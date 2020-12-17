@@ -1,0 +1,7 @@
+# Build output
+/target
+
+# SQLite database
+*.db
+*.db-shm
+*.db-wal
