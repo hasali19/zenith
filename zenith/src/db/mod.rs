@@ -1,4 +1,5 @@
 pub mod movies;
+pub mod tv_shows;
 
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::{Executor, SqlitePool};
