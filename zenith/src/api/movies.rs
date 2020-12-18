@@ -14,38 +14,77 @@ pub fn service(path: &str) -> impl HttpServiceFactory {
 }
 
 #[derive(serde::Serialize)]
-pub struct Movie {
+pub struct MovieListItem {
     id: i64,
     title: String,
+    year: Option<i32>,
+    poster_url: Option<String>,
 }
 
 async fn get_movies(db: Db) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
 
-    let movies: Vec<(i64, String)> = sqlx::query_as("SELECT id, title FROM movies ORDER BY title")
-        .fetch_all(&mut conn)
-        .await?;
+    let movies: Vec<(i64, String, Option<i32>, Option<String>)> =
+        sqlx::query_as("SELECT id, title, year, poster_url FROM movies ORDER BY title")
+            .fetch_all(&mut conn)
+            .await?;
 
-    let res: Vec<Movie> = movies
+    let res: Vec<MovieListItem> = movies
         .into_iter()
-        .map(|(id, title)| Movie { id, title })
+        .map(|(id, title, year, poster_url)| MovieListItem {
+            id,
+            title,
+            year,
+            poster_url,
+        })
         .collect();
 
     Ok(HttpResponse::Ok().json(res))
+}
+
+#[derive(serde::Serialize)]
+pub struct MovieDetails {
+    id: i64,
+    title: String,
+    year: Option<i32>,
+    overview: Option<String>,
+    poster_url: Option<String>,
+    backdrop_url: Option<String>,
 }
 
 async fn get_movie(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder> {
     let (id,) = path.into_inner();
     let mut conn = db.acquire().await?;
 
-    let movie: Option<(i64, String)> = sqlx::query_as("SELECT id, title FROM movies WHERE id = ?")
+    type Row = (
+        i64,
+        String,
+        Option<i32>,
+        Option<String>,
+        Option<String>,
+        Option<String>,
+    );
+
+    let sql = "
+        SELECT id, title, year, overview, poster_url, backdrop_url
+        FROM movies WHERE id = ?
+    ";
+
+    let movie: Option<Row> = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
         .await?;
 
     let res = match movie {
-        Some((id, title)) => Movie { id, title },
         None => return Ok(HttpResponse::NotFound().finish()),
+        Some((id, title, year, overview, poster_url, backdrop_url)) => MovieDetails {
+            id,
+            title,
+            year,
+            overview,
+            poster_url,
+            backdrop_url,
+        },
     };
 
     Ok(HttpResponse::Ok().json(res))

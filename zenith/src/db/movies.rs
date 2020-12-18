@@ -13,18 +13,30 @@ pub async fn get_id_for_path(conn: &mut SqliteConnection, path: &str) -> sqlx::R
 pub struct NewMovie<'a> {
     pub path: &'a str,
     pub title: &'a str,
+    pub year: Option<i32>,
+    pub overview: Option<&'a str>,
+    pub poster_url: Option<&'a str>,
+    pub backdrop_url: Option<&'a str>,
     pub video_path: &'a str,
 }
 
 /// Creates a new movie record.
 pub async fn create(conn: &mut SqliteConnection, data: &NewMovie<'_>) -> sqlx::Result<i64> {
-    let res: SqliteDone =
-        sqlx::query("INSERT INTO movies (path, title, video_path) VALUES (?, ?, ?)")
-            .bind(data.path)
-            .bind(data.title)
-            .bind(data.video_path)
-            .execute(conn)
-            .await?;
+    let sql = "
+        INSERT INTO movies (path, title, year, overview, poster_url, backdrop_url, video_path)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ";
+
+    let res: SqliteDone = sqlx::query(sql)
+        .bind(data.path)
+        .bind(data.title)
+        .bind(data.year)
+        .bind(data.overview)
+        .bind(data.poster_url)
+        .bind(data.backdrop_url)
+        .bind(data.video_path)
+        .execute(conn)
+        .await?;
 
     Ok(res.last_insert_rowid())
 }

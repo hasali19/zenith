@@ -2,6 +2,10 @@ CREATE TABLE IF NOT EXISTS movies (
     id INTEGER PRIMARY KEY,
     path TEXT NOT NULL UNIQUE,
     title TEXT NOT NULL,
+    year INTEGER,
+    overview TEXT,
+    poster_url TEXT,
+    backdrop_url TEXT,
     video_path TEXT NOT NULL
 );
 
