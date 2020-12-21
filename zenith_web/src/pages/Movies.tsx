@@ -1,8 +1,9 @@
 import { useState } from "react";
-import styled from "styled-components";
-import { Grid } from "../components/Grid";
-
+import { useHistory } from "react-router";
 import { useOnce } from "../hooks";
+import styled from "styled-components";
+
+import { Grid } from "../components/Grid";
 
 interface Movie {
   id: number;
@@ -12,6 +13,7 @@ interface Movie {
 }
 
 export function Movies() {
+  const history = useHistory();
   const [movies, setMovies] = useState<Movie[]>([]);
 
   useOnce(() => {
@@ -32,7 +34,10 @@ export function Movies() {
   return (
     <Root>
       <Title>Movies</Title>
-      <Grid items={items} />
+      <Grid
+        items={items}
+        onItemClick={(item) => history.push("/movies/" + item.id)}
+      />
     </Root>
   );
 }

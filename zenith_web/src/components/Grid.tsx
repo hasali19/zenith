@@ -9,13 +9,14 @@ export interface GridItem {
 
 export interface Props {
   items: GridItem[];
+  onItemClick?: (item: GridItem) => void;
 }
 
-export function Grid({ items }: Props) {
+export function Grid({ items, onItemClick }: Props) {
   return (
     <GridContainer>
       {items.map((item) => (
-        <GridItemDiv key={item.id}>
+        <GridItemDiv key={item.id} onClick={() => onItemClick?.(item)}>
           <Poster src={item.poster} />
           <Details>
             <PrimaryText>{item.primary}</PrimaryText>
@@ -38,6 +39,7 @@ const GridItemDiv = styled.div`
   border-radius: 4px;
   overflow: hidden;
   user-select: none;
+  cursor: pointer;
 `;
 
 const Poster = styled.div<{ src: string | null }>`

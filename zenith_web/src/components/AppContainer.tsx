@@ -58,7 +58,7 @@ export function AppContainer({ children }: Props) {
 
       <Main>
         <AppBarSpacer></AppBarSpacer>
-        <div>{children}</div>
+        <MainContent>{children}</MainContent>
       </Main>
     </AppContainerDiv>
   );
@@ -147,8 +147,14 @@ const NavDrawerMainOverlay = styled.div`
   background: #00000055;
 `;
 
-const Main = styled.main`
+const Main = styled.div`
   flex: 1;
+  display: flex;
+  flex-direction: column;
+`;
+
+const MainContent = styled.div`
+  min-height: calc(100% - ${APP_BAR_HEIGHT}px);
 `;
 
 const UnstyledLink = styled(Link)`
