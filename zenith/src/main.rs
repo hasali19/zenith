@@ -15,7 +15,7 @@ async fn sync_libraries(db: &Db) -> eyre::Result<()> {
     let tmdb = TmdbClient::new(&std::env::var("TMDB_ACCESS_TOKEN").unwrap());
 
     sync_movies(&mut conn, &tmdb, "/mnt/nyx/sda/media/Movies").await?;
-    sync_tv_shows(&mut conn, "/mnt/nyx/sda/media/TV").await?;
+    sync_tv_shows(&mut conn, &tmdb, "/mnt/nyx/sda/media/TV").await?;
 
     Ok(())
 }

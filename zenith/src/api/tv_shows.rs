@@ -20,18 +20,24 @@ pub fn service(path: &str) -> impl HttpServiceFactory {
 pub struct TvShow {
     id: i64,
     name: String,
+    poster_url: String,
 }
 
 async fn get_tv_shows(db: Db) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
 
-    let shows: Vec<(i64, String)> = sqlx::query_as("SELECT id, name FROM tv_shows ORDER BY name")
-        .fetch_all(&mut conn)
-        .await?;
+    let shows: Vec<(i64, String, String)> =
+        sqlx::query_as("SELECT id, name, poster_url FROM tv_shows ORDER BY name")
+            .fetch_all(&mut conn)
+            .await?;
 
     let res: Vec<TvShow> = shows
         .into_iter()
-        .map(|(id, name)| TvShow { id, name })
+        .map(|(id, name, poster_url)| TvShow {
+            id,
+            name,
+            poster_url,
+        })
         .collect();
 
     Ok(HttpResponse::Ok().json(res))
