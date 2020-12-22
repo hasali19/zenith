@@ -46,7 +46,10 @@ async fn get_tv_shows(db: Db) -> ApiResult<impl Responder> {
 #[derive(serde::Serialize)]
 struct TvShowFull {
     id: i64,
-    title: String,
+    name: String,
+    overview: Option<String>,
+    poster_url: Option<String>,
+    backdrop_url: Option<String>,
     episodes: Vec<TvEpisode>,
 }
 
@@ -55,36 +58,52 @@ pub struct TvEpisode {
     id: i64,
     season: u32,
     episode: u32,
+    overview: Option<String>,
+    image_url: Option<String>,
 }
 
 async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder> {
     let (id,) = path.into_inner();
     let mut conn = db.acquire().await?;
 
-    let movie: Option<(i64, String)> = sqlx::query_as("SELECT id, name FROM tv_shows WHERE id = ?")
+    type Row = (i64, String, Option<String>, Option<String>, Option<String>);
+
+    let sql = "SELECT id, name, overview, poster_url, backdrop_url FROM tv_shows WHERE id = ?";
+    let movie: Option<Row> = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
         .await?;
 
     let res = match movie {
         None => return Ok(HttpResponse::NotFound().finish()),
-        Some((id, title)) => {
-            let sql = "SELECT id, season, episode FROM tv_episodes WHERE show_id = ? ORDER BY season, episode";
-            let episodes: Vec<(i64, i64, i64)> =
-                sqlx::query_as(sql).bind(id).fetch_all(&mut conn).await?;
+        Some((id, name, overview, poster_url, backdrop_url)) => {
+            let sql = "
+                SELECT id, season, episode, overview, image_url
+                FROM tv_episodes
+                WHERE show_id = ?
+                ORDER BY season, episode
+            ";
 
+            type Row = (i64, i64, i64, Option<String>, Option<String>);
+
+            let episodes: Vec<Row> = sqlx::query_as(sql).bind(id).fetch_all(&mut conn).await?;
             let episodes = episodes
                 .into_iter()
-                .map(|(id, season, episode)| TvEpisode {
+                .map(|(id, season, episode, overview, image_url)| TvEpisode {
                     id,
                     season: season as u32,
                     episode: episode as u32,
+                    overview,
+                    image_url,
                 })
                 .collect();
 
             TvShowFull {
                 id,
-                title,
+                name,
+                overview,
+                poster_url,
+                backdrop_url,
                 episodes,
             }
         }

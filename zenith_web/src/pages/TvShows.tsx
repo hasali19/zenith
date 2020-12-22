@@ -1,4 +1,5 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { useHistory } from "react-router";
 import { Grid } from "../components/Grid";
 import { useOnce } from "../hooks";
 
@@ -9,6 +10,7 @@ interface TvShow {
 }
 
 export function TvShows() {
+  const history = useHistory();
   const [shows, setShows] = useState<TvShow[]>([]);
 
   useOnce(() => {
@@ -30,7 +32,10 @@ export function TvShows() {
     <div style={{ padding: 16 }}>
       <h1>TV Shows</h1>
       <br />
-      <Grid items={items} />
+      <Grid
+        items={items}
+        onItemClick={(item) => history.push("/tv_shows/" + item.id)}
+      />
     </div>
   );
 }
