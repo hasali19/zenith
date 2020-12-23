@@ -25,10 +25,13 @@ pub struct MovieListItem {
 async fn get_movies(db: Db) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
 
+    let sql = "
+        SELECT id, COALESCE(display_title, title), year, poster
+        FROM movies ORDER BY title
+    ";
+
     let movies: Vec<(i64, String, Option<i32>, Option<String>)> =
-        sqlx::query_as("SELECT id, title, year, poster FROM movies ORDER BY title")
-            .fetch_all(&mut conn)
-            .await?;
+        sqlx::query_as(sql).fetch_all(&mut conn).await?;
 
     let res: Vec<MovieListItem> = movies
         .into_iter()
@@ -67,7 +70,7 @@ async fn get_movie(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder>
     );
 
     let sql = "
-        SELECT id, title, year, overview, poster, backdrop
+        SELECT id, COALESCE(display_title, title), year, overview, poster, backdrop
         FROM movies WHERE id = ?
     ";
 

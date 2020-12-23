@@ -27,10 +27,13 @@ pub struct TvShow {
 async fn get_tv_shows(db: Db) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
 
+    let sql = "
+        SELECT id, COALESCE(display_name, name), poster
+        FROM tv_shows ORDER BY name
+    ";
+
     let shows: Vec<(i64, String, Option<String>)> =
-        sqlx::query_as("SELECT id, name, poster FROM tv_shows ORDER BY name")
-            .fetch_all(&mut conn)
-            .await?;
+        sqlx::query_as(sql).fetch_all(&mut conn).await?;
 
     let res: Vec<TvShow> = shows
         .into_iter()
@@ -69,7 +72,11 @@ async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responde
 
     type Row = (i64, String, Option<String>, Option<String>, Option<String>);
 
-    let sql = "SELECT id, name, overview, poster, backdrop FROM tv_shows WHERE id = ?";
+    let sql = "
+        SELECT id, COALESCE(display_name, name), overview, poster, backdrop FROM tv_shows
+        WHERE id = ?
+    ";
+
     let movie: Option<Row> = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)

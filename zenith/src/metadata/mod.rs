@@ -10,29 +10,35 @@ pub async fn refresh_movie_metadata(
 ) -> eyre::Result<()> {
     log::info!("updating metadata for movie (id: {})", id);
 
-    let title: String = sqlx::query("SELECT title FROM movies WHERE id = ?")
-        .bind(id)
-        .try_map(|row: SqliteRow| row.try_get(0))
-        .fetch_one(&mut *db)
-        .await?;
+    let (title, year): (String, Option<i32>) =
+        sqlx::query_as("SELECT title, year FROM movies WHERE id = ?")
+            .bind(id)
+            .fetch_one(&mut *db)
+            .await?;
 
     let query = MovieSearchQuery {
         title: &title,
         page: None,
-        primary_release_year: None,
+        primary_release_year: year,
     };
 
     let metadata = tmdb.search_movies(&query).await?;
     let result = match metadata.results.into_iter().next() {
         Some(result) => result,
-        None => return Ok(()),
+        None => {
+            return Err(eyre::eyre!(
+                "no match found for '{} ({})'",
+                title,
+                year.unwrap_or(-1)
+            ))
+        }
     };
 
     log::info!("match found: {}", result.title);
 
     let sql = "
         UPDATE movies
-        SET title = ?,
+        SET display_title = ?,
             overview = ?,
             poster = ?,
             backdrop = ?
@@ -80,7 +86,7 @@ pub async fn refresh_tv_show_metadata(
 
     let sql = "
         UPDATE tv_shows
-        SET name = ?,
+        SET display_name = ?,
             overview = ?,
             poster = ?,
             backdrop = ?,
