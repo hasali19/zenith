@@ -7,7 +7,8 @@ use regex::Regex;
 use sqlx::{Connection, SqliteConnection, Transaction};
 
 use crate::db::tv_shows::{self, NewTvEpisode, NewTvShow};
-use crate::tmdb::{self, TmdbClient};
+use crate::metadata;
+use crate::tmdb::TmdbClient;
 
 lazy_static! {
     static ref REGEX: Regex = Regex::new(r"^S(\d\d)E(\d\d)\.\S+$").unwrap();
@@ -91,16 +92,6 @@ fn find_episodes(path: &Path) -> eyre::Result<Vec<(u32, u32, String)>> {
     Ok(episodes)
 }
 
-async fn get_ids_by_path(
-    db: &mut SqliteConnection,
-    path: &str,
-) -> sqlx::Result<Option<(i64, Option<i32>)>> {
-    sqlx::query_as("SELECT id, tmdb_id FROM tv_shows WHERE path = ?")
-        .bind(path)
-        .fetch_optional(db)
-        .await
-}
-
 async fn sync_show(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
@@ -108,41 +99,22 @@ async fn sync_show(
     path: &str,
     episodes: &[(u32, u32, String)],
 ) -> eyre::Result<i64> {
-    let mut transaction = db.begin().await?;
-
-    let (id, tmdb_id) = match get_ids_by_path(&mut transaction, &path).await? {
-        Some(ids) => ids,
+    let id = match tv_shows::get_id_for_path(&mut *db, &path).await? {
+        Some(id) => id,
         None => {
             log::info!("found tv show: {}", name);
+            let tv_show = NewTvShow { path, name };
+            let id = tv_shows::create(&mut *db, &tv_show).await?;
 
-            let mut tv_show = NewTvShow {
-                path,
-                name,
-                overview: None,
-                poster_url: None,
-                backdrop_url: None,
-                tmdb_id: None,
-            };
-
-            let metadata = get_show_metadata(tmdb, name).await;
-            if let Some(metadata) = &metadata {
-                tv_show.name = &metadata.name;
-                tv_show.overview = metadata.overview.as_deref();
-                tv_show.poster_url = metadata.poster_path.as_deref();
-                tv_show.backdrop_url = metadata.backdrop_path.as_deref();
-                tv_show.tmdb_id = Some(metadata.id);
+            if let Err(e) = metadata::refresh_tv_show_metadata(&mut *db, tmdb, id).await {
+                log::error!("failed to update metadata: {}", e);
             }
 
-            let id = tv_shows::create(&mut transaction, &tv_show).await?;
-            let tmdb_id = metadata.map(|m| m.id);
-
-            (id, tmdb_id)
+            id
         }
     };
 
-    sync_episodes(&mut transaction, tmdb, id, tmdb_id, &episodes).await?;
-
-    transaction.commit().await?;
+    sync_episodes(&mut *db, tmdb, id, &episodes).await?;
 
     Ok(id)
 }
@@ -151,7 +123,6 @@ async fn sync_episodes(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
     show_id: i64,
-    tmdb_id: Option<i32>,
     episodes: &[(u32, u32, String)],
 ) -> sqlx::Result<()> {
     let mut ids = tv_shows::get_episode_ids(&mut *db, show_id)
@@ -173,30 +144,17 @@ async fn sync_episodes(
                     show_id
                 );
 
-                let mut new_episode = NewTvEpisode {
+                let new_episode = NewTvEpisode {
                     season: *season,
                     episode: *episode,
-                    overview: None,
-                    image_url: None,
-                    tmdb_id: None,
                     video_path: path,
                 };
 
-                let metadata = match tmdb_id {
-                    Some(tmdb_id) => get_episode_metadata(tmdb, tmdb_id, *season, *episode).await,
-                    None => None,
-                };
+                let id = tv_shows::create_episode(&mut *db, show_id, &new_episode).await?;
 
-                if let Some((metadata, image)) = &metadata {
-                    new_episode.overview = metadata.overview.as_deref();
-                    new_episode.tmdb_id = Some(metadata.id);
-
-                    if let Some(image) = image {
-                        new_episode.image_url = Some(&image.file_path);
-                    }
+                if let Err(e) = metadata::refresh_tv_episode_metadata(&mut *db, tmdb, id).await {
+                    log::error!("failed to update metadata: {}", e);
                 }
-
-                tv_shows::create_episode(&mut *db, show_id, &new_episode).await?;
             }
         }
     }
@@ -206,41 +164,4 @@ async fn sync_episodes(
     }
 
     Ok(())
-}
-
-async fn get_show_metadata(tmdb: &TmdbClient, name: &str) -> Option<tmdb::TvShowSearchResult> {
-    let query = tmdb::TvShowSearchQuery {
-        name,
-        page: None,
-        first_air_date_year: None,
-    };
-
-    let metadata = match tmdb.search_tv_shows(&query).await {
-        Ok(metadata) => metadata,
-        Err(_) => return None,
-    };
-
-    metadata.results.into_iter().next()
-}
-
-async fn get_episode_metadata(
-    tmdb: &TmdbClient,
-    show_id: i32,
-    season: u32,
-    episode: u32,
-) -> Option<(tmdb::TvEpisodeResponse, Option<tmdb::Image>)> {
-    let metadata = tmdb
-        .get_tv_episode(show_id, season as i32, episode as i32)
-        .await
-        .ok()?;
-
-    let image = tmdb
-        .get_tv_episode_images(show_id, season as i32, episode as i32)
-        .await
-        .ok()?
-        .stills
-        .into_iter()
-        .next();
-
-    Some((metadata, image))
 }

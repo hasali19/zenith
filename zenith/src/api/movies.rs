@@ -3,6 +3,7 @@ use actix_web::dev::HttpServiceFactory;
 use actix_web::{web, HttpResponse, Responder};
 
 use crate::db::Db;
+use crate::utils;
 
 use super::{ApiError, ApiResult};
 
@@ -25,17 +26,17 @@ async fn get_movies(db: Db) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
 
     let movies: Vec<(i64, String, Option<i32>, Option<String>)> =
-        sqlx::query_as("SELECT id, title, year, poster_url FROM movies ORDER BY title")
+        sqlx::query_as("SELECT id, title, year, poster FROM movies ORDER BY title")
             .fetch_all(&mut conn)
             .await?;
 
     let res: Vec<MovieListItem> = movies
         .into_iter()
-        .map(|(id, title, year, poster_url)| MovieListItem {
+        .map(|(id, title, year, poster)| MovieListItem {
             id,
             title,
             year,
-            poster_url,
+            poster_url: poster.as_deref().map(utils::get_image_url),
         })
         .collect();
 
@@ -66,7 +67,7 @@ async fn get_movie(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder>
     );
 
     let sql = "
-        SELECT id, title, year, overview, poster_url, backdrop_url
+        SELECT id, title, year, overview, poster, backdrop
         FROM movies WHERE id = ?
     ";
 
@@ -77,13 +78,13 @@ async fn get_movie(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder>
 
     let res = match movie {
         None => return Ok(HttpResponse::NotFound().finish()),
-        Some((id, title, year, overview, poster_url, backdrop_url)) => MovieDetails {
+        Some((id, title, year, overview, poster, backdrop)) => MovieDetails {
             id,
             title,
             year,
             overview,
-            poster_url,
-            backdrop_url,
+            poster_url: poster.as_deref().map(utils::get_image_url),
+            backdrop_url: backdrop.as_deref().map(utils::get_image_url),
         },
     };
 

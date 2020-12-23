@@ -24,9 +24,7 @@ export function Movies() {
 
   const items = movies.map((movie) => ({
     id: movie.id,
-    poster: movie.poster_url
-      ? `https://image.tmdb.org/t/p/w185${movie.poster_url}`
-      : null,
+    poster: movie.poster_url,
     primary: movie.title,
     secondary: movie.year?.toString() || null,
   }));

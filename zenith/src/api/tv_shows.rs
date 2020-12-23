@@ -3,6 +3,7 @@ use actix_web::dev::HttpServiceFactory;
 use actix_web::{web, HttpResponse, Responder};
 
 use crate::db::Db;
+use crate::utils;
 
 use super::{ApiError, ApiResult};
 
@@ -20,23 +21,23 @@ pub fn service(path: &str) -> impl HttpServiceFactory {
 pub struct TvShow {
     id: i64,
     name: String,
-    poster_url: String,
+    poster_url: Option<String>,
 }
 
 async fn get_tv_shows(db: Db) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
 
-    let shows: Vec<(i64, String, String)> =
-        sqlx::query_as("SELECT id, name, poster_url FROM tv_shows ORDER BY name")
+    let shows: Vec<(i64, String, Option<String>)> =
+        sqlx::query_as("SELECT id, name, poster FROM tv_shows ORDER BY name")
             .fetch_all(&mut conn)
             .await?;
 
     let res: Vec<TvShow> = shows
         .into_iter()
-        .map(|(id, name, poster_url)| TvShow {
+        .map(|(id, name, poster)| TvShow {
             id,
             name,
-            poster_url,
+            poster_url: poster.as_deref().map(utils::get_image_url),
         })
         .collect();
 
@@ -59,7 +60,7 @@ pub struct TvEpisode {
     season: u32,
     episode: u32,
     overview: Option<String>,
-    image_url: Option<String>,
+    thumbnail_url: Option<String>,
 }
 
 async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder> {
@@ -68,7 +69,7 @@ async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responde
 
     type Row = (i64, String, Option<String>, Option<String>, Option<String>);
 
-    let sql = "SELECT id, name, overview, poster_url, backdrop_url FROM tv_shows WHERE id = ?";
+    let sql = "SELECT id, name, overview, poster, backdrop FROM tv_shows WHERE id = ?";
     let movie: Option<Row> = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
@@ -76,9 +77,9 @@ async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responde
 
     let res = match movie {
         None => return Ok(HttpResponse::NotFound().finish()),
-        Some((id, name, overview, poster_url, backdrop_url)) => {
+        Some((id, name, overview, poster, backdrop)) => {
             let sql = "
-                SELECT id, season, episode, overview, image_url
+                SELECT id, season, episode, overview, thumbnail
                 FROM tv_episodes
                 WHERE show_id = ?
                 ORDER BY season, episode
@@ -89,12 +90,12 @@ async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responde
             let episodes: Vec<Row> = sqlx::query_as(sql).bind(id).fetch_all(&mut conn).await?;
             let episodes = episodes
                 .into_iter()
-                .map(|(id, season, episode, overview, image_url)| TvEpisode {
+                .map(|(id, season, episode, overview, thumbnail)| TvEpisode {
                     id,
                     season: season as u32,
                     episode: episode as u32,
                     overview,
-                    image_url,
+                    thumbnail_url: thumbnail.as_deref().map(utils::get_image_url),
                 })
                 .collect();
 
@@ -102,8 +103,8 @@ async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responde
                 id,
                 name,
                 overview,
-                poster_url,
-                backdrop_url,
+                poster_url: poster.as_deref().map(utils::get_image_url),
+                backdrop_url: backdrop.as_deref().map(utils::get_image_url),
                 episodes,
             }
         }

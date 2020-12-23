@@ -25,17 +25,14 @@ export function MovieDetails() {
     return null;
   }
 
-  const backdrop = "https://image.tmdb.org/t/p/w1280" + movie.backdrop_url;
-  const poster = "https://image.tmdb.org/t/p/w185" + movie.poster_url;
-
   return (
     <Root>
-      <Background src={backdrop} />
+      <Background src={movie.backdrop_url} />
       <BackgroundOverlay />
       <Foreground>
-        <MobileBackdrop src={backdrop} />
+        <MobileBackdrop src={movie.backdrop_url!!} />
         <Main>
-          <Poster src={poster} />
+          <Poster src={movie.poster_url!!} />
           <Details>
             <Title>{movie.title}</Title>
             <Year>{movie.year}</Year>
@@ -107,6 +104,9 @@ const Main = styled.div`
 `;
 
 const Poster = styled.img`
+  width: 250px;
+  border-radius: 4px;
+
   @media (max-width: 599px) {
     display: none;
   }

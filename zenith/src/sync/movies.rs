@@ -4,9 +4,9 @@ use regex::Regex;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Row, SqliteConnection};
 
-use crate::db;
 use crate::db::movies::NewMovie;
-use crate::tmdb::{self, MovieSearchQuery, TmdbClient};
+use crate::tmdb::TmdbClient;
+use crate::{db, metadata};
 
 pub async fn sync_movies(
     db: &mut SqliteConnection,
@@ -72,27 +72,20 @@ pub async fn sync_movies(
             }
             // Otherwise create a new movie
             None => {
-                log::info!("found movie: {}", file_name);
+                log::info!("adding movie: {}", file_name);
 
-                let mut movie = NewMovie {
+                let movie = NewMovie {
                     path,
                     title: &title,
                     year,
-                    overview: None,
-                    poster_url: None,
-                    backdrop_url: None,
                     video_path: &video_file,
                 };
 
-                let metadata = get_metadata(tmdb, &title).await;
-                if let Some(metadata) = &metadata {
-                    movie.title = &metadata.title;
-                    movie.overview = metadata.overview.as_deref();
-                    movie.poster_url = metadata.poster_path.as_deref();
-                    movie.backdrop_url = metadata.backdrop_path.as_deref();
-                }
+                let id = db::movies::create(&mut *db, &movie).await?;
 
-                db::movies::create(&mut *db, &movie).await?;
+                if let Err(e) = metadata::refresh_movie_metadata(&mut *db, tmdb, id).await {
+                    log::error!("failed to update metadata: {}", e);
+                }
             }
         }
     }
@@ -125,19 +118,4 @@ fn parse_movie_dir_name(name: &str) -> Option<(String, Option<i32>)> {
 
         (name, year)
     })
-}
-
-async fn get_metadata(tmdb: &TmdbClient, title: &str) -> Option<tmdb::MovieSearchResult> {
-    let query = MovieSearchQuery {
-        title,
-        page: None,
-        primary_release_year: None,
-    };
-
-    let metadata = match tmdb.search_movies(&query).await {
-        Ok(metadata) => metadata,
-        Err(_) => return None,
-    };
-
-    metadata.results.into_iter().next()
 }

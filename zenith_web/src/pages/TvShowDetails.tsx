@@ -16,7 +16,7 @@ interface TvEpisode {
   season: number;
   episode: number;
   overview: string | null;
-  image_url: string | null;
+  thumbnail_url: string | null;
 }
 
 export function TvShowDetails() {
@@ -33,17 +33,14 @@ export function TvShowDetails() {
     return null;
   }
 
-  const backdrop = "https://image.tmdb.org/t/p/w1280" + show.backdrop_url;
-  const poster = "https://image.tmdb.org/t/p/w185" + show.poster_url;
-
   return (
     <Root>
-      <Background src={backdrop} />
+      <Background src={show.backdrop_url} />
       <BackgroundOverlay />
       <Foreground>
-        <MobileBackdrop src={backdrop} />
+        <MobileBackdrop src={show.backdrop_url!!} />
         <Main>
-          <Poster src={poster} />
+          <Poster src={show.poster_url!!} />
           <Details>
             <Title>{show.name}</Title>
             <Overview>{show.overview}</Overview>
@@ -56,9 +53,7 @@ export function TvShowDetails() {
           <h2 style={{ margin: "16px 0px" }}>Episodes</h2>
           {show.episodes.map((episode) => (
             <Episode key={episode.id}>
-              <EpisodeImage
-                src={`https://image.tmdb.org/t/p/w300${episode.image_url}`}
-              />
+              <EpisodeImage src={episode.thumbnail_url!!} />
               <EpisodeDetails>
                 <h3>
                   Season {episode.season} Episode {episode.episode}
@@ -130,6 +125,9 @@ const Main = styled.div`
 `;
 
 const Poster = styled.img`
+  width: 250px;
+  border-radius: 4px;
+
   @media (max-width: 599px) {
     display: none;
   }

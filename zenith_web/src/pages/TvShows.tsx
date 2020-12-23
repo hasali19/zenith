@@ -21,9 +21,7 @@ export function TvShows() {
 
   const items = shows.map((show) => ({
     id: show.id,
-    poster: show.poster_url
-      ? `https://image.tmdb.org/t/p/w185${show.poster_url}`
-      : null,
+    poster: show.poster_url,
     primary: show.name,
     secondary: null,
   }));
