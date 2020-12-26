@@ -1,4 +1,5 @@
 pub mod movies;
+pub mod stream;
 pub mod tv_shows;
 
 use actix_web::dev::HttpServiceFactory;
@@ -11,6 +12,7 @@ pub fn service(path: &str) -> impl HttpServiceFactory {
     web::scope(path)
         .service(movies::service("/movies"))
         .service(tv_shows::service("/tv_shows"))
+        .service(stream::service("/stream"))
 }
 
 #[derive(Debug, derive_more::Display)]

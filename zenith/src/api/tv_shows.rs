@@ -1,21 +1,16 @@
-use actix_files::NamedFile;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::{web, HttpResponse, Responder};
 
-use crate::db::media::{MediaFileType, MediaItemType};
+use crate::db::media::MediaItemType;
 use crate::db::Db;
 use crate::utils;
 
-use super::{ApiError, ApiResult};
+use super::ApiResult;
 
 pub fn service(path: &str) -> impl HttpServiceFactory {
     web::scope(path)
         .route("", web::get().to(get_tv_shows))
         .route("/{id}", web::get().to(get_tv_show))
-        .route(
-            "/{movie_id}/episodes/{episode_id}/stream",
-            web::get().to(get_stream),
-        )
 }
 
 #[derive(serde::Serialize)]
@@ -68,6 +63,7 @@ pub struct TvEpisode {
     episode: u32,
     overview: Option<String>,
     thumbnail_url: Option<String>,
+    stream: String,
 }
 
 async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder> {
@@ -91,25 +87,29 @@ async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responde
         None => return Ok(HttpResponse::NotFound().finish()),
         Some((id, name, overview, poster, backdrop)) => {
             let sql = "
-                SELECT episode.id, season.index_number, episode.index_number, episode.overview, episode.primary_image
+                SELECT episode.id, season.index_number, episode.index_number, episode.overview, episode.primary_image, file.id
                 FROM media_items AS episode
                 JOIN media_items AS season ON season.id = episode.parent_id
-                WHERE season.parent_id = ?
+                JOIN media_files AS file ON episode.id = file.item_id
+                WHERE season.parent_id = ? AND file.file_type = 1
                 ORDER BY season.index_number, episode.index_number
             ";
 
-            type Row = (i64, i64, i64, Option<String>, Option<String>);
+            type Row = (i64, i64, i64, Option<String>, Option<String>, i64);
 
             let episodes: Vec<Row> = sqlx::query_as(sql).bind(id).fetch_all(&mut conn).await?;
             let episodes = episodes
                 .into_iter()
-                .map(|(id, season, episode, overview, primary)| TvEpisode {
-                    id,
-                    season: season as u32,
-                    episode: episode as u32,
-                    overview,
-                    thumbnail_url: primary.as_deref().map(utils::get_image_url),
-                })
+                .map(
+                    |(id, season, episode, overview, primary, file_id)| TvEpisode {
+                        id,
+                        season: season as u32,
+                        episode: episode as u32,
+                        overview,
+                        thumbnail_url: primary.as_deref().map(utils::get_image_url),
+                        stream: format!("/api/stream/{}", file_id),
+                    },
+                )
                 .collect();
 
             TvShowFull {
@@ -124,31 +124,4 @@ async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responde
     };
 
     Ok(HttpResponse::Ok().json(res))
-}
-
-async fn get_stream(path: web::Path<(i64, i64)>, db: Db) -> ApiResult<impl Responder> {
-    let (show_id, episode_id) = path.into_inner();
-    let mut conn = db.acquire().await?;
-
-    let sql = "
-        SELECT file.path FROM media_files AS file
-        JOIN media_items AS episode ON episode.id = file.item_id
-        JOIN media_items AS season ON season.id = episode.parent_id
-        JOIN media_items AS show ON show.id = season.parent_id
-        WHERE episode.id = ? AND show.id = ? AND file.file_type = ?
-    ";
-
-    let path: Option<(String,)> = sqlx::query_as(sql)
-        .bind(episode_id)
-        .bind(show_id)
-        .bind(MediaFileType::Video)
-        .fetch_optional(&mut conn)
-        .await?;
-
-    let path = match path {
-        Some((path,)) => path,
-        None => return Err(ApiError::NotFound),
-    };
-
-    Ok(NamedFile::open(path))
 }

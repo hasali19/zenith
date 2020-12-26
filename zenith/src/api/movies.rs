@@ -1,17 +1,15 @@
-use actix_files::NamedFile;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::{web, HttpResponse, Responder};
 
 use crate::db::Db;
 use crate::utils;
 
-use super::{ApiError, ApiResult};
+use super::ApiResult;
 
 pub fn service(path: &str) -> impl HttpServiceFactory {
     web::scope(path)
         .route("", web::get().to(get_movies))
         .route("/{id}", web::get().to(get_movie))
-        .route("/{id}/stream", web::get().to(get_stream))
 }
 
 #[derive(serde::Serialize)]
@@ -55,6 +53,7 @@ pub struct MovieDetails {
     overview: Option<String>,
     poster_url: Option<String>,
     backdrop_url: Option<String>,
+    stream: String,
 }
 
 async fn get_movie(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder> {
@@ -68,12 +67,15 @@ async fn get_movie(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder>
         Option<String>,
         Option<String>,
         Option<String>,
+        i64,
     );
 
     let sql = "
-        SELECT id, name, CAST(strftime('%Y', datetime(release_date, 'unixepoch')) as INTEGER),
-               overview, primary_image, backdrop_image
-        FROM media_items WHERE id = ? AND item_type = 1
+        SELECT movie.id, name, CAST(strftime('%Y', datetime(release_date, 'unixepoch')) as INTEGER),
+               overview, primary_image, backdrop_image, file.id
+        FROM media_items AS movie
+        JOIN media_files AS file ON movie.id = file.item_id
+        WHERE movie.id = ? AND item_type = 1 AND file_type = 1
     ";
 
     let movie: Option<Row> = sqlx::query_as(sql)
@@ -83,33 +85,16 @@ async fn get_movie(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder>
 
     let res = match movie {
         None => return Ok(HttpResponse::NotFound().finish()),
-        Some((id, title, year, overview, poster, backdrop)) => MovieDetails {
+        Some((id, title, year, overview, poster, backdrop, file_id)) => MovieDetails {
             id,
             title,
             year,
             overview,
             poster_url: poster.as_deref().map(utils::get_image_url),
             backdrop_url: backdrop.as_deref().map(utils::get_image_url),
+            stream: format!("/api/stream/{}", file_id),
         },
     };
 
     Ok(HttpResponse::Ok().json(res))
-}
-
-async fn get_stream(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder> {
-    let (movie_id,) = path.into_inner();
-    let mut conn = db.acquire().await?;
-
-    let path: Option<(String,)> =
-        sqlx::query_as("SELECT path FROM media_files WHERE item_id = ? AND file_type = 1")
-            .bind(movie_id)
-            .fetch_optional(&mut conn)
-            .await?;
-
-    let path = match path {
-        Some((path,)) => path,
-        None => return Err(ApiError::NotFound),
-    };
-
-    Ok(NamedFile::open(path))
 }
