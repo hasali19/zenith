@@ -54,6 +54,7 @@ pub struct MovieDetails {
     poster_url: Option<String>,
     backdrop_url: Option<String>,
     stream: String,
+    duration: f64,
 }
 
 async fn get_movie(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder> {
@@ -68,14 +69,15 @@ async fn get_movie(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder>
         Option<String>,
         Option<String>,
         i64,
+        f64,
     );
 
     let sql = "
         SELECT movie.id, name, CAST(strftime('%Y', datetime(release_date, 'unixepoch')) as INTEGER),
-               overview, primary_image, backdrop_image, file.id
+               overview, primary_image, backdrop_image, file.id, file.duration
         FROM media_items AS movie
-        JOIN media_files AS file ON movie.id = file.item_id
-        WHERE movie.id = ? AND item_type = 1 AND file_type = 1
+        JOIN video_files AS file ON movie.id = file.item_id
+        WHERE movie.id = ? AND item_type = 1
     ";
 
     let movie: Option<Row> = sqlx::query_as(sql)
@@ -85,7 +87,7 @@ async fn get_movie(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder>
 
     let res = match movie {
         None => return Ok(HttpResponse::NotFound().finish()),
-        Some((id, title, year, overview, poster, backdrop, file_id)) => MovieDetails {
+        Some((id, title, year, overview, poster, backdrop, file_id, duration)) => MovieDetails {
             id,
             title,
             year,
@@ -93,6 +95,7 @@ async fn get_movie(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder>
             poster_url: poster.as_deref().map(utils::get_image_url),
             backdrop_url: backdrop.as_deref().map(utils::get_image_url),
             stream: format!("/api/stream/{}", file_id),
+            duration,
         },
     };
 

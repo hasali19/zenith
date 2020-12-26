@@ -64,6 +64,7 @@ pub struct TvEpisode {
     overview: Option<String>,
     thumbnail_url: Option<String>,
     stream: String,
+    duration: f64,
 }
 
 async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder> {
@@ -87,27 +88,29 @@ async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responde
         None => return Ok(HttpResponse::NotFound().finish()),
         Some((id, name, overview, poster, backdrop)) => {
             let sql = "
-                SELECT episode.id, season.index_number, episode.index_number, episode.overview, episode.primary_image, file.id
+                SELECT episode.id, season.index_number, episode.index_number, episode.overview,
+                       episode.primary_image, file.id, file.duration
                 FROM media_items AS episode
                 JOIN media_items AS season ON season.id = episode.parent_id
-                JOIN media_files AS file ON episode.id = file.item_id
-                WHERE season.parent_id = ? AND file.file_type = 1
+                JOIN video_files AS file ON episode.id = file.item_id
+                WHERE season.parent_id = ?
                 ORDER BY season.index_number, episode.index_number
             ";
 
-            type Row = (i64, i64, i64, Option<String>, Option<String>, i64);
+            type Row = (i64, i64, i64, Option<String>, Option<String>, i64, f64);
 
             let episodes: Vec<Row> = sqlx::query_as(sql).bind(id).fetch_all(&mut conn).await?;
             let episodes = episodes
                 .into_iter()
                 .map(
-                    |(id, season, episode, overview, primary, file_id)| TvEpisode {
+                    |(id, season, episode, overview, primary, file_id, duration)| TvEpisode {
                         id,
                         season: season as u32,
                         episode: episode as u32,
                         overview,
                         thumbnail_url: primary.as_deref().map(utils::get_image_url),
                         stream: format!("/api/stream/{}", file_id),
+                        duration,
                     },
                 )
                 .collect();

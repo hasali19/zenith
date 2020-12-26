@@ -7,9 +7,9 @@ use regex::Regex;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Row, SqliteConnection};
 
-use crate::db::media::{MediaFileType, MediaItemType};
-use crate::metadata;
+use crate::db::media::MediaItemType;
 use crate::tmdb::TmdbClient;
+use crate::{ffmpeg, metadata};
 
 lazy_static! {
     static ref REGEX: Regex = Regex::new(r"^S(\d\d)E(\d\d)\.\S+$").unwrap();
@@ -242,6 +242,8 @@ async fn sync_episode(
         None => {
             log::info!("adding tv episode: {} (season_id: {})", episode, season_id);
 
+            let info = ffmpeg::get_video_info(path).await?;
+
             let sql = "
                 INSERT INTO media_items (parent_id, item_type, path, index_number)
                 VALUES (?, ?, ?, ?)
@@ -256,13 +258,13 @@ async fn sync_episode(
                 .await?;
 
             let sqlx = "
-                INSERT INTO media_files (item_id, file_type, path)
+                INSERT INTO video_files (item_id, path, duration)
                 VALUES (last_insert_rowid(), ?, ?)
             ";
 
             sqlx::query(sqlx)
-                .bind(MediaFileType::Video)
                 .bind(path)
+                .bind(info.duration)
                 .execute(&mut *db)
                 .await?;
 
@@ -322,7 +324,7 @@ async fn remove_season(db: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
 async fn remove_episode(db: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
     log::info!("removing tv episode: {}", id);
 
-    sqlx::query("DELETE FROM media_files WHERE item_id = ?")
+    sqlx::query("DELETE FROM video_files WHERE item_id = ?")
         .bind(id)
         .execute(&mut *db)
         .await?;

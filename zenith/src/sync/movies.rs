@@ -4,8 +4,8 @@ use regex::Regex;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Connection, Row, SqliteConnection};
 
-use crate::metadata;
 use crate::tmdb::TmdbClient;
+use crate::{ffmpeg, metadata};
 
 pub async fn sync_movies(
     db: &mut SqliteConnection,
@@ -73,6 +73,8 @@ pub async fn sync_movies(
             None => {
                 log::info!("adding movie: {}", file_name);
 
+                let info = ffmpeg::get_video_info(&video_file).await?;
+
                 let release_date = year
                     .and_then(|year| time::Date::try_from_yo(year, 1).ok())
                     .and_then(|date| date.try_with_hms(0, 0, 0).ok())
@@ -94,12 +96,13 @@ pub async fn sync_movies(
                     .last_insert_rowid();
 
                 let sql = "
-                    INSERT INTO media_files (item_id, file_type, path)
-                    VALUES (last_insert_rowid(), 1, ?)
+                    INSERT INTO video_files (item_id, path, duration)
+                    VALUES (last_insert_rowid(), ?, ?)
                 ";
 
                 sqlx::query(sql)
                     .bind(video_file)
+                    .bind(info.duration)
                     .execute(&mut transaction)
                     .await?;
 
@@ -116,6 +119,11 @@ pub async fn sync_movies(
     // may be deleted from the database
     for id in movies {
         log::info!("removing movie: {}", id);
+
+        sqlx::query("DELETE FROM video_files WHERE item_id = ?")
+            .bind(id)
+            .execute(&mut *db)
+            .await?;
 
         sqlx::query("DELETE FROM media_items WHERE id = ?")
             .bind(id)

@@ -12,12 +12,6 @@ pub enum MediaItemType {
     TvEpisode = 4,
 }
 
-#[derive(Clone, Copy, sqlx::Type)]
-#[repr(i32)]
-pub enum MediaFileType {
-    Video = 1,
-}
-
 #[derive(Clone, Copy)]
 pub enum MediaImageType {
     Poster = 1,
