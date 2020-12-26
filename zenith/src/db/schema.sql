@@ -1,37 +1,30 @@
-CREATE TABLE IF NOT EXISTS movies (
+CREATE TABLE IF NOT EXISTS media_items (
     id INTEGER PRIMARY KEY,
-    path TEXT NOT NULL UNIQUE,
-    title TEXT NOT NULL,
-    year INTEGER,
-    display_title TEXT,
-    overview TEXT,
-    poster TEXT,
-    backdrop TEXT,
-    tmdb_id INTEGER,
-    video_path TEXT NOT NULL
-);
+    parent_id INTEGER,
+    item_type INTEGER NOT NULL,
+    path TEXT,
 
-CREATE TABLE IF NOT EXISTS tv_shows (
-    id INTEGER PRIMARY KEY,
-    path TEXT NOT NULL UNIQUE,
-    name TEXT NOT NULL,
-    display_name TEXT,
-    overview TEXT,
-    poster TEXT,
-    backdrop TEXT,
-    tmdb_id INTEGER
-);
-
-CREATE TABLE IF NOT EXISTS tv_episodes (
-    id INTEGER PRIMARY KEY,
-    show_id INTEGER NOT NULL,
-    season INTEGER NOT NULL,
-    episode INTEGER NOT NULL,
     name TEXT,
+    index_number INTEGER,
+    release_date INTEGER,
     overview TEXT,
-    thumbnail TEXT,
-    tmdb_id INTEGER,
-    video_path TEXT NOT NULL,
 
-    FOREIGN KEY (show_id) REFERENCES tv_shows (id)
+    primary_image TEXT,
+    backdrop_image TEXT,
+
+    tmdb_id INTEGER,
+
+    added_at INTEGER DEFAULT (strftime('%s','now')),
+    updated_at INTEGER,
+
+    FOREIGN KEY (parent_id) REFERENCES media_items (id)
+);
+
+CREATE TABLE IF NOT EXISTS media_files (
+    id INTEGER PRIMARY KEY,
+    item_id INTEGER NOT NULL,
+    file_type INTEGER NOT NULL,
+    path TEXT NOT NULL,
+
+    FOREIGN KEY (item_id) REFERENCES media_items (id)
 );

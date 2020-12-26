@@ -1,10 +1,18 @@
-pub fn get_image_url(poster: &str) -> String {
-    let (img_type, value) = poster.split_once('|').unwrap();
-    match img_type {
-        // TODO: Don't use hard coded tmdb urls
-        "tmdb.poster" => format!("https://image.tmdb.org/t/p/w342{}", value),
-        "tmdb.backdrop" => format!("https://image.tmdb.org/t/p/original{}", value),
-        "tmdb.still" => format!("https://image.tmdb.org/t/p/original{}", value),
-        _ => unreachable!(),
+use std::convert::TryFrom;
+
+use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType};
+
+pub fn get_image_url(value: &str) -> String {
+    let image = MediaImage::try_from(value).unwrap();
+    match image.src_type {
+        MediaImageSrcType::Local => todo!(),
+        MediaImageSrcType::Tmdb => match image.img_type {
+            // TODO: Don't use hard coded tmdb urls
+            MediaImageType::Poster => format!("https://image.tmdb.org/t/p/w342{}", image.src),
+            MediaImageType::Backdrop => format!("https://image.tmdb.org/t/p/original{}", image.src),
+            MediaImageType::Thumbnail => {
+                format!("https://image.tmdb.org/t/p/original{}", image.src)
+            }
+        },
     }
 }

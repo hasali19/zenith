@@ -1,12 +1,13 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 use lazy_static::lazy_static;
 use regex::Regex;
 
-use sqlx::{Connection, SqliteConnection, Transaction};
+use sqlx::sqlite::SqliteRow;
+use sqlx::{Row, SqliteConnection};
 
-use crate::db::tv_shows::{self, NewTvEpisode, NewTvShow};
+use crate::db::media::{MediaFileType, MediaItemType};
 use crate::metadata;
 use crate::tmdb::TmdbClient;
 
@@ -19,7 +20,9 @@ pub async fn sync_tv_shows(
     tmdb: &TmdbClient,
     path: &str,
 ) -> eyre::Result<()> {
-    let mut tv_shows = tv_shows::get_all_ids(&mut *db)
+    let mut tv_shows = sqlx::query("SELECT id FROM media_items WHERE item_type = 2")
+        .try_map(|row: SqliteRow| row.try_get::<i64, _>(0))
+        .fetch_all(&mut *db)
         .await?
         .into_iter()
         .collect::<HashSet<_>>();
@@ -49,17 +52,14 @@ pub async fn sync_tv_shows(
     }
 
     for id in tv_shows {
-        log::info!("removing tv show: {}", id);
-        let mut transaction: Transaction<_> = db.begin().await?;
-        tv_shows::delete(&mut transaction, id).await?;
-        transaction.commit().await?;
+        remove_show(&mut *db, id).await?;
     }
 
     Ok(())
 }
 
-fn find_episodes(path: &Path) -> eyre::Result<Vec<(u32, u32, String)>> {
-    let mut episodes = Vec::new();
+fn find_episodes(path: &Path) -> eyre::Result<HashMap<i32, Vec<(i32, String)>>> {
+    let mut episodes = HashMap::new();
 
     for entry in std::fs::read_dir(path)? {
         let entry = entry?;
@@ -83,10 +83,13 @@ fn find_episodes(path: &Path) -> eyre::Result<Vec<(u32, u32, String)>> {
             None => continue,
         };
 
-        let season: u32 = captures.get(1).unwrap().as_str().parse().unwrap();
-        let episode: u32 = captures.get(2).unwrap().as_str().parse().unwrap();
+        let season: i32 = captures.get(1).unwrap().as_str().parse().unwrap();
+        let episode: i32 = captures.get(2).unwrap().as_str().parse().unwrap();
 
-        episodes.push((season, episode, file_path.to_str().unwrap().to_owned()));
+        episodes
+            .entry(season)
+            .or_insert_with(Vec::new)
+            .push((episode, file_path.to_str().unwrap().to_owned()));
     }
 
     Ok(episodes)
@@ -97,14 +100,37 @@ async fn sync_show(
     tmdb: &TmdbClient,
     name: &str,
     path: &str,
-    episodes: &[(u32, u32, String)],
+    episodes: &HashMap<i32, Vec<(i32, String)>>,
 ) -> eyre::Result<i64> {
-    let id = match tv_shows::get_id_for_path(&mut *db, &path).await? {
-        Some(id) => id,
+    let sql = "
+        SELECT id FROM media_items
+        WHERE path = ? AND item_type = ?
+    ";
+
+    let res = sqlx::query_as(sql)
+        .bind(path)
+        .bind(MediaItemType::TvShow)
+        .fetch_optional(&mut *db)
+        .await?;
+
+    let id = match res {
+        Some((id,)) => id,
         None => {
-            log::info!("found tv show: {}", name);
-            let tv_show = NewTvShow { path, name };
-            let id = tv_shows::create(&mut *db, &tv_show).await?;
+            log::info!("adding tv show: {}", name);
+
+            let sql = "
+                INSERT INTO media_items (item_type, path, name)
+                VALUES (?, ?, ?)
+            ";
+
+            let res = sqlx::query(sql)
+                .bind(MediaItemType::TvShow)
+                .bind(path)
+                .bind(name)
+                .execute(&mut *db)
+                .await?;
+
+            let id = res.last_insert_rowid();
 
             if let Err(e) = metadata::refresh_tv_show_metadata(&mut *db, tmdb, id).await {
                 log::error!("failed to update metadata: {}", e);
@@ -114,54 +140,197 @@ async fn sync_show(
         }
     };
 
-    sync_episodes(&mut *db, tmdb, id, &episodes).await?;
-
-    Ok(id)
-}
-
-async fn sync_episodes(
-    db: &mut SqliteConnection,
-    tmdb: &TmdbClient,
-    show_id: i64,
-    episodes: &[(u32, u32, String)],
-) -> sqlx::Result<()> {
-    let mut ids = tv_shows::get_episode_ids(&mut *db, show_id)
+    let mut seasons = sqlx::query("SELECT id FROM media_items WHERE parent_id = ?")
+        .bind(id)
+        .try_map(|row: SqliteRow| row.try_get::<i64, _>(0))
+        .fetch_all(&mut *db)
         .await?
         .into_iter()
         .collect::<HashSet<_>>();
 
-    for (season, episode, path) in episodes {
-        let id = tv_shows::get_episode_id_for_number(&mut *db, show_id, *season, *episode).await?;
-        match id {
-            Some(id) => {
-                ids.remove(&id);
-            }
-            None => {
-                log::info!(
-                    "found tv episode: S{:02}E{:02} (show_id: {})",
-                    season,
-                    episode,
-                    show_id
-                );
+    for (season, episodes) in episodes {
+        seasons.remove(&sync_season(db, tmdb, id, *season, episodes).await?);
+    }
 
-                let new_episode = NewTvEpisode {
-                    season: *season,
-                    episode: *episode,
-                    video_path: path,
-                };
+    for season in seasons {
+        remove_season(&mut *db, season).await?;
+    }
 
-                let id = tv_shows::create_episode(&mut *db, show_id, &new_episode).await?;
+    Ok(id)
+}
 
-                if let Err(e) = metadata::refresh_tv_episode_metadata(&mut *db, tmdb, id).await {
-                    log::error!("failed to update metadata: {}", e);
-                }
-            }
+async fn sync_season(
+    db: &mut SqliteConnection,
+    tmdb: &TmdbClient,
+    show_id: i64,
+    season: i32,
+    episodes: &[(i32, String)],
+) -> eyre::Result<i64> {
+    let sql = "
+        SELECT id FROM media_items
+        WHERE parent_id = ? AND index_number = ? AND item_type = ?
+    ";
+
+    let res = sqlx::query_as(sql)
+        .bind(show_id)
+        .bind(season)
+        .bind(MediaItemType::TvSeason)
+        .fetch_optional(&mut *db)
+        .await?;
+
+    let id = match res {
+        Some((id,)) => id,
+        None => {
+            log::info!("adding tv season: {} (show_id: {})", season, show_id);
+
+            let sql = "
+                INSERT INTO media_items (parent_id, item_type, index_number)
+                VALUES (?, ?, ?)
+            ";
+
+            let res = sqlx::query(sql)
+                .bind(show_id)
+                .bind(MediaItemType::TvSeason)
+                .bind(season)
+                .execute(&mut *db)
+                .await?;
+
+            res.last_insert_rowid()
         }
+    };
+
+    let mut episode_ids = sqlx::query("SELECT id FROM media_items WHERE parent_id = ?")
+        .bind(id)
+        .try_map(|row: SqliteRow| row.try_get::<i64, _>(0))
+        .fetch_all(&mut *db)
+        .await?
+        .into_iter()
+        .collect::<HashSet<i64>>();
+
+    for (episode, path) in episodes {
+        episode_ids.remove(&sync_episode(db, tmdb, id, *episode, path).await?);
     }
 
-    for id in ids {
-        tv_shows::delete_episode(&mut *db, id).await?;
+    for episode in episode_ids {
+        remove_episode(&mut *db, episode).await?;
     }
+
+    Ok(id)
+}
+
+async fn sync_episode(
+    db: &mut SqliteConnection,
+    tmdb: &TmdbClient,
+    season_id: i64,
+    episode: i32,
+    path: &str,
+) -> eyre::Result<i64> {
+    let sql = "
+        SELECT id FROM media_items
+        WHERE parent_id = ? AND index_number = ? AND item_type = ?
+    ";
+
+    let res = sqlx::query_as(sql)
+        .bind(season_id)
+        .bind(episode)
+        .bind(MediaItemType::TvEpisode)
+        .fetch_optional(&mut *db)
+        .await?;
+
+    let id = match res {
+        Some((id,)) => id,
+        None => {
+            log::info!("adding tv episode: {} (season_id: {})", episode, season_id);
+
+            let sql = "
+                INSERT INTO media_items (parent_id, item_type, path, index_number)
+                VALUES (?, ?, ?, ?)
+            ";
+
+            let res = sqlx::query(sql)
+                .bind(season_id)
+                .bind(MediaItemType::TvEpisode)
+                .bind(path)
+                .bind(episode)
+                .execute(&mut *db)
+                .await?;
+
+            let sqlx = "
+                INSERT INTO media_files (item_id, file_type, path)
+                VALUES (last_insert_rowid(), ?, ?)
+            ";
+
+            sqlx::query(sqlx)
+                .bind(MediaFileType::Video)
+                .bind(path)
+                .execute(&mut *db)
+                .await?;
+
+            let id = res.last_insert_rowid();
+
+            if let Err(e) = metadata::refresh_tv_episode_metadata(&mut *db, tmdb, id).await {
+                log::error!("failed to update metadata: {}", e);
+            }
+
+            id
+        }
+    };
+
+    Ok(id)
+}
+
+async fn remove_show(db: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
+    log::info!("removing tv show: {}", id);
+
+    let seasons: Vec<(i64,)> = sqlx::query_as("SELECT id FROM media_items WHERE parent_id = ?")
+        .bind(id)
+        .fetch_all(&mut *db)
+        .await?;
+
+    for (season,) in seasons {
+        remove_season(&mut *db, season).await?;
+    }
+
+    sqlx::query("DELETE FROM media_items WHERE id = ?")
+        .bind(id)
+        .execute(&mut *db)
+        .await?;
+
+    Ok(())
+}
+
+async fn remove_season(db: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
+    log::info!("removing tv season: {}", id);
+
+    let episodes: Vec<(i64,)> = sqlx::query_as("SELECT id FROM media_items WHERE parent_id = ?")
+        .bind(id)
+        .fetch_all(&mut *db)
+        .await?;
+
+    for (episode,) in episodes {
+        remove_episode(&mut *db, episode).await?;
+    }
+
+    sqlx::query("DELETE FROM media_items WHERE id = ?")
+        .bind(id)
+        .execute(&mut *db)
+        .await?;
+
+    Ok(())
+}
+
+async fn remove_episode(db: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
+    log::info!("removing tv episode: {}", id);
+
+    sqlx::query("DELETE FROM media_files WHERE item_id = ?")
+        .bind(id)
+        .execute(&mut *db)
+        .await?;
+
+    sqlx::query("DELETE FROM media_items WHERE id = ?")
+        .bind(id)
+        .execute(&mut *db)
+        .await?;
 
     Ok(())
 }

@@ -2,11 +2,10 @@ use std::collections::HashSet;
 
 use regex::Regex;
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Row, SqliteConnection};
+use sqlx::{Connection, Row, SqliteConnection};
 
-use crate::db::movies::NewMovie;
+use crate::metadata;
 use crate::tmdb::TmdbClient;
-use crate::{db, metadata};
 
 pub async fn sync_movies(
     db: &mut SqliteConnection,
@@ -14,7 +13,7 @@ pub async fn sync_movies(
     path: &str,
 ) -> eyre::Result<()> {
     // Find all existing movies
-    let mut movies = sqlx::query("SELECT id FROM movies")
+    let mut movies = sqlx::query("SELECT id FROM media_items WHERE item_type = 1")
         .try_map(|row: SqliteRow| row.try_get::<i64, _>(0))
         .fetch_all(&mut *db)
         .await?
@@ -65,7 +64,7 @@ pub async fn sync_movies(
             None => continue,
         };
 
-        match db::movies::get_id_for_path(&mut *db, path).await? {
+        match get_id_for_path(&mut *db, path).await? {
             // Remove from the set of ids if the movie exists
             Some(id) => {
                 movies.remove(&id);
@@ -74,14 +73,37 @@ pub async fn sync_movies(
             None => {
                 log::info!("adding movie: {}", file_name);
 
-                let movie = NewMovie {
-                    path,
-                    title: &title,
-                    year,
-                    video_path: &video_file,
-                };
+                let release_date = year
+                    .and_then(|year| time::Date::try_from_yo(year, 1).ok())
+                    .and_then(|date| date.try_with_hms(0, 0, 0).ok())
+                    .map(|dt| dt.assume_utc().unix_timestamp());
 
-                let id = db::movies::create(&mut *db, &movie).await?;
+                let mut transaction = db.begin().await?;
+
+                let sql = "
+                    INSERT INTO media_items (item_type, path, name, release_date)
+                    VALUES (1, ?, ?, ?)
+                ";
+
+                let id: i64 = sqlx::query(sql)
+                    .bind(path)
+                    .bind(&title)
+                    .bind(release_date)
+                    .execute(&mut transaction)
+                    .await?
+                    .last_insert_rowid();
+
+                let sql = "
+                    INSERT INTO media_files (item_id, file_type, path)
+                    VALUES (last_insert_rowid(), 1, ?)
+                ";
+
+                sqlx::query(sql)
+                    .bind(video_file)
+                    .execute(&mut transaction)
+                    .await?;
+
+                transaction.commit().await?;
 
                 if let Err(e) = metadata::refresh_movie_metadata(&mut *db, tmdb, id).await {
                     log::error!("failed to update metadata: {}", e);
@@ -95,7 +117,7 @@ pub async fn sync_movies(
     for id in movies {
         log::info!("removing movie: {}", id);
 
-        sqlx::query("DELETE FROM movies WHERE id = ?")
+        sqlx::query("DELETE FROM media_items WHERE id = ?")
             .bind(id)
             .execute(&mut *db)
             .await?;
@@ -104,7 +126,15 @@ pub async fn sync_movies(
     Ok(())
 }
 
-fn parse_movie_dir_name(name: &str) -> Option<(String, Option<i32>)> {
+async fn get_id_for_path(db: &mut SqliteConnection, path: &str) -> sqlx::Result<Option<i64>> {
+    sqlx::query("SELECT id FROM media_items WHERE item_type = 1 AND path = ?")
+        .bind(path)
+        .try_map(|row: SqliteRow| row.try_get(0))
+        .fetch_optional(db)
+        .await
+}
+
+pub fn parse_movie_dir_name(name: &str) -> Option<(String, Option<i32>)> {
     lazy_static::lazy_static! {
         static ref REGEX: Regex = Regex::new(r"^(\S.*?)(?: \((\d\d\d\d)\))?$").unwrap();
     }

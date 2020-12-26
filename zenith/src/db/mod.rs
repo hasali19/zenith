@@ -1,5 +1,4 @@
-pub mod movies;
-pub mod tv_shows;
+pub mod media;
 
 use actix_web::dev::Payload;
 use actix_web::{FromRequest, HttpRequest};

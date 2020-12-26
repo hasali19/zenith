@@ -26,8 +26,9 @@ async fn get_movies(db: Db) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
 
     let sql = "
-        SELECT id, COALESCE(display_title, title), year, poster
-        FROM movies ORDER BY title
+        SELECT id, name, CAST(strftime('%Y', datetime(release_date, 'unixepoch')) as INTEGER), primary_image
+        FROM media_items WHERE item_type = 1
+        ORDER BY name
     ";
 
     let movies: Vec<(i64, String, Option<i32>, Option<String>)> =
@@ -35,11 +36,11 @@ async fn get_movies(db: Db) -> ApiResult<impl Responder> {
 
     let res: Vec<MovieListItem> = movies
         .into_iter()
-        .map(|(id, title, year, poster)| MovieListItem {
+        .map(|(id, title, year, primary)| MovieListItem {
             id,
             title,
             year,
-            poster_url: poster.as_deref().map(utils::get_image_url),
+            poster_url: primary.as_deref().map(utils::get_image_url),
         })
         .collect();
 
@@ -70,8 +71,9 @@ async fn get_movie(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder>
     );
 
     let sql = "
-        SELECT id, COALESCE(display_title, title), year, overview, poster, backdrop
-        FROM movies WHERE id = ?
+        SELECT id, name, CAST(strftime('%Y', datetime(release_date, 'unixepoch')) as INTEGER),
+               overview, primary_image, backdrop_image
+        FROM media_items WHERE id = ? AND item_type = 1
     ";
 
     let movie: Option<Row> = sqlx::query_as(sql)
@@ -98,10 +100,11 @@ async fn get_stream(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder
     let (movie_id,) = path.into_inner();
     let mut conn = db.acquire().await?;
 
-    let path: Option<(String,)> = sqlx::query_as("SELECT video_path FROM movies WHERE id = ?")
-        .bind(movie_id)
-        .fetch_optional(&mut conn)
-        .await?;
+    let path: Option<(String,)> =
+        sqlx::query_as("SELECT path FROM media_files WHERE item_id = ? AND file_type = 1")
+            .bind(movie_id)
+            .fetch_optional(&mut conn)
+            .await?;
 
     let path = match path {
         Some((path,)) => path,
