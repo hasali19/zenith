@@ -5,17 +5,17 @@ use actix_web::{App, HttpServer};
 use env_logger::Env;
 
 use zenith::api;
+use zenith::config::Config;
 use zenith::db::Db;
 use zenith::sync::movies::sync_movies;
 use zenith::sync::tv_shows::sync_tv_shows;
 use zenith::tmdb::TmdbClient;
 
-async fn sync_libraries(db: &Db) -> eyre::Result<()> {
+async fn sync_libraries(db: &Db, tmdb: &TmdbClient, config: &Config) -> eyre::Result<()> {
     let mut conn = db.acquire().await?;
-    let tmdb = TmdbClient::new(&std::env::var("TMDB_ACCESS_TOKEN").unwrap());
 
-    sync_movies(&mut conn, &tmdb, "/mnt/nyx/sda/media/Movies").await?;
-    sync_tv_shows(&mut conn, &tmdb, "/mnt/nyx/sda/media/TV").await?;
+    sync_movies(&mut conn, &tmdb, &config.movie_path).await?;
+    sync_tv_shows(&mut conn, &tmdb, &config.tv_show_path).await?;
 
     Ok(())
 }
@@ -26,9 +26,11 @@ async fn main() -> eyre::Result<()> {
     dotenv::dotenv().ok();
     env_logger::init_from_env(Env::new().default_filter_or("info,sqlx::query=warn"));
 
+    let config = Config::load("config.yml")?;
     let db = Db::init().await?;
+    let tmdb = TmdbClient::new(&config.tmdb_access_token);
 
-    sync_libraries(&db).await?;
+    sync_libraries(&db, &tmdb, &config).await?;
 
     HttpServer::new({
         let db = db.clone();

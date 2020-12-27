@@ -8,3 +8,6 @@
 
 # Environment variables
 .env
+
+# App config
+config.yml
