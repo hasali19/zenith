@@ -27,7 +27,7 @@ async fn main() -> eyre::Result<()> {
     env_logger::init_from_env(Env::new().default_filter_or("info,sqlx::query=warn"));
 
     let config = Config::load("config.yml")?;
-    let db = Db::init().await?;
+    let db = Db::init(config.db_path.as_deref().unwrap_or("zenith.db")).await?;
     let tmdb = TmdbClient::new(&config.tmdb_access_token);
 
     sync_libraries(&db, &tmdb, &config).await?;

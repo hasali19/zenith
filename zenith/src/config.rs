@@ -6,6 +6,7 @@ pub struct Config {
     pub movie_path: String,
     pub tv_show_path: String,
     pub tmdb_access_token: String,
+    pub db_path: Option<String>,
 }
 
 impl Config {

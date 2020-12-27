@@ -11,9 +11,9 @@ use sqlx::{Executor, Sqlite, SqlitePool, Transaction};
 pub struct Db(SqlitePool);
 
 impl Db {
-    pub async fn init() -> sqlx::Result<Self> {
+    pub async fn init(path: &str) -> sqlx::Result<Self> {
         let options = SqliteConnectOptions::new()
-            .filename("zenith.db")
+            .filename(path)
             .create_if_missing(true);
 
         let pool = SqlitePool::connect_with(options).await?;
