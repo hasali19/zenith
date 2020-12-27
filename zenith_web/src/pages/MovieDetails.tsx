@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { useHistory, useParams } from "react-router";
 import styled from "styled-components";
 
 interface Movie {
@@ -9,9 +9,11 @@ interface Movie {
   overview: string | null;
   poster_url: string | null;
   backdrop_url: string | null;
+  stream_id: number;
 }
 
 export function MovieDetails() {
+  const history = useHistory();
   const params = useParams<{ id: string }>();
   const [movie, setMovie] = useState<Movie | null>(null);
 
@@ -38,7 +40,12 @@ export function MovieDetails() {
             <Year>{movie.year}</Year>
             <Overview>{movie.overview}</Overview>
             <div>
-              <button style={{ width: 60, height: 60 }}>Play {"|>"}</button>
+              <button
+                onClick={() => history.push(`/player/${movie.stream_id}`)}
+                style={{ width: 60, height: 60 }}
+              >
+                Play {"|>"}
+              </button>
             </div>
           </Details>
         </Main>
