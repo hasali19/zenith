@@ -63,7 +63,7 @@ pub struct TvEpisode {
     episode: u32,
     overview: Option<String>,
     thumbnail_url: Option<String>,
-    stream: String,
+    stream_id: i64,
     duration: f64,
 }
 
@@ -109,7 +109,7 @@ async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responde
                         episode: episode as u32,
                         overview,
                         thumbnail_url: primary.as_deref().map(utils::get_image_url),
-                        stream: format!("/api/stream/{}", file_id),
+                        stream_id: file_id,
                         duration,
                     },
                 )

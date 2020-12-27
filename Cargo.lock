@@ -2741,6 +2741,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "log",
+ "pin-project 1.0.2",
  "regex",
  "reqwest",
  "serde",
@@ -2748,5 +2749,6 @@ dependencies = [
  "sqlx",
  "time",
  "tokio",
+ "tokio-util",
  "url",
 ]

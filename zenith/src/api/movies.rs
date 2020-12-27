@@ -53,7 +53,7 @@ pub struct MovieDetails {
     overview: Option<String>,
     poster_url: Option<String>,
     backdrop_url: Option<String>,
-    stream: String,
+    stream_id: i64,
     duration: f64,
 }
 
@@ -94,7 +94,7 @@ async fn get_movie(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder>
             overview,
             poster_url: poster.as_deref().map(utils::get_image_url),
             backdrop_url: backdrop.as_deref().map(utils::get_image_url),
-            stream: format!("/api/stream/{}", file_id),
+            stream_id: file_id,
             duration,
         },
     };

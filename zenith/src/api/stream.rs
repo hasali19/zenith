@@ -1,8 +1,8 @@
-use actix_files::NamedFile;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::{web, HttpResponse, Responder};
 
 use crate::db::Db;
+use crate::ffmpeg;
 
 use super::{ApiError, ApiResult};
 
@@ -12,8 +12,19 @@ pub fn service(path: &str) -> impl HttpServiceFactory {
         .route("/{id}/info", web::get().to(get_stream_info))
 }
 
-async fn get_stream(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder> {
+#[derive(serde::Deserialize)]
+struct StreamQuery {
+    #[serde(default)]
+    start: f64,
+}
+
+async fn get_stream(
+    path: web::Path<(i64,)>,
+    query: web::Query<StreamQuery>,
+    db: Db,
+) -> ApiResult<impl Responder> {
     let (id,) = path.into_inner();
+    let query = query.into_inner();
     let mut conn = db.acquire().await?;
 
     let path: Option<(String,)> = sqlx::query_as("SELECT path FROM video_files WHERE id = ?")
@@ -26,7 +37,9 @@ async fn get_stream(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder
         None => return Err(ApiError::NotFound),
     };
 
-    Ok(NamedFile::open(path))
+    let stream = ffmpeg::begin_transcode(query.start, path);
+
+    Ok(HttpResponse::Ok().streaming(stream))
 }
 
 #[derive(serde::Serialize)]
