@@ -1,0 +1,33 @@
+# Git directory
+.git
+
+# CI configuration
+.github/workflows
+
+# Cargo output
+/target
+
+# Frontend build output
+zenith_web/build
+
+# Frontend dependencies
+zenith_web/node_modules
+
+# Environment variables
+.env
+.env.*
+
+# SQLite database
+*.db
+*.db-shm
+*.db-wal
+
+# VSCode configuration
+.vscode
+
+# App config
+config.yml
+
+Dockerfile
+
+.gitignore
