@@ -1,6 +1,9 @@
+use std::path::Path;
+
+use actix_files::NamedFile;
 use actix_web::middleware::normalize::TrailingSlash;
 use actix_web::middleware::{Logger, NormalizePath};
-use actix_web::{App, HttpServer};
+use actix_web::{web, App, HttpRequest, HttpServer, Responder};
 
 use env_logger::Env;
 
@@ -40,6 +43,7 @@ async fn main() -> eyre::Result<()> {
                 .wrap(NormalizePath::new(TrailingSlash::Trim))
                 .wrap(Logger::default())
                 .service(api::service("/api"))
+                .default_service(web::get().to(spa_fallback))
         }
     })
     .bind("0.0.0.0:8000")?
@@ -49,4 +53,13 @@ async fn main() -> eyre::Result<()> {
     db.close().await;
 
     Ok(())
+}
+
+async fn spa_fallback(req: HttpRequest) -> actix_web::Result<impl Responder> {
+    let path = Path::new("zenith_web/build").join(req.path().trim_start_matches('/'));
+    if path.is_file() {
+        Ok(NamedFile::open(path)?)
+    } else {
+        Ok(NamedFile::open("zenith_web/build/index.html")?)
+    }
 }
