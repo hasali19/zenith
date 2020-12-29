@@ -85,7 +85,7 @@ fun ZenithApp(settingsRepo: UserSettingsRepository) {
                     when (currentScreen) {
                         is Screen.Home -> HomeScreen()
                         is Screen.Movies -> MoviesScreen(serverUrl!!)
-                        is Screen.TvShows -> TvShowsScreen()
+                        is Screen.TvShows -> TvShowsScreen(serverUrl!!)
                         else -> throw IllegalStateException()
                     }
                 }
@@ -191,14 +191,50 @@ fun MoviesScreen(serverUrl: String) {
     }
 }
 
+data class TvShow(
+    val id: Int,
+    val name: String,
+    @SerializedName("poster_url")
+    val posterUrl: String?,
+)
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TvShowsScreen() {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            imageVector = vectorResource(id = R.drawable.television),
-            modifier = Modifier.align(Alignment.Center).size(48.dp),
-            colorFilter = ColorFilter.tint(Color.DarkGray)
-        )
+fun TvShowsScreen(serverUrl: String) {
+    var shows: List<TvShow> by remember { mutableStateOf(emptyList()) }
+
+    LaunchedEffect(serverUrl) {
+        shows = Fuel.get("$serverUrl/api/tv_shows")
+            .awaitObject(gsonDeserializer())
+    }
+
+    LazyVerticalGrid(cells = GridCells.Adaptive(128.dp), contentPadding = PaddingValues(4.dp)) {
+        items(shows) { show ->
+            Card(modifier = Modifier.padding(4.dp).fillMaxWidth()) {
+                Column {
+                    WithConstraints {
+                        val height = with(AmbientDensity.current) {
+                            constraints.maxWidth.toDp() * (3f / 2f)
+                        }
+
+                        Box(modifier = Modifier.fillMaxWidth().preferredHeight(height)) {
+                            show.posterUrl?.let { url ->
+                                CoilImage(data = url, modifier = Modifier.fillMaxWidth())
+                            }
+                        }
+                    }
+
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text(
+                            text = show.name,
+                            style = MaterialTheme.typography.body2,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
