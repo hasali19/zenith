@@ -1,13 +1,14 @@
 package uk.co.hasali.zenith
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -21,7 +22,6 @@ import androidx.compose.ui.platform.AmbientContext
 import androidx.compose.ui.platform.AmbientDensity
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.res.loadVectorResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.github.kittinunf.fuel.Fuel
@@ -147,7 +147,16 @@ data class Movie(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MoviesScreen(serverUrl: String) {
+    val context = AmbientContext.current
     var movies: List<Movie> by remember { mutableStateOf(emptyList()) }
+
+    fun onItemClick(movieId: Int) {
+        context.startActivity(
+            Intent(context, MovieDetailsActivity::class.java).apply {
+                putExtra("movie_id", movieId)
+            }
+        )
+    }
 
     LaunchedEffect(serverUrl) {
         movies = Fuel.get("$serverUrl/api/movies")
@@ -156,7 +165,13 @@ fun MoviesScreen(serverUrl: String) {
 
     LazyVerticalGrid(cells = GridCells.Adaptive(128.dp), contentPadding = PaddingValues(4.dp)) {
         items(movies) { movie ->
-            Card(modifier = Modifier.padding(4.dp).fillMaxWidth()) {
+            Card(
+                modifier = Modifier.padding(4.dp)
+                    .fillMaxWidth()
+                    .clickable {
+                        onItemClick(movie.id)
+                    }
+            ) {
                 Column {
                     WithConstraints {
                         val height = with(AmbientDensity.current) {
