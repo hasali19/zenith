@@ -1,10 +1,13 @@
 package uk.co.hasali.zenith
 
-import android.app.Application
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -13,14 +16,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.WithConstraints
+import androidx.compose.ui.platform.AmbientContext
+import androidx.compose.ui.platform.AmbientDensity
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.res.loadVectorResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.datastore.preferences.core.preferencesKey
-import androidx.lifecycle.AndroidViewModel
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.coroutines.awaitObject
+import com.github.kittinunf.fuel.gson.gsonDeserializer
+import com.google.gson.annotations.SerializedName
+import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.launch
 import uk.co.hasali.zenith.ui.ZenithTheme
 
@@ -76,7 +84,7 @@ fun ZenithApp(settingsRepo: UserSettingsRepository) {
                 ) {
                     when (currentScreen) {
                         is Screen.Home -> HomeScreen()
-                        is Screen.Movies -> MoviesScreen()
+                        is Screen.Movies -> MoviesScreen(serverUrl!!)
                         is Screen.TvShows -> TvShowsScreen()
                         else -> throw IllegalStateException()
                     }
@@ -97,6 +105,11 @@ fun TopLevelScreenScaffold(
         topBar = {
             TopAppBar(title = { Text(text = "Zenith") })
         },
+        bodyContent = {
+            Box(modifier = Modifier.padding(it)) {
+                content()
+            }
+        },
         bottomBar = {
             BottomNavigation {
                 screens.forEach { screen ->
@@ -109,9 +122,7 @@ fun TopLevelScreenScaffold(
                 }
             }
         }
-    ) {
-        content()
-    }
+    )
 }
 
 @Composable
@@ -125,14 +136,58 @@ fun HomeScreen() {
     }
 }
 
+data class Movie(
+    val id: Int,
+    val title: String,
+    val year: Int?,
+    @SerializedName("poster_url")
+    val posterUrl: String?,
+)
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MoviesScreen() {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            imageVector = vectorResource(id = R.drawable.movie),
-            modifier = Modifier.align(Alignment.Center).size(48.dp),
-            colorFilter = ColorFilter.tint(Color.DarkGray)
-        )
+fun MoviesScreen(serverUrl: String) {
+    var movies: List<Movie> by remember { mutableStateOf(emptyList()) }
+
+    LaunchedEffect(serverUrl) {
+        movies = Fuel.get("$serverUrl/api/movies")
+            .awaitObject(gsonDeserializer())
+    }
+
+    LazyVerticalGrid(cells = GridCells.Adaptive(128.dp), contentPadding = PaddingValues(4.dp)) {
+        items(movies) { movie ->
+            Card(modifier = Modifier.padding(4.dp).fillMaxWidth()) {
+                Column {
+                    WithConstraints {
+                        val height = with(AmbientDensity.current) {
+                            constraints.maxWidth.toDp() * (3f / 2f)
+                        }
+
+                        Box(modifier = Modifier.fillMaxWidth().preferredHeight(height)) {
+                            movie.posterUrl?.let { url ->
+                                CoilImage(data = url, modifier = Modifier.fillMaxWidth())
+                            }
+                        }
+                    }
+
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text(
+                            text = movie.title,
+                            style = MaterialTheme.typography.body2,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Text(
+                            text = movie.year?.toString() ?: "",
+                            style = MaterialTheme.typography.caption,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
