@@ -1,5 +1,6 @@
 package uk.co.hasali.zenith
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
@@ -32,7 +33,9 @@ data class MovieDetails(
     @SerializedName("poster_url")
     val posterUrl: String?,
     @SerializedName("backdrop_url")
-    val backdropUrl: String?
+    val backdropUrl: String?,
+    @SerializedName("stream_id")
+    val streamId: Int,
 )
 
 class MovieDetailsActivity : AppCompatActivity() {
@@ -60,6 +63,14 @@ class MovieDetailsActivity : AppCompatActivity() {
 
     @Composable
     fun MovieDetailsScreen() {
+        fun onPlayButtonClick() {
+            startActivity(
+                Intent(this@MovieDetailsActivity, VideoPlayerActivity::class.java).apply {
+                    putExtra("stream_id", movie.streamId)
+                }
+            )
+        }
+
         ZenithTheme {
             Surface(color = MaterialTheme.colors.background) {
                 Box {
@@ -85,12 +96,13 @@ class MovieDetailsActivity : AppCompatActivity() {
                         }
 
                         FloatingActionButton(
+                            onClick = { onPlayButtonClick() },
                             modifier = Modifier.padding(32.dp)
                                 .constrainAs(fab) {
-                                end.linkTo(parent.end)
-                                centerAround(backdrop.bottom)
-                            },
-                            onClick = { /*TODO*/ }) {
+                                    end.linkTo(parent.end)
+                                    centerAround(backdrop.bottom)
+                                },
+                        ) {
                             Icon(Icons.Default.PlayArrow)
                         }
 

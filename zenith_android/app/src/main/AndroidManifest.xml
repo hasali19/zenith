@@ -12,6 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Zenith"
         android:usesCleartextTraffic="true">
+
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
@@ -22,9 +23,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".MovieDetailsActivity"
-            android:theme="@style/Theme.Zenith.NoActionBar" />
+            android:theme="@style/Theme.Zenith.NoActionBar">
+        </activity>
+
+        <activity
+            android:name=".VideoPlayerActivity"
+            android:theme="@style/Theme.Zenith.NoActionBar">
+        </activity>
+
     </application>
 
 </manifest>
