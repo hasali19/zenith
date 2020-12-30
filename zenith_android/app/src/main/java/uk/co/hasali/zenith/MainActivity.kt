@@ -216,7 +216,16 @@ data class TvShow(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TvShowsScreen(serverUrl: String) {
+    val context = AmbientContext.current
     var shows: List<TvShow> by remember { mutableStateOf(emptyList()) }
+
+    fun onItemClick(showId: Int) {
+        context.startActivity(
+            Intent(context, TvShowDetailsActivity::class.java).apply {
+                putExtra("show_id", showId)
+            }
+        )
+    }
 
     LaunchedEffect(serverUrl) {
         shows = Fuel.get("$serverUrl/api/tv_shows")
@@ -225,7 +234,13 @@ fun TvShowsScreen(serverUrl: String) {
 
     LazyVerticalGrid(cells = GridCells.Adaptive(128.dp), contentPadding = PaddingValues(4.dp)) {
         items(shows) { show ->
-            Card(modifier = Modifier.padding(4.dp).fillMaxWidth()) {
+            Card(
+                modifier = Modifier.padding(4.dp)
+                    .fillMaxWidth()
+                    .clickable {
+                        onItemClick(show.id)
+                    }
+            ) {
                 Column {
                     WithConstraints {
                         val height = with(AmbientDensity.current) {

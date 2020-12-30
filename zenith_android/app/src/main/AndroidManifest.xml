@@ -29,6 +29,11 @@
         </activity>
 
         <activity
+            android:name=".TvShowDetailsActivity"
+            android:theme="@style/Theme.Zenith.NoActionBar">
+        </activity>
+
+        <activity
             android:name=".VideoPlayerActivity"
             android:theme="@style/Theme.Zenith.NoActionBar"
             android:screenOrientation="userLandscape">

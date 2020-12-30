@@ -107,7 +107,7 @@ class MovieDetailsActivity : AppCompatActivity() {
                         }
 
                         Column(
-                            modifier = Modifier.padding(32.dp)
+                            modifier = Modifier.padding(16.dp)
                                 .constrainAs(content) {
                                     top.linkTo(backdrop.bottom)
                                     start.linkTo(parent.start)
