@@ -30,7 +30,8 @@
 
         <activity
             android:name=".VideoPlayerActivity"
-            android:theme="@style/Theme.Zenith.NoActionBar">
+            android:theme="@style/Theme.Zenith.NoActionBar"
+            android:screenOrientation="userLandscape">
         </activity>
 
     </application>
