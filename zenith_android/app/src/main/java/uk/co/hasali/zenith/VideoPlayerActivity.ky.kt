@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class VideoPlayerActivity : AppCompatActivity() {
+
+    private var player: SimpleExoPlayer? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_video_player)
@@ -22,7 +25,8 @@ class VideoPlayerActivity : AppCompatActivity() {
             val serverUrl = settings.serverUrl!!
 
             val playerView = findViewById<PlayerView>(R.id.player_view)
-            val player = SimpleExoPlayer.Builder(this@VideoPlayerActivity)
+
+            player = SimpleExoPlayer.Builder(this@VideoPlayerActivity)
                 .build()
                 .apply {
                     setMediaItem(MediaItem.fromUri("$serverUrl/api/stream/$streamId"))
@@ -32,5 +36,10 @@ class VideoPlayerActivity : AppCompatActivity() {
 
             playerView.player = player
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        player?.release()
     }
 }
