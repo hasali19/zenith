@@ -5,12 +5,20 @@ import android.os.Bundle
 import android.support.v4.media.session.MediaSessionCompat
 import android.view.SurfaceView
 import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
-import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.video.VideoListener
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -23,16 +31,21 @@ class VideoPlayerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_video_player)
 
         val streamId = intent.getIntExtra("stream_id", -1)
+
+        var aspectRatio by mutableStateOf(16f / 9f)
+        val surfaceView = SurfaceView(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            )
+        }
 
         lifecycleScope.launch {
             val settingsRepo = UserSettingsRepository.getInstance(this@VideoPlayerActivity)
             val settings = settingsRepo.settings.first()
             val serverUrl = settings.serverUrl!!
-
-            val surfaceView: SurfaceView = findViewById(R.id.surface_view)
 
             player = SimpleExoPlayer.Builder(this@VideoPlayerActivity)
                 .build()
@@ -47,9 +60,9 @@ class VideoPlayerActivity : AppCompatActivity() {
                             pixelWidthHeightRatio: Float
                         ) {
                             // Set the aspect ratio for the SurfaceView
-                            val layout = surfaceView.layoutParams as ConstraintLayout.LayoutParams
-                            layout.dimensionRatio = "${width}:${height}"
-                            surfaceView.requestLayout()
+                            aspectRatio =
+                                if (width == 0 || height == 0) 1f
+                                else (width * pixelWidthHeightRatio) / height
                         }
                     })
 
@@ -67,6 +80,15 @@ class VideoPlayerActivity : AppCompatActivity() {
             connector = MediaSessionConnector(session).apply {
                 setPlayer(player)
                 setControlDispatcher(object : DefaultControlDispatcher() {})
+            }
+        }
+
+        setContent {
+            Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+                AndroidView(
+                    viewBlock = { FrameLayout(it).apply { addView(surfaceView) } },
+                    modifier = Modifier.aspectRatio(aspectRatio).align(Alignment.Center),
+                )
             }
         }
     }
