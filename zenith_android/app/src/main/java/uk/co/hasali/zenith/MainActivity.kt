@@ -3,6 +3,7 @@ package uk.co.hasali.zenith
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -82,11 +83,13 @@ fun ZenithApp(settingsRepo: UserSettingsRepository) {
                     currentScreen = currentScreen,
                     onScreenChange = { currentScreen = it }
                 ) {
-                    when (currentScreen) {
-                        is Screen.Home -> HomeScreen()
-                        is Screen.Movies -> MoviesScreen(serverUrl!!)
-                        is Screen.TvShows -> TvShowsScreen(serverUrl!!)
-                        else -> throw IllegalStateException()
+                    Crossfade(current = currentScreen) { screen ->
+                        when (screen) {
+                            is Screen.Home -> HomeScreen()
+                            is Screen.Movies -> MoviesScreen(serverUrl!!)
+                            is Screen.TvShows -> TvShowsScreen(serverUrl!!)
+                            else -> throw IllegalStateException()
+                        }
                     }
                 }
             }
