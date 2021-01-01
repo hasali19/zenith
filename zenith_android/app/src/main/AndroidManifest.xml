@@ -36,6 +36,7 @@
         <activity
             android:name=".VideoPlayerActivity"
             android:theme="@style/Theme.Zenith.NoActionBar"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
             android:screenOrientation="userLandscape">
         </activity>
 
