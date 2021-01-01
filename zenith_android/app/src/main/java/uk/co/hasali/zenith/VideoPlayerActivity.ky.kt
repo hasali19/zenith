@@ -3,12 +3,15 @@ package uk.co.hasali.zenith
 import android.os.Build
 import android.os.Bundle
 import android.support.v4.media.session.MediaSessionCompat
+import android.view.SurfaceView
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ui.PlayerView
+import com.google.android.exoplayer2.video.VideoListener
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -29,12 +32,29 @@ class VideoPlayerActivity : AppCompatActivity() {
             val settings = settingsRepo.settings.first()
             val serverUrl = settings.serverUrl!!
 
-            val playerView = findViewById<PlayerView>(R.id.player_view)
+            val surfaceView: SurfaceView = findViewById(R.id.surface_view)
 
             player = SimpleExoPlayer.Builder(this@VideoPlayerActivity)
                 .build()
                 .apply {
+                    setVideoSurfaceView(surfaceView)
+
+                    addVideoListener(object : VideoListener {
+                        override fun onVideoSizeChanged(
+                            width: Int,
+                            height: Int,
+                            unappliedRotationDegrees: Int,
+                            pixelWidthHeightRatio: Float
+                        ) {
+                            // Set the aspect ratio for the SurfaceView
+                            val layout = surfaceView.layoutParams as ConstraintLayout.LayoutParams
+                            layout.dimensionRatio = "${width}:${height}"
+                            surfaceView.requestLayout()
+                        }
+                    })
+
                     setMediaItem(MediaItem.fromUri("$serverUrl/api/stream/$streamId"))
+
                     prepare()
                     play()
                 }
@@ -48,8 +68,6 @@ class VideoPlayerActivity : AppCompatActivity() {
                 setPlayer(player)
                 setControlDispatcher(object : DefaultControlDispatcher() {})
             }
-
-            playerView.player = player
         }
     }
 
