@@ -2,11 +2,12 @@ package uk.co.hasali.zenith
 
 import android.os.Build
 import android.os.Bundle
+import android.support.v4.media.session.MediaSessionCompat
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -14,6 +15,8 @@ import kotlinx.coroutines.launch
 class VideoPlayerActivity : AppCompatActivity() {
 
     private var player: SimpleExoPlayer? = null
+    private var session: MediaSessionCompat? = null
+    private var connector: MediaSessionConnector? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +39,16 @@ class VideoPlayerActivity : AppCompatActivity() {
                     play()
                 }
 
+            val session = MediaSessionCompat(this@VideoPlayerActivity, "ZenithMediaSession").apply {
+                isActive = true
+                session = this
+            }
+
+            connector = MediaSessionConnector(session).apply {
+                setPlayer(player)
+                setControlDispatcher(object : DefaultControlDispatcher() {})
+            }
+
             playerView.player = player
         }
     }
@@ -47,9 +60,20 @@ class VideoPlayerActivity : AppCompatActivity() {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        player?.pause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        player?.play()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         player?.release()
+        session?.release()
     }
 
     private fun hideSystemUi() {
