@@ -6,11 +6,13 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.view.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
@@ -123,7 +125,11 @@ class VideoPlayerActivity : AppCompatActivity() {
             val range = 0f..duration.toFloat()
 
             Box(modifier = Modifier.fillMaxSize()) {
-                Column(modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)) {
+                Column(
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                        .background(Color(0f, 0f, 0f, 0.5f))
+                        .padding(16.dp)
+                ) {
                     Slider(position, {}, valueRange = range)
                     Row(
                         horizontalArrangement = Arrangement.Center,
