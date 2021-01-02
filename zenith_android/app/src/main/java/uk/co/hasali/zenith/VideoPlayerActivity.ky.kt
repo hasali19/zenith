@@ -3,8 +3,8 @@ package uk.co.hasali.zenith
 import android.os.Build
 import android.os.Bundle
 import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
 import android.view.*
+import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,9 +13,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.AmbientContext
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.coroutines.awaitObject
@@ -54,11 +56,14 @@ class VideoPlayerActivity : AppCompatActivity() {
         var playbackState by mutableStateOf(PlaybackState.PLAYING)
         var playbackPosition by mutableStateOf(0L)
         var duration by mutableStateOf(0L)
+        var serverUrl: String? by mutableStateOf(null)
+        var start by mutableStateOf(0L)
 
         lifecycleScope.launch {
             val settingsRepo = UserSettingsRepository.getInstance(this@VideoPlayerActivity)
             val settings = settingsRepo.settings.first()
-            val serverUrl = settings.serverUrl!!
+
+            serverUrl = settings.serverUrl!!
 
             val info: StreamInfo = Fuel.get("$serverUrl/api/stream/$streamId/info")
                 .awaitObject(gsonDeserializer())
@@ -88,10 +93,10 @@ class VideoPlayerActivity : AppCompatActivity() {
 
                     addListener(object : Player.EventListener {
                         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                            if (playWhenReady) {
-                                playbackState = PlaybackState.PLAYING
+                            playbackState = if (playWhenReady) {
+                                PlaybackState.PLAYING
                             } else {
-                                playbackState = PlaybackState.PAUSED
+                                PlaybackState.PAUSED
                             }
                         }
                     })
@@ -104,7 +109,8 @@ class VideoPlayerActivity : AppCompatActivity() {
 
             launch {
                 while (player.let { it != null && it.playbackState != Player.STATE_ENDED }) {
-                    playbackPosition = player?.currentPosition ?: 0
+                    if (player?.playWhenReady == true)
+                        playbackPosition = player?.currentPosition ?: 0
                     delay(1000)
                 }
             }
@@ -122,15 +128,24 @@ class VideoPlayerActivity : AppCompatActivity() {
 
         composeView.setContent {
             val position = playbackPosition.toFloat() / 1000
-            val range = 0f..duration.toFloat()
 
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier.align(Alignment.BottomCenter)
                         .background(Color(0f, 0f, 0f, 0.5f))
-                        .padding(16.dp)
+                        .padding(8.dp)
                 ) {
-                    Slider(position, {}, valueRange = range)
+                    SeekBar(
+                        position = start + position,
+                        max = duration.toFloat(),
+                        onSeekStart = { player?.playWhenReady = false },
+                        onSeekEnd = { pos ->
+                            start = pos.toLong()
+                            player?.setMediaItem(MediaItem.fromUri("$serverUrl/api/stream/$streamId?start=$start"))
+                            player?.playWhenReady = true
+                        }
+                    )
+
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth()
@@ -199,4 +214,46 @@ class VideoPlayerActivity : AppCompatActivity() {
             TODO()
         }
     }
+}
+
+@Composable
+fun SeekBar(
+    position: Float,
+    max: Float,
+    onSeekStart: () -> Unit = {},
+    onSeekEnd: (Float) -> Unit = {}
+) {
+    val context = AmbientContext.current
+    val view = remember {
+        SeekBar(context).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+    }
+
+    onCommit(max) {
+        view.max = max.toInt()
+    }
+
+    onCommit(position) {
+        view.progress = position.toInt()
+    }
+
+    onCommit(onSeekStart, onSeekEnd) {
+        view.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {
+                onSeekStart()
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                onSeekEnd(seekBar.progress.toFloat())
+            }
+        })
+    }
+
+    AndroidView(viewBlock = { view }, modifier = Modifier.padding(vertical = 8.dp))
 }
