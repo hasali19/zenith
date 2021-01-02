@@ -16,7 +16,7 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:theme="@style/Theme.Zenith.NoActionBar">
+            android:theme="@style/Theme.Zenith">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -26,20 +26,20 @@
 
         <activity
             android:name=".SetupActivity"
-            android:theme="@style/Theme.Zenith.NoActionBar" />
+            android:theme="@style/Theme.Zenith" />
 
         <activity
             android:name=".MovieDetailsActivity"
-            android:theme="@style/Theme.Zenith.NoActionBar" />
+            android:theme="@style/Theme.Zenith" />
 
         <activity
             android:name=".TvShowDetailsActivity"
-            android:theme="@style/Theme.Zenith.NoActionBar" />
+            android:theme="@style/Theme.Zenith" />
 
         <activity
             android:name=".VideoPlayerActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
-            android:theme="@style/Theme.Zenith.NoActionBar" />
+            android:theme="@style/Theme.Zenith" />
 
     </application>
 
