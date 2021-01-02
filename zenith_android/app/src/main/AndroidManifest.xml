@@ -25,21 +25,21 @@
         </activity>
 
         <activity
+            android:name=".SetupActivity"
+            android:theme="@style/Theme.Zenith.NoActionBar" />
+
+        <activity
             android:name=".MovieDetailsActivity"
-            android:theme="@style/Theme.Zenith.NoActionBar">
-        </activity>
+            android:theme="@style/Theme.Zenith.NoActionBar" />
 
         <activity
             android:name=".TvShowDetailsActivity"
-            android:theme="@style/Theme.Zenith.NoActionBar">
-        </activity>
+            android:theme="@style/Theme.Zenith.NoActionBar" />
 
         <activity
             android:name=".VideoPlayerActivity"
-            android:theme="@style/Theme.Zenith.NoActionBar"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
-            android:screenOrientation="userLandscape">
-        </activity>
+            android:theme="@style/Theme.Zenith.NoActionBar" />
 
     </application>
 

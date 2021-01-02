@@ -25,19 +25,34 @@ import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.res.loadVectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.gson.gsonDeserializer
 import com.google.gson.annotations.SerializedName
 import dev.chrisbanes.accompanist.coil.CoilImage
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import uk.co.hasali.zenith.ui.ZenithTheme
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            ZenithApp(settingsRepo = UserSettingsRepository.getInstance(this))
+
+        lifecycleScope.launch {
+            val settingsRepo = UserSettingsRepository.getInstance(this@MainActivity)
+            val settings = settingsRepo.settings.first()
+            val serverUrl = settings.serverUrl
+
+            if (serverUrl == null) {
+                // Server url has not been initialised, go to setup screen
+                startActivity(Intent(this@MainActivity, SetupActivity::class.java))
+                finish()
+            } else {
+                setContent {
+                    ZenithApp(serverUrl = serverUrl)
+                }
+            }
         }
     }
 }
@@ -52,45 +67,23 @@ sealed class Screen(val name: String, val icon: @Composable () -> Unit) {
     object TvShows : Screen("TV Shows", {
         loadVectorResource(id = R.drawable.television).resource.resource?.let { Icon(it) }
     })
-
-    object SelectServer : Screen("Select Server", {})
 }
 
 @Composable
-fun ZenithApp(settingsRepo: UserSettingsRepository) {
-    val scope = rememberCoroutineScope()
-
-    val settings by settingsRepo.settings.collectAsState(initial = null)
-    if (settings == null) {
-        return
-    }
-
-    val serverUrl = settings!!.serverUrl
-    var currentScreen: Screen by remember { mutableStateOf(Screen.Home) }
-    val screen = if (serverUrl == null) Screen.SelectServer else currentScreen
+fun ZenithApp(serverUrl: String) {
+    var screen: Screen by remember { mutableStateOf(Screen.Home) }
 
     ZenithTheme {
-        when (screen) {
-            is Screen.SelectServer -> SelectServerScreen(onSave = {
-                scope.launch {
-                    settingsRepo.setServerUrl(it)
-                }
-            })
-
-            else -> {
-                TopLevelScreenScaffold(
-                    screens = listOf(Screen.Home, Screen.Movies, Screen.TvShows),
-                    currentScreen = currentScreen,
-                    onScreenChange = { currentScreen = it }
-                ) {
-                    Crossfade(current = currentScreen) { screen ->
-                        when (screen) {
-                            is Screen.Home -> HomeScreen()
-                            is Screen.Movies -> MoviesScreen(serverUrl!!)
-                            is Screen.TvShows -> TvShowsScreen(serverUrl!!)
-                            else -> throw IllegalStateException()
-                        }
-                    }
+        TopLevelScreenScaffold(
+            screens = listOf(Screen.Home, Screen.Movies, Screen.TvShows),
+            currentScreen = screen,
+            onScreenChange = { screen = it }
+        ) {
+            Crossfade(current = screen) { screen ->
+                when (screen) {
+                    is Screen.Home -> HomeScreen()
+                    is Screen.Movies -> MoviesScreen(serverUrl)
+                    is Screen.TvShows -> TvShowsScreen(serverUrl)
                 }
             }
         }
@@ -266,37 +259,6 @@ fun TvShowsScreen(serverUrl: String) {
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun SelectServerScreen(onSave: (String) -> Unit) {
-    var url by remember { mutableStateOf("") }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text(text = "Select Server") })
-        }
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            TextField(
-                value = url,
-                onValueChange = { url = it },
-                label = { Text("Server address") },
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = { onSave(url) },
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Text(text = "Save")
             }
         }
     }
