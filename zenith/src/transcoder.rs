@@ -142,5 +142,5 @@ fn get_segment_number_from_name(name: &str) -> Option<i32> {
     name.split("__")
         .nth(1)
         .and_then(|n| n.split('.').next())
-        .map(|n| n.parse().unwrap())
+        .and_then(|n| n.parse().ok())
 }
