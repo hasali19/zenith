@@ -3,16 +3,19 @@ use std::path::Path;
 use actix_files::NamedFile;
 use actix_web::middleware::normalize::TrailingSlash;
 use actix_web::middleware::{Logger, NormalizePath};
+use actix_web::web::Data;
 use actix_web::{web, App, HttpRequest, HttpServer, Responder};
 
 use env_logger::Env;
 
+use tokio::sync::Mutex;
 use zenith::api;
 use zenith::config::Config;
 use zenith::db::Db;
 use zenith::sync::movies::sync_movies;
 use zenith::sync::tv_shows::sync_tv_shows;
 use zenith::tmdb::TmdbClient;
+use zenith::transcoder::Transcoder;
 
 async fn sync_libraries(db: &Db, tmdb: &TmdbClient, config: &Config) -> eyre::Result<()> {
     let mut conn = db.acquire().await?;
@@ -35,11 +38,14 @@ async fn main() -> eyre::Result<()> {
 
     sync_libraries(&db, &tmdb, &config).await?;
 
+    let transcoder = Data::new(Mutex::new(Transcoder::new("/mnt/nyx/sda/transcoding-temp")));
+
     HttpServer::new({
         let db = db.clone();
         move || {
             App::new()
                 .app_data(db.clone())
+                .app_data(transcoder.clone())
                 .wrap(NormalizePath::new(TrailingSlash::Trim))
                 .wrap(Logger::default())
                 .service(api::service("/api"))
