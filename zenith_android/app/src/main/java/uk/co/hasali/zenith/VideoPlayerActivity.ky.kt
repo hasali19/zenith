@@ -97,8 +97,10 @@ class VideoPlayerActivity : AppCompatActivity() {
                         }
 
                         override fun onPlaybackStateChanged(state: Int) {
-                            if (state == ExoPlayer.STATE_READY) {
-                                duration = this@apply.duration
+                            when (state) {
+                                ExoPlayer.STATE_READY -> duration = this@apply.duration
+                                ExoPlayer.STATE_ENDED -> finish()
+                                else -> {}
                             }
                         }
                     })
