@@ -19,20 +19,16 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
-import com.github.kittinunf.fuel.Fuel
-import com.github.kittinunf.fuel.coroutines.awaitObject
-import com.github.kittinunf.fuel.gson.gsonDeserializer
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
+import com.google.android.exoplayer2.util.MimeTypes
 import com.google.android.exoplayer2.video.VideoListener
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class VideoPlayerActivity : AppCompatActivity() {
-
-    data class StreamInfo(val duration: Float)
 
     enum class PlaybackState {
         PLAYING,
@@ -56,19 +52,11 @@ class VideoPlayerActivity : AppCompatActivity() {
         var playbackState by mutableStateOf(PlaybackState.PLAYING)
         var playbackPosition by mutableStateOf(0L)
         var duration by mutableStateOf(0L)
-        var serverUrl: String? by mutableStateOf(null)
-        var start by mutableStateOf(0L)
 
         lifecycleScope.launch {
             val settingsRepo = UserSettingsRepository.getInstance(this@VideoPlayerActivity)
             val settings = settingsRepo.settings.first()
-
-            serverUrl = settings.serverUrl!!
-
-            val info: StreamInfo = Fuel.get("$serverUrl/api/stream/$streamId/info")
-                .awaitObject(gsonDeserializer())
-
-            duration = info.duration.toLong()
+            val serverUrl = settings.serverUrl!!
 
             player = SimpleExoPlayer.Builder(this@VideoPlayerActivity)
                 .build()
@@ -99,9 +87,20 @@ class VideoPlayerActivity : AppCompatActivity() {
                                 PlaybackState.PAUSED
                             }
                         }
+
+                        override fun onPlaybackStateChanged(state: Int) {
+                            if (state == ExoPlayer.STATE_READY) {
+                                duration = this@apply.duration
+                            }
+                        }
                     })
 
-                    setMediaItem(MediaItem.fromUri("$serverUrl/api/stream/$streamId"))
+                    val item = MediaItem.Builder()
+                        .setUri("$serverUrl/api/stream/$streamId/hls")
+                        .setMimeType(MimeTypes.APPLICATION_M3U8)
+                        .build()
+
+                    setMediaItem(item)
 
                     prepare()
                     play()
@@ -109,8 +108,9 @@ class VideoPlayerActivity : AppCompatActivity() {
 
             launch {
                 while (player.let { it != null && it.playbackState != Player.STATE_ENDED }) {
-                    if (player?.playWhenReady == true)
+                    if (player?.playWhenReady == true) {
                         playbackPosition = player?.currentPosition ?: 0
+                    }
                     delay(1000)
                 }
             }
@@ -136,12 +136,11 @@ class VideoPlayerActivity : AppCompatActivity() {
                         .padding(8.dp)
                 ) {
                     SeekBar(
-                        position = start + position,
-                        max = duration.toFloat(),
+                        position = position,
+                        max = duration.toFloat() / 1000,
                         onSeekStart = { player?.playWhenReady = false },
                         onSeekEnd = { pos ->
-                            start = pos.toLong()
-                            player?.setMediaItem(MediaItem.fromUri("$serverUrl/api/stream/$streamId?start=$start"))
+                            player?.seekTo((pos * 1000).toLong())
                             player?.playWhenReady = true
                         }
                     )
