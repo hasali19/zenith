@@ -1,5 +1,6 @@
 package uk.co.hasali.zenith
 
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.support.v4.media.session.MediaSessionCompat
@@ -19,6 +20,9 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
+import androidx.work.*
+import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.core.awaitUnit
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
@@ -35,6 +39,9 @@ class VideoPlayerActivity : AppCompatActivity() {
         PAUSED,
     }
 
+    private var streamId: Int? = null
+    private var serverUrl: String? = null
+
     private var player: SimpleExoPlayer? = null
     private var session: MediaSessionCompat? = null
     private var connector: MediaSessionConnector? = null
@@ -43,7 +50,7 @@ class VideoPlayerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_video_player)
 
-        val streamId = intent.getIntExtra("stream_id", -1)
+        streamId = intent.getIntExtra("stream_id", -1)
 
         val aspectRatioLayout: AspectRatioFrameLayout = findViewById(R.id.aspect_ratio_layout)
         val surfaceView: SurfaceView = findViewById(R.id.surface_view)
@@ -56,7 +63,8 @@ class VideoPlayerActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val settingsRepo = UserSettingsRepository.getInstance(this@VideoPlayerActivity)
             val settings = settingsRepo.settings.first()
-            val serverUrl = settings.serverUrl!!
+
+            serverUrl = settings.serverUrl!!
 
             player = SimpleExoPlayer.Builder(this@VideoPlayerActivity)
                 .build()
@@ -131,7 +139,8 @@ class VideoPlayerActivity : AppCompatActivity() {
 
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
-                    modifier = Modifier.align(Alignment.BottomCenter)
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
                         .background(Color(0f, 0f, 0f, 0.5f))
                         .padding(8.dp)
                 ) {
@@ -174,6 +183,17 @@ class VideoPlayerActivity : AppCompatActivity() {
         }
     }
 
+    class CleanupWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+        override suspend fun doWork(): Result {
+            val uri = inputData.getString("URI") ?: return Result.failure()
+
+            Fuel.post(uri)
+                .awaitUnit()
+
+            return Result.success()
+        }
+    }
+
     override fun onPause() {
         super.onPause()
         player?.pause()
@@ -186,8 +206,19 @@ class VideoPlayerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+
         player?.release()
         session?.release()
+
+        if (serverUrl != null && streamId != null) {
+            WorkManager
+                .getInstance(this)
+                .enqueue(
+                    OneTimeWorkRequestBuilder<CleanupWorker>()
+                        .setInputData(workDataOf("URI" to "$serverUrl/api/stream/$streamId/hls/stop"))
+                        .build()
+                )
+        }
     }
 
     private fun hideSystemUi() {
