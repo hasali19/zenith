@@ -144,10 +144,12 @@ class TvShowDetailsActivity : AppCompatActivity() {
                                         modifier = Modifier.preferredSize(160.dp, 90.dp)
                                             .background(Color.Black)
                                     ) {
-                                        CoilImage(
-                                            data = episode.thumbnailUrl!!,
-                                            modifier = Modifier.fillMaxSize()
-                                        )
+                                        if (episode.thumbnailUrl != null) {
+                                            CoilImage(
+                                                data = episode.thumbnailUrl,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        }
                                     }
                                     Column(modifier = Modifier.padding(8.dp)) {
                                         Text(
