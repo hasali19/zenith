@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::process::Stdio;
 use std::time::Duration;
 
 use actix_web::dev::Payload;
@@ -53,7 +54,21 @@ impl Transcoder {
 
 struct Job {
     video_id: i64,
+    out_dir: PathBuf,
+    start_segment: u32,
     process: Child,
+}
+
+impl Job {
+    pub fn last_segment(&self) -> Option<u32> {
+        std::fs::read_dir(&self.out_dir)
+            .ok()?
+            .filter_map(|e| e.ok())
+            .map(|e| e.file_name().to_str().unwrap().to_string())
+            .filter(|n| n.ends_with(".ts"))
+            .filter_map(|n| get_segment_number_from_name(&n))
+            .max()
+    }
 }
 
 async fn transcoder(mut rx: mpsc::Receiver<Request>, db: Db, temp_dir: String) {
@@ -62,7 +77,7 @@ async fn transcoder(mut rx: mpsc::Receiver<Request>, db: Db, temp_dir: String) {
     // Delete anything in the temp dir from a previous run
     std::fs::read_dir(&temp_dir)
         .unwrap()
-        .for_each(|e| std::fs::remove_dir_all(e.unwrap().path()).unwrap());
+        .for_each(|e| std::fs::remove_file(e.unwrap().path()).unwrap());
 
     log::info!("listening for requests");
 
@@ -87,86 +102,120 @@ async fn transcoder(mut rx: mpsc::Receiver<Request>, db: Db, temp_dir: String) {
                         .unwrap()
                         .unwrap();
 
-                if current_job.is_none()
-                    || (current_job.is_some() && current_job.as_ref().unwrap().video_id != video_id)
-                {
-                    if let Some(mut job) = current_job.take() {
-                        job.process.kill().unwrap();
-                        job.process.await.unwrap();
+                let job = match current_job.take() {
+                    Some(mut job) => {
+                        let should_restart = job.video_id != video_id
+                            || segment < job.start_segment
+                            || job
+                                .last_segment()
+                                .map(|n| segment > n + 15)
+                                .unwrap_or(false);
+
+                        if should_restart {
+                            log::warn!("killing current transcode job");
+
+                            job.process.kill().unwrap();
+                            job.process.await.unwrap();
+
+                            std::fs::read_dir(&temp_dir)
+                                .unwrap()
+                                .for_each(|e| std::fs::remove_file(e.unwrap().path()).unwrap());
+
+                            Job {
+                                video_id,
+                                out_dir: temp_dir.clone(),
+                                start_segment: segment,
+                                process: start_job(&temp_dir, &path, segment),
+                            }
+                        } else {
+                            job
+                        }
                     }
-
-                    let segment_name_template = temp_dir.join("%d.ts");
-                    let playlist_name = temp_dir.join("main.m3u8");
-                    let process = Command::new("ffmpeg")
-                        .arg("-ss")
-                        .arg((segment * 3).to_string())
-                        .arg("-noaccurate_seek")
-                        .arg("-i")
-                        .arg(path)
-                        .arg("-map_metadata")
-                        .arg("-1")
-                        .arg("-map_chapters")
-                        .arg("-1")
-                        .arg("-threads")
-                        .arg("0")
-                        .arg("-codec:v")
-                        .arg("libx264")
-                        .arg("-force_key_frames:0")
-                        .arg(format!("expr:gte(t,{}+n_forced*3)", segment * 3))
-                        .arg("-g")
-                        .arg("72")
-                        .arg("-keyint_min")
-                        .arg("72")
-                        .arg("-sc_threshold")
-                        .arg("0")
-                        .arg("-start_at_zero")
-                        .arg("-vsync")
-                        .arg("-1")
-                        .arg("-codec:a")
-                        .arg("libmp3lame")
-                        .arg("-copyts")
-                        .arg("-avoid_negative_ts")
-                        .arg("disabled")
-                        .arg("-f")
-                        .arg("hls")
-                        .arg("-max_delay")
-                        .arg("5000000")
-                        .arg("-hls_time")
-                        .arg("3")
-                        .arg("-individual_header_trailer")
-                        .arg("0")
-                        .arg("-hls_segment_type")
-                        .arg("mpegts")
-                        .arg("-start_number")
-                        .arg(segment.to_string())
-                        .arg("-hls_segment_filename")
-                        .arg(segment_name_template)
-                        .arg("-hls_playlist_type")
-                        .arg("vod")
-                        .arg("-hls_list_size")
-                        .arg("0")
-                        .arg("-hls_flags")
-                        .arg("temp_file")
-                        .arg("-y")
-                        .arg(playlist_name)
-                        .spawn()
-                        .unwrap();
-
-                    current_job = Some(Job { video_id, process });
-                }
+                    None => Job {
+                        video_id,
+                        out_dir: temp_dir.clone(),
+                        start_segment: segment,
+                        process: start_job(&temp_dir, &path, segment),
+                    },
+                };
 
                 let segment_path = temp_dir.join(format!("{}.ts", segment));
 
-                loop {
-                    if segment_path.is_file() {
-                        break;
-                    }
-
+                // Wait until the file is ready
+                while !segment_path.is_file() {
                     tokio::time::delay_for(Duration::from_millis(500)).await;
                 }
 
-                tx.send(segment_path).unwrap()
+                tx.send(segment_path).unwrap();
+
+                current_job = Some(job);
             }
         }
     }
+}
+
+fn get_segment_number_from_name(name: &str) -> Option<u32> {
+    name.split('.').next().and_then(|n| n.parse().ok())
+}
+
+fn start_job(temp_dir: &Path, path: &str, segment: u32) -> Child {
+    let segment_name_template = temp_dir.join("%d.ts");
+    let playlist_name = temp_dir.join("main.m3u8");
+    let process = Command::new("ffmpeg")
+        .arg("-ss")
+        .arg((segment * 3).to_string())
+        .arg("-noaccurate_seek")
+        .arg("-i")
+        .arg(path)
+        .arg("-map_metadata")
+        .arg("-1")
+        .arg("-map_chapters")
+        .arg("-1")
+        .arg("-threads")
+        .arg("0")
+        .arg("-codec:v")
+        .arg("libx264")
+        .arg("-force_key_frames:0")
+        .arg(format!("expr:gte(t,{}+n_forced*3)", segment * 3))
+        .arg("-g")
+        .arg("72")
+        .arg("-keyint_min")
+        .arg("72")
+        .arg("-sc_threshold")
+        .arg("0")
+        .arg("-start_at_zero")
+        .arg("-vsync")
+        .arg("-1")
+        .arg("-codec:a")
+        .arg("libmp3lame")
+        .arg("-copyts")
+        .arg("-avoid_negative_ts")
+        .arg("disabled")
+        .arg("-f")
+        .arg("hls")
+        .arg("-max_delay")
+        .arg("5000000")
+        .arg("-hls_time")
+        .arg("3")
+        .arg("-individual_header_trailer")
+        .arg("0")
+        .arg("-hls_segment_type")
+        .arg("mpegts")
+        .arg("-start_number")
+        .arg(segment.to_string())
+        .arg("-hls_segment_filename")
+        .arg(segment_name_template)
+        .arg("-hls_playlist_type")
+        .arg("vod")
+        .arg("-hls_list_size")
+        .arg("0")
+        .arg("-hls_flags")
+        .arg("temp_file")
+        .arg("-y")
+        .arg(playlist_name)
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+
+    process
 }
