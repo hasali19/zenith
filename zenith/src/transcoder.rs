@@ -1,146 +1,172 @@
-use std::fs::File;
 use std::path::PathBuf;
-use std::process::Stdio;
+use std::time::Duration;
 
-use tokio::process::Command;
+use actix_web::dev::Payload;
+use actix_web::{FromRequest, HttpRequest};
+use futures::future::{self, Ready};
+use tokio::process::{Child, Command};
+use tokio::sync::{mpsc, oneshot};
 
-pub struct Transcoder {
-    temp_dir: PathBuf,
-    current_job: Option<Job>,
+use crate::db::Db;
+
+#[derive(Clone)]
+pub struct Transcoder(mpsc::Sender<Request>);
+
+impl FromRequest for Transcoder {
+    type Error = ();
+    type Future = Ready<Result<Self, Self::Error>>;
+    type Config = ();
+
+    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
+        future::ok(req.app_data::<Self>().unwrap().clone())
+    }
 }
 
-pub struct Job {
-    video_id: i64,
-    start_segment: i32,
-    process_handle: tokio::sync::oneshot::Sender<()>,
-}
-
-impl Job {
-    pub fn video_id(&self) -> i64 {
-        self.video_id
-    }
-
-    pub fn start_segment(&self) -> i32 {
-        self.start_segment
-    }
+#[derive(Debug)]
+enum Request {
+    TranscodeSegment {
+        video_id: i64,
+        segment: u32,
+        tx: oneshot::Sender<PathBuf>,
+    },
 }
 
 impl Transcoder {
-    #[allow(clippy::clippy::new_without_default)]
-    pub fn new(temp_dir: &str) -> Self {
-        Transcoder {
-            current_job: None,
-            temp_dir: PathBuf::from(temp_dir),
-        }
+    pub fn new(db: Db, temp_dir: &str) -> Self {
+        let (tx, rx) = mpsc::channel(1);
+        tokio::spawn(transcoder(rx, db, temp_dir.to_string()));
+        Transcoder(tx)
     }
 
-    pub fn is_transcoding(&self, video_id: i64) -> bool {
-        matches!(self.current_job, Some(Job { video_id: id, .. }) if id == video_id)
-    }
-
-    pub fn get_last_segment_number(&self, video_id: i64) -> Option<i32> {
-        std::fs::read_dir(&self.temp_dir)
-            .ok()?
-            .filter_map(|e| e.ok())
-            .map(|e| e.file_name().to_str().unwrap().to_string())
-            .filter(|n| n.starts_with(&video_id.to_string()) && n.ends_with(".ts"))
-            .filter_map(|n| get_segment_number_from_name(&n))
-            .max()
-    }
-
-    pub fn get_segment(&self, video_id: i64, segment: i32) -> Option<(PathBuf, File)> {
-        let filename = format!("{}__{}.ts", video_id, segment);
-        let path = self.temp_dir.join(filename);
-        File::open(&path).ok().map(|v| (path, v))
-    }
-
-    pub async fn begin_transcode(&mut self, video_id: i64, path: &str) {
-        if let Some(job) = self.current_job.take() {
-            log::warn!("killing existing transcode job");
-            job.process_handle.send(()).unwrap();
-        }
-
-        log::info!("starting transcode");
-
-        let segment_name_template = self.temp_dir.join(format!("{}__%d.ts", video_id));
-        let playlist_name = self.temp_dir.join(format!("{}.m3u8", video_id));
-
-        let (tx, rx) = tokio::sync::oneshot::channel();
-
-        let mut cmd = Command::new("ffmpeg");
-
-        cmd.arg("-noaccurate_seek")
-            .arg("-i")
-            .arg(path)
-            .arg("-map_metadata")
-            .arg("-1")
-            .arg("-map_chapters")
-            .arg("-1")
-            .arg("-threads")
-            .arg("0")
-            .arg("-codec:v")
-            .arg("libx264")
-            .arg("-force_key_frames:0")
-            .arg("expr:gte(t,0+n_forced*3)")
-            .arg("-g")
-            .arg("72")
-            .arg("-keyint_min")
-            .arg("72")
-            .arg("-sc_threshold")
-            .arg("0")
-            .arg("-start_at_zero")
-            .arg("-vsync")
-            .arg("-1")
-            .arg("-codec:a")
-            .arg("libmp3lame")
-            .arg("-f")
-            .arg("hls")
-            .arg("-max_delay")
-            .arg("5000000")
-            .arg("-hls_time")
-            .arg("3")
-            .arg("-individual_header_trailer")
-            .arg("0")
-            .arg("-hls_segment_type")
-            .arg("mpegts")
-            .arg("-start_number")
-            .arg("0")
-            .arg("-hls_segment_filename")
-            .arg(segment_name_template)
-            .arg("-hls_playlist_type")
-            .arg("vod")
-            .arg("-hls_list_size")
-            .arg("0")
-            .arg("-hls_flags")
-            .arg("temp_file")
-            .arg("-y")
-            .arg(playlist_name)
-            .stderr(Stdio::null());
-
-        tokio::spawn(async move {
-            let mut child = cmd.spawn().unwrap();
-
-            // Wait for the child to finish, or a signal from the channel to kill it
-            tokio::select! {
-                _ = &mut child => {},
-                Ok(_) = rx => {
-                    child.kill().unwrap();
-                    child.await.unwrap();
-                },
-            }
-        });
-
-        self.current_job = Some(Job {
+    pub async fn transcode_segment(&mut self, video_id: i64, segment: u32) -> PathBuf {
+        let (tx, rx) = oneshot::channel();
+        let req = Request::TranscodeSegment {
             video_id,
-            start_segment: 0,
-            process_handle: tx,
-        });
+            segment,
+            tx,
+        };
+
+        self.0.send(req).await.unwrap();
+        rx.await.unwrap()
     }
 }
 
-fn get_segment_number_from_name(name: &str) -> Option<i32> {
-    name.split("__")
-        .nth(1)
-        .and_then(|n| n.split('.').next())
-        .and_then(|n| n.parse().ok())
+struct Job {
+    video_id: i64,
+    process: Child,
+}
+
+async fn transcoder(mut rx: mpsc::Receiver<Request>, db: Db, temp_dir: String) {
+    let temp_dir = PathBuf::from(temp_dir);
+
+    // Delete anything in the temp dir from a previous run
+    std::fs::read_dir(&temp_dir)
+        .unwrap()
+        .for_each(|e| std::fs::remove_dir_all(e.unwrap().path()).unwrap());
+
+    log::info!("listening for requests");
+
+    let mut current_job: Option<Job> = None;
+
+    while let Some(req) = rx.recv().await {
+        match req {
+            Request::TranscodeSegment {
+                video_id,
+                segment,
+                tx,
+            } => {
+                log::info!("requested segment: {}:{}", video_id, segment);
+
+                let mut conn = db.acquire().await.unwrap();
+
+                let (path,): (String,) =
+                    sqlx::query_as("SELECT path FROM video_files WHERE id = ?")
+                        .bind(video_id)
+                        .fetch_optional(&mut conn)
+                        .await
+                        .unwrap()
+                        .unwrap();
+
+                if current_job.is_none()
+                    || (current_job.is_some() && current_job.as_ref().unwrap().video_id != video_id)
+                {
+                    if let Some(mut job) = current_job.take() {
+                        job.process.kill().unwrap();
+                        job.process.await.unwrap();
+                    }
+
+                    let segment_name_template = temp_dir.join("%d.ts");
+                    let playlist_name = temp_dir.join("main.m3u8");
+                    let process = Command::new("ffmpeg")
+                        .arg("-ss")
+                        .arg((segment * 3).to_string())
+                        .arg("-noaccurate_seek")
+                        .arg("-i")
+                        .arg(path)
+                        .arg("-map_metadata")
+                        .arg("-1")
+                        .arg("-map_chapters")
+                        .arg("-1")
+                        .arg("-threads")
+                        .arg("0")
+                        .arg("-codec:v")
+                        .arg("libx264")
+                        .arg("-force_key_frames:0")
+                        .arg(format!("expr:gte(t,{}+n_forced*3)", segment * 3))
+                        .arg("-g")
+                        .arg("72")
+                        .arg("-keyint_min")
+                        .arg("72")
+                        .arg("-sc_threshold")
+                        .arg("0")
+                        .arg("-start_at_zero")
+                        .arg("-vsync")
+                        .arg("-1")
+                        .arg("-codec:a")
+                        .arg("libmp3lame")
+                        .arg("-copyts")
+                        .arg("-avoid_negative_ts")
+                        .arg("disabled")
+                        .arg("-f")
+                        .arg("hls")
+                        .arg("-max_delay")
+                        .arg("5000000")
+                        .arg("-hls_time")
+                        .arg("3")
+                        .arg("-individual_header_trailer")
+                        .arg("0")
+                        .arg("-hls_segment_type")
+                        .arg("mpegts")
+                        .arg("-start_number")
+                        .arg(segment.to_string())
+                        .arg("-hls_segment_filename")
+                        .arg(segment_name_template)
+                        .arg("-hls_playlist_type")
+                        .arg("vod")
+                        .arg("-hls_list_size")
+                        .arg("0")
+                        .arg("-hls_flags")
+                        .arg("temp_file")
+                        .arg("-y")
+                        .arg(playlist_name)
+                        .spawn()
+                        .unwrap();
+
+                    current_job = Some(Job { video_id, process });
+                }
+
+                let segment_path = temp_dir.join(format!("{}.ts", segment));
+
+                loop {
+                    if segment_path.is_file() {
+                        break;
+                    }
+
+                    tokio::time::delay_for(Duration::from_millis(500)).await;
+                }
+
+                tx.send(segment_path).unwrap()
+            }
+        }
+    }
 }

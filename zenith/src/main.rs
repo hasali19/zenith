@@ -3,12 +3,10 @@ use std::path::Path;
 use actix_files::NamedFile;
 use actix_web::middleware::normalize::TrailingSlash;
 use actix_web::middleware::{Logger, NormalizePath};
-use actix_web::web::Data;
 use actix_web::{web, App, HttpRequest, HttpServer, Responder};
 
 use env_logger::Env;
 
-use tokio::sync::Mutex;
 use zenith::api;
 use zenith::config::Config;
 use zenith::db::Db;
@@ -38,7 +36,7 @@ async fn main() -> eyre::Result<()> {
 
     sync_libraries(&db, &tmdb, &config).await?;
 
-    let transcoder = Data::new(Mutex::new(Transcoder::new("/mnt/nyx/sda/transcoding-temp")));
+    let transcoder = Transcoder::new(db.clone(), "/mnt/nyx/sda/transcoding-temp");
 
     HttpServer::new({
         let db = db.clone();

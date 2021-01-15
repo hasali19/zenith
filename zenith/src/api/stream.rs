@@ -1,7 +1,6 @@
 use actix_files::NamedFile;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
-use tokio::sync::Mutex;
 
 use crate::db::Db;
 use crate::transcoder::Transcoder;
@@ -57,39 +56,17 @@ async fn get_stream(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder
 
 async fn get_hls_segment(
     req: HttpRequest,
-    path: web::Path<(i64, i32)>,
-    db: Db,
-    transcoder: web::Data<Mutex<Transcoder>>,
+    path: web::Path<(i64, u32)>,
+    mut transcoder: Transcoder,
 ) -> ApiResult<impl Responder> {
     let (id, segment) = path.into_inner();
-    let mut conn = db.acquire().await?;
+    let segment_path = transcoder.transcode_segment(id, segment).await;
 
-    let (path,): (String,) = sqlx::query_as("SELECT path FROM video_files WHERE id = ?")
-        .bind(id)
-        .fetch_optional(&mut conn)
-        .await?
-        .ok_or(ApiError::NotFound)?;
-
-    let mut transcoder = transcoder.lock().await;
-
-    // If the video is not currently being transcoded, start a transcode job
-    if !transcoder.is_transcoding(id) {
-        transcoder.begin_transcode(id, &path).await;
-    }
-
-    loop {
-        // Wait until the requested segment is available and then return it
-        if let Some((path, file)) = transcoder.get_segment(id, segment) {
-            return Ok(NamedFile::from_file(file, path)?
-                .into_response(&req)?
-                .with_header("Access-Control-Allow-Origin", "*")
-                .respond_to(&req)
-                .await);
-        }
-
-        // Keep checking every 500ms to see if the segment is available
-        actix_web::rt::time::delay_for(std::time::Duration::from_millis(500)).await;
-    }
+    Ok(NamedFile::open(segment_path)?
+        .into_response(&req)?
+        .with_header("Access-Control-Allow-Origin", "*")
+        .respond_to(&req)
+        .await)
 }
 
 #[derive(serde::Serialize)]
