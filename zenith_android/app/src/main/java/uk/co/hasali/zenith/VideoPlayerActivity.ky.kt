@@ -105,9 +105,9 @@ class VideoPlayerActivity : AppCompatActivity() {
                         }
                     })
 
+                    // TODO: Add option to play transcoded stream
                     val item = MediaItem.Builder()
-                        .setUri("$serverUrl/api/stream/$streamId/hls")
-                        .setMimeType(MimeTypes.APPLICATION_M3U8)
+                        .setUri("$serverUrl/api/stream/$streamId/original")
                         .build()
 
                     setMediaItem(item)
