@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.preferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.createDataStore
 import kotlinx.coroutines.flow.map
 
@@ -17,7 +17,7 @@ class UserSettingsRepository private constructor(context: Context) {
     private val store: DataStore<Preferences> = context.createDataStore(name = "settings")
 
     private object PreferenceKeys {
-        val ZENITH_SERVER_URL = preferencesKey<String>("server_url")
+        val ZENITH_SERVER_URL = stringPreferencesKey("server_url")
     }
 
     val settings = store.data.map { preferences ->
