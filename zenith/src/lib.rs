@@ -5,4 +5,5 @@ pub mod ffmpeg;
 pub mod metadata;
 pub mod sync;
 pub mod tmdb;
+pub mod transcoder;
 pub mod utils;
