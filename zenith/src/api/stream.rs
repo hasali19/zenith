@@ -12,6 +12,7 @@ pub fn service(path: &str) -> impl HttpServiceFactory {
         .route("/{id}/original", web::get().to(get_original))
         .route("/{id}/hls", web::get().to(get_hls_playlist))
         .route("/{id}/hls/{segment}.ts", web::get().to(get_hls_segment))
+        .route("/{id}/hls/stop", web::post().to(stop_hls_transcoding))
         .route("/{id}/info", web::get().to(get_stream_info))
         .default_service(web::route().to(HttpResponse::NotFound))
 }
@@ -85,6 +86,15 @@ async fn get_hls_segment(
         .with_header("Access-Control-Allow-Origin", "*")
         .respond_to(&req)
         .await)
+}
+
+async fn stop_hls_transcoding(
+    path: web::Path<(i64,)>,
+    mut transcoder: Transcoder,
+) -> ApiResult<impl Responder> {
+    let (id,) = path.into_inner();
+    transcoder.cancel(id).await;
+    Ok(HttpResponse::Ok())
 }
 
 #[derive(serde::Serialize)]

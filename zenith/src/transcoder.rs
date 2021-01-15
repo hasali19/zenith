@@ -30,6 +30,10 @@ enum Request {
         segment: u32,
         tx: oneshot::Sender<PathBuf>,
     },
+    Cancel {
+        video_id: i64,
+        tx: oneshot::Sender<()>,
+    },
 }
 
 impl Transcoder {
@@ -46,6 +50,14 @@ impl Transcoder {
             segment,
             tx,
         };
+
+        self.0.send(req).await.unwrap();
+        rx.await.unwrap()
+    }
+
+    pub async fn cancel(&mut self, video_id: i64) {
+        let (tx, rx) = oneshot::channel();
+        let req = Request::Cancel { video_id, tx };
 
         self.0.send(req).await.unwrap();
         rx.await.unwrap()
@@ -149,6 +161,25 @@ async fn transcoder(mut rx: mpsc::Receiver<Request>, db: Db, temp_dir: String) {
                 tx.send(segment_path).unwrap();
 
                 current_job = Some(job);
+            }
+
+            Request::Cancel { video_id, tx } => {
+                if let Some(job) = &current_job {
+                    if job.video_id == video_id {
+                        log::warn!("killing current transcode job");
+
+                        let mut job = current_job.take().unwrap();
+
+                        job.process.kill().unwrap();
+                        job.process.await.unwrap();
+
+                        std::fs::read_dir(&temp_dir)
+                            .unwrap()
+                            .for_each(|e| std::fs::remove_file(e.unwrap().path()).unwrap());
+                    }
+                }
+
+                tx.send(()).unwrap();
             }
         }
     }
