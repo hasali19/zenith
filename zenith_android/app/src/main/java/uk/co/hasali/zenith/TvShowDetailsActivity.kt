@@ -3,10 +3,10 @@ package uk.co.hasali.zenith
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -36,14 +36,21 @@ data class TvShowDetails(
     val posterUrl: String?,
     @SerializedName("backdrop_url")
     val backdropUrl: String?,
+    val seasons: List<TvShowSeason>,
+)
+
+data class TvShowSeason(
+    val id: Int,
+    val season: Int,
+    val name: String?,
+    val overview: String?,
+    @SerializedName("poster_url")
+    val posterUrl: String?,
     val episodes: List<TvShowEpisode>,
-    @SerializedName("stream_id")
-    val streamId: Int,
 )
 
 data class TvShowEpisode(
     val id: Int,
-    val season: Int,
     val episode: Int,
     val name: String?,
     val overview: String?,
@@ -51,6 +58,7 @@ data class TvShowEpisode(
     val thumbnailUrl: String?,
     @SerializedName("stream_id")
     val streamId: Int,
+    val duration: Double,
 )
 
 class TvShowDetailsActivity : AppCompatActivity() {
@@ -78,14 +86,6 @@ class TvShowDetailsActivity : AppCompatActivity() {
 
     @Composable
     fun TvShowDetailsScreen() {
-        fun onEpisodeClick(streamId: Int) {
-            startActivity(
-                Intent(this@TvShowDetailsActivity, VideoPlayerActivity::class.java).apply {
-                    putExtra("stream_id", streamId)
-                }
-            )
-        }
-
         ZenithTheme {
             Surface(color = MaterialTheme.colors.background) {
                 Box {
@@ -128,43 +128,45 @@ class TvShowDetailsActivity : AppCompatActivity() {
                                 Text(text = show.overview ?: "")
                                 Spacer(modifier = Modifier.preferredHeight(16.dp))
 
-                                Text(text = "Episodes", style = MaterialTheme.typography.h6)
-                            }
-                        }
+                                Text(text = "Seasons", style = MaterialTheme.typography.h6)
+                                Spacer(modifier = Modifier.preferredHeight(16.dp))
+                                LazyRow {
+                                    items(show.seasons) { season ->
+                                        Card(
+                                            modifier = Modifier.padding(4.dp)
+                                                .preferredWidth(92.dp)
+                                                .clickable { }
+                                        ) {
+                                            Column {
+                                                WithConstraints {
+                                                    val height = with(AmbientDensity.current) {
+                                                        constraints.maxWidth.toDp() * (3f / 2f)
+                                                    }
 
-                        items(show.episodes) { episode ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth()
-                                    .wrapContentHeight()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                                    .clickable { onEpisodeClick(episode.streamId) }
-                            ) {
-                                Row {
-                                    Box(
-                                        modifier = Modifier.preferredSize(160.dp, 90.dp)
-                                            .background(Color.Black)
-                                    ) {
-                                        if (episode.thumbnailUrl != null) {
-                                            CoilImage(
-                                                data = episode.thumbnailUrl,
-                                                modifier = Modifier.fillMaxSize()
-                                            )
+                                                    Box(modifier = Modifier.fillMaxWidth().preferredHeight(height)) {
+                                                        season.posterUrl?.let { url ->
+                                                            CoilImage(data = url, modifier = Modifier.fillMaxWidth())
+                                                        }
+                                                    }
+                                                }
+
+                                                Column(modifier = Modifier.padding(8.dp)) {
+                                                    Text(
+                                                        text = show.name,
+                                                        style = MaterialTheme.typography.body2,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+
+                                                    Text(
+                                                        text = season.name ?: "Season ${season.season}",
+                                                        style = MaterialTheme.typography.caption,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                            }
                                         }
-                                    }
-                                    Column(modifier = Modifier.padding(8.dp)) {
-                                        Text(
-                                            text = String.format(
-                                                "S%02dE%02d",
-                                                episode.season,
-                                                episode.episode
-                                            )
-                                        )
-                                        Text(
-                                            text = episode.overview ?: "Unknown",
-                                            style = MaterialTheme.typography.caption,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
                                     }
                                 }
                             }

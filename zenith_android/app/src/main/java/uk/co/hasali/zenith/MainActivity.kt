@@ -126,7 +126,9 @@ fun HomeScreen() {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             imageVector = Icons.Default.Home,
-            modifier = Modifier.align(Alignment.Center).size(48.dp),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(48.dp),
             colorFilter = ColorFilter.tint(Color.DarkGray)
         )
     }
@@ -162,7 +164,8 @@ fun MoviesScreen(serverUrl: String) {
     LazyVerticalGrid(cells = GridCells.Adaptive(128.dp), contentPadding = PaddingValues(4.dp)) {
         items(movies) { movie ->
             Card(
-                modifier = Modifier.padding(4.dp)
+                modifier = Modifier
+                    .padding(4.dp)
                     .fillMaxWidth()
                     .clickable {
                         onItemClick(movie.id)
@@ -174,7 +177,11 @@ fun MoviesScreen(serverUrl: String) {
                             constraints.maxWidth.toDp() * (3f / 2f)
                         }
 
-                        Box(modifier = Modifier.fillMaxWidth().preferredHeight(height)) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .preferredHeight(height)
+                        ) {
                             movie.posterUrl?.let { url ->
                                 CoilImage(data = url, modifier = Modifier.fillMaxWidth())
                             }
@@ -207,6 +214,8 @@ data class TvShow(
     val name: String,
     @SerializedName("poster_url")
     val posterUrl: String?,
+    @SerializedName("season_count")
+    val seasonCount: Int,
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -231,7 +240,8 @@ fun TvShowsScreen(serverUrl: String) {
     LazyVerticalGrid(cells = GridCells.Adaptive(128.dp), contentPadding = PaddingValues(4.dp)) {
         items(shows) { show ->
             Card(
-                modifier = Modifier.padding(4.dp)
+                modifier = Modifier
+                    .padding(4.dp)
                     .fillMaxWidth()
                     .clickable {
                         onItemClick(show.id)
@@ -243,7 +253,11 @@ fun TvShowsScreen(serverUrl: String) {
                             constraints.maxWidth.toDp() * (3f / 2f)
                         }
 
-                        Box(modifier = Modifier.fillMaxWidth().preferredHeight(height)) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .preferredHeight(height)
+                        ) {
                             show.posterUrl?.let { url ->
                                 CoilImage(data = url, modifier = Modifier.fillMaxWidth())
                             }
@@ -254,6 +268,13 @@ fun TvShowsScreen(serverUrl: String) {
                         Text(
                             text = show.name,
                             style = MaterialTheme.typography.body2,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Text(
+                            text = "${show.seasonCount} season${if (show.seasonCount > 1) "s" else ""}",
+                            style = MaterialTheme.typography.caption,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
