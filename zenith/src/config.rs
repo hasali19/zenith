@@ -6,8 +6,8 @@ pub struct Config {
     pub movie_path: String,
     pub tv_show_path: String,
     pub tmdb_access_token: String,
-    pub db_path: Option<String>,
     pub transcode_dir: String,
+    db_path: Option<String>,
     ffprobe_path: Option<String>,
     ffmpeg_path: Option<String>,
 }
@@ -17,6 +17,10 @@ impl Config {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
         Ok(serde_yaml::from_reader(reader)?)
+    }
+
+    pub fn db_path(&self) -> &str {
+        self.db_path.as_deref().unwrap_or("zenith.db")
     }
 
     pub fn ffprobe_path(&self) -> &str {

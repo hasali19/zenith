@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::sync::Arc;
 
 use actix_files::NamedFile;
 use actix_web::middleware::normalize::TrailingSlash;
@@ -7,24 +8,11 @@ use actix_web::{web, App, HttpRequest, HttpServer, Responder};
 
 use env_logger::Env;
 
-use zenith::api;
 use zenith::config::Config;
 use zenith::db::Db;
-use zenith::ffmpeg::Ffprobe;
-use zenith::sync::movies::sync_movies;
-use zenith::sync::tv_shows::sync_tv_shows;
 use zenith::tmdb::TmdbClient;
 use zenith::transcoder::Transcoder;
-
-async fn sync_libraries(db: &Db, tmdb: &TmdbClient, config: &Config) -> eyre::Result<()> {
-    let ffprobe = Ffprobe::new(config.ffprobe_path());
-    let mut conn = db.acquire().await?;
-
-    sync_movies(&mut conn, &tmdb, &ffprobe, &config.movie_path).await?;
-    sync_tv_shows(&mut conn, &tmdb, &ffprobe, &config.tv_show_path).await?;
-
-    Ok(())
-}
+use zenith::{api, sync};
 
 #[actix_web::main]
 async fn main() -> eyre::Result<()> {
@@ -32,13 +20,18 @@ async fn main() -> eyre::Result<()> {
     dotenv::dotenv().ok();
     env_logger::init_from_env(Env::new().default_filter_or("info,sqlx::query=warn"));
 
-    let config = Config::load("config.yml")?;
-    let db = Db::init(config.db_path.as_deref().unwrap_or("zenith.db")).await?;
+    let config = Arc::new(Config::load("config.yml")?);
     let tmdb = TmdbClient::new(&config.tmdb_access_token);
-
-    sync_libraries(&db, &tmdb, &config).await?;
-
+    let db = Db::init(config.db_path()).await?;
     let transcoder = Transcoder::new(db.clone(), &config);
+
+    tokio::spawn({
+        let config = config.clone();
+        let db = db.clone();
+        async move {
+            sync::full_library_sync(&db, &tmdb, config).await.unwrap();
+        }
+    });
 
     HttpServer::new({
         let db = db.clone();
