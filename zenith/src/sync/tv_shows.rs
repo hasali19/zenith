@@ -199,7 +199,13 @@ async fn sync_season(
                 .execute(&mut *db)
                 .await?;
 
-            res.last_insert_rowid()
+            let id = res.last_insert_rowid();
+
+            if let Err(e) = metadata::refresh_tv_season_metadata(&mut *db, tmdb, id).await {
+                log::error!("failed to update metadata: {}", e);
+            }
+
+            id
         }
     };
 

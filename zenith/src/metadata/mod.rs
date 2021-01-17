@@ -150,6 +150,59 @@ pub async fn refresh_tv_show_metadata(
     Ok(())
 }
 
+pub async fn refresh_tv_season_metadata(
+    db: &mut SqliteConnection,
+    tmdb: &TmdbClient,
+    id: i64,
+) -> eyre::Result<()> {
+    log::info!("updating metadata for tv season (id: {})", id);
+
+    let sql = "
+        SELECT show.tmdb_id, season.index_number
+        FROM media_items AS season
+        JOIN media_items AS show ON show.id = season.parent_id
+        WHERE season.id = ? AND season.item_type = ?
+    ";
+
+    let (tmdb_show_id, season): (i32, i32) = sqlx::query_as(sql)
+        .bind(id)
+        .bind(MediaItemType::TvSeason)
+        .fetch_one(&mut *db)
+        .await?;
+
+    let metadata = tmdb.get_tv_season(tmdb_show_id, season).await?;
+    let poster = metadata.poster_path.as_deref().map(|poster| MediaImage {
+        img_type: MediaImageType::Poster,
+        src_type: MediaImageSrcType::Tmdb,
+        src: poster,
+    });
+
+    log::info!(
+        "match found: {}",
+        metadata.name.as_deref().unwrap_or("unknown name")
+    );
+
+    let sql = "
+        UPDATE media_items
+        SET name = ?,
+            overview = ?,
+            primary_image = ?,
+            tmdb_id = ?
+        WHERE id = ?
+    ";
+
+    sqlx::query(sql)
+        .bind(metadata.name)
+        .bind(metadata.overview)
+        .bind(poster.map(|p| p.to_string()))
+        .bind(metadata.id)
+        .bind(id)
+        .execute(&mut *db)
+        .await?;
+
+    Ok(())
+}
+
 pub async fn refresh_tv_episode_metadata(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
@@ -195,7 +248,8 @@ pub async fn refresh_tv_episode_metadata(
         UPDATE media_items
         SET name = ?,
             overview = ?,
-            primary_image = ?
+            primary_image = ?,
+            tmdb_id = ?
         WHERE id = ?
     ";
 
@@ -203,6 +257,7 @@ pub async fn refresh_tv_episode_metadata(
         .bind(metadata.name)
         .bind(metadata.overview)
         .bind(thumbnail.map(|t| t.to_string()))
+        .bind(metadata.id)
         .bind(id)
         .execute(&mut *db)
         .await?;
