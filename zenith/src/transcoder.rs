@@ -8,6 +8,7 @@ use futures::future::{self, Ready};
 use tokio::process::{Child, Command};
 use tokio::sync::{mpsc, oneshot};
 
+use crate::config::Config;
 use crate::db::Db;
 
 #[derive(Clone)]
@@ -37,9 +38,16 @@ enum Request {
 }
 
 impl Transcoder {
-    pub fn new(db: Db, temp_dir: &str) -> Self {
+    pub fn new(db: Db, config: &Config) -> Self {
         let (tx, rx) = mpsc::channel(1);
-        tokio::spawn(transcoder(rx, db, temp_dir.to_string()));
+
+        tokio::spawn(transcoder(
+            rx,
+            db,
+            config.transcode_dir.to_string(),
+            config.ffmpeg_path().to_string(),
+        ));
+
         Transcoder(tx)
     }
 
@@ -83,10 +91,21 @@ impl Job {
     }
 }
 
-async fn transcoder(mut rx: mpsc::Receiver<Request>, db: Db, temp_dir: String) {
+async fn transcoder(
+    mut rx: mpsc::Receiver<Request>,
+    db: Db,
+    temp_dir: String,
+    ffmpeg_path: String,
+) {
+    let ffmpeg_path = PathBuf::from(ffmpeg_path);
     let temp_dir = PathBuf::from(temp_dir);
 
-    // Delete anything in the temp dir from a previous run
+    // Ensure transcode directory exists
+    if !temp_dir.is_dir() {
+        std::fs::create_dir_all(&temp_dir).unwrap();
+    }
+
+    // Delete anything in the transcode directory from a previous run
     std::fs::read_dir(&temp_dir)
         .unwrap()
         .for_each(|e| std::fs::remove_file(e.unwrap().path()).unwrap());
@@ -137,7 +156,7 @@ async fn transcoder(mut rx: mpsc::Receiver<Request>, db: Db, temp_dir: String) {
                                 video_id,
                                 out_dir: temp_dir.clone(),
                                 start_segment: segment,
-                                process: start_job(&temp_dir, &path, segment),
+                                process: start_job(&ffmpeg_path, &temp_dir, &path, segment),
                             }
                         } else {
                             job
@@ -147,7 +166,7 @@ async fn transcoder(mut rx: mpsc::Receiver<Request>, db: Db, temp_dir: String) {
                         video_id,
                         out_dir: temp_dir.clone(),
                         start_segment: segment,
-                        process: start_job(&temp_dir, &path, segment),
+                        process: start_job(&ffmpeg_path, &temp_dir, &path, segment),
                     },
                 };
 
@@ -189,10 +208,10 @@ fn get_segment_number_from_name(name: &str) -> Option<u32> {
     name.split('.').next().and_then(|n| n.parse().ok())
 }
 
-fn start_job(temp_dir: &Path, path: &str, segment: u32) -> Child {
+fn start_job(ffmpeg_path: &Path, temp_dir: &Path, path: &str, segment: u32) -> Child {
     let segment_name_template = temp_dir.join("%d.ts");
     let playlist_name = temp_dir.join("main.m3u8");
-    let process = Command::new("ffmpeg")
+    let process = Command::new(ffmpeg_path)
         .arg("-ss")
         .arg((segment * 3).to_string())
         .arg("-noaccurate_seek")

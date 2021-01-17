@@ -10,16 +10,18 @@ use env_logger::Env;
 use zenith::api;
 use zenith::config::Config;
 use zenith::db::Db;
+use zenith::ffmpeg::Ffprobe;
 use zenith::sync::movies::sync_movies;
 use zenith::sync::tv_shows::sync_tv_shows;
 use zenith::tmdb::TmdbClient;
 use zenith::transcoder::Transcoder;
 
 async fn sync_libraries(db: &Db, tmdb: &TmdbClient, config: &Config) -> eyre::Result<()> {
+    let ffprobe = Ffprobe::new(config.ffprobe_path());
     let mut conn = db.acquire().await?;
 
-    sync_movies(&mut conn, &tmdb, &config.movie_path).await?;
-    sync_tv_shows(&mut conn, &tmdb, &config.tv_show_path).await?;
+    sync_movies(&mut conn, &tmdb, &ffprobe, &config.movie_path).await?;
+    sync_tv_shows(&mut conn, &tmdb, &ffprobe, &config.tv_show_path).await?;
 
     Ok(())
 }
@@ -36,7 +38,7 @@ async fn main() -> eyre::Result<()> {
 
     sync_libraries(&db, &tmdb, &config).await?;
 
-    let transcoder = Transcoder::new(db.clone(), "/mnt/nyx/sda/transcoding-temp");
+    let transcoder = Transcoder::new(db.clone(), &config);
 
     HttpServer::new({
         let db = db.clone();

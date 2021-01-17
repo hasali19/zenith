@@ -11,3 +11,6 @@
 
 # App config
 config.yml
+
+# Transcoding temp directory
+/transcodes

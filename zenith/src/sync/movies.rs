@@ -4,12 +4,14 @@ use regex::Regex;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Connection, Row, SqliteConnection};
 
+use crate::ffmpeg::Ffprobe;
+use crate::metadata;
 use crate::tmdb::TmdbClient;
-use crate::{ffmpeg, metadata};
 
 pub async fn sync_movies(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
+    ffprobe: &Ffprobe,
     path: &str,
 ) -> eyre::Result<()> {
     // Find all existing movies
@@ -73,7 +75,7 @@ pub async fn sync_movies(
             None => {
                 log::info!("adding movie: {}", file_name);
 
-                let info = ffmpeg::get_video_info(&video_file).await?;
+                let info = ffprobe.get_video_info(&video_file).await?;
 
                 let release_date = year
                     .and_then(|year| time::Date::try_from_yo(year, 1).ok())

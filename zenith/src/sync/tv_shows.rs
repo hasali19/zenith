@@ -8,8 +8,9 @@ use sqlx::sqlite::SqliteRow;
 use sqlx::{Row, SqliteConnection};
 
 use crate::db::media::MediaItemType;
+use crate::ffmpeg::Ffprobe;
+use crate::metadata;
 use crate::tmdb::TmdbClient;
-use crate::{ffmpeg, metadata};
 
 lazy_static! {
     static ref REGEX: Regex = Regex::new(r"^S(\d\d)E(\d\d)\.\S+$").unwrap();
@@ -18,6 +19,7 @@ lazy_static! {
 pub async fn sync_tv_shows(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
+    ffprobe: &Ffprobe,
     path: &str,
 ) -> eyre::Result<()> {
     let mut tv_shows = sqlx::query("SELECT id FROM media_items WHERE item_type = 2")
@@ -46,7 +48,7 @@ pub async fn sync_tv_shows(
         }
 
         let path = file_path.to_str().unwrap().to_owned();
-        let id = sync_show(&mut *db, tmdb, file_name, &path, &episodes).await?;
+        let id = sync_show(&mut *db, tmdb, ffprobe, file_name, &path, &episodes).await?;
 
         tv_shows.remove(&id);
     }
@@ -98,6 +100,7 @@ fn find_episodes(path: &Path) -> eyre::Result<HashMap<i32, Vec<(i32, String)>>> 
 async fn sync_show(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
+    ffprobe: &Ffprobe,
     name: &str,
     path: &str,
     episodes: &HashMap<i32, Vec<(i32, String)>>,
@@ -149,7 +152,7 @@ async fn sync_show(
         .collect::<HashSet<_>>();
 
     for (season, episodes) in episodes {
-        seasons.remove(&sync_season(db, tmdb, id, *season, episodes).await?);
+        seasons.remove(&sync_season(db, tmdb, ffprobe, id, *season, episodes).await?);
     }
 
     for season in seasons {
@@ -162,6 +165,7 @@ async fn sync_show(
 async fn sync_season(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
+    ffprobe: &Ffprobe,
     show_id: i64,
     season: i32,
     episodes: &[(i32, String)],
@@ -208,7 +212,7 @@ async fn sync_season(
         .collect::<HashSet<i64>>();
 
     for (episode, path) in episodes {
-        episode_ids.remove(&sync_episode(db, tmdb, id, *episode, path).await?);
+        episode_ids.remove(&sync_episode(db, tmdb, ffprobe, id, *episode, path).await?);
     }
 
     for episode in episode_ids {
@@ -221,6 +225,7 @@ async fn sync_season(
 async fn sync_episode(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
+    ffprobe: &Ffprobe,
     season_id: i64,
     episode: i32,
     path: &str,
@@ -242,7 +247,7 @@ async fn sync_episode(
         None => {
             log::info!("adding tv episode: {} (season_id: {})", episode, season_id);
 
-            let info = ffmpeg::get_video_info(path).await?;
+            let info = ffprobe.get_video_info(path).await?;
 
             let sql = "
                 INSERT INTO media_items (parent_id, item_type, path, index_number)
