@@ -9,6 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,10 +22,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.work.*
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.awaitUnit
+import com.github.kittinunf.fuel.coroutines.awaitUnit
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
+import com.google.android.exoplayer2.util.MimeTypes
 import com.google.android.exoplayer2.video.VideoListener
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -42,6 +47,7 @@ class VideoPlayerActivity : AppCompatActivity() {
     private var session: MediaSessionCompat? = null
     private var connector: MediaSessionConnector? = null
 
+    @OptIn(ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_video_player)
@@ -56,6 +62,7 @@ class VideoPlayerActivity : AppCompatActivity() {
         var playbackPosition by mutableStateOf(0L)
         var duration by mutableStateOf(0L)
         var buffering by mutableStateOf(false)
+        var useTranscoding by mutableStateOf(false)
 
         lifecycleScope.launch {
             val settingsRepo = UserSettingsRepository.getInstance(this@VideoPlayerActivity)
@@ -137,43 +144,121 @@ class VideoPlayerActivity : AppCompatActivity() {
 
         composeView.setContent {
             val position = playbackPosition.toFloat() / 1000
+            val optionsState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 
-            Box(modifier = Modifier.fillMaxSize()) {
-                if (buffering) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
+            ModalBottomSheetLayout(
+                sheetState = optionsState,
+                sheetContent = {
+                    ListItem(
+                        // modifier = Modifier.clickable { useTranscoding = !useTranscoding },
+                        text = { Text("Transcoding") },
+                        trailing = {
+                            Switch(
+                                checked = useTranscoding,
+                                onCheckedChange = { checked ->
+                                    if (checked) {
+                                        player?.let { player ->
+                                            val pos = player.currentPosition
 
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .background(Color(0f, 0f, 0f, 0.5f))
-                        .padding(8.dp)
-                ) {
-                    SeekBar(
-                        position = position,
-                        max = duration.toFloat() / 1000,
-                        onSeekStart = { player?.playWhenReady = false },
-                        onSeekEnd = { pos ->
-                            player?.seekTo((pos * 1000).toLong())
-                            player?.playWhenReady = true
+                                            player.setMediaItem(
+                                                MediaItem.Builder()
+                                                    .setUri("$serverUrl/api/stream/$streamId/hls")
+                                                    .setMimeType(MimeTypes.APPLICATION_M3U8)
+                                                    .build()
+                                            )
+
+                                            player.seekTo(pos)
+                                        }
+                                    } else {
+                                        lifecycleScope.launch {
+                                            player?.let { player ->
+                                                val pos = player.currentPosition
+
+                                                player.stop()
+
+                                                Fuel.post("$serverUrl/api/stream/$streamId/hls/stop")
+                                                    .awaitUnit(scope = Dispatchers.IO)
+
+                                                player.setMediaItem(
+                                                    MediaItem.Builder()
+                                                        .setUri("$serverUrl/api/stream/$streamId/original")
+                                                        .build()
+                                                )
+
+                                                player.prepare()
+                                                player.play()
+
+                                                player.seekTo(pos)
+                                            }
+                                        }
+                                    }
+
+                                    useTranscoding = checked
+                                }
+                            )
                         }
                     )
+                }
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (buffering) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
 
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .background(Color(0f, 0f, 0f, 0.5f))
+                            .padding(8.dp)
                     ) {
-                        FloatingActionButton(onClick = {
-                            player?.let { it.playWhenReady = !it.playWhenReady }
-                        }) {
-                            Icon(
-                                vectorResource(
-                                    id = when (playbackState) {
-                                        PlaybackState.PAUSED -> R.drawable.play
-                                        PlaybackState.PLAYING -> R.drawable.pause
-                                    }
+                        SeekBar(
+                            position = position,
+                            max = duration.toFloat() / 1000,
+                            onSeekStart = { player?.playWhenReady = false },
+                            onSeekEnd = { pos ->
+                                player?.seekTo((pos * 1000).toLong())
+                                player?.playWhenReady = true
+                            }
+                        )
+
+                        ConstraintLayout(modifier = Modifier.fillMaxWidth()) {
+                            val (center, right) = createRefs()
+
+                            FloatingActionButton(
+                                modifier = Modifier.constrainAs(center) {
+                                    top.linkTo(parent.top)
+                                    bottom.linkTo(parent.bottom)
+                                    start.linkTo(parent.start)
+                                    end.linkTo(parent.end)
+                                },
+                                onClick = {
+                                    player?.let { it.playWhenReady = !it.playWhenReady }
+                                }
+                            ) {
+                                Icon(
+                                    vectorResource(
+                                        id = when (playbackState) {
+                                            PlaybackState.PAUSED -> R.drawable.play
+                                            PlaybackState.PLAYING -> R.drawable.pause
+                                        }
+                                    )
                                 )
-                            )
+                            }
+
+                            IconButton(
+                                onClick = { optionsState.show() },
+                                modifier = Modifier
+                                    .constrainAs(right) {
+                                        top.linkTo(parent.top)
+                                        bottom.linkTo(parent.bottom)
+                                        end.linkTo(parent.end)
+                                    }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Settings,
+                                    tint = Color.White
+                                )
+                            }
                         }
                     }
                 }
