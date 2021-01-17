@@ -1,15 +1,16 @@
 use std::path::{Path, PathBuf};
-use std::process::Stdio;
 use std::time::Duration;
 
 use actix_web::dev::Payload;
-use actix_web::{FromRequest, HttpRequest};
+use actix_web::{FromRequest, HttpRequest, Result};
 use futures::future::{self, Ready};
-use tokio::process::{Child, Command};
+use sqlx::SqliteConnection;
+use tokio::process::Child;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::config::Config;
 use crate::db::Db;
+use crate::ffmpeg::{Ffmpeg, TranscodeOptions};
 
 #[derive(Clone)]
 pub struct Transcoder(mpsc::Sender<Request>);
@@ -97,18 +98,16 @@ async fn transcoder(
     temp_dir: String,
     ffmpeg_path: String,
 ) {
-    let ffmpeg_path = PathBuf::from(ffmpeg_path);
-    let temp_dir = PathBuf::from(temp_dir);
+    let ffmpeg = Ffmpeg::new(ffmpeg_path);
+    let transcode_dir = PathBuf::from(temp_dir);
 
     // Ensure transcode directory exists
-    if !temp_dir.is_dir() {
-        std::fs::create_dir_all(&temp_dir).unwrap();
+    if !transcode_dir.is_dir() {
+        std::fs::create_dir_all(&transcode_dir).unwrap();
     }
 
     // Delete anything in the transcode directory from a previous run
-    std::fs::read_dir(&temp_dir)
-        .unwrap()
-        .for_each(|e| std::fs::remove_file(e.unwrap().path()).unwrap());
+    clear_dir(&transcode_dir).unwrap();
 
     log::info!("listening for requests");
 
@@ -124,77 +123,36 @@ async fn transcoder(
                 log::info!("requested segment: {}:{}", video_id, segment);
 
                 let mut conn = db.acquire().await.unwrap();
-
-                let (path,): (String,) =
-                    sqlx::query_as("SELECT path FROM video_files WHERE id = ?")
-                        .bind(video_id)
-                        .fetch_optional(&mut conn)
-                        .await
-                        .unwrap()
-                        .unwrap();
+                let path = get_video_path_by_id(&mut conn, video_id).await.unwrap();
 
                 let job = match current_job.take() {
-                    Some(mut job) => {
-                        let should_restart = job.video_id != video_id
-                            || segment < job.start_segment
-                            || job
-                                .last_segment()
-                                .map(|n| segment > n + 15)
-                                .unwrap_or(false);
-
-                        if should_restart {
-                            log::warn!("killing current transcode job");
-
-                            job.process.kill().unwrap();
-                            job.process.await.unwrap();
-
-                            std::fs::read_dir(&temp_dir)
-                                .unwrap()
-                                .for_each(|e| std::fs::remove_file(e.unwrap().path()).unwrap());
-
-                            Job {
-                                video_id,
-                                out_dir: temp_dir.clone(),
-                                start_segment: segment,
-                                process: start_job(&ffmpeg_path, &temp_dir, &path, segment),
-                            }
-                        } else {
-                            job
+                    None => start_job(&ffmpeg, &transcode_dir, video_id, &path, segment),
+                    Some(job) => match should_restart_job(&job, video_id, segment) {
+                        false => Ok(job),
+                        true => {
+                            kill_job(job, &transcode_dir).await.unwrap();
+                            start_job(&ffmpeg, &transcode_dir, video_id, &path, segment)
                         }
-                    }
-                    None => Job {
-                        video_id,
-                        out_dir: temp_dir.clone(),
-                        start_segment: segment,
-                        process: start_job(&ffmpeg_path, &temp_dir, &path, segment),
                     },
                 };
 
-                let segment_path = temp_dir.join(format!("{}.ts", segment));
+                current_job = Some(job.unwrap());
+
+                let segment_path = transcode_dir.join(format!("{}.ts", segment));
 
                 // Wait until the file is ready
                 while !segment_path.is_file() {
                     tokio::time::delay_for(Duration::from_millis(500)).await;
                 }
 
+                // Return path to the requested segment
                 tx.send(segment_path).unwrap();
-
-                current_job = Some(job);
             }
 
             Request::Cancel { video_id, tx } => {
-                if let Some(job) = &current_job {
+                if let Some(job) = current_job.take() {
                     if job.video_id == video_id {
-                        log::warn!("killing current transcode job");
-
-                        let mut job = current_job.take().unwrap();
-
-                        job.process.kill().unwrap();
-                        job.process.await.unwrap();
-
-                        std::fs::read_dir(&temp_dir)
-                            .unwrap()
-                            .for_each(|e| std::fs::remove_file(e.unwrap().path()).unwrap());
+                        kill_job(job, &transcode_dir).await.unwrap();
                     }
                 }
 
@@ -204,68 +162,79 @@ async fn transcoder(
     }
 }
 
-fn get_segment_number_from_name(name: &str) -> Option<u32> {
-    name.split('.').next().and_then(|n| n.parse().ok())
+fn clear_dir(dir: &Path) -> eyre::Result<()> {
+    for entry in std::fs::read_dir(dir)? {
+        let entry = entry?;
+        let file_type = entry.file_type().unwrap();
+        let path = entry.path();
+
+        if file_type.is_file() {
+            std::fs::remove_file(&path)?;
+        } else if file_type.is_dir() {
+            std::fs::remove_dir_all(&path)?;
+        }
+    }
+
+    Ok(())
 }
 
-fn start_job(ffmpeg_path: &Path, temp_dir: &Path, path: &str, segment: u32) -> Child {
-    let segment_name_template = temp_dir.join("%d.ts");
-    let playlist_name = temp_dir.join("main.m3u8");
-    let process = Command::new(ffmpeg_path)
-        .arg("-ss")
-        .arg((segment * 3).to_string())
-        .arg("-noaccurate_seek")
-        .arg("-i")
-        .arg(path)
-        .arg("-map_metadata")
-        .arg("-1")
-        .arg("-map_chapters")
-        .arg("-1")
-        .arg("-threads")
-        .arg("0")
-        .arg("-codec:v")
-        .arg("libx264")
-        .arg("-force_key_frames:0")
-        .arg(format!("expr:gte(t,{}+n_forced*3)", segment * 3))
-        .arg("-g")
-        .arg("72")
-        .arg("-keyint_min")
-        .arg("72")
-        .arg("-sc_threshold")
-        .arg("0")
-        .arg("-start_at_zero")
-        .arg("-vsync")
-        .arg("-1")
-        .arg("-codec:a")
-        .arg("libmp3lame")
-        .arg("-copyts")
-        .arg("-avoid_negative_ts")
-        .arg("disabled")
-        .arg("-f")
-        .arg("hls")
-        .arg("-max_delay")
-        .arg("5000000")
-        .arg("-hls_time")
-        .arg("3")
-        .arg("-individual_header_trailer")
-        .arg("0")
-        .arg("-hls_segment_type")
-        .arg("mpegts")
-        .arg("-start_number")
-        .arg(segment.to_string())
-        .arg("-hls_segment_filename")
-        .arg(segment_name_template)
-        .arg("-hls_playlist_type")
-        .arg("vod")
-        .arg("-hls_list_size")
-        .arg("0")
-        .arg("-hls_flags")
-        .arg("temp_file")
-        .arg("-y")
-        .arg(playlist_name)
-        .stderr(Stdio::null())
-        .spawn()
-        .unwrap();
+async fn get_video_path_by_id(conn: &mut SqliteConnection, id: i64) -> Option<String> {
+    let res: Option<(String,)> = sqlx::query_as("SELECT path FROM video_files WHERE id = ?")
+        .bind(id)
+        .fetch_optional(conn)
+        .await
+        .ok()
+        .flatten();
 
-    process
+    res.map(|(path,)| path)
+}
+
+fn should_restart_job(job: &Job, video_id: i64, segment: u32) -> bool {
+    job.video_id != video_id
+        || segment < job.start_segment
+        || job
+            .last_segment()
+            .map(|n| segment > n + 15)
+            .unwrap_or(false)
+}
+
+fn start_job(
+    ffmpeg: &Ffmpeg,
+    transcode_dir: &Path,
+    video_id: i64,
+    path: &str,
+    segment: u32,
+) -> eyre::Result<Job> {
+    let segment_name_template = transcode_dir.join("%d.ts");
+    let playlist_name = transcode_dir.join("main.m3u8");
+
+    let child = ffmpeg.spawn_transcode(&TranscodeOptions {
+        input_path: path,
+        start_number: segment,
+        segment_time: 3,
+        segment_filename: &segment_name_template,
+        playlist_filename: &playlist_name,
+    })?;
+
+    Ok(Job {
+        video_id,
+        out_dir: transcode_dir.to_path_buf(),
+        start_segment: segment,
+        process: child,
+    })
+}
+
+async fn kill_job(mut job: Job, transcode_dir: &Path) -> eyre::Result<()> {
+    log::warn!("killing current transcode job");
+
+    job.process.kill()?;
+    job.process.await?;
+
+    clear_dir(&transcode_dir)?;
+
+    Ok(())
+}
+
+fn get_segment_number_from_name(name: &str) -> Option<u32> {
+    name.split('.').next().and_then(|n| n.parse().ok())
 }
