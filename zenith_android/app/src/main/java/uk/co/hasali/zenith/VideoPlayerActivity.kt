@@ -5,7 +5,6 @@ import android.os.Build
 import android.os.Bundle
 import android.support.v4.media.session.MediaSessionCompat
 import android.view.*
-import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,11 +13,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.AmbientContext
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import androidx.work.*
 import com.github.kittinunf.fuel.Fuel
@@ -26,7 +23,6 @@ import com.github.kittinunf.fuel.core.awaitUnit
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
-import com.google.android.exoplayer2.util.MimeTypes
 import com.google.android.exoplayer2.video.VideoListener
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -59,6 +55,7 @@ class VideoPlayerActivity : AppCompatActivity() {
         var playbackState by mutableStateOf(PlaybackState.PLAYING)
         var playbackPosition by mutableStateOf(0L)
         var duration by mutableStateOf(0L)
+        var buffering by mutableStateOf(false)
 
         lifecycleScope.launch {
             val settingsRepo = UserSettingsRepository.getInstance(this@VideoPlayerActivity)
@@ -97,10 +94,12 @@ class VideoPlayerActivity : AppCompatActivity() {
                         }
 
                         override fun onPlaybackStateChanged(state: Int) {
+                            buffering = state == ExoPlayer.STATE_BUFFERING
                             when (state) {
                                 ExoPlayer.STATE_READY -> duration = this@apply.duration
                                 ExoPlayer.STATE_ENDED -> finish()
-                                else -> {}
+                                else -> {
+                                }
                             }
                         }
                     })
@@ -140,6 +139,10 @@ class VideoPlayerActivity : AppCompatActivity() {
             val position = playbackPosition.toFloat() / 1000
 
             Box(modifier = Modifier.fillMaxSize()) {
+                if (buffering) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -185,7 +188,8 @@ class VideoPlayerActivity : AppCompatActivity() {
         }
     }
 
-    class CleanupWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    class CleanupWorker(context: Context, params: WorkerParameters) :
+        CoroutineWorker(context, params) {
         override suspend fun doWork(): Result {
             val uri = inputData.getString("URI") ?: return Result.failure()
 
@@ -246,46 +250,4 @@ class VideoPlayerActivity : AppCompatActivity() {
             TODO()
         }
     }
-}
-
-@Composable
-fun SeekBar(
-    position: Float,
-    max: Float,
-    onSeekStart: () -> Unit = {},
-    onSeekEnd: (Float) -> Unit = {}
-) {
-    val context = AmbientContext.current
-    val view = remember {
-        SeekBar(context).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        }
-    }
-
-    onCommit(max) {
-        view.max = max.toInt()
-    }
-
-    onCommit(position) {
-        view.progress = position.toInt()
-    }
-
-    onCommit(onSeekStart, onSeekEnd) {
-        view.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
-
-            override fun onStartTrackingTouch(seekBar: SeekBar) {
-                onSeekStart()
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar) {
-                onSeekEnd(seekBar.progress.toFloat())
-            }
-        })
-    }
-
-    AndroidView(viewBlock = { view }, modifier = Modifier.padding(vertical = 8.dp))
 }
