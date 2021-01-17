@@ -55,6 +55,15 @@ pub struct TvShowSearchResult {
 }
 
 #[derive(serde::Deserialize)]
+pub struct TvSeasonResponse {
+    pub id: i32,
+    pub name: Option<String>,
+    pub air_date: Option<String>,
+    pub overview: Option<String>,
+    pub poster_path: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
 pub struct TvEpisodeResponse {
     pub id: i32,
     pub name: Option<String>,
@@ -139,6 +148,15 @@ impl TmdbClient {
         }
 
         Ok(self.client.get(url.as_str()).send().await?.json().await?)
+    }
+
+    pub async fn get_tv_season(&self, tv_id: i32, season: i32) -> eyre::Result<TvSeasonResponse> {
+        let url = format!(
+            "https://api.themoviedb.org/3/tv/{}/season/{}",
+            tv_id, season
+        );
+
+        Ok(self.client.get(&url).send().await?.json().await?)
     }
 
     pub async fn get_tv_episode(
