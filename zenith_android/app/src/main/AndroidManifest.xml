@@ -37,6 +37,10 @@
             android:theme="@style/Theme.Zenith" />
 
         <activity
+            android:name=".TvEpisodesActivity"
+            android:theme="@style/Theme.Zenith" />
+
+        <activity
             android:name=".VideoPlayerActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
             android:theme="@style/Theme.Zenith" />

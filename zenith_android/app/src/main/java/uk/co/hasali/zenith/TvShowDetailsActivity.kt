@@ -86,6 +86,15 @@ class TvShowDetailsActivity : AppCompatActivity() {
 
     @Composable
     fun TvShowDetailsScreen() {
+        fun onSeasonClick(showId: Int, season: Int) {
+            startActivity(
+                Intent(this, TvEpisodesActivity::class.java).apply {
+                    putExtra("show_id", showId)
+                    putExtra("season", season)
+                }
+            )
+        }
+
         ZenithTheme {
             Surface(color = MaterialTheme.colors.background) {
                 Box {
@@ -135,7 +144,7 @@ class TvShowDetailsActivity : AppCompatActivity() {
                                         Card(
                                             modifier = Modifier.padding(4.dp)
                                                 .preferredWidth(92.dp)
-                                                .clickable { }
+                                                .clickable { onSeasonClick(show.id, season.season) }
                                         ) {
                                             Column {
                                                 WithConstraints {
