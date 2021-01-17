@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.gesture.tapGestureFilter
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.vectorResource
@@ -58,6 +59,7 @@ class VideoPlayerActivity : AppCompatActivity() {
         val surfaceView: SurfaceView = findViewById(R.id.surface_view)
         val composeView: ComposeView = findViewById(R.id.compose_view)
 
+        var showControls by mutableStateOf(false)
         var playbackState by mutableStateOf(PlaybackState.PLAYING)
         var playbackPosition by mutableStateOf(0L)
         var duration by mutableStateOf(0L)
@@ -200,64 +202,71 @@ class VideoPlayerActivity : AppCompatActivity() {
                     )
                 }
             ) {
-                Box(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .tapGestureFilter { showControls = !showControls }
+                ) {
                     if (buffering) {
                         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                     }
 
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .background(Color(0f, 0f, 0f, 0.5f))
-                            .padding(8.dp)
-                    ) {
-                        SeekBar(
-                            position = position,
-                            max = duration.toFloat() / 1000,
-                            onSeekStart = { player?.playWhenReady = false },
-                            onSeekEnd = { pos ->
-                                player?.seekTo((pos * 1000).toLong())
-                                player?.playWhenReady = true
-                            }
-                        )
-
-                        ConstraintLayout(modifier = Modifier.fillMaxWidth()) {
-                            val (center, right) = createRefs()
-
-                            FloatingActionButton(
-                                modifier = Modifier.constrainAs(center) {
-                                    top.linkTo(parent.top)
-                                    bottom.linkTo(parent.bottom)
-                                    start.linkTo(parent.start)
-                                    end.linkTo(parent.end)
-                                },
-                                onClick = {
-                                    player?.let { it.playWhenReady = !it.playWhenReady }
+                    if (showControls) {
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .background(Color(0f, 0f, 0f, 0.5f))
+                                .padding(8.dp)
+                                .tapGestureFilter { /* Intercept tap */ }
+                        ) {
+                            SeekBar(
+                                position = position,
+                                max = duration.toFloat() / 1000,
+                                onSeekStart = { player?.playWhenReady = false },
+                                onSeekEnd = { pos ->
+                                    player?.seekTo((pos * 1000).toLong())
+                                    player?.playWhenReady = true
                                 }
-                            ) {
-                                Icon(
-                                    vectorResource(
-                                        id = when (playbackState) {
-                                            PlaybackState.PAUSED -> R.drawable.play
-                                            PlaybackState.PLAYING -> R.drawable.pause
-                                        }
-                                    )
-                                )
-                            }
+                            )
 
-                            IconButton(
-                                onClick = { optionsState.show() },
-                                modifier = Modifier
-                                    .constrainAs(right) {
+                            ConstraintLayout(modifier = Modifier.fillMaxWidth()) {
+                                val (center, right) = createRefs()
+
+                                FloatingActionButton(
+                                    modifier = Modifier.constrainAs(center) {
                                         top.linkTo(parent.top)
                                         bottom.linkTo(parent.bottom)
+                                        start.linkTo(parent.start)
                                         end.linkTo(parent.end)
+                                    },
+                                    onClick = {
+                                        player?.let { it.playWhenReady = !it.playWhenReady }
                                     }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Settings,
-                                    tint = Color.White
-                                )
+                                ) {
+                                    Icon(
+                                        vectorResource(
+                                            id = when (playbackState) {
+                                                PlaybackState.PAUSED -> R.drawable.play
+                                                PlaybackState.PLAYING -> R.drawable.pause
+                                            }
+                                        )
+                                    )
+                                }
+
+                                IconButton(
+                                    onClick = { optionsState.show() },
+                                    modifier = Modifier
+                                        .constrainAs(right) {
+                                            top.linkTo(parent.top)
+                                            bottom.linkTo(parent.bottom)
+                                            end.linkTo(parent.end)
+                                        }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Settings,
+                                        tint = Color.White
+                                    )
+                                }
                             }
                         }
                     }
