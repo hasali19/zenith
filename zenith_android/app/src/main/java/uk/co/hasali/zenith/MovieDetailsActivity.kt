@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -71,10 +73,16 @@ class MovieDetailsActivity : AppCompatActivity() {
             )
         }
 
+        val scrollState = rememberScrollState()
+
         ZenithTheme {
             Surface(color = MaterialTheme.colors.background) {
                 Box {
-                    ConstraintLayout(modifier = Modifier.fillMaxSize()) {
+                    ConstraintLayout(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(state = scrollState)
+                    ) {
                         val (backdrop, fab, content) = createRefs()
 
                         WithConstraints(
@@ -97,7 +105,8 @@ class MovieDetailsActivity : AppCompatActivity() {
 
                         FloatingActionButton(
                             onClick = { onPlayButtonClick() },
-                            modifier = Modifier.padding(32.dp)
+                            modifier = Modifier
+                                .padding(32.dp)
                                 .constrainAs(fab) {
                                     end.linkTo(parent.end)
                                     centerAround(backdrop.bottom)
@@ -107,7 +116,8 @@ class MovieDetailsActivity : AppCompatActivity() {
                         }
 
                         Column(
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier
+                                .padding(16.dp)
                                 .constrainAs(content) {
                                     top.linkTo(backdrop.bottom)
                                     start.linkTo(parent.start)
