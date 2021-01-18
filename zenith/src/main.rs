@@ -8,11 +8,12 @@ use actix_web::{web, App, HttpRequest, HttpServer, Responder};
 
 use env_logger::Env;
 
+use zenith::api;
 use zenith::config::Config;
 use zenith::db::Db;
+use zenith::sync::SyncService;
 use zenith::tmdb::TmdbClient;
 use zenith::transcoder::Transcoder;
-use zenith::{api, sync};
 
 #[actix_web::main]
 async fn main() -> eyre::Result<()> {
@@ -24,14 +25,7 @@ async fn main() -> eyre::Result<()> {
     let tmdb = TmdbClient::new(&config.tmdb_access_token);
     let db = Db::init(config.db_path()).await?;
     let transcoder = Transcoder::new(db.clone(), &config);
-
-    tokio::spawn({
-        let config = config.clone();
-        let db = db.clone();
-        async move {
-            sync::full_library_sync(&db, &tmdb, config).await.unwrap();
-        }
-    });
+    let sync_service = SyncService::new(db.clone(), tmdb, config.clone());
 
     HttpServer::new({
         let db = db.clone();
@@ -39,6 +33,7 @@ async fn main() -> eyre::Result<()> {
             App::new()
                 .app_data(db.clone())
                 .app_data(transcoder.clone())
+                .app_data(sync_service.clone())
                 .wrap(NormalizePath::new(TrailingSlash::Trim))
                 .wrap(Logger::default())
                 .service(api::service("/api"))

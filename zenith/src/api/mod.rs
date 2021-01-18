@@ -1,3 +1,4 @@
+pub mod library;
 pub mod movies;
 pub mod stream;
 pub mod tv_shows;
@@ -10,6 +11,7 @@ pub type ApiResult<T> = Result<T, ApiError>;
 
 pub fn service(path: &str) -> impl HttpServiceFactory {
     web::scope(path)
+        .service(library::service("/library"))
         .service(movies::service("/movies"))
         .service(tv_shows::service("/tv_shows"))
         .service(stream::service("/stream"))
