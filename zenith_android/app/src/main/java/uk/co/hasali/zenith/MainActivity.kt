@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,7 +51,13 @@ class MainActivity : AppCompatActivity() {
                 finish()
             } else {
                 setContent {
-                    ZenithApp(serverUrl = serverUrl)
+                    ZenithApp(
+                        serverUrl = serverUrl,
+                        onLaunchSetup = {
+                            startActivity(Intent(this@MainActivity, SetupActivity::class.java))
+                            finish()
+                        }
+                    )
                 }
             }
         }
@@ -70,14 +77,15 @@ sealed class Screen(val name: String, val icon: @Composable () -> Unit) {
 }
 
 @Composable
-fun ZenithApp(serverUrl: String) {
+fun ZenithApp(serverUrl: String, onLaunchSetup: () -> Unit = {}) {
     var screen: Screen by remember { mutableStateOf(Screen.Home) }
 
     ZenithTheme {
         TopLevelScreenScaffold(
             screens = listOf(Screen.Home, Screen.Movies, Screen.TvShows),
             currentScreen = screen,
-            onScreenChange = { screen = it }
+            onScreenChange = { screen = it },
+            onLaunchSetup = onLaunchSetup,
         ) {
             Crossfade(current = screen) { screen ->
                 when (screen) {
@@ -95,11 +103,31 @@ fun TopLevelScreenScaffold(
     screens: List<Screen>,
     currentScreen: Screen,
     onScreenChange: (Screen) -> Unit,
+    onLaunchSetup: () -> Unit,
     content: @Composable () -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(text = "Zenith") })
+            TopAppBar(
+                title = { Text(text = "Zenith") },
+                actions = {
+                    DropdownMenu(
+                        toggle = {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(imageVector = Icons.Default.MoreVert)
+                            }
+                        },
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(onClick = onLaunchSetup) {
+                            Text("Change server")
+                        }
+                    }
+                }
+            )
         },
         bodyContent = {
             Box(modifier = Modifier.padding(it)) {
