@@ -94,6 +94,8 @@ impl Ffmpeg {
             .arg("0")
             .arg("-codec:v")
             .arg("libx264")
+            .arg("-preset")
+            .arg("veryfast")
             .arg("-force_key_frames:0")
             .arg(format!("expr:gte(t,{}+n_forced*3)", start_time))
             .arg("-g")
