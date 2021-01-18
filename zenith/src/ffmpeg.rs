@@ -69,6 +69,7 @@ pub struct TranscodeOptions<'a> {
     pub segment_time: u32,
     pub segment_filename: &'a Path,
     pub playlist_filename: &'a Path,
+    pub use_hw_encoder: bool,
 }
 
 impl Ffmpeg {
@@ -80,8 +81,9 @@ impl Ffmpeg {
 
     pub fn spawn_transcode(&self, options: &TranscodeOptions) -> eyre::Result<Child> {
         let start_time = options.start_number * options.segment_time;
-        let child = Command::new(&self.exe_path)
-            .arg("-ss")
+        let mut cmd = Command::new(&self.exe_path);
+
+        cmd.arg("-ss")
             .arg(start_time.to_string())
             .arg("-noaccurate_seek")
             .arg("-i")
@@ -92,10 +94,15 @@ impl Ffmpeg {
             .arg("-1")
             .arg("-threads")
             .arg("0")
-            .arg("-codec:v")
-            .arg("libx264")
-            .arg("-preset")
-            .arg("veryfast")
+            .arg("-codec:v");
+
+        if options.use_hw_encoder {
+            cmd.arg("h264_nvenc");
+        } else {
+            cmd.arg("libx264").arg("-preset").arg("veryfast");
+        }
+
+        let child = cmd
             .arg("-force_key_frames:0")
             .arg(format!("expr:gte(t,{}+n_forced*3)", start_time))
             .arg("-g")

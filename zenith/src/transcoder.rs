@@ -214,6 +214,10 @@ fn start_job(
         segment_time: 3,
         segment_filename: &segment_name_template,
         playlist_filename: &playlist_name,
+        // TODO: Don't hardcode this
+        // - Might be a good idea to check what encoders ffmpeg supports
+        // - Worst case, just let the user pick between hw/sw encoder
+        use_hw_encoder: true,
     })?;
 
     Ok(Job {
