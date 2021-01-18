@@ -225,10 +225,17 @@ fn start_job(
 }
 
 async fn kill_job(mut job: Job, transcode_dir: &Path) -> eyre::Result<()> {
-    log::warn!("killing current transcode job");
+    log::info!("killing current transcode job");
 
-    job.process.kill()?;
-    job.process.await?;
+    if let Err(e) = job.process.kill() {
+        if let std::io::ErrorKind::PermissionDenied = e.kind() {
+            log::warn!("child has already exited")
+        } else {
+            log::error!("failed to kill child: {:?}", e.kind());
+        }
+    } else {
+        job.process.await?;
+    }
 
     clear_dir(&transcode_dir)?;
 
