@@ -96,6 +96,7 @@ impl Ffmpeg {
             cmd.arg_pair("-c:v", "h264_nvenc");
         } else {
             cmd.arg_pair("-c:v", "libx264");
+            cmd.arg_pair("-preset", "veryfast");
         }
 
         cmd.arg_pair("-c:a", "libmp3lame")
