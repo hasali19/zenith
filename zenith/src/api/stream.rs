@@ -1,18 +1,22 @@
+use std::sync::Arc;
+
 use actix_files::NamedFile;
 use actix_web::dev::HttpServiceFactory;
+use actix_web::web::Bytes;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
+use tokio::stream::StreamExt;
+use tokio_util::codec::{BytesCodec, FramedRead};
 
+use crate::config::Config;
 use crate::db::Db;
-use crate::transcoder::Transcoder;
+use crate::ffmpeg::{Ffmpeg, TranscodeOptions};
 
 use super::{ApiError, ApiResult};
 
 pub fn service(path: &str) -> impl HttpServiceFactory {
     web::scope(path)
         .route("/{id}/original", web::get().to(get_original))
-        .route("/{id}/hls", web::get().to(get_hls_playlist))
-        .route("/{id}/hls/{segment}.ts", web::get().to(get_hls_segment))
-        .route("/{id}/hls/stop", web::post().to(stop_hls_transcoding))
+        .route("/{id}/transcode", web::get().to(get_transcoded_stream))
         .route("/{id}/info", web::get().to(get_stream_info))
         .default_service(web::route().to(HttpResponse::NotFound))
 }
@@ -34,67 +38,58 @@ async fn get_original(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Respond
     Ok(NamedFile::open(path))
 }
 
-async fn get_hls_playlist(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder> {
+#[derive(serde::Deserialize)]
+struct Query {
+    #[serde(default)]
+    start: u64,
+}
+
+async fn get_transcoded_stream(
+    req: HttpRequest,
+    path: web::Path<(i64,)>,
+    query: web::Query<Query>,
+    db: Db,
+) -> ApiResult<impl Responder> {
     let (id,) = path.into_inner();
+    let query = query.into_inner();
+    let config: &Arc<Config> = req.app_data().unwrap();
     let mut conn = db.acquire().await?;
 
-    let (_path, duration): (String, f64) =
-        sqlx::query_as("SELECT path, duration FROM video_files WHERE id = ?")
-            .bind(id)
-            .fetch_optional(&mut conn)
-            .await?
-            .ok_or(ApiError::NotFound)?;
+    let path: Option<(String,)> = sqlx::query_as("SELECT path FROM video_files WHERE id = ?")
+        .bind(id)
+        .fetch_optional(&mut conn)
+        .await?;
 
-    let segments = (duration / 3.0).ceil() as i32;
-    let mut playlist = String::new();
+    let path = match path {
+        Some((path,)) => path,
+        None => return Err(ApiError::NotFound),
+    };
 
-    playlist.push_str("#EXTM3U\n");
-    playlist.push_str("#EXT-X-PLAYLIST-TYPE:VOD\n");
-    playlist.push_str("#EXT-X-VERSION:3\n");
-    playlist.push_str("#EXT-X-TARGETDURATION:3\n");
-    playlist.push_str("#EXT-X-MEDIA-SEQUENCE:0\n");
+    let (mut tx, rx) = tokio::sync::mpsc::channel(1);
 
-    for i in 0..segments {
-        let length = if i == segments - 1 {
-            3.0 * (1 - segments) as f64 + duration
-        } else {
-            3.0
-        };
+    let ffmpeg = Ffmpeg::new(config.ffmpeg_path());
+    let mut child = ffmpeg.spawn_transcode(&TranscodeOptions {
+        input_path: &path,
+        start_time: query.start,
+        use_hw_encoder: false,
+    })?;
 
-        playlist.push_str(&format!("#EXTINF:{:.8},\n", length));
-        playlist.push_str(&format!("hls/{}.ts\n", i));
-    }
+    actix_web::rt::spawn(async move {
+        let stdout = child.stdout.as_mut().unwrap();
+        let mut stream = FramedRead::new(stdout, BytesCodec::new());
 
-    playlist.push_str("#EXT-X-ENDLIST\n");
+        while let Some(v) = stream.next().await {
+            let v = v.map(Bytes::from).map_err(actix_web::Error::from);
+            if tx.send(v).await.is_err() {
+                child.kill().unwrap();
+                break;
+            }
+        }
 
-    Ok(HttpResponse::Ok()
-        .content_type("application/x-mpegURL")
-        .header("Access-Control-Allow-Origin", "*")
-        .body(playlist))
-}
+        child.await.unwrap();
+    });
 
-async fn get_hls_segment(
-    req: HttpRequest,
-    path: web::Path<(i64, u32)>,
-    mut transcoder: Transcoder,
-) -> ApiResult<impl Responder> {
-    let (id, segment) = path.into_inner();
-    let segment_path = transcoder.transcode_segment(id, segment).await;
-
-    Ok(NamedFile::open(segment_path)?
-        .into_response(&req)?
-        .with_header("Access-Control-Allow-Origin", "*")
-        .respond_to(&req)
-        .await)
-}
-
-async fn stop_hls_transcoding(
-    path: web::Path<(i64,)>,
-    mut transcoder: Transcoder,
-) -> ApiResult<impl Responder> {
-    let (id,) = path.into_inner();
-    transcoder.cancel(id).await;
-    Ok(HttpResponse::Ok())
+    Ok(HttpResponse::Ok().content_type("video/mp4").streaming(rx))
 }
 
 #[derive(serde::Serialize)]

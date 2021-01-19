@@ -1,8 +1,20 @@
-use std::path::Path;
+use std::ffi::OsStr;
 use std::process::Stdio;
 
 use eyre::eyre;
 use tokio::process::{Child, Command};
+
+trait CommandExt {
+    fn arg_pair(&mut self, arg1: impl AsRef<OsStr>, arg2: impl AsRef<OsStr>) -> &mut Self;
+}
+
+impl CommandExt for Command {
+    fn arg_pair(&mut self, arg1: impl AsRef<OsStr>, arg2: impl AsRef<OsStr>) -> &mut Self {
+        self.arg(arg1);
+        self.arg(arg2);
+        self
+    }
+}
 
 pub struct Ffprobe {
     exe_path: String,
@@ -31,10 +43,8 @@ impl Ffprobe {
 
     pub async fn get_video_info(&self, path: &str) -> eyre::Result<VideoInfo> {
         let output = Command::new(&self.exe_path)
-            .arg("-loglevel")
-            .arg("error")
-            .arg("-print_format")
-            .arg("json")
+            .arg_pair("-loglevel", "error")
+            .arg_pair("-print_format", "json")
             .arg("-show_format")
             .arg(path)
             .stdout(Stdio::piped())
@@ -65,10 +75,7 @@ pub struct Ffmpeg {
 
 pub struct TranscodeOptions<'a> {
     pub input_path: &'a str,
-    pub start_number: u32,
-    pub segment_time: u32,
-    pub segment_filename: &'a Path,
-    pub playlist_filename: &'a Path,
+    pub start_time: u64,
     pub use_hw_encoder: bool,
 }
 
@@ -79,71 +86,24 @@ impl Ffmpeg {
         }
     }
 
-    pub fn spawn_transcode(&self, options: &TranscodeOptions) -> eyre::Result<Child> {
-        let start_time = options.start_number * options.segment_time;
+    pub fn spawn_transcode(&self, options: &TranscodeOptions) -> std::io::Result<Child> {
         let mut cmd = Command::new(&self.exe_path);
 
-        cmd.arg("-ss")
-            .arg(start_time.to_string())
-            .arg("-noaccurate_seek")
-            .arg("-i")
-            .arg(options.input_path)
-            .arg("-map_metadata")
-            .arg("-1")
-            .arg("-map_chapters")
-            .arg("-1")
-            .arg("-threads")
-            .arg("0")
-            .arg("-codec:v");
+        cmd.arg_pair("-ss", options.start_time.to_string())
+            .arg_pair("-i", options.input_path);
 
         if options.use_hw_encoder {
-            cmd.arg("h264_nvenc");
+            cmd.arg_pair("-c:v", "h264_nvenc");
         } else {
-            cmd.arg("libx264").arg("-preset").arg("veryfast");
+            cmd.arg_pair("-c:v", "libx264");
         }
 
-        let child = cmd
-            .arg("-force_key_frames:0")
-            .arg(format!("expr:gte(t,{}+n_forced*3)", start_time))
-            .arg("-g")
-            .arg("72")
-            .arg("-keyint_min")
-            .arg("72")
-            .arg("-sc_threshold")
-            .arg("0")
-            .arg("-start_at_zero")
-            .arg("-vsync")
-            .arg("-1")
-            .arg("-codec:a")
-            .arg("libmp3lame")
-            .arg("-copyts")
-            .arg("-avoid_negative_ts")
-            .arg("disabled")
-            .arg("-f")
-            .arg("hls")
-            .arg("-max_delay")
-            .arg("5000000")
-            .arg("-hls_time")
-            .arg("3")
-            .arg("-individual_header_trailer")
-            .arg("0")
-            .arg("-hls_segment_type")
-            .arg("mpegts")
-            .arg("-start_number")
-            .arg(options.start_number.to_string())
-            .arg("-hls_segment_filename")
-            .arg(options.segment_filename)
-            .arg("-hls_playlist_type")
-            .arg("vod")
-            .arg("-hls_list_size")
-            .arg("0")
-            .arg("-hls_flags")
-            .arg("temp_file")
-            .arg("-y")
-            .arg(options.playlist_filename)
-            .stderr(Stdio::null())
-            .spawn()?;
-
-        Ok(child)
+        cmd.arg_pair("-c:a", "libmp3lame")
+            .arg_pair("-f", "mp4")
+            .arg_pair("-movflags", "frag_keyframe+empty_moov")
+            .arg("pipe:1")
+            .stdout(Stdio::piped())
+            .stderr(Stdio::inherit())
+            .spawn()
     }
 }

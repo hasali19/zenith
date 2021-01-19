@@ -13,7 +13,6 @@ use zenith::config::Config;
 use zenith::db::Db;
 use zenith::sync::SyncService;
 use zenith::tmdb::TmdbClient;
-use zenith::transcoder::Transcoder;
 
 #[actix_web::main]
 async fn main() -> eyre::Result<()> {
@@ -24,15 +23,14 @@ async fn main() -> eyre::Result<()> {
     let config = Arc::new(Config::load("config.yml")?);
     let tmdb = TmdbClient::new(&config.tmdb_access_token);
     let db = Db::init(config.db_path()).await?;
-    let transcoder = Transcoder::new(db.clone(), &config);
     let sync_service = SyncService::new(db.clone(), tmdb, config.clone());
 
     HttpServer::new({
         let db = db.clone();
         move || {
             App::new()
+                .app_data(config.clone())
                 .app_data(db.clone())
-                .app_data(transcoder.clone())
                 .app_data(sync_service.clone())
                 .wrap(NormalizePath::new(TrailingSlash::Trim))
                 .wrap(Logger::default())
