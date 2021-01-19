@@ -84,7 +84,7 @@ class VideoPlayerActivity : AppCompatActivity() {
                             width: Int,
                             height: Int,
                             unappliedRotationDegrees: Int,
-                            pixelWidthHeightRatio: Float
+                            pixelWidthHeightRatio: Float,
                         ) {
                             // Set the aspect ratio for the SurfaceView
                             val aspectRatio =
@@ -141,7 +141,16 @@ class VideoPlayerActivity : AppCompatActivity() {
 
         composeView.setContent {
             val position = playbackPosition.toFloat() / 1000
-            val optionsState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+
+            fun setPlayerPosition(pos: Long) {
+                start = pos
+                player?.let { player ->
+                    player.stop()
+                    player.setMediaItem(MediaItem.fromUri("$serverUrl/api/stream/$streamId/transcode?start=$start"))
+                    player.prepare()
+                    player.play()
+                }
+            }
 
             Box(
                 modifier = Modifier
@@ -164,23 +173,27 @@ class VideoPlayerActivity : AppCompatActivity() {
                             position = start + position,
                             max = duration.toFloat(),
                             onSeekStart = { player?.playWhenReady = false },
-                            onSeekEnd = { pos ->
-                                start = pos.toLong()
-
-                                player?.let { player ->
-                                    player.stop()
-                                    player.setMediaItem(MediaItem.fromUri("$serverUrl/api/stream/$streamId/transcode?start=$start"))
-                                    player.prepare()
-                                    player.play()
-                                }
-                            }
+                            onSeekEnd = { setPlayerPosition(it.toLong()) }
                         )
 
                         Row(
                             horizontalArrangement = Arrangement.Center,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
+                            IconButton(
+                                modifier = Modifier.padding(8.dp),
+                                onClick = {
+                                    setPlayerPosition(maxOf(0L, start + position.toLong() - 10))
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = vectorResource(id = R.drawable.rewind_10),
+                                    tint = Color.White,
+                                )
+                            }
+
                             FloatingActionButton(
+                                modifier = Modifier.padding(8.dp),
                                 onClick = {
                                     player?.let { it.playWhenReady = !it.playWhenReady }
                                 }
@@ -192,6 +205,19 @@ class VideoPlayerActivity : AppCompatActivity() {
                                             PlaybackState.PLAYING -> R.drawable.pause
                                         }
                                     )
+                                )
+                            }
+
+                            IconButton(
+                                modifier = Modifier.padding(8.dp),
+                                onClick = {
+                                    setPlayerPosition(minOf(duration,
+                                        start + position.toLong() + 30))
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = vectorResource(id = R.drawable.fast_forward_30),
+                                    tint = Color.White,
                                 )
                             }
                         }
