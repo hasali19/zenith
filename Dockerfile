@@ -1,4 +1,4 @@
-FROM rustlang/rust:nightly-buster as builder-rust
+FROM rust:1.49-buster as builder-rust
 WORKDIR /usr/src/zenith
 COPY Cargo.* ./
 COPY . .
@@ -11,7 +11,7 @@ RUN npm install
 COPY zenith_web .
 RUN npm run build
 
-FROM ubuntu:focal
+FROM nvidia/cuda:11.2.0-base
 WORKDIR /app
 RUN apt-get update && apt-get install -y libssl1.1 libcurl4 ffmpeg
 COPY --from=builder-rust /usr/local/cargo/bin/zenith /usr/local/bin/zenith
