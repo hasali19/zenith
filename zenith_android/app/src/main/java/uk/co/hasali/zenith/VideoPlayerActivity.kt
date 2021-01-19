@@ -8,8 +8,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -168,21 +166,21 @@ class VideoPlayerActivity : AppCompatActivity() {
                             onSeekStart = { player?.playWhenReady = false },
                             onSeekEnd = { pos ->
                                 start = pos.toLong()
-                                player?.setMediaItem(MediaItem.fromUri("$serverUrl/api/stream/$streamId/transcode?start=$start"))
-                                player?.playWhenReady = true
+
+                                player?.let { player ->
+                                    player.stop()
+                                    player.setMediaItem(MediaItem.fromUri("$serverUrl/api/stream/$streamId/transcode?start=$start"))
+                                    player.prepare()
+                                    player.play()
+                                }
                             }
                         )
 
-                        ConstraintLayout(modifier = Modifier.fillMaxWidth()) {
-                            val (center, right) = createRefs()
-
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
                             FloatingActionButton(
-                                modifier = Modifier.constrainAs(center) {
-                                    top.linkTo(parent.top)
-                                    bottom.linkTo(parent.bottom)
-                                    this.start.linkTo(parent.start)
-                                    end.linkTo(parent.end)
-                                },
                                 onClick = {
                                     player?.let { it.playWhenReady = !it.playWhenReady }
                                 }
@@ -194,21 +192,6 @@ class VideoPlayerActivity : AppCompatActivity() {
                                             PlaybackState.PLAYING -> R.drawable.pause
                                         }
                                     )
-                                )
-                            }
-
-                            IconButton(
-                                onClick = { optionsState.show() },
-                                modifier = Modifier
-                                    .constrainAs(right) {
-                                        top.linkTo(parent.top)
-                                        bottom.linkTo(parent.bottom)
-                                        end.linkTo(parent.end)
-                                    }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Settings,
-                                    tint = Color.White
                                 )
                             }
                         }
