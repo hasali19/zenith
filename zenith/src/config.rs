@@ -7,6 +7,8 @@ pub struct Config {
     pub tv_show_path: String,
     pub tmdb_access_token: String,
     pub transcode_dir: String,
+    #[serde(default)]
+    pub use_hw_encoder: bool,
     db_path: Option<String>,
     ffprobe_path: Option<String>,
     ffmpeg_path: Option<String>,

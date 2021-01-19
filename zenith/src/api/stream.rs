@@ -71,7 +71,7 @@ async fn get_transcoded_stream(
     let mut child = ffmpeg.spawn_transcode(&TranscodeOptions {
         input_path: &path,
         start_time: query.start,
-        use_hw_encoder: false,
+        use_hw_encoder: config.use_hw_encoder,
     })?;
 
     actix_web::rt::spawn(async move {
