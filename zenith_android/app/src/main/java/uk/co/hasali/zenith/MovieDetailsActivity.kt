@@ -43,6 +43,7 @@ data class MovieDetails(
 class MovieDetailsActivity : AppCompatActivity() {
 
     private lateinit var movie: MovieDetails
+    private lateinit var stream: VideoPlayerActivity.StreamInfo
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +56,9 @@ class MovieDetailsActivity : AppCompatActivity() {
             val serverUrl = settings.serverUrl!!
 
             movie = Fuel.get("$serverUrl/api/movies/$movieId")
+                .awaitObject(gsonDeserializer())
+
+            stream = Fuel.get("$serverUrl/api/stream/${movie.streamId}/info")
                 .awaitObject(gsonDeserializer())
 
             setContent {
@@ -117,7 +121,7 @@ class MovieDetailsActivity : AppCompatActivity() {
 
                         Column(
                             modifier = Modifier
-                                .padding(16.dp)
+                                .padding(horizontal = 16.dp, vertical = 32.dp)
                                 .constrainAs(content) {
                                     top.linkTo(backdrop.bottom)
                                     start.linkTo(parent.start)
@@ -130,10 +134,23 @@ class MovieDetailsActivity : AppCompatActivity() {
                                     style = MaterialTheme.typography.h6
                                 )
 
-                                Text(
-                                    text = movie.year?.toString() ?: "",
-                                    style = MaterialTheme.typography.body2
-                                )
+                                Row {
+                                    Text(
+                                        text = movie.year?.toString() ?: "",
+                                        style = MaterialTheme.typography.body2
+                                    )
+
+                                    Text(
+                                        text = "\u2022",
+                                        style = MaterialTheme.typography.body2,
+                                        modifier = Modifier.padding(horizontal = 8.dp),
+                                    )
+
+                                    Text(
+                                        text = formatDuration(stream.duration),
+                                        style = MaterialTheme.typography.body2
+                                    )
+                                }
                             }
 
                             Spacer(modifier = Modifier.preferredHeight(16.dp))
@@ -150,5 +167,16 @@ class MovieDetailsActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+}
+
+private fun formatDuration(duration: Float): String {
+    val value = duration.toLong()
+    return if (value <= 90 * 60) {
+        "${value / 60}m"
+    } else {
+        val hours = value / 3600
+        val minutes = (value % 3600) / 60
+        "${hours}h ${minutes}m"
     }
 }
