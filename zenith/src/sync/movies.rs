@@ -75,7 +75,13 @@ pub async fn sync_movies(
             None => {
                 log::info!("adding movie: {}", file_name);
 
-                let info = ffprobe.get_video_info(&video_file).await?;
+                let info = match ffprobe.get_video_info(&video_file).await {
+                    Ok(ingo) => ingo,
+                    Err(e) => {
+                        log::warn!("{}", e);
+                        continue;
+                    }
+                };
 
                 let release_date = year
                     .and_then(|year| time::Date::try_from_yo(year, 1).ok())

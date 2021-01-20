@@ -13,6 +13,7 @@ use zenith::config::Config;
 use zenith::db::Db;
 use zenith::sync::SyncService;
 use zenith::tmdb::TmdbClient;
+use zenith::watcher::FileWatcher;
 
 #[actix_web::main]
 async fn main() -> eyre::Result<()> {
@@ -24,6 +25,18 @@ async fn main() -> eyre::Result<()> {
     let tmdb = TmdbClient::new(&config.tmdb_access_token);
     let db = Db::init(config.db_path()).await?;
     let sync_service = SyncService::new(db.clone(), tmdb, config.clone());
+
+    let mut watcher = FileWatcher::spawn({
+        let mut sync_service = sync_service.clone();
+        move |_| {
+            // Run sync anytime anything changes
+            // TODO: Make this more clever
+            sync_service.start_full_sync();
+        }
+    });
+
+    watcher.watch(&config.movie_path);
+    watcher.watch(&config.tv_show_path);
 
     HttpServer::new({
         let db = db.clone();

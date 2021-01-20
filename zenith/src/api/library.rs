@@ -12,6 +12,6 @@ pub fn service(path: &str) -> impl HttpServiceFactory {
 }
 
 async fn sync(mut sync_service: SyncService) -> ApiResult<impl Responder> {
-    sync_service.start_full_sync().await;
+    sync_service.start_full_sync();
     Ok(HttpResponse::Ok())
 }

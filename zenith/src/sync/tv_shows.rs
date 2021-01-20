@@ -218,7 +218,14 @@ async fn sync_season(
         .collect::<HashSet<i64>>();
 
     for (episode, path) in episodes {
-        episode_ids.remove(&sync_episode(db, tmdb, ffprobe, id, *episode, path).await?);
+        match sync_episode(db, tmdb, ffprobe, id, *episode, path).await {
+            Ok(id) => {
+                episode_ids.remove(&id);
+            }
+            Err(e) => {
+                log::warn!("{}", e);
+            }
+        }
     }
 
     for episode in episode_ids {

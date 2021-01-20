@@ -6,7 +6,7 @@ use std::sync::Arc;
 use actix_web::dev::Payload;
 use actix_web::{FromRequest, HttpRequest};
 use futures::future::{self, Ready};
-use tokio::sync::mpsc::{self, Receiver, Sender};
+use tokio::sync::mpsc;
 
 use crate::config::Config;
 use crate::db::Db;
@@ -14,7 +14,7 @@ use crate::ffmpeg::Ffprobe;
 use crate::tmdb::TmdbClient;
 
 #[derive(Clone)]
-pub struct SyncService(Sender<Request>);
+pub struct SyncService(mpsc::UnboundedSender<Request>);
 
 impl FromRequest for SyncService {
     type Error = ();
@@ -33,22 +33,40 @@ enum Request {
 
 impl SyncService {
     pub fn new(db: Db, tmdb: TmdbClient, config: Arc<Config>) -> Self {
-        let (tx, rx) = mpsc::channel(1);
+        let (tx, rx) = mpsc::unbounded_channel();
         tokio::spawn(sync_service(rx, db, tmdb, config));
         SyncService(tx)
     }
 
-    pub async fn start_full_sync(&mut self) {
-        self.0.send(Request::StartFullSync).await.unwrap();
+    pub fn start_full_sync(&mut self) {
+        self.0.send(Request::StartFullSync).unwrap();
     }
 }
 
-async fn sync_service(mut rx: Receiver<Request>, db: Db, tmdb: TmdbClient, config: Arc<Config>) {
-    full_sync(&db, &tmdb, &config).await.unwrap();
+async fn sync_service(
+    mut rx: mpsc::UnboundedReceiver<Request>,
+    db: Db,
+    tmdb: TmdbClient,
+    config: Arc<Config>,
+) {
+    let tmdb = Arc::new(tmdb);
+
+    if let Err(e) = full_sync(&db, &tmdb, &config).await {
+        log::error!("sync failed: {}", e.to_string());
+    }
 
     while let Some(req) = rx.recv().await {
         match req {
-            Request::StartFullSync => full_sync(&db, &tmdb, &config).await.unwrap(),
+            Request::StartFullSync => {
+                // Consume all pending requests, to avoid running unnecessary sync jobs
+                // TODO: This will break if other request types are added
+                while rx.try_recv().is_ok() {}
+
+                // Actually do the sync
+                if let Err(e) = full_sync(&db, &tmdb, &config).await {
+                    log::error!("sync failed: {}", e.to_string());
+                }
+            }
         }
     }
 }
@@ -61,6 +79,8 @@ async fn full_sync(db: &Db, tmdb: &TmdbClient, config: &Config) -> eyre::Result<
 
     movies::sync_movies(&mut conn, &tmdb, &ffprobe, &config.movie_path).await?;
     tv_shows::sync_tv_shows(&mut conn, &tmdb, &ffprobe, &config.tv_show_path).await?;
+
+    log::info!("sync complete");
 
     Ok(())
 }

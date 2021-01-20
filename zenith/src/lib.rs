@@ -6,3 +6,4 @@ pub mod metadata;
 pub mod sync;
 pub mod tmdb;
 pub mod utils;
+pub mod watcher;
