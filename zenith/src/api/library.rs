@@ -1,17 +1,11 @@
-use actix_web::dev::HttpServiceFactory;
-use actix_web::{web, HttpResponse, Responder};
+use hyper::{Body, Response};
 
-use crate::sync::SyncService;
+use crate::server::App;
+use crate::AppState;
 
-use super::ApiResult;
-
-pub fn service(path: &str) -> impl HttpServiceFactory {
-    web::scope(path)
-        .route("/sync", web::post().to(sync))
-        .default_service(web::route().to(HttpResponse::NotFound))
-}
-
-async fn sync(mut sync_service: SyncService) -> ApiResult<impl Responder> {
-    sync_service.start_full_sync();
-    Ok(HttpResponse::Ok())
+pub fn configure(app: &mut App<AppState>) {
+    app.post("/api/library", |mut state: AppState, _| async move {
+        state.sync_service.start_full_sync();
+        Response::new(Body::empty())
+    });
 }

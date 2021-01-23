@@ -3,9 +3,7 @@ pub mod tv_shows;
 
 use std::sync::Arc;
 
-use actix_web::dev::Payload;
-use actix_web::{FromRequest, HttpRequest};
-use futures::future::{self, Ready};
+use futures::FutureExt;
 use tokio::sync::mpsc;
 
 use crate::config::Config;
@@ -15,16 +13,6 @@ use crate::tmdb::TmdbClient;
 
 #[derive(Clone)]
 pub struct SyncService(mpsc::UnboundedSender<Request>);
-
-impl FromRequest for SyncService {
-    type Error = ();
-    type Future = Ready<Result<Self, Self::Error>>;
-    type Config = ();
-
-    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        future::ok(req.app_data::<Self>().unwrap().clone())
-    }
-}
 
 #[derive(Debug)]
 enum Request {
@@ -60,7 +48,7 @@ async fn sync_service(
             Request::StartFullSync => {
                 // Consume all pending requests, to avoid running unnecessary sync jobs
                 // TODO: This will break if other request types are added
-                while rx.try_recv().is_ok() {}
+                while rx.recv().now_or_never().flatten().is_some() {}
 
                 // Actually do the sync
                 if let Err(e) = full_sync(&db, &tmdb, &config).await {

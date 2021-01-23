@@ -1,8 +1,5 @@
 pub mod media;
 
-use actix_web::dev::Payload;
-use actix_web::{FromRequest, HttpRequest};
-use futures::future::{self, Ready};
 use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::{Executor, Sqlite, SqlitePool, Transaction};
@@ -33,15 +30,5 @@ impl Db {
 
     pub async fn close(&self) {
         self.0.close().await
-    }
-}
-
-impl FromRequest for Db {
-    type Error = ();
-    type Future = Ready<Result<Self, Self::Error>>;
-    type Config = ();
-
-    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        future::ok(req.app_data::<Self>().unwrap().clone())
     }
 }

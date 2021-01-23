@@ -1,17 +1,14 @@
-use actix_web::dev::HttpServiceFactory;
-use actix_web::{web, HttpResponse, Responder};
 use sqlx::SqliteConnection;
 
 use crate::db::media::MediaItemType;
-use crate::db::Db;
-use crate::utils;
+use crate::server::{App, JsonResponse, Request};
+use crate::{utils, AppState};
 
-use super::ApiResult;
+use super::{ApiError, ApiResult};
 
-pub fn service(path: &str) -> impl HttpServiceFactory {
-    web::scope(path)
-        .route("", web::get().to(get_tv_shows))
-        .route("/{id}", web::get().to(get_tv_show))
+pub fn configure(app: &mut App<AppState>) {
+    app.get("/api/tv_shows", get_tv_shows);
+    app.get("/api/tv_shows/:id", get_tv_show);
 }
 
 #[derive(serde::Serialize)]
@@ -22,8 +19,8 @@ pub struct TvShow {
     season_count: u32,
 }
 
-async fn get_tv_shows(db: Db) -> ApiResult<impl Responder> {
-    let mut conn = db.acquire().await?;
+async fn get_tv_shows(state: AppState, _: Request) -> ApiResult<JsonResponse> {
+    let mut conn = state.db.acquire().await.unwrap();
 
     let sql = "
         SELECT id, name, primary_image, (SELECT COUNT(id) FROM media_items WHERE parent_id = show.id)
@@ -34,7 +31,8 @@ async fn get_tv_shows(db: Db) -> ApiResult<impl Responder> {
     let shows: Vec<(i64, String, Option<String>, i64)> = sqlx::query_as(sql)
         .bind(MediaItemType::TvShow)
         .fetch_all(&mut conn)
-        .await?;
+        .await
+        .map_err(|_| ApiError::internal_server_error())?;
 
     let res: Vec<TvShow> = shows
         .into_iter()
@@ -46,7 +44,7 @@ async fn get_tv_shows(db: Db) -> ApiResult<impl Responder> {
         })
         .collect();
 
-    Ok(HttpResponse::Ok().json(res))
+    Ok(JsonResponse::from(res))
 }
 
 #[derive(serde::Serialize)]
@@ -79,9 +77,13 @@ pub struct TvEpisode {
     duration: f64,
 }
 
-async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responder> {
-    let (id,) = path.into_inner();
-    let mut conn = db.acquire().await?;
+async fn get_tv_show(state: AppState, req: Request) -> ApiResult<JsonResponse> {
+    let id: i64 = req
+        .param("id")
+        .and_then(|v| v.parse().ok())
+        .ok_or_else(ApiError::bad_request)?;
+
+    let mut conn = state.db.acquire().await.unwrap();
 
     type Row = (i64, String, Option<String>, Option<String>, Option<String>);
 
@@ -90,25 +92,24 @@ async fn get_tv_show(path: web::Path<(i64,)>, db: Db) -> ApiResult<impl Responde
         FROM media_items WHERE id = ? AND item_type = ?
     ";
 
-    let result: Option<Row> = sqlx::query_as(sql)
+    let (id, name, overview, poster, backdrop): Row = sqlx::query_as(sql)
         .bind(id)
         .bind(MediaItemType::TvShow)
         .fetch_optional(&mut conn)
-        .await?;
+        .await
+        .map_err(|_| ApiError::internal_server_error())?
+        .ok_or_else(ApiError::not_found)?;
 
-    let show = match result {
-        None => return Ok(HttpResponse::NotFound().finish()),
-        Some((id, name, overview, poster, backdrop)) => TvShowFull {
-            id,
-            name,
-            overview,
-            poster_url: poster.as_deref().map(utils::get_image_url),
-            backdrop_url: backdrop.as_deref().map(utils::get_image_url),
-            seasons: get_seasons_by_show_id(&mut conn, id).await?,
-        },
+    let show = TvShowFull {
+        id,
+        name,
+        overview,
+        poster_url: poster.as_deref().map(utils::get_image_url),
+        backdrop_url: backdrop.as_deref().map(utils::get_image_url),
+        seasons: get_seasons_by_show_id(&mut conn, id).await?,
     };
 
-    Ok(HttpResponse::Ok().json(show))
+    Ok(JsonResponse::from(show))
 }
 
 async fn get_seasons_by_show_id(
@@ -128,7 +129,8 @@ async fn get_seasons_by_show_id(
         .bind(show_id)
         .bind(MediaItemType::TvSeason)
         .fetch_all(&mut *conn)
-        .await?;
+        .await
+        .map_err(|_| ApiError::internal_server_error())?;
 
     let mut seasons = vec![];
 
@@ -165,7 +167,8 @@ async fn get_episodes_by_season_id(
         .bind(season_id)
         .bind(MediaItemType::TvEpisode)
         .fetch_all(conn)
-        .await?;
+        .await
+        .map_err(|_| ApiError::internal_server_error())?;
 
     let mut episodes = vec![];
 
