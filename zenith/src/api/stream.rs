@@ -61,13 +61,14 @@ async fn get_transcoded_stream(state: AppState, req: Request) -> ApiResult {
         .map_err(|_| ApiError::internal_server_error())?
         .ok_or_else(ApiError::not_found)?;
 
+    let config = &state.config.transcoding;
+    let ffmpeg = Ffmpeg::new(&config.ffmpeg_path);
     let options = TranscodeOptions {
         input_path: &path,
         start_time: query.start,
-        use_hw_encoder: state.config.use_hw_encoder,
+        use_hw_encoder: config.use_hw_encoder,
     };
 
-    let ffmpeg = Ffmpeg::new(state.config.ffmpeg_path());
     let mut child = ffmpeg
         .spawn_transcode(&options)
         .map_err(|e| ApiError::internal_server_error().body(e.to_string()))?;

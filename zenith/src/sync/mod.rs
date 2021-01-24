@@ -62,11 +62,11 @@ async fn sync_service(
 async fn full_sync(db: &Db, tmdb: &TmdbClient, config: &Config) -> eyre::Result<()> {
     log::info!("running full library sync");
 
-    let ffprobe = Ffprobe::new(config.ffprobe_path());
+    let ffprobe = Ffprobe::new(&config.transcoding.ffprobe_path);
     let mut conn = db.acquire().await?;
 
-    movies::sync_movies(&mut conn, &tmdb, &ffprobe, &config.movie_path).await?;
-    tv_shows::sync_tv_shows(&mut conn, &tmdb, &ffprobe, &config.tv_show_path).await?;
+    movies::sync_movies(&mut conn, &tmdb, &ffprobe, &config.libraries.movies).await?;
+    tv_shows::sync_tv_shows(&mut conn, &tmdb, &ffprobe, &config.libraries.tv_shows).await?;
 
     log::info!("sync complete");
 

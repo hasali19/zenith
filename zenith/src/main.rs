@@ -1,4 +1,5 @@
 use std::net::SocketAddr;
+use std::str::FromStr;
 use std::sync::Arc;
 
 use env_logger::Env;
@@ -18,8 +19,8 @@ async fn main() -> eyre::Result<()> {
     env_logger::init_from_env(Env::new().default_filter_or("info,sqlx::query=warn"));
 
     let config = Arc::new(Config::load("config.yml")?);
-    let tmdb = TmdbClient::new(&config.tmdb_access_token);
-    let db = Db::init(config.db_path()).await?;
+    let tmdb = TmdbClient::new(&config.tmdb.access_token);
+    let db = Db::init(&config.database.path).await?;
     let sync_service = SyncService::new(db.clone(), tmdb, config.clone());
 
     let mut watcher = FileWatcher::spawn({
@@ -31,18 +32,20 @@ async fn main() -> eyre::Result<()> {
         }
     });
 
-    watcher.watch(&config.movie_path);
-    watcher.watch(&config.tv_show_path);
+    watcher.watch(&config.libraries.movies);
+    watcher.watch(&config.libraries.tv_shows);
 
     let mut app = App::new(AppState {
-        config,
+        config: config.clone(),
         db: db.clone(),
         sync_service,
     });
 
+    let addr = SocketAddr::from_str(&format!("{}:{}", config.http.host, config.http.port))?;
+
     app.wrap(middleware::Logger);
     app.configure(zenith::api::configure);
-    app.run(SocketAddr::from(([0, 0, 0, 0], 8000))).await?;
+    app.run(addr).await?;
 
     db.close().await;
 

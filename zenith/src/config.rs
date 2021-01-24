@@ -1,16 +1,53 @@
 use std::fs::File;
 use std::io::BufReader;
 
-#[derive(serde::Deserialize)]
+use serde::Deserialize;
+
+#[derive(Deserialize)]
 pub struct Config {
-    pub movie_path: String,
-    pub tv_show_path: String,
-    pub tmdb_access_token: String,
+    #[serde(default)]
+    pub http: Http,
+    pub libraries: Libraries,
+    pub tmdb: Tmdb,
+    #[serde(default)]
+    pub transcoding: Transcoding,
+    #[serde(default)]
+    pub database: Database,
+}
+
+#[derive(Deserialize)]
+pub struct Http {
+    #[serde(default = "Http::default_host")]
+    pub host: String,
+    #[serde(default = "Http::default_port")]
+    pub port: u16,
+}
+
+#[derive(Deserialize)]
+pub struct Libraries {
+    pub movies: String,
+    pub tv_shows: String,
+}
+
+#[derive(Deserialize)]
+pub struct Tmdb {
+    pub access_token: String,
+}
+
+#[derive(Deserialize)]
+pub struct Transcoding {
+    #[serde(default = "Transcoding::default_ffprobe_path")]
+    pub ffprobe_path: String,
+    #[serde(default = "Transcoding::default_ffmpeg_path")]
+    pub ffmpeg_path: String,
     #[serde(default)]
     pub use_hw_encoder: bool,
-    db_path: Option<String>,
-    ffprobe_path: Option<String>,
-    ffmpeg_path: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct Database {
+    #[serde(default = "Database::default_path")]
+    pub path: String,
 }
 
 impl Config {
@@ -19,16 +56,57 @@ impl Config {
         let reader = BufReader::new(file);
         Ok(serde_yaml::from_reader(reader)?)
     }
+}
 
-    pub fn db_path(&self) -> &str {
-        self.db_path.as_deref().unwrap_or("zenith.db")
+impl Http {
+    fn default_host() -> String {
+        "0.0.0.0".into()
     }
 
-    pub fn ffprobe_path(&self) -> &str {
-        self.ffprobe_path.as_deref().unwrap_or("ffprobe")
+    fn default_port() -> u16 {
+        8000
+    }
+}
+
+impl Default for Http {
+    fn default() -> Self {
+        Http {
+            host: Http::default_host(),
+            port: Http::default_port(),
+        }
+    }
+}
+
+impl Transcoding {
+    fn default_ffprobe_path() -> String {
+        "ffprobe".into()
     }
 
-    pub fn ffmpeg_path(&self) -> &str {
-        self.ffmpeg_path.as_deref().unwrap_or("ffmpeg")
+    fn default_ffmpeg_path() -> String {
+        "ffmpeg".into()
+    }
+}
+
+impl Default for Transcoding {
+    fn default() -> Self {
+        Transcoding {
+            ffprobe_path: Transcoding::default_ffprobe_path(),
+            ffmpeg_path: Transcoding::default_ffmpeg_path(),
+            use_hw_encoder: false,
+        }
+    }
+}
+
+impl Database {
+    fn default_path() -> String {
+        "zenith.db".into()
+    }
+}
+
+impl Default for Database {
+    fn default() -> Self {
+        Database {
+            path: Database::default_path(),
+        }
     }
 }
