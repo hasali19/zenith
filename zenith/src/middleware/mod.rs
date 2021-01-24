@@ -27,16 +27,8 @@ impl<S: Send + Sync + 'static> Middleware<S> for Logger {
         let res: hyper::Response<hyper::Body> = next.run(state, req).await.into();
         let duration = start.elapsed();
         let status = res.status();
-        let time = time::OffsetDateTime::now_utc();
 
-        log::info!(
-            "{} {} -> {} - {:?} ({})",
-            method,
-            path,
-            status,
-            duration,
-            time
-        );
+        log::info!("{} {} -> {} - {:?}", method, path, status, duration);
 
         res.into()
     }
