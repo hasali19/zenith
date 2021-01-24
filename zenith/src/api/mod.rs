@@ -12,6 +12,7 @@ pub fn configure(app: &mut App<AppState>) {
     app.configure(library::configure);
     app.configure(stream::configure);
     app.configure(movies::configure);
+    app.configure(tv_shows::configure);
 }
 
 type ApiResponse = Response<Body>;
