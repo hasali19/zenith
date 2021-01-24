@@ -1,4 +1,5 @@
 use std::ffi::OsStr;
+use std::path::Path;
 use std::process::Stdio;
 
 use eyre::eyre;
@@ -89,7 +90,15 @@ impl Ffmpeg {
     pub fn spawn_transcode(&self, options: &TranscodeOptions) -> std::io::Result<Child> {
         let mut cmd = Command::new(&self.exe_path);
 
-        cmd.arg_pair("-ss", options.start_time.to_string())
+        let log_dir = Path::new("transcode-logs");
+        if !log_dir.is_dir() {
+            std::fs::create_dir(log_dir)?;
+        }
+
+        let ffreport = format!("file={}/%p-%t.log:level=32", log_dir.to_string_lossy());
+
+        cmd.env("FFREPORT", ffreport)
+            .arg_pair("-ss", options.start_time.to_string())
             .arg_pair("-i", options.input_path);
 
         if options.use_hw_encoder {
@@ -104,7 +113,7 @@ impl Ffmpeg {
             .arg_pair("-movflags", "frag_keyframe+empty_moov")
             .arg("pipe:1")
             .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
+            .stderr(Stdio::null())
             .spawn()
     }
 }
