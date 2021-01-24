@@ -3,6 +3,7 @@ pub mod config;
 pub mod db;
 pub mod ffmpeg;
 pub mod metadata;
+pub mod middleware;
 pub mod server;
 pub mod sync;
 pub mod tmdb;

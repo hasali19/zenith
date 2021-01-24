@@ -9,7 +9,7 @@ use zenith::server::App;
 use zenith::sync::SyncService;
 use zenith::tmdb::TmdbClient;
 use zenith::watcher::FileWatcher;
-use zenith::AppState;
+use zenith::{middleware, AppState};
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
@@ -40,6 +40,7 @@ async fn main() -> eyre::Result<()> {
         sync_service,
     });
 
+    app.wrap(middleware::Logger);
     app.configure(zenith::api::configure);
     app.run(SocketAddr::from(([0, 0, 0, 0], 8000))).await?;
 

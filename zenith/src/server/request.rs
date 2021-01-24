@@ -1,7 +1,7 @@
 use std::mem;
 
 use hyper::http::request::Parts;
-use hyper::{Body, Request as HyperRequest};
+use hyper::{Body, Method, Request as HyperRequest, Uri};
 use route_recognizer::Params;
 use serde::de::DeserializeOwned;
 
@@ -19,6 +19,14 @@ impl<'a> Request {
             params,
             body,
         }
+    }
+
+    pub fn uri(&self) -> &Uri {
+        &self.parts.uri
+    }
+
+    pub fn method(&self) -> &Method {
+        &self.parts.method
     }
 
     pub fn param(&self, key: &str) -> Option<&str> {

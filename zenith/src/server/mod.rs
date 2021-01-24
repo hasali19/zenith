@@ -1,4 +1,5 @@
 mod endpoint;
+mod middleware;
 mod request;
 mod response;
 
@@ -11,13 +12,14 @@ use hyper::{service, Body, Method, Server as HyperServer, StatusCode};
 use route_recognizer::{Match, Router};
 
 pub use self::endpoint::Endpoint;
+pub use self::middleware::{Middleware, Next};
 pub use self::request::Request;
 pub use self::response::{JsonResponse, Response};
 
-#[derive(Default)]
 pub struct App<S> {
-    router: HashMap<Method, Router<Box<dyn Endpoint<S>>>>,
     state: S,
+    router: HashMap<Method, Router<Box<dyn Endpoint<S>>>>,
+    middleware: Vec<Box<dyn Middleware<S>>>,
 }
 
 macro_rules! method_fn {
@@ -31,8 +33,9 @@ macro_rules! method_fn {
 impl<S: Clone + Send + Sync + 'static> App<S> {
     pub fn new(state: S) -> Self {
         App {
-            router: HashMap::new(),
             state,
+            router: HashMap::new(),
+            middleware: vec![],
         }
     }
 
@@ -56,6 +59,10 @@ impl<S: Clone + Send + Sync + 'static> App<S> {
     method_fn!(post, POST);
     method_fn!(put, PUT);
     method_fn!(trace, TRACE);
+
+    pub fn wrap(&mut self, middleware: impl Middleware<S>) {
+        self.middleware.push(Box::new(middleware));
+    }
 
     pub async fn run(self, addr: SocketAddr) -> hyper::Result<()> {
         let app = Arc::new(self);
@@ -85,7 +92,7 @@ impl<S: Clone + Send + Sync + 'static> App<S> {
     }
 }
 
-async fn service<S: Clone + 'static>(
+async fn service<S: Clone + Send + Sync + 'static>(
     app: Arc<App<S>>,
     req: hyper::Request<Body>,
 ) -> Result<hyper::Response<Body>, hyper::http::Error> {
@@ -108,7 +115,9 @@ async fn service<S: Clone + 'static>(
     };
 
     let req = Request::new(req, params);
-    let res = handler.call(app.state.clone(), req).await;
+    let res = Next::new(handler.as_ref(), &app.middleware)
+        .run(app.state.clone(), req)
+        .await;
 
     Ok(res.into())
 }
