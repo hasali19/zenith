@@ -12,7 +12,16 @@ impl Response {
         Response(HyperResponse::new(Body::empty()))
     }
 
-    pub fn content_type<T: TryInto<HeaderValue>>(
+    pub fn status(&self) -> StatusCode {
+        self.0.status()
+    }
+
+    pub fn with_status(mut self, status: StatusCode) -> Self {
+        *self.0.status_mut() = status;
+        self
+    }
+
+    pub fn with_content_type<T: TryInto<HeaderValue>>(
         mut self,
         content_type: T,
     ) -> Result<Self, T::Error> {
@@ -23,16 +32,20 @@ impl Response {
         Ok(self)
     }
 
-    pub fn body(mut self, body: Body) -> Self {
+    pub fn body(&self) -> &Body {
+        self.0.body()
+    }
+
+    pub fn with_body(mut self, body: Body) -> Self {
         *self.0.body_mut() = body;
         self
     }
 
     pub fn json<T: Serialize>(self, val: &T) -> serde_json::Result<Self> {
         Ok(self
-            .content_type("application/json")
+            .with_content_type("application/json")
             .unwrap()
-            .body(Body::from(serde_json::to_vec(&val)?)))
+            .with_body(Body::from(serde_json::to_vec(&val)?)))
     }
 }
 

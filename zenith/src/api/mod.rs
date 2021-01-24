@@ -3,9 +3,8 @@ pub mod movies;
 pub mod stream;
 pub mod tv_shows;
 
-use hyper::{Body, StatusCode};
+use zenith_server::{App, Body, Response, StatusCode};
 
-use crate::server::{App, Response};
 use crate::AppState;
 
 pub fn configure(app: &mut App<AppState>) {
@@ -50,13 +49,9 @@ impl ApiError {
     }
 }
 
-impl From<ApiError> for crate::server::Response {
+impl From<ApiError> for Response {
     fn from(e: ApiError) -> Self {
-        hyper::Response::builder()
-            .status(e.status)
-            .body(e.body)
-            .unwrap()
-            .into()
+        Response::new().with_status(e.status).with_body(e.body)
     }
 }
 

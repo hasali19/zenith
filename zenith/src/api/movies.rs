@@ -1,4 +1,5 @@
-use crate::server::{App, Request, Response};
+use zenith_server::{App, Request, Response};
+
 use crate::{utils, AppState};
 
 use super::{ApiError, ApiResult};

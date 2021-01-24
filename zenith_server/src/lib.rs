@@ -8,8 +8,10 @@ use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use hyper::{service, Body, Method, Server as HyperServer, StatusCode};
+use hyper::{service, Server as HyperServer};
 use route_recognizer::{Match, Router};
+
+pub use hyper::{Body, Method, StatusCode};
 
 pub use self::endpoint::Endpoint;
 pub use self::middleware::{Middleware, Next};

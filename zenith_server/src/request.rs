@@ -11,6 +11,11 @@ pub struct Request {
     body: Body,
 }
 
+pub enum Error {
+    HyperError(hyper::Error),
+    JsonParseError(serde_json::Error),
+}
+
 impl<'a> Request {
     pub fn new(req: HyperRequest<Body>, params: Params) -> Self {
         let (parts, body) = req.into_parts();
@@ -38,9 +43,12 @@ impl<'a> Request {
         serde_qs::from_str(qs)
     }
 
-    pub async fn body_json<T: DeserializeOwned>(&mut self) -> eyre::Result<T> {
+    pub async fn body_json<T: DeserializeOwned>(&mut self) -> Result<T, Error> {
         let body = mem::replace(&mut self.body, Body::empty());
-        let bytes = hyper::body::to_bytes(body).await?;
-        Ok(serde_json::from_slice(&bytes)?)
+        let bytes = hyper::body::to_bytes(body)
+            .await
+            .map_err(Error::HyperError)?;
+
+        Ok(serde_json::from_slice(&bytes).map_err(Error::JsonParseError)?)
     }
 }

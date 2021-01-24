@@ -2248,21 +2248,33 @@ dependencies = [
  "env_logger",
  "eyre",
  "futures",
- "hyper",
  "itertools",
  "lazy_static",
  "log",
  "notify",
  "regex",
  "reqwest",
- "route-recognizer",
  "serde",
  "serde_json",
- "serde_qs",
  "serde_yaml",
  "sqlx",
  "time",
  "tokio",
  "tokio-util",
  "url",
+ "zenith_server",
+]
+
+[[package]]
+name = "zenith_server"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "hyper",
+ "log",
+ "route-recognizer",
+ "serde",
+ "serde_json",
+ "serde_qs",
+ "tokio",
 ]

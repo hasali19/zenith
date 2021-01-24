@@ -1,7 +1,7 @@
 use sqlx::SqliteConnection;
+use zenith_server::{App, Request, Response};
 
 use crate::db::media::MediaItemType;
-use crate::server::{App, Request, Response};
 use crate::{utils, AppState};
 
 use super::{ApiError, ApiResult};

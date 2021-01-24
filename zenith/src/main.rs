@@ -5,11 +5,11 @@ use env_logger::Env;
 
 use zenith::config::Config;
 use zenith::db::Db;
-use zenith::server::App;
 use zenith::sync::SyncService;
 use zenith::tmdb::TmdbClient;
 use zenith::watcher::FileWatcher;
 use zenith::{middleware, AppState};
+use zenith_server::App;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {

@@ -1,10 +1,9 @@
 use futures::StreamExt;
-use hyper::Body;
 use tokio::fs::File;
 use tokio_util::codec::{BytesCodec, FramedRead};
+use zenith_server::{App, Body, Request, Response};
 
 use crate::ffmpeg::{Ffmpeg, TranscodeOptions};
-use crate::server::{App, Request, Response};
 use crate::AppState;
 
 use super::{ApiError, ApiResult};
@@ -37,7 +36,7 @@ async fn get_original(state: AppState, req: Request) -> ApiResult {
     let stream = FramedRead::new(file, BytesCodec::new());
     let body = Body::wrap_stream(stream);
 
-    Ok(Response::new().body(body))
+    Ok(Response::new().with_body(body))
 }
 
 #[derive(serde::Deserialize)]
@@ -91,9 +90,9 @@ async fn get_transcoded_stream(state: AppState, req: Request) -> ApiResult {
     });
 
     Ok(Response::new()
-        .content_type("video/mp4")
+        .with_content_type("video/mp4")
         .unwrap()
-        .body(body))
+        .with_body(body))
 }
 
 #[derive(serde::Serialize)]

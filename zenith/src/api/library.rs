@@ -1,4 +1,5 @@
-use crate::server::App;
+use zenith_server::App;
+
 use crate::AppState;
 
 pub fn configure(app: &mut App<AppState>) {
