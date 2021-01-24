@@ -14,7 +14,7 @@ use route_recognizer::{Match, Router};
 pub use self::endpoint::Endpoint;
 pub use self::middleware::{Middleware, Next};
 pub use self::request::Request;
-pub use self::response::{JsonResponse, Response};
+pub use self::response::Response;
 
 pub struct App<S> {
     state: S,

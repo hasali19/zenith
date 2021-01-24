@@ -1,4 +1,4 @@
-use crate::server::{App, JsonResponse, Request};
+use crate::server::{App, Request, Response};
 use crate::{utils, AppState};
 
 use super::{ApiError, ApiResult};
@@ -16,7 +16,7 @@ pub struct MovieListItem {
     poster_url: Option<String>,
 }
 
-async fn get_movies(state: AppState, _: Request) -> ApiResult<JsonResponse> {
+async fn get_movies(state: AppState, _: Request) -> ApiResult {
     let mut conn = state.db.acquire().await.unwrap();
 
     let sql = "
@@ -40,7 +40,7 @@ async fn get_movies(state: AppState, _: Request) -> ApiResult<JsonResponse> {
         })
         .collect();
 
-    Ok(JsonResponse::from(res))
+    Ok(Response::new().json(&res)?)
 }
 
 #[derive(serde::Serialize)]
@@ -55,7 +55,7 @@ pub struct MovieDetails {
     duration: f64,
 }
 
-async fn get_movie(state: AppState, req: Request) -> ApiResult<JsonResponse> {
+async fn get_movie(state: AppState, req: Request) -> ApiResult {
     let id: i64 = req
         .param("id")
         .and_then(|v| v.parse().ok())
@@ -89,7 +89,7 @@ async fn get_movie(state: AppState, req: Request) -> ApiResult<JsonResponse> {
         .map_err(|_| ApiError::internal_server_error())?
         .ok_or_else(ApiError::not_found)?;
 
-    Ok(JsonResponse::from(MovieDetails {
+    Ok(Response::new().json(&MovieDetails {
         id,
         title,
         year,
@@ -98,5 +98,5 @@ async fn get_movie(state: AppState, req: Request) -> ApiResult<JsonResponse> {
         backdrop_url: backdrop.as_deref().map(utils::get_image_url),
         stream_id: file_id,
         duration,
-    }))
+    })?)
 }

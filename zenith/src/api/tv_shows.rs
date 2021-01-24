@@ -1,7 +1,7 @@
 use sqlx::SqliteConnection;
 
 use crate::db::media::MediaItemType;
-use crate::server::{App, JsonResponse, Request};
+use crate::server::{App, Request, Response};
 use crate::{utils, AppState};
 
 use super::{ApiError, ApiResult};
@@ -19,7 +19,7 @@ pub struct TvShow {
     season_count: u32,
 }
 
-async fn get_tv_shows(state: AppState, _: Request) -> ApiResult<JsonResponse> {
+async fn get_tv_shows(state: AppState, _: Request) -> ApiResult {
     let mut conn = state.db.acquire().await.unwrap();
 
     let sql = "
@@ -44,7 +44,7 @@ async fn get_tv_shows(state: AppState, _: Request) -> ApiResult<JsonResponse> {
         })
         .collect();
 
-    Ok(JsonResponse::from(res))
+    Ok(Response::new().json(&res)?)
 }
 
 #[derive(serde::Serialize)]
@@ -77,7 +77,7 @@ pub struct TvEpisode {
     duration: f64,
 }
 
-async fn get_tv_show(state: AppState, req: Request) -> ApiResult<JsonResponse> {
+async fn get_tv_show(state: AppState, req: Request) -> ApiResult {
     let id: i64 = req
         .param("id")
         .and_then(|v| v.parse().ok())
@@ -109,7 +109,7 @@ async fn get_tv_show(state: AppState, req: Request) -> ApiResult<JsonResponse> {
         seasons: get_seasons_by_show_id(&mut conn, id).await?,
     };
 
-    Ok(JsonResponse::from(show))
+    Ok(Response::new().json(&show)?)
 }
 
 async fn get_seasons_by_show_id(

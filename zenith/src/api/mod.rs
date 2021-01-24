@@ -3,9 +3,9 @@ pub mod movies;
 pub mod stream;
 pub mod tv_shows;
 
-use hyper::{Body, Response, StatusCode};
+use hyper::{Body, StatusCode};
 
-use crate::server::App;
+use crate::server::{App, Response};
 use crate::AppState;
 
 pub fn configure(app: &mut App<AppState>) {
@@ -15,8 +15,7 @@ pub fn configure(app: &mut App<AppState>) {
     app.configure(tv_shows::configure);
 }
 
-type ApiResponse = Response<Body>;
-type ApiResult<T = ApiResponse> = Result<T, ApiError>;
+type ApiResult<T = Response> = Result<T, ApiError>;
 
 #[derive(Debug)]
 struct ApiError {
@@ -53,7 +52,7 @@ impl ApiError {
 
 impl From<ApiError> for crate::server::Response {
     fn from(e: ApiError) -> Self {
-        Response::builder()
+        hyper::Response::builder()
             .status(e.status)
             .body(e.body)
             .unwrap()
@@ -63,9 +62,12 @@ impl From<ApiError> for crate::server::Response {
 
 impl From<eyre::Report> for ApiError {
     fn from(e: eyre::Report) -> Self {
-        ApiError {
-            status: StatusCode::INTERNAL_SERVER_ERROR,
-            body: Body::from(e.to_string()),
-        }
+        ApiError::internal_server_error().body(e.to_string())
+    }
+}
+
+impl From<serde_json::Error> for ApiError {
+    fn from(e: serde_json::Error) -> Self {
+        ApiError::internal_server_error().body(e.to_string())
     }
 }

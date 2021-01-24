@@ -1,10 +1,10 @@
 use futures::StreamExt;
-use hyper::{header, Body, Response, StatusCode};
+use hyper::Body;
 use tokio::fs::File;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
 use crate::ffmpeg::{Ffmpeg, TranscodeOptions};
-use crate::server::{App, JsonResponse, Request};
+use crate::server::{App, Request, Response};
 use crate::AppState;
 
 use super::{ApiError, ApiResult};
@@ -37,7 +37,7 @@ async fn get_original(state: AppState, req: Request) -> ApiResult {
     let stream = FramedRead::new(file, BytesCodec::new());
     let body = Body::wrap_stream(stream);
 
-    Ok(Response::new(body))
+    Ok(Response::new().body(body))
 }
 
 #[derive(serde::Deserialize)]
@@ -90,11 +90,10 @@ async fn get_transcoded_stream(state: AppState, req: Request) -> ApiResult {
         child.wait().await.unwrap();
     });
 
-    Ok(Response::builder()
-        .status(StatusCode::OK)
-        .header(header::CONTENT_TYPE, "video/mp4")
-        .body(body)
-        .unwrap())
+    Ok(Response::new()
+        .content_type("video/mp4")
+        .unwrap()
+        .body(body))
 }
 
 #[derive(serde::Serialize)]
@@ -103,7 +102,7 @@ struct StreamInfo {
     duration: f64,
 }
 
-async fn get_stream_info(state: AppState, req: Request) -> ApiResult<JsonResponse> {
+async fn get_stream_info(state: AppState, req: Request) -> ApiResult {
     let id: i64 = req
         .param("id")
         .and_then(|v| v.parse().ok())
@@ -123,5 +122,5 @@ async fn get_stream_info(state: AppState, req: Request) -> ApiResult<JsonRespons
         .map_err(|_| ApiError::internal_server_error())?
         .ok_or_else(ApiError::not_found)?;
 
-    Ok(StreamInfo { path, duration }.into())
+    Ok(Response::new().json(&StreamInfo { path, duration })?)
 }
