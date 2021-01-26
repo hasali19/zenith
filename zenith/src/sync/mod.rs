@@ -9,6 +9,7 @@ use tokio::sync::mpsc;
 use crate::config::Config;
 use crate::db::Db;
 use crate::ffmpeg::Ffprobe;
+use crate::lifecycle::AppLifecycle;
 use crate::tmdb::TmdbClient;
 
 #[derive(Clone)]
@@ -20,9 +21,14 @@ enum Request {
 }
 
 impl LibrarySync {
-    pub fn new(db: Db, tmdb: TmdbClient, config: Arc<Config>) -> Self {
+    pub fn new(db: Db, tmdb: TmdbClient, config: Arc<Config>, lifecycle: &AppLifecycle) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        tokio::spawn(sync_service(rx, db, tmdb, config));
+        let task = tokio::spawn(sync_service(rx, db, tmdb, config));
+
+        lifecycle.on_stopped(async move {
+            task.abort();
+        });
+
         LibrarySync(tx)
     }
 

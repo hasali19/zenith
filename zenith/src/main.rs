@@ -6,6 +6,7 @@ use env_logger::Env;
 
 use zenith::config::Config;
 use zenith::db::Db;
+use zenith::lifecycle::AppLifecycle;
 use zenith::sync::LibrarySync;
 use zenith::tmdb::TmdbClient;
 use zenith::watcher::FileWatcher;
@@ -18,15 +19,16 @@ async fn main() -> eyre::Result<()> {
     dotenv::dotenv().ok();
     env_logger::init_from_env(Env::new().default_filter_or("info,sqlx::query=warn"));
 
+    let lifecycle = AppLifecycle::new();
     let config = Arc::new(Config::load("config.yml")?);
     let tmdb = TmdbClient::new(&config.tmdb.access_token);
     let db = Db::init(&config.database.path).await?;
-    let sync = LibrarySync::new(db.clone(), tmdb, config.clone());
+    let sync = LibrarySync::new(db.clone(), tmdb, config.clone(), &lifecycle);
 
     let mut watcher = FileWatcher::spawn({
         let mut sync = sync.clone();
         move |_| {
-            // Run sync anytime anything changes
+            // Run full sync anytime anything changes
             // TODO: Make this more clever
             sync.start_full_sync();
         }
@@ -46,6 +48,8 @@ async fn main() -> eyre::Result<()> {
     app.wrap(middleware::Logger);
     app.configure(zenith::api::configure);
     app.run(addr).await?;
+
+    lifecycle.signal_stopped()?;
 
     db.close().await;
 

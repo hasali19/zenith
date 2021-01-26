@@ -2,6 +2,7 @@ pub mod api;
 pub mod config;
 pub mod db;
 pub mod ffmpeg;
+pub mod lifecycle;
 pub mod metadata;
 pub mod middleware;
 pub mod sync;
