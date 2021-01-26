@@ -6,7 +6,7 @@ use env_logger::Env;
 
 use zenith::config::Config;
 use zenith::db::Db;
-use zenith::sync::SyncService;
+use zenith::sync::LibrarySync;
 use zenith::tmdb::TmdbClient;
 use zenith::watcher::FileWatcher;
 use zenith::{middleware, AppState};
@@ -21,14 +21,14 @@ async fn main() -> eyre::Result<()> {
     let config = Arc::new(Config::load("config.yml")?);
     let tmdb = TmdbClient::new(&config.tmdb.access_token);
     let db = Db::init(&config.database.path).await?;
-    let sync_service = SyncService::new(db.clone(), tmdb, config.clone());
+    let sync = LibrarySync::new(db.clone(), tmdb, config.clone());
 
     let mut watcher = FileWatcher::spawn({
-        let mut sync_service = sync_service.clone();
+        let mut sync = sync.clone();
         move |_| {
             // Run sync anytime anything changes
             // TODO: Make this more clever
-            sync_service.start_full_sync();
+            sync.start_full_sync();
         }
     });
 
@@ -38,7 +38,7 @@ async fn main() -> eyre::Result<()> {
     let mut app = App::new(AppState {
         config: config.clone(),
         db: db.clone(),
-        sync_service,
+        sync,
     });
 
     let addr = SocketAddr::from_str(&format!("{}:{}", config.http.host, config.http.port))?;

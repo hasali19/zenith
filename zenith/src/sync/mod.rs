@@ -12,18 +12,18 @@ use crate::ffmpeg::Ffprobe;
 use crate::tmdb::TmdbClient;
 
 #[derive(Clone)]
-pub struct SyncService(mpsc::UnboundedSender<Request>);
+pub struct LibrarySync(mpsc::UnboundedSender<Request>);
 
 #[derive(Debug)]
 enum Request {
     StartFullSync,
 }
 
-impl SyncService {
+impl LibrarySync {
     pub fn new(db: Db, tmdb: TmdbClient, config: Arc<Config>) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         tokio::spawn(sync_service(rx, db, tmdb, config));
-        SyncService(tx)
+        LibrarySync(tx)
     }
 
     pub fn start_full_sync(&mut self) {
