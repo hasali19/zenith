@@ -1,16 +1,16 @@
 use std::collections::HashSet;
 
+use metadata::{MetadataManager, RefreshRequest};
 use regex::Regex;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Connection, Row, SqliteConnection};
 
 use crate::ffmpeg::Ffprobe;
 use crate::metadata;
-use crate::tmdb::TmdbClient;
 
 pub async fn sync_movies(
     db: &mut SqliteConnection,
-    tmdb: &TmdbClient,
+    metadata: &MetadataManager,
     ffprobe: &Ffprobe,
     path: &str,
 ) -> eyre::Result<()> {
@@ -116,9 +116,7 @@ pub async fn sync_movies(
 
                 transaction.commit().await?;
 
-                if let Err(e) = metadata::refresh_movie_metadata(&mut *db, tmdb, id).await {
-                    log::error!("failed to update metadata: {}", e);
-                }
+                metadata.enqueue(RefreshRequest::Movie(id));
             }
         }
     }

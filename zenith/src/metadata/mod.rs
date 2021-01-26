@@ -1,11 +1,62 @@
 use eyre::eyre;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Row, SqliteConnection};
+use tokio::sync::mpsc;
 
 use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType, MediaItemType};
+use crate::db::Db;
 use crate::tmdb::{MovieSearchQuery, TmdbClient, TvShowSearchQuery};
 
-pub async fn refresh_movie_metadata(
+#[derive(Debug)]
+pub enum RefreshRequest {
+    Movie(i64),
+    TvShow(i64),
+    TvSeason(i64),
+    TvEpisode(i64),
+}
+
+pub struct MetadataManager(mpsc::UnboundedSender<RefreshRequest>);
+
+impl MetadataManager {
+    pub fn new(db: Db, tmdb: TmdbClient) -> Self {
+        let (sender, mut receiver) = mpsc::unbounded_channel();
+
+        tokio::spawn(async move {
+            while let Some(req) = receiver.recv().await {
+                let mut conn = db.acquire().await.unwrap();
+                let res = match req {
+                    RefreshRequest::Movie(id) => refresh_movie_metadata(&mut conn, &tmdb, id).await,
+
+                    RefreshRequest::TvShow(id) => {
+                        refresh_tv_show_metadata(&mut conn, &tmdb, id).await
+                    }
+
+                    RefreshRequest::TvSeason(id) => {
+                        refresh_tv_season_metadata(&mut conn, &tmdb, id).await
+                    }
+
+                    RefreshRequest::TvEpisode(id) => {
+                        refresh_tv_episode_metadata(&mut conn, &tmdb, id).await
+                    }
+                };
+
+                if let Err(e) = res {
+                    log::error!("{}", e);
+                }
+            }
+        });
+
+        MetadataManager(sender)
+    }
+
+    pub fn enqueue(&self, req: RefreshRequest) {
+        self.0
+            .send(req)
+            .expect("failed to send metadata refresh request");
+    }
+}
+
+async fn refresh_movie_metadata(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
     id: i64,
@@ -81,7 +132,7 @@ pub async fn refresh_movie_metadata(
     Ok(())
 }
 
-pub async fn refresh_tv_show_metadata(
+async fn refresh_tv_show_metadata(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
     id: i64,
@@ -150,7 +201,7 @@ pub async fn refresh_tv_show_metadata(
     Ok(())
 }
 
-pub async fn refresh_tv_season_metadata(
+async fn refresh_tv_season_metadata(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
     id: i64,
@@ -203,7 +254,7 @@ pub async fn refresh_tv_season_metadata(
     Ok(())
 }
 
-pub async fn refresh_tv_episode_metadata(
+async fn refresh_tv_episode_metadata(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
     id: i64,

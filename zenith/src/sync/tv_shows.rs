@@ -9,8 +9,7 @@ use sqlx::{Row, SqliteConnection};
 
 use crate::db::media::MediaItemType;
 use crate::ffmpeg::Ffprobe;
-use crate::metadata;
-use crate::tmdb::TmdbClient;
+use crate::metadata::{MetadataManager, RefreshRequest};
 
 lazy_static! {
     static ref REGEX: Regex = Regex::new(r"^S(\d\d)E(\d\d)\.\S+$").unwrap();
@@ -18,7 +17,7 @@ lazy_static! {
 
 pub async fn sync_tv_shows(
     db: &mut SqliteConnection,
-    tmdb: &TmdbClient,
+    metadata: &MetadataManager,
     ffprobe: &Ffprobe,
     path: &str,
 ) -> eyre::Result<()> {
@@ -48,7 +47,7 @@ pub async fn sync_tv_shows(
         }
 
         let path = file_path.to_str().unwrap().to_owned();
-        let id = sync_show(&mut *db, tmdb, ffprobe, file_name, &path, &episodes).await?;
+        let id = sync_show(&mut *db, metadata, ffprobe, file_name, &path, &episodes).await?;
 
         tv_shows.remove(&id);
     }
@@ -99,7 +98,7 @@ fn find_episodes(path: &Path) -> eyre::Result<HashMap<i32, Vec<(i32, String)>>> 
 
 async fn sync_show(
     db: &mut SqliteConnection,
-    tmdb: &TmdbClient,
+    metadata: &MetadataManager,
     ffprobe: &Ffprobe,
     name: &str,
     path: &str,
@@ -135,9 +134,7 @@ async fn sync_show(
 
             let id = res.last_insert_rowid();
 
-            if let Err(e) = metadata::refresh_tv_show_metadata(&mut *db, tmdb, id).await {
-                log::error!("failed to update metadata: {}", e);
-            }
+            metadata.enqueue(RefreshRequest::TvShow(id));
 
             id
         }
@@ -152,7 +149,7 @@ async fn sync_show(
         .collect::<HashSet<_>>();
 
     for (season, episodes) in episodes {
-        seasons.remove(&sync_season(db, tmdb, ffprobe, id, *season, episodes).await?);
+        seasons.remove(&sync_season(db, metadata, ffprobe, id, *season, episodes).await?);
     }
 
     for season in seasons {
@@ -164,7 +161,7 @@ async fn sync_show(
 
 async fn sync_season(
     db: &mut SqliteConnection,
-    tmdb: &TmdbClient,
+    metadata: &MetadataManager,
     ffprobe: &Ffprobe,
     show_id: i64,
     season: i32,
@@ -201,9 +198,7 @@ async fn sync_season(
 
             let id = res.last_insert_rowid();
 
-            if let Err(e) = metadata::refresh_tv_season_metadata(&mut *db, tmdb, id).await {
-                log::error!("failed to update metadata: {}", e);
-            }
+            metadata.enqueue(RefreshRequest::TvSeason(id));
 
             id
         }
@@ -218,7 +213,7 @@ async fn sync_season(
         .collect::<HashSet<i64>>();
 
     for (episode, path) in episodes {
-        match sync_episode(db, tmdb, ffprobe, id, *episode, path).await {
+        match sync_episode(db, metadata, ffprobe, id, *episode, path).await {
             Ok(id) => {
                 episode_ids.remove(&id);
             }
@@ -237,7 +232,7 @@ async fn sync_season(
 
 async fn sync_episode(
     db: &mut SqliteConnection,
-    tmdb: &TmdbClient,
+    metadata: &MetadataManager,
     ffprobe: &Ffprobe,
     season_id: i64,
     episode: i32,
@@ -288,9 +283,7 @@ async fn sync_episode(
 
             let id = res.last_insert_rowid();
 
-            if let Err(e) = metadata::refresh_tv_episode_metadata(&mut *db, tmdb, id).await {
-                log::error!("failed to update metadata: {}", e);
-            }
+            metadata.enqueue(RefreshRequest::TvEpisode(id));
 
             id
         }

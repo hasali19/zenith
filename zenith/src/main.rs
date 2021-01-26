@@ -7,6 +7,7 @@ use env_logger::Env;
 use zenith::config::Config;
 use zenith::db::Db;
 use zenith::lifecycle::AppLifecycle;
+use zenith::metadata::MetadataManager;
 use zenith::sync::LibrarySync;
 use zenith::tmdb::TmdbClient;
 use zenith::watcher::FileWatcher;
@@ -21,9 +22,12 @@ async fn main() -> eyre::Result<()> {
 
     let lifecycle = AppLifecycle::new();
     let config = Arc::new(Config::load("config.yml")?);
-    let tmdb = TmdbClient::new(&config.tmdb.access_token);
     let db = Db::init(&config.database.path).await?;
-    let sync = LibrarySync::new(db.clone(), tmdb, config.clone(), &lifecycle);
+    let tmdb = TmdbClient::new(&config.tmdb.access_token);
+    let metadata = MetadataManager::new(db.clone(), tmdb);
+    let mut sync = LibrarySync::new(db.clone(), metadata, config.clone(), &lifecycle);
+
+    sync.start_full_sync();
 
     let mut watcher = FileWatcher::spawn({
         let mut sync = sync.clone();
