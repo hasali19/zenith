@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS media_items (
     release_date INTEGER,
     overview TEXT,
 
+    duration REAL,
+
     primary_image TEXT,
     backdrop_image TEXT,
 
@@ -18,13 +20,4 @@ CREATE TABLE IF NOT EXISTS media_items (
     updated_at INTEGER,
 
     FOREIGN KEY (parent_id) REFERENCES media_items (id)
-);
-
-CREATE TABLE IF NOT EXISTS video_files (
-    id INTEGER PRIMARY KEY,
-    item_id INTEGER NOT NULL,
-    path TEXT NOT NULL,
-    duration REAL NOT NULL,
-
-    FOREIGN KEY (item_id) REFERENCES media_items (id)
 );

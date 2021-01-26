@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use metadata::{MetadataManager, RefreshRequest};
 use regex::Regex;
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Connection, Row, SqliteConnection};
+use sqlx::{Row, SqliteConnection};
 
 use crate::ffmpeg::Ffprobe;
 use crate::metadata;
@@ -30,93 +30,68 @@ pub async fn sync_movies(
             continue;
         }
 
-        let file_path = entry.path();
-        let file_name = match file_path.file_name().and_then(|v| v.to_str()) {
-            Some(name) => name,
-            None => continue,
-        };
+        for entry in std::fs::read_dir(entry.path())? {
+            let entry = entry?;
 
-        let path = match file_path.to_str() {
-            Some(path) => path,
-            None => continue,
-        };
-
-        let (title, year) = match parse_movie_dir_name(file_name) {
-            Some(v) => v,
-            None => continue,
-        };
-
-        // Just get the first video file found for now
-        let video_file = std::fs::read_dir(path)?
-            .filter_map(|entry| {
-                let entry = entry.ok()?;
-                let path = entry.path();
-                let path = path.to_str()?;
-
-                if !path.ends_with(".mkv") && !path.ends_with(".mp4") {
-                    return None;
-                }
-
-                Some(path.to_owned())
-            })
-            .next();
-
-        let video_file = match video_file {
-            Some(video_file) => video_file,
-            None => continue,
-        };
-
-        match get_id_for_path(&mut *db, path).await? {
-            // Remove from the set of ids if the movie exists
-            Some(id) => {
-                movies.remove(&id);
+            if !entry.file_type().unwrap().is_file() {
+                continue;
             }
-            // Otherwise create a new movie
-            None => {
-                log::info!("adding movie: {}", file_name);
 
-                let info = match ffprobe.get_video_info(&video_file).await {
-                    Ok(ingo) => ingo,
-                    Err(e) => {
-                        log::warn!("{}", e);
-                        continue;
-                    }
-                };
+            let file_path = entry.path();
+            let file_name = match file_path.file_name().and_then(|v| v.to_str()) {
+                Some(name) => name,
+                None => continue,
+            };
 
-                let release_date = year
-                    .and_then(|year| time::Date::try_from_yo(year, 1).ok())
-                    .and_then(|date| date.try_with_hms(0, 0, 0).ok())
-                    .map(|dt| dt.assume_utc().unix_timestamp());
+            let (title, year) = match parse_movie_file_name(file_name) {
+                Some(v) => v,
+                None => continue,
+            };
 
-                let mut transaction = db.begin().await?;
+            let path = entry.path();
+            let path = match path.to_str() {
+                Some(path) => path,
+                None => continue,
+            };
 
-                let sql = "
-                    INSERT INTO media_items (item_type, path, name, release_date)
-                    VALUES (1, ?, ?, ?)
-                ";
+            match get_id_for_path(&mut *db, &path).await? {
+                // Remove from the set of ids if the movie exists
+                Some(id) => {
+                    movies.remove(&id);
+                }
+                // Otherwise create a new movie
+                None => {
+                    log::info!("adding movie: {}", file_name);
 
-                let id: i64 = sqlx::query(sql)
-                    .bind(path)
-                    .bind(&title)
-                    .bind(release_date)
-                    .execute(&mut transaction)
-                    .await?
-                    .last_insert_rowid();
+                    let info = match ffprobe.get_video_info(&path).await {
+                        Ok(ingo) => ingo,
+                        Err(e) => {
+                            log::warn!("{}", e);
+                            continue;
+                        }
+                    };
 
-                let sql = "
-                    INSERT INTO video_files (item_id, path, duration)
-                    VALUES (last_insert_rowid(), ?, ?)
-                ";
+                    let release_date = year
+                        .and_then(|year| time::Date::try_from_yo(year, 1).ok())
+                        .and_then(|date| date.try_with_hms(0, 0, 0).ok())
+                        .map(|dt| dt.assume_utc().unix_timestamp());
 
-                sqlx::query(sql)
-                    .bind(video_file)
-                    .bind(info.duration)
-                    .execute(&mut transaction)
-                    .await?;
+                    let sql = "
+                        INSERT INTO media_items (item_type, path, name, release_date, duration)
+                        VALUES (1, ?, ?, ?, ?)
+                    ";
 
-                transaction.commit().await?;
+                    let id: i64 = sqlx::query(sql)
+                        .bind(&path)
+                        .bind(&title)
+                        .bind(release_date)
+                        .bind(info.duration)
+                        .execute(&mut *db)
+                        .await?
+                        .last_insert_rowid();
 
-                metadata.enqueue(RefreshRequest::Movie(id));
+                    metadata.enqueue(RefreshRequest::Movie(id));
+                }
             }
         }
     }
@@ -125,11 +100,6 @@ pub async fn sync_movies(
     // may be deleted from the database
     for id in movies {
         log::info!("removing movie: {}", id);
-
-        sqlx::query("DELETE FROM video_files WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut *db)
-            .await?;
 
         sqlx::query("DELETE FROM media_items WHERE id = ?")
             .bind(id)
@@ -148,9 +118,9 @@ async fn get_id_for_path(db: &mut SqliteConnection, path: &str) -> sqlx::Result<
         .await
 }
 
-pub fn parse_movie_dir_name(name: &str) -> Option<(String, Option<i32>)> {
+pub fn parse_movie_file_name(name: &str) -> Option<(String, Option<i32>)> {
     lazy_static::lazy_static! {
-        static ref REGEX: Regex = Regex::new(r"^(\S.*?)(?: \((\d\d\d\d)\))?$").unwrap();
+        static ref REGEX: Regex = Regex::new(r"^(\S.*?)(?: \((\d\d\d\d)\))?\.(mkv|mp4)$").unwrap();
     }
 
     REGEX.captures(name).map(|captures| {

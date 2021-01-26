@@ -258,8 +258,8 @@ async fn sync_episode(
             let info = ffprobe.get_video_info(path).await?;
 
             let sql = "
-                INSERT INTO media_items (parent_id, item_type, path, index_number)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO media_items (parent_id, item_type, path, index_number, duration)
+                VALUES (?, ?, ?, ?, ?)
             ";
 
             let res = sqlx::query(sql)
@@ -267,16 +267,6 @@ async fn sync_episode(
                 .bind(MediaItemType::TvEpisode)
                 .bind(path)
                 .bind(episode)
-                .execute(&mut *db)
-                .await?;
-
-            let sqlx = "
-                INSERT INTO video_files (item_id, path, duration)
-                VALUES (last_insert_rowid(), ?, ?)
-            ";
-
-            sqlx::query(sqlx)
-                .bind(path)
                 .bind(info.duration)
                 .execute(&mut *db)
                 .await?;
@@ -334,11 +324,6 @@ async fn remove_season(db: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
 
 async fn remove_episode(db: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
     log::info!("removing tv episode: {}", id);
-
-    sqlx::query("DELETE FROM video_files WHERE item_id = ?")
-        .bind(id)
-        .execute(&mut *db)
-        .await?;
 
     sqlx::query("DELETE FROM media_items WHERE id = ?")
         .bind(id)

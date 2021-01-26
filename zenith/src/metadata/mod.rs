@@ -76,7 +76,7 @@ async fn refresh_movie_metadata(
         .and_then(|v| v.to_str())
         .ok_or_else(|| eyre!("invalid movie path"))?;
 
-    let (title, year) = crate::sync::movies::parse_movie_dir_name(name)
+    let (title, year) = crate::sync::movies::parse_movie_file_name(name)
         .ok_or_else(|| eyre!("failed to parse movie name"))?;
 
     let query = MovieSearchQuery {

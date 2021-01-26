@@ -22,7 +22,7 @@ async fn get_original(state: AppState, req: Request) -> ApiResult {
 
     let mut conn = state.db.acquire().await.unwrap();
 
-    let (path,): (String,) = sqlx::query_as("SELECT path FROM video_files WHERE id = ?")
+    let (path,): (String,) = sqlx::query_as("SELECT path FROM media_items WHERE id = ?")
         .bind(id)
         .fetch_optional(&mut conn)
         .await
@@ -54,7 +54,7 @@ async fn get_transcoded_stream(state: AppState, req: Request) -> ApiResult {
     let query: Query = req.query().map_err(|_| ApiError::bad_request())?;
     let mut conn = state.db.acquire().await.unwrap();
 
-    let (path,): (String,) = sqlx::query_as("SELECT path FROM video_files WHERE id = ?")
+    let (path,): (String,) = sqlx::query_as("SELECT path FROM media_items WHERE id = ?")
         .bind(id)
         .fetch_optional(&mut conn)
         .await
@@ -111,7 +111,7 @@ async fn get_stream_info(state: AppState, req: Request) -> ApiResult {
     let mut conn = state.db.acquire().await.unwrap();
 
     let sql = "
-        SELECT path, duration FROM video_files
+        SELECT path, duration FROM media_items
         WHERE id = ?
     ";
 

@@ -153,15 +153,13 @@ async fn get_episodes_by_season_id(
     season_id: i64,
 ) -> ApiResult<Vec<TvEpisode>> {
     let sql = "
-        SELECT episode.id, episode.index_number, episode.overview, episode.primary_image,
-               file.id, file.duration
-        FROM media_items AS episode
-        JOIN video_files AS file ON episode.id = file.item_id
-        WHERE episode.parent_id = ? AND episode.item_type = ?
-        ORDER BY episode.index_number
+        SELECT id, index_number, overview, primary_image, duration
+        FROM media_items
+        WHERE parent_id = ? AND item_type = ?
+        ORDER BY index_number
     ";
 
-    type Row = (i64, i64, Option<String>, Option<String>, i64, f64);
+    type Row = (i64, i64, Option<String>, Option<String>, f64);
 
     let results: Vec<Row> = sqlx::query_as(sql)
         .bind(season_id)
@@ -172,13 +170,13 @@ async fn get_episodes_by_season_id(
 
     let mut episodes = vec![];
 
-    for (id, episode, overview, primary, file_id, duration) in results {
+    for (id, episode, overview, primary, duration) in results {
         episodes.push(TvEpisode {
             id,
             episode: episode as u32,
             overview,
             thumbnail_url: primary.as_deref().map(utils::get_image_url),
-            stream_id: file_id,
+            stream_id: id,
             duration,
         });
     }

@@ -71,19 +71,17 @@ async fn get_movie(state: AppState, req: Request) -> ApiResult {
         Option<String>,
         Option<String>,
         Option<String>,
-        i64,
         f64,
     );
 
     let sql = "
-        SELECT movie.id, name, CAST(strftime('%Y', datetime(release_date, 'unixepoch')) as INTEGER),
-               overview, primary_image, backdrop_image, file.id, file.duration
-        FROM media_items AS movie
-        JOIN video_files AS file ON movie.id = file.item_id
-        WHERE movie.id = ? AND item_type = 1
+        SELECT id, name, CAST(strftime('%Y', datetime(release_date, 'unixepoch')) as INTEGER),
+               overview, primary_image, backdrop_image, duration
+        FROM media_items
+        WHERE id = ? AND item_type = 1
     ";
 
-    let (id, title, year, overview, poster, backdrop, file_id, duration): Row = sqlx::query_as(sql)
+    let (id, title, year, overview, poster, backdrop, duration): Row = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
         .await
@@ -97,7 +95,7 @@ async fn get_movie(state: AppState, req: Request) -> ApiResult {
         overview,
         poster_url: poster.as_deref().map(utils::get_image_url),
         backdrop_url: backdrop.as_deref().map(utils::get_image_url),
-        stream_id: file_id,
+        stream_id: id,
         duration,
     })?)
 }
