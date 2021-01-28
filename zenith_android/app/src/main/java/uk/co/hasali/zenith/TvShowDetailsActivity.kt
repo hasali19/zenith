@@ -62,7 +62,7 @@ class TvShowDetailsActivity : AppCompatActivity() {
             val settings = settingsRepo.settings.first()
             val serverUrl = settings.serverUrl!!
 
-            show = Fuel.get("$serverUrl/api/tv_shows/$showId")
+            show = Fuel.get("$serverUrl/api/items/$showId")
                 .awaitObject(gsonDeserializer())
 
             seasons = Fuel.get("$serverUrl/api/items/$showId/children")
