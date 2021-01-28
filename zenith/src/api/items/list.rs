@@ -1,12 +1,13 @@
-use serde::{Deserialize, Serialize};
-use sqlx::sqlite::{SqliteArguments, SqliteRow};
-use sqlx::{Arguments, FromRow, Row};
-use time::OffsetDateTime;
+use serde::Deserialize;
+use sqlx::sqlite::SqliteArguments;
+use sqlx::Arguments;
 use zenith_server::{Request, Response};
 
 use crate::api::{ApiError, ApiResult};
 use crate::db::media::MediaItemType;
-use crate::{utils, AppState};
+use crate::AppState;
+
+use super::common::MediaItem;
 
 #[derive(Deserialize)]
 struct Query {
@@ -27,37 +28,6 @@ enum QueryItemType {
 enum QuerySortKey {
     Name,
     IndexNumber,
-}
-
-#[derive(Serialize)]
-struct MediaItem {
-    id: i64,
-    parent_id: i64,
-    name: Option<String>,
-    #[serde(flatten)]
-    data: ItemData,
-}
-
-#[derive(Serialize)]
-#[serde(tag = "item_type", rename_all = "snake_case")]
-enum ItemData {
-    Movie {
-        release_year: Option<i32>,
-        poster_url: Option<String>,
-    },
-    TvShow {
-        start_year: Option<i32>,
-        poster_url: Option<String>,
-    },
-    TvSeason {
-        season_number: i32,
-        poster_url: Option<String>,
-    },
-    TvEpisode {
-        episode_number: i32,
-        overview: Option<String>,
-        thumbnail_url: Option<String>,
-    },
 }
 
 pub(super) async fn get(state: AppState, req: Request) -> ApiResult {
@@ -93,8 +63,15 @@ async fn get_query(state: AppState, query: Query) -> ApiResult {
 }
 
 fn build_sql_query<'a>(query: Query) -> (String, SqliteArguments<'a>) {
+    const SQL: &str = "
+        SELECT *
+        FROM media_items AS m
+        LEFT JOIN user_item_data AS u ON m.id = u.item_id
+        WHERE TRUE
+    ";
+
     let mut args = SqliteArguments::default();
-    let mut sql = "SELECT * FROM media_items WHERE TRUE".to_string();
+    let mut sql = SQL.to_string();
 
     if let Some(item_type) = query.item_type {
         sql.push_str(" AND item_type = ?");
@@ -109,42 +86,6 @@ fn build_sql_query<'a>(query: Query) -> (String, SqliteArguments<'a>) {
     sql += " ORDER BY item_type, index_number, name";
 
     (sql, args)
-}
-
-impl<'r> FromRow<'r, SqliteRow> for MediaItem {
-    fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
-        let primary_img = row.try_get::<Option<_>, _>(9)?.map(utils::get_image_url);
-
-        let release_date: Option<i64> = row.try_get(6)?;
-        let release_year = release_date.map(|v| OffsetDateTime::from_unix_timestamp(v).year());
-
-        let item = MediaItem {
-            id: row.try_get(0)?,
-            parent_id: row.try_get(1)?,
-            name: row.try_get(4)?,
-            data: match row.try_get(2)? {
-                MediaItemType::Movie => ItemData::Movie {
-                    release_year,
-                    poster_url: primary_img,
-                },
-                MediaItemType::TvShow => ItemData::TvShow {
-                    start_year: release_year,
-                    poster_url: primary_img,
-                },
-                MediaItemType::TvSeason => ItemData::TvSeason {
-                    season_number: row.try_get(5)?,
-                    poster_url: primary_img,
-                },
-                MediaItemType::TvEpisode => ItemData::TvEpisode {
-                    episode_number: row.try_get(5)?,
-                    overview: row.try_get(7)?,
-                    thumbnail_url: primary_img,
-                },
-            },
-        };
-
-        Ok(item)
-    }
 }
 
 impl From<QueryItemType> for MediaItemType {

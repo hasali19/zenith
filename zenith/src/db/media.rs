@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 use eyre::eyre;
 use itertools::Itertools;
 
-#[derive(Clone, Copy, sqlx::Type)]
+#[derive(Clone, Copy, Debug, sqlx::Type)]
 #[repr(i32)]
 pub enum MediaItemType {
     Movie = 1,

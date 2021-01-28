@@ -21,3 +21,11 @@ CREATE TABLE IF NOT EXISTS media_items (
 
     FOREIGN KEY (parent_id) REFERENCES media_items (id)
 );
+
+CREATE TABLE IF NOT EXISTS user_item_data (
+    item_id INTEGER PRIMARY KEY,
+    position REAL NOT NULL DEFAULT 0,
+    is_watched BOOLEAN NOT NULL DEFAULT 0,
+
+    FOREIGN KEY (item_id) REFERENCES media_items (id)
+);

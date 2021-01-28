@@ -1,49 +1,12 @@
-use serde::Serialize;
-use sqlx::sqlite::SqliteRow;
-use sqlx::Row;
-use time::OffsetDateTime;
+use serde::Deserialize;
 use zenith_server::{Request, Response};
 
 use crate::api::{ApiError, ApiResult};
 use crate::db::media::MediaItemType;
 use crate::metadata::RefreshRequest;
-use crate::{utils, AppState};
+use crate::AppState;
 
-#[derive(Serialize)]
-struct MediaItem {
-    id: i64,
-    parent_id: i64,
-    name: Option<String>,
-    overview: Option<String>,
-    #[serde(flatten)]
-    data: ItemData,
-    added_at: i64,
-    updated_at: Option<i64>,
-}
-
-#[derive(Serialize)]
-#[serde(tag = "item_type", rename_all = "snake_case")]
-enum ItemData {
-    Movie {
-        release_year: Option<i32>,
-        duration: f64,
-        poster_url: Option<String>,
-        backdrop_url: Option<String>,
-    },
-    TvShow {
-        poster_url: Option<String>,
-        backdrop_url: Option<String>,
-    },
-    TvSeason {
-        season_number: i32,
-        poster_url: Option<String>,
-    },
-    TvEpisode {
-        episode_number: i32,
-        duration: f64,
-        thumbnail_url: Option<String>,
-    },
-}
+use super::common::MediaItem;
 
 pub(super) async fn get(state: AppState, req: Request) -> ApiResult {
     let id: i64 = req
@@ -53,14 +16,20 @@ pub(super) async fn get(state: AppState, req: Request) -> ApiResult {
 
     let mut conn = state.db.acquire().await?;
 
-    let sql = "SELECT * FROM media_items WHERE id = ?";
-    let row: SqliteRow = sqlx::query(sql)
+    let sql = "
+        SELECT *
+        FROM media_items AS m
+        LEFT JOIN user_item_data AS u ON m.id = u.item_id
+        WHERE id = ?
+    ";
+
+    let item: MediaItem = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
         .await?
         .ok_or_else(ApiError::not_found)?;
 
-    Ok(Response::new().json(&to_media_item(&row).await?)?)
+    Ok(Response::new().json(&item)?)
 }
 
 pub(super) async fn refresh_metadata(state: AppState, req: Request) -> ApiResult {
@@ -90,65 +59,49 @@ pub(super) async fn refresh_metadata(state: AppState, req: Request) -> ApiResult
     Ok(Response::new())
 }
 
-async fn to_media_item(row: &SqliteRow) -> sqlx::Result<MediaItem> {
-    let item = MediaItem {
-        id: row.try_get(0)?,
-        parent_id: row.try_get(1)?,
-        name: row.try_get(4)?,
-        overview: row.try_get(7)?,
-        data: match row.try_get(2)? {
-            MediaItemType::Movie => get_movie_data(row)?,
-            MediaItemType::TvShow => get_tv_show_data(row)?,
-            MediaItemType::TvSeason => get_tv_season_data(row)?,
-            MediaItemType::TvEpisode => get_tv_episode_data(row)?,
-        },
-        added_at: row.try_get(12)?,
-        updated_at: row.try_get(13)?,
-    };
-
-    Ok(item)
+#[derive(Deserialize)]
+struct ProgressUpdate {
+    position: f64,
 }
 
-fn get_movie_data(row: &SqliteRow) -> sqlx::Result<ItemData> {
-    let primary_img = row.try_get::<Option<_>, _>(9)?.map(utils::get_image_url);
-    let backdrop_img = row.try_get::<Option<_>, _>(10)?.map(utils::get_image_url);
+pub(super) async fn update_progress(state: AppState, req: Request) -> ApiResult {
+    let id: i64 = req
+        .param("id")
+        .and_then(|v| v.parse().ok())
+        .ok_or_else(ApiError::bad_request)?;
 
-    let release_date: Option<i64> = row.try_get(6)?;
-    let release_year = release_date.map(|v| OffsetDateTime::from_unix_timestamp(v).year());
+    let data: ProgressUpdate = req
+        .query()
+        .map_err(|e| ApiError::bad_request().body(e.to_string()))?;
 
-    Ok(ItemData::Movie {
-        release_year,
-        duration: row.try_get(8)?,
-        poster_url: primary_img,
-        backdrop_url: backdrop_img,
-    })
-}
+    let mut conn = state.db.acquire().await?;
 
-fn get_tv_show_data(row: &SqliteRow) -> sqlx::Result<ItemData> {
-    let primary_img = row.try_get::<Option<_>, _>(9)?.map(utils::get_image_url);
-    let backdrop_img = row.try_get::<Option<_>, _>(10)?.map(utils::get_image_url);
+    let (item_type, duration): (MediaItemType, f64) =
+        sqlx::query_as("SELECT item_type, duration FROM media_items WHERE id = ?")
+            .bind(id)
+            .fetch_optional(&mut conn)
+            .await?
+            .ok_or_else(ApiError::not_found)?;
 
-    Ok(ItemData::TvShow {
-        poster_url: primary_img,
-        backdrop_url: backdrop_img,
-    })
-}
+    if !matches!(item_type, MediaItemType::Movie | MediaItemType::TvEpisode) {
+        let msg = format!("cannot set progress for item of type {:?}", item_type);
+        return Err(ApiError::bad_request().body(msg));
+    }
 
-fn get_tv_season_data(row: &SqliteRow) -> sqlx::Result<ItemData> {
-    let primary_img = row.try_get::<Option<_>, _>(9)?.map(utils::get_image_url);
+    let sql = "
+        INSERT INTO user_item_data (item_id, position, is_watched)
+        VALUES (?, ?, ?)
+        ON CONFLICT (item_id) DO UPDATE
+        SET position = excluded.position,
+            is_watched = is_watched OR excluded.is_watched
+    ";
 
-    Ok(ItemData::TvSeason {
-        season_number: row.try_get(5)?,
-        poster_url: primary_img,
-    })
-}
+    sqlx::query(sql)
+        .bind(id)
+        .bind(data.position)
+        .bind((data.position / duration) >= 0.9)
+        .execute(&mut conn)
+        .await?;
 
-fn get_tv_episode_data(row: &SqliteRow) -> sqlx::Result<ItemData> {
-    let primary_img = row.try_get::<Option<_>, _>(9)?.map(utils::get_image_url);
-
-    Ok(ItemData::TvEpisode {
-        episode_number: row.try_get(5)?,
-        duration: row.try_get(8)?,
-        thumbnail_url: primary_img,
-    })
+    Ok(Response::new())
 }
