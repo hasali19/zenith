@@ -25,7 +25,7 @@ async fn main() -> eyre::Result<()> {
     let db = Db::init(&config.database.path).await?;
     let tmdb = TmdbClient::new(&config.tmdb.access_token);
     let metadata = MetadataManager::new(db.clone(), tmdb);
-    let mut sync = LibrarySync::new(db.clone(), metadata, config.clone(), &lifecycle);
+    let mut sync = LibrarySync::new(db.clone(), metadata.clone(), config.clone(), &lifecycle);
 
     sync.start_full_sync();
 
@@ -45,6 +45,7 @@ async fn main() -> eyre::Result<()> {
         config: config.clone(),
         db: db.clone(),
         sync,
+        metadata,
     });
 
     let addr = SocketAddr::from_str(&format!("{}:{}", config.http.host, config.http.port))?;

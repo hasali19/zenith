@@ -36,34 +36,21 @@ data class TvShowDetails(
     val posterUrl: String?,
     @SerializedName("backdrop_url")
     val backdropUrl: String?,
-    val seasons: List<TvShowSeason>,
 )
 
 data class TvShowSeason(
     val id: Int,
-    val season: Int,
+    @SerializedName("season_number")
+    val seasonNumber: Int,
     val name: String?,
-    val overview: String?,
     @SerializedName("poster_url")
     val posterUrl: String?,
-    val episodes: List<TvShowEpisode>,
-)
-
-data class TvShowEpisode(
-    val id: Int,
-    val episode: Int,
-    val name: String?,
-    val overview: String?,
-    @SerializedName("thumbnail_url")
-    val thumbnailUrl: String?,
-    @SerializedName("stream_id")
-    val streamId: Int,
-    val duration: Double,
 )
 
 class TvShowDetailsActivity : AppCompatActivity() {
 
     private lateinit var show: TvShowDetails
+    private lateinit var seasons: List<TvShowSeason>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,6 +65,9 @@ class TvShowDetailsActivity : AppCompatActivity() {
             show = Fuel.get("$serverUrl/api/tv_shows/$showId")
                 .awaitObject(gsonDeserializer())
 
+            seasons = Fuel.get("$serverUrl/api/items/$showId/children")
+                .awaitObject(gsonDeserializer())
+
             setContent {
                 TvShowDetailsScreen()
             }
@@ -86,11 +76,10 @@ class TvShowDetailsActivity : AppCompatActivity() {
 
     @Composable
     fun TvShowDetailsScreen() {
-        fun onSeasonClick(showId: Int, season: Int) {
+        fun onSeasonClick(seasonId: Int) {
             startActivity(
                 Intent(this, TvEpisodesActivity::class.java).apply {
-                    putExtra("show_id", showId)
-                    putExtra("season", season)
+                    putExtra("season_id", seasonId)
                 }
             )
         }
@@ -140,11 +129,11 @@ class TvShowDetailsActivity : AppCompatActivity() {
                                 Text(text = "Seasons", style = MaterialTheme.typography.h6)
                                 Spacer(modifier = Modifier.preferredHeight(16.dp))
                                 LazyRow {
-                                    items(show.seasons) { season ->
+                                    items(seasons) { season ->
                                         Card(
                                             modifier = Modifier.padding(4.dp)
                                                 .preferredWidth(92.dp)
-                                                .clickable { onSeasonClick(show.id, season.season) }
+                                                .clickable { onSeasonClick(season.id) }
                                         ) {
                                             Column {
                                                 WithConstraints {
@@ -168,7 +157,7 @@ class TvShowDetailsActivity : AppCompatActivity() {
                                                     )
 
                                                     Text(
-                                                        text = season.name ?: "Season ${season.season}",
+                                                        text = season.name ?: "Season ${season.seasonNumber}",
                                                         style = MaterialTheme.typography.caption,
                                                         maxLines = 1,
                                                         overflow = TextOverflow.Ellipsis

@@ -29,21 +29,20 @@ import uk.co.hasali.zenith.ui.ZenithTheme
 
 data class MovieDetails(
     val id: Int,
-    val title: String,
-    val year: Int?,
+    val name: String,
     val overview: String?,
+    @SerializedName("release_year")
+    val releaseYear: Int?,
+    val duration: Float,
     @SerializedName("poster_url")
     val posterUrl: String?,
     @SerializedName("backdrop_url")
     val backdropUrl: String?,
-    @SerializedName("stream_id")
-    val streamId: Int,
 )
 
 class MovieDetailsActivity : AppCompatActivity() {
 
     private lateinit var movie: MovieDetails
-    private lateinit var stream: VideoPlayerActivity.StreamInfo
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,10 +54,7 @@ class MovieDetailsActivity : AppCompatActivity() {
             val settings = settingsRepo.settings.first()
             val serverUrl = settings.serverUrl!!
 
-            movie = Fuel.get("$serverUrl/api/movies/$movieId")
-                .awaitObject(gsonDeserializer())
-
-            stream = Fuel.get("$serverUrl/api/stream/${movie.streamId}/info")
+            movie = Fuel.get("$serverUrl/api/items/$movieId")
                 .awaitObject(gsonDeserializer())
 
             setContent {
@@ -72,7 +68,7 @@ class MovieDetailsActivity : AppCompatActivity() {
         fun onPlayButtonClick() {
             startActivity(
                 Intent(this@MovieDetailsActivity, VideoPlayerActivity::class.java).apply {
-                    putExtra("stream_id", movie.streamId)
+                    putExtra("stream_id", movie.id)
                 }
             )
         }
@@ -130,13 +126,13 @@ class MovieDetailsActivity : AppCompatActivity() {
                         ) {
                             Column {
                                 Text(
-                                    text = movie.title,
+                                    text = movie.name,
                                     style = MaterialTheme.typography.h6
                                 )
 
                                 Row {
                                     Text(
-                                        text = movie.year?.toString() ?: "",
+                                        text = movie.releaseYear?.toString() ?: "",
                                         style = MaterialTheme.typography.body2
                                     )
 
@@ -147,7 +143,7 @@ class MovieDetailsActivity : AppCompatActivity() {
                                     )
 
                                     Text(
-                                        text = formatDuration(stream.duration),
+                                        text = formatDuration(movie.duration),
                                         style = MaterialTheme.typography.body2
                                     )
                                 }

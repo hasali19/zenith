@@ -48,7 +48,7 @@ pub struct TvShowSearchResponse {
 pub struct TvShowSearchResult {
     pub id: i32,
     pub name: String,
-    pub first_air_date_year: Option<String>,
+    pub first_air_date: Option<String>,
     pub overview: Option<String>,
     pub poster_path: Option<String>,
     pub backdrop_path: Option<String>,

@@ -69,7 +69,7 @@ class VideoPlayerActivity : AppCompatActivity() {
 
             serverUrl = settings.serverUrl!!
 
-            val info: StreamInfo = Fuel.get("$serverUrl/api/stream/$streamId/info")
+            val info: StreamInfo = Fuel.get("$serverUrl/api/items/$streamId")
                 .awaitObject(gsonDeserializer())
 
             duration = info.duration.toLong()

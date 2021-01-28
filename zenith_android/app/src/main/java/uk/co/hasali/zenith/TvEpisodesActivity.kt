@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -18,27 +19,54 @@ import androidx.lifecycle.lifecycleScope
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.gson.gsonDeserializer
+import com.google.gson.annotations.SerializedName
 import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import uk.co.hasali.zenith.ui.ZenithTheme
 
 class TvEpisodesActivity : AppCompatActivity() {
+
+    data class TvSeason(
+        val id: Int,
+        @SerializedName("parent_id")
+        val showId: Int,
+        val name: String?,
+        val overview: String?,
+        @SerializedName("season_number")
+        val seasonNumber: Int,
+        @SerializedName("poster_url")
+        val posterUrl: String?,
+    )
+
+    data class TvEpisode(
+        val id: Int,
+        val name: String?,
+        val overview: String?,
+        @SerializedName("episode_number")
+        val episodeNumber: Int,
+        @SerializedName("thumbnail_url")
+        val thumbnailUrl: String?,
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val showId = intent.getIntExtra("show_id", -1)
-        val seasonNumber = intent.getIntExtra("season", -1)
+        val seasonId = intent.getIntExtra("season_id", -1)
 
         lifecycleScope.launch {
             val settingsRepo = UserSettingsRepository.getInstance(this@TvEpisodesActivity)
             val settings = settingsRepo.settings.first()
             val serverUrl = settings.serverUrl!!
 
-            val show: TvShowDetails = Fuel.get("$serverUrl/api/tv_shows/$showId")
+            val season: TvSeason = Fuel.get("$serverUrl/api/items/$seasonId")
                 .awaitObject(gsonDeserializer())
 
-            val season = show.seasons.first { it.season == seasonNumber }
+            val show: TvShowDetails = Fuel.get("$serverUrl/api/items/${season.showId}")
+                .awaitObject(gsonDeserializer())
+
+            val episodes: List<TvEpisode> = Fuel.get("$serverUrl/api/items/$seasonId/children")
+                .awaitObject(gsonDeserializer())
 
             setContent {
                 fun onItemClick(streamId: Int) {
@@ -56,7 +84,7 @@ class TvEpisodesActivity : AppCompatActivity() {
                                 Column {
                                     Text(text = show.name)
                                     Text(
-                                        text = season.name ?: "Season ${season.season}",
+                                        text = season.name ?: "Season ${season.seasonNumber}",
                                         style = MaterialTheme.typography.caption
                                     )
                                 }
@@ -73,8 +101,8 @@ class TvEpisodesActivity : AppCompatActivity() {
                         val itemWidth = itemHeight * (16f / 9f)
 
                         LazyColumn {
-                            items(season.episodes) { episode ->
-                                Box(modifier = Modifier.clickable { onItemClick(episode.streamId) }) {
+                            items(episodes) { episode ->
+                                Box(modifier = Modifier.clickable { onItemClick(episode.id) }) {
                                     Row(
                                         modifier = Modifier
                                             .preferredHeight(itemHeight.dp)
@@ -93,17 +121,23 @@ class TvEpisodesActivity : AppCompatActivity() {
 
                                         val name = episode.name ?: String.format(
                                             "S%02dE%02d",
-                                            seasonNumber,
-                                            episode.episode
+                                            season.seasonNumber,
+                                            episode.episodeNumber
                                         )
 
                                         Column(modifier = Modifier.align(Alignment.CenterVertically)) {
-                                            Text(text = name)
+                                            Text(
+                                                text = "${episode.episodeNumber} - $name",
+                                                style = MaterialTheme.typography.body2,
+                                                overflow = TextOverflow.Ellipsis,
+                                                maxLines = 1,
+                                            )
                                             Text(
                                                 text = episode.overview ?: "",
                                                 style = MaterialTheme.typography.caption,
                                                 overflow = TextOverflow.Ellipsis,
                                                 maxLines = 4,
+                                                color = Color.Gray,
                                             )
                                         }
                                     }

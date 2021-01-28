@@ -11,7 +11,6 @@ use super::{ApiError, ApiResult};
 pub fn configure(app: &mut App<AppState>) {
     app.get("/api/stream/:id/original", get_original);
     app.get("/api/stream/:id/transcode", get_transcoded_stream);
-    app.get("/api/stream/:id/info", get_stream_info);
 }
 
 async fn get_original(state: AppState, req: Request) -> ApiResult {
@@ -94,33 +93,4 @@ async fn get_transcoded_stream(state: AppState, req: Request) -> ApiResult {
         .with_content_type("video/mp4")
         .unwrap()
         .with_body(body))
-}
-
-#[derive(serde::Serialize)]
-struct StreamInfo {
-    path: String,
-    duration: f64,
-}
-
-async fn get_stream_info(state: AppState, req: Request) -> ApiResult {
-    let id: i64 = req
-        .param("id")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
-
-    let mut conn = state.db.acquire().await.unwrap();
-
-    let sql = "
-        SELECT path, duration FROM media_items
-        WHERE id = ?
-    ";
-
-    let (path, duration): (String, f64) = sqlx::query_as(sql)
-        .bind(id)
-        .fetch_optional(&mut conn)
-        .await
-        .map_err(|_| ApiError::internal_server_error())?
-        .ok_or_else(ApiError::not_found)?;
-
-    Ok(Response::new().json(&StreamInfo { path, duration })?)
 }

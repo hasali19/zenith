@@ -164,8 +164,9 @@ fun HomeScreen() {
 
 data class Movie(
     val id: Int,
-    val title: String,
-    val year: Int?,
+    val name: String,
+    @SerializedName("release_year")
+    val releaseYear: Int?,
     @SerializedName("poster_url")
     val posterUrl: String?,
 )
@@ -185,7 +186,7 @@ fun MoviesScreen(serverUrl: String) {
     }
 
     LaunchedEffect(serverUrl) {
-        movies = Fuel.get("$serverUrl/api/movies")
+        movies = Fuel.get("$serverUrl/api/items?item_type=movie")
             .awaitObject(gsonDeserializer())
     }
 
@@ -218,14 +219,14 @@ fun MoviesScreen(serverUrl: String) {
 
                     Column(modifier = Modifier.padding(8.dp)) {
                         Text(
-                            text = movie.title,
+                            text = movie.name,
                             style = MaterialTheme.typography.body2,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
 
                         Text(
-                            text = movie.year?.toString() ?: "",
+                            text = movie.releaseYear?.toString() ?: "",
                             style = MaterialTheme.typography.caption,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -242,8 +243,8 @@ data class TvShow(
     val name: String,
     @SerializedName("poster_url")
     val posterUrl: String?,
-    @SerializedName("season_count")
-    val seasonCount: Int,
+    @SerializedName("start_year")
+    val startYear: Int?,
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -261,7 +262,7 @@ fun TvShowsScreen(serverUrl: String) {
     }
 
     LaunchedEffect(serverUrl) {
-        shows = Fuel.get("$serverUrl/api/tv_shows")
+        shows = Fuel.get("$serverUrl/api/items?item_type=tv_show")
             .awaitObject(gsonDeserializer())
     }
 
@@ -301,7 +302,7 @@ fun TvShowsScreen(serverUrl: String) {
                         )
 
                         Text(
-                            text = "${show.seasonCount} season${if (show.seasonCount > 1) "s" else ""}",
+                            text = show.startYear?.toString() ?: "",
                             style = MaterialTheme.typography.caption,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis

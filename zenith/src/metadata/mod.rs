@@ -15,6 +15,7 @@ pub enum RefreshRequest {
     TvEpisode(i64),
 }
 
+#[derive(Clone)]
 pub struct MetadataManager(mpsc::UnboundedSender<RefreshRequest>);
 
 impl MetadataManager {
@@ -166,6 +167,12 @@ async fn refresh_tv_show_metadata(
 
     log::info!("match found: {}", result.name);
 
+    let first_air_date = result
+        .first_air_date
+        .and_then(|date| time::Date::parse(date, "%F").ok())
+        .map(|date| date.with_time(time::Time::try_from_hms(0, 0, 0).unwrap()))
+        .map(|dt| dt.assume_utc().unix_timestamp());
+
     let poster = result.poster_path.as_deref().map(|poster| MediaImage {
         img_type: MediaImageType::Poster,
         src_type: MediaImageSrcType::Tmdb,
@@ -181,6 +188,7 @@ async fn refresh_tv_show_metadata(
     let sql = "
         UPDATE media_items
         SET name = ?,
+            release_date = ?,
             overview = ?,
             primary_image = ?,
             backdrop_image = ?,
@@ -190,6 +198,7 @@ async fn refresh_tv_show_metadata(
 
     sqlx::query(sql)
         .bind(result.name)
+        .bind(first_air_date)
         .bind(result.overview)
         .bind(poster.map(|p| p.to_string()))
         .bind(backdrop.map(|b| b.to_string()))

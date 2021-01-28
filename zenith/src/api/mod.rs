@@ -1,17 +1,15 @@
-pub mod library;
-pub mod movies;
-pub mod stream;
-pub mod tv_shows;
+mod items;
+mod library;
+mod stream;
 
 use zenith_server::{App, Body, Response, StatusCode};
 
 use crate::AppState;
 
 pub fn configure(app: &mut App<AppState>) {
+    app.configure(items::configure);
     app.configure(library::configure);
     app.configure(stream::configure);
-    app.configure(movies::configure);
-    app.configure(tv_shows::configure);
 }
 
 type ApiResult<T = Response> = Result<T, ApiError>;
@@ -63,6 +61,12 @@ impl From<eyre::Report> for ApiError {
 
 impl From<serde_json::Error> for ApiError {
     fn from(e: serde_json::Error) -> Self {
+        ApiError::internal_server_error().body(e.to_string())
+    }
+}
+
+impl From<sqlx::Error> for ApiError {
+    fn from(e: sqlx::Error) -> Self {
         ApiError::internal_server_error().body(e.to_string())
     }
 }
