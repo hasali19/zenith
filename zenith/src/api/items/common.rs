@@ -31,6 +31,7 @@ pub enum ItemData {
         user_data: UserData,
     },
     TvShow {
+        start_year: Option<i32>,
         poster_url: Option<String>,
         backdrop_url: Option<String>,
     },
@@ -97,7 +98,11 @@ fn get_tv_show_data(row: &SqliteRow) -> sqlx::Result<ItemData> {
     let primary_img = row.try_get::<Option<_>, _>(9)?.map(utils::get_image_url);
     let backdrop_img = row.try_get::<Option<_>, _>(10)?.map(utils::get_image_url);
 
+    let release_date: Option<i64> = row.try_get(6)?;
+    let start_year = release_date.map(|v| OffsetDateTime::from_unix_timestamp(v).year());
+
     Ok(ItemData::TvShow {
+        start_year,
         poster_url: primary_img,
         backdrop_url: backdrop_img,
     })

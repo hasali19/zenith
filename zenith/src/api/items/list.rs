@@ -13,6 +13,28 @@ use super::common::MediaItem;
 struct Query {
     item_type: Option<QueryItemType>,
     parent_id: Option<i64>,
+    watch_status: Option<WatchStatus>,
+    is_watching: Option<bool>,
+    #[serde(default)]
+    sort_by: Vec<SortKey>,
+    limit: Option<u32>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum WatchStatus {
+    Watched,
+    Unwatched,
+    NeverWatched,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum SortKey {
+    ItemType,
+    IndexNumber,
+    Name,
+    AddedAt,
 }
 
 #[derive(Deserialize)]
@@ -74,16 +96,53 @@ fn build_sql_query<'a>(query: Query) -> (String, SqliteArguments<'a>) {
     let mut sql = SQL.to_string();
 
     if let Some(item_type) = query.item_type {
-        sql.push_str(" AND item_type = ?");
+        sql += " AND item_type = ?";
         args.add(MediaItemType::from(item_type));
     }
 
     if let Some(parent_id) = query.parent_id {
-        sql.push_str(" AND parent_id = ?");
+        sql += " AND parent_id = ?";
         args.add(parent_id);
     }
 
-    sql += " ORDER BY item_type, index_number, name";
+    if let Some(watch_status) = query.watch_status {
+        sql += match watch_status {
+            WatchStatus::Watched => " AND is_watched = 1",
+            WatchStatus::Unwatched => " AND COALESCE(is_watched, 0) = 0",
+            WatchStatus::NeverWatched => " AND is_watched IS NULL",
+        };
+    }
+
+    if let Some(is_watching) = query.is_watching {
+        if is_watching {
+            sql += " AND position > 0 AND position < duration";
+        } else {
+            sql += " AND COALESCE(position, 0) = 0"
+        }
+    }
+
+    if !query.sort_by.is_empty() {
+        let keys: Vec<_> = query
+            .sort_by
+            .into_iter()
+            .map(|k| match k {
+                SortKey::ItemType => "item_type",
+                SortKey::IndexNumber => "index_number",
+                SortKey::Name => "name",
+                SortKey::AddedAt => "added_at DESC",
+            })
+            .collect();
+
+        sql += " ORDER BY ";
+        sql += keys.join(",").as_str();
+    } else {
+        sql += " ORDER BY item_type, index_number, name";
+    }
+
+    if let Some(limit) = query.limit {
+        sql += " LIMIT ";
+        sql += limit.to_string().as_str();
+    }
 
     (sql, args)
 }
