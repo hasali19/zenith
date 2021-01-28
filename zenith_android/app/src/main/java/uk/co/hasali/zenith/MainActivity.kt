@@ -5,20 +5,18 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.WithConstraints
 import androidx.compose.ui.platform.AmbientContext
 import androidx.compose.ui.platform.AmbientDensity
@@ -89,7 +87,7 @@ fun ZenithApp(serverUrl: String, onLaunchSetup: () -> Unit = {}) {
         ) {
             Crossfade(current = screen) { screen ->
                 when (screen) {
-                    is Screen.Home -> HomeScreen()
+                    is Screen.Home -> HomeScreen(serverUrl)
                     is Screen.Movies -> MoviesScreen(serverUrl)
                     is Screen.TvShows -> TvShowsScreen(serverUrl)
                 }
@@ -104,7 +102,7 @@ fun TopLevelScreenScaffold(
     currentScreen: Screen,
     onScreenChange: (Screen) -> Unit,
     onLaunchSetup: () -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -149,16 +147,152 @@ fun TopLevelScreenScaffold(
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun HomeScreen() {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            imageVector = Icons.Default.Home,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(48.dp),
-            colorFilter = ColorFilter.tint(Color.DarkGray)
+fun HomeScreen(serverUrl: String) {
+    val context = AmbientContext.current
+
+    var movies: List<Movie> by remember { mutableStateOf(emptyList()) }
+    var shows: List<TvShow> by remember { mutableStateOf(emptyList()) }
+
+    fun onMovieClick(movieId: Int) {
+        context.startActivity(
+            Intent(context, MovieDetailsActivity::class.java).apply {
+                putExtra("movie_id", movieId)
+            }
         )
+    }
+
+    fun onShowClick(showId: Int) {
+        context.startActivity(
+            Intent(context, TvShowDetailsActivity::class.java).apply {
+                putExtra("show_id", showId)
+            }
+        )
+    }
+
+    LaunchedEffect(serverUrl) {
+        movies =
+            Fuel.get("$serverUrl/api/items?item_type=movie&sort_by[0]=added_at&watch_status=never_watched&limit=10")
+                .awaitObject(gsonDeserializer())
+
+        shows =
+            Fuel.get("$serverUrl/api/items?item_type=tv_show&sort_by[0]=added_at&watch_status=never_watched&limit=10")
+                .awaitObject(gsonDeserializer())
+    }
+
+    ScrollableColumn {
+        Column(modifier = Modifier.padding(4.dp)) {
+            if (movies.isNotEmpty()) {
+                Row(modifier = Modifier.padding(8.dp)) {
+                    Text("Recently Added Movies")
+                }
+
+                LazyRow(contentPadding = PaddingValues(4.dp)) {
+                    items(movies) { movie ->
+                        Card(
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .preferredWidth(110.dp)
+                                .clickable {
+                                    onMovieClick(movie.id)
+                                }
+                        ) {
+                            Column {
+                                WithConstraints {
+                                    val height = with(AmbientDensity.current) {
+                                        constraints.maxWidth.toDp() * (3f / 2f)
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .preferredHeight(height)
+                                    ) {
+                                        movie.posterUrl?.let { url ->
+                                            CoilImage(data = url,
+                                                modifier = Modifier.fillMaxWidth())
+                                        }
+                                    }
+                                }
+
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Text(
+                                        text = movie.name,
+                                        style = MaterialTheme.typography.body2,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    Text(
+                                        text = movie.releaseYear?.toString() ?: "",
+                                        style = MaterialTheme.typography.caption,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.preferredHeight(8.dp))
+            }
+
+            if (shows.isNotEmpty()) {
+                Row(modifier = Modifier.padding(8.dp)) {
+                    Text("Recently Added TV")
+                }
+
+                LazyRow(contentPadding = PaddingValues(4.dp)) {
+                    items(shows) { show ->
+                        Card(
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .preferredWidth(110.dp)
+                                .clickable {
+                                    onShowClick(show.id)
+                                }
+                        ) {
+                            Column {
+                                WithConstraints {
+                                    val height = with(AmbientDensity.current) {
+                                        constraints.maxWidth.toDp() * (3f / 2f)
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .preferredHeight(height)
+                                    ) {
+                                        show.posterUrl?.let { url ->
+                                            CoilImage(data = url,
+                                                modifier = Modifier.fillMaxWidth())
+                                        }
+                                    }
+                                }
+
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Text(
+                                        text = show.name,
+                                        style = MaterialTheme.typography.body2,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    Text(
+                                        text = show.startYear?.toString() ?: "",
+                                        style = MaterialTheme.typography.caption,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
