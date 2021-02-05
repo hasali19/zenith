@@ -1,4 +1,4 @@
-name: CI
+name: Zenith Server
 
 on:
   pull_request:
