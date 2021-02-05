@@ -48,7 +48,7 @@ android {
 
     composeOptions {
         kotlinCompilerExtensionVersion compose_version
-        kotlinCompilerVersion '1.4.21'
+        kotlinCompilerVersion '1.4.21-2'
     }
 }
 
@@ -70,7 +70,7 @@ dependencies {
 
     implementation 'com.google.android.material:material:1.2.1'
 
-    implementation 'dev.chrisbanes.accompanist:accompanist-coil:0.4.1'
+    implementation 'dev.chrisbanes.accompanist:accompanist-coil:0.5.0'
     implementation 'com.google.android.exoplayer:exoplayer:2.12.2'
     implementation 'com.google.android.exoplayer:extension-mediasession:2.12.2'
 

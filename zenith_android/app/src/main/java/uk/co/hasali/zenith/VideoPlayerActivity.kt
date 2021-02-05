@@ -188,6 +188,7 @@ class VideoPlayerActivity : AppCompatActivity() {
                             ) {
                                 Icon(
                                     imageVector = vectorResource(id = R.drawable.rewind_10),
+                                    contentDescription = "Rewind",
                                     tint = Color.White,
                                 )
                             }
@@ -199,12 +200,13 @@ class VideoPlayerActivity : AppCompatActivity() {
                                 }
                             ) {
                                 Icon(
-                                    vectorResource(
+                                    imageVector = vectorResource(
                                         id = when (playbackState) {
                                             PlaybackState.PAUSED -> R.drawable.play
                                             PlaybackState.PLAYING -> R.drawable.pause
                                         }
-                                    )
+                                    ),
+                                    contentDescription = "Play/Pause"
                                 )
                             }
 
@@ -217,6 +219,7 @@ class VideoPlayerActivity : AppCompatActivity() {
                             ) {
                                 Icon(
                                     imageVector = vectorResource(id = R.drawable.fast_forward_30),
+                                    contentDescription = "Fast forward",
                                     tint = Color.White,
                                 )
                             }

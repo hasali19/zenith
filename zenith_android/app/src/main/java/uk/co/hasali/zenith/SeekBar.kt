@@ -21,7 +21,7 @@ fun SeekBar(
     position: Float,
     max: Float,
     onSeekStart: () -> Unit = {},
-    onSeekEnd: (Float) -> Unit = {}
+    onSeekEnd: (Float) -> Unit = {},
 ) {
     var internalPosition by remember { mutableStateOf(position) }
 
@@ -35,19 +35,22 @@ fun SeekBar(
         }
     }
 
-    onCommit(max) {
+    DisposableEffect(max) {
         view.max = max.toInt()
+        onDispose { }
     }
 
-    onCommit(position) {
+    DisposableEffect(position) {
         internalPosition = position
+        onDispose { }
     }
 
-    onCommit(internalPosition) {
+    DisposableEffect(internalPosition) {
         view.progress = internalPosition.toInt()
+        onDispose { }
     }
 
-    onCommit(onSeekStart, onSeekEnd) {
+    DisposableEffect(onSeekStart, onSeekEnd) {
         view.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
@@ -63,6 +66,8 @@ fun SeekBar(
                 onSeekEnd(seekBar.progress.toFloat())
             }
         })
+
+        onDispose { }
     }
 
     Column {
@@ -91,7 +96,7 @@ fun SeekBar(
 private fun TimeText(
     time: Float,
     modifier: Modifier = Modifier,
-    align: TextAlign = TextAlign.Start
+    align: TextAlign = TextAlign.Start,
 ) {
     Text(
         text = DateUtils.formatElapsedTime(time.toLong()),

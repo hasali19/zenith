@@ -13,7 +13,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.WithConstraints
 import androidx.compose.ui.platform.AmbientDensity
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.dp
@@ -21,7 +20,6 @@ import androidx.lifecycle.lifecycleScope
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.gson.gsonDeserializer
-import com.google.gson.annotations.SerializedName
 import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -73,7 +71,7 @@ class MovieDetailsActivity : AppCompatActivity() {
                     ) {
                         val (backdrop, fab, content) = createRefs()
 
-                        WithConstraints(
+                        BoxWithConstraints(
                             modifier = Modifier.constrainAs(backdrop) {
                                 top.linkTo(parent.top)
                                 start.linkTo(parent.start)
@@ -88,7 +86,7 @@ class MovieDetailsActivity : AppCompatActivity() {
                                 modifier = Modifier.preferredHeight(height)
                             ) {
                                 movie.backdrop?.let { url ->
-                                    CoilImage(data = url)
+                                    CoilImage(data = url, contentDescription = null)
                                 }
                             }
                         }
@@ -102,7 +100,7 @@ class MovieDetailsActivity : AppCompatActivity() {
                                     centerAround(backdrop.bottom)
                                 },
                         ) {
-                            Icon(Icons.Default.PlayArrow)
+                            Icon(Icons.Default.PlayArrow, "Play")
                         }
 
                         Column(
@@ -148,7 +146,11 @@ class MovieDetailsActivity : AppCompatActivity() {
                         title = { /* No title */ },
                         backgroundColor = Color.Transparent,
                         elevation = 0.dp,
-                        navigationIcon = { IconButton(onClick = { finish() }) { Icon(Icons.Default.ArrowBack) } },
+                        navigationIcon = {
+                            IconButton(onClick = { finish() }) {
+                                Icon(Icons.Default.ArrowBack, "Back")
+                            }
+                        },
                     )
                 }
             }

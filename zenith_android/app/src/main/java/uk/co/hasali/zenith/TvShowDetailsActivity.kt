@@ -7,13 +7,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.WithConstraints
 import androidx.compose.ui.platform.AmbientDensity
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.text.style.TextOverflow
@@ -22,7 +22,6 @@ import androidx.lifecycle.lifecycleScope
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.gson.gsonDeserializer
-import com.google.gson.annotations.SerializedName
 import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -72,7 +71,7 @@ class TvShowDetailsActivity : AppCompatActivity() {
                 Box {
                     LazyColumn {
                         item {
-                            WithConstraints {
+                            BoxWithConstraints {
                                 val height = with(AmbientDensity.current) {
                                     constraints.maxWidth.toDp() * (9f / 16f)
                                 }
@@ -81,7 +80,7 @@ class TvShowDetailsActivity : AppCompatActivity() {
                                     modifier = Modifier.preferredHeight(height)
                                 ) {
                                     show.backdrop?.let { url ->
-                                        CoilImage(data = url)
+                                        CoilImage(data = url, contentDescription = null)
                                     }
                                 }
 
@@ -91,9 +90,7 @@ class TvShowDetailsActivity : AppCompatActivity() {
                                     elevation = 0.dp,
                                     navigationIcon = {
                                         IconButton(onClick = { finish() }) {
-                                            Icon(
-                                                Icons.Default.ArrowBack
-                                            )
+                                            Icon(Icons.Default.ArrowBack, "Back")
                                         }
                                     },
                                 )
@@ -116,19 +113,26 @@ class TvShowDetailsActivity : AppCompatActivity() {
                                 LazyRow {
                                     items(seasons) { season ->
                                         Card(
-                                            modifier = Modifier.padding(4.dp)
+                                            modifier = Modifier
+                                                .padding(4.dp)
                                                 .preferredWidth(92.dp)
                                                 .clickable { onSeasonClick(season.id) }
                                         ) {
                                             Column {
-                                                WithConstraints {
+                                                BoxWithConstraints {
                                                     val height = with(AmbientDensity.current) {
                                                         constraints.maxWidth.toDp() * (3f / 2f)
                                                     }
 
-                                                    Box(modifier = Modifier.fillMaxWidth().preferredHeight(height)) {
+                                                    Box(modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .preferredHeight(height)) {
                                                         season.poster?.let { url ->
-                                                            CoilImage(data = url, modifier = Modifier.fillMaxWidth())
+                                                            CoilImage(
+                                                                data = url,
+                                                                contentDescription = null,
+                                                                modifier = Modifier.fillMaxWidth(),
+                                                            )
                                                         }
                                                     }
                                                 }
@@ -142,7 +146,8 @@ class TvShowDetailsActivity : AppCompatActivity() {
                                                     )
 
                                                     Text(
-                                                        text = season.name ?: "Season ${season.seasonNumber}",
+                                                        text = season.name
+                                                            ?: "Season ${season.seasonNumber}",
                                                         style = MaterialTheme.typography.caption,
                                                         maxLines = 1,
                                                         overflow = TextOverflow.Ellipsis

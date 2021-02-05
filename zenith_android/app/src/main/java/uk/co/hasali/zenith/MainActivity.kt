@@ -4,20 +4,18 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.ScrollableColumn
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.WithConstraints
 import androidx.compose.ui.platform.AmbientContext
 import androidx.compose.ui.platform.AmbientDensity
 import androidx.compose.ui.platform.setContent
@@ -65,14 +63,16 @@ class MainActivity : AppCompatActivity() {
 }
 
 sealed class Screen(val name: String, val icon: @Composable () -> Unit) {
-    object Home : Screen("Home", { Icon(Icons.Filled.Home) })
+    object Home : Screen("Home", { Icon(Icons.Filled.Home, "Home") })
 
     object Movies : Screen("Movies", {
-        loadVectorResource(id = R.drawable.movie).resource.resource?.let { Icon(it) }
+        loadVectorResource(id = R.drawable.movie).resource.resource?.let { Icon(it, "Movies") }
     })
 
     object TvShows : Screen("TV Shows", {
-        loadVectorResource(id = R.drawable.television).resource.resource?.let { Icon(it) }
+        loadVectorResource(id = R.drawable.television).resource.resource?.let {
+            Icon(it, "TV Shows")
+        }
     })
 }
 
@@ -116,7 +116,7 @@ fun TopLevelScreenScaffold(
                     DropdownMenu(
                         toggle = {
                             IconButton(onClick = { showMenu = true }) {
-                                Icon(imageVector = Icons.Default.MoreVert)
+                                Icon(imageVector = Icons.Default.MoreVert, "More")
                             }
                         },
                         expanded = showMenu,
@@ -149,7 +149,6 @@ fun TopLevelScreenScaffold(
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(serverUrl: String) {
     val context = AmbientContext.current
@@ -181,7 +180,7 @@ fun HomeScreen(serverUrl: String) {
             .awaitObject(gsonDeserializer())
     }
 
-    ScrollableColumn {
+    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         Column(modifier = Modifier.padding(4.dp)) {
             if (movies.isNotEmpty()) {
                 Row(modifier = Modifier.padding(8.dp)) {
@@ -199,7 +198,7 @@ fun HomeScreen(serverUrl: String) {
                                 }
                         ) {
                             Column {
-                                WithConstraints {
+                                BoxWithConstraints {
                                     val height = with(AmbientDensity.current) {
                                         constraints.maxWidth.toDp() * (3f / 2f)
                                     }
@@ -210,8 +209,11 @@ fun HomeScreen(serverUrl: String) {
                                             .preferredHeight(height)
                                     ) {
                                         movie.poster?.let { url ->
-                                            CoilImage(data = url,
-                                                modifier = Modifier.fillMaxWidth())
+                                            CoilImage(
+                                                data = url,
+                                                contentDescription = null,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
                                         }
                                     }
                                 }
@@ -255,7 +257,7 @@ fun HomeScreen(serverUrl: String) {
                                 }
                         ) {
                             Column {
-                                WithConstraints {
+                                BoxWithConstraints {
                                     val height = with(AmbientDensity.current) {
                                         constraints.maxWidth.toDp() * (3f / 2f)
                                     }
@@ -266,8 +268,11 @@ fun HomeScreen(serverUrl: String) {
                                             .preferredHeight(height)
                                     ) {
                                         show.poster?.let { url ->
-                                            CoilImage(data = url,
-                                                modifier = Modifier.fillMaxWidth())
+                                            CoilImage(
+                                                data = url,
+                                                contentDescription = null,
+                                                modifier = Modifier.fillMaxWidth(),
+                                            )
                                         }
                                     }
                                 }
@@ -326,7 +331,7 @@ fun MoviesScreen(serverUrl: String) {
                     }
             ) {
                 Column {
-                    WithConstraints {
+                    BoxWithConstraints {
                         val height = with(AmbientDensity.current) {
                             constraints.maxWidth.toDp() * (3f / 2f)
                         }
@@ -337,7 +342,11 @@ fun MoviesScreen(serverUrl: String) {
                                 .preferredHeight(height)
                         ) {
                             movie.poster?.let { url ->
-                                CoilImage(data = url, modifier = Modifier.fillMaxWidth())
+                                CoilImage(
+                                    data = url,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
                             }
                         }
                     }
@@ -393,7 +402,7 @@ fun TvShowsScreen(serverUrl: String) {
                     }
             ) {
                 Column {
-                    WithConstraints {
+                    BoxWithConstraints {
                         val height = with(AmbientDensity.current) {
                             constraints.maxWidth.toDp() * (3f / 2f)
                         }
@@ -404,7 +413,11 @@ fun TvShowsScreen(serverUrl: String) {
                                 .preferredHeight(height)
                         ) {
                             show.poster?.let { url ->
-                                CoilImage(data = url, modifier = Modifier.fillMaxWidth())
+                                CoilImage(
+                                    data = url,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
                             }
                         }
                     }
