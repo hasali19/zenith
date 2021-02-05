@@ -1,15 +1,21 @@
-mod items;
 mod library;
+mod metadata;
+mod movies;
+mod progress;
 mod stream;
+mod tv;
 
 use zenith_server::{App, Body, Response, StatusCode};
 
 use crate::AppState;
 
 pub fn configure(app: &mut App<AppState>) {
-    app.configure(items::configure);
     app.configure(library::configure);
+    app.configure(movies::configure);
+    app.configure(tv::configure);
     app.configure(stream::configure);
+    app.configure(progress::configure);
+    app.configure(metadata::configure);
 }
 
 type ApiResult<T = Response> = Result<T, ApiError>;

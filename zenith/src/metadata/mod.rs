@@ -1,9 +1,8 @@
 use eyre::eyre;
-use sqlx::sqlite::SqliteRow;
-use sqlx::{Row, SqliteConnection};
+use sqlx::SqliteConnection;
 use tokio::sync::mpsc;
 
-use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType, MediaItemType};
+use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType};
 use crate::db::Db;
 use crate::tmdb::{MovieSearchQuery, TmdbClient, TvShowSearchQuery};
 
@@ -64,12 +63,10 @@ async fn refresh_movie_metadata(
 ) -> eyre::Result<()> {
     log::info!("updating metadata for movie (id: {})", id);
 
-    let (path,): (String,) =
-        sqlx::query_as("SELECT path FROM media_items WHERE item_type = ? AND id = ?")
-            .bind(MediaItemType::Movie)
-            .bind(id)
-            .fetch_one(&mut *db)
-            .await?;
+    let path: String = sqlx::query_scalar("SELECT path FROM movies WHERE item_id = ?")
+        .bind(id)
+        .fetch_one(&mut *db)
+        .await?;
 
     let path = std::path::Path::new(&path);
     let name = path
@@ -113,12 +110,12 @@ async fn refresh_movie_metadata(
     });
 
     let sql = "
-        UPDATE media_items
-        SET name = ?,
+        UPDATE movies
+        SET title    = ?,
             overview = ?,
-            primary_image = ?,
-            backdrop_image = ?
-        WHERE id = ?
+            poster   = ?,
+            backdrop = ?
+        WHERE item_id = ?
     ";
 
     sqlx::query(sql)
@@ -140,10 +137,8 @@ async fn refresh_tv_show_metadata(
 ) -> eyre::Result<()> {
     log::info!("updating metadata for tv show (id: {})", id);
 
-    let path: String = sqlx::query("SELECT path FROM media_items WHERE id = ? AND item_type = ?")
+    let path: String = sqlx::query_scalar("SELECT path FROM tv_shows WHERE item_id = ?")
         .bind(id)
-        .bind(MediaItemType::TvShow)
-        .try_map(|row: SqliteRow| row.try_get(0))
         .fetch_one(&mut *db)
         .await?;
 
@@ -186,14 +181,14 @@ async fn refresh_tv_show_metadata(
     });
 
     let sql = "
-        UPDATE media_items
+        UPDATE tv_shows
         SET name = ?,
-            release_date = ?,
+            start_date = ?,
             overview = ?,
-            primary_image = ?,
-            backdrop_image = ?,
+            poster = ?,
+            backdrop = ?,
             tmdb_id = ?
-        WHERE id = ?
+        WHERE item_id = ?
     ";
 
     sqlx::query(sql)
@@ -218,17 +213,14 @@ async fn refresh_tv_season_metadata(
     log::info!("updating metadata for tv season (id: {})", id);
 
     let sql = "
-        SELECT show.tmdb_id, season.index_number
-        FROM media_items AS season
-        JOIN media_items AS show ON show.id = season.parent_id
-        WHERE season.id = ? AND season.item_type = ?
+        SELECT show.tmdb_id, season.season_number
+        FROM tv_seasons AS season
+        JOIN tv_shows AS show ON show.item_id = season.show_id
+        WHERE season.item_id = ?
     ";
 
-    let (tmdb_show_id, season): (i32, i32) = sqlx::query_as(sql)
-        .bind(id)
-        .bind(MediaItemType::TvSeason)
-        .fetch_one(&mut *db)
-        .await?;
+    let (tmdb_show_id, season): (i32, i32) =
+        sqlx::query_as(sql).bind(id).fetch_one(&mut *db).await?;
 
     let metadata = tmdb.get_tv_season(tmdb_show_id, season).await?;
     let poster = metadata.poster_path.as_deref().map(|poster| MediaImage {
@@ -243,12 +235,12 @@ async fn refresh_tv_season_metadata(
     );
 
     let sql = "
-        UPDATE media_items
+        UPDATE tv_seasons
         SET name = ?,
             overview = ?,
-            primary_image = ?,
+            poster = ?,
             tmdb_id = ?
-        WHERE id = ?
+        WHERE item_id = ?
     ";
 
     sqlx::query(sql)
@@ -271,18 +263,15 @@ async fn refresh_tv_episode_metadata(
     log::info!("updating metadata for tv episode (id: {})", id);
 
     let sql = "
-        SELECT show.tmdb_id, season.index_number, episode.index_number
-        FROM media_items AS episode
-        JOIN media_items AS season ON season.id = episode.parent_id
-        JOIN media_items AS show ON show.id = season.parent_id
-        WHERE episode.id = ? AND episode.item_type = ?
+        SELECT show.tmdb_id, season.season_number, episode.episode_number
+        FROM tv_episodes AS episode
+        JOIN tv_seasons AS season ON season.item_id = episode.season_id
+        JOIN tv_shows AS show ON show.item_id = season.show_id
+        WHERE episode.item_id = ?
     ";
 
-    let (tmdb_show_id, season, episode): (i32, i32, i32) = sqlx::query_as(sql)
-        .bind(id)
-        .bind(MediaItemType::TvEpisode)
-        .fetch_one(&mut *db)
-        .await?;
+    let (tmdb_show_id, season, episode): (i32, i32, i32) =
+        sqlx::query_as(sql).bind(id).fetch_one(&mut *db).await?;
 
     let metadata = tmdb.get_tv_episode(tmdb_show_id, season, episode).await?;
     let thumbnail = tmdb
@@ -305,12 +294,12 @@ async fn refresh_tv_episode_metadata(
     );
 
     let sql = "
-        UPDATE media_items
+        UPDATE tv_episodes
         SET name = ?,
             overview = ?,
-            primary_image = ?,
+            thumbnail = ?,
             tmdb_id = ?
-        WHERE id = ?
+        WHERE item_id = ?
     ";
 
     sqlx::query(sql)

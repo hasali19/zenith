@@ -25,24 +25,12 @@ import com.google.gson.annotations.SerializedName
 import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import uk.co.hasali.zenith.api.Movie
 import uk.co.hasali.zenith.ui.ZenithTheme
-
-data class MovieDetails(
-    val id: Int,
-    val name: String,
-    val overview: String?,
-    @SerializedName("release_year")
-    val releaseYear: Int?,
-    val duration: Float,
-    @SerializedName("poster_url")
-    val posterUrl: String?,
-    @SerializedName("backdrop_url")
-    val backdropUrl: String?,
-)
 
 class MovieDetailsActivity : AppCompatActivity() {
 
-    private lateinit var movie: MovieDetails
+    private lateinit var movie: Movie
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,7 +42,7 @@ class MovieDetailsActivity : AppCompatActivity() {
             val settings = settingsRepo.settings.first()
             val serverUrl = settings.serverUrl!!
 
-            movie = Fuel.get("$serverUrl/api/items/$movieId")
+            movie = Fuel.get("$serverUrl/api/movies/$movieId")
                 .awaitObject(gsonDeserializer())
 
             setContent {
@@ -99,7 +87,9 @@ class MovieDetailsActivity : AppCompatActivity() {
                             Box(
                                 modifier = Modifier.preferredHeight(height)
                             ) {
-                                CoilImage(data = movie.backdropUrl!!)
+                                movie.backdrop?.let { url ->
+                                    CoilImage(data = url)
+                                }
                             }
                         }
 
@@ -126,13 +116,13 @@ class MovieDetailsActivity : AppCompatActivity() {
                         ) {
                             Column {
                                 Text(
-                                    text = movie.name,
+                                    text = movie.title,
                                     style = MaterialTheme.typography.h6
                                 )
 
                                 Row {
                                     Text(
-                                        text = movie.releaseYear?.toString() ?: "",
+                                        text = movie.releaseYear?.toString().orEmpty(),
                                         style = MaterialTheme.typography.body2
                                     )
 
@@ -166,7 +156,7 @@ class MovieDetailsActivity : AppCompatActivity() {
     }
 }
 
-private fun formatDuration(duration: Float): String {
+private fun formatDuration(duration: Double): String {
     val value = duration.toLong()
     return if (value <= 90 * 60) {
         "${value / 60}m"

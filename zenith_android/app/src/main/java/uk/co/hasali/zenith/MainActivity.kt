@@ -28,11 +28,13 @@ import androidx.lifecycle.lifecycleScope
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.gson.gsonDeserializer
-import com.google.gson.annotations.SerializedName
 import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import uk.co.hasali.zenith.api.Movie
+import uk.co.hasali.zenith.api.TvShow
 import uk.co.hasali.zenith.ui.ZenithTheme
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -172,13 +174,11 @@ fun HomeScreen(serverUrl: String) {
     }
 
     LaunchedEffect(serverUrl) {
-        movies =
-            Fuel.get("$serverUrl/api/items?item_type=movie&sort_by[0]=added_at&watch_status=never_watched&limit=10")
-                .awaitObject(gsonDeserializer())
+        movies = Fuel.get("$serverUrl/api/movies/recent")
+            .awaitObject(gsonDeserializer())
 
-        shows =
-            Fuel.get("$serverUrl/api/items?item_type=tv_show&sort_by[0]=added_at&watch_status=never_watched&limit=10")
-                .awaitObject(gsonDeserializer())
+        shows = Fuel.get("$serverUrl/api/tv/shows/recent")
+            .awaitObject(gsonDeserializer())
     }
 
     ScrollableColumn {
@@ -209,7 +209,7 @@ fun HomeScreen(serverUrl: String) {
                                             .fillMaxWidth()
                                             .preferredHeight(height)
                                     ) {
-                                        movie.posterUrl?.let { url ->
+                                        movie.poster?.let { url ->
                                             CoilImage(data = url,
                                                 modifier = Modifier.fillMaxWidth())
                                         }
@@ -218,14 +218,14 @@ fun HomeScreen(serverUrl: String) {
 
                                 Column(modifier = Modifier.padding(8.dp)) {
                                     Text(
-                                        text = movie.name,
+                                        text = movie.title,
                                         style = MaterialTheme.typography.body2,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
 
                                     Text(
-                                        text = movie.releaseYear?.toString() ?: "",
+                                        text = movie.releaseYear?.toString().orEmpty(),
                                         style = MaterialTheme.typography.caption,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -265,7 +265,7 @@ fun HomeScreen(serverUrl: String) {
                                             .fillMaxWidth()
                                             .preferredHeight(height)
                                     ) {
-                                        show.posterUrl?.let { url ->
+                                        show.poster?.let { url ->
                                             CoilImage(data = url,
                                                 modifier = Modifier.fillMaxWidth())
                                         }
@@ -281,7 +281,7 @@ fun HomeScreen(serverUrl: String) {
                                     )
 
                                     Text(
-                                        text = show.startYear?.toString() ?: "",
+                                        text = show.startYear?.toString().orEmpty(),
                                         style = MaterialTheme.typography.caption,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -295,15 +295,6 @@ fun HomeScreen(serverUrl: String) {
         }
     }
 }
-
-data class Movie(
-    val id: Int,
-    val name: String,
-    @SerializedName("release_year")
-    val releaseYear: Int?,
-    @SerializedName("poster_url")
-    val posterUrl: String?,
-)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -320,7 +311,7 @@ fun MoviesScreen(serverUrl: String) {
     }
 
     LaunchedEffect(serverUrl) {
-        movies = Fuel.get("$serverUrl/api/items?item_type=movie")
+        movies = Fuel.get("$serverUrl/api/movies")
             .awaitObject(gsonDeserializer())
     }
 
@@ -345,7 +336,7 @@ fun MoviesScreen(serverUrl: String) {
                                 .fillMaxWidth()
                                 .preferredHeight(height)
                         ) {
-                            movie.posterUrl?.let { url ->
+                            movie.poster?.let { url ->
                                 CoilImage(data = url, modifier = Modifier.fillMaxWidth())
                             }
                         }
@@ -353,14 +344,14 @@ fun MoviesScreen(serverUrl: String) {
 
                     Column(modifier = Modifier.padding(8.dp)) {
                         Text(
-                            text = movie.name,
+                            text = movie.title,
                             style = MaterialTheme.typography.body2,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
 
                         Text(
-                            text = movie.releaseYear?.toString() ?: "",
+                            text = movie.releaseYear?.toString().orEmpty(),
                             style = MaterialTheme.typography.caption,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -371,15 +362,6 @@ fun MoviesScreen(serverUrl: String) {
         }
     }
 }
-
-data class TvShow(
-    val id: Int,
-    val name: String,
-    @SerializedName("poster_url")
-    val posterUrl: String?,
-    @SerializedName("start_year")
-    val startYear: Int?,
-)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -396,7 +378,7 @@ fun TvShowsScreen(serverUrl: String) {
     }
 
     LaunchedEffect(serverUrl) {
-        shows = Fuel.get("$serverUrl/api/items?item_type=tv_show")
+        shows = Fuel.get("$serverUrl/api/tv/shows")
             .awaitObject(gsonDeserializer())
     }
 
@@ -421,7 +403,7 @@ fun TvShowsScreen(serverUrl: String) {
                                 .fillMaxWidth()
                                 .preferredHeight(height)
                         ) {
-                            show.posterUrl?.let { url ->
+                            show.poster?.let { url ->
                                 CoilImage(data = url, modifier = Modifier.fillMaxWidth())
                             }
                         }
@@ -436,7 +418,7 @@ fun TvShowsScreen(serverUrl: String) {
                         )
 
                         Text(
-                            text = show.startYear?.toString() ?: "",
+                            text = show.startYear?.toString().orEmpty(),
                             style = MaterialTheme.typography.caption,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis

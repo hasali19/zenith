@@ -21,7 +21,7 @@ pub async fn sync_tv_shows(
     ffprobe: &Ffprobe,
     path: &str,
 ) -> eyre::Result<()> {
-    let mut tv_shows = sqlx::query("SELECT id FROM media_items WHERE item_type = 2")
+    let mut tv_shows = sqlx::query("SELECT item_id FROM tv_shows")
         .try_map(|row: SqliteRow| row.try_get::<i64, _>(0))
         .fetch_all(&mut *db)
         .await?
@@ -104,35 +104,38 @@ async fn sync_show(
     path: &str,
     episodes: &HashMap<i32, Vec<(i32, String)>>,
 ) -> eyre::Result<i64> {
-    let sql = "
-        SELECT id FROM media_items
-        WHERE path = ? AND item_type = ?
-    ";
-
-    let res = sqlx::query_as(sql)
+    let res = sqlx::query_scalar("SELECT item_id FROM tv_shows WHERE path = ?")
         .bind(path)
-        .bind(MediaItemType::TvShow)
         .fetch_optional(&mut *db)
         .await?;
 
     let id = match res {
-        Some((id,)) => id,
+        Some(id) => id,
         None => {
             log::info!("adding tv show: {}", name);
 
             let sql = "
-                INSERT INTO media_items (item_type, path, name)
+                INSERT INTO media_items (item_type)
+                VALUES (?)
+            ";
+
+            let id: i64 = sqlx::query(sql)
+                .bind(MediaItemType::TvShow)
+                .execute(&mut *db)
+                .await?
+                .last_insert_rowid();
+
+            let sql = "
+                INSERT INTO tv_shows (item_id, path, name)
                 VALUES (?, ?, ?)
             ";
 
-            let res = sqlx::query(sql)
-                .bind(MediaItemType::TvShow)
+            sqlx::query(sql)
+                .bind(id)
                 .bind(path)
                 .bind(name)
                 .execute(&mut *db)
                 .await?;
-
-            let id = res.last_insert_rowid();
 
             metadata.enqueue(RefreshRequest::TvShow(id));
 
@@ -140,9 +143,8 @@ async fn sync_show(
         }
     };
 
-    let mut seasons = sqlx::query("SELECT id FROM media_items WHERE parent_id = ?")
+    let mut seasons = sqlx::query_scalar("SELECT item_id FROM tv_seasons WHERE show_id = ?")
         .bind(id)
-        .try_map(|row: SqliteRow| row.try_get::<i64, _>(0))
         .fetch_all(&mut *db)
         .await?
         .into_iter()
@@ -168,35 +170,43 @@ async fn sync_season(
     episodes: &[(i32, String)],
 ) -> eyre::Result<i64> {
     let sql = "
-        SELECT id FROM media_items
-        WHERE parent_id = ? AND index_number = ? AND item_type = ?
+        SELECT item_id FROM tv_seasons
+        WHERE show_id = ? AND season_number = ?
     ";
 
-    let res = sqlx::query_as(sql)
+    let res = sqlx::query_scalar(sql)
         .bind(show_id)
         .bind(season)
-        .bind(MediaItemType::TvSeason)
         .fetch_optional(&mut *db)
         .await?;
 
     let id = match res {
-        Some((id,)) => id,
+        Some(id) => id,
         None => {
             log::info!("adding tv season: {} (show_id: {})", season, show_id);
 
             let sql = "
-                INSERT INTO media_items (parent_id, item_type, index_number)
+                INSERT INTO media_items (item_type)
+                VALUES (?)
+            ";
+
+            let id: i64 = sqlx::query(sql)
+                .bind(MediaItemType::TvSeason)
+                .execute(&mut *db)
+                .await?
+                .last_insert_rowid();
+
+            let sql = "
+                INSERT INTO tv_seasons (item_id, show_id, season_number)
                 VALUES (?, ?, ?)
             ";
 
-            let res = sqlx::query(sql)
+            sqlx::query(sql)
+                .bind(id)
                 .bind(show_id)
-                .bind(MediaItemType::TvSeason)
                 .bind(season)
                 .execute(&mut *db)
                 .await?;
-
-            let id = res.last_insert_rowid();
 
             metadata.enqueue(RefreshRequest::TvSeason(id));
 
@@ -204,9 +214,8 @@ async fn sync_season(
         }
     };
 
-    let mut episode_ids = sqlx::query("SELECT id FROM media_items WHERE parent_id = ?")
+    let mut episode_ids = sqlx::query_scalar("SELECT item_id FROM tv_episodes WHERE season_id = ?")
         .bind(id)
-        .try_map(|row: SqliteRow| row.try_get::<i64, _>(0))
         .fetch_all(&mut *db)
         .await?
         .into_iter()
@@ -239,39 +248,57 @@ async fn sync_episode(
     path: &str,
 ) -> eyre::Result<i64> {
     let sql = "
-        SELECT id FROM media_items
-        WHERE parent_id = ? AND index_number = ? AND item_type = ?
+        SELECT item_id FROM tv_episodes
+        WHERE season_id = ? AND episode_number = ?
     ";
 
-    let res = sqlx::query_as(sql)
+    let res = sqlx::query_scalar(sql)
         .bind(season_id)
         .bind(episode)
-        .bind(MediaItemType::TvEpisode)
         .fetch_optional(&mut *db)
         .await?;
 
     let id = match res {
-        Some((id,)) => id,
+        Some(id) => id,
         None => {
             log::info!("adding tv episode: {} (season_id: {})", episode, season_id);
 
             let info = ffprobe.get_video_info(path).await?;
 
             let sql = "
-                INSERT INTO media_items (parent_id, item_type, path, index_number, duration)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO media_items (item_type)
+                VALUES (?)
             ";
 
-            let res = sqlx::query(sql)
-                .bind(season_id)
+            let id: i64 = sqlx::query(sql)
                 .bind(MediaItemType::TvEpisode)
-                .bind(path)
+                .execute(&mut *db)
+                .await?
+                .last_insert_rowid();
+
+            let sql = "
+                INSERT INTO tv_episodes (item_id, season_id, episode_number)
+                VALUES (?, ?, ?)
+            ";
+
+            sqlx::query(sql)
+                .bind(id)
+                .bind(season_id)
                 .bind(episode)
-                .bind(info.duration)
                 .execute(&mut *db)
                 .await?;
 
-            let id = res.last_insert_rowid();
+            let sql = "
+                INSERT INTO video_files (item_id, path, duration)
+                VALUES (?, ?, ?)
+            ";
+
+            sqlx::query(sql)
+                .bind(id)
+                .bind(&path)
+                .bind(info.duration)
+                .execute(&mut *db)
+                .await?;
 
             metadata.enqueue(RefreshRequest::TvEpisode(id));
 
@@ -285,14 +312,19 @@ async fn sync_episode(
 async fn remove_show(db: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
     log::info!("removing tv show: {}", id);
 
-    let seasons: Vec<(i64,)> = sqlx::query_as("SELECT id FROM media_items WHERE parent_id = ?")
+    let seasons: Vec<i64> = sqlx::query_scalar("SELECT item_id FROM tv_seasons WHERE show_id = ?")
         .bind(id)
         .fetch_all(&mut *db)
         .await?;
 
-    for (season,) in seasons {
+    for season in seasons {
         remove_season(&mut *db, season).await?;
     }
+
+    sqlx::query("DELETE FROM tv_shows WHERE item_id = ?")
+        .bind(id)
+        .execute(&mut *db)
+        .await?;
 
     sqlx::query("DELETE FROM media_items WHERE id = ?")
         .bind(id)
@@ -305,14 +337,20 @@ async fn remove_show(db: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
 async fn remove_season(db: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
     log::info!("removing tv season: {}", id);
 
-    let episodes: Vec<(i64,)> = sqlx::query_as("SELECT id FROM media_items WHERE parent_id = ?")
-        .bind(id)
-        .fetch_all(&mut *db)
-        .await?;
+    let episodes: Vec<i64> =
+        sqlx::query_scalar("SELECT item_id FROM tv_episodes WHERE season_id = ?")
+            .bind(id)
+            .fetch_all(&mut *db)
+            .await?;
 
-    for (episode,) in episodes {
+    for episode in episodes {
         remove_episode(&mut *db, episode).await?;
     }
+
+    sqlx::query("DELETE FROM tv_seasons WHERE item_id = ?")
+        .bind(id)
+        .execute(&mut *db)
+        .await?;
 
     sqlx::query("DELETE FROM media_items WHERE id = ?")
         .bind(id)
@@ -324,6 +362,16 @@ async fn remove_season(db: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
 
 async fn remove_episode(db: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
     log::info!("removing tv episode: {}", id);
+
+    sqlx::query("DELETE FROM video_files WHERE item_id = ?")
+        .bind(id)
+        .execute(&mut *db)
+        .await?;
+
+    sqlx::query("DELETE FROM tv_episodes WHERE item_id = ?")
+        .bind(id)
+        .execute(&mut *db)
+        .await?;
 
     sqlx::query("DELETE FROM media_items WHERE id = ?")
         .bind(id)

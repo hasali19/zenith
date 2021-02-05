@@ -3,8 +3,9 @@ use std::collections::HashSet;
 use metadata::{MetadataManager, RefreshRequest};
 use regex::Regex;
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Row, SqliteConnection};
+use sqlx::{Acquire, Row, SqliteConnection};
 
+use crate::db::media::MediaItemType;
 use crate::ffmpeg::Ffprobe;
 use crate::metadata;
 
@@ -76,19 +77,45 @@ pub async fn sync_movies(
                         .and_then(|date| date.try_with_hms(0, 0, 0).ok())
                         .map(|dt| dt.assume_utc().unix_timestamp());
 
+                    let mut transaction = db.begin().await?;
+
                     let sql = "
-                        INSERT INTO media_items (item_type, path, name, release_date, duration)
-                        VALUES (1, ?, ?, ?, ?)
+                        INSERT INTO media_items (item_type)
+                        VALUES (?)
                     ";
 
                     let id: i64 = sqlx::query(sql)
+                        .bind(MediaItemType::Movie)
+                        .execute(&mut transaction)
+                        .await?
+                        .last_insert_rowid();
+
+                    let sql = "
+                        INSERT INTO movies (item_id, path, title, release_date)
+                        VALUES (?, ?, ?, ?)
+                    ";
+
+                    sqlx::query(sql)
+                        .bind(id)
                         .bind(&path)
                         .bind(&title)
                         .bind(release_date)
+                        .execute(&mut transaction)
+                        .await?;
+
+                    let sql = "
+                        INSERT INTO video_files (item_id, path, duration)
+                        VALUES (?, ?, ?)
+                    ";
+
+                    sqlx::query(sql)
+                        .bind(id)
+                        .bind(&path)
                         .bind(info.duration)
-                        .execute(&mut *db)
-                        .await?
-                        .last_insert_rowid();
+                        .execute(&mut transaction)
+                        .await?;
+
+                    transaction.commit().await?;
 
                     metadata.enqueue(RefreshRequest::Movie(id));
                 }
@@ -111,9 +138,8 @@ pub async fn sync_movies(
 }
 
 async fn get_id_for_path(db: &mut SqliteConnection, path: &str) -> sqlx::Result<Option<i64>> {
-    sqlx::query("SELECT id FROM media_items WHERE item_type = 1 AND path = ?")
+    sqlx::query_scalar("SELECT item_id FROM movies WHERE path = ?")
         .bind(path)
-        .try_map(|row: SqliteRow| row.try_get(0))
         .fetch_optional(db)
         .await
 }

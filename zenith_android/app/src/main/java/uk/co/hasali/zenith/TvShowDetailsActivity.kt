@@ -26,31 +26,14 @@ import com.google.gson.annotations.SerializedName
 import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import uk.co.hasali.zenith.api.TvSeason
+import uk.co.hasali.zenith.api.TvShow
 import uk.co.hasali.zenith.ui.ZenithTheme
-
-data class TvShowDetails(
-    val id: Int,
-    val name: String,
-    val overview: String?,
-    @SerializedName("poster_url")
-    val posterUrl: String?,
-    @SerializedName("backdrop_url")
-    val backdropUrl: String?,
-)
-
-data class TvShowSeason(
-    val id: Int,
-    @SerializedName("season_number")
-    val seasonNumber: Int,
-    val name: String?,
-    @SerializedName("poster_url")
-    val posterUrl: String?,
-)
 
 class TvShowDetailsActivity : AppCompatActivity() {
 
-    private lateinit var show: TvShowDetails
-    private lateinit var seasons: List<TvShowSeason>
+    private lateinit var show: TvShow
+    private lateinit var seasons: List<TvSeason>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,10 +45,10 @@ class TvShowDetailsActivity : AppCompatActivity() {
             val settings = settingsRepo.settings.first()
             val serverUrl = settings.serverUrl!!
 
-            show = Fuel.get("$serverUrl/api/items/$showId")
+            show = Fuel.get("$serverUrl/api/tv/shows/$showId")
                 .awaitObject(gsonDeserializer())
 
-            seasons = Fuel.get("$serverUrl/api/items/$showId/children")
+            seasons = Fuel.get("$serverUrl/api/tv/shows/$showId/seasons")
                 .awaitObject(gsonDeserializer())
 
             setContent {
@@ -97,7 +80,9 @@ class TvShowDetailsActivity : AppCompatActivity() {
                                 Box(
                                     modifier = Modifier.preferredHeight(height)
                                 ) {
-                                    CoilImage(data = show.backdropUrl!!)
+                                    show.backdrop?.let { url ->
+                                        CoilImage(data = url)
+                                    }
                                 }
 
                                 TopAppBar(
@@ -142,7 +127,7 @@ class TvShowDetailsActivity : AppCompatActivity() {
                                                     }
 
                                                     Box(modifier = Modifier.fillMaxWidth().preferredHeight(height)) {
-                                                        season.posterUrl?.let { url ->
+                                                        season.poster?.let { url ->
                                                             CoilImage(data = url, modifier = Modifier.fillMaxWidth())
                                                         }
                                                     }

@@ -11,6 +11,7 @@ use super::{ApiError, ApiResult};
 pub fn configure(app: &mut App<AppState>) {
     app.get("/api/stream/:id/original", get_original);
     app.get("/api/stream/:id/transcode", get_transcoded_stream);
+    app.get("/api/stream/:id/info", get_info);
 }
 
 async fn get_original(state: AppState, req: Request) -> ApiResult {
@@ -19,13 +20,12 @@ async fn get_original(state: AppState, req: Request) -> ApiResult {
         .and_then(|v| v.parse().ok())
         .ok_or_else(ApiError::bad_request)?;
 
-    let mut conn = state.db.acquire().await.unwrap();
+    let mut conn = state.db.acquire().await?;
 
-    let (path,): (String,) = sqlx::query_as("SELECT path FROM media_items WHERE id = ?")
+    let path: String = sqlx::query_scalar("SELECT path FROM video_files WHERE item_id = ?")
         .bind(id)
         .fetch_optional(&mut conn)
-        .await
-        .map_err(|_| ApiError::internal_server_error())?
+        .await?
         .ok_or_else(ApiError::not_found)?;
 
     let file = File::open(path)
@@ -51,13 +51,12 @@ async fn get_transcoded_stream(state: AppState, req: Request) -> ApiResult {
         .ok_or_else(ApiError::bad_request)?;
 
     let query: Query = req.query().map_err(|_| ApiError::bad_request())?;
-    let mut conn = state.db.acquire().await.unwrap();
+    let mut conn = state.db.acquire().await?;
 
-    let (path,): (String,) = sqlx::query_as("SELECT path FROM media_items WHERE id = ?")
+    let path: String = sqlx::query_scalar("SELECT path FROM video_files WHERE item_id = ?")
         .bind(id)
         .fetch_optional(&mut conn)
-        .await
-        .map_err(|_| ApiError::internal_server_error())?
+        .await?
         .ok_or_else(ApiError::not_found)?;
 
     let config = &state.config.transcoding;
@@ -93,4 +92,26 @@ async fn get_transcoded_stream(state: AppState, req: Request) -> ApiResult {
         .with_content_type("video/mp4")
         .unwrap()
         .with_body(body))
+}
+
+#[derive(serde::Serialize)]
+struct StreamInfo {
+    duration: f64,
+}
+
+async fn get_info(state: AppState, req: Request) -> ApiResult {
+    let id: i64 = req
+        .param("id")
+        .and_then(|v| v.parse().ok())
+        .ok_or_else(ApiError::bad_request)?;
+
+    let mut conn = state.db.acquire().await?;
+
+    let duration: f64 = sqlx::query_scalar("SELECT duration FROM video_files WHERE item_id = ?")
+        .bind(id)
+        .fetch_optional(&mut conn)
+        .await?
+        .ok_or_else(ApiError::not_found)?;
+
+    Ok(Response::new().json(&StreamInfo { duration })?)
 }

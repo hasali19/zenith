@@ -19,35 +19,15 @@ import androidx.lifecycle.lifecycleScope
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.gson.gsonDeserializer
-import com.google.gson.annotations.SerializedName
 import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import uk.co.hasali.zenith.api.TvEpisode
+import uk.co.hasali.zenith.api.TvSeason
+import uk.co.hasali.zenith.api.TvShow
 import uk.co.hasali.zenith.ui.ZenithTheme
 
 class TvEpisodesActivity : AppCompatActivity() {
-
-    data class TvSeason(
-        val id: Int,
-        @SerializedName("parent_id")
-        val showId: Int,
-        val name: String?,
-        val overview: String?,
-        @SerializedName("season_number")
-        val seasonNumber: Int,
-        @SerializedName("poster_url")
-        val posterUrl: String?,
-    )
-
-    data class TvEpisode(
-        val id: Int,
-        val name: String?,
-        val overview: String?,
-        @SerializedName("episode_number")
-        val episodeNumber: Int,
-        @SerializedName("thumbnail_url")
-        val thumbnailUrl: String?,
-    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,13 +39,13 @@ class TvEpisodesActivity : AppCompatActivity() {
             val settings = settingsRepo.settings.first()
             val serverUrl = settings.serverUrl!!
 
-            val season: TvSeason = Fuel.get("$serverUrl/api/items/$seasonId")
+            val season: TvSeason = Fuel.get("$serverUrl/api/tv/seasons/$seasonId")
                 .awaitObject(gsonDeserializer())
 
-            val show: TvShowDetails = Fuel.get("$serverUrl/api/items/${season.showId}")
+            val show: TvShow = Fuel.get("$serverUrl/api/tv/shows/${season.showId}")
                 .awaitObject(gsonDeserializer())
 
-            val episodes: List<TvEpisode> = Fuel.get("$serverUrl/api/items/$seasonId/children")
+            val episodes: List<TvEpisode> = Fuel.get("$serverUrl/api/tv/seasons/$seasonId/episodes")
                 .awaitObject(gsonDeserializer())
 
             setContent {
@@ -109,9 +89,9 @@ class TvEpisodesActivity : AppCompatActivity() {
                                             .padding(8.dp)
                                     ) {
                                         Box(modifier = Modifier.preferredWidth(itemWidth.dp)) {
-                                            if (episode.thumbnailUrl != null) {
+                                            if (episode.thumbnail != null) {
                                                 CoilImage(
-                                                    data = episode.thumbnailUrl,
+                                                    data = episode.thumbnail,
                                                     modifier = Modifier.align(
                                                         Alignment.Center
                                                     )
