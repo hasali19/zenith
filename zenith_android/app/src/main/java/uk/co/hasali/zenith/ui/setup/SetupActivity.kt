@@ -1,4 +1,4 @@
-package uk.co.hasali.zenith
+package uk.co.hasali.zenith.ui.setup
 
 import android.content.Intent
 import android.os.Bundle
@@ -13,7 +13,9 @@ import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import uk.co.hasali.zenith.UserSettingsRepository
 import uk.co.hasali.zenith.ui.ZenithTheme
+import uk.co.hasali.zenith.ui.main.MainActivity
 
 class SetupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,7 +64,10 @@ fun SetupScreen(settingsRepo: UserSettingsRepository, onFinish: () -> Unit) {
             bodyContent = {
                 Box(modifier = Modifier.fillMaxSize()) {
                     Column(
-                        modifier = Modifier.fillMaxWidth().align(Alignment.Center).padding(32.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.Center)
+                            .padding(32.dp)
                     ) {
                         AddressTextField(
                             value = address,
@@ -70,7 +75,11 @@ fun SetupScreen(settingsRepo: UserSettingsRepository, onFinish: () -> Unit) {
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
 
-                        Row(modifier = Modifier.align(Alignment.End).padding(vertical = 8.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .padding(vertical = 8.dp),
+                        ) {
                             Text("Use https")
                             Spacer(modifier = Modifier.width(8.dp))
                             Switch(checked = useHttps, onCheckedChange = { useHttps = it })
@@ -78,7 +87,9 @@ fun SetupScreen(settingsRepo: UserSettingsRepository, onFinish: () -> Unit) {
 
                         Button(
                             onClick = { onSubmit() },
-                            modifier = Modifier.align(Alignment.End).padding(vertical = 8.dp)
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .padding(vertical = 8.dp)
                         ) {
                             Text("Done")
                         }
@@ -93,7 +104,7 @@ fun SetupScreen(settingsRepo: UserSettingsRepository, onFinish: () -> Unit) {
 fun AddressTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     TextField(
         label = { Text("Server address") },

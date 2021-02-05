@@ -1,4 +1,4 @@
-package uk.co.hasali.zenith
+package uk.co.hasali.zenith.ui.videoplayer
 
 import android.os.Build
 import android.os.Bundle
@@ -28,6 +28,8 @@ import com.google.android.exoplayer2.video.VideoListener
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import uk.co.hasali.zenith.R
+import uk.co.hasali.zenith.UserSettingsRepository
 
 class VideoPlayerActivity : AppCompatActivity() {
 

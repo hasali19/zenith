@@ -1,4 +1,4 @@
-package uk.co.hasali.zenith
+package uk.co.hasali.zenith.ui.videoplayer
 
 import android.text.format.DateUtils
 import android.view.ViewGroup
