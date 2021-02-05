@@ -10,8 +10,12 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
+import androidx.compose.runtime.savedinstancestate.Saver
+import androidx.compose.runtime.savedinstancestate.savedInstanceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.viewinterop.viewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -48,18 +52,22 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
+class NavigationViewModel : ViewModel() {
+    var currentScreen: Screen by mutableStateOf(Screen.Home)
+}
+
 @Composable
 fun MainScreen(serverUrl: String, onLaunchSetup: () -> Unit = {}) {
-    var screen: Screen by remember { mutableStateOf(Screen.Home) }
+    val nav: NavigationViewModel = viewModel()
 
     ZenithTheme {
         TopLevelScreenScaffold(
             screens = listOf(Screen.Home, Screen.Movies, Screen.TvShows),
-            currentScreen = screen,
-            onScreenChange = { screen = it },
+            currentScreen = nav.currentScreen,
+            onScreenChange = { nav.currentScreen = it },
             onLaunchSetup = onLaunchSetup,
         ) {
-            Crossfade(current = screen) { screen ->
+            Crossfade(current = nav.currentScreen) { screen ->
                 when (screen) {
                     is Screen.Home -> HomeScreen(serverUrl)
                     is Screen.Movies -> MoviesScreen(serverUrl)
