@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::path::Path;
 use std::process::Stdio;
@@ -21,18 +22,22 @@ pub struct Ffprobe {
     exe_path: String,
 }
 
-#[derive(serde::Deserialize)]
-struct FfprobeOutput {
-    format: FfprobeFormat,
+#[derive(Debug, serde::Deserialize)]
+pub struct FfprobeOutput {
+    pub format: FfprobeFormat,
+    pub streams: Vec<FfprobeStream>,
 }
 
-#[derive(serde::Deserialize)]
-struct FfprobeFormat {
-    duration: String,
+#[derive(Debug, serde::Deserialize)]
+pub struct FfprobeFormat {
+    pub duration: String,
 }
 
-pub struct VideoInfo {
-    pub duration: f64,
+#[derive(Debug, serde::Deserialize)]
+pub struct FfprobeStream {
+    pub index: u32,
+    pub codec_type: String,
+    pub tags: HashMap<String, String>,
 }
 
 impl Ffprobe {
@@ -42,11 +47,12 @@ impl Ffprobe {
         }
     }
 
-    pub async fn get_video_info(&self, path: &str) -> eyre::Result<VideoInfo> {
+    pub async fn get_video_info(&self, path: &str) -> eyre::Result<FfprobeOutput> {
         let output = Command::new(&self.exe_path)
             .arg_pair("-loglevel", "error")
             .arg_pair("-print_format", "json")
             .arg("-show_format")
+            .arg("-show_streams")
             .arg(path)
             .stdout(Stdio::piped())
             .spawn()?
@@ -60,13 +66,7 @@ impl Ffprobe {
         let stdout = String::from_utf8(output.stdout)?;
         let data: FfprobeOutput = serde_json::from_str(&stdout)?;
 
-        Ok(VideoInfo {
-            duration: data
-                .format
-                .duration
-                .parse()
-                .map_err(|_| eyre!("invalid duration"))?,
-        })
+        Ok(data)
     }
 }
 
@@ -80,6 +80,12 @@ pub struct TranscodeOptions<'a> {
     pub use_hw_encoder: bool,
 }
 
+pub struct SubtitleOptions<'a> {
+    pub input_path: &'a str,
+    pub start_time: u64,
+    pub stream_index: u32,
+}
+
 impl Ffmpeg {
     pub fn new(exe_path: impl Into<String>) -> Self {
         Ffmpeg {
@@ -87,7 +93,7 @@ impl Ffmpeg {
         }
     }
 
-    pub fn spawn_transcode(&self, options: &TranscodeOptions) -> std::io::Result<Child> {
+    pub fn transcode(&self, options: &TranscodeOptions) -> std::io::Result<Child> {
         let mut cmd = Command::new(&self.exe_path);
 
         let log_dir = Path::new("transcode-logs");
@@ -114,6 +120,18 @@ impl Ffmpeg {
             .arg("pipe:1")
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
+            .spawn()
+    }
+
+    pub fn extract_subtitles(&self, options: &SubtitleOptions) -> std::io::Result<Child> {
+        Command::new(&self.exe_path)
+            .arg_pair("-ss", options.start_time.to_string())
+            .arg_pair("-i", options.input_path)
+            .arg_pair("-map", format!("0:{}", options.stream_index))
+            .arg_pair("-c:s", "webvtt")
+            .arg_pair("-f", "webvtt")
+            .arg("pipe:1")
+            .stdout(Stdio::piped())
             .spawn()
     }
 }

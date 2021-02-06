@@ -65,7 +65,15 @@ pub async fn sync_movies(
                     log::info!("adding movie: {}", file_name);
 
                     let info = match ffprobe.get_video_info(&path).await {
-                        Ok(ingo) => ingo,
+                        Ok(info) => info,
+                        Err(e) => {
+                            log::warn!("{}", e);
+                            continue;
+                        }
+                    };
+
+                    let duration: f64 = match info.format.duration.parse() {
+                        Ok(duration) => duration,
                         Err(e) => {
                             log::warn!("{}", e);
                             continue;
@@ -111,7 +119,7 @@ pub async fn sync_movies(
                     sqlx::query(sql)
                         .bind(id)
                         .bind(&path)
-                        .bind(info.duration)
+                        .bind(duration)
                         .execute(&mut transaction)
                         .await?;
 

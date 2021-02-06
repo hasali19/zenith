@@ -264,6 +264,7 @@ async fn sync_episode(
             log::info!("adding tv episode: {} (season_id: {})", episode, season_id);
 
             let info = ffprobe.get_video_info(path).await?;
+            let duration: f64 = info.format.duration.parse()?;
 
             let sql = "
                 INSERT INTO media_items (item_type)
@@ -296,7 +297,7 @@ async fn sync_episode(
             sqlx::query(sql)
                 .bind(id)
                 .bind(&path)
-                .bind(info.duration)
+                .bind(duration)
                 .execute(&mut *db)
                 .await?;
 
