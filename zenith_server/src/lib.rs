@@ -11,6 +11,7 @@ use std::sync::Arc;
 use hyper::{service, Server as HyperServer};
 use route_recognizer::{Match, Router};
 
+pub use headers;
 pub use hyper::{Body, Method, StatusCode};
 
 pub use self::endpoint::Endpoint;

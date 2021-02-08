@@ -1,7 +1,5 @@
-use std::convert::TryInto;
-
-use header::HeaderValue;
-use hyper::{header, Body, Response as HyperResponse, StatusCode};
+use headers::{ContentType, Header, HeaderMapExt};
+use hyper::{Body, Response as HyperResponse, StatusCode};
 use serde::Serialize;
 
 #[derive(Default)]
@@ -21,15 +19,9 @@ impl Response {
         self
     }
 
-    pub fn with_content_type<T: TryInto<HeaderValue>>(
-        mut self,
-        content_type: T,
-    ) -> Result<Self, T::Error> {
-        self.0
-            .headers_mut()
-            .insert(header::CONTENT_TYPE, content_type.try_into()?);
-
-        Ok(self)
+    pub fn with_header<H: Header>(mut self, header: H) -> Self {
+        self.0.headers_mut().typed_insert(header);
+        self
     }
 
     pub fn body(&self) -> &Body {
@@ -43,8 +35,7 @@ impl Response {
 
     pub fn json<T: Serialize>(self, val: &T) -> serde_json::Result<Self> {
         Ok(self
-            .with_content_type("application/json")
-            .unwrap()
+            .with_header(ContentType::json())
             .with_body(Body::from(serde_json::to_vec(&val)?)))
     }
 }

@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 async-trait      = "0.1"
+headers          = "0.3"
 log              = "0.4"
 route-recognizer = "0.2"
 serde            = "1.0"

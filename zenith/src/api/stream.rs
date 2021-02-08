@@ -1,8 +1,15 @@
+use std::io::SeekFrom;
+use std::ops::Bound;
+use std::str::FromStr;
+
 use futures::StreamExt;
+use mime::Mime;
 use tokio::fs::File;
+use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio::process::Child;
 use tokio_util::codec::{BytesCodec, FramedRead};
-use zenith_server::{App, Body, Request, Response};
+use zenith_server::headers::{AcceptRanges, ContentLength, ContentRange, ContentType, Range};
+use zenith_server::{App, Body, Request, Response, StatusCode};
 
 use crate::ffmpeg::{Ffmpeg, Ffprobe, SubtitleOptions, TranscodeOptions};
 use crate::AppState;
@@ -30,14 +37,51 @@ async fn get_original(state: AppState, req: Request) -> ApiResult {
         .await?
         .ok_or_else(ApiError::not_found)?;
 
-    let file = File::open(path)
+    let mut file = File::open(path)
         .await
         .map_err(|_| ApiError::internal_server_error())?;
 
-    let stream = FramedRead::new(file, BytesCodec::new());
-    let body = Body::wrap_stream(stream);
+    let length = file.metadata().await.unwrap().len();
+    let range = req.header::<Range>().and_then(|range| range.iter().next());
 
-    Ok(Response::new().with_body(body))
+    if let Some((from, to)) = range {
+        let from = match from {
+            Bound::Included(n) => n,
+            Bound::Excluded(n) => n + 1,
+            Bound::Unbounded => 0,
+        };
+
+        let to = match to {
+            Bound::Included(n) => n,
+            Bound::Excluded(n) => n - 1,
+            Bound::Unbounded => length - 1,
+        };
+
+        file.seek(SeekFrom::Start(from))
+            .await
+            .map_err(|e| ApiError::internal_server_error().body(e.to_string()))?;
+
+        let total_length = length;
+        let length = u64::min(length - from, to - from + 1);
+        let reader = file.take(length);
+        let stream = FramedRead::new(reader, BytesCodec::new());
+        let body = Body::wrap_stream(stream);
+
+        Ok(Response::new()
+            .with_status(StatusCode::PARTIAL_CONTENT)
+            .with_header(AcceptRanges::bytes())
+            .with_header(ContentLength(length))
+            .with_header(ContentRange::bytes(from..=from + length - 1, total_length).unwrap())
+            .with_body(body))
+    } else {
+        let stream = FramedRead::new(file, BytesCodec::new());
+        let body = Body::wrap_stream(stream);
+
+        Ok(Response::new()
+            .with_header(AcceptRanges::bytes())
+            .with_header(ContentLength(length))
+            .with_body(body))
+    }
 }
 
 #[derive(serde::Deserialize)]
@@ -74,8 +118,7 @@ async fn get_transcoded_stream(state: AppState, req: Request) -> ApiResult {
         .map_err(|e| ApiError::internal_server_error().body(e.to_string()))?;
 
     Ok(Response::new()
-        .with_content_type("video/mp4")
-        .unwrap()
+        .with_header(ContentType::from(Mime::from_str("video/mp4").unwrap()))
         .with_body(stream_stdout(child)))
 }
 
@@ -118,8 +161,7 @@ async fn get_subtitles_stream(state: AppState, req: Request) -> ApiResult {
         .map_err(|e| ApiError::internal_server_error().body(e.to_string()))?;
 
     Ok(Response::new()
-        .with_content_type("text/vtt")
-        .unwrap()
+        .with_header(ContentType::from(Mime::from_str("text/vtt").unwrap()))
         .with_body(stream_stdout(child)))
 }
 

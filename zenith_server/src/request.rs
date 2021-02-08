@@ -1,5 +1,6 @@
 use std::mem;
 
+use headers::{Header, HeaderMapExt};
 use hyper::http::request::Parts;
 use hyper::{Body, Method, Request as HyperRequest, Uri};
 use route_recognizer::Params;
@@ -36,6 +37,10 @@ impl<'a> Request {
 
     pub fn param(&self, key: &str) -> Option<&str> {
         self.params.find(key)
+    }
+
+    pub fn header<T: Header>(&self) -> Option<T> {
+        self.parts.headers.typed_get()
     }
 
     pub fn query<T: DeserializeOwned>(&self) -> Result<T, serde_qs::Error> {
