@@ -12,7 +12,7 @@ use zenith::sync::LibrarySync;
 use zenith::tmdb::TmdbClient;
 use zenith::watcher::FileWatcher;
 use zenith::{middleware, AppState};
-use zenith_server::App;
+use zenith_http::App;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {

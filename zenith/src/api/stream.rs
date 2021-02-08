@@ -8,8 +8,8 @@ use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio::process::Child;
 use tokio_util::codec::{BytesCodec, FramedRead};
-use zenith_server::headers::{AcceptRanges, ContentLength, ContentRange, ContentType, Range};
-use zenith_server::{App, Body, Request, Response, StatusCode};
+use zenith_http::headers::{AcceptRanges, ContentLength, ContentRange, ContentType, Range};
+use zenith_http::{App, Body, Request, Response, StatusCode};
 
 use crate::ffmpeg::{Ffmpeg, Ffprobe, SubtitleOptions, TranscodeOptions};
 use crate::AppState;

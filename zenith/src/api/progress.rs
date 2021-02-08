@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use zenith_server::{App, Request, Response};
+use zenith_http::{App, Request, Response};
 
 use crate::AppState;
 

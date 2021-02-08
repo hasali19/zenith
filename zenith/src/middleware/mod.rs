@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use async_trait::async_trait;
 
-use zenith_server::Middleware;
+use zenith_http::Middleware;
 
 pub struct Logger;
 
@@ -11,9 +11,9 @@ impl<S: Send + Sync + 'static> Middleware<S> for Logger {
     async fn handle(
         &self,
         state: S,
-        req: zenith_server::Request,
-        next: zenith_server::Next<'_, S>,
-    ) -> zenith_server::Response {
+        req: zenith_http::Request,
+        next: zenith_http::Next<'_, S>,
+    ) -> zenith_http::Response {
         let method = req.method().clone();
         let path = req.uri().path();
         let qs = req.uri().query();

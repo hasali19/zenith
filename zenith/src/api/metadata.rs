@@ -1,4 +1,4 @@
-use zenith_server::{App, Request, Response};
+use zenith_http::{App, Request, Response};
 
 use crate::db::media::MediaItemType;
 use crate::metadata::RefreshRequest;

@@ -5,7 +5,7 @@ mod progress;
 mod stream;
 mod tv;
 
-use zenith_server::{App, Body, Response, StatusCode};
+use zenith_http::{App, Body, Response, StatusCode};
 
 use crate::AppState;
 

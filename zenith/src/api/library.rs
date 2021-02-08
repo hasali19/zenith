@@ -1,4 +1,4 @@
-use zenith_server::App;
+use zenith_http::App;
 
 use crate::AppState;
 

@@ -1,7 +1,7 @@
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
-use zenith_server::{App, Request, Response};
+use zenith_http::{App, Request, Response};
 
 use crate::{utils, AppState};
 

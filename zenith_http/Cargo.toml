@@ -1,5 +1,5 @@
 [package]
-name    = "zenith_server"
+name    = "zenith_http"
 version = "0.0.0"
 authors = ["Hasan Ali <git@hasali.co.uk>"]
 edition = "2018"

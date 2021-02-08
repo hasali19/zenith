@@ -1,2 +1,2 @@
 [workspace]
-members = ["zenith", "zenith_server"]
+members = ["zenith", "zenith_http"]

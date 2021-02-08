@@ -2,7 +2,7 @@ mod episodes;
 mod seasons;
 mod shows;
 
-use zenith_server::App;
+use zenith_http::App;
 
 use crate::AppState;
 
