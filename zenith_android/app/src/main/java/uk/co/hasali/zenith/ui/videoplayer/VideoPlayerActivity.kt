@@ -5,17 +5,10 @@ import android.os.Bundle
 import android.support.v4.media.session.MediaSessionCompat
 import android.view.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.gesture.tapGestureFilter
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.work.*
 import com.github.kittinunf.fuel.Fuel
@@ -35,11 +28,6 @@ class VideoPlayerActivity : AppCompatActivity() {
 
     data class StreamInfo(val duration: Float)
 
-    enum class PlaybackState {
-        PLAYING,
-        PAUSED,
-    }
-
     private var streamId: Int? = null
 
     private var player: SimpleExoPlayer? = null
@@ -57,7 +45,6 @@ class VideoPlayerActivity : AppCompatActivity() {
         val surfaceView: SurfaceView = findViewById(R.id.surface_view)
         val composeView: ComposeView = findViewById(R.id.compose_view)
 
-        var showControls by mutableStateOf(false)
         var playbackState by mutableStateOf(PlaybackState.PLAYING)
         var playbackPosition by mutableStateOf(0L)
         var duration by mutableStateOf(0L)
@@ -154,81 +141,15 @@ class VideoPlayerActivity : AppCompatActivity() {
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .tapGestureFilter { showControls = !showControls }
-            ) {
-                if (buffering) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-
-                if (showControls) {
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .background(Color(0f, 0f, 0f, 0.5f))
-                            .padding(8.dp)
-                            .tapGestureFilter { /* Intercept tap */ }
-                    ) {
-                        SeekBar(
-                            position = start + position,
-                            max = duration.toFloat(),
-                            onSeekStart = { player?.playWhenReady = false },
-                            onSeekEnd = { setPlayerPosition(it.toLong()) }
-                        )
-
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            IconButton(
-                                modifier = Modifier.padding(8.dp),
-                                onClick = {
-                                    setPlayerPosition(maxOf(0L, start + position.toLong() - 10))
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = vectorResource(id = R.drawable.rewind_10),
-                                    contentDescription = "Rewind",
-                                    tint = Color.White,
-                                )
-                            }
-
-                            FloatingActionButton(
-                                modifier = Modifier.padding(8.dp),
-                                onClick = {
-                                    player?.let { it.playWhenReady = !it.playWhenReady }
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = vectorResource(
-                                        id = when (playbackState) {
-                                            PlaybackState.PAUSED -> R.drawable.play
-                                            PlaybackState.PLAYING -> R.drawable.pause
-                                        }
-                                    ),
-                                    contentDescription = "Play/Pause"
-                                )
-                            }
-
-                            IconButton(
-                                modifier = Modifier.padding(8.dp),
-                                onClick = {
-                                    setPlayerPosition(minOf(duration,
-                                        start + position.toLong() + 30))
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = vectorResource(id = R.drawable.fast_forward_30),
-                                    contentDescription = "Fast forward",
-                                    tint = Color.White,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            ControlsOverlay(
+                buffering = buffering,
+                position = start + position,
+                duration = duration.toFloat(),
+                state = playbackState,
+                onPlayPause = { player?.let { it.playWhenReady = !it.playWhenReady } },
+                onSeekStart = { player?.playWhenReady = false },
+                onSeekTo = { setPlayerPosition(it.toLong()) },
+            )
         }
     }
 
