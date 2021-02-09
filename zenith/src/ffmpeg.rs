@@ -37,6 +37,7 @@ pub struct FfprobeFormat {
 pub struct FfprobeStream {
     pub index: u32,
     pub codec_type: String,
+    #[serde(default)]
     pub tags: HashMap<String, String>,
 }
 
