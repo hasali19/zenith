@@ -15,6 +15,7 @@ struct Show {
     overview: Option<String>,
     poster: Option<String>,
     backdrop: Option<String>,
+    unwatched_episodes: u32,
 }
 
 impl<'r> FromRow<'r, SqliteRow> for Show {
@@ -30,6 +31,7 @@ impl<'r> FromRow<'r, SqliteRow> for Show {
             overview: row.try_get(4)?,
             poster: poster.as_deref().map(utils::get_image_url),
             backdrop: backdrop.as_deref().map(utils::get_image_url),
+            unwatched_episodes: row.try_get(7)?,
         })
     }
 }
@@ -40,7 +42,13 @@ pub(super) async fn get_shows(state: AppState, _: Request) -> ApiResult {
     let sql = "
         SELECT
             show.item_id, name, start_date, end_date,
-            overview, poster, backdrop
+            overview, poster, backdrop, (
+                SELECT COUNT(*)
+                FROM tv_episodes AS episode
+                JOIN tv_seasons AS season ON season.item_id = episode.season_id
+                LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
+                WHERE season.show_id = show.item_id AND COALESCE(u.is_watched, 0) = 0
+            )
         FROM tv_shows AS show
         ORDER BY name
     ";
@@ -61,7 +69,13 @@ pub(super) async fn get_show(state: AppState, req: Request) -> ApiResult {
     let sql = "
         SELECT
             show.item_id, name, start_date, end_date,
-            overview, poster, backdrop
+            overview, poster, backdrop, (
+                SELECT COUNT(*)
+                FROM tv_episodes AS episode
+                JOIN tv_seasons AS season ON season.item_id = episode.season_id
+                LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
+                WHERE season.show_id = show.item_id AND COALESCE(u.is_watched, 0) = 0
+            )
         FROM tv_shows AS show
         WHERE show.item_id = ?
     ";
@@ -83,7 +97,13 @@ pub(super) async fn get_recently_updated_shows(state: AppState, _: Request) -> A
     let sql = "
         SELECT
             show.item_id, show.name, show.start_date, show.end_date,
-            show.overview, show.poster, show.backdrop,
+            show.overview, show.poster, show.backdrop, (
+                SELECT COUNT(*)
+                FROM tv_episodes AS episode
+                JOIN tv_seasons AS season ON season.item_id = episode.season_id
+                LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
+                WHERE season.show_id = show.item_id AND COALESCE(u.is_watched, 0) = 0
+            ),
             MAX(item.added_at) AS latest_episode_added_at
         FROM tv_shows AS show
         JOIN tv_seasons AS season ON season.show_id = show.item_id

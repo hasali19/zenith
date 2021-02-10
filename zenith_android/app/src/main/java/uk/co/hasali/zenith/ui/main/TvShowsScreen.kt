@@ -16,9 +16,9 @@ import androidx.compose.ui.unit.dp
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.gson.gsonDeserializer
-import uk.co.hasali.zenith.ui.showdetails.ShowDetailsActivity
 import uk.co.hasali.zenith.api.TvShow
 import uk.co.hasali.zenith.ui.PosterCard
+import uk.co.hasali.zenith.ui.showdetails.ShowDetailsActivity
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -45,6 +45,7 @@ fun TvShowsScreen(serverUrl: String) {
                 posterUrl = show.poster,
                 primaryText = show.name,
                 secondaryText = show.startYear?.toString(),
+                count = show.unwatchedEpisodes,
                 modifier = Modifier
                     .padding(4.dp)
                     .preferredWidth(110.dp)

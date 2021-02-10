@@ -14,6 +14,8 @@ data class TvShow(
     val overview: String?,
     val poster: String?,
     val backdrop: String?,
+    @SerializedName("unwatched_episodes")
+    val unwatchedEpisodes: Int,
 ) {
     val startYear: Int?
         get() = startDate?.let {
