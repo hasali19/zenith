@@ -4,53 +4,88 @@ import android.os.Build
 import android.os.Bundle
 import android.support.v4.media.session.MediaSessionCompat
 import android.view.*
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.lifecycleScope
 import androidx.work.*
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.gson.gsonDeserializer
 import com.google.android.exoplayer2.*
-import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
-import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
-import com.google.android.exoplayer2.video.VideoListener
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import uk.co.hasali.zenith.R
 import uk.co.hasali.zenith.UserSettingsRepository
+import uk.co.hasali.zenith.databinding.ActivityVideoPlayerBinding
+
+private data class StreamInfo(val duration: Float)
+
+private const val MEDIA_SESSION_TAG = "ZenithMediaSession"
 
 class VideoPlayerActivity : AppCompatActivity() {
 
-    data class StreamInfo(val duration: Float)
+    companion object {
+        const val EXTRA_ITEM_ID = "item_id"
+    }
 
-    private var streamId: Int? = null
+    private lateinit var view: ActivityVideoPlayerBinding
 
-    private var player: SimpleExoPlayer? = null
-    private var session: MediaSessionCompat? = null
-    private var connector: MediaSessionConnector? = null
+    private lateinit var player: Player
+    private lateinit var session: MediaSessionCompat
+
+    private var itemId = -1
+    private var playbackState by mutableStateOf(PlayState.PLAYING)
+    private var playbackPosition by mutableStateOf(0f)
+    private var duration by mutableStateOf(0f)
+    private var buffering by mutableStateOf(false)
+    private var serverUrl: String? by mutableStateOf(null)
+
+    private var progressUpdateJob: Job? = null
 
     @OptIn(ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_video_player)
+        view = ActivityVideoPlayerBinding.inflate(layoutInflater)
+        setContentView(view.root)
 
-        streamId = intent.getIntExtra("stream_id", -1)
+        itemId = intent.getIntExtra(EXTRA_ITEM_ID, -1)
+        if (itemId == -1) {
+            val message = getString(R.string.player_invalid_item_id)
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            finish()
+        }
 
-        val aspectRatioLayout: AspectRatioFrameLayout = findViewById(R.id.aspect_ratio_layout)
-        val surfaceView: SurfaceView = findViewById(R.id.surface_view)
-        val composeView: ComposeView = findViewById(R.id.compose_view)
+        session = MediaSessionCompat(this, MEDIA_SESSION_TAG)
+        player = Player(this, view.surfaceView, session).apply {
+            onVideoSizeChanged = { _, _, aspectRatio ->
+                view.aspectRatioLayout.setAspectRatio(aspectRatio)
+            }
 
-        var playbackState by mutableStateOf(PlaybackState.PLAYING)
-        var playbackPosition by mutableStateOf(0L)
-        var duration by mutableStateOf(0L)
-        var buffering by mutableStateOf(false)
-        var serverUrl: String? by mutableStateOf(null)
-        var start by mutableStateOf(0L)
+            onVideoBufferingChanged = {
+                buffering = it
+            }
+
+            onVideoPlaybackStateChanged = {
+                playbackState = it
+                when (it) {
+                    PlayState.PAUSED -> progressUpdateJob?.cancel()
+                    PlayState.PLAYING -> {
+                        progressUpdateJob?.cancel()
+                        progressUpdateJob = launchProgressUpdate()
+                    }
+                }
+            }
+
+            onVideoEnded = {
+                finish()
+            }
+        }
 
         lifecycleScope.launch {
             val settingsRepo = UserSettingsRepository.getInstance(this@VideoPlayerActivity)
@@ -58,98 +93,41 @@ class VideoPlayerActivity : AppCompatActivity() {
 
             serverUrl = settings.serverUrl!!
 
-            val info: StreamInfo = Fuel.get("$serverUrl/api/stream/$streamId/info")
+            val info: StreamInfo = Fuel.get("$serverUrl/api/stream/$itemId/info")
                 .awaitObject(gsonDeserializer())
 
-            duration = info.duration.toLong()
+            duration = info.duration
 
-            player = SimpleExoPlayer.Builder(this@VideoPlayerActivity)
-                .build()
-                .apply {
-                    setVideoSurfaceView(surfaceView)
-
-                    addVideoListener(object : VideoListener {
-                        override fun onVideoSizeChanged(
-                            width: Int,
-                            height: Int,
-                            unappliedRotationDegrees: Int,
-                            pixelWidthHeightRatio: Float,
-                        ) {
-                            // Set the aspect ratio for the SurfaceView
-                            val aspectRatio =
-                                if (width == 0 || height == 0) 1f
-                                else (width * pixelWidthHeightRatio) / height
-
-                            aspectRatioLayout.setAspectRatio(aspectRatio)
-                        }
-                    })
-
-                    addListener(object : Player.EventListener {
-                        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                            playbackState = if (playWhenReady) {
-                                PlaybackState.PLAYING
-                            } else {
-                                PlaybackState.PAUSED
-                            }
-                        }
-
-                        override fun onPlaybackStateChanged(state: Int) {
-                            buffering = state == ExoPlayer.STATE_BUFFERING
-                            // Close player when video is over
-                            if (state == ExoPlayer.STATE_ENDED) {
-                                finish()
-                            }
-                        }
-                    })
-
-                    setMediaItem(MediaItem.fromUri("$serverUrl/api/stream/$streamId/transcode"))
-
-                    prepare()
-                    play()
+            player.setVideoItem(object : VideoItem {
+                override fun getUrlForPosition(position: Float): String {
+                    return "$serverUrl/api/stream/$itemId/transcode?start=${position.toLong()}"
                 }
+            })
 
-            launch {
-                while (player.let { it != null && it.playbackState != Player.STATE_ENDED }) {
-                    if (player?.playWhenReady == true) {
-                        playbackPosition = player?.currentPosition ?: 0
-                    }
-                    delay(1000)
-                }
-            }
-
-            val session = MediaSessionCompat(this@VideoPlayerActivity, "ZenithMediaSession").apply {
-                isActive = true
-                session = this
-            }
-
-            connector = MediaSessionConnector(session).apply {
-                setPlayer(player)
-                setControlDispatcher(object : DefaultControlDispatcher() {})
-            }
+            player.play()
+            session.isActive = true
         }
 
-        composeView.setContent {
-            val position = playbackPosition.toFloat() / 1000
-
-            fun setPlayerPosition(pos: Long) {
-                start = pos
-                player?.let { player ->
-                    player.stop()
-                    player.setMediaItem(MediaItem.fromUri("$serverUrl/api/stream/$streamId/transcode?start=$start"))
-                    player.prepare()
-                    player.play()
-                }
-            }
-
+        view.composeView.setContent {
             ControlsOverlay(
                 buffering = buffering,
-                position = start + position,
-                duration = duration.toFloat(),
+                position = playbackPosition,
+                duration = duration,
                 state = playbackState,
-                onPlayPause = { player?.let { it.playWhenReady = !it.playWhenReady } },
-                onSeekStart = { player?.playWhenReady = false },
-                onSeekTo = { setPlayerPosition(it.toLong()) },
+                onPlayPause = { player.state = player.state.toggle() },
+                onSeekStart = { player.pause() },
+                onSeekTo = {
+                    player.seekTo(it)
+                    player.play()
+                },
             )
+        }
+    }
+
+    private fun launchProgressUpdate() = lifecycleScope.launch {
+        while (isActive && !player.isEnded) {
+            playbackPosition = player.position
+            delay(1000)
         }
     }
 
@@ -162,19 +140,18 @@ class VideoPlayerActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        player?.pause()
+        player.pause()
     }
 
     override fun onResume() {
         super.onResume()
-        player?.play()
+        player.play()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-
-        player?.release()
-        session?.release()
+        player.release()
+        session.release()
     }
 
     private fun hideSystemUi() {
@@ -185,17 +162,6 @@ class VideoPlayerActivity : AppCompatActivity() {
                     or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_FULLSCREEN)
-        } else {
-            TODO()
-        }
-    }
-
-    private fun showSystemUi() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
         } else {
             TODO()
         }

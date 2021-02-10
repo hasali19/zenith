@@ -13,8 +13,8 @@ import com.github.kittinunf.fuel.gson.gsonDeserializer
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import uk.co.hasali.zenith.UserSettingsRepository
-import uk.co.hasali.zenith.ui.videoplayer.VideoPlayerActivity
 import uk.co.hasali.zenith.api.Movie
+import uk.co.hasali.zenith.ui.videoplayer.VideoPlayerActivity
 
 class MovieDetailsActivity : AppCompatActivity() {
 
@@ -46,7 +46,7 @@ class MovieDetailsActivity : AppCompatActivity() {
     private fun playMovie() {
         startActivity(
             Intent(this, VideoPlayerActivity::class.java).apply {
-                putExtra("stream_id", movie.id)
+                putExtra(VideoPlayerActivity.EXTRA_ITEM_ID, movie.id)
             }
         )
     }

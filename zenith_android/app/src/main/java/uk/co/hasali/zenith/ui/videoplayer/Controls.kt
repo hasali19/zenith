@@ -16,17 +16,12 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import uk.co.hasali.zenith.R
 
-enum class PlaybackState {
-    PLAYING,
-    PAUSED,
-}
-
 @Composable
 fun ControlsOverlay(
     buffering: Boolean,
     position: Float,
     duration: Float,
-    state: PlaybackState,
+    state: PlayState,
     onPlayPause: () -> Unit,
     onSeekStart: () -> Unit,
     onSeekTo: (Float) -> Unit,
@@ -73,7 +68,7 @@ fun ControlsOverlay(
 fun ButtonRow(
     position: Float,
     duration: Float,
-    state: PlaybackState,
+    state: PlayState,
     onPlayPause: () -> Unit,
     onSeekTo: (Float) -> Unit,
 ) {
@@ -99,10 +94,10 @@ fun ButtonRow(
 }
 
 @Composable
-fun PlayPauseButton(state: PlaybackState, onPlayPause: () -> Unit) {
+fun PlayPauseButton(state: PlayState, onPlayPause: () -> Unit) {
     val drawable = when (state) {
-        PlaybackState.PAUSED -> R.drawable.play
-        PlaybackState.PLAYING -> R.drawable.pause
+        PlayState.PAUSED -> R.drawable.play
+        PlayState.PLAYING -> R.drawable.pause
     }
 
     FloatingActionButton(

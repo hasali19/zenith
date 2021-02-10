@@ -13,10 +13,10 @@ import com.github.kittinunf.fuel.gson.gsonDeserializer
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import uk.co.hasali.zenith.UserSettingsRepository
-import uk.co.hasali.zenith.ui.videoplayer.VideoPlayerActivity
 import uk.co.hasali.zenith.api.TvEpisode
 import uk.co.hasali.zenith.api.TvSeason
 import uk.co.hasali.zenith.api.TvShow
+import uk.co.hasali.zenith.ui.videoplayer.VideoPlayerActivity
 
 class EpisodesActivity : AppCompatActivity() {
 
@@ -54,7 +54,7 @@ class EpisodesActivity : AppCompatActivity() {
     private fun playEpisode(episode: TvEpisode) {
         startActivity(
             Intent(this, VideoPlayerActivity::class.java).apply {
-                putExtra("stream_id", episode.id)
+                putExtra(VideoPlayerActivity.EXTRA_ITEM_ID, episode.id)
             }
         )
     }
