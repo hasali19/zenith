@@ -16,4 +16,6 @@ class TvEpisode(
     val overview: String?,
     val thumbnail: String?,
     val duration: Double,
+    @SerializedName("is_watched")
+    val isWatched: Boolean,
 )

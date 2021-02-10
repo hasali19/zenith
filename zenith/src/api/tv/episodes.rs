@@ -17,6 +17,7 @@ struct Episode {
     overview: Option<String>,
     thumbnail: Option<String>,
     duration: f64,
+    is_watched: bool,
 }
 
 impl<'r> FromRow<'r, SqliteRow> for Episode {
@@ -33,6 +34,7 @@ impl<'r> FromRow<'r, SqliteRow> for Episode {
             overview: row.try_get(6)?,
             thumbnail: thumbnail.as_deref().map(utils::get_image_url),
             duration: row.try_get(8)?,
+            is_watched: row.try_get(9)?,
         })
     }
 }
@@ -49,11 +51,12 @@ pub(super) async fn get_episodes(state: AppState, req: Request) -> ApiResult {
         SELECT
             episode.item_id, show.item_id, season.item_id, episode_number,
             episode.name, episode.air_date, episode.overview, episode.thumbnail,
-            video.duration
+            video.duration, COALESCE(user.is_watched, 0)
         FROM tv_episodes AS episode
         JOIN tv_seasons AS season ON season.item_id = episode.season_id
         JOIN tv_shows AS show ON show.item_id = season.show_id
         JOIN video_files AS video ON video.item_id = episode.item_id
+        LEFT JOIN user_item_data AS user ON user.item_id = episode.item_id
         WHERE episode.season_id = ?
         ORDER BY episode_number
     ";
@@ -78,11 +81,12 @@ pub(super) async fn get_episode(state: AppState, req: Request) -> ApiResult {
         SELECT
             episode.item_id, show.item_id, season.item_id, episode_number,
             episode.name, episode.air_date, episode.overview, episode.thumbnail,
-            video.duration
+            video.duration, COALESCE(user.is_watched, 0)
         FROM tv_episodes AS episode
         JOIN tv_seasons AS season ON season.item_id = episode.season_id
         JOIN tv_shows AS show ON show.item_id = season.show_id
         JOIN video_files AS video ON video.item_id = episode.item_id
+        LEFT JOIN user_item_data AS user ON user.item_id = episode.item_id
         WHERE episode.item_id = ?
     ";
 

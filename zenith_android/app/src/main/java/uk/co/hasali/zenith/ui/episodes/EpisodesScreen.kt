@@ -1,16 +1,22 @@
 package uk.co.hasali.zenith.ui.episodes
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.accompanist.coil.CoilImage
@@ -84,10 +90,14 @@ fun EpisodeListItem(season: TvSeason, episode: TvEpisode, onClick: () -> Unit) {
             .clickable { onClick() }
     ) {
         Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-            Thumbnail(
-                url = episode.thumbnail,
-                modifier = Modifier.size(itemWidth.dp, itemHeight.dp),
-            )
+            Box(
+                modifier = Modifier
+                    .size(itemWidth.dp, itemHeight.dp)
+                    .clip(MaterialTheme.shapes.small),
+            ) {
+                Thumbnail(url = episode.thumbnail)
+                WatchedOverlay(visible = episode.isWatched)
+            }
 
             Spacer(modifier = Modifier.preferredWidth(16.dp))
 
@@ -124,6 +134,32 @@ fun Thumbnail(url: String?, modifier: Modifier = Modifier) {
                 data = url,
                 contentDescription = null,
                 fadeIn = true,
+            )
+        }
+    }
+}
+
+@Composable
+fun WatchedOverlay(visible: Boolean) {
+    if (!visible) return
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White.copy(alpha = 0.2f))
+    ) {
+        Box(
+            modifier = Modifier
+                .preferredSize(32.dp, 32.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colors.secondary)
+                .padding(8.dp)
+        ) {
+            Image(
+                imageVector = Icons.Default.Done,
+                contentDescription = "Watched",
+                colorFilter = ColorFilter.tint(MaterialTheme.colors.onSecondary),
+                modifier = Modifier.fillMaxSize(),
             )
         }
     }
