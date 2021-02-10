@@ -50,7 +50,7 @@ fun ControlsOverlay(
     onSeekStart: () -> Unit,
     onSeekTo: (Float) -> Unit,
 ) {
-    var visible by remember { mutableStateOf(false) }
+    var visible by remember { mutableStateOf(true) }
     val gestureDetector = rememberSingleTapGestureDetector {
         visible = !visible
     }
