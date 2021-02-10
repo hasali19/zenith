@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.accompanist.coil.CoilImage
+import dev.chrisbanes.accompanist.insets.statusBarsPadding
 import uk.co.hasali.zenith.api.TvEpisode
 import uk.co.hasali.zenith.api.TvSeason
 import uk.co.hasali.zenith.api.TvShow
@@ -46,21 +47,30 @@ fun EpisodesScreen(
 
 @Composable
 fun AppBar(show: TvShow, season: TvSeason, onBackPressed: () -> Unit) {
-    TopAppBar(
-        title = {
-            Column {
-                Text(text = show.name)
-                Text(
-                    text = season.name ?: "Season ${season.seasonNumber}",
-                    style = MaterialTheme.typography.caption
-                )
+    Surface(
+        color = MaterialTheme.colors.primarySurface,
+        elevation = 4.dp,
+    ) {
+        TopAppBar(
+            title = {
+                Column {
+                    Text(text = show.name)
+                    Text(
+                        text = season.name ?: "Season ${season.seasonNumber}",
+                        style = MaterialTheme.typography.caption
+                    )
+                }
+            },
+            backgroundColor = Color.Transparent,
+            elevation = 0.dp,
+            modifier = Modifier.statusBarsPadding(),
+            navigationIcon = {
+                IconButton(onClick = { onBackPressed() }) {
+                    Icon(Icons.Default.ArrowBack, "Back")
+                }
             }
-        }, navigationIcon = {
-            IconButton(onClick = { onBackPressed() }) {
-                Icon(Icons.Default.ArrowBack, "Back")
-            }
-        }
-    )
+        )
+    }
 }
 
 @Composable

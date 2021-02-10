@@ -11,10 +11,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.viewModel
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
+import dev.chrisbanes.accompanist.insets.ProvideWindowInsets
+import dev.chrisbanes.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import uk.co.hasali.zenith.*
@@ -25,22 +30,29 @@ import java.util.*
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        var serverUrl: String? by mutableStateOf(null)
 
         lifecycleScope.launch {
             val settingsRepo = UserSettingsRepository.getInstance(this@MainActivity)
             val settings = settingsRepo.settings.first()
-            val serverUrl = settings.serverUrl
+            serverUrl = settings.serverUrl
 
             if (serverUrl == null) {
                 // Server url has not been initialised, go to setup screen
                 startActivity(Intent(this@MainActivity, SetupActivity::class.java))
                 finish()
-            } else {
-                setContent {
+            }
+        }
+
+        setContent {
+            ProvideWindowInsets {
+                serverUrl?.let { serverUrl ->
                     MainScreen(
                         serverUrl = serverUrl,
                         onLaunchSetup = {
-                            startActivity(Intent(this@MainActivity, SetupActivity::class.java))
+                            startActivity(Intent(this, SetupActivity::class.java))
                             finish()
                         }
                     )
@@ -98,24 +110,32 @@ fun TopLevelScreenScaffold(
 fun MainAppBar(onLaunchSetup: () -> Unit) {
     var showMenu by remember { mutableStateOf(false) }
 
-    TopAppBar(
-        title = { Text(text = "Zenith") },
-        actions = {
-            DropdownMenu(
-                toggle = {
-                    IconButton(onClick = { showMenu = true }) {
-                        Icon(imageVector = Icons.Default.MoreVert, "More")
+    Surface(
+        color = MaterialTheme.colors.primarySurface,
+        elevation = 4.dp,
+    ) {
+        TopAppBar(
+            title = { Text(text = "Zenith") },
+            backgroundColor = Color.Transparent,
+            elevation = 0.dp,
+            modifier = Modifier.statusBarsPadding(),
+            actions = {
+                DropdownMenu(
+                    toggle = {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(imageVector = Icons.Default.MoreVert, "More")
+                        }
+                    },
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(onClick = onLaunchSetup) {
+                        Text("Change server")
                     }
-                },
-                expanded = showMenu,
-                onDismissRequest = { showMenu = false }
-            ) {
-                DropdownMenuItem(onClick = onLaunchSetup) {
-                    Text("Change server")
                 }
-            }
-        }
-    )
+            },
+        )
+    }
 }
 
 @Composable

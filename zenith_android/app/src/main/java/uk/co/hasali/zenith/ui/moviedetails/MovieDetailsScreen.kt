@@ -10,9 +10,9 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.AmbientDensity
 import androidx.compose.ui.unit.dp
-import dev.chrisbanes.accompanist.coil.CoilImage
+import dev.chrisbanes.accompanist.insets.AmbientWindowInsets
+import dev.chrisbanes.accompanist.insets.statusBarsPadding
 import uk.co.hasali.zenith.api.Movie
 import uk.co.hasali.zenith.ui.Backdrop
 import uk.co.hasali.zenith.ui.ZenithTheme
@@ -22,7 +22,9 @@ fun MovieDetailsScreen(movie: Movie, onPlay: () -> Unit, onBackPressed: () -> Un
     ZenithTheme {
         Surface(color = MaterialTheme.colors.background) {
             ScreenContent(movie, onPlay)
-            AppBar(onBackPressed)
+            Box(modifier = Modifier.statusBarsPadding()) {
+                AppBar(onBackPressed)
+            }
         }
     }
 }

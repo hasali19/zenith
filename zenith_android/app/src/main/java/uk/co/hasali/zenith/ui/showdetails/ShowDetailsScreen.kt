@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import dev.chrisbanes.accompanist.insets.statusBarsPadding
 import uk.co.hasali.zenith.api.TvSeason
 import uk.co.hasali.zenith.api.TvShow
 import uk.co.hasali.zenith.ui.Backdrop
@@ -52,16 +53,18 @@ fun TvShowDetailsScreen(
                 }
             }
 
-            TopAppBar(
-                title = { /* No title */ },
-                backgroundColor = Color.Transparent,
-                elevation = 0.dp,
-                navigationIcon = {
-                    IconButton(onClick = { onBackPressed() }) {
-                        Icon(Icons.Default.ArrowBack, "Back")
-                    }
-                },
-            )
+            Box(modifier = Modifier.statusBarsPadding()) {
+                TopAppBar(
+                    title = { /* No title */ },
+                    backgroundColor = Color.Transparent,
+                    elevation = 0.dp,
+                    navigationIcon = {
+                        IconButton(onClick = { onBackPressed() }) {
+                            Icon(Icons.Default.ArrowBack, "Back")
+                        }
+                    },
+                )
+            }
         }
     }
 }
