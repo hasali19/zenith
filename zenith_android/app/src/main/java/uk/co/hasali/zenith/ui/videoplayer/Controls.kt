@@ -20,6 +20,7 @@ import uk.co.hasali.zenith.R
 fun ControlsOverlay(
     buffering: Boolean,
     position: Float,
+    buffered: Float,
     duration: Float,
     state: PlayState,
     onPlayPause: () -> Unit,
@@ -47,6 +48,7 @@ fun ControlsOverlay(
             ) {
                 SeekBar(
                     position = position,
+                    buffered = buffered,
                     max = duration,
                     onSeekStart = onSeekStart,
                     onSeekEnd = onSeekTo

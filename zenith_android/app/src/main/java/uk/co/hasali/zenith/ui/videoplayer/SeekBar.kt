@@ -19,6 +19,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 @Composable
 fun SeekBar(
     position: Float,
+    buffered: Float,
     max: Float,
     onSeekStart: () -> Unit = {},
     onSeekEnd: (Float) -> Unit = {},
@@ -47,6 +48,11 @@ fun SeekBar(
 
     DisposableEffect(internalPosition) {
         view.progress = internalPosition.toInt()
+        onDispose { }
+    }
+
+    DisposableEffect(buffered) {
+        view.secondaryProgress = buffered.toInt()
         onDispose { }
     }
 

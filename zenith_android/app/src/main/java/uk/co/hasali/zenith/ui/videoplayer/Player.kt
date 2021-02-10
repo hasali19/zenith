@@ -39,6 +39,9 @@ class Player(context: Context, surface: SurfaceView, session: MediaSessionCompat
     val position
         get() = startPosition + (player.currentPosition.toFloat() / 1000)
 
+    val bufferedPosition
+        get() = startPosition + (player.bufferedPosition.toFloat() / 1000)
+
     val isEnded
         get() = player.playbackState == ExoPlayer.STATE_ENDED
 

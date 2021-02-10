@@ -42,6 +42,7 @@ class VideoPlayerActivity : AppCompatActivity() {
     private var itemId = -1
     private var playbackState by mutableStateOf(PlayState.PLAYING)
     private var playbackPosition by mutableStateOf(0f)
+    private var bufferedPosition by mutableStateOf(0f)
     private var duration by mutableStateOf(0f)
     private var buffering by mutableStateOf(false)
     private var serverUrl: String? by mutableStateOf(null)
@@ -112,6 +113,7 @@ class VideoPlayerActivity : AppCompatActivity() {
             ControlsOverlay(
                 buffering = buffering,
                 position = playbackPosition,
+                buffered = bufferedPosition,
                 duration = duration,
                 state = playbackState,
                 onPlayPause = { player.state = player.state.toggle() },
@@ -127,6 +129,7 @@ class VideoPlayerActivity : AppCompatActivity() {
     private fun launchProgressUpdate() = lifecycleScope.launch {
         while (isActive && !player.isEnded) {
             playbackPosition = player.position
+            bufferedPosition = player.bufferedPosition
             delay(1000)
         }
     }
