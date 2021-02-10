@@ -2,6 +2,10 @@ package uk.co.hasali.zenith.ui.videoplayer
 
 import android.view.GestureDetector
 import android.view.MotionEvent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.CircularProgressIndicator
@@ -33,6 +37,7 @@ private fun rememberSingleTapGestureDetector(onSingleTap: () -> Unit): GestureDe
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun ControlsOverlay(
     buffering: Boolean,
@@ -58,10 +63,14 @@ fun ControlsOverlay(
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
 
-        if (visible) {
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
             Column(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
                     .background(Color(0f, 0f, 0f, 0.5f))
                     .padding(8.dp)
             ) {
@@ -70,7 +79,7 @@ fun ControlsOverlay(
                     buffered = buffered,
                     max = duration,
                     onSeekStart = onSeekStart,
-                    onSeekEnd = onSeekTo
+                    onSeekEnd = onSeekTo,
                 )
 
                 ButtonRow(
