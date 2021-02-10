@@ -1,5 +1,6 @@
 package uk.co.hasali.zenith.ui.videoplayer
 
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.support.v4.media.session.MediaSessionCompat
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.lifecycleScope
 import androidx.work.*
 import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.core.awaitUnit
 import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.gson.gsonDeserializer
 import com.google.android.exoplayer2.*
@@ -151,10 +153,34 @@ class VideoPlayerActivity : AppCompatActivity() {
         player.play()
     }
 
+    class OnDestroyWorker(context: Context, params: WorkerParameters) :
+        CoroutineWorker(context, params) {
+        override suspend fun doWork(): Result {
+            val uri = inputData.getString("URI") ?: return Result.failure()
+
+            Fuel.post(uri)
+                .awaitUnit()
+
+            return Result.success()
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+
         player.release()
         session.release()
+
+        if (serverUrl != null && player.position > 0) {
+            val uri = "$serverUrl/api/progress/$itemId?position=${player.position}"
+            WorkManager
+                .getInstance(this)
+                .enqueue(
+                    OneTimeWorkRequestBuilder<OnDestroyWorker>()
+                        .setInputData(workDataOf("URI" to uri))
+                        .build()
+                )
+        }
     }
 
     private fun hideSystemUi() {
