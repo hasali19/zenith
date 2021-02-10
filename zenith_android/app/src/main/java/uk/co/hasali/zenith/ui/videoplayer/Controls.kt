@@ -1,5 +1,7 @@
 package uk.co.hasali.zenith.ui.videoplayer
 
+import android.view.GestureDetector
+import android.view.MotionEvent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.CircularProgressIndicator
@@ -9,12 +11,27 @@ import androidx.compose.material.IconButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.gesture.tapGestureFilter
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.platform.AmbientContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import androidx.core.view.GestureDetectorCompat
 import uk.co.hasali.zenith.R
+
+@Composable
+private fun rememberSingleTapGestureDetector(onSingleTap: () -> Unit): GestureDetectorCompat {
+    val context = AmbientContext.current
+    return remember {
+        GestureDetectorCompat(context, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(e: MotionEvent?) = true
+            override fun onSingleTapUp(e: MotionEvent?) = true.also {
+                onSingleTap()
+            }
+        })
+    }
+}
 
 @Composable
 fun ControlsOverlay(
@@ -28,11 +45,14 @@ fun ControlsOverlay(
     onSeekTo: (Float) -> Unit,
 ) {
     var visible by remember { mutableStateOf(false) }
+    val gestureDetector = rememberSingleTapGestureDetector {
+        visible = !visible
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .tapGestureFilter { visible = !visible }
+            .pointerInteropFilter { gestureDetector.onTouchEvent(it) }
     ) {
         if (buffering) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -44,7 +64,6 @@ fun ControlsOverlay(
                     .align(Alignment.BottomCenter)
                     .background(Color(0f, 0f, 0f, 0.5f))
                     .padding(8.dp)
-                    .tapGestureFilter { /* Intercept tap */ }
             ) {
                 SeekBar(
                     position = position,
