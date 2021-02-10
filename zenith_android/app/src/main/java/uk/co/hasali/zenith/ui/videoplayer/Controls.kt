@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.AmbientContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.GestureDetectorCompat
+import kotlinx.coroutines.delay
 import uk.co.hasali.zenith.R
 
 @Composable
@@ -52,6 +53,13 @@ fun ControlsOverlay(
     var visible by remember { mutableStateOf(false) }
     val gestureDetector = rememberSingleTapGestureDetector {
         visible = !visible
+    }
+
+    LaunchedEffect(visible) {
+        if (visible) {
+            delay(3000)
+            visible = false
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
