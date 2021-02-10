@@ -54,13 +54,15 @@ fun ControlsOverlay(
         visible = !visible
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInteropFilter { gestureDetector.onTouchEvent(it) }
-    ) {
-        if (buffering) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+    Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInteropFilter { gestureDetector.onTouchEvent(it) }
+        ) {
+            if (buffering) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
         }
 
         AnimatedVisibility(
