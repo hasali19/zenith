@@ -103,12 +103,13 @@ pub(super) async fn get_recently_updated_shows(state: AppState, _: Request) -> A
                 JOIN tv_seasons AS season ON season.item_id = episode.season_id
                 LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
                 WHERE season.show_id = show.item_id AND COALESCE(u.is_watched, 0) = 0
-            ),
+            ) AS unwatched_episodes,
             MAX(item.added_at) AS latest_episode_added_at
         FROM tv_shows AS show
         JOIN tv_seasons AS season ON season.show_id = show.item_id
         JOIN tv_episodes AS episode ON episode.season_id = season.item_id
         JOIN media_items AS item ON item.id = episode.item_id
+        WHERE unwatched_episodes > 0
         GROUP BY show.item_id
         ORDER BY latest_episode_added_at DESC, show.name
         LIMIT 10
