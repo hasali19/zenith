@@ -14,10 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.viewModel
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.chrisbanes.accompanist.insets.ProvideWindowInsets
 import dev.chrisbanes.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.flow.first
@@ -77,7 +77,7 @@ fun MainScreen(serverUrl: String, onLaunchSetup: () -> Unit = {}) {
             onScreenChange = { nav.currentScreen = it },
             onLaunchSetup = onLaunchSetup,
         ) {
-            Crossfade(current = nav.currentScreen) { screen ->
+            Crossfade(nav.currentScreen) { screen ->
                 when (screen) {
                     is Screen.Home -> HomeScreen(serverUrl)
                     is Screen.Movies -> MoviesScreen(serverUrl)
@@ -120,17 +120,18 @@ fun MainAppBar(onLaunchSetup: () -> Unit) {
             elevation = 0.dp,
             modifier = Modifier.statusBarsPadding(),
             actions = {
-                DropdownMenu(
-                    toggle = {
-                        IconButton(onClick = { showMenu = true }) {
-                            Icon(imageVector = Icons.Default.MoreVert, "More")
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(imageVector = Icons.Default.MoreVert, "More")
+                    }
+
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(onClick = onLaunchSetup) {
+                            Text("Change server")
                         }
-                    },
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(onClick = onLaunchSetup) {
-                        Text("Change server")
                     }
                 }
             },

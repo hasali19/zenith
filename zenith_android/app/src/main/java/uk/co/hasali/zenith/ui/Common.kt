@@ -10,7 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.AmbientDensity
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.accompanist.coil.CoilImage
@@ -27,7 +27,7 @@ fun PosterCard(
         Box {
             Column {
                 BoxWithConstraints {
-                    val height = with(AmbientDensity.current) {
+                    val height = with(LocalDensity.current) {
                         constraints.maxWidth.toDp() * (3f / 2f)
                     }
 
@@ -79,7 +79,7 @@ fun PosterCard(
 @Composable
 fun Backdrop(url: String?, modifier: Modifier = Modifier) {
     BoxWithConstraints(modifier = modifier) {
-        val height = with(AmbientDensity.current) {
+        val height = with(LocalDensity.current) {
             constraints.maxWidth.toDp() * (9f / 16f)
         }
 
