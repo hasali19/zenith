@@ -3,11 +3,12 @@ package uk.co.hasali.zenith.ui.videoplayer
 import android.content.Context
 import android.support.v4.media.session.MediaSessionCompat
 import android.view.SurfaceView
-import com.google.android.exoplayer2.DefaultControlDispatcher
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
+import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy
+import com.google.android.exoplayer2.upstream.LoadErrorHandlingPolicy
 import com.google.android.exoplayer2.video.VideoListener
 
 enum class PlayState {
@@ -96,11 +97,20 @@ class Player(context: Context, surface: SurfaceView, session: MediaSessionCompat
     }
 
     private fun setMediaItemUrl(url: String) {
+        val factory = DefaultHttpDataSourceFactory()
         val mediaItem = MediaItem.Builder()
             .setUri(url)
             .build()
 
-        player.setMediaItem(mediaItem)
+        val source = ProgressiveMediaSource.Factory(factory)
+            .setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy() {
+                override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
+                    return C.TIME_UNSET
+                }
+            })
+            .createMediaSource(mediaItem)
+
+        player.setMediaSource(source)
         player.prepare()
     }
 
@@ -135,6 +145,18 @@ class Player(context: Context, surface: SurfaceView, session: MediaSessionCompat
 
         if (state == ExoPlayer.STATE_ENDED) {
             onVideoEnded?.invoke()
+        }
+    }
+
+    override fun onPlayerError(error: ExoPlaybackException) {
+        // If we temporarily lose connection to the server, this should
+        // enable re-requesting the video at the current position, to avoid restarting
+        // from the beginning.
+        // TODO: Check if this will cause infinite reconnect attempts
+        if (error.type == ExoPlaybackException.TYPE_SOURCE) {
+            seekTo(position)
+        } else {
+            super.onPlayerError(error)
         }
     }
 }
