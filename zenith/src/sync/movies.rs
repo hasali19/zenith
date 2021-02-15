@@ -1,44 +1,37 @@
 use std::collections::HashSet;
+use std::path::Path;
 
-use metadata::{MetadataManager, RefreshRequest};
 use regex::Regex;
-use sqlx::sqlite::SqliteRow;
-use sqlx::{Acquire, Row, SqliteConnection};
 
-use crate::db::media::MediaItemType;
-use crate::ffmpeg::Ffprobe;
-use crate::metadata;
+use crate::ffmpeg::VideoInfoProvider;
+use crate::fs::{DirEntryType, FileSystem};
+use crate::library::{MediaLibrary, NewMovie};
 
-pub async fn sync_movies(
-    db: &mut SqliteConnection,
-    metadata: &MetadataManager,
-    ffprobe: &Ffprobe,
+pub(super) async fn sync_movies(
+    library: &impl MediaLibrary,
+    fs: &impl FileSystem,
+    video_info: &impl VideoInfoProvider,
     path: &str,
 ) -> eyre::Result<()> {
     // Find all existing movies
-    let mut movies = sqlx::query("SELECT id FROM media_items WHERE item_type = 1")
-        .try_map(|row: SqliteRow| row.try_get::<i64, _>(0))
-        .fetch_all(&mut *db)
+    let mut movies = library
+        .get_movie_ids()
         .await?
         .into_iter()
         .collect::<HashSet<_>>();
 
     // Search for all movies on the filesystem
-    for entry in std::fs::read_dir(path)? {
-        let entry = entry?;
-
-        if !entry.file_type().unwrap().is_dir() {
+    for entry in fs.list_dir(Path::new(path))? {
+        if !matches!(entry.entry_type, DirEntryType::Directory) {
             continue;
         }
 
-        for entry in std::fs::read_dir(entry.path())? {
-            let entry = entry?;
-
-            if !entry.file_type().unwrap().is_file() {
+        for entry in fs.list_dir(&entry.path)? {
+            if !matches!(entry.entry_type, DirEntryType::File) {
                 continue;
             }
 
-            let file_path = entry.path();
+            let file_path = entry.path;
             let file_name = match file_path.file_name().and_then(|v| v.to_str()) {
                 Some(name) => name,
                 None => continue,
@@ -49,13 +42,12 @@ pub async fn sync_movies(
                 None => continue,
             };
 
-            let path = entry.path();
-            let path = match path.to_str() {
+            let path = match file_path.to_str() {
                 Some(path) => path,
                 None => continue,
             };
 
-            match get_id_for_path(&mut *db, &path).await? {
+            match library.get_movie_id(&path).await? {
                 // Remove from the set of ids if the movie exists
                 Some(id) => {
                     movies.remove(&id);
@@ -64,16 +56,8 @@ pub async fn sync_movies(
                 None => {
                     log::info!("adding movie: {}", file_name);
 
-                    let info = match ffprobe.get_video_info(&path).await {
+                    let info = match video_info.get_video_info(&path).await {
                         Ok(info) => info,
-                        Err(e) => {
-                            log::warn!("{}", e);
-                            continue;
-                        }
-                    };
-
-                    let duration: f64 = match info.format.duration.parse() {
-                        Ok(duration) => duration,
                         Err(e) => {
                             log::warn!("{}", e);
                             continue;
@@ -85,47 +69,14 @@ pub async fn sync_movies(
                         .and_then(|date| date.try_with_hms(0, 0, 0).ok())
                         .map(|dt| dt.assume_utc().unix_timestamp());
 
-                    let mut transaction = db.begin().await?;
+                    let movie = NewMovie {
+                        path,
+                        title: &title,
+                        release_date,
+                        duration: info.duration,
+                    };
 
-                    let sql = "
-                        INSERT INTO media_items (item_type)
-                        VALUES (?)
-                    ";
-
-                    let id: i64 = sqlx::query(sql)
-                        .bind(MediaItemType::Movie)
-                        .execute(&mut transaction)
-                        .await?
-                        .last_insert_rowid();
-
-                    let sql = "
-                        INSERT INTO movies (item_id, path, title, release_date)
-                        VALUES (?, ?, ?, ?)
-                    ";
-
-                    sqlx::query(sql)
-                        .bind(id)
-                        .bind(&path)
-                        .bind(&title)
-                        .bind(release_date)
-                        .execute(&mut transaction)
-                        .await?;
-
-                    let sql = "
-                        INSERT INTO video_files (item_id, path, duration)
-                        VALUES (?, ?, ?)
-                    ";
-
-                    sqlx::query(sql)
-                        .bind(id)
-                        .bind(&path)
-                        .bind(duration)
-                        .execute(&mut transaction)
-                        .await?;
-
-                    transaction.commit().await?;
-
-                    metadata.enqueue(RefreshRequest::Movie(id));
+                    library.add_movie(movie).await?;
                 }
             }
         }
@@ -135,21 +86,10 @@ pub async fn sync_movies(
     // may be deleted from the database
     for id in movies {
         log::info!("removing movie: {}", id);
-
-        sqlx::query("DELETE FROM media_items WHERE id = ?")
-            .bind(id)
-            .execute(&mut *db)
-            .await?;
+        library.remove_movie(id).await?;
     }
 
     Ok(())
-}
-
-async fn get_id_for_path(db: &mut SqliteConnection, path: &str) -> sqlx::Result<Option<i64>> {
-    sqlx::query_scalar("SELECT item_id FROM movies WHERE path = ?")
-        .bind(path)
-        .fetch_optional(db)
-        .await
 }
 
 pub fn parse_movie_file_name(name: &str) -> Option<(String, Option<i32>)> {

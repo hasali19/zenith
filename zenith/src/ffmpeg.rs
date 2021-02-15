@@ -71,6 +71,29 @@ impl Ffprobe {
     }
 }
 
+pub struct VideoInfo {
+    pub duration: f64,
+}
+
+#[async_trait::async_trait]
+pub trait VideoInfoProvider {
+    async fn get_video_info(&self, path: &str) -> eyre::Result<VideoInfo>;
+}
+
+#[async_trait::async_trait]
+impl VideoInfoProvider for Ffprobe {
+    async fn get_video_info(&self, path: &str) -> eyre::Result<VideoInfo> {
+        let info = match self.get_video_info(path).await {
+            Err(e) => return Err(e),
+            Ok(info) => VideoInfo {
+                duration: info.format.duration.parse()?,
+            },
+        };
+
+        Ok(info)
+    }
+}
+
 pub struct Ffmpeg {
     exe_path: String,
 }

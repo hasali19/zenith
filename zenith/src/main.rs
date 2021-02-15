@@ -6,6 +6,7 @@ use env_logger::Env;
 
 use zenith::config::Config;
 use zenith::db::Db;
+use zenith::library::MediaLibraryImpl;
 use zenith::lifecycle::AppLifecycle;
 use zenith::metadata::MetadataManager;
 use zenith::sync::LibrarySync;
@@ -25,7 +26,8 @@ async fn main() -> eyre::Result<()> {
     let db = Db::init(&config.database.path).await?;
     let tmdb = TmdbClient::new(&config.tmdb.access_token);
     let metadata = MetadataManager::new(db.clone(), tmdb);
-    let mut sync = LibrarySync::new(db.clone(), metadata.clone(), config.clone(), &lifecycle);
+    let library = MediaLibraryImpl::new(db.clone(), metadata.clone());
+    let mut sync = LibrarySync::new(library, config.clone(), &lifecycle);
 
     sync.start_full_sync();
 

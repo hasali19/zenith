@@ -7,10 +7,10 @@ use futures::FutureExt;
 use tokio::sync::mpsc;
 
 use crate::config::Config;
-use crate::db::Db;
 use crate::ffmpeg::Ffprobe;
+use crate::fs::RealFs;
+use crate::library::MediaLibrary;
 use crate::lifecycle::AppLifecycle;
-use crate::metadata::MetadataManager;
 
 #[derive(Clone)]
 pub struct LibrarySync(mpsc::UnboundedSender<Request>);
@@ -22,13 +22,12 @@ enum Request {
 
 impl LibrarySync {
     pub fn new(
-        db: Db,
-        metadata: MetadataManager,
+        library: impl MediaLibrary + Send + Sync + 'static,
         config: Arc<Config>,
         lifecycle: &AppLifecycle,
     ) -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
-        let task = tokio::spawn(sync_service(rx, db, metadata, config));
+        let task = tokio::spawn(sync_service(rx, library, config));
 
         lifecycle.on_stopped(async move {
             task.abort();
@@ -44,8 +43,7 @@ impl LibrarySync {
 
 async fn sync_service(
     mut rx: mpsc::UnboundedReceiver<Request>,
-    db: Db,
-    metadata: MetadataManager,
+    library: impl MediaLibrary,
     config: Arc<Config>,
 ) {
     while let Some(req) = rx.recv().await {
@@ -56,7 +54,7 @@ async fn sync_service(
                 while rx.recv().now_or_never().flatten().is_some() {}
 
                 // Actually do the sync
-                if let Err(e) = full_sync(&db, &metadata, &config).await {
+                if let Err(e) = full_sync(&library, &config).await {
                     log::error!("sync failed: {}", e.to_string());
                 }
             }
@@ -64,14 +62,13 @@ async fn sync_service(
     }
 }
 
-async fn full_sync(db: &Db, metadata: &MetadataManager, config: &Config) -> eyre::Result<()> {
+async fn full_sync(library: &impl MediaLibrary, config: &Config) -> eyre::Result<()> {
     log::info!("running full library sync");
 
     let ffprobe = Ffprobe::new(&config.transcoding.ffprobe_path);
-    let mut conn = db.acquire().await?;
 
-    movies::sync_movies(&mut conn, &metadata, &ffprobe, &config.libraries.movies).await?;
-    tv_shows::sync_tv_shows(&mut conn, &metadata, &ffprobe, &config.libraries.tv_shows).await?;
+    movies::sync_movies(library, &RealFs, &ffprobe, &config.libraries.movies).await?;
+    tv_shows::sync_tv_shows(library, &RealFs, &ffprobe, &config.libraries.tv_shows).await?;
 
     log::info!("sync complete");
 
