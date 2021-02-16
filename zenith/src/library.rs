@@ -371,6 +371,11 @@ impl MediaLibrary for MediaLibraryImpl {
     async fn remove_episode(&self, id: i64) -> eyre::Result<()> {
         let mut transaction = self.db.begin().await?;
 
+        sqlx::query("DELETE FROM user_item_data WHERE item_id = ?")
+            .bind(id)
+            .execute(&mut transaction)
+            .await?;
+
         sqlx::query("DELETE FROM video_files WHERE item_id = ?")
             .bind(id)
             .execute(&mut transaction)
