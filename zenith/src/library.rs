@@ -262,6 +262,8 @@ impl MediaLibrary for MediaLibraryImpl {
             .execute(&mut *transaction)
             .await?;
 
+        transaction.commit().await?;
+
         self.metadata.enqueue(RefreshRequest::TvSeason(id));
 
         Ok(id)
