@@ -3,7 +3,7 @@
     <h1 class="display-1 mt-4 mb-4">Movies</h1>
     <div class="grid">
       <div v-for="movie in movies" :key="movie.id">
-        <v-card @click="onItemClick">
+        <v-card @click="onItemClick(movie.id)">
           <v-img :src="movie.poster"></v-img>
         </v-card>
         <div class="mt-2 mb-4">
@@ -31,7 +31,9 @@ export default Vue.extend({
   },
 
   methods: {
-    onItemClick() {},
+    onItemClick(id: number) {
+      this.$router.push({ path: `/player/${id}` })
+    },
   },
 })
 </script>
