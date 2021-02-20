@@ -48,8 +48,12 @@ impl<'a> Request {
         serde_qs::from_str(qs)
     }
 
+    pub fn body(&mut self) -> Body {
+        mem::replace(&mut self.body, Body::empty())
+    }
+
     pub async fn body_json<T: DeserializeOwned>(&mut self) -> Result<T, Error> {
-        let body = mem::replace(&mut self.body, Body::empty());
+        let body = self.body();
         let bytes = hyper::body::to_bytes(body)
             .await
             .map_err(Error::HyperError)?;

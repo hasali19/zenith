@@ -14,3 +14,6 @@ config.yml
 
 # Log files
 *.log
+
+# Cache directory
+cache/

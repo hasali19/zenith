@@ -9,6 +9,7 @@ pub mod metadata;
 pub mod middleware;
 pub mod sync;
 pub mod tmdb;
+pub mod transcoder;
 pub mod utils;
 pub mod watcher;
 
@@ -18,6 +19,7 @@ use config::Config;
 use db::Db;
 use metadata::MetadataManager;
 use sync::LibrarySync;
+use transcoder::HlsTranscoder;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -25,4 +27,5 @@ pub struct AppState {
     pub db: Db,
     pub sync: LibrarySync,
     pub metadata: MetadataManager,
+    pub transcoder: Arc<HlsTranscoder>,
 }
