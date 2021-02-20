@@ -104,6 +104,13 @@ pub struct TranscodeOptions<'a> {
     pub use_hw_encoder: bool,
 }
 
+pub struct HlsTranscodeOptions<'a> {
+    pub input_path: &'a str,
+    pub start_time: f64,
+    pub start_number: u32,
+    pub segment_time: u32,
+}
+
 pub struct SubtitleOptions<'a> {
     pub input_path: &'a str,
     pub start_time: u64,
@@ -145,6 +152,52 @@ impl Ffmpeg {
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
             .spawn()
+    }
+
+    pub fn transcode_hls(&self, options: &HlsTranscodeOptions) -> eyre::Result<Child> {
+        let mut cmd = Command::new(&self.exe_path);
+
+        let log_dir = Path::new("transcode-logs");
+        if !log_dir.is_dir() {
+            std::fs::create_dir(log_dir)?;
+        }
+
+        let ffreport = format!("file={}/%p-%t.log:level=32", log_dir.to_string_lossy());
+
+        // TODO: Remove hardcoded urls
+        let segment_filename = "http://localhost:8000/api/hls/receiver/%d.ts";
+        let playlist_filename = "http://localhost:8000/api/hls/receiver/main.m3u8";
+
+        let child = cmd
+            .env("FFREPORT", ffreport)
+            .arg_pair("-ss", options.start_time.to_string())
+            .arg_pair("-fflags", "+genpts")
+            .arg_pair("-i", options.input_path)
+            .arg_pair("-map_metadata", "-1")
+            .arg_pair("-map_chapters", "-1")
+            .arg_pair("-threads", "0")
+            .arg("-sn")
+            .arg_pair("-codec:v", "copy")
+            .arg_pair("-vsync", "-1")
+            .arg_pair("-codec:a", "libmp3lame")
+            .arg("-copyts")
+            .arg_pair("-avoid_negative_ts", "disabled")
+            .arg_pair("-f", "hls")
+            .arg_pair("-max_delay", "5000000")
+            .arg_pair("-hls_time", options.segment_time.to_string())
+            .arg_pair("-individual_header_trailer", "0")
+            .arg_pair("-hls_segment_type", "mpegts")
+            .arg_pair("-start_number", options.start_number.to_string())
+            .arg_pair("-hls_segment_filename", segment_filename)
+            .arg_pair("-hls_playlist_type", "vod")
+            .arg_pair("-hls_list_size", "0")
+            .arg_pair("-http_persistent", "1")
+            .arg_pair("-method", "PUT")
+            .arg(playlist_filename)
+            .stderr(Stdio::null())
+            .spawn()?;
+
+        Ok(child)
     }
 
     pub fn extract_subtitles(&self, options: &SubtitleOptions) -> std::io::Result<Child> {

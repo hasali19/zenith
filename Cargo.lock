@@ -2288,6 +2288,7 @@ name = "zenith"
 version = "0.0.0"
 dependencies = [
  "async-trait",
+ "bytes",
  "color-eyre",
  "dotenv",
  "env_logger",
