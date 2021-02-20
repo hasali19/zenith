@@ -9,7 +9,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use hyper::{service, Server as HyperServer};
-use route_recognizer::{Match, Router};
+use route_recognizer::{Match, Params, Router};
 
 pub use headers;
 pub use hyper::{Body, Method, StatusCode};
@@ -23,6 +23,7 @@ pub struct App<S> {
     state: S,
     router: HashMap<Method, Router<Box<dyn Endpoint<S>>>>,
     middleware: Vec<Box<dyn Middleware<S>>>,
+    fallback: Option<Box<dyn Endpoint<S>>>,
 }
 
 macro_rules! method_fn {
@@ -39,6 +40,7 @@ impl<S: Clone + Send + Sync + 'static> App<S> {
             state,
             router: HashMap::new(),
             middleware: vec![],
+            fallback: None,
         }
     }
 
@@ -62,6 +64,10 @@ impl<S: Clone + Send + Sync + 'static> App<S> {
     method_fn!(post, POST);
     method_fn!(put, PUT);
     method_fn!(trace, TRACE);
+
+    pub fn fallback_to(&mut self, to: impl Endpoint<S>) {
+        self.fallback = Some(Box::new(to));
+    }
 
     pub fn wrap(&mut self, middleware: impl Middleware<S>) {
         self.middleware.push(Box::new(middleware));
@@ -111,9 +117,18 @@ async fn service<S: Clone + Send + Sync + 'static>(
     let (handler, params) = match route {
         Some(route) => route,
         None => {
-            return hyper::Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .body(Body::empty())
+            return match app.fallback.as_deref() {
+                Some(fallback) => {
+                    let req = Request::new(req, Params::new());
+                    let res = Next::new(fallback, &app.middleware)
+                        .run(app.state.clone(), req)
+                        .await;
+                    Ok(res.into())
+                }
+                None => hyper::Response::builder()
+                    .status(StatusCode::NOT_FOUND)
+                    .body(Body::empty()),
+            }
         }
     };
 
