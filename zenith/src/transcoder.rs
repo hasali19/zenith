@@ -163,6 +163,7 @@ impl HlsTranscoder {
             input_path: &path,
             start_number: segment,
             segment_time: 6,
+            use_hw_encoder: config.use_hw_encoder,
         })?;
 
         let (tx, rx) = oneshot::channel();

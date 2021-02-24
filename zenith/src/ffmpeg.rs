@@ -108,6 +108,7 @@ pub struct HlsTranscodeOptions<'a> {
     pub input_path: &'a str,
     pub start_number: u32,
     pub segment_time: u32,
+    pub use_hw_encoder: bool,
 }
 
 pub struct SubtitleOptions<'a> {
@@ -169,16 +170,25 @@ impl Ffmpeg {
         let segment_filename = "http://localhost:8000/api/hls/receiver/%d.ts";
         let playlist_filename = "http://localhost:8000/api/hls/receiver/main.m3u8";
 
-        let child = Command::new(&self.exe_path)
-            .env("FFREPORT", ffreport)
+        let mut cmd = Command::new(&self.exe_path);
+
+        cmd.env("FFREPORT", ffreport)
             .arg_pair("-ss", start_time.to_string())
             .arg_pair("-i", options.input_path)
             .arg_pair("-map_metadata", "-1")
             .arg_pair("-map_chapters", "-1")
             .arg_pair("-threads", "0")
-            .arg("-sn")
-            .arg_pair("-codec:v", "libx264")
-            .arg_pair("-preset", "veryfast")
+            .arg("-sn");
+
+        if options.use_hw_encoder {
+            cmd.arg_pair("-c:v", "h264_nvenc");
+            cmd.arg_pair("-profile", "high");
+        } else {
+            cmd.arg_pair("-c:v", "libx264");
+            cmd.arg_pair("-preset", "veryfast");
+        }
+
+        let child = cmd
             .arg_pair("-force_key_frames:0", key_frames)
             .arg_pair("-g", "72")
             .arg_pair("-keyint_min", "72")
