@@ -1,13 +1,9 @@
 use std::collections::HashMap;
-use std::path::Path;
-use std::process::Stdio;
 use std::sync::Arc;
 use std::time::Duration;
 
 use bytes::Bytes;
 use futures::StreamExt;
-use itertools::Itertools;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::sync::{oneshot, Mutex};
 use zenith_http::Body;
 
@@ -35,25 +31,6 @@ impl HlsTranscoder {
             config,
             current: Mutex::new(None),
         }
-    }
-
-    pub async fn create_session(&self, item_id: i64) -> eyre::Result<()> {
-        let mut current = self.current.lock().await;
-
-        if let Some(current) = current.as_ref() {
-            if current.item_id == item_id {
-                return Ok(());
-            }
-        }
-
-        *current = Some(JobState {
-            item_id,
-            segments: HashMap::new(),
-            last_requested_segment: 0,
-            canceller: None,
-        });
-
-        Ok(())
     }
 
     pub async fn generate_playlist(&self, item_id: i64) -> Option<String> {

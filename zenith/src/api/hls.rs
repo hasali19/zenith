@@ -9,21 +9,9 @@ use crate::AppState;
 use super::{ApiError, ApiResult};
 
 pub fn configure(app: &mut App<AppState>) {
-    app.post("/api/hls/:id/prepare", create_session);
     app.get("/api/hls/:id/main.m3u8", get_hls_playlist);
     app.get("/api/hls/:id/:file_name", get_hls_segment);
     app.put("/api/hls/receiver/:file_name", receive_hls_segment);
-}
-
-async fn create_session(state: AppState, req: Request) -> ApiResult {
-    let id: i64 = req
-        .param("id")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
-
-    state.transcoder.create_session(id).await?;
-
-    Ok(Response::new().with_header(AccessControlAllowOrigin::ANY))
 }
 
 async fn get_hls_playlist(state: AppState, req: Request) -> ApiResult {
