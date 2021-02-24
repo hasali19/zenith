@@ -34,13 +34,6 @@ impl HlsTranscoder {
     }
 
     pub async fn generate_playlist(&self, item_id: i64) -> Option<String> {
-        let job = self.current.lock().await;
-        let job = job.as_ref()?;
-
-        if job.item_id != item_id {
-            return None;
-        }
-
         let mut conn = self.db.acquire().await.ok()?;
         let duration: f64 =
             sqlx::query_scalar("SELECT duration FROM video_files WHERE item_id = ?")
@@ -80,23 +73,24 @@ impl HlsTranscoder {
         loop {
             let mut current = self.current.lock().await;
 
-            let mut job = match current.as_mut() {
-                None => return Ok(None),
-                Some(job) if job.item_id != item_id => return Ok(None),
+            // TODO: Make this nicer
+            let mut job = match current.take() {
+                None => self.spawn_ffmpeg(item_id, segment).await?,
+                Some(job) if job.item_id != item_id => self.spawn_ffmpeg(item_id, segment).await?,
                 Some(job) => {
                     if let Some(data) = job.segments.get(&segment) {
-                        return Ok(Some(data.clone()));
+                        let data = data.clone();
+                        *current = Some(job);
+                        return Ok(Some(data));
                     }
 
                     if job.canceller.is_none() {
-                        self.spawn_ffmpeg(job, item_id, segment).await?;
-                        job
+                        self.spawn_ffmpeg(item_id, segment).await?
                     } else if segment < job.last_requested_segment
                         || segment > job.last_requested_segment + 20
                     {
                         log::warn!("restarting transcode due to out of range seek");
-                        self.spawn_ffmpeg(job, item_id, segment).await?;
-                        job
+                        self.spawn_ffmpeg(item_id, segment).await?
                     } else {
                         job
                     }
@@ -105,9 +99,7 @@ impl HlsTranscoder {
 
             job.last_requested_segment = segment;
 
-            if let Some(data) = job.segments.get(&segment) {
-                return Ok(Some(data.clone()));
-            }
+            *current = Some(job);
 
             drop(current);
 
@@ -115,12 +107,7 @@ impl HlsTranscoder {
         }
     }
 
-    async fn spawn_ffmpeg(
-        &self,
-        job: &mut JobState,
-        item_id: i64,
-        segment: u32,
-    ) -> eyre::Result<()> {
+    async fn spawn_ffmpeg(&self, item_id: i64, segment: u32) -> eyre::Result<JobState> {
         log::info!(
             "starting transcode for item_id: {}, segment: {}",
             item_id,
@@ -154,9 +141,12 @@ impl HlsTranscoder {
             }
         });
 
-        job.canceller = Some(tx);
-
-        Ok(())
+        Ok(JobState {
+            item_id,
+            last_requested_segment: segment,
+            segments: HashMap::new(),
+            canceller: Some(tx),
+        })
     }
 
     pub async fn receive_segment(&self, segment: u32, mut stream: Body) {
@@ -169,7 +159,7 @@ impl HlsTranscoder {
                 .unwrap()
                 .last_requested_segment;
 
-            if segment <= last_request + 10 {
+            if segment < last_request + 10 {
                 break;
             }
 
