@@ -26,17 +26,15 @@ export default Vue.extend({
   },
 
   mounted() {
-    fetch(`/api/hls/${this.id}/prepare`, { method: 'POST' }).then(() => {
-      const video = this.$refs.video as HTMLVideoElement
-      if (video.canPlayType('application/vnd.apple.mpegURL')) {
-        video.src = this.url
-      } else if (Hls.isSupported()) {
-        const hls = new Hls()
-        hls.loadSource(this.url)
-        hls.attachMedia(video)
-        video.play()
-      }
-    })
+    const video = this.$refs.video as HTMLVideoElement
+    if (video.canPlayType('application/vnd.apple.mpegURL')) {
+      video.src = this.url
+    } else if (Hls.isSupported()) {
+      const hls = new Hls()
+      hls.loadSource(this.url)
+      hls.attachMedia(video)
+      video.play()
+    }
   },
 })
 </script>
