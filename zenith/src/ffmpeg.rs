@@ -106,7 +106,6 @@ pub struct TranscodeOptions<'a> {
 
 pub struct HlsTranscodeOptions<'a> {
     pub input_path: &'a str,
-    pub start_time: f64,
     pub start_number: u32,
     pub segment_time: u32,
 }
@@ -155,8 +154,6 @@ impl Ffmpeg {
     }
 
     pub fn transcode_hls(&self, options: &HlsTranscodeOptions) -> eyre::Result<Child> {
-        let mut cmd = Command::new(&self.exe_path);
-
         let log_dir = Path::new("transcode-logs");
         if !log_dir.is_dir() {
             std::fs::create_dir(log_dir)?;
@@ -164,27 +161,36 @@ impl Ffmpeg {
 
         let ffreport = format!("file={}/%p-%t.log:level=32", log_dir.to_string_lossy());
 
+        let start_time = options.start_number * options.segment_time;
+        let segment_time = options.segment_time.to_string();
+        let key_frames = format!("expr:gte(t,{}+n_forced*{})", start_time, segment_time);
+
         // TODO: Remove hardcoded urls
         let segment_filename = "http://localhost:8000/api/hls/receiver/%d.ts";
         let playlist_filename = "http://localhost:8000/api/hls/receiver/main.m3u8";
 
-        let child = cmd
+        let child = Command::new(&self.exe_path)
             .env("FFREPORT", ffreport)
-            .arg_pair("-ss", options.start_time.to_string())
-            .arg_pair("-fflags", "+genpts")
+            .arg_pair("-ss", start_time.to_string())
             .arg_pair("-i", options.input_path)
             .arg_pair("-map_metadata", "-1")
             .arg_pair("-map_chapters", "-1")
             .arg_pair("-threads", "0")
             .arg("-sn")
-            .arg_pair("-codec:v", "copy")
+            .arg_pair("-codec:v", "libx264")
+            .arg_pair("-preset", "veryfast")
+            .arg_pair("-force_key_frames:0", key_frames)
+            .arg_pair("-g", "72")
+            .arg_pair("-keyint_min", "72")
+            .arg_pair("-sc_threshold", "0")
+            .arg("-start_at_zero")
             .arg_pair("-vsync", "-1")
             .arg_pair("-codec:a", "libmp3lame")
             .arg("-copyts")
             .arg_pair("-avoid_negative_ts", "disabled")
             .arg_pair("-f", "hls")
             .arg_pair("-max_delay", "5000000")
-            .arg_pair("-hls_time", options.segment_time.to_string())
+            .arg_pair("-hls_time", segment_time)
             .arg_pair("-individual_header_trailer", "0")
             .arg_pair("-hls_segment_type", "mpegts")
             .arg_pair("-start_number", options.start_number.to_string())
