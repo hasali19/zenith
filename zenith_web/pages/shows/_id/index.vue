@@ -6,14 +6,18 @@
       <div class="episode-grid">
         <div v-for="episode in season.episodes" :key="episode.id">
           <v-card @click="onEpisodeClick(episode.id)">
-            <v-img :src="episode.thumbnail"></v-img>
+            <v-img :src="episode.thumbnail" class="thumbnail"></v-img>
           </v-card>
           <div class="mt-2 mb-4">
-            <div class="subtitle-2 text-truncate">{{ episode.episode_number }} - {{ episode.name }}</div>
+            <div class="subtitle-2 text-truncate">
+              {{ episode.episode_number }} - {{ episode.name }}
+            </div>
             <div
               class="caption"
               style="line-height: 1rem; max-height: 3rem; overflow: hidden"
-            >{{ episode.overview }}</div>
+            >
+              {{ episode.overview }}
+            </div>
           </div>
         </div>
       </div>
@@ -55,5 +59,9 @@ export default Vue.extend({
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   grid-gap: 16px;
+}
+
+.thumbnail {
+  aspect-ratio: 16 / 9;
 }
 </style>
