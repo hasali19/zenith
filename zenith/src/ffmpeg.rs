@@ -101,7 +101,6 @@ pub struct Ffmpeg {
 pub struct TranscodeOptions<'a> {
     pub input_path: &'a str,
     pub start_time: u64,
-    pub use_hw_encoder: bool,
 }
 
 pub struct HlsTranscodeOptions<'a> {
@@ -125,8 +124,6 @@ impl Ffmpeg {
     }
 
     pub fn transcode(&self, options: &TranscodeOptions) -> std::io::Result<Child> {
-        let mut cmd = Command::new(&self.exe_path);
-
         let log_dir = Path::new("transcode-logs");
         if !log_dir.is_dir() {
             std::fs::create_dir(log_dir)?;
@@ -134,18 +131,13 @@ impl Ffmpeg {
 
         let ffreport = format!("file={}/%p-%t.log:level=32", log_dir.to_string_lossy());
 
-        cmd.env("FFREPORT", ffreport)
+        Command::new(&self.exe_path)
+            .env("FFREPORT", ffreport)
+            .arg("-noaccurate_seek")
             .arg_pair("-ss", options.start_time.to_string())
-            .arg_pair("-i", options.input_path);
-
-        if options.use_hw_encoder {
-            cmd.arg_pair("-c:v", "h264_nvenc");
-        } else {
-            cmd.arg_pair("-c:v", "libx264");
-            cmd.arg_pair("-preset", "veryfast");
-        }
-
-        cmd.arg_pair("-c:a", "libmp3lame")
+            .arg_pair("-i", options.input_path)
+            .arg_pair("-c:v", "copy")
+            .arg_pair("-c:a", "libmp3lame")
             .arg_pair("-f", "mp4")
             .arg_pair("-movflags", "frag_keyframe+empty_moov")
             .arg("pipe:1")

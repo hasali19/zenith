@@ -110,7 +110,6 @@ async fn get_transcoded_stream(state: AppState, req: Request) -> ApiResult {
     let options = TranscodeOptions {
         input_path: &path,
         start_time: query.start,
-        use_hw_encoder: config.use_hw_encoder,
     };
 
     let child = ffmpeg
