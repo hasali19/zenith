@@ -28,9 +28,16 @@
           @touchstart="onSeekStart"
           @change="onSeekEnd"
         />
-        <div style="margin: 16px 16px 16px 0">
+        <div style="margin: 16px 0">
           {{ formattedRemaining }}
         </div>
+        <v-btn
+          icon
+          style="margin-right: 16px; margin-left: 8px"
+          @click="fullscreen = !fullscreen"
+        >
+          <v-icon>mdi-fullscreen</v-icon>
+        </v-btn>
       </div>
     </div>
   </div>
@@ -65,6 +72,7 @@ export default Vue.extend({
       interval: null as any,
       controls: false,
       timeout: null as any,
+      fullscreen: false,
     }
   },
 
@@ -97,6 +105,14 @@ export default Vue.extend({
         video.pause()
       } else {
         video.play()
+      }
+    },
+
+    fullscreen(val) {
+      if (val) {
+        document.documentElement.requestFullscreen()
+      } else {
+        document.exitFullscreen()
       }
     },
   },
@@ -169,6 +185,7 @@ export default Vue.extend({
 
 .bottom-controls {
   display: flex;
+  align-items: center;
 }
 
 .seekbar {
