@@ -15,7 +15,7 @@
         </v-btn>
       </div>
       <div class="bottom-controls">
-        <div style="margin: 16px 0 16px 16px">
+        <div class="time" style="margin: 16px 0 16px 16px">
           {{ formattedPosition }}
         </div>
         <input
@@ -28,7 +28,7 @@
           @touchstart="onSeekStart"
           @change="onSeekEnd"
         />
-        <div style="margin: 16px 0">
+        <div class="time" style="margin: 16px 0">
           {{ formattedRemaining }}
         </div>
         <v-btn
@@ -191,6 +191,10 @@ export default Vue.extend({
 .bottom-controls {
   display: flex;
   align-items: center;
+}
+
+.time {
+  font-size: 0.8em;
 }
 
 .seekbar {
