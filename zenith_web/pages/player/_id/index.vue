@@ -179,6 +179,7 @@ export default Vue.extend({
   top: 0;
   display: flex;
   flex-direction: column;
+  background: linear-gradient(#0000, 90%, #000);
 }
 
 .main-controls {
