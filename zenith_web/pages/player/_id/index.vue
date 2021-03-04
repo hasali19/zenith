@@ -63,6 +63,8 @@ function formatTime(value: number, duration: number) {
 }
 
 export default Vue.extend({
+  layout: 'fullscreen',
+
   data() {
     return {
       duration: 1365,
