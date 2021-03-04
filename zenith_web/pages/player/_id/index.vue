@@ -1,5 +1,5 @@
 <template>
-  <div class="root" @mousemove="onMouseMove">
+  <div class="root" @mousemove="onMouseMove" @touchmove="onMouseMove">
     <video ref="video" class="video" :src="url" autoplay></video>
     <div v-if="controls" class="overlay">
       <div class="main-controls">
