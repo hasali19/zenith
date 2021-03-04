@@ -1,17 +1,35 @@
 <template>
   <div class="root">
-    <video class="video" ref="video" controls></video>
+    <video ref="video" class="video" :src="url" autoplay></video>
+    <div class="overlay">
+      <div style="flex: 1"></div>
+      <div class="bottom-controls">
+        <input
+          type="range"
+          class="seekbar"
+          min="0"
+          :max="duration"
+          :value="totalPosition"
+          @mousedown="onSeekStart"
+          @touchstart="onSeekStart"
+          @change="onSeekEnd"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import Hls from 'hls.js'
 
 export default Vue.extend({
   data() {
     return {
-      ready: false,
+      duration: 1365,
+      start: 0,
+      position: 0,
+      paused: false,
+      interval: null as any,
     }
   },
 
@@ -20,21 +38,51 @@ export default Vue.extend({
       return parseInt(this.$route.params.id)
     },
 
-    url() {
-      return `/api/hls/${this.$route.params.id}/main.m3u8`
+    url(): string {
+      return `/api/stream/${this.$route.params.id}/transcode?start=${this.start}`
+    },
+
+    totalPosition(): number {
+      return this.start + this.position
+    },
+  },
+
+  watch: {
+    paused(val) {
+      const video = this.$refs.video as HTMLVideoElement
+      if (val) {
+        video.pause()
+      } else {
+        video.play()
+      }
     },
   },
 
   mounted() {
-    const video = this.$refs.video as HTMLVideoElement
-    if (video.canPlayType('application/vnd.apple.mpegURL')) {
-      video.src = this.url
-    } else if (Hls.isSupported()) {
-      const hls = new Hls()
-      hls.loadSource(this.url)
-      hls.attachMedia(video)
-      video.play()
-    }
+    this.interval = window.setInterval(this.updatePosition, 200)
+  },
+
+  beforeDestroy() {
+    window.clearInterval(this.interval)
+  },
+
+  methods: {
+    updatePosition() {
+      if (!this.paused) {
+        const video = this.$refs.video as HTMLVideoElement
+        this.position = video.currentTime
+      }
+    },
+
+    onSeekStart() {
+      this.paused = true
+    },
+
+    onSeekEnd(e: any) {
+      this.start = parseFloat(e.target.value)
+      this.position = 0
+      this.paused = false
+    },
   },
 })
 </script>
@@ -48,5 +96,23 @@ export default Vue.extend({
 .video {
   width: 100%;
   height: 100%;
+}
+
+.overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom-controls {
+  display: flex;
+}
+
+.seekbar {
+  margin: 16px;
+  flex: 1;
 }
 </style>
