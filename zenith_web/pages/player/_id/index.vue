@@ -172,7 +172,32 @@ export default Vue.extend({
 }
 
 .seekbar {
-  margin: 16px;
+  -webkit-appearance: none;
   flex: 1;
+  margin: 16px;
+  background: transparent;
+}
+
+.seekbar:focus {
+  outline: none;
+}
+
+.seekbar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgb(103, 103, 255);
+  cursor: pointer;
+  margin-top: -7px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+}
+
+.seekbar::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+  background: rgb(167, 167, 167);
+  border-radius: 1.3px;
+  border: 0.2px solid #010101;
 }
 </style>
