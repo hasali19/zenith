@@ -1,6 +1,6 @@
 <template>
   <div class="root" @mousemove="onMouseMove" @touchmove="onMouseMove">
-    <video ref="video" class="video" :src="url" autoplay></video>
+    <video v-if="ready" ref="video" class="video" :src="url" autoplay></video>
     <div v-if="controls" class="overlay">
       <div class="main-controls">
         <v-btn
@@ -67,7 +67,8 @@ export default Vue.extend({
 
   data() {
     return {
-      duration: 1365,
+      ready: false,
+      duration: 0,
       start: 0,
       position: 0,
       paused: false,
@@ -103,6 +104,7 @@ export default Vue.extend({
   watch: {
     paused(val) {
       const video = this.$refs.video as HTMLVideoElement
+      if (!video) return
       if (val) {
         video.pause()
       } else {
@@ -119,8 +121,12 @@ export default Vue.extend({
     },
   },
 
-  mounted() {
+  async mounted() {
+    const res = await fetch(`/api/stream/${this.id}/info`)
+    const info = await res.json()
+    this.duration = info.duration
     this.interval = window.setInterval(this.updatePosition, 200)
+    this.ready = true
   },
 
   beforeDestroy() {
@@ -131,7 +137,9 @@ export default Vue.extend({
     updatePosition() {
       if (!this.paused) {
         const video = this.$refs.video as HTMLVideoElement
-        this.position = video.currentTime
+        if (video) {
+          this.position = video.currentTime
+        }
       }
     },
 
