@@ -3,16 +3,24 @@
     <video ref="video" class="video"></video>
     <div v-if="controls" class="overlay">
       <div class="main-controls">
-        <v-btn
-          fab
-          x-large
-          light
-          color="grey lighten-2"
-          @click="paused = !paused"
-        >
-          <v-icon v-if="paused">mdi-play</v-icon>
-          <v-icon v-else>mdi-pause</v-icon>
-        </v-btn>
+        <div class="main-controls-buttons">
+          <v-btn fab light color="grey" @click="rewind">
+            <v-icon>mdi-rewind-10</v-icon>
+          </v-btn>
+          <v-btn
+            fab
+            x-large
+            light
+            color="grey lighten-2"
+            @click="paused = !paused"
+          >
+            <v-icon v-if="paused">mdi-play</v-icon>
+            <v-icon v-else>mdi-pause</v-icon>
+          </v-btn>
+          <v-btn fab light color="grey" @click="fastForward">
+            <v-icon>mdi-fast-forward-30</v-icon>
+          </v-btn>
+        </div>
       </div>
       <div class="bottom-controls">
         <div class="time" style="margin: 16px 0 16px 16px">
@@ -166,11 +174,32 @@ export default Vue.extend({
     seekTo(position: number) {
       const video = this.$refs.video as HTMLVideoElement
       if (video) {
-        this.start = position
+        this.start = Math.floor(position)
         this.position = 0
-        video.src = `/api/stream/${this.$route.params.id}/transcode?start=${position}`
+        video.src = `/api/stream/${this.$route.params.id}/transcode?start=${this.start}`
       }
     },
+
+    rewind() {
+      this.seekTo(Math.max(0, this.totalPosition - 10))
+      this.play()
+    },
+
+    fastForward() {
+      this.seekTo(Math.min(this.duration, this.totalPosition + 30))
+      this.play()
+    },
+
+    play() {
+      const video = this.$refs.video as HTMLVideoElement
+      if (video) {
+        if (this.paused) {
+          this.paused = false
+        } else {
+          video.play()
+        }
+      }
+    }
   },
 })
 </script>
@@ -204,6 +233,14 @@ export default Vue.extend({
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.main-controls-buttons {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
 }
 
 .bottom-controls {
