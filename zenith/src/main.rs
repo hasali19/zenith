@@ -14,7 +14,6 @@ use zenith::lifecycle::AppLifecycle;
 use zenith::metadata::MetadataManager;
 use zenith::sync::LibrarySync;
 use zenith::tmdb::TmdbClient;
-use zenith::transcoder::HlsTranscoder;
 use zenith::watcher::FileWatcher;
 use zenith::{middleware, AppState};
 use zenith_http::{App, Body, Request, Response, StatusCode};
@@ -47,14 +46,11 @@ async fn main() -> eyre::Result<()> {
     watcher.watch(&config.libraries.movies);
     watcher.watch(&config.libraries.tv_shows);
 
-    let transcoder = Arc::new(HlsTranscoder::new(config.clone(), db.clone()));
-
     let mut app = App::new(AppState {
         config: config.clone(),
         db: db.clone(),
         sync,
         metadata,
-        transcoder,
     });
 
     let addr = SocketAddr::from_str(&format!("{}:{}", config.http.host, config.http.port))?;

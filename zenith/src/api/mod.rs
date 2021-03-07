@@ -1,4 +1,3 @@
-mod hls;
 mod library;
 mod metadata;
 mod movies;
@@ -15,7 +14,6 @@ pub fn configure(app: &mut App<AppState>) {
     app.configure(movies::configure);
     app.configure(tv::configure);
     app.configure(stream::configure);
-    app.configure(hls::configure);
     app.configure(progress::configure);
     app.configure(metadata::configure);
 }
