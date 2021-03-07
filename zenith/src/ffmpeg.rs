@@ -37,6 +37,7 @@ pub struct FfprobeFormat {
 pub struct FfprobeStream {
     pub index: u32,
     pub codec_type: String,
+    pub codec_name: String,
     #[serde(default)]
     pub tags: HashMap<String, String>,
 }
@@ -101,6 +102,8 @@ pub struct Ffmpeg {
 pub struct TranscodeOptions<'a> {
     pub input_path: &'a str,
     pub start_time: u64,
+    pub transcode_video: bool,
+    pub use_hw_encoder: bool,
 }
 
 pub struct SubtitleOptions<'a> {
@@ -123,18 +126,37 @@ impl Ffmpeg {
         }
 
         let ffreport = format!("file={}/%p-%t.log:level=32", log_dir.to_string_lossy());
+        let mut cmd = Command::new(&self.exe_path);
 
-        Command::new(&self.exe_path)
-            .env("FFREPORT", ffreport)
-            .arg("-noaccurate_seek")
-            .arg_pair("-ss", options.start_time.to_string())
-            .arg_pair("-i", options.input_path)
-            .arg_pair("-c:v", "copy")
-            .arg_pair("-c:a", "aac")
-            .arg_pair("-ac", "2")
-            .arg_pair("-f", "mp4")
-            .arg_pair("-movflags", "frag_keyframe+empty_moov")
-            .arg("pipe:1")
+        cmd.env("FFREPORT", ffreport);
+        cmd.arg("-noaccurate_seek");
+        cmd.arg_pair("-ss", options.start_time.to_string());
+        cmd.arg_pair("-i", options.input_path);
+
+        // Ignore subtitles
+        cmd.arg("-sn");
+
+        // Set video codec options
+        if options.transcode_video {
+            if options.use_hw_encoder {
+                cmd.arg_pair("-c:v", "h264_nvenc");
+                cmd.arg_pair("-profile", "high");
+            } else {
+                cmd.arg_pair("-c:v", "libx264");
+                cmd.arg_pair("-preset", "veryfast");
+            }
+        } else {
+            cmd.arg_pair("-c:v", "copy");
+        }
+
+        // Set audio codec options
+        cmd.arg_pair("-c:a", "aac").arg_pair("-ac", "2");
+
+        // Set output container options
+        cmd.arg_pair("-f", "mp4");
+        cmd.arg_pair("-movflags", "frag_keyframe+empty_moov");
+
+        cmd.arg("pipe:1")
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
             .spawn()

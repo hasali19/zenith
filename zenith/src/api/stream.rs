@@ -106,10 +106,32 @@ async fn get_transcoded_stream(state: AppState, req: Request) -> ApiResult {
         .ok_or_else(ApiError::not_found)?;
 
     let config = &state.config.transcoding;
+    let info = Ffprobe::new(&config.ffprobe_path)
+        .get_video_info(&path)
+        .await?;
+
+    let mut transcode_video = false;
+    let video_stream = info
+        .streams
+        .iter()
+        .find(|stream| stream.codec_type == "video");
+
+    if let Some(video_stream) = video_stream {
+        let codec = &video_stream.codec_name;
+        if codec == "h264" {
+            log::info!("copying existing h264 video stream");
+        } else {
+            transcode_video = true;
+            log::info!("transcoding video due to unsupported codec ({})", codec);
+        }
+    }
+
     let ffmpeg = Ffmpeg::new(&config.ffmpeg_path);
     let options = TranscodeOptions {
         input_path: &path,
         start_time: query.start,
+        transcode_video,
+        use_hw_encoder: config.use_hw_encoder,
     };
 
     let child = ffmpeg
