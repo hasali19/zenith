@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <div class="text-h4">{{ show.name }}</div>
+    <div v-if="show" class="text-h4">{{ show.name }}</div>
     <div v-for="season in seasons" :key="season.id">
       <div class="text-h5 mt-4 mb-4">{{ season.name }}</div>
       <div class="episode-grid">
@@ -28,22 +28,31 @@
 <script lang="ts">
 import Vue from 'vue'
 export default Vue.extend({
-  async asyncData({ params }) {
-    const show = await fetch(`/api/tv/shows/${params.id}`).then((res) =>
-      res.json()
-    )
+  data() {
+    return {
+      show: null,
+      seasons: [],
+    }
+  },
+
+  async mounted() {
+    const show = await fetch(
+      `/api/tv/shows/${this.$route.params.id}`,
+    ).then(res => res.json())
+
+    this.show = show
 
     const seasons = await fetch(
-      `/api/tv/shows/${params.id}/seasons`
-    ).then((res) => res.json())
+      `/api/tv/shows/${this.$route.params.id}/seasons`,
+    ).then(res => res.json())
 
     for (const season of seasons) {
       season.episodes = await fetch(
-        `/api/tv/seasons/${season.id}/episodes`
-      ).then((res) => res.json())
+        `/api/tv/seasons/${season.id}/episodes`,
+      ).then(res => res.json())
     }
 
-    return { show, seasons }
+    this.seasons = seasons
   },
 
   methods: {

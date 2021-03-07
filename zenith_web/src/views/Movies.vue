@@ -1,15 +1,15 @@
 <template>
   <v-container fluid>
-    <h1 class="display-1 mt-4 mb-4">Shows</h1>
+    <h1 class="display-1 mt-4 mb-4">Movies</h1>
     <div class="grid">
-      <div v-for="show in shows" :key="show.id">
-        <v-card @click="onItemClick(show.id)">
-          <v-img :src="show.poster" class="poster"></v-img>
+      <div v-for="movie in movies" :key="movie.id">
+        <v-card @click="onItemClick(movie.id)">
+          <v-img :src="movie.poster" class="poster"></v-img>
         </v-card>
         <div class="mt-2 mb-4">
-          <div class="subtitle-2 text-truncate">{{ show.name }}</div>
+          <div class="subtitle-2 text-truncate">{{ movie.title }}</div>
           <div class="caption">
-            {{ new Date(show.start_date * 1000).getFullYear() }}
+            {{ new Date(movie.release_date * 1000).getFullYear() }}
           </div>
         </div>
       </div>
@@ -22,19 +22,19 @@ import Vue from 'vue'
 export default Vue.extend({
   data() {
     return {
-      shows: [],
+      movies: [],
     }
   },
 
-  async fetch() {
-    const res = await fetch('/api/tv/shows')
+  async mounted() {
+    const res = await fetch('/api/movies')
     const data = await res.json()
-    this.shows = data
+    this.movies = data
   },
 
   methods: {
     onItemClick(id: number) {
-      this.$router.push({ path: `/shows/${id}` })
+      this.$router.push({ path: `/player/${id}` })
     },
   },
 })

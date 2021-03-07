@@ -63,8 +63,6 @@ function formatTime(value: number, duration: number) {
 }
 
 export default Vue.extend({
-  layout: 'fullscreen',
-
   data() {
     return {
       ready: false,
@@ -72,9 +70,9 @@ export default Vue.extend({
       start: 0,
       position: 0,
       paused: false,
-      interval: null as any,
+      interval: null as number | null,
       controls: false,
-      timeout: null as any,
+      timeout: null as number | null,
       fullscreen: false,
     }
   },
@@ -130,7 +128,9 @@ export default Vue.extend({
   },
 
   beforeDestroy() {
-    window.clearInterval(this.interval)
+    if (this.interval) {
+      window.clearInterval(this.interval)
+    }
   },
 
   methods: {
@@ -147,8 +147,10 @@ export default Vue.extend({
       this.paused = true
     },
 
-    onSeekEnd(e: any) {
-      this.start = parseFloat(e.target.value)
+    onSeekEnd(e: InputEvent) {
+      const target = e.target as HTMLInputElement
+      if (!target) return
+      this.start = parseFloat(target.value)
       this.position = 0
       this.paused = false
     },

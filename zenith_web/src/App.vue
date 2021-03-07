@@ -1,5 +1,5 @@
 <template>
-  <v-app dark>
+  <v-app>
     <v-navigation-drawer v-model="drawer" clipped fixed app>
       <v-list nav>
         <v-list-item to="/" router exact>
@@ -33,7 +33,7 @@
       <v-toolbar-title v-text="title" />
     </v-app-bar>
     <v-main>
-      <nuxt />
+      <router-view></router-view>
     </v-main>
   </v-app>
 </template>
