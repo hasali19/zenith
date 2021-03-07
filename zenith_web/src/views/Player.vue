@@ -1,6 +1,6 @@
 <template>
   <div class="root" @mousemove="onMouseMove" @touchmove="onMouseMove">
-    <video v-if="ready" ref="video" class="video" :src="url" autoplay></video>
+    <video ref="video" class="video"></video>
     <div v-if="controls" class="overlay">
       <div class="main-controls">
         <v-btn
@@ -82,10 +82,6 @@ export default Vue.extend({
       return parseInt(this.$route.params.id)
     },
 
-    url(): string {
-      return `/api/stream/${this.$route.params.id}/transcode?start=${this.start}`
-    },
-
     totalPosition(): number {
       return this.start + this.position
     },
@@ -120,11 +116,14 @@ export default Vue.extend({
   },
 
   async mounted() {
+    const video = this.$refs.video as HTMLVideoElement
     const res = await fetch(`/api/stream/${this.id}/info`)
     const info = await res.json()
     this.duration = info.duration
     this.interval = window.setInterval(this.updatePosition, 200)
     this.ready = true
+    this.seekTo(0)
+    video.play()
   },
 
   beforeDestroy() {
@@ -150,8 +149,7 @@ export default Vue.extend({
     onSeekEnd(e: InputEvent) {
       const target = e.target as HTMLInputElement
       if (!target) return
-      this.start = parseFloat(target.value)
-      this.position = 0
+      this.seekTo(parseFloat(target.value))
       this.paused = false
     },
 
@@ -163,6 +161,15 @@ export default Vue.extend({
       }
 
       this.timeout = window.setTimeout(() => (this.controls = false), 3000)
+    },
+
+    seekTo(position: number) {
+      const video = this.$refs.video as HTMLVideoElement
+      if (video) {
+        this.start = position
+        this.position = 0
+        video.src = `/api/stream/${this.$route.params.id}/transcode?start=${position}`
+      }
     },
   },
 })
