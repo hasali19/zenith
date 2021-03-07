@@ -1,0 +1,8 @@
+{
+  // "vetur.format.defaultFormatter.html": "prettier",
+  "eslint.format.enable": true,
+  "eslint.validate": ["vue", "typescript"],
+  "[vue]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  }
+}
