@@ -103,13 +103,6 @@ pub struct TranscodeOptions<'a> {
     pub start_time: u64,
 }
 
-pub struct HlsTranscodeOptions<'a> {
-    pub input_path: &'a str,
-    pub start_number: u32,
-    pub segment_time: u32,
-    pub use_hw_encoder: bool,
-}
-
 pub struct SubtitleOptions<'a> {
     pub input_path: &'a str,
     pub start_time: u64,
