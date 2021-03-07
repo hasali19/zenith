@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app v-if="!fullscreen">
     <v-navigation-drawer v-model="drawer" clipped fixed app>
       <v-list nav>
         <v-list-item to="/" router exact>
@@ -36,6 +36,9 @@
       <router-view></router-view>
     </v-main>
   </v-app>
+  <v-app v-else>
+    <router-view></router-view>
+  </v-app>
 </template>
 
 <script>
@@ -45,6 +48,11 @@ export default {
       drawer: false,
       title: 'Zenith',
     }
+  },
+  computed: {
+    fullscreen() {
+      return this.$route.path.startsWith('/player')
+    },
   },
 }
 </script>
