@@ -1,9 +1,12 @@
 use std::net::SocketAddr;
+use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 
 use env_logger::Env;
 
+use tokio::fs::File;
+use tokio_util::codec::{BytesCodec, FramedRead};
 use zenith::config::Config;
 use zenith::db::Db;
 use zenith::library::MediaLibraryImpl;
@@ -14,7 +17,7 @@ use zenith::tmdb::TmdbClient;
 use zenith::transcoder::HlsTranscoder;
 use zenith::watcher::FileWatcher;
 use zenith::{middleware, AppState};
-use zenith_http::App;
+use zenith_http::{App, Body, Request, Response, StatusCode};
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
@@ -58,6 +61,7 @@ async fn main() -> eyre::Result<()> {
 
     app.wrap(middleware::Logger);
     app.configure(zenith::api::configure);
+    app.fallback_to(spa);
     app.run(addr).await?;
 
     lifecycle.signal_stopped()?;
@@ -65,4 +69,22 @@ async fn main() -> eyre::Result<()> {
     db.close().await;
 
     Ok(())
+}
+
+async fn spa(_: AppState, req: Request) -> Result<Response, Response> {
+    let path = Path::new("zenith_web/dist").join(req.uri().path().trim_start_matches('/'));
+    let path = if path.is_file() {
+        path.as_path()
+    } else {
+        Path::new("zenith_web/dist/index.html")
+    };
+
+    let file = File::open(path)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let stream = FramedRead::new(file, BytesCodec::new());
+    let body = Body::wrap_stream(stream);
+
+    Ok(Response::new().with_body(body))
 }
