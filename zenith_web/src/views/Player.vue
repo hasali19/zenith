@@ -81,7 +81,7 @@ export default Vue.extend({
   },
 
   async mounted() {
-    const info = await api.getStreamInfo(this.$route.params.id)
+    const info = await api.stream.getInfo(this.$route.params.id)
 
     this.duration = info.duration
 
@@ -115,7 +115,7 @@ export default Vue.extend({
     seekTo(position: number) {
       this.offset = Math.floor(Math.min(this.duration, Math.max(0, position)))
       this.position = 0
-      this.video.src = api.getTranscodeStreamUrl(this.id, this.offset)
+      this.video.src = api.stream.getTranscodeUrl(this.id, this.offset)
       this.video.play()
     },
 
