@@ -1,208 +1,27 @@
 <template>
-  <div class="root" @mousemove="onMouseMove" @touchmove="onMouseMove">
+  <div
+    class="root"
+    @mousemove="onInteraction"
+    @touchmove="onInteraction"
+    @click="onInteraction"
+  >
     <video ref="video" class="video"></video>
-    <div v-if="controls" class="overlay">
-      <div class="main-controls">
-        <div class="main-controls-buttons">
-          <v-btn fab light color="grey" @click="rewind">
-            <v-icon>mdi-rewind-10</v-icon>
-          </v-btn>
-          <v-btn
-            fab
-            x-large
-            light
-            color="grey lighten-2"
-            @click="paused = !paused"
-          >
-            <v-icon v-if="paused">mdi-play</v-icon>
-            <v-icon v-else>mdi-pause</v-icon>
-          </v-btn>
-          <v-btn fab light color="grey" @click="fastForward">
-            <v-icon>mdi-fast-forward-30</v-icon>
-          </v-btn>
-        </div>
-      </div>
-      <div class="bottom-controls">
-        <div class="time" style="margin: 16px 0 16px 16px">
-          {{ formattedPosition }}
-        </div>
-        <input
-          type="range"
-          class="seekbar"
-          min="0"
-          :max="duration"
-          :value="totalPosition"
-          @mousedown="onSeekStart"
-          @touchstart="onSeekStart"
-          @change="onSeekEnd"
-        />
-        <div class="time" style="margin: 16px 0">
-          {{ formattedRemaining }}
-        </div>
-        <v-btn
-          icon
-          style="margin-right: 16px; margin-left: 8px"
-          @click="fullscreen = !fullscreen"
-        >
-          <v-icon>mdi-fullscreen</v-icon>
-        </v-btn>
-      </div>
+    <div class="overlay" :style="{ display: showControls ? 'block' : 'none' }">
+      <player-controls
+        :duration="duration"
+        :position="offset + position"
+        :state="state"
+        @pause="video.pause()"
+        @play="video.play()"
+        @rewind="seekTo(offset + position - $event)"
+        @fast-forward="seekTo(offset + position + $event)"
+        @seek-start="startSeek"
+        @seek-end="seekTo($event)"
+        @toggle-fullscreen="toggleFullscreen"
+      />
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import Vue from 'vue'
-
-function formatTimeSegment(value: number) {
-  return value.toString().padStart(2, '0')
-}
-
-function formatTime(value: number, duration: number) {
-  const hours = formatTimeSegment(Math.floor(value / 3600))
-  const mins = formatTimeSegment(Math.floor((value % 3600) / 60))
-  const secs = formatTimeSegment(Math.floor((value % 3600) % 60))
-
-  if (duration >= 3600) {
-    return `${hours}:${mins}:${secs}`
-  } else {
-    return `${mins}:${secs}`
-  }
-}
-
-export default Vue.extend({
-  data() {
-    return {
-      ready: false,
-      duration: 0,
-      start: 0,
-      position: 0,
-      paused: false,
-      interval: null as number | null,
-      controls: false,
-      timeout: null as number | null,
-      fullscreen: false,
-    }
-  },
-
-  computed: {
-    id(): number {
-      return parseInt(this.$route.params.id)
-    },
-
-    totalPosition(): number {
-      return this.start + this.position
-    },
-
-    formattedPosition(): string {
-      return formatTime(this.totalPosition, this.duration)
-    },
-
-    formattedRemaining(): string {
-      return formatTime(this.duration - this.totalPosition, this.duration)
-    },
-  },
-
-  watch: {
-    paused(val) {
-      const video = this.$refs.video as HTMLVideoElement
-      if (!video) return
-      if (val) {
-        video.pause()
-      } else {
-        video.play()
-      }
-    },
-
-    fullscreen(val) {
-      if (val) {
-        document.documentElement.requestFullscreen()
-      } else {
-        document.exitFullscreen()
-      }
-    },
-  },
-
-  async mounted() {
-    const video = this.$refs.video as HTMLVideoElement
-    const res = await fetch(`/api/stream/${this.id}/info`)
-    const info = await res.json()
-    this.duration = info.duration
-    this.interval = window.setInterval(this.updatePosition, 200)
-    this.ready = true
-    this.seekTo(0)
-    video.play()
-  },
-
-  beforeDestroy() {
-    if (this.interval) {
-      window.clearInterval(this.interval)
-    }
-  },
-
-  methods: {
-    updatePosition() {
-      if (!this.paused) {
-        const video = this.$refs.video as HTMLVideoElement
-        if (video) {
-          this.position = video.currentTime
-        }
-      }
-    },
-
-    onSeekStart() {
-      this.paused = true
-    },
-
-    onSeekEnd(e: InputEvent) {
-      const target = e.target as HTMLInputElement
-      if (!target) return
-      this.seekTo(parseFloat(target.value))
-      this.paused = false
-    },
-
-    onMouseMove() {
-      this.controls = true
-
-      if (this.timeout) {
-        window.clearTimeout(this.timeout)
-      }
-
-      this.timeout = window.setTimeout(() => (this.controls = false), 3000)
-    },
-
-    seekTo(position: number) {
-      const video = this.$refs.video as HTMLVideoElement
-      if (video) {
-        this.start = Math.floor(position)
-        this.position = 0
-        video.src = `/api/stream/${this.$route.params.id}/transcode?start=${this.start}`
-      }
-    },
-
-    rewind() {
-      this.seekTo(Math.max(0, this.totalPosition - 10))
-      this.play()
-    },
-
-    fastForward() {
-      this.seekTo(Math.min(this.duration, this.totalPosition + 30))
-      this.play()
-    },
-
-    play() {
-      const video = this.$refs.video as HTMLVideoElement
-      if (video) {
-        if (this.paused) {
-          this.paused = false
-        } else {
-          video.play()
-        }
-      }
-    },
-  },
-})
-</script>
 
 <style scoped>
 .root {
@@ -223,61 +42,96 @@ export default Vue.extend({
   width: 100%;
   height: 100%;
   top: 0;
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(#0000, 90%, #000);
-}
-
-.main-controls {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.main-controls-buttons {
-  width: 100%;
-  max-width: 600px;
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
-}
-
-.bottom-controls {
-  display: flex;
-  align-items: center;
-}
-
-.time {
-  font-size: 0.8em;
-}
-
-.seekbar {
-  -webkit-appearance: none;
-  flex: 1;
-  margin: 16px;
-  background: transparent;
-}
-
-.seekbar:focus {
-  outline: none;
-}
-
-.seekbar::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: rgb(202, 155, 0);
-  cursor: pointer;
-  margin-top: -6px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
-}
-
-.seekbar::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 3px;
-  cursor: pointer;
-  background: rgb(214, 214, 214);
-  border-radius: 1px;
 }
 </style>
+
+<script lang="ts">
+import Vue from 'vue'
+
+import api from '@/api'
+import fullscreen from '@/fullscreen'
+
+import PlayerControls from '@/components/PlayerControls.vue'
+
+export default Vue.extend({
+  components: { PlayerControls },
+
+  data() {
+    return {
+      state: 'playing',
+      duration: 0,
+      offset: 0,
+      position: 0,
+      interval: undefined as number | undefined,
+      controls: true,
+      timeout: undefined as number | undefined,
+    }
+  },
+
+  computed: {
+    id() {
+      return this.$route.params.id
+    },
+    video() {
+      return this.$refs.video as HTMLVideoElement
+    },
+    showControls(): boolean {
+      return this.controls || this.state === 'paused'
+    },
+  },
+
+  async mounted() {
+    const info = await api.getStreamInfo(this.$route.params.id)
+
+    this.duration = info.duration
+
+    this.interval = window.setInterval(() => {
+      this.position = this.video.currentTime
+    }, 200)
+
+    this.video.addEventListener('pause', () => {
+      this.state = 'paused'
+    })
+
+    this.video.addEventListener('play', () => {
+      this.state = 'playing'
+    })
+
+    this.seekTo(0)
+    this.delayedHideControls()
+  },
+
+  beforeDestroy() {
+    if (this.interval) {
+      window.clearInterval(this.interval)
+    }
+  },
+
+  methods: {
+    startSeek() {
+      this.video.pause()
+    },
+
+    seekTo(position: number) {
+      this.offset = Math.floor(Math.min(this.duration, Math.max(0, position)))
+      this.position = 0
+      this.video.src = api.getTranscodeStreamUrl(this.id, this.offset)
+      this.video.play()
+    },
+
+    delayedHideControls() {
+      if (this.timeout) window.clearTimeout(this.timeout)
+      this.timeout = window.setTimeout(() => (this.controls = false), 3000)
+    },
+
+    toggleFullscreen() {
+      fullscreen.toggle()
+    },
+
+    onInteraction() {
+      this.controls = true
+      this.delayedHideControls()
+    },
+  },
+})
+</script>
