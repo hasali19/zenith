@@ -6,7 +6,7 @@
     @click="onInteraction"
   >
     <video ref="video" class="video"></video>
-    <div class="overlay" :style="{ display: showControls ? 'block' : 'none' }">
+    <div class="overlay" :style="{ opacity: showControls ? 100 : 0 }">
       <player-controls
         :duration="duration"
         :position="offset + position"
@@ -42,6 +42,7 @@
   width: 100%;
   height: 100%;
   top: 0;
+  transition: 200ms;
 }
 </style>
 
