@@ -199,7 +199,7 @@ export default Vue.extend({
           video.play()
         }
       }
-    }
+    },
   },
 })
 </script>
