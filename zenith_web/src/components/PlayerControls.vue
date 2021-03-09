@@ -104,7 +104,7 @@ export default Vue.extend({
   data() {
     return {
       seeking: false,
-      seekbarPos: 0,
+      seekbarPos: this.position,
     }
   },
 

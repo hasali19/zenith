@@ -6,20 +6,22 @@
     @click="onInteraction"
   >
     <video ref="video" class="video"></video>
-    <div class="overlay" :style="{ opacity: showControls ? 100 : 0 }">
-      <player-controls
-        :duration="duration"
-        :position="offset + position"
-        :state="state"
-        @pause="video.pause()"
-        @play="video.play()"
-        @rewind="seekTo(offset + position - $event)"
-        @fast-forward="seekTo(offset + position + $event)"
-        @seek-start="startSeek"
-        @seek-end="seekTo($event)"
-        @toggle-fullscreen="toggleFullscreen"
-      />
-    </div>
+    <transition name="fade">
+      <div v-if="showControls" class="overlay">
+        <player-controls
+          :duration="duration"
+          :position="offset + position"
+          :state="state"
+          @pause="video.pause()"
+          @play="video.play()"
+          @rewind="seekTo(offset + position - $event)"
+          @fast-forward="seekTo(offset + position + $event)"
+          @seek-start="startSeek"
+          @seek-end="seekTo($event)"
+          @toggle-fullscreen="toggleFullscreen"
+        />
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -42,7 +44,16 @@
   width: 100%;
   height: 100%;
   top: 0;
-  transition: 200ms;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+
+.fade-enter,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
 
