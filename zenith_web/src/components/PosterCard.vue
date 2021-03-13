@@ -24,7 +24,7 @@ export default Vue.extend({
       type: String,
       required: true,
     },
-    secondary: String,
+    secondary: [String, Number],
     poster: String,
   },
 })
