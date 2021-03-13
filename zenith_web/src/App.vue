@@ -1,6 +1,6 @@
 <template>
   <v-app v-if="!fullscreen">
-    <v-navigation-drawer v-model="drawer" clipped fixed app>
+    <v-navigation-drawer v-model="drawer" clipped fixed app touchless>
       <v-list nav>
         <v-list-item to="/" router exact>
           <v-list-item-action>

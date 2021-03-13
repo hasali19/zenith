@@ -1,64 +1,53 @@
 <template>
   <v-container>
-    <div>
+    <div class="mt-4 mt-sm-8">
       <h1 class="text-h5 my-4">Recently Added Movies</h1>
-      <v-sheet outlined rounded class="pt-2">
-        <v-slide-group style="margin: 8px 4px" show-arrows="desktop">
-          <v-slide-item
-            v-for="movie in movies"
-            :key="movie.id"
-            style="margin: 0px 4px"
-          >
-            <div style="width: 120px">
-              <v-card @click="onMovieClick(movie.id)">
-                <v-img :src="movie.poster" class="poster"></v-img>
-              </v-card>
-              <div class="my-2">
-                <div class="subtitle-2 text-truncate">{{ movie.title }}</div>
-                <div class="caption">
-                  {{ movie.releaseYear() }}
-                </div>
-              </div>
-            </div>
-          </v-slide-item>
-        </v-slide-group>
-      </v-sheet>
+      <slide-group style="overflow-x: auto; width: 100%">
+        <poster-card
+          v-for="movie in movies"
+          :key="movie.id"
+          :poster="movie.poster"
+          :primary="movie.title"
+          :secondary="movie.releaseYear()"
+          @click="onMovieClick(movie.id)"
+          style="width: 120px; margin: 0px 4px"
+        />
+      </slide-group>
     </div>
     <div class="mt-8">
       <h1 class="text-h5 my-4">Recently Added TV</h1>
-      <v-sheet outlined rounded class="pt-2">
-        <v-slide-group style="margin: 8px 4px" show-arrows="desktop">
-          <v-slide-item
-            v-for="show in shows"
-            :key="show.id"
-            style="margin: 0px 4px"
-          >
-            <div style="width: 120px">
-              <v-card @click="onShowClick(show.id)">
-                <v-img :src="show.poster" class="poster"></v-img>
-              </v-card>
-              <div class="my-2">
-                <div class="subtitle-2 text-truncate">{{ show.name }}</div>
-                <div class="caption">
-                  {{ show.startYear() }}
-                </div>
-              </div>
-            </div>
-          </v-slide-item>
-        </v-slide-group>
-      </v-sheet>
+      <slide-group style="overflow-x: auto; width: 100%">
+        <poster-card
+          v-for="show in shows"
+          :key="show.id"
+          :poster="show.poster"
+          :primary="show.name"
+          :secondary="show.startYear()"
+          @click="onShowClick(show.id)"
+          class="group-item mx-1"
+        />
+      </slide-group>
     </div>
   </v-container>
 </template>
 
-<style scoped></style>
+<style scoped>
+.group-item {
+  width: 120px;
+}
+</style>
 
 <script lang="ts">
 import Vue from 'vue'
 
 import api, { Movie, TvShow } from '@/api'
 
+import PosterCard from '@/components/PosterCard.vue'
+import SlideGroup from '@/components/SlideGroup.vue'
+
 export default Vue.extend({
+  components: { PosterCard, SlideGroup },
+
   data() {
     return {
       movies: [] as Movie[],
