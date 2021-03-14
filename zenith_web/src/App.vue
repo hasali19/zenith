@@ -30,7 +30,11 @@
     </v-navigation-drawer>
     <v-app-bar clipped-left fixed app>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer" />
-      <v-toolbar-title v-text="title" />
+      <img
+        src="/zenith_full.png"
+        class="ml-2"
+        style="max-height: calc(100% - 24px)"
+      />
     </v-app-bar>
     <v-main>
       <router-view></router-view>
