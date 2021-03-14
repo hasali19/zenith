@@ -16,6 +16,7 @@ use zenith::sync::LibrarySync;
 use zenith::tmdb::TmdbClient;
 use zenith::watcher::FileWatcher;
 use zenith::{middleware, AppState};
+use zenith_http::headers::ContentType;
 use zenith_http::{App, Body, Request, Response, StatusCode};
 
 #[tokio::main]
@@ -75,6 +76,7 @@ async fn spa(_: AppState, req: Request) -> Result<Response, Response> {
         Path::new("zenith_web/dist/index.html")
     };
 
+    let mime = mime_guess::from_path(path);
     let file = File::open(path)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -82,5 +84,7 @@ async fn spa(_: AppState, req: Request) -> Result<Response, Response> {
     let stream = FramedRead::new(file, BytesCodec::new());
     let body = Body::wrap_stream(stream);
 
-    Ok(Response::new().with_body(body))
+    Ok(Response::new()
+        .with_header(ContentType::from(mime.first_or_text_plain()))
+        .with_body(body))
 }
