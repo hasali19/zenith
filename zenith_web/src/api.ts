@@ -89,6 +89,12 @@ export default {
   },
 
   tv: {
+    async getShow(id: ItemId) {
+      const res = await fetch(`/api/tv/shows/${id}`)
+      const show = await res.json()
+      return new TvShow(show)
+    },
+
     async getRecentShows() {
       const res = await fetch(`/api/tv/shows/recent`)
       const shows = await res.json()

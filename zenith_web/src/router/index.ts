@@ -5,6 +5,7 @@ import Home from '../views/Home.vue'
 import Movies from '../views/Movies.vue'
 import Shows from '../views/Shows.vue'
 import Show from '../views/Show.vue'
+import Season from '../views/Season.vue'
 import Player from '../views/Player.vue'
 
 Vue.use(VueRouter)
@@ -26,6 +27,10 @@ const routes: Array<RouteConfig> = [
   {
     path: '/shows/:id',
     component: Show,
+  },
+  {
+    path: '/seasons/:id',
+    component: Season,
   },
   {
     path: '/player/:id',
