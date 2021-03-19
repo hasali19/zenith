@@ -81,6 +81,12 @@ export interface StreamInfo {
 
 export default {
   movies: {
+    async getMovie(id: ItemId) {
+      const res = await fetch(`/api/movies/${id}`)
+      const show = await res.json()
+      return new Movie(show)
+    },
+
     async getRecent() {
       const res = await fetch(`/api/movies/recent`)
       const movies = await res.json()

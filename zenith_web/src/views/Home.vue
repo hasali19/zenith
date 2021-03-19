@@ -62,7 +62,7 @@ export default Vue.extend({
 
   methods: {
     onMovieClick(id: number) {
-      this.$router.push({ path: `/player/${id}` })
+      this.$router.push({ path: `/movies/${id}` })
     },
 
     onShowClick(id: number) {

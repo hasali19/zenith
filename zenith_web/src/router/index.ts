@@ -3,6 +3,7 @@ import VueRouter, { RouteConfig } from 'vue-router'
 
 import Home from '../views/Home.vue'
 import Movies from '../views/Movies.vue'
+import Movie from '../views/Movie.vue'
 import Shows from '../views/Shows.vue'
 import Show from '../views/Show.vue'
 import Season from '../views/Season.vue'
@@ -19,6 +20,10 @@ const routes: Array<RouteConfig> = [
   {
     path: '/movies',
     component: Movies,
+  },
+  {
+    path: '/movies/:id',
+    component: Movie,
   },
   {
     path: '/shows',
