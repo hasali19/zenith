@@ -5,7 +5,7 @@
     @touchmove="onInteraction"
     @click="onInteraction"
   >
-    <video ref="video" class="video"></video>
+    <video ref="video" class="video" disableRemotePlayback></video>
     <transition name="fade">
       <div v-if="showControls" class="overlay">
         <player-controls
