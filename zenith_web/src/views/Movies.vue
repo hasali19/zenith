@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid>
+  <v-container>
     <h1 class="display-1 mt-4 mb-4">Movies</h1>
     <div class="grid">
       <div v-for="movie in movies" :key="movie.id">

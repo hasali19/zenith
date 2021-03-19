@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid>
+  <v-container>
     <h1 class="display-1 mt-4 mb-4">Shows</h1>
     <div class="grid">
       <div v-for="show in shows" :key="show.id">
