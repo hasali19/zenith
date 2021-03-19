@@ -10,6 +10,9 @@
           <div class="subtitle-2 text-truncate">
             {{ episode.episode_number }} - {{ episode.name }}
           </div>
+          <div class="caption text--secondary">
+            {{ duration(episode.duration) }}
+          </div>
           <div class="caption overview">
             {{ episode.overview }}
           </div>
@@ -63,6 +66,16 @@ export default Vue.extend({
   },
 
   methods: {
+    duration(duration: number): string {
+      if (duration <= 90 * 60) {
+        return `${Math.floor(duration / 60)}m`
+      } else {
+        const hours = Math.floor(duration / 3600)
+        const minutes = Math.floor((duration % 3600) / 60)
+        return `${hours}h ${minutes}m`
+      }
+    },
+
     onEpisodeClick(id: number) {
       this.$router.push({ path: `/player/${id}` })
     },
