@@ -22,7 +22,6 @@ use zenith_http::{App, Body, Request, Response, StatusCode};
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     color_eyre::install()?;
-    dotenv::dotenv().ok();
     env_logger::init_from_env(Env::new().default_filter_or("info,sqlx::query=warn"));
 
     let lifecycle = AppLifecycle::new();
