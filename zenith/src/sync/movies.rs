@@ -54,12 +54,12 @@ pub(super) async fn sync_movies(
                 }
                 // Otherwise create a new movie
                 None => {
-                    log::info!("adding movie: {}", file_name);
+                    tracing::info!("adding movie: {}", file_name);
 
                     let info = match video_info.get_video_info(&path).await {
                         Ok(info) => info,
                         Err(e) => {
-                            log::warn!("{}", e);
+                            tracing::warn!("{}", e);
                             continue;
                         }
                     };
@@ -85,7 +85,7 @@ pub(super) async fn sync_movies(
     // Any remaining ids no longer exist on the filesystem, so
     // may be deleted from the database
     for id in movies {
-        log::info!("removing movie: {}", id);
+        tracing::info!("removing movie: {}", id);
         library.remove_movie(id).await?;
     }
 

@@ -103,7 +103,7 @@ async fn sync_show(
     let id = match res {
         Some(id) => id,
         None => {
-            log::info!("adding tv show: {}", name);
+            tracing::info!("adding tv show: {}", name);
             library.add_show(NewShow { path, name }).await?
         }
     };
@@ -137,7 +137,7 @@ async fn sync_season(
     let id = match res {
         Some(id) => id,
         None => {
-            log::info!("adding tv season: {} (show_id: {})", season, show_id);
+            tracing::info!("adding tv season: {} (show_id: {})", season, show_id);
 
             let season = NewSeason {
                 show_id,
@@ -160,7 +160,7 @@ async fn sync_season(
                 episode_ids.remove(&id);
             }
             Err(e) => {
-                log::warn!("{}", e);
+                tracing::warn!("{}", e);
             }
         }
     }
@@ -184,7 +184,7 @@ async fn sync_episode(
     let id = match res {
         Some(id) => id,
         None => {
-            log::info!("adding tv episode: {} (season_id: {})", episode, season_id);
+            tracing::info!("adding tv episode: {} (season_id: {})", episode, season_id);
 
             let info = ffprobe.get_video_info(path).await?;
             let duration: f64 = info.format.duration.parse()?;

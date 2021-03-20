@@ -3,8 +3,6 @@ use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use env_logger::Env;
-
 use tokio::fs::File;
 use tokio_util::codec::{BytesCodec, FramedRead};
 use zenith::config::Config;
@@ -22,7 +20,11 @@ use zenith_http::{App, Body, Request, Response, StatusCode};
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     color_eyre::install()?;
-    env_logger::init_from_env(Env::new().default_filter_or("info,sqlx::query=warn"));
+
+    tracing_subscriber::fmt()
+        .pretty()
+        .with_env_filter("info,sqlx::query=warn")
+        .init();
 
     let lifecycle = AppLifecycle::new();
     let config = Arc::new(Config::load("config.yml")?);

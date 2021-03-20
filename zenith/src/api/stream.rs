@@ -119,10 +119,10 @@ async fn get_transcoded_stream(state: AppState, req: Request) -> ApiResult {
     if let Some(video_stream) = video_stream {
         let codec = &video_stream.codec_name;
         if codec == "h264" {
-            log::info!("copying existing h264 video stream");
+            tracing::info!("copying existing h264 video stream");
         } else {
             transcode_video = true;
-            log::info!("transcoding video due to unsupported codec ({})", codec);
+            tracing::info!("transcoding video due to unsupported codec ({})", codec);
         }
     }
 
@@ -249,7 +249,7 @@ fn stream_stdout(mut child: Child) -> Body {
 
         while let Some(Ok(v)) = stream.next().await {
             if sender.send_data(v.into()).await.is_err() {
-                log::warn!("client has disconnected, killing child process");
+                tracing::warn!("client has disconnected, killing child process");
                 child.kill().await.unwrap();
                 return;
             }

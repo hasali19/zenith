@@ -41,7 +41,7 @@ impl MetadataManager {
                 };
 
                 if let Err(e) = res {
-                    log::error!("{}", e);
+                    tracing::error!("{}", e);
                 }
             }
         });
@@ -61,7 +61,7 @@ async fn refresh_movie_metadata(
     tmdb: &TmdbClient,
     id: i64,
 ) -> eyre::Result<()> {
-    log::info!("updating metadata for movie (id: {})", id);
+    tracing::info!("updating metadata for movie (id: {})", id);
 
     let path: String = sqlx::query_scalar("SELECT path FROM movies WHERE item_id = ?")
         .bind(id)
@@ -95,7 +95,7 @@ async fn refresh_movie_metadata(
         }
     };
 
-    log::info!("match found: {}", result.title);
+    tracing::info!("match found: {}", result.title);
 
     let poster = result.poster_path.as_deref().map(|poster| MediaImage {
         img_type: MediaImageType::Poster,
@@ -135,7 +135,7 @@ async fn refresh_tv_show_metadata(
     tmdb: &TmdbClient,
     id: i64,
 ) -> eyre::Result<()> {
-    log::info!("updating metadata for tv show (id: {})", id);
+    tracing::info!("updating metadata for tv show (id: {})", id);
 
     let path: String = sqlx::query_scalar("SELECT path FROM tv_shows WHERE item_id = ?")
         .bind(id)
@@ -160,7 +160,7 @@ async fn refresh_tv_show_metadata(
         None => return Ok(()),
     };
 
-    log::info!("match found: {}", result.name);
+    tracing::info!("match found: {}", result.name);
 
     let first_air_date = result
         .first_air_date
@@ -210,7 +210,7 @@ async fn refresh_tv_season_metadata(
     tmdb: &TmdbClient,
     id: i64,
 ) -> eyre::Result<()> {
-    log::info!("updating metadata for tv season (id: {})", id);
+    tracing::info!("updating metadata for tv season (id: {})", id);
 
     let sql = "
         SELECT show.tmdb_id, season.season_number
@@ -229,7 +229,7 @@ async fn refresh_tv_season_metadata(
         src: poster,
     });
 
-    log::info!(
+    tracing::info!(
         "match found: {}",
         metadata.name.as_deref().unwrap_or("unknown name")
     );
@@ -260,7 +260,7 @@ async fn refresh_tv_episode_metadata(
     tmdb: &TmdbClient,
     id: i64,
 ) -> eyre::Result<()> {
-    log::info!("updating metadata for tv episode (id: {})", id);
+    tracing::info!("updating metadata for tv episode (id: {})", id);
 
     let sql = "
         SELECT show.tmdb_id, season.season_number, episode.episode_number
@@ -288,7 +288,7 @@ async fn refresh_tv_episode_metadata(
         src: thumbnail,
     });
 
-    log::info!(
+    tracing::info!(
         "match found: {}",
         metadata.name.as_deref().unwrap_or("unknown name")
     );

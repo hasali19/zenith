@@ -28,7 +28,7 @@ impl<S: Send + Sync + 'static> Middleware<S> for Logger {
         let duration = start.elapsed();
         let status = res.status();
 
-        log::info!("{} {} -> {} - {:?}", method, path, status, duration);
+        tracing::info!("{} {} -> {} - {:?}", method, path, status, duration);
 
         res
     }

@@ -55,7 +55,7 @@ async fn sync_service(
 
                 // Actually do the sync
                 if let Err(e) = full_sync(&library, &config).await {
-                    log::error!("sync failed: {}", e.to_string());
+                    tracing::error!("sync failed: {}", e.to_string());
                 }
             }
         }
@@ -63,14 +63,14 @@ async fn sync_service(
 }
 
 async fn full_sync(library: &impl MediaLibrary, config: &Config) -> eyre::Result<()> {
-    log::info!("running full library sync");
+    tracing::info!("running full library sync");
 
     let ffprobe = Ffprobe::new(&config.transcoding.ffprobe_path);
 
     movies::sync_movies(library, &RealFs, &ffprobe, &config.libraries.movies).await?;
     tv_shows::sync_tv_shows(library, &RealFs, &ffprobe, &config.libraries.tv_shows).await?;
 
-    log::info!("sync complete");
+    tracing::info!("sync complete");
 
     Ok(())
 }

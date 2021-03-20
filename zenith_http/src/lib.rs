@@ -81,7 +81,7 @@ impl<S: Clone + Send + Sync + 'static> App<S> {
             async { Ok::<_, Infallible>(service::service_fn(move |req| service(app.clone(), req))) }
         });
 
-        log::info!("starting server at http://{}:{}", addr.ip(), addr.port());
+        tracing::info!("starting server at http://{}:{}", addr.ip(), addr.port());
 
         let server = HyperServer::bind(&addr).serve(make_svc);
         let ctrl_c = async {
@@ -95,7 +95,7 @@ impl<S: Clone + Send + Sync + 'static> App<S> {
             _ = ctrl_c => {},
         };
 
-        log::info!("shutting down");
+        tracing::info!("shutting down");
 
         Ok(())
     }
