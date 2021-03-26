@@ -77,7 +77,7 @@ export default Vue.extend({
     },
 
     onEpisodeClick(id: number) {
-      this.$router.push({ path: `/player/${id}` })
+      this.$router.push({ path: `/episodes/${id}` })
     },
   },
 })

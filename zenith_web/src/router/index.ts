@@ -7,6 +7,7 @@ import Movie from '../views/Movie.vue'
 import Shows from '../views/Shows.vue'
 import Show from '../views/Show.vue'
 import Season from '../views/Season.vue'
+import Episode from '../views/Episode.vue'
 import Player from '../views/Player.vue'
 import CastPlayer from '../views/CastPlayer.vue'
 
@@ -37,6 +38,10 @@ const routes: Array<RouteConfig> = [
   {
     path: '/seasons/:id',
     component: Season,
+  },
+  {
+    path: '/episodes/:id',
+    component: Episode,
   },
   {
     path: '/player/:id',

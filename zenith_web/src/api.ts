@@ -75,6 +75,75 @@ export class TvShow implements TvShowJson {
   }
 }
 
+export interface TvEpisodeJson {
+  id: number
+  show_id: number
+  season_id: number
+  episode_number: number
+  name: string | null
+  air_date: number | null
+  overview: string | null
+  thumbnail: string | null
+  duration: number
+  is_watched: boolean
+}
+
+export class TvEpisode implements TvEpisodeJson {
+  public id: number
+  public show_id: number
+  public season_id: number
+  public episode_number: number
+  public name: string | null
+  public air_date: number | null
+  public overview: string | null
+  public thumbnail: string | null
+  public duration: number
+  public is_watched: boolean
+
+  constructor(json: TvEpisodeJson) {
+    this.id = json.id
+    this.show_id = json.show_id // eslint-disable-line
+    this.season_id = json.season_id // eslint-disable-line
+    this.episode_number = json.episode_number // eslint-disable-line
+    this.name = json.name
+    this.air_date = json.air_date // eslint-disable-line
+    this.overview = json.overview
+    this.thumbnail = json.thumbnail
+    this.duration = json.duration
+    this.is_watched = json.is_watched // eslint-disable-line
+  }
+}
+
+export interface TvSeasonJson {
+  id: number
+  show_id: number
+  season_number: number
+  name: string | null
+  overview: string | null
+  poster: string | null
+  backdrop: string | null
+}
+
+export class TvSeason {
+  public id: number
+  public show_id: number
+  public season_number: number
+  public name: string | null
+  public overview: string | null
+  public poster: string | null
+  public backdrop: string | null
+
+  constructor(json: TvSeasonJson) {
+    this.id = json.id
+    this.show_id = json.show_id // eslint-disable-line
+    this.season_number = json.season_number // eslint-disable-line
+    this.name = json.name
+    this.overview = json.overview
+    this.poster = json.poster
+    this.backdrop = json.backdrop
+  }
+}
+
 export interface StreamInfo {
   duration: number
 }
@@ -105,6 +174,24 @@ export default {
       const res = await fetch(`/api/tv/shows/recent`)
       const shows = await res.json()
       return shows.map((s: TvShowJson) => new TvShow(s))
+    },
+
+    async getSeason(id: ItemId) {
+      const res = await fetch(`/api/tv/seasons/${id}`)
+      const season = await res.json()
+      return new TvSeason(season)
+    },
+
+    async getEpisode(id: ItemId) {
+      const res = await fetch(`/api/tv/episodes/${id}`)
+      const episode = await res.json()
+      return new TvEpisode(episode)
+    },
+  },
+
+  metadata: {
+    async refresh(id: ItemId) {
+      await fetch(`/api/metadata/${id}/refresh`, { method: 'POST' })
     },
   },
 
