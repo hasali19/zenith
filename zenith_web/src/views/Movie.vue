@@ -7,8 +7,11 @@
         {{ movie.releaseYear() }} • {{ duration }}
       </div>
       <div class="text-body-2 mx-4">{{ movie.overview }}</div>
-      <v-btn class="ma-4" color="accent" @click="onPlay">
+      <v-btn class="ma-4 mr-1" color="accent" @click="onPlay">
         <v-icon left>mdi-play</v-icon> Play
+      </v-btn>
+      <v-btn class="ma-4 ml-1" color="secondary" @click="onCast">
+        <v-icon left>mdi-cast</v-icon> Cast
       </v-btn>
     </div>
     <div v-else style="width: 100%; height: 100%">
@@ -29,6 +32,7 @@
             <v-btn color="accent" @click="onPlay">
               <v-icon left>mdi-play</v-icon> Play
             </v-btn>
+            <v-btn @click="onCast">Cast</v-btn>
           </div>
         </div>
       </div>
@@ -78,6 +82,7 @@
 import Vue from 'vue'
 
 import api, { Movie } from '@/api'
+import gcast from '@/gcast'
 
 export default Vue.extend({
   data() {
@@ -107,6 +112,19 @@ export default Vue.extend({
   methods: {
     onPlay() {
       this.$router.push(`/player/${this.$route.params.id}`)
+    },
+
+    onCast() {
+      gcast.connect().then(session => {
+        const id = this.$route.params.id
+        const url = origin + api.stream.getTranscodeUrl(id)
+        const info = new window.chrome.cast.media.MediaInfo(url, 'video/mp4')
+        const request = new window.chrome.cast.media.LoadRequest(info)
+
+        session.loadMedia(request).then(() => {
+          this.$router.push(`/cast/${this.$route.params.id}`)
+        })
+      })
     },
   },
 })
