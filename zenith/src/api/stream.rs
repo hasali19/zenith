@@ -8,7 +8,9 @@ use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio::process::Child;
 use tokio_util::codec::{BytesCodec, FramedRead};
-use zenith_http::headers::{AcceptRanges, ContentLength, ContentRange, ContentType, Range};
+use zenith_http::headers::{
+    AcceptRanges, AccessControlAllowOrigin, ContentLength, ContentRange, ContentType, Range,
+};
 use zenith_http::{App, Body, Request, Response, StatusCode};
 
 use crate::ffmpeg::{Ffmpeg, Ffprobe, SubtitleOptions, TranscodeOptions};
@@ -183,6 +185,7 @@ async fn get_subtitles_stream(state: AppState, req: Request) -> ApiResult {
 
     Ok(Response::new()
         .with_header(ContentType::from(Mime::from_str("text/vtt").unwrap()))
+        .with_header(AccessControlAllowOrigin::ANY)
         .with_body(stream_stdout(child)))
 }
 
