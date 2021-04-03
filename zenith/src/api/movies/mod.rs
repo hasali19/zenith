@@ -96,7 +96,7 @@ async fn get_recent_movies(state: AppState, _: Request) -> ApiResult {
         JOIN media_items AS item ON item.id = movie.item_id
         JOIN video_files AS video ON video.item_id = movie.item_id
         ORDER BY added_at DESC, title
-        LIMIT 10
+        LIMIT 30
     ";
 
     let movies: Vec<Movie> = sqlx::query_as(sql).fetch_all(&mut conn).await?;

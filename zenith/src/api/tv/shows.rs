@@ -112,7 +112,7 @@ pub(super) async fn get_recently_updated_shows(state: AppState, _: Request) -> A
         WHERE unwatched_episodes > 0
         GROUP BY show.item_id
         ORDER BY latest_episode_added_at DESC, show.name
-        LIMIT 10
+        LIMIT 30
     ";
 
     let shows: Vec<Show> = sqlx::query_as(sql).fetch_all(&mut conn).await?;
