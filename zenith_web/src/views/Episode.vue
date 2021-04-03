@@ -1,6 +1,11 @@
 <template>
   <div v-if="episode">
-    <v-img :src="episode.thumbnail" style="aspect-ratio: 16 / 9" />
+    <div style="position: relative">
+      <v-img :src="episode.thumbnail" style="aspect-ratio: 16 / 9" />
+      <v-overlay absolute :value="episode.is_watched">
+        <v-icon x-large>mdi-check</v-icon>
+      </v-overlay>
+    </div>
     <div class="text-h4 mx-4 mt-6">
       {{ episode.episode_number }} - {{ episode.name }}
     </div>

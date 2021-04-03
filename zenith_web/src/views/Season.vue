@@ -5,6 +5,9 @@
       <div v-for="episode in episodes" :key="episode.id">
         <v-card @click="onEpisodeClick(episode.id)">
           <v-img :src="episode.thumbnail" class="thumbnail"></v-img>
+          <v-overlay absolute :value="episode.is_watched">
+            <v-icon>mdi-check</v-icon>
+          </v-overlay>
         </v-card>
         <div class="mt-2 mb-4">
           <div class="subtitle-2 text-truncate">
