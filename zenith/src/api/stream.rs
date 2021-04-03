@@ -192,6 +192,7 @@ async fn get_subtitles_stream(state: AppState, req: Request) -> ApiResult {
 #[derive(serde::Serialize)]
 struct StreamInfo {
     duration: f64,
+    position: Option<f64>,
     subtitles: Vec<SubtitleInfo>,
 }
 
@@ -210,7 +211,14 @@ async fn get_info(state: AppState, req: Request) -> ApiResult {
 
     let mut conn = state.db.acquire().await?;
 
-    let path: String = sqlx::query_scalar("SELECT path FROM video_files WHERE item_id = ?")
+    let sql = "
+        SELECT file.path, data.position
+        FROM video_files AS file
+        LEFT JOIN user_item_data AS data ON file.item_id = data.item_id
+        WHERE file.item_id = ?
+    ";
+
+    let (path, position): (String, Option<f64>) = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
         .await?
@@ -239,6 +247,7 @@ async fn get_info(state: AppState, req: Request) -> ApiResult {
 
     Ok(Response::new().json(&StreamInfo {
         duration,
+        position,
         subtitles,
     })?)
 }

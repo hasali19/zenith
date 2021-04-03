@@ -146,6 +146,7 @@ export class TvSeason {
 
 export interface StreamInfo {
   duration: number
+  position: number | null
   subtitles: SubtitleInfo[]
 }
 

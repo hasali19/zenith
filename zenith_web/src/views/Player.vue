@@ -124,7 +124,7 @@ export default Vue.extend({
       this.state = 'playing'
     })
 
-    this.seekTo(0)
+    this.seekTo(info.position || 0)
     this.delayedHideControls()
   },
 
