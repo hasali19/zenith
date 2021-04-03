@@ -4,18 +4,18 @@
     <div class="text-h4 mx-4 mt-6 mb-2">{{ show.name }}</div>
     <div class="text-body-2 mx-4">{{ show.overview }}</div>
     <div class="mt-6">
-      <div class="text-h5 mx-4">Seasons</div>
-      <slide-group padding="0px 12px" style="overflow-x: auto; width: 100%">
-        <poster-card
-          v-for="season in seasons"
-          :key="season.id"
-          :poster="season.poster"
-          :primary="show.name"
-          :secondary="season.name"
-          @click="onSeasonClick(season.id)"
-          style="width: 120px; margin: 0px 4px"
-        />
-      </slide-group>
+      <div class="mx-4">
+        <slide-group title="Seasons" :items="seasons">
+          <template v-slot="{ item }">
+            <poster-card
+              :poster="item.poster"
+              :primary="show.name"
+              :secondary="item.name"
+              @click="onSeasonClick(item.id)"
+            />
+          </template>
+        </slide-group>
+      </div>
     </div>
   </div>
 </template>

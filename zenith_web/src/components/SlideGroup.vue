@@ -29,9 +29,10 @@
 }
 
 .wrapper {
+  margin: 0px -4px;
   display: flex;
   box-sizing: border-box;
-  width: 100%;
+  width: calc(100% + 8px);
   float: left;
   transition: transform 300ms;
 }
