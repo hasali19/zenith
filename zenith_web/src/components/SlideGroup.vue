@@ -1,17 +1,43 @@
 <template>
-  <div style="overflow-x: auto; width: 100%">
-    <div class="slide-group my-2" :style="{ padding }">
-      <slot></slot>
+  <div class="root">
+    <div class="d-flex">
+      <h1 class="text-h5 flex-grow-1">{{ title }}</h1>
+      <v-btn @click="prev" icon :disabled="page === 0">
+        <v-icon>mdi-chevron-left</v-icon>
+      </v-btn>
+      <v-btn @click="next" icon :disabled="page === pageCount - 1">
+        <v-icon>mdi-chevron-right</v-icon>
+      </v-btn>
+    </div>
+    <div class="wrapper my-2" :style="{ transform }">
+      <div
+        class="item"
+        v-for="(item, index) in items"
+        :key="index"
+        :style="{ width: `calc(100% / ${itemCount})` }"
+      >
+        <slot v-bind:item="item"></slot>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.slide-group {
+.root {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.wrapper {
   display: flex;
   box-sizing: border-box;
-  min-width: 100%;
+  width: 100%;
   float: left;
+  transition: transform 300ms;
+}
+
+.item {
+  padding: 4px;
 }
 </style>
 
@@ -19,7 +45,56 @@
 import Vue from 'vue'
 export default Vue.extend({
   props: {
-    padding: String,
+    title: String,
+    items: Array,
+  },
+
+  data() {
+    return {
+      page: 0,
+    }
+  },
+
+  computed: {
+    itemCount(): number {
+      switch (this.$vuetify.breakpoint.name) {
+        case 'xs':
+          return 3
+
+        case 'sm':
+          return 5
+
+        case 'md':
+          return 7
+
+        case 'lg':
+          return 9
+
+        case 'xl':
+          return 11
+
+        default:
+          return 0
+      }
+    },
+
+    pageCount(): number {
+      return Math.ceil(this.items.length / this.itemCount)
+    },
+
+    transform(): string {
+      return `translateX(${this.page * -100}%)`
+    },
+  },
+
+  methods: {
+    prev() {
+      this.page = Math.max(0, this.page - 1)
+    },
+
+    next() {
+      this.page = Math.min(this.page + 1, this.pageCount - 1)
+    },
   },
 })
 </script>

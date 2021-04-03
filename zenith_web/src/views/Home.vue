@@ -1,31 +1,27 @@
 <template>
   <v-container>
     <div class="mt-4 mt-sm-8">
-      <h1 class="text-h5 my-4">Recently Added Movies</h1>
-      <slide-group style="overflow-x: auto; width: 100%">
-        <poster-card
-          v-for="movie in movies"
-          :key="movie.id"
-          :poster="movie.poster"
-          :primary="movie.title"
-          :secondary="movie.releaseYear()"
-          @click="onMovieClick(movie.id)"
-          style="width: 120px; margin: 0px 4px"
-        />
+      <slide-group title="Recently Added Movies" :items="movies">
+        <template v-slot="{ item }">
+          <poster-card
+            :poster="item.poster"
+            :primary="item.title"
+            :secondary="item.releaseYear()"
+            @click="onMovieClick(item.id)"
+          />
+        </template>
       </slide-group>
     </div>
     <div class="mt-8">
-      <h1 class="text-h5 my-4">Recently Added TV</h1>
-      <slide-group style="overflow-x: auto; width: 100%">
-        <poster-card
-          v-for="show in shows"
-          :key="show.id"
-          :poster="show.poster"
-          :primary="show.name"
-          :secondary="show.startYear()"
-          @click="onShowClick(show.id)"
-          class="group-item mx-1"
-        />
+      <slide-group title="Recently Added TV" :items="shows">
+        <template v-slot="{ item }">
+          <poster-card
+            :poster="item.poster"
+            :primary="item.name"
+            :secondary="item.startYear()"
+            @click="onShowClick(item.id)"
+          />
+        </template>
       </slide-group>
     </div>
   </v-container>
