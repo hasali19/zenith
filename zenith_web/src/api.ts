@@ -213,4 +213,12 @@ export default {
       return `/api/stream/${id}/transcode?start=${start}`
     },
   },
+
+  progress: {
+    async update(id: ItemId, position: number) {
+      await fetch(`/api/progress/${id}?position=${position}`, {
+        method: 'POST',
+      })
+    },
+  },
 }

@@ -97,9 +97,24 @@ export default Vue.extend({
 
     this.duration = info.duration
 
-    this.interval = window.setInterval(() => {
-      this.position = this.video.currentTime
-    }, 200)
+    this.interval = window.setInterval(
+      (() => {
+        let counter = 0
+        return async () => {
+          // Update internal position state
+          this.position = this.video.currentTime
+
+          counter += 1
+
+          // Update server position every 10 ticks (2 seconds)
+          if (this.state === 'playing' && counter >= 10) {
+            counter = 0
+            await api.progress.update(this.id, this.offset + this.position)
+          }
+        }
+      })(),
+      200,
+    )
 
     this.video.addEventListener('pause', () => {
       this.state = 'paused'
