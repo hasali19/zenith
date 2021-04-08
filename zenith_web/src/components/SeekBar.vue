@@ -1,21 +1,41 @@
 <template>
-  <input
-    type="range"
-    class="seekbar"
-    min="0"
-    :max="duration"
-    :value="position"
-    @mousedown="$emit('seek-start')"
-    @touchstart="$emit('seek-start')"
-    @change="$emit('seek-end', parseFloat($event.target.value))"
-  />
+  <div class="flex-grow-1 flex-shrink-1 d-flex" style="position: relative">
+    <input
+      type="range"
+      class="seekbar"
+      min="0"
+      :max="duration"
+      :value="position"
+      @mousedown="$emit('seek-start')"
+      @touchstart="$emit('seek-start')"
+      @change="$emit('seek-end', parseFloat($event.target.value))"
+    />
+    <div
+      class="track watched"
+      :style="{
+        width: `${(position / duration) * 100}%`,
+      }"
+    />
+    <div
+      class="track remaining"
+      :style="{
+        left: `${(position / duration) * 100}%`,
+        width: `${100 - (position / duration) * 100}%`,
+      }"
+    />
+  </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+.root {
+  flex: 1;
+}
+
 .seekbar {
   -webkit-appearance: none;
   flex: 1;
   background: transparent;
+  z-index: 1;
 }
 
 .seekbar:focus {
@@ -24,20 +44,37 @@
 
 .seekbar::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: rgb(202, 155, 0);
+  background: var(--v-accent-base);
   cursor: pointer;
-  margin-top: -6px;
+  margin-top: -5px;
 }
 
 .seekbar::-webkit-slider-runnable-track {
   width: 100%;
   height: 3px;
   cursor: pointer;
-  background: rgb(214, 214, 214);
-  border-radius: 1px;
+  background: transparent;
+}
+
+.track {
+  position: absolute;
+  height: 3px;
+  z-index: 0;
+}
+
+.track.watched {
+  background-color: var(--v-accent-base);
+  border-top-left-radius: 2px;
+  border-bottom-left-radius: 2px;
+}
+
+.track.remaining {
+  background-color: rgb(214, 214, 214);
+  border-top-right-radius: 2px;
+  border-bottom-right-radius: 2px;
 }
 </style>
 
