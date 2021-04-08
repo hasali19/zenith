@@ -14,7 +14,10 @@
         class="item"
         v-for="(item, index) in items"
         :key="index"
-        :style="{ width: `calc(100% / ${itemCount})` }"
+        :style="{
+          minWidth: `${100 / itemCount}%`,
+          width: `${100 / itemCount}%`,
+        }"
       >
         <slot v-bind:item="item"></slot>
       </div>
