@@ -1,8 +1,15 @@
 {
-  // "vetur.format.defaultFormatter.html": "prettier",
+  "vetur.format.defaultFormatter.html": "prettier",
   "eslint.format.enable": true,
-  "eslint.validate": ["vue", "typescript"],
+  "eslint.validate": ["javascript", "typescript", "vue"],
+  "eslint.workingDirectories": ["zenith_web"],
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
   "[vue]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }
