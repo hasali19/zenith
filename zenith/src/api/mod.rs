@@ -1,4 +1,3 @@
-mod library;
 mod metadata;
 mod movies;
 mod progress;
@@ -10,7 +9,6 @@ use zenith_http::{App, Body, Response, StatusCode};
 use crate::AppState;
 
 pub fn configure(app: &mut App<AppState>) {
-    app.configure(library::configure);
     app.configure(movies::configure);
     app.configure(tv::configure);
     app.configure(stream::configure);

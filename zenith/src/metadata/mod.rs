@@ -4,6 +4,7 @@ use tokio::sync::mpsc;
 
 use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType};
 use crate::db::Db;
+use crate::library::scanner;
 use crate::tmdb::{MovieSearchQuery, TmdbClient, TvShowSearchQuery};
 
 #[derive(Debug)]
@@ -63,10 +64,13 @@ async fn refresh_movie_metadata(
 ) -> eyre::Result<()> {
     tracing::info!("updating metadata for movie (id: {})", id);
 
-    let path: String = sqlx::query_scalar("SELECT path FROM movies WHERE item_id = ?")
-        .bind(id)
-        .fetch_one(&mut *db)
-        .await?;
+    let sql = "
+        SELECT path FROM movies
+        JOIN video_files USING (item_id)
+        WHERE item_id = ?
+    ";
+
+    let path: String = sqlx::query_scalar(sql).bind(id).fetch_one(&mut *db).await?;
 
     let path = std::path::Path::new(&path);
     let name = path
@@ -74,13 +78,13 @@ async fn refresh_movie_metadata(
         .and_then(|v| v.to_str())
         .ok_or_else(|| eyre!("invalid movie path"))?;
 
-    let (title, year) = crate::sync::movies::parse_movie_file_name(name)
-        .ok_or_else(|| eyre!("failed to parse movie name"))?;
+    let (title, year) =
+        scanner::parse_movie_filename(name).ok_or_else(|| eyre!("failed to parse movie name"))?;
 
     let query = MovieSearchQuery {
         title: &title,
         page: None,
-        primary_release_year: year,
+        primary_release_year: year.map(|dt| dt.year()),
     };
 
     let metadata = tmdb.search_movies(&query).await?;
@@ -90,7 +94,7 @@ async fn refresh_movie_metadata(
             return Err(eyre!(
                 "no match found for '{} ({})'",
                 title,
-                year.unwrap_or(-1)
+                year.map(|dt| dt.year()).unwrap_or(-1)
             ))
         }
     };

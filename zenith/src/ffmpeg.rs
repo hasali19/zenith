@@ -3,6 +3,7 @@ use std::ffi::OsStr;
 use std::path::Path;
 use std::process::Stdio;
 
+use async_trait::async_trait;
 use eyre::eyre;
 use tokio::process::{Child, Command};
 
@@ -76,8 +77,8 @@ pub struct VideoInfo {
     pub duration: f64,
 }
 
-#[async_trait::async_trait]
-pub trait VideoInfoProvider {
+#[async_trait]
+pub trait VideoInfoProvider: Send + Sync {
     async fn get_video_info(&self, path: &str) -> eyre::Result<VideoInfo>;
 }
 

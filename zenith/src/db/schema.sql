@@ -15,7 +15,6 @@ create table if not exists video_files (
 
 create table if not exists movies (
     item_id integer primary key,
-    path text not null,
     title text not null,
     release_date integer,
     overview text,

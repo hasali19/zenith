@@ -7,10 +7,10 @@ use tokio::fs::File;
 use tokio_util::codec::{BytesCodec, FramedRead};
 use zenith::config::Config;
 use zenith::db::Db;
-use zenith::library::MediaLibraryImpl;
-use zenith::lifecycle::AppLifecycle;
+use zenith::ffmpeg::Ffprobe;
+use zenith::library::scanner::LibraryScanner;
+use zenith::library::MediaLibrary;
 use zenith::metadata::MetadataManager;
-use zenith::sync::LibrarySync;
 use zenith::tmdb::TmdbClient;
 use zenith::watcher::FileWatcher;
 use zenith::{middleware, AppState};
@@ -26,22 +26,24 @@ async fn main() -> eyre::Result<()> {
         .with_env_filter("info,sqlx::query=warn")
         .init();
 
-    let lifecycle = AppLifecycle::new();
     let config = Arc::new(Config::load("config.yml")?);
     let db = Db::init(&config.database.path).await?;
     let tmdb = TmdbClient::new(&config.tmdb.access_token);
     let metadata = MetadataManager::new(db.clone(), tmdb);
-    let library = MediaLibraryImpl::new(db.clone(), metadata.clone());
-    let mut sync = LibrarySync::new(library, config.clone(), &lifecycle);
+    let video_info_provider = Arc::new(Ffprobe::new(&config.transcoding.ffprobe_path));
+    let library = Arc::new(MediaLibrary::new(db.clone(), video_info_provider));
+    let scanner = Arc::new(LibraryScanner::new(
+        library,
+        metadata.clone(),
+        config.clone(),
+    ));
 
-    sync.start_full_sync();
+    scanner.start_scan();
 
     let mut watcher = FileWatcher::spawn({
-        let mut sync = sync.clone();
+        let scanner = scanner.clone();
         move |_| {
-            // Run full sync anytime anything changes
-            // TODO: Make this more clever
-            sync.start_full_sync();
+            scanner.start_scan();
         }
     });
 
@@ -51,7 +53,6 @@ async fn main() -> eyre::Result<()> {
     let mut app = App::new(AppState {
         config: config.clone(),
         db: db.clone(),
-        sync,
         metadata,
     });
 
@@ -61,8 +62,6 @@ async fn main() -> eyre::Result<()> {
     app.configure(zenith::api::configure);
     app.fallback_to(spa);
     app.run(addr).await?;
-
-    lifecycle.signal_stopped()?;
 
     db.close().await;
 
