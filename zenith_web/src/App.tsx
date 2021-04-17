@@ -1,45 +1,54 @@
-import React, { useState } from "react";
-import logo from "./logo.svg";
-import "./App.css";
+import { useState } from "react";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { css, Theme } from "@emotion/react";
+import { Toolbar, Typography } from "@material-ui/core";
 
-function App() {
-  const [count, setCount] = useState(0);
+import AppBar from "./AppBar";
+import Drawer from "./Drawer";
 
+const styles = {
+  root: css`
+    height: 100vh;
+  `,
+
+  main: (theme: Theme) => css`
+    flex: 1;
+    overflow: auto;
+
+    ${theme.breakpoints.up("sm")} {
+      padding-left: 256px;
+    }
+  `,
+
+  content: (theme: Theme) => css`
+    padding: ${theme.spacing(2)};
+  `,
+};
+
+export default function App() {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>Hello Vite + React!</p>
-        <p>
-          <button onClick={() => setCount((count) => count + 1)}>
-            count is: {count}
-          </button>
-        </p>
-        <p>
-          Edit <code>App.tsx</code> and save to test HMR updates.
-        </p>
-        <p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-          {" | "}
-          <a
-            className="App-link"
-            href="https://vitejs.dev/guide/features.html"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Vite Docs
-          </a>
-        </p>
-      </header>
-    </div>
+    <BrowserRouter>
+      <div css={styles.root}>
+        <AppBar onToggleDrawer={() => setOpen((v) => !v)} />
+        <Drawer open={open} onClose={() => setOpen(false)} />
+        <div css={styles.main}>
+          <Toolbar />
+          <main css={styles.content}>
+            <Switch>
+              <Route path="/movies">
+                <Typography variant="h4">Movies</Typography>
+              </Route>
+              <Route path="/shows">
+                <Typography variant="h4">Shows</Typography>
+              </Route>
+              <Route path="/">
+                <Typography variant="h4">Home</Typography>
+              </Route>
+            </Switch>
+          </main>
+        </div>
+      </div>
+    </BrowserRouter>
   );
 }
-
-export default App;
