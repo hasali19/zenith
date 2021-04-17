@@ -24,7 +24,7 @@ jobs:
       - run: flutter pub get
         working-directory: zenith_flutter
 
-      - run: flutter build apk
+      - run: flutter build apk --dart-define GIT_COMMIT_HASH=$(git rev-parse HEAD)
         working-directory: zenith_flutter
 
       - uses: actions/upload-artifact@v2
