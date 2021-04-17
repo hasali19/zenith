@@ -37,13 +37,29 @@
       />
     </v-app-bar>
     <v-main>
-      <router-view></router-view>
+      <transition name="fade" mode="out-in">
+        <router-view></router-view>
+      </transition>
     </v-main>
   </v-app>
   <v-app v-else>
     <router-view></router-view>
   </v-app>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition-duration: 0.3s;
+  transition-property: opacity;
+  transition-timing-function: ease;
+}
+
+.fade-enter,
+.fade-leave-active {
+  opacity: 0;
+}
+</style>
 
 <script>
 export default {
