@@ -69,8 +69,8 @@ class AppState extends State<App> {
           child: FutureBuilder(
             future: _runId,
             builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return Text("${snapshot.data}");
+              if (snapshot.connectionState == ConnectionState.done) {
+                return Text("Hello, world!");
               } else if (snapshot.hasError) {
                 return Text("${snapshot.error}");
               } else {
