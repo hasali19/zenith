@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 
 void main() {
   runApp(App());
@@ -15,59 +15,129 @@ class App extends StatefulWidget {
   }
 }
 
-const GIT_COMMIT_HASH = bool.hasEnvironment('GIT_COMMIT_HASH')
-    ? String.fromEnvironment('GIT_COMMIT_HASH')
-    : null;
+class Movie {
+  final int id;
+  final String title;
+  final int releaseDate;
+  final String overview;
+  final String poster;
+  final String backdrop;
+  final double duration;
 
-const UPDATE_URL =
-    'https://nightly.link/hasali19/zenith/workflows/flutter/flutter/zenith-apk.zip';
+  Movie(
+      {@required this.id,
+      @required this.title,
+      @required this.releaseDate,
+      @required this.overview,
+      @required this.poster,
+      @required this.backdrop,
+      @required this.duration});
 
-Future _checkForUpdates() async {
-  if (GIT_COMMIT_HASH == null) {
-    return;
+  factory Movie.fromJson(Map<String, dynamic> json) {
+    return Movie(
+        id: json['id'],
+        title: json['title'],
+        releaseDate: json['release_date'],
+        overview: json['overview'],
+        poster: json['poster'],
+        backdrop: json['backdrop'],
+        duration: json['duration']);
   }
 
-  final path = 'repos/hasali19/zenith/actions/workflows/8229171/runs';
-  final uri = Uri.https('api.github.com', path, {'per_page': "1"});
-  final res = await http.get(uri);
+  int releaseYear() {
+    return DateTime.fromMillisecondsSinceEpoch(this.releaseDate * 1000).year;
+  }
+}
 
-  final Iterable runs = jsonDecode(res.body)['workflow_runs'];
-  final run = runs.firstWhere(
-      (run) => run['status'] == 'completed' && run['conclusion'] == 'success');
-
-  final hash = run['head_sha'];
-  if (hash != GIT_COMMIT_HASH) {
-    await canLaunch(UPDATE_URL)
-        ? await launch(UPDATE_URL)
-        : throw 'Could not launch $UPDATE_URL';
+Future<List<Movie>> _fetchMovies() async {
+  // TODO: Remove hardcoded url
+  final res = await http.get(Uri.https('zenith.hasali.uk', 'api/movies'));
+  if (res.statusCode == 200) {
+    return List<Movie>.from(
+        jsonDecode(res.body).map((json) => Movie.fromJson(json)));
+  } else {
+    throw Exception('Failed to load movies');
   }
 }
 
 class AppState extends State<App> {
-  Future _future;
+  Future _movies;
 
   @override
   void initState() {
     super.initState();
-    _future = _checkForUpdates();
+    _movies = _fetchMovies();
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Zenith',
+      themeMode: ThemeMode.system,
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
       home: Scaffold(
+        appBar: AppBar(
+          title: Text("Zenith"),
+        ),
         body: Center(
-          child: FutureBuilder(
-            future: _future,
+          child: FutureBuilder<List<Movie>>(
+            future: _movies,
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                return Text("Hello, world!");
-              } else if (snapshot.hasError) {
-                return Text("${snapshot.error}");
-              } else {
+              if (snapshot.hasError) {
+                return Text('${snapshot.error}');
+              }
+
+              if (!snapshot.hasData) {
                 return CircularProgressIndicator();
               }
+
+              return GridView.extent(
+                maxCrossAxisExtent: 150,
+                childAspectRatio: 2 / 3.8,
+                padding: EdgeInsets.all(8),
+                crossAxisSpacing: 8,
+                children: snapshot.data
+                    .map(
+                      (movie) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Material(
+                            elevation: 2.0,
+                            type: MaterialType.card,
+                            clipBehavior: Clip.hardEdge,
+                            child: Ink.image(
+                              fit: BoxFit.cover,
+                              image: NetworkImage(movie.poster),
+                              child: InkWell(
+                                onTap: () {},
+                                child: AspectRatio(aspectRatio: 2 / 3),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                TextOneLine(
+                                  movie.title,
+                                  style: Theme.of(context).textTheme.subtitle2,
+                                  overflow: TextOverflow.fade,
+                                ),
+                                Text(
+                                  movie.releaseYear().toString(),
+                                  maxLines: 1,
+                                  style: Theme.of(context).textTheme.caption,
+                                )
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    )
+                    .toList(),
+              );
             },
           ),
         ),
