@@ -110,6 +110,10 @@ Future<List<Show>> _fetchShows() async {
   }
 }
 
+const GIT_COMMIT_HASH = bool.hasEnvironment('GIT_COMMIT_HASH')
+    ? String.fromEnvironment('GIT_COMMIT_HASH')
+    : null;
+
 class AppState extends State<App> {
   int _current = 0;
 
@@ -144,6 +148,9 @@ class AppState extends State<App> {
       home: Scaffold(
         appBar: AppBar(
           title: Text("Zenith"),
+          actions: [
+            AppBarMenu(),
+          ],
         ),
         body: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
@@ -163,6 +170,39 @@ class AppState extends State<App> {
           },
         ),
       ),
+    );
+  }
+}
+
+class AppBarMenu extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton(
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'about',
+          child: Text('About'),
+        ),
+      ],
+      onSelected: (String value) {
+        if (value == 'about') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) {
+                return Scaffold(
+                  appBar: AppBar(
+                    title: Text("About"),
+                  ),
+                  body: Center(
+                    child: Text(GIT_COMMIT_HASH ?? "No commit hash"),
+                  ),
+                );
+              },
+            ),
+          );
+        }
+      },
     );
   }
 }
