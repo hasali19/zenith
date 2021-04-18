@@ -21,11 +21,17 @@ jobs:
         with:
           flutter-version: "2.0.5"
 
-      - run: flutter pub get
+      - name: Build signed APK
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          ANDROID_KEYSTORE_KEY_ALIAS: ${{ secrets.ANDROID_KEYSTORE_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEYSTORE_PATH: ../../keystore.jks
         working-directory: zenith_flutter
-
-      - run: flutter build apk --dart-define GIT_COMMIT_HASH=$(git rev-parse HEAD)
-        working-directory: zenith_flutter
+        run: |
+          echo $ANDROID_KEYSTORE | base64 -d > keystore.jks
+          flutter pub get
+          flutter build apk --dart-define GIT_COMMIT_HASH=$(git rev-parse HEAD)
 
       - uses: actions/upload-artifact@v2
         with:
