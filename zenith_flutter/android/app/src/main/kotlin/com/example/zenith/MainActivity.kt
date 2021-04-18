@@ -1,4 +1,4 @@
-package com.example.zenith
+package uk.hasali.zenith
 
 import io.flutter.embedding.android.FlutterActivity
 
