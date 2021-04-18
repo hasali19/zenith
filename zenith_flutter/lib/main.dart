@@ -1,8 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
   runApp(App());
@@ -328,9 +330,16 @@ class MovieDetailsScreen extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   padding: EdgeInsets.symmetric(vertical: 4),
                   child: ElevatedButton.icon(
-                    onPressed: () {},
                     icon: Icon(Icons.play_arrow, size: 18),
                     label: Text("Play"),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PlayerScreen(movie.id),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 Text(
@@ -450,6 +459,42 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
   }
 }
 
+class PlayerScreen extends StatefulWidget {
+  final int id;
+
+  PlayerScreen(this.id);
+
+  @override
+  State<StatefulWidget> createState() {
+    return PlayerScreenState();
+  }
+}
+
+class PlayerScreenState extends State<PlayerScreen> {
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setEnabledSystemUIOverlays([]);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: WebView(
+        initialUrl: 'https://zenith.hasali.uk/player/${widget.id}',
+        javascriptMode: JavascriptMode.unrestricted,
+        initialMediaPlaybackPolicy: AutoMediaPlaybackPolicy.always_allow,
+      ),
+    );
+  }
+}
+
 class EpisodeGrid extends StatelessWidget {
   final _episodes;
 
@@ -480,7 +525,12 @@ class EpisodeGrid extends StatelessWidget {
                   child: InkWell(
                     child: AspectRatio(aspectRatio: 16 / 9),
                     onTap: () {
-                      // TODO:
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PlayerScreen(episode['id']),
+                        ),
+                      );
                     },
                   ),
                 ),
