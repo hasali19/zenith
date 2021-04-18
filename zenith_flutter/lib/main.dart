@@ -305,9 +305,13 @@ class MovieDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: ListView(
-        // crossAxisAlignment: CrossAxisAlignment.stretch,
+        padding: EdgeInsets.only(top: 0),
         children: [
           AspectRatio(
             aspectRatio: 16 / 9,
@@ -405,7 +409,11 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      // appBar: AppBar(),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: FutureBuilder(
         future: _episodes,
         builder: (context, snapshot) {
@@ -419,9 +427,6 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
 
           return CustomScrollView(
             slivers: [
-              const SliverAppBar(
-                pinned: true,
-              ),
               SliverList(
                 delegate: SliverChildListDelegate([
                   AspectRatio(
