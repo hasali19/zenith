@@ -19,45 +19,37 @@ const GIT_COMMIT_HASH = bool.hasEnvironment('GIT_COMMIT_HASH')
     ? String.fromEnvironment('GIT_COMMIT_HASH')
     : null;
 
-Future fetchRuns() async {
-  var res = await http.get(
-    Uri.https(
-      'api.github.com',
-      'repos/hasali19/zenith/actions/workflows/8229171/runs',
-      {'per_page': "1"},
-    ),
-  );
+const UPDATE_URL =
+    'https://nightly.link/hasali19/zenith/workflows/flutter/flutter/zenith-apk.zip';
 
-  final runs = jsonDecode(res.body);
-  final run = runs['workflow_runs'][0];
-  final runId = run['id'];
+Future _checkForUpdates() async {
+  if (GIT_COMMIT_HASH == null) {
+    return;
+  }
+
+  final path = 'repos/hasali19/zenith/actions/workflows/8229171/runs';
+  final uri = Uri.https('api.github.com', path, {'per_page': "1"});
+  final res = await http.get(uri);
+
+  final Iterable runs = jsonDecode(res.body)['workflow_runs'];
+  final run = runs.firstWhere(
+      (run) => run['status'] == 'completed' && run['conclusion'] == 'success');
+
   final hash = run['head_sha'];
-  final suiteId = run['check_suite_id'];
-
   if (hash != GIT_COMMIT_HASH) {
-    res = await http.get(
-      Uri.https(
-        'api.github.com',
-        'repos/hasali19/zenith/actions/runs/$runId/artifacts',
-      ),
-    );
-
-    final artifacts = jsonDecode(res.body);
-    final artifactId = artifacts['artifacts'][0]['id'];
-    final url =
-        'https://github.com/hasali19/zenith/suites/$suiteId/artifacts/$artifactId';
-
-    await canLaunch(url) ? await launch(url) : throw 'Could not launch $url';
+    await canLaunch(UPDATE_URL)
+        ? await launch(UPDATE_URL)
+        : throw 'Could not launch $UPDATE_URL';
   }
 }
 
 class AppState extends State<App> {
-  Future _runId;
+  Future _future;
 
   @override
   void initState() {
     super.initState();
-    _runId = fetchRuns();
+    _future = _checkForUpdates();
   }
 
   @override
@@ -67,7 +59,7 @@ class AppState extends State<App> {
       home: Scaffold(
         body: Center(
           child: FutureBuilder(
-            future: _runId,
+            future: _future,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 return Text("Hello, world!");
