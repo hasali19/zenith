@@ -49,6 +49,43 @@ class Movie {
   }
 }
 
+class Show {
+  final int id;
+  final String name;
+  final int startDate;
+  final int endDate;
+  final String overview;
+  final String poster;
+  final String backdrop;
+  final int unwatchedEpisodes;
+
+  Show(
+      {@required this.id,
+      @required this.name,
+      @required this.startDate,
+      @required this.endDate,
+      @required this.overview,
+      @required this.poster,
+      @required this.backdrop,
+      @required this.unwatchedEpisodes});
+
+  factory Show.fromJson(Map<String, dynamic> json) {
+    return Show(
+        id: json['id'],
+        name: json['name'],
+        startDate: json['start_date'],
+        endDate: json['end_date'],
+        overview: json['overview'],
+        poster: json['poster'],
+        backdrop: json['backdrop'],
+        unwatchedEpisodes: json['unwatched_episodes']);
+  }
+
+  int startYear() {
+    return DateTime.fromMillisecondsSinceEpoch(this.startDate * 1000).year;
+  }
+}
+
 Future<List<Movie>> _fetchMovies() async {
   // TODO: Remove hardcoded url
   final res = await http.get(Uri.https('zenith.hasali.uk', 'api/movies'));
@@ -60,7 +97,89 @@ Future<List<Movie>> _fetchMovies() async {
   }
 }
 
+Future<List<Show>> _fetchShows() async {
+  // TODO: Remove hardcoded url
+  final res = await http.get(Uri.https('zenith.hasali.uk', 'api/tv/shows'));
+  if (res.statusCode == 200) {
+    return List<Show>.from(
+        jsonDecode(res.body).map((json) => Show.fromJson(json)));
+  } else {
+    throw Exception('Failed to load movies');
+  }
+}
+
 class AppState extends State<App> {
+  int _current = 0;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget screen;
+
+    switch (_current) {
+      case 0:
+        screen = HomeScreen();
+        break;
+
+      case 1:
+        screen = MovieListScreen();
+        break;
+
+      case 2:
+        screen = ShowListScreen();
+        break;
+    }
+
+    return MaterialApp(
+      title: 'Zenith',
+      themeMode: ThemeMode.system,
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text("Zenith"),
+        ),
+        body: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: screen,
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          items: [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+            BottomNavigationBarItem(icon: Icon(Icons.movie), label: "Movies"),
+            BottomNavigationBarItem(icon: Icon(Icons.tv), label: "Shows"),
+          ],
+          currentIndex: _current,
+          onTap: (item) {
+            setState(() {
+              _current = item;
+            });
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container();
+  }
+}
+
+class MovieListScreen extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    return MovieListScreenState();
+  }
+}
+
+class MovieListScreenState extends State<MovieListScreen> {
   Future<List<Movie>> _movies;
 
   @override
@@ -71,47 +190,88 @@ class AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Zenith',
-      themeMode: ThemeMode.system,
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
-      home: MovieListScreen(_movies),
+    return FutureBuilder<List<Movie>>(
+      future: _movies,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Text('${snapshot.error}');
+        }
+
+        if (!snapshot.hasData) {
+          return CircularProgressIndicator();
+        }
+
+        return GridView.extent(
+          maxCrossAxisExtent: 150,
+          childAspectRatio: 2 / 3.85,
+          padding: EdgeInsets.all(8),
+          crossAxisSpacing: 8,
+          children: [
+            for (final movie in snapshot.data)
+              PosterCard(
+                poster: movie.poster,
+                primary: movie.title,
+                secondary: movie.releaseYear().toString(),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MovieDetailsScreen(movie),
+                    ),
+                  );
+                },
+              )
+          ],
+        );
+      },
     );
   }
 }
 
-class MovieListScreen extends StatelessWidget {
-  final Future<List<Movie>> _movies;
+class ShowListScreen extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    return ShowListScreenState();
+  }
+}
 
-  MovieListScreen(this._movies);
+class ShowListScreenState extends State<ShowListScreen> {
+  Future<List<Show>> _shows;
+
+  @override
+  void initState() {
+    super.initState();
+    _shows = _fetchShows();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Movies"),
-      ),
-      body: FutureBuilder<List<Movie>>(
-        future: _movies,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Text('${snapshot.error}');
-          }
+    return FutureBuilder<List<Show>>(
+      future: _shows,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Text('${snapshot.error}');
+        }
 
-          if (!snapshot.hasData) {
-            return CircularProgressIndicator();
-          }
+        if (!snapshot.hasData) {
+          return CircularProgressIndicator();
+        }
 
-          return GridView.extent(
-            maxCrossAxisExtent: 150,
-            childAspectRatio: 2 / 3.8,
-            padding: EdgeInsets.all(8),
-            crossAxisSpacing: 8,
-            children: [for (final movie in snapshot.data) PosterCard(movie)],
-          );
-        },
-      ),
+        return GridView.extent(
+          maxCrossAxisExtent: 150,
+          childAspectRatio: 2 / 3.85,
+          padding: EdgeInsets.all(8),
+          crossAxisSpacing: 8,
+          children: [
+            for (final show in snapshot.data)
+              PosterCard(
+                poster: show.poster,
+                primary: show.name,
+                secondary: show.startYear().toString(),
+              )
+          ],
+        );
+      },
     );
   }
 }
@@ -179,9 +339,17 @@ class MovieDetailsScreen extends StatelessWidget {
 }
 
 class PosterCard extends StatelessWidget {
-  final Movie movie;
+  final String poster;
+  final String primary;
+  final String secondary;
 
-  PosterCard(this.movie);
+  final void Function() onTap;
+
+  PosterCard(
+      {@required this.poster,
+      @required this.primary,
+      @required this.secondary,
+      this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -194,17 +362,10 @@ class PosterCard extends StatelessWidget {
           clipBehavior: Clip.hardEdge,
           child: Ink.image(
             fit: BoxFit.cover,
-            image: NetworkImage(movie.poster),
+            image: NetworkImage(poster),
             child: InkWell(
               child: AspectRatio(aspectRatio: 2 / 3),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MovieDetailsScreen(movie),
-                  ),
-                );
-              },
+              onTap: onTap,
             ),
           ),
         ),
@@ -214,12 +375,13 @@ class PosterCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextOneLine(
-                movie.title,
+                primary,
                 style: Theme.of(context).textTheme.subtitle2,
                 overflow: TextOverflow.fade,
               ),
+              SizedBox(height: 2),
               Text(
-                movie.releaseYear().toString(),
+                secondary,
                 maxLines: 1,
                 style: Theme.of(context).textTheme.caption,
               )
