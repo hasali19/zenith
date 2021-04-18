@@ -114,6 +114,30 @@ const GIT_COMMIT_HASH = bool.hasEnvironment('GIT_COMMIT_HASH')
     ? String.fromEnvironment('GIT_COMMIT_HASH')
     : null;
 
+const UPDATE_URL =
+    'https://nightly.link/hasali19/zenith/workflows/flutter/flutter/zenith-apk.zip';
+
+Future<bool> _checkForUpdates() async {
+  if (GIT_COMMIT_HASH == null) {
+    return false;
+  }
+
+  final path = 'repos/hasali19/zenith/actions/workflows/8229171/runs';
+  final uri = Uri.https('api.github.com', path, {'per_page': "1"});
+  final res = await http.get(uri);
+
+  final Iterable runs = jsonDecode(res.body)['workflow_runs'];
+  final run = runs.firstWhere(
+      (run) => run['status'] == 'completed' && run['conclusion'] == 'success');
+
+  final hash = run['head_sha'];
+  if (hash != GIT_COMMIT_HASH) {
+    return true;
+  }
+
+  return false;
+}
+
 class AppState extends State<App> {
   int _current = 0;
 
@@ -207,10 +231,78 @@ class AppBarMenu extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    return HomeScreenState();
+  }
+}
+
+class HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkForUpdates().then((value) {
+      if (value) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) {
+            return UpdateDialog();
+          },
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container();
+  }
+}
+
+class UpdateDialog extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    return UpdateDialogState();
+  }
+}
+
+class UpdateDialogState extends State<UpdateDialog> {
+  static const platform = const MethodChannel('zenith.hasali.uk/updater');
+
+  bool _updating = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text("Update"),
+      content: _updating
+          ? Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 24),
+                Text("Downloading"),
+              ],
+            )
+          : Text("An update is available"),
+      actions: [
+        TextButton(
+          child: Text("Install"),
+          onPressed: () async {
+            if (!_updating) {
+              platform.invokeMethod('installApk', <String, dynamic>{
+                'url': UPDATE_URL,
+              });
+
+              setState(() {
+                _updating = true;
+              });
+            }
+          },
+        ),
+      ],
+    );
   }
 }
 
