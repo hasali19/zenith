@@ -25,6 +25,27 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+def releaseKeyAlias = keystoreProperties.getProperty('keyAlias')
+if (releaseKeyAlias == null) {
+    releaseKeyAlias = System.getenv('ANDROID_KEYSTORE_KEY_ALIAS')
+}
+
+def releaseStorePassword = keystoreProperties.getProperty('storePassword')
+if (releaseStorePassword == null) {
+    releaseStorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+}
+
+def releaseStoreFile = keystoreProperties.getProperty('storeFile')
+if (releaseStoreFile == null) {
+    releaseStoreFile = System.getenv('ANDROID_KEYSTORE_PATH')
+}
+
 android {
     compileSdkVersion 30
 
@@ -42,10 +63,10 @@ android {
 
     signingConfigs {
         release {
-            keyAlias System.getenv('ANDROID_KEYSTORE_KEY_ALIAS')
-            keyPassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
-            storeFile System.getenv('ANDROID_KEYSTORE_PATH') ? file(System.getenv('ANDROID_KEYSTORE_PATH')) : null
-            storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+            keyAlias releaseKeyAlias
+            keyPassword releaseStorePassword
+            storeFile releaseStoreFile ? file(releaseStoreFile) : null
+            storePassword releaseStorePassword
         }
    }
 
