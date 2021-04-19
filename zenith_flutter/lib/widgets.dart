@@ -23,7 +23,7 @@ class PosterGrid extends StatelessWidget {
   });
 
   Widget _item(int i) {
-    return _PosterGridItem(
+    return PosterItem(
       poster: poster(i),
       primary: primary(i),
       secondary: secondary(i),
@@ -55,18 +55,19 @@ class PosterGrid extends StatelessWidget {
   }
 }
 
-class _PosterGridItem extends StatelessWidget {
+class PosterItem extends StatelessWidget {
   final String poster;
   final String primary;
   final String secondary;
 
   final void Function() onTap;
 
-  _PosterGridItem(
-      {@required this.poster,
-      @required this.primary,
-      @required this.secondary,
-      this.onTap});
+  PosterItem({
+    @required this.poster,
+    @required this.primary,
+    @required this.secondary,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +86,7 @@ class _PosterGridItem extends StatelessWidget {
     );
 
     final info = Container(
-      padding: EdgeInsets.symmetric(vertical: 8),
+      margin: EdgeInsets.only(top: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

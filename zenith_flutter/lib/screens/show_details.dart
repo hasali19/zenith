@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:zenith/screens/season_details.dart';
+import 'package:zenith/widgets.dart';
 
 import '../api.dart';
 import 'player.dart';
@@ -16,24 +18,12 @@ class ShowDetailsScreen extends StatefulWidget {
 }
 
 class ShowDetailsScreenState extends State<ShowDetailsScreen> {
-  Future<List<Episode>> _episodes;
+  Future<List<Season>> _seasons;
 
   @override
   void initState() {
     super.initState();
-    _episodes = _fetchEpisodes();
-  }
-
-  Future<List<Episode>> _fetchEpisodes() async {
-    final client = context.read<ApiClient>();
-    final seasons = await client.getSeasons(widget.show.id);
-    final episodes = <Episode>[];
-
-    for (final season in seasons) {
-      episodes.addAll(await client.getEpisodes(season.id));
-    }
-
-    return episodes;
+    _seasons = context.read<ApiClient>().getSeasons(widget.show.id);
   }
 
   @override
@@ -45,8 +35,8 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: FutureBuilder<List<Episode>>(
-        future: _episodes,
+      body: FutureBuilder<List<Season>>(
+        future: _seasons,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text("${snapshot.error}"));
@@ -56,38 +46,69 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
             return Center(child: CircularProgressIndicator());
           }
 
-          return CustomScrollView(
-            slivers: [
-              SliverList(
-                delegate: SliverChildListDelegate([
-                  AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: Image.network(widget.show.backdrop),
+          return SingleChildScrollView(
+            padding: EdgeInsets.only(top: 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Image.network(widget.show.backdrop),
+                ),
+                Container(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        widget.show.name,
+                        style: theme.textTheme.headline4,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        widget.show.overview,
+                        style: theme.textTheme.bodyText2,
+                      ),
+                    ],
                   ),
-                  Container(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          widget.show.name,
-                          style: theme.textTheme.headline4,
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          widget.show.overview,
-                          style: theme.textTheme.bodyText2,
-                        ),
-                      ],
-                    ),
+                ),
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    "Seasons",
+                    style: theme.textTheme.headline5,
                   ),
-                ]),
-              ),
-              SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                sliver: EpisodeGrid(snapshot.data),
-              )
-            ],
+                ),
+                SizedBox(
+                  height: 236,
+                  child: ListView(
+                    shrinkWrap: true,
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    children: [
+                      for (final season in snapshot.data)
+                        Container(
+                          width: 120,
+                          margin: EdgeInsets.symmetric(horizontal: 4),
+                          child: PosterItem(
+                            poster: season.poster,
+                            primary:
+                                season.name ?? "Season ${season.seasonNumber}",
+                            secondary: widget.show.name,
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => SeasonDetailsScreen(
+                                          widget.show, season)));
+                            },
+                          ),
+                        )
+                    ],
+                  ),
+                )
+              ],
+            ),
           );
         },
       ),
