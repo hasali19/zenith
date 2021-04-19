@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../api.dart';
 import '../../widgets.dart';
@@ -17,7 +18,7 @@ class ShowsScreenState extends State<ShowsScreen> {
   @override
   void initState() {
     super.initState();
-    _shows = fetchShows();
+    _shows = context.read<ApiClient>().getShows();
   }
 
   void _handleItemTap(Show show) {

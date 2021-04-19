@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../api.dart';
 import 'player.dart';
@@ -15,12 +16,24 @@ class ShowDetailsScreen extends StatefulWidget {
 }
 
 class ShowDetailsScreenState extends State<ShowDetailsScreen> {
-  Future<List> _episodes;
+  Future<List<Episode>> _episodes;
 
   @override
   void initState() {
     super.initState();
-    _episodes = fetchEpisodes(widget.show.id);
+    _episodes = _fetchEpisodes();
+  }
+
+  Future<List<Episode>> _fetchEpisodes() async {
+    final client = context.read<ApiClient>();
+    final seasons = await client.getSeasons(widget.show.id);
+    final episodes = <Episode>[];
+
+    for (final season in seasons) {
+      episodes.addAll(await client.getEpisodes(season.id));
+    }
+
+    return episodes;
   }
 
   @override
@@ -32,7 +45,7 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: FutureBuilder(
+      body: FutureBuilder<List<Episode>>(
         future: _episodes,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -83,7 +96,7 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
 }
 
 class EpisodeGrid extends StatelessWidget {
-  final _episodes;
+  final List<Episode> _episodes;
 
   EpisodeGrid(this._episodes);
 
@@ -108,14 +121,14 @@ class EpisodeGrid extends StatelessWidget {
                 clipBehavior: Clip.hardEdge,
                 child: Ink.image(
                   fit: BoxFit.cover,
-                  image: NetworkImage(episode['thumbnail']),
+                  image: NetworkImage(episode.thumbnail),
                   child: InkWell(
                     child: AspectRatio(aspectRatio: 16 / 9),
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => PlayerScreen(episode['id']),
+                          builder: (context) => PlayerScreen(episode.id),
                         ),
                       );
                     },
@@ -128,13 +141,13 @@ class EpisodeGrid extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      episode['name'],
+                      episode.name,
                       style: Theme.of(context).textTheme.subtitle2,
                       // overflow: TextOverflow.fade,
                     ),
                     SizedBox(height: 2),
                     Text(
-                      episode['overview'],
+                      episode.overview,
                       style: Theme.of(context).textTheme.caption,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,

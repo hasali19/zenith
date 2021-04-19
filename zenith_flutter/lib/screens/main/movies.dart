@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../api.dart';
 import '../../widgets.dart';
@@ -6,9 +7,7 @@ import '../movie_details.dart';
 
 class MoviesScreen extends StatefulWidget {
   @override
-  State<StatefulWidget> createState() {
-    return MoviesScreenState();
-  }
+  State<StatefulWidget> createState() => MoviesScreenState();
 }
 
 class MoviesScreenState extends State<MoviesScreen> {
@@ -17,7 +16,7 @@ class MoviesScreenState extends State<MoviesScreen> {
   @override
   void initState() {
     super.initState();
-    _movies = fetchMovies();
+    _movies = context.read<ApiClient>().getMovies();
   }
 
   void _handleItemTap(Movie movie) {
