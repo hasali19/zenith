@@ -92,7 +92,12 @@ export default function ({ open, onClose }: Props) {
       `}
     >
       <Hidden smUp>
-        <Drawer variant="temporary" open={open} onClose={onClose}>
+        <Drawer
+          variant="temporary"
+          open={open}
+          onClose={onClose}
+          ModalProps={{ keepMounted: true }}
+        >
           <DrawerContent onClose={onClose} />
         </Drawer>
       </Hidden>

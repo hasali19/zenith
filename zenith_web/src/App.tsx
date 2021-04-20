@@ -5,23 +5,28 @@ import { Toolbar, Typography } from "@material-ui/core";
 
 import AppBar from "./AppBar";
 import Drawer from "./Drawer";
+import Movies from "./pages/Movies";
+import Movie from "./pages/Movie";
 
 const styles = {
   root: css`
     height: 100vh;
   `,
 
-  main: (theme: Theme) => css`
-    flex: 1;
-    overflow: auto;
+  content: (theme: Theme) => css`
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 
     ${theme.breakpoints.up("sm")} {
       padding-left: 256px;
     }
   `,
 
-  content: (theme: Theme) => css`
-    padding: ${theme.spacing(2)};
+  main: css`
+    flex: 1;
+    overflow: hidden;
   `,
 };
 
@@ -32,12 +37,15 @@ export default function App() {
       <div css={styles.root}>
         <AppBar onToggleDrawer={() => setOpen((v) => !v)} />
         <Drawer open={open} onClose={() => setOpen(false)} />
-        <div css={styles.main}>
+        <div css={styles.content}>
           <Toolbar />
-          <main css={styles.content}>
+          <main css={styles.main}>
             <Switch>
+              <Route path="/movies/:id">
+                <Movie />
+              </Route>
               <Route path="/movies">
-                <Typography variant="h4">Movies</Typography>
+                <Movies />
               </Route>
               <Route path="/shows">
                 <Typography variant="h4">Shows</Typography>

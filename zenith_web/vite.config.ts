@@ -8,4 +8,9 @@ export default defineConfig({
     jsxFactory: "jsx",
     jsxInject: `import { jsx } from "@emotion/react"`,
   },
+  server: {
+    proxy: {
+      "/api": "http://localhost:8000",
+    },
+  },
 });
