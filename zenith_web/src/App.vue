@@ -1,35 +1,33 @@
 <template>
   <v-app v-if="!fullscreen">
-    <v-navigation-drawer v-model="drawer" clipped fixed app touchless>
+    <v-navigation-drawer
+      v-model="drawer"
+      app
+      clipped
+      touchless
+      :style="{ 'background-color': '#121212' }"
+      :permanent="!isMobile"
+    >
       <v-list nav>
-        <v-list-item to="/" router exact>
+        <v-list-item
+          v-for="item in drawerItems"
+          :key="item.to"
+          :to="item.to"
+          router
+          exact
+          active-class="active"
+        >
           <v-list-item-action>
-            <v-icon>mdi-home</v-icon>
+            <v-icon>{{ item.icon }}</v-icon>
           </v-list-item-action>
           <v-list-item-content>
-            <v-list-item-title>Home</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item to="/movies" router exact>
-          <v-list-item-action>
-            <v-icon>mdi-movie</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title>Movies</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item to="/shows" router exact>
-          <v-list-item-action>
-            <v-icon>mdi-television</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title>Shows</v-list-item-title>
+            <v-list-item-title>{{ item.name }}</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
-    <v-app-bar clipped-left fixed app>
-      <v-app-bar-nav-icon @click.stop="drawer = !drawer" />
+    <v-app-bar clipped-left app>
+      <v-app-bar-nav-icon v-if="isMobile" @click.stop="drawer = !drawer" />
       <img
         src="/zenith_full.png"
         class="ml-2"
@@ -59,19 +57,45 @@
 .fade-leave-active {
   opacity: 0;
 }
+
+.active {
+  background-color: #fd11009f;
+}
 </style>
 
 <script>
 export default {
   data() {
     return {
-      drawer: false,
       title: 'Zenith',
+      drawer: false,
+      drawerItems: [
+        {
+          name: 'Home',
+          icon: 'mdi-home',
+          to: '/',
+        },
+        {
+          name: 'Movies',
+          icon: 'mdi-movie',
+          to: '/movies',
+        },
+        {
+          name: 'Shows',
+          icon: 'mdi-television',
+          to: '/shows',
+        },
+      ],
     }
   },
+
   computed: {
     fullscreen() {
       return this.$route.path.startsWith('/player')
+    },
+
+    isMobile() {
+      return this.$vuetify.breakpoint.mobile
     },
   },
 }
