@@ -7,6 +7,7 @@ import AppBar from "./AppBar";
 import Drawer from "./Drawer";
 import Movies from "./pages/Movies";
 import Movie from "./pages/Movie";
+import Player from "./pages/Player";
 
 const styles = {
   root: css`
@@ -41,6 +42,9 @@ export default function App() {
           <Toolbar />
           <main css={styles.main}>
             <Switch>
+              <Route path="/player/:id">
+                <Player />
+              </Route>
               <Route path="/movies/:id">
                 <Movie />
               </Route>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { useHistory, useParams } from "react-router";
 import { css, Theme } from "@emotion/react";
 import { Button, Icon, LinearProgress, Typography } from "@material-ui/core";
 
@@ -47,6 +47,7 @@ const styles = {
 
 export default function () {
   const params = useParams<any>();
+  const history = useHistory();
   const [movie, setMovie] = useState<Movie | null>(null);
 
   useEffect(() => {
@@ -70,6 +71,7 @@ export default function () {
         variant="contained"
         startIcon={<Icon>play_arrow</Icon>}
         css={styles.play}
+        onClick={() => history.push(`/player/${movie.id}`)}
       >
         Play
       </Button>
