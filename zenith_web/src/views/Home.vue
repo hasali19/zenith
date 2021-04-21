@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <div class="px-4">
     <div class="mt-4 mt-sm-8">
       <slide-group title="Recently Added Movies" :items="movies">
         <template v-slot="{ item }">
@@ -24,7 +24,7 @@
         </template>
       </slide-group>
     </div>
-  </v-container>
+  </div>
 </template>
 
 <style scoped>

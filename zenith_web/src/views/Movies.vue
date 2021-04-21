@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <div class="px-4">
     <h1 class="display-1 mt-4 mb-4">Movies</h1>
     <div class="grid">
       <div v-for="movie in movies" :key="movie.id">
@@ -14,7 +14,7 @@
         </div>
       </div>
     </div>
-  </v-container>
+  </div>
 </template>
 
 <script lang="ts">
@@ -40,11 +40,19 @@ export default Vue.extend({
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '~vuetify/src/styles/settings/_variables';
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   grid-gap: 8px;
+}
+
+@media #{map-get($display-breakpoints, 'md-and-up')} {
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
 }
 
 .poster {
