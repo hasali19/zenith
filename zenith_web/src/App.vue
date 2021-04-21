@@ -1,5 +1,5 @@
 <template>
-  <v-app v-if="!fullscreen">
+  <v-app>
     <v-navigation-drawer
       v-model="drawer"
       app
@@ -35,27 +35,34 @@
       />
     </v-app-bar>
     <v-main>
-      <transition name="fade" mode="out-in">
+      <transition name="zoom" mode="out-in">
         <router-view></router-view>
       </transition>
     </v-main>
   </v-app>
-  <v-app v-else>
-    <router-view></router-view>
-  </v-app>
 </template>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition-duration: 0.3s;
-  transition-property: opacity;
-  transition-timing-function: ease;
+.zoom-enter-active,
+.zoom-leave-active {
+  animation-duration: 300ms;
+  animation-fill-mode: both;
+  animation-name: zoom;
 }
 
-.fade-enter,
-.fade-leave-active {
-  opacity: 0;
+.zoom-leave-active {
+  animation-direction: reverse;
+}
+
+@keyframes zoom {
+  from {
+    opacity: 0;
+    transform: scale3d(0.9, 0.9, 0.9);
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 .active {
@@ -90,10 +97,6 @@ export default {
   },
 
   computed: {
-    fullscreen() {
-      return this.$route.path.startsWith('/player')
-    },
-
     isMobile() {
       return this.$vuetify.breakpoint.mobile
     },
