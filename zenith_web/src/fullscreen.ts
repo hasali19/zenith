@@ -13,16 +13,16 @@ export default {
     return isFullscreen
   },
 
-  toggle() {
+  toggle(element: HTMLElement = document.documentElement) {
     if (this.get()) {
       this.exit()
     } else {
-      this.enter()
+      this.enter(element)
     }
   },
 
-  enter() {
-    document.documentElement.requestFullscreen()
+  enter(element: HTMLElement = document.documentElement) {
+    element.requestFullscreen()
   },
 
   exit() {

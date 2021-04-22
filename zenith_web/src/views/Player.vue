@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="root"
     class="root"
     @mousemove="onInteraction"
     @touchmove="onInteraction"
@@ -152,7 +153,7 @@ export default Vue.extend({
     },
 
     toggleFullscreen() {
-      fullscreen.toggle()
+      fullscreen.toggle(this.$refs.root as HTMLDivElement)
     },
 
     onInteraction() {
