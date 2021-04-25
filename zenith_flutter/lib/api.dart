@@ -153,14 +153,17 @@ class Episode {
 
 class StreamInfo {
   final double duration;
+  final double position;
 
   StreamInfo({
     @required this.duration,
+    @required this.position,
   });
 
   factory StreamInfo.fromJson(Map<String, dynamic> json) {
     return StreamInfo(
       duration: json['duration'],
+      position: json['position'],
     );
   }
 }
@@ -195,6 +198,22 @@ class ApiClient {
   Future<StreamInfo> getStreamInfo(int id) async {
     final json = await _get('/api/stream/$id/info');
     return StreamInfo.fromJson(json);
+  }
+
+  Future updateProgress(int id, int position) async {
+    final uri = Uri(
+      scheme: scheme,
+      host: host,
+      port: port,
+      path: '/api/progress/$id',
+      queryParameters: {'position': position.toString()},
+    );
+
+    final res = await http.post(uri);
+
+    if (res.statusCode != 200) {
+      throw Exception("Failed to fetch $uri");
+    }
   }
 
   Future<dynamic> _get(String path) async {

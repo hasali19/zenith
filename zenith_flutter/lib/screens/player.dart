@@ -36,6 +36,9 @@ class PlayerScreenState extends State<PlayerScreen> {
     Wakelock.enable();
     SystemChrome.setEnabledSystemUIOverlays([]);
 
+    final client = context.read<ApiClient>();
+    var counter = 0;
+
     _platform.setMethodCallHandler((call) async {
       if (call.method == 'onAspectRatioChanged') {
         setState(() {
@@ -45,6 +48,17 @@ class PlayerScreenState extends State<PlayerScreen> {
         setState(() {
           _position = call.arguments as int;
         });
+
+        counter += 1;
+
+        if (counter == 4) {
+          counter = 0;
+        }
+
+        if (counter == 0) {
+          client.updateProgress(
+              widget.id, ((_position ?? 0) / 1000 + _offset).toInt());
+        }
       } else if (call.method == 'onPlaybackStateChanged') {
         setState(() {
           _playing = call.arguments as bool;
@@ -52,14 +66,14 @@ class PlayerScreenState extends State<PlayerScreen> {
       }
     });
 
-    final client = context.read<ApiClient>();
-
     client.getStreamInfo(widget.id).then((info) {
       setState(() {
         _info = info;
+        _offset = info.position.toInt();
       });
 
-      final url = 'https://zenith.hasali.uk/api/stream/${widget.id}/transcode';
+      final url =
+          'https://zenith.hasali.uk/api/stream/${widget.id}/transcode?start=${info.position?.toInt() ?? 0}';
 
       _platform.invokeMethod('init', url).then((texture) {
         setState(() {
