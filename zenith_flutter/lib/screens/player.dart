@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:wakelock/wakelock.dart';
 import 'package:zenith/api.dart';
 
 class PlayerScreen extends StatefulWidget {
@@ -29,6 +30,7 @@ class PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
+    Wakelock.enable();
     SystemChrome.setEnabledSystemUIOverlays([]);
 
     _platform.setMethodCallHandler((call) async {
@@ -70,6 +72,7 @@ class PlayerScreenState extends State<PlayerScreen> {
       _platform.invokeMethod('destroy', _texture);
     }
 
+    Wakelock.disable();
     SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
     super.dispose();
   }
