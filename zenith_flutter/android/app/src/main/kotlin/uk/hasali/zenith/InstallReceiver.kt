@@ -17,14 +17,6 @@ class InstallReceiver : BroadcastReceiver() {
                     intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
                 context.startActivity(activityIntent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
-
-//            PackageInstaller.STATUS_SUCCESS ->
-//                Toast.makeText(context, "Install succeeded!", Toast.LENGTH_SHORT).show()
-//
-//            else -> {
-//                val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
-//                Log.e(TAG, "received $status and $msg")
-//            }
         }
     }
 }

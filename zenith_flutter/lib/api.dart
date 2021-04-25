@@ -151,6 +151,20 @@ class Episode {
   }
 }
 
+class StreamInfo {
+  final double duration;
+
+  StreamInfo({
+    @required this.duration,
+  });
+
+  factory StreamInfo.fromJson(Map<String, dynamic> json) {
+    return StreamInfo(
+      duration: json['duration'],
+    );
+  }
+}
+
 class ApiClient {
   final String scheme;
   final String host;
@@ -176,6 +190,11 @@ class ApiClient {
   Future<List<Episode>> getEpisodes(int seasonId) async {
     final json = await _get('/api/tv/seasons/$seasonId/episodes');
     return List<Episode>.from(json.map((json) => Episode.fromJson(json)));
+  }
+
+  Future<StreamInfo> getStreamInfo(int id) async {
+    final json = await _get('/api/stream/$id/info');
+    return StreamInfo.fromJson(json);
   }
 
   Future<dynamic> _get(String path) async {
