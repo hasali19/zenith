@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -25,6 +26,7 @@ class PlayerScreenState extends State<PlayerScreen> {
   int _texture;
   double _aspectRatio;
   bool _playing = true;
+  int _offset = 0;
   int _position;
   bool _controls = true;
 
@@ -80,6 +82,7 @@ class PlayerScreenState extends State<PlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final position = (_position ?? 0) / 1000 + _offset;
     return Scaffold(
       body: Container(
         color: Colors.black,
@@ -135,19 +138,39 @@ class PlayerScreenState extends State<PlayerScreen> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                "${formatTime(_position / 1000, _info.duration >= 3600)}",
+                                "${formatTime(position, _info.duration >= 3600)}",
                                 style: TextStyle(color: Colors.white),
                               ),
                               Expanded(
                                 child: Slider(
                                   min: 0,
                                   max: _info.duration,
-                                  value: _position / 1000,
-                                  onChanged: (value) {},
+                                  value: min(position, _info.duration),
+                                  onChangeStart: (value) {
+                                    _platform.invokeMethod("pause", _texture);
+                                  },
+                                  onChangeEnd: (value) {
+                                    setState(() {
+                                      _offset = value.toInt();
+                                      _position = 0;
+                                    });
+
+                                    _platform.invokeMethod("setUrl", {
+                                      "textureId": _texture,
+                                      "url":
+                                          "https://zenith.hasali.uk/api/stream/${widget.id}/transcode?start=$_offset",
+                                    });
+                                  },
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _offset = value.toInt();
+                                      _position = 0;
+                                    });
+                                  },
                                 ),
                               ),
                               Text(
-                                "${formatTime(_info.duration - (_position / 1000), _info.duration >= 3600)}",
+                                "${formatTime(_info.duration - position, _info.duration >= 3600)}",
                                 style: TextStyle(color: Colors.white),
                               ),
                             ],

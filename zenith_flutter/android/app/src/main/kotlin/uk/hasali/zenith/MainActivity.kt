@@ -30,7 +30,7 @@ private const val VIDEO_PLAYER_CHANNEL = "zenith.hasali.uk/video-player"
 
 private const val PROGRESS_UPDATE_INTERVAL = 500L
 
-class Player(context: Context, private val channel: MethodChannel, private val texture: TextureRegistry.SurfaceTextureEntry, private val url: String) {
+class Player(context: Context, private val channel: MethodChannel, private val texture: TextureRegistry.SurfaceTextureEntry, url: String) {
     private val player: SimpleExoPlayer
     private var progressShouldLoop = true
 
@@ -63,6 +63,13 @@ class Player(context: Context, private val channel: MethodChannel, private val t
         player.play()
 
         this.player = player
+    }
+
+    fun setUrl(url: String) {
+        player.stop()
+        player.setMediaItem(MediaItem.fromUri(url))
+        player.prepare()
+        player.play()
     }
 
     fun play() {
@@ -172,6 +179,26 @@ class MainActivity : FlutterActivity() {
                     player?.play()
 
                     result.success(true)
+                }
+                "setUrl" -> {
+                    val id = when (val id = call.argument<Any>("textureId")) {
+                        is Int -> id.toLong()
+                        is Long -> id
+                        else -> throw ClassCastException()
+                    }
+
+                    val url = call.argument<String>("url")
+
+                    if (player?.textureId != id) {
+                        result.error("invalid_texture", "Invalid texture id", null)
+                    }
+
+                    if (url == null) {
+                        result.error("invalid_url", null, null)
+                    } else {
+                        player?.setUrl(url)
+                        result.success(true)
+                    }
                 }
                 else -> result.notImplemented()
             }
