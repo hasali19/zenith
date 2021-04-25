@@ -69,7 +69,7 @@ class PlayerScreenState extends State<PlayerScreen> {
     client.getStreamInfo(widget.id).then((info) {
       setState(() {
         _info = info;
-        _offset = info.position.toInt();
+        _offset = info.position?.toInt() ?? 0;
       });
 
       final url =
