@@ -26,6 +26,7 @@ class App extends StatelessWidget {
         ),
         darkTheme: ThemeData.dark().copyWith(
           pageTransitionsTheme: pageTransitionsTheme,
+          scaffoldBackgroundColor: Color(0xFF121212),
         ),
         home: MainScreen(),
       ),
