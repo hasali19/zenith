@@ -26,6 +26,7 @@ class PlayerScreenState extends State<PlayerScreen> {
   double _aspectRatio;
   bool _playing = true;
   int _position;
+  bool _controls = true;
 
   @override
   void initState() {
@@ -84,62 +85,79 @@ class PlayerScreenState extends State<PlayerScreen> {
         color: Colors.black,
         child: Stack(
           children: [
-            Center(
-              child: _info == null || _texture == null || _aspectRatio == null
-                  ? Container()
-                  : AspectRatio(
-                      aspectRatio: _aspectRatio,
-                      child: Texture(textureId: _texture),
-                    ),
-            ),
-            Align(
-              alignment: Alignment.center,
-              child: FloatingActionButton(
-                child: Icon(_playing ? Icons.pause : Icons.play_arrow),
-                onPressed: () {
-                  _platform.invokeMethod(_playing ? 'pause' : 'play', _texture);
-                },
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              child: Center(
+                child: _info == null || _texture == null || _aspectRatio == null
+                    ? Container()
+                    : AspectRatio(
+                        aspectRatio: _aspectRatio,
+                        child: Texture(textureId: _texture),
+                      ),
               ),
+              onTap: () {
+                setState(() {
+                  _controls = !_controls;
+                });
+              },
             ),
-            if (_position != null)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.transparent, Colors.black],
-                      begin: const FractionalOffset(0, 0),
-                      end: const FractionalOffset(0, 1),
+            AnimatedOpacity(
+              opacity: _controls ? 1 : 0,
+              duration: Duration(milliseconds: 200),
+              child: Stack(
+                children: [
+                  Align(
+                    alignment: Alignment.center,
+                    child: FloatingActionButton(
+                      child: Icon(_playing ? Icons.pause : Icons.play_arrow),
+                      onPressed: () {
+                        _platform.invokeMethod(
+                            _playing ? 'pause' : 'play', _texture);
+                      },
                     ),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          "${formatTime(_position / 1000, _info.duration >= 3600)}",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        Expanded(
-                          child: Slider(
-                            min: 0,
-                            max: _info.duration,
-                            value: _position / 1000,
-                            onChanged: (value) {},
+                  if (_position != null)
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.transparent, Colors.black],
+                            begin: const FractionalOffset(0, 0),
+                            end: const FractionalOffset(0, 1),
                           ),
                         ),
-                        Text(
-                          "${formatTime(_info.duration - (_position / 1000), _info.duration >= 3600)}",
-                          style: TextStyle(color: Colors.white),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                "${formatTime(_position / 1000, _info.duration >= 3600)}",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              Expanded(
+                                child: Slider(
+                                  min: 0,
+                                  max: _info.duration,
+                                  value: _position / 1000,
+                                  onChanged: (value) {},
+                                ),
+                              ),
+                              Text(
+                                "${formatTime(_info.duration - (_position / 1000), _info.duration >= 3600)}",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
+                ],
               ),
+            )
           ],
         ),
       ),
