@@ -56,43 +56,77 @@ class SeasonDetailsScreenState extends State<SeasonDetailsScreen> {
                         ? Container()
                         : Image.network(widget.season.backdrop!),
                   ),
-                  Container(
+                  Padding(
                     padding: EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: Row(
                       children: [
-                        Text(
-                          widget.season.name ??
-                              'Season ${widget.season.seasonNumber}',
-                          style: theme.textTheme.headline4,
+                        Material(
+                          elevation: 2.0,
+                          type: MaterialType.card,
+                          clipBehavior: Clip.hardEdge,
+                          child: Image.network(
+                            widget.season.poster!,
+                            width: 150,
+                          ),
                         ),
-                        Text(
-                          widget.show.name ?? '',
-                          style: theme.textTheme.caption,
-                        ),
-                        if (widget.season.overview?.isNotEmpty ?? false)
-                          Column(children: [
-                            SizedBox(height: 16),
-                            Text(
-                              widget.season.overview ?? '',
-                              style: theme.textTheme.bodyText2,
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  widget.season.name ??
+                                      'Season ${widget.season.seasonNumber}',
+                                  style: theme.textTheme.headline5,
+                                ),
+                                Text(
+                                  '${widget.show.name ?? ''} - S${widget.season.seasonNumber.toString().padLeft(2, '0')}',
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  '${snapshot.data?.length} episodes',
+                                  style: theme.textTheme.caption,
+                                ),
+                              ],
                             ),
-                          ])
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   Container(
-                    margin: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'Episodes',
-                      style: theme.textTheme.headline5,
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (widget.season.overview?.isNotEmpty ?? false)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                'Overview',
+                                style: theme.textTheme.headline6,
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                widget.season.overview ?? '',
+                                style: theme.textTheme.bodyText2,
+                              ),
+                            ],
+                          ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Episodes',
+                          style: theme.textTheme.headline6,
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 16),
                 ]),
               ),
               SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 sliver: EpisodeGrid(snapshot.data!),
               )
             ],

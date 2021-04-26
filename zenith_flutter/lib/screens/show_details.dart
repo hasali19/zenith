@@ -57,28 +57,64 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
                       ? Container()
                       : Image.network(widget.show.backdrop!),
                 ),
-                Container(
+                Padding(
                   padding: EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Material(
+                        elevation: 2.0,
+                        type: MaterialType.card,
+                        clipBehavior: Clip.hardEdge,
+                        child: Image.network(
+                          widget.show.poster!,
+                          width: 150,
+                        ),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                widget.show.name ?? '',
+                                style: theme.textTheme.headline5,
+                              ),
+                              Text(
+                                widget.show.startYear().toString(),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                '${snapshot.data?.length} seasons',
+                                style: theme.textTheme.caption,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        widget.show.name ?? '',
-                        style: theme.textTheme.headline4,
+                        'Overview',
+                        style: theme.textTheme.headline6,
                       ),
                       SizedBox(height: 8),
                       Text(
                         widget.show.overview ?? '',
                         style: theme.textTheme.bodyText2,
                       ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Seasons',
+                        style: theme.textTheme.headline6,
+                      ),
                     ],
-                  ),
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'Seasons',
-                    style: theme.textTheme.headline5,
                   ),
                 ),
                 SizedBox(
