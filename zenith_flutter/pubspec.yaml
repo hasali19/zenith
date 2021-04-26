@@ -26,6 +26,7 @@ dependencies:
 
   assorted_layout_widgets: ^4.0.7
   http: ^0.13.1
+  pedantic: ^1.0.0
   provider: ^5.0.0
   wakelock: ^0.5.1
 

@@ -81,8 +81,8 @@ class PosterItem extends StatelessWidget {
               fit: BoxFit.cover,
               image: NetworkImage(this.poster!),
               child: InkWell(
-                child: AspectRatio(aspectRatio: 2 / 3),
                 onTap: onTap,
+                child: AspectRatio(aspectRatio: 2 / 3),
               ),
             ),
     );

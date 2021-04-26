@@ -45,7 +45,7 @@ class MovieDetailsScreen extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: 4),
                   child: ElevatedButton.icon(
                     icon: Icon(Icons.play_arrow, size: 18),
-                    label: Text("Play"),
+                    label: Text('Play'),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -57,7 +57,7 @@ class MovieDetailsScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  movie.overview ?? "",
+                  movie.overview ?? '',
                   style: theme.textTheme.bodyText2,
                 ),
               ],

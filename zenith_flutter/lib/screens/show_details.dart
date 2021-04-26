@@ -39,7 +39,7 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
         future: _seasons,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text("${snapshot.error}"));
+            return Center(child: Text('${snapshot.error}'));
           }
 
           if (!snapshot.hasData) {
@@ -63,12 +63,12 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        widget.show.name ?? "",
+                        widget.show.name ?? '',
                         style: theme.textTheme.headline4,
                       ),
                       SizedBox(height: 8),
                       Text(
-                        widget.show.overview ?? "",
+                        widget.show.overview ?? '',
                         style: theme.textTheme.bodyText2,
                       ),
                     ],
@@ -77,7 +77,7 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    "Seasons",
+                    'Seasons',
                     style: theme.textTheme.headline5,
                   ),
                 ),
@@ -95,8 +95,8 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
                           child: PosterItem(
                             poster: season.poster,
                             primary:
-                                season.name ?? "Season ${season.seasonNumber}",
-                            secondary: widget.show.name ?? "",
+                                season.name ?? 'Season ${season.seasonNumber}',
+                            secondary: widget.show.name ?? '',
                             onTap: () {
                               Navigator.push(
                                   context,
@@ -148,7 +148,6 @@ class EpisodeGrid extends StatelessWidget {
                         fit: BoxFit.cover,
                         image: NetworkImage(episode.thumbnail!),
                         child: InkWell(
-                          child: AspectRatio(aspectRatio: 16 / 9),
                           onTap: () {
                             Navigator.push(
                               context,
@@ -157,6 +156,7 @@ class EpisodeGrid extends StatelessWidget {
                               ),
                             );
                           },
+                          child: AspectRatio(aspectRatio: 16 / 9),
                         ),
                       ),
               ),
@@ -166,12 +166,12 @@ class EpisodeGrid extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      episode.name ?? "",
+                      episode.name ?? '',
                       style: Theme.of(context).textTheme.subtitle2,
                     ),
                     SizedBox(height: 2),
                     Text(
-                      episode.overview ?? "",
+                      episode.overview ?? '',
                       style: Theme.of(context).textTheme.caption,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,

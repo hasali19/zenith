@@ -49,7 +49,7 @@ class ShowsScreenState extends State<ShowsScreen> {
           return PosterGrid(
             count: shows.length,
             poster: (i) => shows[i].poster,
-            primary: (i) => shows[i].name ?? "",
+            primary: (i) => shows[i].name ?? '',
             secondary: (i) => shows[i].startYear().toString(),
             onItemTap: (i) => _handleItemTap(shows[i]),
           );

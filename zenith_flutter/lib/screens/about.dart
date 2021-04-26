@@ -9,10 +9,10 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("About"),
+        title: Text('About'),
       ),
       body: Center(
-        child: Text(commitHash ?? "No commit hash"),
+        child: Text(commitHash ?? 'No commit hash'),
       ),
     );
   }

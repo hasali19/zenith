@@ -39,7 +39,7 @@ class SeasonDetailsScreenState extends State<SeasonDetailsScreen> {
         future: _episodes,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text("${snapshot.error}"));
+            return Center(child: Text('${snapshot.error}'));
           }
 
           if (snapshot.data != null) {
@@ -63,18 +63,18 @@ class SeasonDetailsScreenState extends State<SeasonDetailsScreen> {
                       children: [
                         Text(
                           widget.season.name ??
-                              "Season ${widget.season.seasonNumber}",
+                              'Season ${widget.season.seasonNumber}',
                           style: theme.textTheme.headline4,
                         ),
                         Text(
-                          widget.show.name ?? "",
+                          widget.show.name ?? '',
                           style: theme.textTheme.caption,
                         ),
                         if (widget.season.overview?.isNotEmpty ?? false)
                           Column(children: [
                             SizedBox(height: 16),
                             Text(
-                              widget.season.overview ?? "",
+                              widget.season.overview ?? '',
                               style: theme.textTheme.bodyText2,
                             ),
                           ])
@@ -84,7 +84,7 @@ class SeasonDetailsScreenState extends State<SeasonDetailsScreen> {
                   Container(
                     margin: EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      "Episodes",
+                      'Episodes',
                       style: theme.textTheme.headline5,
                     ),
                   ),
@@ -134,6 +134,15 @@ class EpisodeGrid extends StatelessWidget {
                           fit: BoxFit.cover,
                           image: NetworkImage(episode.thumbnail!),
                           child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      PlayerScreen(episode.id),
+                                ),
+                              );
+                            },
                             child: AspectRatio(
                               aspectRatio: 16 / 9,
                               child: episode.isWatched
@@ -145,15 +154,6 @@ class EpisodeGrid extends StatelessWidget {
                                     )
                                   : null,
                             ),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      PlayerScreen(episode.id),
-                                ),
-                              );
-                            },
                           ),
                         ),
                 ),
@@ -163,13 +163,13 @@ class EpisodeGrid extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       TextOneLine(
-                        "${episode.episodeNumber} - ${episode.name}",
+                        '${episode.episodeNumber} - ${episode.name}',
                         style: Theme.of(context).textTheme.subtitle2,
                         overflow: TextOverflow.fade,
                       ),
                       SizedBox(height: 2),
                       Text(
-                        episode.overview ?? "",
+                        episode.overview ?? '',
                         style: Theme.of(context).textTheme.caption,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,

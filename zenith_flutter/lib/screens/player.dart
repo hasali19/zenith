@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pedantic/pedantic.dart';
 import 'package:provider/provider.dart';
 import 'package:wakelock/wakelock.dart';
 import 'package:zenith/api.dart';
@@ -19,7 +20,7 @@ class PlayerScreen extends StatefulWidget {
 }
 
 class PlayerScreenState extends State<PlayerScreen> {
-  static const _platform = const MethodChannel('zenith.hasali.uk/video-player');
+  static const _platform = MethodChannel('zenith.hasali.uk/video-player');
 
   StreamInfo? _info;
 
@@ -56,8 +57,8 @@ class PlayerScreenState extends State<PlayerScreen> {
         }
 
         if (counter == 0) {
-          client.updateProgress(
-              widget.id, ((_position ?? 0) / 1000 + _offset).toInt());
+          unawaited(client.updateProgress(
+              widget.id, ((_position ?? 0) / 1000 + _offset).toInt()));
         }
       } else if (call.method == 'onPlaybackStateChanged') {
         setState(() {
@@ -104,6 +105,11 @@ class PlayerScreenState extends State<PlayerScreen> {
           children: [
             GestureDetector(
               behavior: HitTestBehavior.opaque,
+              onTap: () {
+                setState(() {
+                  _controls = !_controls;
+                });
+              },
               child: Center(
                 child: _info == null || _texture == null || _aspectRatio == null
                     ? Container()
@@ -112,11 +118,6 @@ class PlayerScreenState extends State<PlayerScreen> {
                         child: Texture(textureId: _texture!),
                       ),
               ),
-              onTap: () {
-                setState(() {
-                  _controls = !_controls;
-                });
-              },
             ),
             AnimatedOpacity(
               opacity: _controls ? 1 : 0,
@@ -126,11 +127,11 @@ class PlayerScreenState extends State<PlayerScreen> {
                   Align(
                     alignment: Alignment.center,
                     child: FloatingActionButton(
-                      child: Icon(_playing ? Icons.pause : Icons.play_arrow),
                       onPressed: () {
                         _platform.invokeMethod(
                             _playing ? 'pause' : 'play', _texture);
                       },
+                      child: Icon(_playing ? Icons.pause : Icons.play_arrow),
                     ),
                   ),
                   if (_position != null)
@@ -152,7 +153,7 @@ class PlayerScreenState extends State<PlayerScreen> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                "${formatTime(position, _info!.duration >= 3600)}",
+                                '${formatTime(position, _info!.duration >= 3600)}',
                                 style: TextStyle(color: Colors.white),
                               ),
                               Expanded(
@@ -161,7 +162,7 @@ class PlayerScreenState extends State<PlayerScreen> {
                                   max: _info!.duration,
                                   value: min(position, _info!.duration),
                                   onChangeStart: (value) {
-                                    _platform.invokeMethod("pause", _texture);
+                                    _platform.invokeMethod('pause', _texture);
                                   },
                                   onChangeEnd: (value) {
                                     setState(() {
@@ -169,10 +170,10 @@ class PlayerScreenState extends State<PlayerScreen> {
                                       _position = 0;
                                     });
 
-                                    _platform.invokeMethod("setUrl", {
-                                      "textureId": _texture,
-                                      "url":
-                                          "https://zenith.hasali.uk/api/stream/${widget.id}/transcode?start=$_offset",
+                                    _platform.invokeMethod('setUrl', {
+                                      'textureId': _texture,
+                                      'url':
+                                          'https://zenith.hasali.uk/api/stream/${widget.id}/transcode?start=$_offset',
                                     });
                                   },
                                   onChanged: (value) {
@@ -184,7 +185,7 @@ class PlayerScreenState extends State<PlayerScreen> {
                                 ),
                               ),
                               Text(
-                                "${formatTime(_info!.duration - position, _info!.duration >= 3600)}",
+                                '${formatTime(_info!.duration - position, _info!.duration >= 3600)}',
                                 style: TextStyle(color: Colors.white),
                               ),
                             ],

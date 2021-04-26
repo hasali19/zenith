@@ -22,7 +22,7 @@ Future<bool> _checkForUpdates() async {
   }
 
   final path = 'repos/hasali19/zenith/actions/workflows/8229171/runs';
-  final uri = Uri.https('api.github.com', path, {'per_page': "1"});
+  final uri = Uri.https('api.github.com', path, {'per_page': '1'});
   final res = await http.get(uri);
 
   final Iterable runs = jsonDecode(res.body)['workflow_runs'];
@@ -72,7 +72,7 @@ class MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Zenith"),
+        title: Text('Zenith'),
         actions: [
           AppBarMenu(),
         ],
@@ -83,9 +83,9 @@ class MainScreenState extends State<MainScreen> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.movie), label: "Movies"),
-          BottomNavigationBarItem(icon: Icon(Icons.tv), label: "Shows"),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.movie), label: 'Movies'),
+          BottomNavigationBarItem(icon: Icon(Icons.tv), label: 'Shows'),
         ],
         currentIndex: _current,
         onTap: (item) => setState(() => _current = item),
@@ -128,7 +128,7 @@ class UpdateDialog extends StatefulWidget {
 }
 
 class UpdateDialogState extends State<UpdateDialog> {
-  static const platform = const MethodChannel('zenith.hasali.uk/updater');
+  static const platform = MethodChannel('zenith.hasali.uk/updater');
 
   var _updating = false;
 
@@ -151,20 +151,20 @@ class UpdateDialogState extends State<UpdateDialog> {
         children: [
           CircularProgressIndicator(),
           SizedBox(width: 24),
-          Text("Downloading"),
+          Text('Downloading'),
         ],
       );
     } else {
-      content = Text("An update is available");
+      content = Text('An update is available');
     }
 
     return AlertDialog(
-      title: Text("Update"),
+      title: Text('Update'),
       content: content,
       actions: [
         TextButton(
-          child: Text("Install"),
           onPressed: _handleInstallTap,
+          child: Text('Install'),
         ),
       ],
     );

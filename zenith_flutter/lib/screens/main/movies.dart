@@ -48,7 +48,7 @@ class MoviesScreenState extends State<MoviesScreen> {
             count: movies.length,
             poster: (i) => movies[i].poster,
             primary: (i) => movies[i].title,
-            secondary: (i) => movies[i].releaseYear()?.toString() ?? "",
+            secondary: (i) => movies[i].releaseYear()?.toString() ?? '',
             onItemTap: (i) => _handleItemTap(movies[i]),
           );
         },

@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:meta/meta.dart';
 import 'package:http/http.dart' as http;
 
 class Movie {
@@ -224,7 +223,7 @@ class ApiClient {
     final res = await http.post(uri);
 
     if (res.statusCode != 200) {
-      throw Exception("Failed to fetch $uri");
+      throw Exception('Failed to fetch $uri');
     }
   }
 
@@ -233,7 +232,7 @@ class ApiClient {
     final res = await http.get(uri);
 
     if (res.statusCode != 200) {
-      throw Exception("Failed to fetch $uri");
+      throw Exception('Failed to fetch $uri');
     }
 
     return jsonDecode(utf8.decode(res.bodyBytes));
