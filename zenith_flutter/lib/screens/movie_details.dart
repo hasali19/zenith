@@ -23,7 +23,9 @@ class MovieDetailsScreen extends StatelessWidget {
         children: [
           AspectRatio(
             aspectRatio: 16 / 9,
-            child: Image.network(movie.backdrop),
+            child: movie.backdrop == null
+                ? Container()
+                : Image.network(movie.backdrop!),
           ),
           Container(
             padding: EdgeInsets.all(16),
@@ -55,7 +57,7 @@ class MovieDetailsScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  movie.overview,
+                  movie.overview ?? "",
                   style: theme.textTheme.bodyText2,
                 ),
               ],

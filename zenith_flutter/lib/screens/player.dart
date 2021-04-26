@@ -21,13 +21,13 @@ class PlayerScreen extends StatefulWidget {
 class PlayerScreenState extends State<PlayerScreen> {
   static const _platform = const MethodChannel('zenith.hasali.uk/video-player');
 
-  StreamInfo _info;
+  StreamInfo? _info;
 
-  int _texture;
-  double _aspectRatio;
+  int? _texture;
+  double? _aspectRatio;
   bool _playing = true;
   int _offset = 0;
-  int _position;
+  int? _position;
   bool _controls = true;
 
   @override
@@ -108,8 +108,8 @@ class PlayerScreenState extends State<PlayerScreen> {
                 child: _info == null || _texture == null || _aspectRatio == null
                     ? Container()
                     : AspectRatio(
-                        aspectRatio: _aspectRatio,
-                        child: Texture(textureId: _texture),
+                        aspectRatio: _aspectRatio!,
+                        child: Texture(textureId: _texture!),
                       ),
               ),
               onTap: () {
@@ -152,14 +152,14 @@ class PlayerScreenState extends State<PlayerScreen> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                "${formatTime(position, _info.duration >= 3600)}",
+                                "${formatTime(position, _info!.duration >= 3600)}",
                                 style: TextStyle(color: Colors.white),
                               ),
                               Expanded(
                                 child: Slider(
                                   min: 0,
-                                  max: _info.duration,
-                                  value: min(position, _info.duration),
+                                  max: _info!.duration,
+                                  value: min(position, _info!.duration),
                                   onChangeStart: (value) {
                                     _platform.invokeMethod("pause", _texture);
                                   },
@@ -184,7 +184,7 @@ class PlayerScreenState extends State<PlayerScreen> {
                                 ),
                               ),
                               Text(
-                                "${formatTime(_info.duration - position, _info.duration >= 3600)}",
+                                "${formatTime(_info!.duration - position, _info!.duration >= 3600)}",
                                 style: TextStyle(color: Colors.white),
                               ),
                             ],

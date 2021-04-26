@@ -13,7 +13,7 @@ class ShowsScreen extends StatefulWidget {
 }
 
 class ShowsScreenState extends State<ShowsScreen> {
-  Future<List<Show>> _shows;
+  Future<List<Show>>? _shows;
 
   @override
   void initState() {
@@ -40,16 +40,18 @@ class ShowsScreenState extends State<ShowsScreen> {
             return Text('${snapshot.error}');
           }
 
-          if (!snapshot.hasData) {
+          final shows = snapshot.data;
+
+          if (shows == null) {
             return CircularProgressIndicator();
           }
 
           return PosterGrid(
-            count: snapshot.data.length,
-            poster: (i) => snapshot.data[i].poster,
-            primary: (i) => snapshot.data[i].name,
-            secondary: (i) => snapshot.data[i].startYear().toString(),
-            onItemTap: (i) => _handleItemTap(snapshot.data[i]),
+            count: shows.length,
+            poster: (i) => shows[i].poster,
+            primary: (i) => shows[i].name ?? "",
+            secondary: (i) => shows[i].startYear().toString(),
+            onItemTap: (i) => _handleItemTap(shows[i]),
           );
         },
       ),

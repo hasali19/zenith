@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class AboutScreen extends StatelessWidget {
-  final String commitHash;
+  final String? commitHash;
 
-  AboutScreen({@required this.commitHash});
+  AboutScreen({this.commitHash});
 
   @override
   Widget build(BuildContext context) {

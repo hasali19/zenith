@@ -11,7 +11,7 @@ class MoviesScreen extends StatefulWidget {
 }
 
 class MoviesScreenState extends State<MoviesScreen> {
-  Future<List<Movie>> _movies;
+  Future<List<Movie>>? _movies;
 
   @override
   void initState() {
@@ -38,16 +38,18 @@ class MoviesScreenState extends State<MoviesScreen> {
             return Text('${snapshot.error}');
           }
 
-          if (!snapshot.hasData) {
+          final movies = snapshot.data;
+
+          if (movies == null) {
             return CircularProgressIndicator();
           }
 
           return PosterGrid(
-            count: snapshot.data.length,
-            poster: (i) => snapshot.data[i].poster,
-            primary: (i) => snapshot.data[i].title,
-            secondary: (i) => snapshot.data[i].releaseYear().toString(),
-            onItemTap: (i) => _handleItemTap(snapshot.data[i]),
+            count: movies.length,
+            poster: (i) => movies[i].poster,
+            primary: (i) => movies[i].title,
+            secondary: (i) => movies[i].releaseYear()?.toString() ?? "",
+            onItemTap: (i) => _handleItemTap(movies[i]),
           );
         },
       ),

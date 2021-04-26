@@ -18,7 +18,7 @@ class ShowDetailsScreen extends StatefulWidget {
 }
 
 class ShowDetailsScreenState extends State<ShowDetailsScreen> {
-  Future<List<Season>> _seasons;
+  Future<List<Season>>? _seasons;
 
   @override
   void initState() {
@@ -53,7 +53,9 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
               children: [
                 AspectRatio(
                   aspectRatio: 16 / 9,
-                  child: Image.network(widget.show.backdrop),
+                  child: widget.show.backdrop == null
+                      ? Container()
+                      : Image.network(widget.show.backdrop!),
                 ),
                 Container(
                   padding: EdgeInsets.all(16),
@@ -61,12 +63,12 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        widget.show.name,
+                        widget.show.name ?? "",
                         style: theme.textTheme.headline4,
                       ),
                       SizedBox(height: 8),
                       Text(
-                        widget.show.overview,
+                        widget.show.overview ?? "",
                         style: theme.textTheme.bodyText2,
                       ),
                     ],
@@ -86,7 +88,7 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     children: [
-                      for (final season in snapshot.data)
+                      for (final season in snapshot.data ?? [])
                         Container(
                           width: 120,
                           margin: EdgeInsets.symmetric(horizontal: 4),
@@ -94,7 +96,7 @@ class ShowDetailsScreenState extends State<ShowDetailsScreen> {
                             poster: season.poster,
                             primary:
                                 season.name ?? "Season ${season.seasonNumber}",
-                            secondary: widget.show.name,
+                            secondary: widget.show.name ?? "",
                             onTap: () {
                               Navigator.push(
                                   context,
@@ -140,21 +142,23 @@ class EpisodeGrid extends StatelessWidget {
                 elevation: 2.0,
                 type: MaterialType.card,
                 clipBehavior: Clip.hardEdge,
-                child: Ink.image(
-                  fit: BoxFit.cover,
-                  image: NetworkImage(episode.thumbnail),
-                  child: InkWell(
-                    child: AspectRatio(aspectRatio: 16 / 9),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PlayerScreen(episode.id),
+                child: episode.thumbnail == null
+                    ? Container()
+                    : Ink.image(
+                        fit: BoxFit.cover,
+                        image: NetworkImage(episode.thumbnail!),
+                        child: InkWell(
+                          child: AspectRatio(aspectRatio: 16 / 9),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PlayerScreen(episode.id),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
-                ),
+                      ),
               ),
               Container(
                 padding: EdgeInsets.symmetric(vertical: 8),
@@ -162,13 +166,12 @@ class EpisodeGrid extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      episode.name,
+                      episode.name ?? "",
                       style: Theme.of(context).textTheme.subtitle2,
-                      // overflow: TextOverflow.fade,
                     ),
                     SizedBox(height: 2),
                     Text(
-                      episode.overview,
+                      episode.overview ?? "",
                       style: Theme.of(context).textTheme.caption,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,

@@ -6,20 +6,20 @@ import 'package:http/http.dart' as http;
 class Movie {
   final int id;
   final String title;
-  final int releaseDate;
-  final String overview;
-  final String poster;
-  final String backdrop;
+  final int? releaseDate;
+  final String? overview;
+  final String? poster;
+  final String? backdrop;
   final double duration;
 
   Movie({
-    @required this.id,
-    @required this.title,
-    @required this.releaseDate,
-    @required this.overview,
-    @required this.poster,
-    @required this.backdrop,
-    @required this.duration,
+    required this.id,
+    required this.title,
+    this.releaseDate,
+    this.overview,
+    this.poster,
+    this.backdrop,
+    required this.duration,
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
@@ -34,30 +34,36 @@ class Movie {
     );
   }
 
-  int releaseYear() {
-    return DateTime.fromMillisecondsSinceEpoch(this.releaseDate * 1000).year;
+  int? releaseYear() {
+    final releaseDate = this.releaseDate;
+
+    if (releaseDate == null) {
+      return null;
+    }
+
+    return DateTime.fromMillisecondsSinceEpoch(releaseDate * 1000).year;
   }
 }
 
 class Show {
   final int id;
-  final String name;
-  final int startDate;
-  final int endDate;
-  final String overview;
-  final String poster;
-  final String backdrop;
+  final String? name;
+  final int? startDate;
+  final int? endDate;
+  final String? overview;
+  final String? poster;
+  final String? backdrop;
   final int unwatchedEpisodes;
 
   Show({
-    @required this.id,
-    @required this.name,
-    @required this.startDate,
-    @required this.endDate,
-    @required this.overview,
-    @required this.poster,
-    @required this.backdrop,
-    @required this.unwatchedEpisodes,
+    required this.id,
+    this.name,
+    this.startDate,
+    this.endDate,
+    this.overview,
+    this.poster,
+    this.backdrop,
+    required this.unwatchedEpisodes,
   });
 
   factory Show.fromJson(Map<String, dynamic> json) {
@@ -73,8 +79,14 @@ class Show {
     );
   }
 
-  int startYear() {
-    return DateTime.fromMillisecondsSinceEpoch(this.startDate * 1000).year;
+  int? startYear() {
+    final startDate = this.startDate;
+
+    if (startDate == null) {
+      return null;
+    }
+
+    return DateTime.fromMillisecondsSinceEpoch(startDate * 1000).year;
   }
 }
 
@@ -82,19 +94,19 @@ class Season {
   final int id;
   final int showId;
   final int seasonNumber;
-  final String name;
-  final String overview;
-  final String poster;
-  final String backdrop;
+  final String? name;
+  final String? overview;
+  final String? poster;
+  final String? backdrop;
 
   Season({
-    @required this.id,
-    @required this.showId,
-    @required this.seasonNumber,
-    @required this.name,
-    @required this.overview,
-    @required this.poster,
-    @required this.backdrop,
+    required this.id,
+    required this.showId,
+    required this.seasonNumber,
+    this.name,
+    this.overview,
+    this.poster,
+    this.backdrop,
   });
 
   factory Season.fromJson(Map<String, dynamic> json) {
@@ -115,24 +127,24 @@ class Episode {
   final int showId;
   final int seasonId;
   final int episodeNumber;
-  final String name;
-  final int airDate;
-  final String overview;
-  final String thumbnail;
+  final String? name;
+  final int? airDate;
+  final String? overview;
+  final String? thumbnail;
   final double duration;
   final bool isWatched;
 
   Episode({
-    @required this.id,
-    @required this.showId,
-    @required this.seasonId,
-    @required this.episodeNumber,
-    @required this.name,
-    @required this.airDate,
-    @required this.overview,
-    @required this.thumbnail,
-    @required this.duration,
-    @required this.isWatched,
+    required this.id,
+    required this.showId,
+    required this.seasonId,
+    required this.episodeNumber,
+    this.name,
+    this.airDate,
+    this.overview,
+    this.thumbnail,
+    required this.duration,
+    required this.isWatched,
   });
 
   factory Episode.fromJson(Map<String, dynamic> json) {
@@ -153,11 +165,11 @@ class Episode {
 
 class StreamInfo {
   final double duration;
-  final double position;
+  final double? position;
 
   StreamInfo({
-    @required this.duration,
-    @required this.position,
+    required this.duration,
+    this.position,
   });
 
   factory StreamInfo.fromJson(Map<String, dynamic> json) {

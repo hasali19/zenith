@@ -7,16 +7,16 @@ class PosterGrid extends StatelessWidget {
 
   final int count;
 
-  final String Function(int) poster;
+  final String? Function(int) poster;
   final String Function(int) primary;
   final String Function(int) secondary;
-  final void Function(int) onItemTap;
+  final void Function(int)? onItemTap;
 
   PosterGrid({
-    @required this.count,
-    @required this.poster,
-    @required this.primary,
-    @required this.secondary,
+    required this.count,
+    required this.poster,
+    required this.primary,
+    required this.secondary,
     this.spacing = 8,
     this.maxItemWidth = 120,
     this.onItemTap,
@@ -27,7 +27,7 @@ class PosterGrid extends StatelessWidget {
       poster: poster(i),
       primary: primary(i),
       secondary: secondary(i),
-      onTap: () => onItemTap(i),
+      onTap: () => onItemTap?.call(i),
     );
   }
 
@@ -56,16 +56,16 @@ class PosterGrid extends StatelessWidget {
 }
 
 class PosterItem extends StatelessWidget {
-  final String poster;
+  final String? poster;
   final String primary;
   final String secondary;
 
-  final void Function() onTap;
+  final void Function()? onTap;
 
   PosterItem({
-    @required this.poster,
-    @required this.primary,
-    @required this.secondary,
+    required this.poster,
+    required this.primary,
+    required this.secondary,
     this.onTap,
   });
 
@@ -75,14 +75,16 @@ class PosterItem extends StatelessWidget {
       elevation: 2.0,
       type: MaterialType.card,
       clipBehavior: Clip.hardEdge,
-      child: Ink.image(
-        fit: BoxFit.cover,
-        image: NetworkImage(this.poster),
-        child: InkWell(
-          child: AspectRatio(aspectRatio: 2 / 3),
-          onTap: onTap,
-        ),
-      ),
+      child: this.poster == null
+          ? Container()
+          : Ink.image(
+              fit: BoxFit.cover,
+              image: NetworkImage(this.poster!),
+              child: InkWell(
+                child: AspectRatio(aspectRatio: 2 / 3),
+                onTap: onTap,
+              ),
+            ),
     );
 
     final info = Container(

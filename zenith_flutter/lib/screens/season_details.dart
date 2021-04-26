@@ -18,7 +18,7 @@ class SeasonDetailsScreen extends StatefulWidget {
 }
 
 class SeasonDetailsScreenState extends State<SeasonDetailsScreen> {
-  Future<List<Episode>> _episodes;
+  Future<List<Episode>>? _episodes;
 
   @override
   void initState() {
@@ -42,7 +42,7 @@ class SeasonDetailsScreenState extends State<SeasonDetailsScreen> {
             return Center(child: Text("${snapshot.error}"));
           }
 
-          if (!snapshot.hasData) {
+          if (snapshot.data != null) {
             return Center(child: CircularProgressIndicator());
           }
 
@@ -52,7 +52,9 @@ class SeasonDetailsScreenState extends State<SeasonDetailsScreen> {
                 delegate: SliverChildListDelegate([
                   AspectRatio(
                     aspectRatio: 16 / 9,
-                    child: Image.network(widget.season.backdrop),
+                    child: widget.season.backdrop == null
+                        ? Container()
+                        : Image.network(widget.season.backdrop!),
                   ),
                   Container(
                     padding: EdgeInsets.all(16),
@@ -65,14 +67,14 @@ class SeasonDetailsScreenState extends State<SeasonDetailsScreen> {
                           style: theme.textTheme.headline4,
                         ),
                         Text(
-                          widget.show.name,
+                          widget.show.name ?? "",
                           style: theme.textTheme.caption,
                         ),
-                        if (widget.season.overview.isNotEmpty)
+                        if (widget.season.overview?.isNotEmpty ?? false)
                           Column(children: [
                             SizedBox(height: 16),
                             Text(
-                              widget.season.overview,
+                              widget.season.overview ?? "",
                               style: theme.textTheme.bodyText2,
                             ),
                           ])
@@ -91,7 +93,7 @@ class SeasonDetailsScreenState extends State<SeasonDetailsScreen> {
               ),
               SliverPadding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
-                sliver: EpisodeGrid(snapshot.data),
+                sliver: EpisodeGrid(snapshot.data!),
               )
             ],
           );
@@ -126,31 +128,34 @@ class EpisodeGrid extends StatelessWidget {
                   elevation: 2.0,
                   type: MaterialType.card,
                   clipBehavior: Clip.hardEdge,
-                  child: Ink.image(
-                    fit: BoxFit.cover,
-                    image: NetworkImage(episode.thumbnail),
-                    child: InkWell(
-                      child: AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: episode.isWatched
-                            ? Container(
-                                color: Color.fromARGB(100, 0, 0, 0),
-                                child: Center(
-                                  child: Icon(Icons.check),
+                  child: episode.thumbnail == null
+                      ? Container()
+                      : Ink.image(
+                          fit: BoxFit.cover,
+                          image: NetworkImage(episode.thumbnail!),
+                          child: InkWell(
+                            child: AspectRatio(
+                              aspectRatio: 16 / 9,
+                              child: episode.isWatched
+                                  ? Container(
+                                      color: Color.fromARGB(100, 0, 0, 0),
+                                      child: Center(
+                                        child: Icon(Icons.check),
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      PlayerScreen(episode.id),
                                 ),
-                              )
-                            : null,
-                      ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PlayerScreen(episode.id),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-                  ),
+                        ),
                 ),
                 Container(
                   padding: EdgeInsets.symmetric(vertical: 8),
@@ -164,7 +169,7 @@ class EpisodeGrid extends StatelessWidget {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        episode.overview,
+                        episode.overview ?? "",
                         style: Theme.of(context).textTheme.caption,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
