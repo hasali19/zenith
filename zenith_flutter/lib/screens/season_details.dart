@@ -42,7 +42,7 @@ class SeasonDetailsScreenState extends State<SeasonDetailsScreen> {
             return Center(child: Text('${snapshot.error}'));
           }
 
-          if (snapshot.data != null) {
+          if (snapshot.data == null) {
             return Center(child: CircularProgressIndicator());
           }
 
