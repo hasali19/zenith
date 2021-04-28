@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app class="app">
     <v-navigation-drawer
       v-model="drawer"
       app
@@ -34,9 +34,11 @@
         style="max-height: calc(100% - 24px)"
       />
     </v-app-bar>
-    <v-main>
+    <v-main class="main">
       <transition name="zoom" mode="out-in">
-        <router-view></router-view>
+        <div :key="$route.path" class="main-content">
+          <router-view></router-view>
+        </div>
       </transition>
     </v-main>
   </v-app>
@@ -45,7 +47,7 @@
 <style scoped>
 .zoom-enter-active,
 .zoom-leave-active {
-  animation-duration: 300ms;
+  animation-duration: 200ms;
   animation-fill-mode: both;
   animation-name: zoom;
 }
@@ -67,6 +69,21 @@
 
 .active {
   background-color: #fd11009f;
+}
+
+.app {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main {
+  height: 100%;
+  overflow: hidden;
+}
+
+.main-content {
+  height: 100%;
+  overflow-y: auto;
 }
 </style>
 
