@@ -85,13 +85,13 @@ export default function ({ open, onClose }: Props) {
   return (
     <nav
       css={(theme) => css`
-        ${theme.breakpoints.up("sm")} {
+        ${theme.breakpoints.up("md")} {
           width: ${WIDTH}px;
           flex-shrink: 0;
         }
       `}
     >
-      <Hidden smUp>
+      <Hidden mdUp>
         <Drawer
           variant="temporary"
           open={open}
@@ -101,7 +101,7 @@ export default function ({ open, onClose }: Props) {
           <DrawerContent onClose={onClose} />
         </Drawer>
       </Hidden>
-      <Hidden smDown>
+      <Hidden mdDown>
         <Drawer variant="permanent" open>
           <Toolbar />
           <DrawerContent onClose={onClose} />

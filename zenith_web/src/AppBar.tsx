@@ -22,7 +22,7 @@ export default function ({ onToggleDrawer }: Props) {
       `}
     >
       <Toolbar>
-        <Hidden smUp implementation="css">
+        <Hidden mdUp implementation="css">
           <IconButton
             edge="start"
             color="inherit"

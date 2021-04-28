@@ -20,7 +20,7 @@ const styles = {
     flex-direction: column;
     overflow: hidden;
 
-    ${theme.breakpoints.up("sm")} {
+    ${theme.breakpoints.up("md")} {
       padding-left: 256px;
     }
   `,
