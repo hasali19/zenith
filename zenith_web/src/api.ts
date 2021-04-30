@@ -196,6 +196,12 @@ export default {
       return shows.map((s: TvShowJson) => new TvShow(s));
     },
 
+    async getSeasons(showId: ItemId) {
+      const res = await fetch(`/api/tv/shows/${showId}/seasons`);
+      const seasons = await res.json();
+      return seasons.map((s: TvSeasonJson) => new TvSeason(s));
+    },
+
     async getSeason(id: ItemId) {
       const res = await fetch(`/api/tv/seasons/${id}`);
       const season = await res.json();

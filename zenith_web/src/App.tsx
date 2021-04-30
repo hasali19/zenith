@@ -8,6 +8,7 @@ import Drawer from "./Drawer";
 import Movies from "./pages/Movies";
 import Shows from "./pages/Shows";
 import Movie from "./pages/Movie";
+import Show from "./pages/Show";
 import Player from "./pages/Player";
 
 const styles = {
@@ -48,6 +49,9 @@ export default function App() {
               </Route>
               <Route path="/movies/:id">
                 <Movie />
+              </Route>
+              <Route path="/shows/:id">
+                <Show />
               </Route>
               <Route path="/movies">
                 <Movies />
