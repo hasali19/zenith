@@ -6,6 +6,7 @@ import { Toolbar, Typography } from "@material-ui/core";
 import AppBar from "./AppBar";
 import Drawer from "./Drawer";
 import Movies from "./pages/Movies";
+import Shows from "./pages/Shows";
 import Movie from "./pages/Movie";
 import Player from "./pages/Player";
 
@@ -52,7 +53,7 @@ export default function App() {
                 <Movies />
               </Route>
               <Route path="/shows">
-                <Typography variant="h4">Shows</Typography>
+                <Shows />
               </Route>
               <Route path="/">
                 <Typography variant="h4">Home</Typography>
