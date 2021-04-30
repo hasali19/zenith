@@ -31,8 +31,7 @@ export default function PosterMediaItem({
       </Card>
       <div
         css={(theme) => css`
-          padding-top: ${theme.spacing(1)};
-          padding-bottom: ${theme.spacing(2)};
+          padding: ${theme.spacing(2)} 0;
         `}
       >
         <Typography
@@ -41,6 +40,7 @@ export default function PosterMediaItem({
             text-overflow: ellipsis;
             overflow: hidden;
             white-space: nowrap;
+            line-height: 1em;
           `}
         >
           {primary}
