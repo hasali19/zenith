@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { BrowserRouter, Route, Switch } from "react-router-dom";
+import React, { useRef, useState } from "react";
+import { BrowserRouter, Route } from "react-router-dom";
+import { Transition } from "react-transition-group";
 import { css, Theme } from "@emotion/react";
 import { Toolbar, Typography } from "@material-ui/core";
 
@@ -30,8 +31,55 @@ const styles = {
   main: css`
     flex: 1;
     overflow: hidden;
+    position: relative;
   `,
 };
+
+function AnimatedScreen({
+  path,
+  children,
+}: {
+  path: string;
+  children: React.ReactNode;
+}) {
+  const ref = useRef(null);
+  return (
+    <Route path={path} exact>
+      {({ match }) => (
+        <Transition
+          in={!!match}
+          nodeRef={ref}
+          addEndListener={() => {}}
+          timeout={200}
+        >
+          {(state) => {
+            const shown = state === "entering" || state === "entered";
+            const offset = state === "exited" ? 50 : 0;
+            return (
+              <div
+                ref={ref}
+                style={{
+                  opacity: shown ? 1 : 0,
+                  transform: `translateY(${offset}px)`,
+                  zIndex: shown ? 1 : 0,
+                }}
+                css={css`
+                  position: absolute;
+                  width: 100%;
+                  height: 100%;
+                  overflow: hidden;
+                  transition: all 200ms ease-in;
+                `}
+              >
+                {state !== "exited" && children}
+              </div>
+            );
+          }}
+        </Transition>
+      )}
+    </Route>
+  );
+}
 
 export default function App() {
   const [open, setOpen] = useState(false);
@@ -43,26 +91,24 @@ export default function App() {
         <div css={styles.content}>
           <Toolbar />
           <main css={styles.main}>
-            <Switch>
-              <Route path="/player/:id">
-                <Player />
-              </Route>
-              <Route path="/movies/:id">
-                <Movie />
-              </Route>
-              <Route path="/shows/:id">
-                <Show />
-              </Route>
-              <Route path="/movies">
-                <Movies />
-              </Route>
-              <Route path="/shows">
-                <Shows />
-              </Route>
-              <Route path="/">
-                <Typography variant="h4">Home</Typography>
-              </Route>
-            </Switch>
+            <AnimatedScreen path="/player/:id">
+              <Player />
+            </AnimatedScreen>
+            <AnimatedScreen path="/movies/:id">
+              <Movie />
+            </AnimatedScreen>
+            <AnimatedScreen path="/shows/:id">
+              <Show />
+            </AnimatedScreen>
+            <AnimatedScreen path="/movies">
+              <Movies />
+            </AnimatedScreen>
+            <AnimatedScreen path="/shows">
+              <Shows />
+            </AnimatedScreen>
+            <AnimatedScreen path="/">
+              <Typography variant="h4">Home</Typography>
+            </AnimatedScreen>
           </main>
         </div>
       </div>
