@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.SoundEffectConstants
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.ViewModel
 import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.insets.statusBarsHeight
@@ -54,12 +56,22 @@ data class Season(
     val poster: String,
 )
 
+@Serializable
+data class Episode(
+    val id: Int,
+    val name: String,
+    val overview: String,
+    val thumbnail: String,
+    val duration: Double,
+)
+
 sealed class Screen {
     object Shows : Screen()
     data class ShowDetails(val show: Show) : Screen()
+    data class SeasonDetails(val show: Show, val season: Season) : Screen()
 }
 
-class Navigator {
+class Navigator : ViewModel() {
     var stack by mutableStateOf(listOf<Screen>(Screen.Shows))
 
     fun push(screen: Screen) {
@@ -77,7 +89,7 @@ class Navigator {
 }
 
 class MainActivity : ComponentActivity() {
-    private val navigator = Navigator()
+    private val navigator: Navigator by viewModels()
 
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -104,7 +116,13 @@ class MainActivity : ComponentActivity() {
                             is Screen.Shows -> ShowsScreen(client = client, navigator = navigator)
                             is Screen.ShowDetails -> ShowDetailsScreen(
                                 client = client,
+                                navigator = navigator,
                                 show = screen.show,
+                            )
+                            is Screen.SeasonDetails -> SeasonDetailsScreen(
+                                client = client,
+                                show = screen.show,
+                                season = screen.season,
                             )
                         }
                     }
@@ -130,12 +148,12 @@ fun AppTheme(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun AppBar() {
+fun AppBar(title: String = "Zenith") {
     Surface(color = MaterialTheme.colors.primarySurface, elevation = 4.dp) {
         Column {
             Spacer(modifier = Modifier.statusBarsHeight())
             TopAppBar(
-                title = { Text("Zenith") },
+                title = { Text(title) },
                 backgroundColor = Color.Transparent,
                 elevation = 0.dp,
             )
@@ -173,7 +191,7 @@ fun ShowsScreen(client: HttpClient, navigator: Navigator) {
 }
 
 @Composable
-fun ShowDetailsScreen(client: HttpClient, show: Show) {
+fun ShowDetailsScreen(client: HttpClient, navigator: Navigator, show: Show) {
     val seasons by produceState(initialValue = emptyList<Season>()) {
         value = client.get("https://zenith.hasali.uk/api/tv/shows/${show.id}/seasons")
     }
@@ -232,8 +250,95 @@ fun ShowDetailsScreen(client: HttpClient, show: Show) {
                                 poster = season.poster,
                                 primary = season.name,
                                 secondary = show.name,
-                                onClick = {}
+                                onClick = {
+                                    navigator.push(Screen.SeasonDetails(show, season))
+                                }
                             )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun SeasonDetailsScreen(client: HttpClient, show: Show, season: Season) {
+    val context = LocalContext.current
+    val episodes by produceState(initialValue = emptyList<Episode>()) {
+        value = client.get("https://zenith.hasali.uk/api/tv/seasons/${season.id}/episodes")
+    }
+
+    Scaffold(topBar = { AppBar(title = season.name) }) {
+        LazyVerticalGrid(cells = GridCells.Adaptive(200.dp), contentPadding = PaddingValues(4.dp)) {
+            items(episodes.size) { i ->
+                val episode = episodes[i]
+
+                BoxWithConstraints(modifier = Modifier.padding(4.dp)) {
+                    with(LocalDensity.current) {
+                        val width = constraints.maxWidth
+                        val height = width * (9.0 / 16.0)
+
+                        Column {
+                            Card {
+                                Image(
+                                    painter = rememberCoilPainter(
+                                        request = episode.thumbnail,
+                                        fadeIn = true
+                                    ),
+                                    contentDescription = "Thumbnail",
+                                    modifier = Modifier
+                                        .size(
+                                            width.toDp(),
+                                            height
+                                                .toInt()
+                                                .toDp(),
+                                        )
+                                        .clickable {
+                                            val audioManager =
+                                                context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                                            audioManager.playSoundEffect(
+                                                SoundEffectConstants.CLICK,
+                                                1.0f
+                                            )
+                                        }
+                                )
+                            }
+
+                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                val duration = if (episode.duration <= 90 * 60) {
+                                    val minutes = (episode.duration / 60).toInt()
+                                    "${minutes}m"
+                                } else {
+                                    val hours = (episode.duration / 3600).toInt()
+                                    val minutes = ((episode.duration % 3600) / 60).toInt()
+                                    "${hours}h ${minutes}m"
+
+                                }
+
+                                Text(
+                                    episode.name,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.subtitle2
+                                )
+
+                                Text(
+                                    duration,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = Color.LightGray.copy(alpha = 0.8f),
+                                    style = MaterialTheme.typography.caption
+                                )
+
+                                Text(
+                                    episode.overview,
+                                    maxLines = 3,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.caption
+                                )
+                            }
                         }
                     }
                 }
