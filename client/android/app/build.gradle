@@ -4,6 +4,27 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.0'
 }
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+def releaseKeyAlias = keystoreProperties.getProperty('keyAlias')
+if (releaseKeyAlias == null) {
+    releaseKeyAlias = System.getenv('ANDROID_KEYSTORE_KEY_ALIAS')
+}
+
+def releaseStorePassword = keystoreProperties.getProperty('storePassword')
+if (releaseStorePassword == null) {
+    releaseStorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+}
+
+def releaseStoreFile = keystoreProperties.getProperty('storeFile')
+if (releaseStoreFile == null) {
+    releaseStoreFile = System.getenv('ANDROID_KEYSTORE_PATH')
+}
+
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.3"
@@ -22,14 +43,29 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            keyAlias releaseKeyAlias
+            keyPassword releaseStorePassword
+            storeFile releaseStoreFile ? file(releaseStoreFile) : null
+            storePassword releaseStorePassword
+        }
+    }
+
     buildFeatures {
         compose true
     }
 
     buildTypes {
+        debug {
+            debuggable true
+            applicationIdSuffix '.debug'
+        }
+
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 
