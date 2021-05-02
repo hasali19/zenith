@@ -1,38 +1,56 @@
 package uk.hasali.zenith
 
 import android.content.Context
+import android.content.res.Configuration
 import android.media.AudioManager
 import android.os.Bundle
 import android.view.SoundEffectConstants
+import android.widget.SeekBar
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModel
 import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.insets.statusBarsHeight
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.ui.PlayerView
 import com.zachklipp.compose.backstack.Backstack
 import io.ktor.client.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -65,10 +83,14 @@ data class Episode(
     val duration: Double,
 )
 
+@Serializable
+data class StreamInfo(val duration: Double, val position: Double?)
+
 sealed class Screen {
     object Shows : Screen()
     data class ShowDetails(val show: Show) : Screen()
     data class SeasonDetails(val show: Show, val season: Season) : Screen()
+    data class Player(val id: Int) : Screen()
 }
 
 class Navigator : ViewModel() {
@@ -121,9 +143,11 @@ class MainActivity : ComponentActivity() {
                             )
                             is Screen.SeasonDetails -> SeasonDetailsScreen(
                                 client = client,
+                                navigator = navigator,
                                 show = screen.show,
                                 season = screen.season,
                             )
+                            is Screen.Player -> PlayerScreen(client = client, id = screen.id)
                         }
                     }
                 }
@@ -264,7 +288,7 @@ fun ShowDetailsScreen(client: HttpClient, navigator: Navigator, show: Show) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SeasonDetailsScreen(client: HttpClient, show: Show, season: Season) {
+fun SeasonDetailsScreen(client: HttpClient, navigator: Navigator, show: Show, season: Season) {
     val context = LocalContext.current
     val episodes by produceState(initialValue = emptyList<Episode>()) {
         value = client.get("https://zenith.hasali.uk/api/tv/seasons/${season.id}/episodes")
@@ -302,6 +326,7 @@ fun SeasonDetailsScreen(client: HttpClient, show: Show, season: Season) {
                                                 SoundEffectConstants.CLICK,
                                                 1.0f
                                             )
+                                            navigator.push(Screen.Player(episode.id))
                                         }
                                 )
                             }
@@ -344,6 +369,199 @@ fun SeasonDetailsScreen(client: HttpClient, show: Show, season: Season) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun PlayerScreen(client: HttpClient, id: Int) {
+    val info by produceState<StreamInfo?>(initialValue = null, id) {
+        value = client.get("https://zenith.hasali.uk/api/stream/$id/info")
+    }
+
+    if (info != null) {
+        VideoPlayer(id = id, info = info!!, client = client)
+    }
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun VideoPlayer(id: Int, info: StreamInfo, client: HttpClient) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    var controls by remember { mutableStateOf(true) }
+    var playing by remember { mutableStateOf(true) }
+    var offset by remember { mutableStateOf(info.position?.toLong() ?: 0) }
+    var position by remember { mutableStateOf(0L) }
+
+    val player = remember {
+        SimpleExoPlayer.Builder(context)
+            .build()
+            .also { player ->
+                player.addListener(object : Player.EventListener {
+                    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                        playing = playWhenReady
+                    }
+                })
+
+                scope.launch {
+                    var counter = 0
+
+                    while (true) {
+                        if (counter == 4) {
+                            counter = 0
+                        }
+
+                        if (player.playWhenReady) {
+                            position = player.currentPosition / 1000
+
+                            if (counter == 0) {
+                                launch {
+                                    client.post("https://zenith.hasali.uk/api/progress/$id?position=${offset + position}")
+                                }
+                            }
+                        }
+
+                        counter += 1
+                        delay(500)
+                    }
+                }
+            }
+    }
+
+    DisposableEffect(offset) {
+        player.stop()
+        player.setMediaItem(MediaItem.fromUri("https://zenith.hasali.uk/api/stream/$id/transcode?start=$offset"))
+        player.prepare()
+        player.play()
+
+        onDispose { }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            player.release()
+        }
+    }
+
+    Surface(
+        color = Color.Black,
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    controls = !controls
+                })
+            },
+    ) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { context ->
+                PlayerView(context).apply {
+                    useController = false
+                }
+            },
+            update = { playerView ->
+                playerView.player = player
+            },
+        )
+
+        AnimatedVisibility(
+            visible = controls,
+            modifier = Modifier.fillMaxSize(),
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                FloatingActionButton(
+                    modifier = Modifier.align(Alignment.Center),
+                    onClick = {
+                        val audioManager =
+                            context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                        audioManager.playSoundEffect(SoundEffectConstants.CLICK, 1.0f)
+                        player.playWhenReady = !player.playWhenReady
+                    },
+                ) {
+                    Icon(
+                        if (playing) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = "Play/Pause",
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black))),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                    ) {
+                        val totalPosition = offset + position
+
+                        Text(
+                            formatTime(totalPosition),
+                            color = Color.White,
+                            style = MaterialTheme.typography.caption,
+                            modifier = Modifier.align(Alignment.CenterVertically),
+                        )
+
+                        AndroidView(
+                            modifier = Modifier
+                                .weight(1f)
+                                .align(Alignment.CenterVertically),
+                            factory = { context ->
+                                SeekBar(context).apply {
+                                    setOnSeekBarChangeListener(object :
+                                        SeekBar.OnSeekBarChangeListener {
+                                        override fun onProgressChanged(
+                                            seekBar: SeekBar,
+                                            progress: Int,
+                                            fromUser: Boolean
+                                        ) {
+                                        }
+
+                                        override fun onStartTrackingTouch(seekBar: SeekBar) {
+                                            player.pause()
+                                        }
+
+                                        override fun onStopTrackingTouch(seekBar: SeekBar) {
+                                            position = 0
+                                            offset = seekBar.progress.toLong()
+                                        }
+                                    })
+                                }
+                            },
+                            update = {
+                                it.max = info?.duration?.toInt() ?: 0
+                                it.progress = if (info != null) totalPosition.toInt() else 0
+                            }
+                        )
+
+                        Text(
+                            formatTime(if (info != null) info!!.duration.toLong() - totalPosition else 0L),
+                            color = Color.White,
+                            style = MaterialTheme.typography.caption,
+                            modifier = Modifier.align(Alignment.CenterVertically),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun formatTime(value: Long): String {
+    val hours = (value / 3600).toString().padStart(2, '0')
+    val mins = ((value % 3600) / 60).toString().padStart(2, '0')
+    val secs = ((value % 3600) % 60).toString().padStart(2, '0')
+
+    return if (value >= 3600) {
+        "$hours:$mins:$secs"
+    } else {
+        "$mins:$secs"
     }
 }
 
