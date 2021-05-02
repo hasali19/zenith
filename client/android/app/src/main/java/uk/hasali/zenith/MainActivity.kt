@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.*
@@ -81,6 +82,7 @@ data class Episode(
     val overview: String,
     val thumbnail: String,
     val duration: Double,
+    @SerialName("is_watched") val isWatched: Boolean,
 )
 
 @Serializable
@@ -329,6 +331,25 @@ fun SeasonDetailsScreen(client: HttpClient, navigator: Navigator, show: Show, se
                                             navigator.push(Screen.Player(episode.id))
                                         }
                                 )
+
+                                if (episode.isWatched) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(
+                                                width.toDp(),
+                                                height
+                                                    .toInt()
+                                                    .toDp(),
+                                            )
+                                            .background(Color.Black.copy(alpha = 0.4f))
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = "Watched",
+                                            modifier = Modifier.align(Alignment.Center),
+                                        )
+                                    }
+                                }
                             }
 
                             Column(modifier = Modifier.padding(vertical = 4.dp)) {
