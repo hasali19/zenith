@@ -7,12 +7,10 @@ import android.view.SoundEffectConstants
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -49,6 +47,13 @@ data class Show(
     @SerialName("start_date") val startDate: Long,
 )
 
+@Serializable
+data class Season(
+    val id: Int,
+    val name: String,
+    val poster: String,
+)
+
 sealed class Screen {
     object Shows : Screen()
     data class ShowDetails(val show: Show) : Screen()
@@ -82,12 +87,25 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
+            val client = remember {
+                HttpClient() {
+                    install(JsonFeature) {
+                        serializer = KotlinxSerializer(kotlinx.serialization.json.Json {
+                            ignoreUnknownKeys = true
+                        })
+                    }
+                }
+            }
+
             AppTheme {
                 ProvideWindowInsets {
                     Backstack(backstack = navigator.stack) { screen ->
                         when (screen) {
-                            is Screen.Shows -> ShowsScreen(navigator = navigator)
-                            is Screen.ShowDetails -> ShowDetailsScreen(show = screen.show)
+                            is Screen.Shows -> ShowsScreen(client = client, navigator = navigator)
+                            is Screen.ShowDetails -> ShowDetailsScreen(
+                                client = client,
+                                show = screen.show,
+                            )
                         }
                     }
                 }
@@ -127,17 +145,7 @@ fun AppBar() {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ShowsScreen(navigator: Navigator) {
-    val client = remember {
-        HttpClient() {
-            install(JsonFeature) {
-                serializer = KotlinxSerializer(kotlinx.serialization.json.Json {
-                    ignoreUnknownKeys = true
-                })
-            }
-        }
-    }
-
+fun ShowsScreen(client: HttpClient, navigator: Navigator) {
     val shows by produceState(initialValue = emptyList<Show>()) {
         value = client.get("https://zenith.hasali.uk/api/tv/shows")
     }
@@ -148,8 +156,15 @@ fun ShowsScreen(navigator: Navigator) {
             contentPadding = PaddingValues(4.dp),
         ) {
             items(shows.size) { i ->
-                ShowGridItem(
-                    show = shows[i],
+                val show = shows[i]
+                val year = Instant.fromEpochSeconds(show.startDate)
+                    .toLocalDateTime(TimeZone.UTC)
+                    .year
+
+                MediaItemWithPoster(
+                    poster = show.poster,
+                    primary = show.name,
+                    secondary = year.toString(),
                     onClick = { navigator.push(Screen.ShowDetails(shows[i])) },
                 )
             }
@@ -158,16 +173,24 @@ fun ShowsScreen(navigator: Navigator) {
 }
 
 @Composable
-fun ShowDetailsScreen(show: Show) {
+fun ShowDetailsScreen(client: HttpClient, show: Show) {
+    val seasons by produceState(initialValue = emptyList<Season>()) {
+        value = client.get("https://zenith.hasali.uk/api/tv/shows/${show.id}/seasons")
+    }
+
     Surface(modifier = Modifier.fillMaxSize()) {
-        Column {
+        BoxWithConstraints(modifier = Modifier.verticalScroll(rememberScrollState())) {
             Image(
                 painter = rememberCoilPainter(request = show.backdrop, fadeIn = true),
                 contentDescription = "Backdrop",
                 modifier = Modifier.aspectRatio(16f / 9f)
             )
 
-            Column(modifier = Modifier.offset(y = (-48).dp)) {
+            val backdropHeight = with(LocalDensity.current) {
+                (constraints.maxWidth * 9f / 16f).toDp()
+            }
+
+            Column(modifier = Modifier.padding(top = backdropHeight - 48.dp)) {
                 Row(modifier = Modifier.padding(horizontal = 16.dp)) {
                     Card {
                         Image(
@@ -198,13 +221,29 @@ fun ShowDetailsScreen(show: Show) {
                     style = MaterialTheme.typography.body2,
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LazyRow(contentPadding = PaddingValues(12.dp, 0.dp)) {
+                    items(seasons.size) { i ->
+                        val season = seasons[i]
+                        Box(modifier = Modifier.width(120.dp)) {
+                            MediaItemWithPoster(
+                                poster = season.poster,
+                                primary = season.name,
+                                secondary = show.name,
+                                onClick = {}
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun ShowGridItem(show: Show, onClick: () -> Unit) {
+fun MediaItemWithPoster(poster: String, primary: String, secondary: String, onClick: () -> Unit) {
     val context = LocalContext.current
 
     @Composable
@@ -212,7 +251,7 @@ fun ShowGridItem(show: Show, onClick: () -> Unit) {
         Card {
             Image(
                 painter = rememberCoilPainter(
-                    show.poster,
+                    poster,
                     fadeIn = true
                 ),
                 contentDescription = "Poster",
@@ -230,20 +269,16 @@ fun ShowGridItem(show: Show, onClick: () -> Unit) {
 
     @Composable
     fun Content() {
-        val year = Instant.fromEpochSeconds(show.startDate)
-            .toLocalDateTime(TimeZone.UTC)
-            .year
-
         Column(modifier = Modifier.padding(vertical = 4.dp)) {
             Text(
-                show.name,
+                primary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.subtitle2
             )
 
             Text(
-                year.toString(),
+                secondary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.caption
