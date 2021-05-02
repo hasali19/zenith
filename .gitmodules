@@ -1,0 +1,3 @@
+[submodule "client/android/compose-backstack"]
+	path = client/android/compose-backstack
+	url = git@github.com:hasali19/compose-backstack.git
