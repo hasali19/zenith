@@ -1,2 +1,4 @@
-include ':app'
 rootProject.name = "Zenith"
+
+include ':app'
+includeBuild 'compose-backstack'
