@@ -1,7 +1,7 @@
 package uk.hasali.zenith
 
+import android.app.Activity
 import android.content.Context
-import android.content.res.Configuration
 import android.media.AudioManager
 import android.os.Bundle
 import android.view.SoundEffectConstants
@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModel
 import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.insets.ProvideWindowInsets
@@ -399,9 +401,34 @@ fun PlayerScreen(client: HttpClient, id: Int) {
         value = client.get("https://zenith.hasali.uk/api/stream/$id/info")
     }
 
-    if (info != null) {
-        VideoPlayer(id = id, info = info!!, client = client)
+    FullScreen {
+        if (info != null) {
+            VideoPlayer(id = id, info = info!!, client = client)
+        }
     }
+}
+
+@Composable
+fun FullScreen(content: @Composable() () -> Unit) {
+    val activity = LocalContext.current as? Activity
+    val window = activity?.window
+
+    if (window != null) {
+        DisposableEffect(Unit) {
+            val controller = WindowCompat.getInsetsController(window, window.decorView)
+            if (controller != null) {
+                controller.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+                controller.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+
+            onDispose {
+                controller?.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+            }
+        }
+    }
+
+    content()
 }
 
 @OptIn(ExperimentalAnimationApi::class)
