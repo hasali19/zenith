@@ -25,6 +25,15 @@ if (releaseStoreFile == null) {
     releaseStoreFile = System.getenv('ANDROID_KEYSTORE_PATH')
 }
 
+def getGitHash = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'rev-parse', 'HEAD'
+        standardOutput = stdout
+    }
+    return "\"" + stdout.toString().trim() + "\""
+}
+
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.3"
@@ -35,6 +44,8 @@ android {
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
+
+        buildConfigField "String", "GIT_COMMIT_HASH", getGitHash()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
