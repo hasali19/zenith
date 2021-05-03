@@ -1,7 +1,10 @@
 package uk.hasali.zenith
 
 import android.app.Activity
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageInstaller
 import android.media.AudioManager
 import android.os.Bundle
 import android.view.SoundEffectConstants
@@ -52,13 +55,16 @@ import io.ktor.client.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.util.zip.ZipInputStream
 
 @Serializable
 data class Show(
@@ -117,6 +123,8 @@ class Navigator : ViewModel() {
 class MainActivity : ComponentActivity() {
     private val navigator: Navigator by viewModels()
 
+    private lateinit var client: HttpClient
+
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -124,18 +132,61 @@ class MainActivity : ComponentActivity() {
         // Enable drawing under the status bar
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
+        client = HttpClient() {
+            install(JsonFeature) {
+                serializer = KotlinxSerializer(kotlinx.serialization.json.Json {
+                    ignoreUnknownKeys = true
+                })
+            }
+        }
+
         setContent {
-            val client = remember {
-                HttpClient() {
-                    install(JsonFeature) {
-                        serializer = KotlinxSerializer(kotlinx.serialization.json.Json {
-                            ignoreUnknownKeys = true
-                        })
-                    }
+            var showUpdateDialog by remember { mutableStateOf(false) }
+
+            LaunchedEffect(Unit) {
+                if (checkForUpdates()) {
+                    showUpdateDialog = true
                 }
             }
 
             AppTheme {
+                if (showUpdateDialog) {
+                    var isDownloading by remember { mutableStateOf(false) }
+
+                    AlertDialog(
+                        title = {
+                            Text("Update")
+                        },
+                        text = {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text("An update is available")
+
+                                if (isDownloading) {
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(
+                                enabled = !isDownloading,
+                                onClick = {
+                                    val audioManager =
+                                        getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                                    audioManager.playSoundEffect(SoundEffectConstants.CLICK, 1.0f)
+                                    isDownloading = true
+                                    installApk("https://nightly.link/hasali19/zenith/workflows/android/android/zenith-apk.zip")
+                                },
+                            ) {
+                                Text("Install")
+                            }
+                        },
+                        onDismissRequest = {
+                            // Ignore
+                        }
+                    )
+                }
+
                 ProvideWindowInsets {
                     Backstack(backstack = navigator.stack) { screen ->
                         when (screen) {
@@ -162,6 +213,67 @@ class MainActivity : ComponentActivity() {
     override fun onBackPressed() {
         if (!navigator.pop()) {
             super.onBackPressed()
+        }
+    }
+
+    private suspend fun checkForUpdates(): Boolean {
+        if (BuildConfig.DEBUG) {
+            return false
+        }
+
+        val github = GitHubApiClient(client)
+        val res = github.getActionsWorkflowRuns(5604606)
+        val run = res.workflowRuns.firstOrNull {
+            it.status == "completed" && it.conclusion == "success"
+        }
+
+        return run != null && run.headSha != BuildConfig.GIT_COMMIT_HASH
+    }
+
+    private fun installApk(url: String) {
+        CoroutineScope(Dispatchers.Main).launch {
+            val response: ByteArray = client.get(url)
+            val zip = ZipInputStream(ByteArrayInputStream(response))
+            val entry = zip.nextEntry
+            val content = ByteArrayOutputStream()
+
+            zip.copyTo(content)
+
+            var session: PackageInstaller.Session? = null
+            try {
+                val installer = packageManager.packageInstaller
+                val params =
+                    PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+
+                withContext(Dispatchers.IO) {
+                    val sessionId = installer.createSession(params)
+
+                    session = installer.openSession(sessionId)
+                    session?.let { session ->
+                        session.openWrite("package", 0, -1).use { output ->
+                            ByteArrayInputStream(content.toByteArray()).copyTo(output)
+                            session.fsync(output)
+                        }
+                    }
+                }
+
+                val intent = Intent(application, InstallReceiver::class.java)
+                val pendingIntent = PendingIntent.getBroadcast(
+                    application,
+                    3439,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                )
+                val receiver = pendingIntent.intentSender
+
+                session?.commit(receiver)
+                session?.close()
+            } catch (e: IOException) {
+                throw RuntimeException("Couldn't install package", e)
+            } catch (e: RuntimeException) {
+                session?.abandon()
+                throw e
+            }
         }
     }
 }
