@@ -14,7 +14,7 @@ data class GetActionsWorkflowRunsResponse(
 @Serializable
 data class ActionsWorkflowRun(
     val status: String,
-    val conclusion: String,
+    val conclusion: String?,
     @SerialName("head_sha")
     val headSha: String,
 )
