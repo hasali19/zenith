@@ -8,6 +8,7 @@ import android.content.pm.PackageInstaller
 import android.media.AudioManager
 import android.os.Bundle
 import android.view.SoundEffectConstants
+import android.view.WindowManager
 import android.widget.SeekBar
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -513,11 +514,31 @@ fun PlayerScreen(client: HttpClient, id: Int) {
         value = client.get("https://zenith.hasali.uk/api/stream/$id/info")
     }
 
-    FullScreen {
-        if (info != null) {
-            VideoPlayer(id = id, info = info!!, client = client)
+    KeepScreenOn {
+        FullScreen {
+            if (info != null) {
+                VideoPlayer(id = id, info = info!!, client = client)
+            }
         }
     }
+}
+
+@Composable
+fun KeepScreenOn(content: @Composable() () -> Unit) {
+    val activity = LocalContext.current as? Activity
+    val window = activity?.window
+
+    if (window != null) {
+        DisposableEffect(Unit) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+            onDispose {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+    }
+
+    content()
 }
 
 @Composable
