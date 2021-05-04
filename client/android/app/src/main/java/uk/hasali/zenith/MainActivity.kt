@@ -47,6 +47,7 @@ import androidx.lifecycle.ViewModel
 import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.insets.statusBarsHeight
+import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
@@ -203,7 +204,11 @@ class MainActivity : ComponentActivity() {
                                 show = screen.show,
                                 season = screen.season,
                             )
-                            is Screen.Player -> PlayerScreen(client = client, id = screen.id)
+                            is Screen.Player -> PlayerScreen(
+                                client = client,
+                                navigator = navigator,
+                                id = screen.id,
+                            )
                         }
                     }
                 }
@@ -509,7 +514,7 @@ fun SeasonDetailsScreen(client: HttpClient, navigator: Navigator, show: Show, se
 }
 
 @Composable
-fun PlayerScreen(client: HttpClient, id: Int) {
+fun PlayerScreen(client: HttpClient, navigator: Navigator, id: Int) {
     val info by produceState<StreamInfo?>(initialValue = null, id) {
         value = client.get("https://zenith.hasali.uk/api/stream/$id/info")
     }
@@ -517,7 +522,12 @@ fun PlayerScreen(client: HttpClient, id: Int) {
     KeepScreenOn {
         FullScreen {
             if (info != null) {
-                VideoPlayer(id = id, info = info!!, client = client)
+                VideoPlayer(
+                    id = id,
+                    info = info!!,
+                    client = client,
+                    onVideoEnded = { navigator.pop() },
+                )
             }
         }
     }
@@ -566,7 +576,7 @@ fun FullScreen(content: @Composable() () -> Unit) {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun VideoPlayer(id: Int, info: StreamInfo, client: HttpClient) {
+fun VideoPlayer(id: Int, info: StreamInfo, client: HttpClient, onVideoEnded: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -580,6 +590,12 @@ fun VideoPlayer(id: Int, info: StreamInfo, client: HttpClient) {
             .build()
             .also { player ->
                 player.addListener(object : Player.EventListener {
+                    override fun onPlaybackStateChanged(state: Int) {
+                        if (state == ExoPlayer.STATE_ENDED) {
+                            onVideoEnded()
+                        }
+                    }
+
                     override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
                         playing = playWhenReady
                     }
