@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::ffi::OsStr;
 use std::path::Path;
 use std::process::Stdio;
 
@@ -7,17 +6,7 @@ use async_trait::async_trait;
 use eyre::eyre;
 use tokio::process::{Child, Command};
 
-trait CommandExt {
-    fn arg_pair(&mut self, arg1: impl AsRef<OsStr>, arg2: impl AsRef<OsStr>) -> &mut Self;
-}
-
-impl CommandExt for Command {
-    fn arg_pair(&mut self, arg1: impl AsRef<OsStr>, arg2: impl AsRef<OsStr>) -> &mut Self {
-        self.arg(arg1);
-        self.arg(arg2);
-        self
-    }
-}
+use crate::ext::CommandExt;
 
 pub struct Ffprobe {
     exe_path: String,

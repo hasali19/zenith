@@ -3,6 +3,7 @@ mod movies;
 mod progress;
 mod stream;
 mod tv;
+mod videos;
 
 use actix_web::{web, Scope};
 
@@ -11,6 +12,7 @@ pub fn service(path: &str) -> Scope {
         .service(movies::service("/movies"))
         .service(tv::service("/tv"))
         .service(stream::service("/stream"))
+        .service(videos::service("/videos"))
         .service(metadata::service("/metadata"))
         .service(progress::service("/progress"))
 }
