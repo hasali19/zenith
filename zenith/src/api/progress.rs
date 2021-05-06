@@ -1,12 +1,11 @@
+use actix_http::error::{ErrorInternalServerError, ErrorNotFound};
+use actix_web::{web, HttpRequest, HttpResponse, Responder, Scope};
 use serde::Deserialize;
-use zenith_http::{App, Request, Response};
 
-use crate::AppState;
+use crate::db::Db;
 
-use super::{ApiError, ApiResult};
-
-pub fn configure(app: &mut App<AppState>) {
-    app.post("/api/progress/:id", update_progress);
+pub fn service(path: &str) -> Scope {
+    web::scope(path).route("{id}", web::post().to(update_progress))
 }
 
 #[derive(Deserialize)]
@@ -14,17 +13,16 @@ struct ProgressUpdate {
     position: f64,
 }
 
-async fn update_progress(state: AppState, req: Request) -> ApiResult {
-    let id: i64 = req
-        .param("id")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
+async fn update_progress(
+    req: HttpRequest,
+    path: web::Path<(i64,)>,
+    query: web::Query<ProgressUpdate>,
+) -> actix_web::Result<impl Responder> {
+    let (id,) = path.into_inner();
+    let query = query.into_inner();
 
-    let data: ProgressUpdate = req
-        .query()
-        .map_err(|e| ApiError::bad_request().body(e.to_string()))?;
-
-    let mut conn = state.db.acquire().await?;
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
         SELECT duration
@@ -35,8 +33,9 @@ async fn update_progress(state: AppState, req: Request) -> ApiResult {
     let duration: f64 = sqlx::query_scalar(sql)
         .bind(id)
         .fetch_optional(&mut conn)
-        .await?
-        .ok_or_else(ApiError::not_found)?;
+        .await
+        .map_err(ErrorInternalServerError)?
+        .ok_or_else(|| ErrorNotFound(""))?;
 
     let sql = "
         INSERT INTO user_item_data (item_id, position, is_watched)
@@ -48,10 +47,11 @@ async fn update_progress(state: AppState, req: Request) -> ApiResult {
 
     sqlx::query(sql)
         .bind(id)
-        .bind(data.position)
-        .bind((data.position / duration) >= 0.9)
+        .bind(query.position)
+        .bind((query.position / duration) >= 0.9)
         .execute(&mut conn)
-        .await?;
+        .await
+        .map_err(ErrorInternalServerError)?;
 
-    Ok(Response::new())
+    Ok(HttpResponse::Ok())
 }

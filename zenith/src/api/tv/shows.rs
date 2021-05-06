@@ -1,10 +1,11 @@
+use actix_http::error::{ErrorInternalServerError, ErrorNotFound};
+use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
-use zenith_http::{Request, Response};
 
-use crate::api::{ApiError, ApiResult};
-use crate::{utils, AppState};
+use crate::db::Db;
+use crate::utils;
 
 #[derive(Serialize)]
 struct Show {
@@ -36,8 +37,9 @@ impl<'r> FromRow<'r, SqliteRow> for Show {
     }
 }
 
-pub(super) async fn get_shows(state: AppState, _: Request) -> ApiResult {
-    let mut conn = state.db.acquire().await?;
+pub(super) async fn get_shows(req: HttpRequest) -> actix_web::Result<impl Responder> {
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
         SELECT
@@ -53,18 +55,22 @@ pub(super) async fn get_shows(state: AppState, _: Request) -> ApiResult {
         ORDER BY name
     ";
 
-    let shows: Vec<Show> = sqlx::query_as(sql).fetch_all(&mut conn).await?;
+    let shows: Vec<Show> = sqlx::query_as(sql)
+        .fetch_all(&mut conn)
+        .await
+        .map_err(ErrorInternalServerError)?;
 
-    Ok(Response::new().json(&shows)?)
+    Ok(HttpResponse::Ok().json(&shows))
 }
 
-pub(super) async fn get_show(state: AppState, req: Request) -> ApiResult {
-    let id: i64 = req
-        .param("id")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
+pub(super) async fn get_show(
+    req: HttpRequest,
+    path: web::Path<(i64,)>,
+) -> actix_web::Result<impl Responder> {
+    let (id,) = path.into_inner();
 
-    let mut conn = state.db.acquire().await?;
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
         SELECT
@@ -83,14 +89,18 @@ pub(super) async fn get_show(state: AppState, req: Request) -> ApiResult {
     let show: Show = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
-        .await?
-        .ok_or_else(ApiError::not_found)?;
+        .await
+        .map_err(ErrorInternalServerError)?
+        .ok_or_else(|| ErrorNotFound(""))?;
 
-    Ok(Response::new().json(&show)?)
+    Ok(HttpResponse::Ok().json(&show))
 }
 
-pub(super) async fn get_recently_updated_shows(state: AppState, _: Request) -> ApiResult {
-    let mut conn = state.db.acquire().await?;
+pub(super) async fn get_recently_updated_shows(
+    req: HttpRequest,
+) -> actix_web::Result<impl Responder> {
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     // Get shows sorted by the added_at of their most recently added episode
     // (i.e. shows that have had an episode added recently will appear higher up)
@@ -115,7 +125,10 @@ pub(super) async fn get_recently_updated_shows(state: AppState, _: Request) -> A
         LIMIT 30
     ";
 
-    let shows: Vec<Show> = sqlx::query_as(sql).fetch_all(&mut conn).await?;
+    let shows: Vec<Show> = sqlx::query_as(sql)
+        .fetch_all(&mut conn)
+        .await
+        .map_err(ErrorInternalServerError)?;
 
-    Ok(Response::new().json(&shows)?)
+    Ok(HttpResponse::Ok().json(&shows))
 }

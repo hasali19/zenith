@@ -3,8 +3,9 @@ use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use tokio::fs::File;
-use tokio_util::codec::{BytesCodec, FramedRead};
+use actix_files::NamedFile;
+use actix_web::middleware::{NormalizePath, TrailingSlash};
+use actix_web::{web, App, HttpRequest, HttpServer, Responder};
 use zenith::config::Config;
 use zenith::db::Db;
 use zenith::ffmpeg::Ffprobe;
@@ -13,11 +14,8 @@ use zenith::library::MediaLibrary;
 use zenith::metadata::MetadataManager;
 use zenith::tmdb::TmdbClient;
 use zenith::watcher::FileWatcher;
-use zenith::{middleware, AppState};
-use zenith_http::headers::ContentType;
-use zenith_http::{App, Body, Request, Response, StatusCode};
 
-#[tokio::main]
+#[actix_rt::main]
 async fn main() -> eyre::Result<()> {
     color_eyre::install()?;
 
@@ -50,25 +48,30 @@ async fn main() -> eyre::Result<()> {
     watcher.watch(&config.libraries.movies);
     watcher.watch(&config.libraries.tv_shows);
 
-    let mut app = App::new(AppState {
-        config: config.clone(),
-        db: db.clone(),
-        metadata,
-    });
-
     let addr = SocketAddr::from_str(&format!("{}:{}", config.http.host, config.http.port))?;
 
-    app.wrap(middleware::Logger);
-    app.configure(zenith::api::configure);
-    app.fallback_to(spa);
-    app.run(addr).await?;
+    HttpServer::new({
+        let db = db.clone();
+        move || {
+            App::new()
+                .app_data(config.clone())
+                .app_data(db.clone())
+                .app_data(metadata.clone())
+                .wrap(NormalizePath::new(TrailingSlash::Trim))
+                .service(zenith::api::service("/api"))
+                .default_service(web::to(spa))
+        }
+    })
+    .bind(addr)?
+    .run()
+    .await?;
 
     db.close().await;
 
     Ok(())
 }
 
-async fn spa(_: AppState, req: Request) -> Result<Response, Response> {
+async fn spa(req: HttpRequest) -> actix_web::Result<impl Responder> {
     let path = Path::new("zenith_web/dist").join(req.uri().path().trim_start_matches('/'));
     let path = if path.is_file() {
         path.as_path()
@@ -76,15 +79,5 @@ async fn spa(_: AppState, req: Request) -> Result<Response, Response> {
         Path::new("zenith_web/dist/index.html")
     };
 
-    let mime = mime_guess::from_path(path);
-    let file = File::open(path)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    let stream = FramedRead::new(file, BytesCodec::new());
-    let body = Body::wrap_stream(stream);
-
-    Ok(Response::new()
-        .with_header(ContentType::from(mime.first_or_text_plain()))
-        .with_body(body))
+    Ok(NamedFile::open(path)?)
 }

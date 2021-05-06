@@ -1,10 +1,11 @@
+use actix_http::error::{ErrorInternalServerError, ErrorNotFound};
+use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
-use zenith_http::{Request, Response};
 
-use crate::api::{ApiError, ApiResult};
-use crate::{utils, AppState};
+use crate::db::Db;
+use crate::utils;
 
 #[derive(Serialize)]
 struct Episode {
@@ -39,13 +40,14 @@ impl<'r> FromRow<'r, SqliteRow> for Episode {
     }
 }
 
-pub(super) async fn get_episodes(state: AppState, req: Request) -> ApiResult {
-    let season_id: i64 = req
-        .param("id")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
+pub(super) async fn get_episodes(
+    req: HttpRequest,
+    path: web::Path<(i64,)>,
+) -> actix_web::Result<impl Responder> {
+    let (season_id,) = path.into_inner();
 
-    let mut conn = state.db.acquire().await?;
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
         SELECT
@@ -64,18 +66,20 @@ pub(super) async fn get_episodes(state: AppState, req: Request) -> ApiResult {
     let episodes: Vec<Episode> = sqlx::query_as(sql)
         .bind(season_id)
         .fetch_all(&mut conn)
-        .await?;
+        .await
+        .map_err(ErrorInternalServerError)?;
 
-    Ok(Response::new().json(&episodes)?)
+    Ok(HttpResponse::Ok().json(&episodes))
 }
 
-pub(super) async fn get_episode(state: AppState, req: Request) -> ApiResult {
-    let id: i64 = req
-        .param("id")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
+pub(super) async fn get_episode(
+    req: HttpRequest,
+    path: web::Path<(i64,)>,
+) -> actix_web::Result<impl Responder> {
+    let (id,) = path.into_inner();
 
-    let mut conn = state.db.acquire().await?;
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
         SELECT
@@ -93,8 +97,9 @@ pub(super) async fn get_episode(state: AppState, req: Request) -> ApiResult {
     let episode: Episode = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
-        .await?
-        .ok_or_else(ApiError::not_found)?;
+        .await
+        .map_err(ErrorInternalServerError)?
+        .ok_or_else(|| ErrorNotFound(""))?;
 
-    Ok(Response::new().json(&episode)?)
+    Ok(HttpResponse::Ok().json(&episode))
 }

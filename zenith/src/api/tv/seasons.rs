@@ -1,10 +1,11 @@
+use actix_http::error::{ErrorInternalServerError, ErrorNotFound};
+use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
-use zenith_http::{Request, Response};
 
-use crate::api::{ApiError, ApiResult};
-use crate::{utils, AppState};
+use crate::db::Db;
+use crate::utils;
 
 #[derive(Serialize)]
 struct Season {
@@ -34,13 +35,14 @@ impl<'r> FromRow<'r, SqliteRow> for Season {
     }
 }
 
-pub(super) async fn get_seasons(state: AppState, req: Request) -> ApiResult {
-    let show_id: i64 = req
-        .param("id")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
+pub(super) async fn get_seasons(
+    req: HttpRequest,
+    path: web::Path<(i64,)>,
+) -> actix_web::Result<impl Responder> {
+    let (show_id,) = path.into_inner();
 
-    let mut conn = state.db.acquire().await?;
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
         SELECT season.item_id, season.show_id, season_number, season.name, season.overview, season.poster, show.backdrop
@@ -53,18 +55,20 @@ pub(super) async fn get_seasons(state: AppState, req: Request) -> ApiResult {
     let seasons: Vec<Season> = sqlx::query_as(sql)
         .bind(show_id)
         .fetch_all(&mut conn)
-        .await?;
+        .await
+        .map_err(ErrorInternalServerError)?;
 
-    Ok(Response::new().json(&seasons)?)
+    Ok(HttpResponse::Ok().json(&seasons))
 }
 
-pub(super) async fn get_season(state: AppState, req: Request) -> ApiResult {
-    let id: i64 = req
-        .param("id")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
+pub(super) async fn get_season(
+    req: HttpRequest,
+    path: web::Path<(i64,)>,
+) -> actix_web::Result<impl Responder> {
+    let (id,) = path.into_inner();
 
-    let mut conn = state.db.acquire().await?;
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
         SELECT season.item_id, season.show_id, season_number, season.name, season.overview, season.poster, show.backdrop
@@ -76,8 +80,9 @@ pub(super) async fn get_season(state: AppState, req: Request) -> ApiResult {
     let season: Season = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
-        .await?
-        .ok_or_else(ApiError::not_found)?;
+        .await
+        .map_err(ErrorInternalServerError)?
+        .ok_or_else(|| ErrorNotFound(""))?;
 
-    Ok(Response::new().json(&season)?)
+    Ok(HttpResponse::Ok().json(&season))
 }

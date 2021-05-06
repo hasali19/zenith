@@ -1,16 +1,18 @@
+use actix_http::error::{ErrorInternalServerError, ErrorNotFound};
+use actix_web::{web, Responder};
+use actix_web::{HttpRequest, HttpResponse, Scope};
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
-use zenith_http::{App, Request, Response};
 
-use crate::{utils, AppState};
+use crate::db::Db;
+use crate::utils;
 
-use super::{ApiError, ApiResult};
-
-pub fn configure(app: &mut App<AppState>) {
-    app.get("/api/movies", get_movies);
-    app.get("/api/movies/:id", get_movie);
-    app.get("/api/movies/recent", get_recent_movies);
+pub fn service(path: &str) -> Scope {
+    web::scope(path)
+        .route("", web::get().to(get_movies))
+        .route("/{id}", web::get().to(get_movie))
+        .route("/recent", web::get().to(get_recent_movies))
 }
 
 #[derive(Serialize)]
@@ -41,8 +43,9 @@ impl<'r> FromRow<'r, SqliteRow> for Movie {
     }
 }
 
-async fn get_movies(state: AppState, _: Request) -> ApiResult {
-    let mut conn = state.db.acquire().await?;
+async fn get_movies(req: HttpRequest) -> actix_web::Result<impl Responder> {
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
         SELECT
@@ -53,18 +56,18 @@ async fn get_movies(state: AppState, _: Request) -> ApiResult {
         ORDER BY title
     ";
 
-    let movies: Vec<Movie> = sqlx::query_as(sql).fetch_all(&mut conn).await?;
+    let movies: Vec<Movie> = sqlx::query_as(sql)
+        .fetch_all(&mut conn)
+        .await
+        .map_err(ErrorInternalServerError)?;
 
-    Ok(Response::new().json(&movies)?)
+    Ok(HttpResponse::Ok().json(&movies))
 }
 
-async fn get_movie(state: AppState, req: Request) -> ApiResult {
-    let id: i64 = req
-        .param("id")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
-
-    let mut conn = state.db.acquire().await?;
+async fn get_movie(req: HttpRequest, path: web::Path<(i64,)>) -> actix_web::Result<impl Responder> {
+    let (id,) = path.into_inner();
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
         SELECT
@@ -79,14 +82,16 @@ async fn get_movie(state: AppState, req: Request) -> ApiResult {
     let movie: Movie = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
-        .await?
-        .ok_or_else(ApiError::not_found)?;
+        .await
+        .map_err(ErrorInternalServerError)?
+        .ok_or_else(|| ErrorNotFound(""))?;
 
-    Ok(Response::new().json(&movie)?)
+    Ok(HttpResponse::Ok().json(&movie))
 }
 
-async fn get_recent_movies(state: AppState, _: Request) -> ApiResult {
-    let mut conn = state.db.acquire().await?;
+async fn get_recent_movies(req: HttpRequest) -> actix_web::Result<impl Responder> {
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
         SELECT
@@ -99,7 +104,10 @@ async fn get_recent_movies(state: AppState, _: Request) -> ApiResult {
         LIMIT 30
     ";
 
-    let movies: Vec<Movie> = sqlx::query_as(sql).fetch_all(&mut conn).await?;
+    let movies: Vec<Movie> = sqlx::query_as(sql)
+        .fetch_all(&mut conn)
+        .await
+        .map_err(ErrorInternalServerError)?;
 
-    Ok(Response::new().json(&movies)?)
+    Ok(HttpResponse::Ok().json(&movies))
 }

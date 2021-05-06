@@ -1,89 +1,42 @@
-use std::io::SeekFrom;
-use std::ops::Bound;
-use std::str::FromStr;
+use std::sync::Arc;
 
-use futures::StreamExt;
-use mime::Mime;
-use tokio::fs::File;
-use tokio::io::{AsyncReadExt, AsyncSeekExt};
+use actix_files::NamedFile;
+use actix_http::error::{ErrorInternalServerError, ErrorNotFound};
+use actix_web::{web, HttpRequest, HttpResponse, Responder, Scope};
+use bytes::Bytes;
+use futures::{Stream, StreamExt};
 use tokio::process::Child;
+use tokio_stream::wrappers::ReceiverStream;
 use tokio_util::codec::{BytesCodec, FramedRead};
-use zenith_http::headers::{
-    AcceptRanges, AccessControlAllowOrigin, ContentLength, ContentRange, ContentType, Range,
-};
-use zenith_http::{App, Body, Request, Response, StatusCode};
 
-use crate::ffmpeg::{Ffmpeg, Ffprobe, SubtitleOptions, TranscodeOptions};
-use crate::AppState;
+use crate::config::Config;
+use crate::db::Db;
+use crate::ffmpeg::{Ffmpeg, Ffprobe, TranscodeOptions};
 
-use super::{ApiError, ApiResult};
-
-pub fn configure(app: &mut App<AppState>) {
-    app.get("/api/stream/:id/original", get_original);
-    app.get("/api/stream/:id/transcode", get_transcoded_stream);
-    app.get("/api/stream/:id/subtitles/:index", get_subtitles_stream);
-    app.get("/api/stream/:id/info", get_info);
+pub fn service(path: &str) -> Scope {
+    web::scope(path)
+        .route("/{id}/original", web::get().to(get_original))
+        .route("/{id}/transcode", web::get().to(get_transcoded_stream))
+        .route("/{id}/info", web::get().to(get_info))
 }
 
-async fn get_original(state: AppState, req: Request) -> ApiResult {
-    let id: i64 = req
-        .param("id")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
+async fn get_original(
+    req: HttpRequest,
+    path: web::Path<(i64,)>,
+) -> actix_web::Result<impl Responder> {
+    let (id,) = path.into_inner();
 
-    let mut conn = state.db.acquire().await?;
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let path: String = sqlx::query_scalar("SELECT path FROM video_files WHERE item_id = ?")
         .bind(id)
         .fetch_optional(&mut conn)
-        .await?
-        .ok_or_else(ApiError::not_found)?;
-
-    let mut file = File::open(path)
         .await
-        .map_err(|_| ApiError::internal_server_error())?;
+        .map_err(ErrorInternalServerError)?
+        .ok_or_else(|| ErrorNotFound(""))?;
 
-    let length = file.metadata().await.unwrap().len();
-    let range = req.header::<Range>().and_then(|range| range.iter().next());
-
-    if let Some((from, to)) = range {
-        let from = match from {
-            Bound::Included(n) => n,
-            Bound::Excluded(n) => n + 1,
-            Bound::Unbounded => 0,
-        };
-
-        let to = match to {
-            Bound::Included(n) => n,
-            Bound::Excluded(n) => n - 1,
-            Bound::Unbounded => length - 1,
-        };
-
-        file.seek(SeekFrom::Start(from))
-            .await
-            .map_err(|e| ApiError::internal_server_error().body(e.to_string()))?;
-
-        let total_length = length;
-        let length = u64::min(length - from, to - from + 1);
-        let reader = file.take(length);
-        let stream = FramedRead::new(reader, BytesCodec::new());
-        let body = Body::wrap_stream(stream);
-
-        Ok(Response::new()
-            .with_status(StatusCode::PARTIAL_CONTENT)
-            .with_header(AcceptRanges::bytes())
-            .with_header(ContentLength(length))
-            .with_header(ContentRange::bytes(from..=from + length - 1, total_length).unwrap())
-            .with_body(body))
-    } else {
-        let stream = FramedRead::new(file, BytesCodec::new());
-        let body = Body::wrap_stream(stream);
-
-        Ok(Response::new()
-            .with_header(AcceptRanges::bytes())
-            .with_header(ContentLength(length))
-            .with_body(body))
-    }
+    Ok(NamedFile::open(path))
 }
 
 #[derive(serde::Deserialize)]
@@ -92,25 +45,30 @@ struct TranscodeQuery {
     start: u64,
 }
 
-async fn get_transcoded_stream(state: AppState, req: Request) -> ApiResult {
-    let id: i64 = req
-        .param("id")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
+async fn get_transcoded_stream(
+    req: HttpRequest,
+    path: web::Path<(i64,)>,
+    query: web::Query<TranscodeQuery>,
+) -> actix_web::Result<impl Responder> {
+    let (id,) = path.into_inner();
+    let query = query.into_inner();
 
-    let query: TranscodeQuery = req.query().map_err(|_| ApiError::bad_request())?;
-    let mut conn = state.db.acquire().await?;
+    let config: &Arc<Config> = req.app_data().unwrap();
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let path: String = sqlx::query_scalar("SELECT path FROM video_files WHERE item_id = ?")
         .bind(id)
         .fetch_optional(&mut conn)
-        .await?
-        .ok_or_else(ApiError::not_found)?;
+        .await
+        .map_err(ErrorInternalServerError)?
+        .ok_or_else(|| ErrorNotFound(""))?;
 
-    let config = &state.config.transcoding;
+    let config = &config.transcoding;
     let info = Ffprobe::new(&config.ffprobe_path)
         .get_video_info(&path)
-        .await?;
+        .await
+        .map_err(ErrorInternalServerError)?;
 
     let mut transcode_video = false;
     let video_stream = info
@@ -138,55 +96,11 @@ async fn get_transcoded_stream(state: AppState, req: Request) -> ApiResult {
 
     let child = ffmpeg
         .transcode(&options)
-        .map_err(|e| ApiError::internal_server_error().body(e.to_string()))?;
+        .map_err(ErrorInternalServerError)?;
 
-    Ok(Response::new()
-        .with_header(ContentType::from(Mime::from_str("video/mp4").unwrap()))
-        .with_body(stream_stdout(child)))
-}
-
-#[derive(serde::Deserialize)]
-struct SubtitlesQuery {
-    #[serde(default)]
-    start: u64,
-}
-
-async fn get_subtitles_stream(state: AppState, req: Request) -> ApiResult {
-    let id: i64 = req
-        .param("id")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
-
-    let stream_index: u32 = req
-        .param("index")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
-
-    let query: SubtitlesQuery = req.query().map_err(|_| ApiError::bad_request())?;
-    let mut conn = state.db.acquire().await?;
-
-    let path: String = sqlx::query_scalar("SELECT path FROM video_files WHERE item_id = ?")
-        .bind(id)
-        .fetch_optional(&mut conn)
-        .await?
-        .ok_or_else(ApiError::not_found)?;
-
-    let config = &state.config.transcoding;
-    let ffmpeg = Ffmpeg::new(&config.ffmpeg_path);
-    let options = SubtitleOptions {
-        input_path: &path,
-        start_time: query.start,
-        stream_index,
-    };
-
-    let child = ffmpeg
-        .extract_subtitles(&options)
-        .map_err(|e| ApiError::internal_server_error().body(e.to_string()))?;
-
-    Ok(Response::new()
-        .with_header(ContentType::from(Mime::from_str("text/vtt").unwrap()))
-        .with_header(AccessControlAllowOrigin::ANY)
-        .with_body(stream_stdout(child)))
+    Ok(HttpResponse::Ok()
+        .content_type("video/mp4")
+        .streaming(stream_stdout(child)))
 }
 
 #[derive(serde::Serialize)]
@@ -203,13 +117,12 @@ struct SubtitleInfo {
     language: Option<String>,
 }
 
-async fn get_info(state: AppState, req: Request) -> ApiResult {
-    let id: i64 = req
-        .param("id")
-        .and_then(|v| v.parse().ok())
-        .ok_or_else(ApiError::bad_request)?;
+async fn get_info(req: HttpRequest, path: web::Path<(i64,)>) -> actix_web::Result<impl Responder> {
+    let (id,) = path.into_inner();
 
-    let mut conn = state.db.acquire().await?;
+    let config: &Arc<Config> = req.app_data().unwrap();
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
         SELECT file.path, data.position
@@ -221,18 +134,22 @@ async fn get_info(state: AppState, req: Request) -> ApiResult {
     let (path, position): (String, Option<f64>) = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
-        .await?
-        .ok_or_else(ApiError::not_found)?;
+        .await
+        .map_err(ErrorInternalServerError)?
+        .ok_or_else(|| ErrorNotFound(""))?;
 
-    let config = &state.config.transcoding;
+    let config = &config.transcoding;
     let ffprobe = Ffprobe::new(&config.ffprobe_path);
-    let info = ffprobe.get_video_info(&path).await?;
+    let info = ffprobe
+        .get_video_info(&path)
+        .await
+        .map_err(ErrorInternalServerError)?;
 
     let duration = info
         .format
         .duration
         .parse::<f64>()
-        .map_err(|e| ApiError::internal_server_error().body(e.to_string()))?;
+        .map_err(ErrorInternalServerError)?;
 
     let subtitles = info
         .streams
@@ -245,22 +162,22 @@ async fn get_info(state: AppState, req: Request) -> ApiResult {
         })
         .collect::<Vec<_>>();
 
-    Ok(Response::new().json(&StreamInfo {
+    Ok(HttpResponse::Ok().json(&StreamInfo {
         duration,
         position,
         subtitles,
-    })?)
+    }))
 }
 
-fn stream_stdout(mut child: Child) -> Body {
-    let (mut sender, body) = Body::channel();
+fn stream_stdout(mut child: Child) -> impl Stream<Item = actix_web::Result<Bytes>> {
+    let (sender, receiver) = tokio::sync::mpsc::channel(1);
 
     tokio::spawn(async move {
         let stdout = child.stdout.as_mut().unwrap();
         let mut stream = FramedRead::new(stdout, BytesCodec::new());
 
         while let Some(Ok(v)) = stream.next().await {
-            if sender.send_data(v.into()).await.is_err() {
+            if sender.send(v.into()).await.is_err() {
                 tracing::warn!("client has disconnected, killing child process");
                 child.kill().await.unwrap();
                 return;
@@ -270,5 +187,5 @@ fn stream_stdout(mut child: Child) -> Body {
         child.wait().await.unwrap();
     });
 
-    body
+    ReceiverStream::new(receiver).map(Ok::<_, actix_web::Error>)
 }
