@@ -3,7 +3,8 @@ import { useHistory, useParams } from "react-router";
 import { css, Theme } from "@emotion/react";
 import { Button, Icon, LinearProgress, Typography } from "@material-ui/core";
 
-import api, { Movie } from "../api";
+import api, { Movie, VideoInfo } from "../api";
+import MediaInfo from "../components/MediaInfo";
 
 function displayDuration(duration: number) {
   if (duration <= 90 * 60) {
@@ -49,12 +50,14 @@ export default function () {
   const params = useParams<any>();
   const history = useHistory();
   const [movie, setMovie] = useState<Movie | null>(null);
+  const [video, setVideo] = useState<VideoInfo | null>(null);
 
   useEffect(() => {
     api.movies.getMovie(params.id).then(setMovie);
+    api.videos.getVideoInfo(params.id).then(setVideo);
   }, []);
 
-  if (!movie) {
+  if (!movie || !video) {
     return <LinearProgress variant="indeterminate" />;
   }
 
@@ -78,6 +81,7 @@ export default function () {
       <Typography variant="body2" css={styles.overview}>
         {movie.overview}
       </Typography>
+      <MediaInfo info={video} />
     </div>
   );
 }

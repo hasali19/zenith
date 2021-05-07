@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router";
 import { css, Theme } from "@emotion/react";
-import { Button, Icon, LinearProgress, Typography } from "@material-ui/core";
+import {
+  Button,
+  Card,
+  Icon,
+  LinearProgress,
+  Typography,
+} from "@material-ui/core";
 
-import api, { TvEpisode } from "../api";
+import api, { TvEpisode, VideoInfo } from "../api";
+import MediaInfo from "../components/MediaInfo";
 
 const styles = {
   root: css`
@@ -49,12 +56,14 @@ export default function () {
   const params = useParams<any>();
   const history = useHistory();
   const [episode, setEpisode] = useState<TvEpisode | null>(null);
+  const [video, setVideo] = useState<VideoInfo | null>(null);
 
   useEffect(() => {
     api.tv.getEpisode(params.id).then(setEpisode);
+    api.videos.getVideoInfo(params.id).then(setVideo);
   }, []);
 
-  if (!episode) {
+  if (!episode || !video) {
     return <LinearProgress variant="indeterminate" />;
   }
 
@@ -79,6 +88,7 @@ export default function () {
       <Typography variant="body2" css={styles.overview}>
         {episode.overview}
       </Typography>
+      <MediaInfo info={video} />
     </div>
   );
 }

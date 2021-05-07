@@ -156,6 +156,21 @@ export interface SubtitleInfo {
   title: string | null;
 }
 
+export interface VideoInfo {
+  path: string;
+  format: string;
+  duration: number;
+  video: {
+    codec: string;
+    profile: string;
+    width: number;
+    height: number;
+  },
+  audio: {
+    codec: string;
+  }
+}
+
 export default {
   movies: {
     async getMovies() {
@@ -224,7 +239,13 @@ export default {
   videos: {
     getVideoUrl(id: ItemId) {
       return `/api/videos/${id}`;
-    }
+    },
+
+    async getVideoInfo(id: ItemId) {
+      const res = await fetch(`/api/videos/${id}/info`);
+      const info = await res.json();
+      return info as VideoInfo;
+    },
   },
 
   metadata: {
