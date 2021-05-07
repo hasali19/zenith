@@ -11,8 +11,8 @@ use crate::utils;
 pub fn service(path: &str) -> Scope {
     web::scope(path)
         .route("", web::get().to(get_movies))
-        .route("/{id}", web::get().to(get_movie))
         .route("/recent", web::get().to(get_recent_movies))
+        .route("/{id}", web::get().to(get_movie))
 }
 
 #[derive(Serialize)]
