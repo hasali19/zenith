@@ -221,6 +221,12 @@ export default {
     },
   },
 
+  videos: {
+    getVideoUrl(id: ItemId) {
+      return `/api/videos/${id}`;
+    }
+  },
+
   metadata: {
     async refresh(id: ItemId) {
       await fetch(`/api/metadata/${id}/refresh`, { method: "POST" });
@@ -238,6 +244,7 @@ export default {
       return `/api/stream/${id}/transcode?start=${start}`;
     },
   },
+
 
   progress: {
     async update(id: ItemId, position: number) {
