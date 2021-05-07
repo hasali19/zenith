@@ -2,6 +2,7 @@ mod metadata;
 mod movies;
 mod progress;
 mod stream;
+mod transcoder;
 mod tv;
 mod videos;
 
@@ -15,4 +16,5 @@ pub fn service(path: &str) -> Scope {
         .service(videos::service("/videos"))
         .service(metadata::service("/metadata"))
         .service(progress::service("/progress"))
+        .service(transcoder::service("/transcoder"))
 }

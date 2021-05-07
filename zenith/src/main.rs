@@ -13,6 +13,7 @@ use zenith::library::scanner::LibraryScanner;
 use zenith::library::MediaLibrary;
 use zenith::metadata::MetadataManager;
 use zenith::tmdb::TmdbClient;
+use zenith::transcoder::Transcoder;
 use zenith::watcher::FileWatcher;
 
 #[actix_rt::main]
@@ -30,6 +31,7 @@ async fn main() -> eyre::Result<()> {
     let metadata = MetadataManager::new(db.clone(), tmdb);
     let video_info_provider = Arc::new(Ffprobe::new(&config.transcoding.ffprobe_path));
     let library = Arc::new(MediaLibrary::new(db.clone(), video_info_provider));
+    let transcoder = Transcoder::new(db.clone());
     let scanner = Arc::new(LibraryScanner::new(
         library,
         metadata.clone(),
@@ -37,6 +39,7 @@ async fn main() -> eyre::Result<()> {
     ));
 
     scanner.start_scan();
+    transcoder.clone().start();
 
     let mut watcher = FileWatcher::spawn({
         let scanner = scanner.clone();
@@ -57,6 +60,7 @@ async fn main() -> eyre::Result<()> {
                 .app_data(config.clone())
                 .app_data(db.clone())
                 .app_data(metadata.clone())
+                .app_data(transcoder.clone())
                 .wrap(NormalizePath::new(TrailingSlash::Trim))
                 .service(zenith::api::service("/api"))
                 .default_service(web::to(spa))
