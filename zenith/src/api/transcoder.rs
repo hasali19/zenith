@@ -2,11 +2,25 @@ use std::sync::Arc;
 
 use actix_web::{web, HttpRequest, HttpResponse, Responder, Scope};
 use serde::Deserialize;
+use serde_json::json;
 
 use crate::transcoder::{Job, Transcoder};
 
 pub fn service(path: &str) -> Scope {
-    web::scope(path).route("", web::post().to(transcode))
+    web::scope(path).service(
+        web::resource("")
+            .route(web::get().to(get_state))
+            .route(web::post().to(transcode)),
+    )
+}
+
+async fn get_state(req: HttpRequest) -> actix_web::Result<impl Responder> {
+    let transcoder: &Arc<Transcoder> = req.app_data().unwrap();
+    let current = transcoder.current().await;
+
+    Ok(HttpResponse::Ok().json(json!({
+        "current": current.map(|j| j.video_id),
+    })))
 }
 
 #[derive(Deserialize)]

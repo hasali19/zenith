@@ -16,6 +16,7 @@ pub struct Transcoder {
     db: Db,
     sema: Semaphore,
     queue: RwLock<Vec<Job>>,
+    current: RwLock<Option<Job>>,
 }
 
 impl Transcoder {
@@ -24,11 +25,32 @@ impl Transcoder {
             db,
             sema: Semaphore::new(0),
             queue: RwLock::new(Vec::new()),
+            current: RwLock::new(None),
         })
     }
 
     pub async fn enqueue(&self, job: Job) {
-        self.queue.write().await.push(job);
+        // Skip if we are already transcoding this id
+        if self
+            .current()
+            .await
+            .iter()
+            .any(|j| j.video_id == job.video_id)
+        {
+            return;
+        }
+
+        let mut queue = self.queue.write().await;
+
+        // Skip if this id is already in the queue
+        for existing in queue.iter() {
+            if existing.video_id == job.video_id {
+                return;
+            }
+        }
+
+        queue.push(job);
+
         self.sema.add_permits(1);
     }
 
@@ -36,11 +58,23 @@ impl Transcoder {
         tokio::spawn(self.run());
     }
 
+    pub async fn current(&self) -> Option<Job> {
+        self.current.read().await.as_ref().map(|j| Job {
+            video_id: j.video_id,
+        })
+    }
+
+    async fn set_current(&self, value: Option<Job>) {
+        *self.current.write().await = value;
+    }
+
     #[tracing::instrument(skip(self))]
     async fn run(self: Arc<Self>) {
         loop {
             let job = self.dequeue_job().await;
             let id = job.video_id;
+
+            self.set_current(Some(job)).await;
 
             tracing::info!("starting transcode for video (id: {})", id);
 
@@ -93,17 +127,20 @@ impl Transcoder {
                 Ok(status) => {
                     if !status.success() {
                         tracing::error!("ffmpeg terminated unsuccessfully");
+                        self.set_current(None).await;
                         continue;
                     }
                 }
                 Err(e) => {
                     tracing::error!("{}", e);
+                    self.set_current(None).await;
                     continue;
                 }
             }
 
             if let Err(e) = std::fs::remove_file(&path) {
                 tracing::error!("failed to remove file: {}", e);
+                self.set_current(None).await;
                 continue;
             }
 
@@ -111,10 +148,12 @@ impl Transcoder {
 
             if let Err(e) = std::fs::rename(&output, &path) {
                 tracing::error!("failed to rename file: {}", e);
+                self.set_current(None).await;
                 continue;
             }
 
             self.update_video_path(id, &path).await;
+            self.set_current(None).await;
         }
     }
 
