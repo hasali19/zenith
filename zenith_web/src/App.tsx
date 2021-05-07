@@ -11,6 +11,7 @@ import Shows from "./pages/Shows";
 import Movie from "./pages/Movie";
 import Show from "./pages/Show";
 import Season from "./pages/Season";
+import Episode from "./pages/Episode";
 import Player from "./pages/Player";
 
 const styles = {
@@ -103,6 +104,9 @@ export default function App() {
             </AnimatedScreen>
             <AnimatedScreen path="/seasons/:id">
               <Season />
+            </AnimatedScreen>
+            <AnimatedScreen path="/episodes/:id">
+              <Episode />
             </AnimatedScreen>
             <AnimatedScreen path="/movies">
               <Movies />
