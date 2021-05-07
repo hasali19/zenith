@@ -208,6 +208,12 @@ export default {
       return new TvSeason(season);
     },
 
+    async getEpisodes(seasonId: ItemId): Promise<TvEpisode[]> {
+      const res = await fetch(`/api/tv/seasons/${seasonId}/episodes`);
+      const episodes = await res.json();
+      return episodes.map((e: TvEpisodeJson) => new TvEpisode(e));
+    },
+
     async getEpisode(id: ItemId) {
       const res = await fetch(`/api/tv/episodes/${id}`);
       const episode = await res.json();
