@@ -69,6 +69,21 @@ impl Transcoder {
         self.sender.send(Event::Queued(id)).ok();
     }
 
+    pub async fn enqueue_all(&self) {
+        let mut conn = self.db.acquire().await.unwrap();
+
+        let ids: Vec<i64> = sqlx::query_scalar("SELECT item_id FROM video_files")
+            .fetch_all(&mut conn)
+            .await
+            .unwrap();
+
+        drop(conn);
+
+        for id in ids {
+            self.enqueue(Job { video_id: id }).await;
+        }
+    }
+
     pub fn start(self: Arc<Self>) {
         tokio::spawn(self.run());
     }

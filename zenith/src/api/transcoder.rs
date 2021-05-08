@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use actix_http::error::ErrorBadRequest;
 use actix_web::{web, HttpRequest, HttpResponse, Responder, Scope};
 use serde::Deserialize;
 use serde_json::json;
@@ -27,7 +28,10 @@ async fn get_state(req: HttpRequest) -> actix_web::Result<impl Responder> {
 
 #[derive(Deserialize)]
 pub struct TranscodeParams {
-    video_id: i64,
+    #[serde(default)]
+    video_id: Option<i64>,
+    #[serde(default)]
+    all: bool,
 }
 
 async fn transcode(
@@ -37,11 +41,11 @@ async fn transcode(
     let params = query.into_inner();
     let transcoder: &Arc<Transcoder> = req.app_data().unwrap();
 
-    transcoder
-        .enqueue(Job {
-            video_id: params.video_id,
-        })
-        .await;
+    match params.video_id {
+        Some(id) => transcoder.enqueue(Job { video_id: id }).await,
+        None if params.all => transcoder.enqueue_all().await,
+        None => return Err(ErrorBadRequest("no video to transcode")),
+    }
 
     Ok(HttpResponse::Ok())
 }

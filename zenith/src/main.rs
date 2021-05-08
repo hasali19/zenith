@@ -46,7 +46,11 @@ async fn main() -> eyre::Result<()> {
         let mut events = transcoder.subscribe();
         async move {
             loop {
-                let event = events.recv().await.unwrap();
+                let event = match events.recv().await {
+                    Ok(event) => event,
+                    Err(_) => continue,
+                };
+
                 let (event, id) = match event {
                     zenith::transcoder::Event::Queued(id) => ("transcoder.queued", id),
                     zenith::transcoder::Event::Started(id) => ("transcoder.started", id),
