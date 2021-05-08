@@ -112,6 +112,8 @@ impl Transcoder {
 
             cmd.arg_pair("-i", &path);
 
+            let mut transcode_any = false;
+
             for stream in info.streams {
                 // Transcode video stream if not already in h264
                 if stream.codec_type == "video" {
@@ -121,6 +123,7 @@ impl Transcoder {
                         cmd.arg_pair(format!("-c:{}", stream.index), "copy");
                     } else {
                         cmd.arg_pair(format!("-c:{}", stream.index), "libx264");
+                        transcode_any = true;
                     }
                 }
 
@@ -133,6 +136,7 @@ impl Transcoder {
                     } else {
                         cmd.arg_pair(format!("-c:{}", stream.index), "aac");
                         cmd.arg_pair(format!("-ac:{}", stream.index), "2");
+                        transcode_any = true;
                     }
                 }
 
@@ -141,6 +145,13 @@ impl Transcoder {
                     cmd.arg_pair("-map", format!("0:{}", stream.index));
                     cmd.arg_pair(format!("-c:{}", stream.index), "copy");
                 }
+            }
+
+            if !transcode_any {
+                tracing::info!("skipping {} - no streams to transcode", id);
+                self.set_current(None).await;
+                self.sender.send(Event::Success(id)).ok();
+                continue;
             }
 
             cmd.arg_pair("-f", "matroska");
