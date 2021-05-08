@@ -104,11 +104,11 @@ async fn main() -> eyre::Result<()> {
 }
 
 async fn spa(req: HttpRequest) -> actix_web::Result<impl Responder> {
-    let path = Path::new("zenith_web/dist").join(req.uri().path().trim_start_matches('/'));
+    let path = Path::new("client/web/dist").join(req.uri().path().trim_start_matches('/'));
     let path = if path.is_file() {
         path.as_path()
     } else {
-        Path::new("zenith_web/dist/index.html")
+        Path::new("client/web/dist/index.html")
     };
 
     Ok(NamedFile::open(path)?)

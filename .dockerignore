@@ -8,10 +8,10 @@
 /target
 
 # Frontend build output
-zenith_web/dist
+client/web/dist
 
 # Frontend dependencies
-zenith_web/node_modules
+client/web/node_modules
 
 # Environment variables
 .env
