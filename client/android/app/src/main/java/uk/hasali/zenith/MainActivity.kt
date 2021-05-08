@@ -16,11 +16,13 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,7 +91,14 @@ data class Episode(
 @Serializable
 data class StreamInfo(val duration: Double, val position: Double?)
 
+@Serializable
+data class VideoInfo(val path: String)
+
+@Serializable
+data class TranscoderState(val current: Int?, val queue: List<Int>)
+
 sealed class Screen {
+    object TranscodeQueue : Screen()
     object Shows : Screen()
     data class ShowDetails(val show: Show) : Screen()
     data class SeasonDetails(val show: Show, val season: Season) : Screen()
@@ -183,6 +192,10 @@ class MainActivity : ComponentActivity() {
                 ProvideWindowInsets {
                     Backstack(backstack = navigator.stack) { screen ->
                         when (screen) {
+                            is Screen.TranscodeQueue -> TranscodeQueueScreen(
+                                client = client,
+                                navigator = navigator,
+                            )
                             is Screen.Shows -> ShowsScreen(client = client, navigator = navigator)
                             is Screen.ShowDetails -> ShowDetailsScreen(
                                 client = client,
@@ -285,7 +298,7 @@ fun AppTheme(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun AppBar(title: String = "Zenith") {
+fun AppBar(navigator: Navigator, title: String = "Zenith", menu: Boolean = true) {
     Surface(color = MaterialTheme.colors.primarySurface, elevation = 4.dp) {
         Column {
             Spacer(modifier = Modifier.statusBarsHeight())
@@ -293,9 +306,80 @@ fun AppBar(title: String = "Zenith") {
                 title = { Text(title) },
                 backgroundColor = Color.Transparent,
                 elevation = 0.dp,
+                actions = {
+                    if (menu) {
+                        AppBarMenu(navigator = navigator)
+                    }
+                }
             )
         }
     }
+}
+
+@Composable
+fun AppBarMenu(navigator: Navigator) {
+    var expanded by remember { mutableStateOf(false) }
+
+    IconButton(onClick = { expanded = true }) {
+        Icon(Icons.Default.MoreVert, contentDescription = "More")
+    }
+
+    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenuItem(onClick = {
+            expanded = false
+            navigator.push(Screen.TranscodeQueue)
+        }) {
+            Text("Transcode queue")
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun TranscodeQueueScreen(client: HttpClient, navigator: Navigator) {
+    val state by produceState<TranscoderState?>(initialValue = null) {
+        value = client.get("https://zenith.hasali.uk/api/transcoder")
+    }
+
+    Scaffold(topBar = { AppBar(navigator = navigator, title = "Transcode queue", menu = false) }) {
+        if (state == null) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+        } else {
+            LazyColumn(contentPadding = PaddingValues(16.dp)) {
+                item {
+                    state?.current?.let { id ->
+                        Text("Current", style = MaterialTheme.typography.subtitle2)
+                        TranscodeQueueListItem(client = client, id = id)
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                item {
+                    Text("Queued (${state?.queue?.size})", style = MaterialTheme.typography.subtitle2)
+                }
+
+                items(state!!.queue.size ?: 0) { i ->
+                    TranscodeQueueListItem(client = client, id = state!!.queue[i])
+                    Divider()
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun TranscodeQueueListItem(client: HttpClient, id: Int) {
+    val info by produceState<VideoInfo?>(initialValue = null, id) {
+        value = client.get("https://zenith.hasali.uk/api/videos/$id/info")
+    }
+
+    ListItem(text = { Text(info?.path ?: id.toString()) })
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -305,7 +389,7 @@ fun ShowsScreen(client: HttpClient, navigator: Navigator) {
         value = client.get("https://zenith.hasali.uk/api/tv/shows")
     }
 
-    Scaffold(topBar = { AppBar() }) {
+    Scaffold(topBar = { AppBar(navigator = navigator) }) {
         LazyVerticalGrid(
             cells = GridCells.Adaptive(120.dp),
             contentPadding = PaddingValues(4.dp),
@@ -407,7 +491,7 @@ fun SeasonDetailsScreen(client: HttpClient, navigator: Navigator, show: Show, se
         value = client.get("https://zenith.hasali.uk/api/tv/seasons/${season.id}/episodes")
     }
 
-    Scaffold(topBar = { AppBar(title = season.name) }) {
+    Scaffold(topBar = { AppBar(title = season.name, navigator = navigator) }) {
         LazyVerticalGrid(cells = GridCells.Adaptive(200.dp), contentPadding = PaddingValues(4.dp)) {
             items(episodes.size) { i ->
                 val episode = episodes[i]
