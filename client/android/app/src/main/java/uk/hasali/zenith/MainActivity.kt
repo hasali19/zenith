@@ -9,16 +9,11 @@ import android.media.AudioManager
 import android.os.Bundle
 import android.view.SoundEffectConstants
 import android.view.WindowManager
-import android.widget.SeekBar
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyRow
@@ -26,14 +21,10 @@ import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
@@ -524,8 +515,8 @@ fun PlayerScreen(client: HttpClient, navigator: Navigator, id: Int) {
             if (info != null) {
                 VideoPlayer(
                     id = id,
-                    info = info!!,
                     client = client,
+                    startPosition = info!!.position?.toInt() ?: 0,
                     onVideoEnded = { navigator.pop() },
                 )
             }
@@ -576,14 +567,9 @@ fun FullScreen(content: @Composable() () -> Unit) {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun VideoPlayer(id: Int, info: StreamInfo, client: HttpClient, onVideoEnded: () -> Unit) {
+fun VideoPlayer(id: Int, client: HttpClient, startPosition: Int, onVideoEnded: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
-    var controls by remember { mutableStateOf(true) }
-    var playing by remember { mutableStateOf(true) }
-    var offset by remember { mutableStateOf(info.position?.toLong() ?: 0) }
-    var position by remember { mutableStateOf(0L) }
 
     val player = remember {
         SimpleExoPlayer.Builder(context)
@@ -595,44 +581,32 @@ fun VideoPlayer(id: Int, info: StreamInfo, client: HttpClient, onVideoEnded: () 
                             onVideoEnded()
                         }
                     }
-
-                    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                        playing = playWhenReady
-                    }
                 })
 
                 scope.launch {
-                    var counter = 0
-
                     while (true) {
-                        if (counter == 4) {
-                            counter = 0
-                        }
-
                         if (player.playWhenReady) {
-                            position = player.currentPosition / 1000
-
-                            if (counter == 0) {
-                                launch {
-                                    client.post("https://zenith.hasali.uk/api/progress/$id?position=${offset + position}")
-                                }
+                            val position = player.currentPosition / 1000
+                            launch {
+                                client.post("https://zenith.hasali.uk/api/progress/$id?position=$position")
                             }
                         }
 
-                        counter += 1
-                        delay(500)
+                        delay(2000)
                     }
                 }
             }
     }
 
-    DisposableEffect(offset) {
-        player.stop()
-        player.setMediaItem(MediaItem.fromUri("https://zenith.hasali.uk/api/stream/$id/transcode?start=$offset"))
+    DisposableEffect(id) {
+        player.setMediaItem(MediaItem.fromUri("https://zenith.hasali.uk/api/videos/$id"))
         player.prepare()
+        player.seekTo(startPosition.toLong() * 1000)
         player.play()
 
-        onDispose { }
+        onDispose {
+            player.stop()
+        }
     }
 
     DisposableEffect(Unit) {
@@ -643,122 +617,13 @@ fun VideoPlayer(id: Int, info: StreamInfo, client: HttpClient, onVideoEnded: () 
 
     Surface(
         color = Color.Black,
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTapGestures(onTap = {
-                    controls = !controls
-                })
-            },
+        modifier = Modifier.fillMaxSize(),
     ) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
-            factory = { context ->
-                PlayerView(context).apply {
-                    useController = false
-                }
-            },
-            update = { playerView ->
-                playerView.player = player
-            },
+            factory = { context -> PlayerView(context) },
+            update = { playerView -> playerView.player = player },
         )
-
-        AnimatedVisibility(
-            visible = controls,
-            modifier = Modifier.fillMaxSize(),
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                FloatingActionButton(
-                    modifier = Modifier.align(Alignment.Center),
-                    onClick = {
-                        val audioManager =
-                            context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                        audioManager.playSoundEffect(SoundEffectConstants.CLICK, 1.0f)
-                        player.playWhenReady = !player.playWhenReady
-                    },
-                ) {
-                    Icon(
-                        if (playing) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = "Play/Pause",
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black))),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                    ) {
-                        val totalPosition = offset + position
-
-                        Text(
-                            formatTime(totalPosition),
-                            color = Color.White,
-                            style = MaterialTheme.typography.caption,
-                            modifier = Modifier.align(Alignment.CenterVertically),
-                        )
-
-                        AndroidView(
-                            modifier = Modifier
-                                .weight(1f)
-                                .align(Alignment.CenterVertically),
-                            factory = { context ->
-                                SeekBar(context).apply {
-                                    setOnSeekBarChangeListener(object :
-                                        SeekBar.OnSeekBarChangeListener {
-                                        override fun onProgressChanged(
-                                            seekBar: SeekBar,
-                                            progress: Int,
-                                            fromUser: Boolean
-                                        ) {
-                                        }
-
-                                        override fun onStartTrackingTouch(seekBar: SeekBar) {
-                                            player.pause()
-                                        }
-
-                                        override fun onStopTrackingTouch(seekBar: SeekBar) {
-                                            position = 0
-                                            offset = seekBar.progress.toLong()
-                                        }
-                                    })
-                                }
-                            },
-                            update = {
-                                it.max = info?.duration?.toInt() ?: 0
-                                it.progress = if (info != null) totalPosition.toInt() else 0
-                            }
-                        )
-
-                        Text(
-                            formatTime(if (info != null) info!!.duration.toLong() - totalPosition else 0L),
-                            color = Color.White,
-                            style = MaterialTheme.typography.caption,
-                            modifier = Modifier.align(Alignment.CenterVertically),
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-fun formatTime(value: Long): String {
-    val hours = (value / 3600).toString().padStart(2, '0')
-    val mins = ((value % 3600) / 60).toString().padStart(2, '0')
-    val secs = ((value % 3600) % 60).toString().padStart(2, '0')
-
-    return if (value >= 3600) {
-        "$hours:$mins:$secs"
-    } else {
-        "$mins:$secs"
     }
 }
 
