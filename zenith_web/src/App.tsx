@@ -2,10 +2,11 @@ import React, { useRef, useState } from "react";
 import { BrowserRouter, Route } from "react-router-dom";
 import { Transition } from "react-transition-group";
 import { css, Theme } from "@emotion/react";
-import { Toolbar, Typography } from "@material-ui/core";
+import { Toolbar } from "@material-ui/core";
 
 import AppBar from "./AppBar";
 import Drawer from "./Drawer";
+import Home from "./pages/Home";
 import Movies from "./pages/Movies";
 import Shows from "./pages/Shows";
 import Movie from "./pages/Movie";
@@ -115,7 +116,7 @@ export default function App() {
               <Shows />
             </AnimatedScreen>
             <AnimatedScreen path="/">
-              <Typography variant="h4">Home</Typography>
+              <Home />
             </AnimatedScreen>
           </main>
         </div>
