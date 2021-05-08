@@ -5,6 +5,7 @@ import {
   Card,
   CardActionArea,
   CardMedia,
+  Icon,
   LinearProgress,
   Typography,
 } from "@material-ui/core";
@@ -105,6 +106,22 @@ export default function () {
                     aspect-ratio: 16/9;
                   `}
                 />
+                {episode.is_watched && (
+                  <div
+                    css={css`
+                      width: 100%;
+                      height: 100%;
+                      position: absolute;
+                      top: 0;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      background-color: rgba(0, 0, 0, 0.5);
+                    `}
+                  >
+                    <Icon>check</Icon>
+                  </div>
+                )}
               </CardActionArea>
             </Card>
             <div
