@@ -17,9 +17,11 @@ pub fn service(path: &str) -> Scope {
 async fn get_state(req: HttpRequest) -> actix_web::Result<impl Responder> {
     let transcoder: &Arc<Transcoder> = req.app_data().unwrap();
     let current = transcoder.current().await;
+    let queue = transcoder.queue().await;
 
     Ok(HttpResponse::Ok().json(json!({
         "current": current.map(|j| j.video_id),
+        "queue": queue.iter().map(|j| j.video_id).collect::<Vec<_>>(),
     })))
 }
 

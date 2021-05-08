@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -15,7 +16,7 @@ pub struct Job {
 pub struct Transcoder {
     db: Db,
     sema: Semaphore,
-    queue: RwLock<Vec<Job>>,
+    queue: RwLock<VecDeque<Job>>,
     current: RwLock<Option<Job>>,
     sender: broadcast::Sender<Event>,
 }
@@ -35,7 +36,7 @@ impl Transcoder {
         Arc::new(Transcoder {
             db,
             sema: Semaphore::new(0),
-            queue: RwLock::new(Vec::new()),
+            queue: RwLock::new(VecDeque::new()),
             current: RwLock::new(None),
             sender,
         })
@@ -62,7 +63,7 @@ impl Transcoder {
             }
         }
 
-        queue.push(job);
+        queue.push_back(job);
 
         self.sema.add_permits(1);
         self.sender.send(Event::Queued(id)).ok();
@@ -76,6 +77,17 @@ impl Transcoder {
         self.current.read().await.as_ref().map(|j| Job {
             video_id: j.video_id,
         })
+    }
+
+    pub async fn queue(&self) -> Vec<Job> {
+        self.queue
+            .read()
+            .await
+            .iter()
+            .map(|job| Job {
+                video_id: job.video_id,
+            })
+            .collect()
     }
 
     async fn set_current(&self, value: Option<Job>) {
@@ -206,6 +218,6 @@ impl Transcoder {
         let mut queue = self.queue.write().await;
 
         // At this point it should always be safe to pop
-        queue.pop().unwrap()
+        queue.pop_front().unwrap()
     }
 }
