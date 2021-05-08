@@ -6,6 +6,7 @@ use std::sync::Arc;
 use actix_files::NamedFile;
 use actix_web::middleware::{NormalizePath, TrailingSlash};
 use actix_web::{web, App, HttpRequest, HttpServer, Responder};
+use zenith::broadcaster::Broadcaster;
 use zenith::config::Config;
 use zenith::db::Db;
 use zenith::ffmpeg::Ffprobe;
@@ -27,6 +28,7 @@ async fn main() -> eyre::Result<()> {
 
     let config = Arc::new(Config::load("config.yml")?);
     let db = Db::init(&config.database.path).await?;
+    let broadcaster = Broadcaster::new();
     let tmdb = TmdbClient::new(&config.tmdb.access_token);
     let metadata = MetadataManager::new(db.clone(), tmdb);
     let video_info_provider = Arc::new(Ffprobe::new(&config.transcoding.ffprobe_path));
@@ -37,6 +39,27 @@ async fn main() -> eyre::Result<()> {
         metadata.clone(),
         config.clone(),
     ));
+
+    // Broadcast events from transcoder to SSE clients
+    tokio::spawn({
+        let broadcaster = broadcaster.clone();
+        let mut events = transcoder.subscribe();
+        async move {
+            loop {
+                let event = events.recv().await.unwrap();
+                let (event, id) = match event {
+                    zenith::transcoder::Event::Queued(id) => ("transcoder.queued", id),
+                    zenith::transcoder::Event::Started(id) => ("transcoder.started", id),
+                    zenith::transcoder::Event::Success(id) => ("transcoder.success", id),
+                    zenith::transcoder::Event::Error(id) => ("transcoder.error", id),
+                };
+
+                let message = format!("data: {{\"event\": \"{}\", \"id\": {}}}\n\n", event, id);
+
+                broadcaster.send(message);
+            }
+        }
+    });
 
     scanner.start_scan();
     transcoder.clone().start();
@@ -61,6 +84,7 @@ async fn main() -> eyre::Result<()> {
                 .app_data(db.clone())
                 .app_data(metadata.clone())
                 .app_data(transcoder.clone())
+                .app_data(broadcaster.clone())
                 .wrap(NormalizePath::new(TrailingSlash::Trim))
                 .service(zenith::api::service("/api"))
                 .default_service(web::to(spa))

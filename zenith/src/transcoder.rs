@@ -2,7 +2,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use tokio::process::Command;
-use tokio::sync::{RwLock, Semaphore};
+use tokio::sync::{broadcast, RwLock, Semaphore};
 
 use crate::db::Db;
 use crate::ext::CommandExt;
@@ -17,26 +17,39 @@ pub struct Transcoder {
     sema: Semaphore,
     queue: RwLock<Vec<Job>>,
     current: RwLock<Option<Job>>,
+    sender: broadcast::Sender<Event>,
+}
+
+#[derive(Clone, Debug)]
+pub enum Event {
+    Queued(i64),
+    Started(i64),
+    Success(i64),
+    Error(i64),
 }
 
 impl Transcoder {
     pub fn new(db: Db) -> Arc<Transcoder> {
+        let (sender, _) = broadcast::channel(8);
+
         Arc::new(Transcoder {
             db,
             sema: Semaphore::new(0),
             queue: RwLock::new(Vec::new()),
             current: RwLock::new(None),
+            sender,
         })
     }
 
+    pub fn subscribe(&self) -> broadcast::Receiver<Event> {
+        self.sender.subscribe()
+    }
+
     pub async fn enqueue(&self, job: Job) {
+        let id = job.video_id;
+
         // Skip if we are already transcoding this id
-        if self
-            .current()
-            .await
-            .iter()
-            .any(|j| j.video_id == job.video_id)
-        {
+        if self.current().await.iter().any(|j| j.video_id == id) {
             return;
         }
 
@@ -44,7 +57,7 @@ impl Transcoder {
 
         // Skip if this id is already in the queue
         for existing in queue.iter() {
-            if existing.video_id == job.video_id {
+            if existing.video_id == id {
                 return;
             }
         }
@@ -52,6 +65,7 @@ impl Transcoder {
         queue.push(job);
 
         self.sema.add_permits(1);
+        self.sender.send(Event::Queued(id)).ok();
     }
 
     pub fn start(self: Arc<Self>) {
@@ -75,6 +89,7 @@ impl Transcoder {
             let id = job.video_id;
 
             self.set_current(Some(job)).await;
+            self.sender.send(Event::Started(id)).ok();
 
             tracing::info!("starting transcode for video (id: {})", id);
 
@@ -128,12 +143,14 @@ impl Transcoder {
                     if !status.success() {
                         tracing::error!("ffmpeg terminated unsuccessfully");
                         self.set_current(None).await;
+                        self.sender.send(Event::Error(id)).ok();
                         continue;
                     }
                 }
                 Err(e) => {
                     tracing::error!("{}", e);
                     self.set_current(None).await;
+                    self.sender.send(Event::Error(id)).ok();
                     continue;
                 }
             }
@@ -141,6 +158,7 @@ impl Transcoder {
             if let Err(e) = std::fs::remove_file(&path) {
                 tracing::error!("failed to remove file: {}", e);
                 self.set_current(None).await;
+                self.sender.send(Event::Error(id)).ok();
                 continue;
             }
 
@@ -149,11 +167,13 @@ impl Transcoder {
             if let Err(e) = std::fs::rename(&output, &path) {
                 tracing::error!("failed to rename file: {}", e);
                 self.set_current(None).await;
+                self.sender.send(Event::Error(id)).ok();
                 continue;
             }
 
             self.update_video_path(id, &path).await;
             self.set_current(None).await;
+            self.sender.send(Event::Success(id)).ok();
         }
     }
 

@@ -1,3 +1,4 @@
+mod events;
 mod metadata;
 mod movies;
 mod progress;
@@ -17,4 +18,5 @@ pub fn service(path: &str) -> Scope {
         .service(metadata::service("/metadata"))
         .service(progress::service("/progress"))
         .service(transcoder::service("/transcoder"))
+        .service(events::service("/events"))
 }
