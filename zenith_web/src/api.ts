@@ -160,6 +160,7 @@ export interface VideoInfo {
   path: string;
   format: string;
   duration: number;
+  position: number | null;
   video: {
     codec: string;
     profile: string;
