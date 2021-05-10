@@ -166,10 +166,10 @@ export interface VideoInfo {
     profile: string;
     width: number;
     height: number;
-  },
+  };
   audio: {
     codec: string;
-  }
+  };
 }
 
 export default {
@@ -254,19 +254,6 @@ export default {
       await fetch(`/api/metadata/${id}/refresh`, { method: "POST" });
     },
   },
-
-  stream: {
-    async getInfo(id: ItemId) {
-      const res = await fetch(`/api/stream/${id}/info`);
-      const info = await res.json();
-      return info as StreamInfo;
-    },
-
-    getTranscodeUrl(id: ItemId, start = 0) {
-      return `/api/stream/${id}/transcode?start=${start}`;
-    },
-  },
-
 
   progress: {
     async update(id: ItemId, position: number) {
