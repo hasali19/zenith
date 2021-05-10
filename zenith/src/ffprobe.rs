@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::process::Stdio;
 
+use async_trait::async_trait;
 use eyre::eyre;
 use serde::Deserialize;
 use serde_json::Value;
@@ -13,7 +14,7 @@ pub struct Ffprobe {
 }
 
 #[derive(Deserialize)]
-pub struct Output {
+pub struct VideoInfo {
     pub format: Format,
     pub streams: Vec<Stream>,
 }
@@ -40,7 +41,7 @@ impl Ffprobe {
         Ffprobe { path: path.into() }
     }
 
-    pub async fn probe(&self, path: &str) -> eyre::Result<Output> {
+    pub async fn probe(&self, path: &str) -> eyre::Result<VideoInfo> {
         let output = Command::new(&self.path)
             .arg_pair("-loglevel", "error")
             .arg_pair("-print_format", "json")
@@ -57,5 +58,17 @@ impl Ffprobe {
         }
 
         Ok(serde_json::from_slice(&output.stdout)?)
+    }
+}
+
+#[async_trait]
+pub trait VideoInfoProvider: Send + Sync {
+    async fn get_video_info(&self, path: &str) -> eyre::Result<VideoInfo>;
+}
+
+#[async_trait::async_trait]
+impl VideoInfoProvider for Ffprobe {
+    async fn get_video_info(&self, path: &str) -> eyre::Result<VideoInfo> {
+        self.probe(path).await
     }
 }

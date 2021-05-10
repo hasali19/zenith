@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use crate::db::media::MediaItemType;
 use crate::db::Db;
-use crate::ffmpeg::VideoInfoProvider;
+use crate::ffprobe::VideoInfoProvider;
 
 pub struct MovieLibrary {
     db: Db,
@@ -24,6 +24,7 @@ impl MovieLibrary {
     /// Adds a new movie
     pub async fn add_movie(&self, movie: &NewMovie<'_>) -> eyre::Result<i64> {
         let info = self.video_info.get_video_info(movie.path).await?;
+        let duration: f64 = info.format.duration.parse()?;
         let mut transaction = self.db.begin().await?;
 
         let sql = "
@@ -57,7 +58,7 @@ impl MovieLibrary {
         sqlx::query(sql)
             .bind(id)
             .bind(movie.path)
-            .bind(info.duration)
+            .bind(duration)
             .execute(&mut transaction)
             .await?;
 

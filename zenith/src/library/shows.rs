@@ -5,7 +5,7 @@ use sqlx::Connection;
 
 use crate::db::media::MediaItemType;
 use crate::db::Db;
-use crate::ffmpeg::VideoInfoProvider;
+use crate::ffprobe::VideoInfoProvider;
 
 pub struct ShowLibrary {
     db: Db,
@@ -196,6 +196,7 @@ impl ShowLibrary {
     /// Adds a new episode
     pub async fn add_episode(&self, episode: NewEpisode<'_>) -> eyre::Result<i64> {
         let info = self.video_info.get_video_info(episode.path).await?;
+        let duration: f64 = info.format.duration.parse()?;
         let mut transaction = self.db.begin().await?;
 
         let sql = "
@@ -229,7 +230,7 @@ impl ShowLibrary {
         sqlx::query(sql)
             .bind(id)
             .bind(episode.path)
-            .bind(info.duration)
+            .bind(duration)
             .execute(&mut *transaction)
             .await?;
 

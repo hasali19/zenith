@@ -9,7 +9,7 @@ use actix_web::{web, App, HttpRequest, HttpServer, Responder};
 use zenith::broadcaster::Broadcaster;
 use zenith::config::Config;
 use zenith::db::Db;
-use zenith::ffmpeg::Ffprobe;
+use zenith::ffprobe::Ffprobe;
 use zenith::library::scanner::LibraryScanner;
 use zenith::library::MediaLibrary;
 use zenith::metadata::MetadataManager;

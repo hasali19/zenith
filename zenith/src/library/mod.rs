@@ -7,7 +7,7 @@ pub use scanner::LibraryScanner;
 use std::sync::Arc;
 
 use crate::db::Db;
-use crate::ffmpeg::VideoInfoProvider;
+use crate::ffprobe::VideoInfoProvider;
 
 use self::movies::MovieLibrary;
 use self::shows::ShowLibrary;
