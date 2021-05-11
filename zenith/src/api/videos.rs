@@ -2,17 +2,18 @@ use std::sync::Arc;
 
 use actix_files::NamedFile;
 use actix_http::error::{ErrorInternalServerError, ErrorNotFound};
-use actix_web::{web, HttpRequest, HttpResponse, Responder, Scope};
+use actix_web::web::ServiceConfig;
+use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde_json::json;
 
 use crate::config::Config;
 use crate::db::Db;
 use crate::ffprobe::Ffprobe;
 
-pub fn service(path: &str) -> Scope {
-    web::scope(path)
-        .route("/{id}", web::get().to(get_video_content))
-        .route("/{id}/info", web::get().to(get_video_info))
+pub fn configure(config: &mut ServiceConfig) {
+    config
+        .route("/videos/{id}", web::get().to(get_video_content))
+        .route("/videos/{id}/info", web::get().to(get_video_info));
 }
 
 async fn get_video_content(

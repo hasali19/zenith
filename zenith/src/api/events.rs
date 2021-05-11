@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
-use actix_web::{web, HttpRequest, HttpResponse, Responder, Scope};
+use actix_web::web::ServiceConfig;
+use actix_web::{web, HttpRequest, HttpResponse, Responder};
 
 use crate::broadcaster::Broadcaster;
 
-pub fn service(path: &str) -> Scope {
-    web::scope(path).route("", web::get().to(connect))
+pub fn configure(config: &mut ServiceConfig) {
+    config.route("/events", web::get().to(connect));
 }
 
 async fn connect(req: HttpRequest) -> impl Responder {

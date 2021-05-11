@@ -1,11 +1,12 @@
 use actix_http::error::{ErrorInternalServerError, ErrorNotFound};
-use actix_web::{web, HttpRequest, HttpResponse, Responder, Scope};
+use actix_web::web::ServiceConfig;
+use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 
 use crate::db::Db;
 
-pub fn service(path: &str) -> Scope {
-    web::scope(path).route("{id}", web::post().to(update_progress))
+pub fn configure(config: &mut ServiceConfig) {
+    config.route("/progress/{id}", web::post().to(update_progress));
 }
 
 #[derive(Deserialize)]

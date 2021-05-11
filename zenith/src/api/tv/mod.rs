@@ -2,24 +2,25 @@ pub mod episodes;
 pub mod seasons;
 pub mod shows;
 
-use actix_web::web::post;
-use actix_web::{web, Scope};
-use web::get;
+use actix_web::web::{self, get, post, ServiceConfig};
+use episodes::{get_episode, get_episodes};
+use seasons::{get_season, get_seasons};
+use shows::{get_recently_updated_shows, get_show, get_shows};
 
-use super::import;
+use super::import::{import_episode, import_show};
 
-pub fn service(path: &str) -> Scope {
-    let shows = web::resource("/shows")
-        .route(get().to(shows::get_shows))
-        .route(post().to(import::import_show));
+pub fn configure(config: &mut ServiceConfig) {
+    let shows = web::resource("/tv/shows")
+        .route(get().to(get_shows))
+        .route(post().to(import_show));
 
-    web::scope(path)
+    config
         .service(shows)
-        .route("/shows/recent", get().to(shows::get_recently_updated_shows))
-        .route("/shows/{id}", get().to(shows::get_show))
-        .route("/shows/{id}/seasons", get().to(seasons::get_seasons))
-        .route("/shows/{id}/episodes", post().to(import::import_episode))
-        .route("/seasons/{id}", get().to(seasons::get_season))
-        .route("/seasons/{id}/episodes", get().to(episodes::get_episodes))
-        .route("/episodes/{id}", get().to(episodes::get_episode))
+        .route("/tv/shows/recent", get().to(get_recently_updated_shows))
+        .route("/tv/shows/{id}", get().to(get_show))
+        .route("/tv/shows/{id}/seasons", get().to(get_seasons))
+        .route("/tv/shows/{id}/episodes", post().to(import_episode))
+        .route("/tv/seasons/{id}", get().to(get_season))
+        .route("/tv/seasons/{id}/episodes", get().to(get_episodes))
+        .route("/tv/episodes/{id}", get().to(get_episode));
 }

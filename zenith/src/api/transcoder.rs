@@ -1,18 +1,19 @@
 use std::sync::Arc;
 
 use actix_http::error::ErrorBadRequest;
-use actix_web::{web, HttpRequest, HttpResponse, Responder, Scope};
+use actix_web::web::ServiceConfig;
+use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 use serde_json::json;
 
 use crate::transcoder::{Job, Transcoder};
 
-pub fn service(path: &str) -> Scope {
-    web::scope(path).service(
-        web::resource("")
+pub fn configure(config: &mut ServiceConfig) {
+    config.service(
+        web::resource("/transcoder")
             .route(web::get().to(get_state))
             .route(web::post().to(transcode)),
-    )
+    );
 }
 
 async fn get_state(req: HttpRequest) -> actix_web::Result<impl Responder> {

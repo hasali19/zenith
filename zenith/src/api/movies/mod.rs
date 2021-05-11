@@ -1,6 +1,7 @@
 use actix_http::error::{ErrorInternalServerError, ErrorNotFound};
+use actix_web::web::ServiceConfig;
 use actix_web::{web, Responder};
-use actix_web::{HttpRequest, HttpResponse, Scope};
+use actix_web::{HttpRequest, HttpResponse};
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
@@ -8,11 +9,11 @@ use sqlx::{FromRow, Row};
 use crate::db::Db;
 use crate::utils;
 
-pub fn service(path: &str) -> Scope {
-    web::scope(path)
-        .route("", web::get().to(get_movies))
-        .route("/recent", web::get().to(get_recent_movies))
-        .route("/{id}", web::get().to(get_movie))
+pub fn configure(config: &mut ServiceConfig) {
+    config
+        .route("/movies", web::get().to(get_movies))
+        .route("/movies/recent", web::get().to(get_recent_movies))
+        .route("/movies/{id}", web::get().to(get_movie));
 }
 
 #[derive(Serialize)]
