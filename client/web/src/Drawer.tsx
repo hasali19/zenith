@@ -2,13 +2,14 @@ import { css } from "@emotion/react";
 import { useHistory, useLocation } from "react-router";
 import {
   Drawer,
-  Hidden,
   Icon,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
+  Theme,
   Toolbar,
+  useMediaQuery,
 } from "@material-ui/core";
 
 const WIDTH = 256;
@@ -82,6 +83,7 @@ export interface Props {
 }
 
 export default function ({ open, onClose }: Props) {
+  const mobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
   return (
     <nav
       css={(theme) => css`
@@ -91,7 +93,7 @@ export default function ({ open, onClose }: Props) {
         }
       `}
     >
-      <Hidden mdUp>
+      {mobile ? (
         <Drawer
           variant="temporary"
           open={open}
@@ -100,13 +102,12 @@ export default function ({ open, onClose }: Props) {
         >
           <DrawerContent onClose={onClose} />
         </Drawer>
-      </Hidden>
-      <Hidden mdDown>
+      ) : (
         <Drawer variant="permanent" open>
           <Toolbar />
           <DrawerContent onClose={onClose} />
         </Drawer>
-      </Hidden>
+      )}
     </nav>
   );
 }

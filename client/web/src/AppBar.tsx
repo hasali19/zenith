@@ -1,11 +1,11 @@
 import { css } from "@emotion/react";
 import {
-  Hidden,
   AppBar,
   Icon,
   IconButton,
   Toolbar,
   Typography,
+  useTheme,
 } from "@material-ui/core";
 
 export interface Props {
@@ -13,6 +13,8 @@ export interface Props {
 }
 
 export default function ({ onToggleDrawer }: Props) {
+  const theme = useTheme();
+  console.log(theme.breakpoints.up('md'));
   return (
     <AppBar
       color="inherit"
@@ -22,20 +24,22 @@ export default function ({ onToggleDrawer }: Props) {
       `}
     >
       <Toolbar>
-        <Hidden mdUp implementation="css">
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={onToggleDrawer}
-            css={(theme) =>
-              css`
+        <IconButton
+          edge="start"
+          color="inherit"
+          onClick={onToggleDrawer}
+          css={(theme) =>
+            css`
                 margin-right: ${theme.spacing(2)};
+
+                ${theme.breakpoints.up('md')} {
+                  display: none;
+                }
               `
-            }
-          >
-            <Icon>menu</Icon>
-          </IconButton>
-        </Hidden>
+          }
+        >
+          <Icon>menu</Icon>
+        </IconButton>
         <Typography
           variant="h6"
           component="div"
