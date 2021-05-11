@@ -4,8 +4,9 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use actix_files::NamedFile;
-use actix_web::middleware::{NormalizePath, TrailingSlash};
+use actix_web::middleware::{Logger, NormalizePath, TrailingSlash};
 use actix_web::{web, App, HttpRequest, HttpServer, Responder};
+use tracing_actix_web::TracingLogger;
 use zenith::broadcaster::Broadcaster;
 use zenith::config::Config;
 use zenith::db::Db;
@@ -17,7 +18,7 @@ use zenith::tmdb::TmdbClient;
 use zenith::transcoder::Transcoder;
 use zenith::watcher::FileWatcher;
 
-#[actix_rt::main]
+#[actix_web::main]
 async fn main() -> eyre::Result<()> {
     color_eyre::install()?;
 
@@ -90,6 +91,8 @@ async fn main() -> eyre::Result<()> {
                 .app_data(transcoder.clone())
                 .app_data(broadcaster.clone())
                 .wrap(NormalizePath::new(TrailingSlash::Trim))
+                .wrap(Logger::default())
+                .wrap(TracingLogger::default())
                 .service(zenith::api::service("/api"))
                 .default_service(web::to(spa))
         }
