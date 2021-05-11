@@ -126,7 +126,7 @@ pub fn parse_movie_filename(name: &str) -> Option<(String, Option<OffsetDateTime
     Some((name, year))
 }
 
-// Recursively scans a folder for tv shows
+/// Recursively scans a folder for tv shows
 pub async fn scan_shows(
     library: &ShowLibrary,
     metadata: &MetadataManager,
@@ -204,7 +204,7 @@ pub async fn scan_shows(
     Ok(())
 }
 
-// Extracts a show name, season and episode number from an episode path
+/// Extracts a show name, season and episode number from an episode path
 pub fn parse_episode_path(path: &Path) -> Option<(String, u32, u32)> {
     static REGEX: OnceCell<Regex> = OnceCell::new();
 
