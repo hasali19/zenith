@@ -170,6 +170,11 @@ export interface VideoInfo {
   audio: {
     codec: string;
   };
+  subtitles: {
+    index: number;
+    title: string | null;
+    language: string | null;
+  }[];
 }
 
 export default {

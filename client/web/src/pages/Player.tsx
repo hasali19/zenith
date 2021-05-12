@@ -56,7 +56,17 @@ export default function Player() {
           width: 100%;
           height: 100%;
         `}
-      />
+      >
+        {info &&
+          info.subtitles.map((subtitle) => (
+            <track
+              src={`/api/videos/${params.id}/subtitles/${subtitle.index}`}
+              kind="subtitles"
+              label={subtitle.title || subtitle.language || undefined}
+              srcLang={subtitle.language || undefined}
+            />
+          ))}
+      </video>
     </div>
   );
 }
