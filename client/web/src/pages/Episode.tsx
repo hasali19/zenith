@@ -1,16 +1,11 @@
 import { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router";
 import { css, Theme } from "@emotion/react";
-import {
-  Button,
-  Card,
-  Icon,
-  LinearProgress,
-  Typography,
-} from "@material-ui/core";
+import { Button, Icon, LinearProgress, Typography } from "@material-ui/core";
 
 import api, { TvEpisode, VideoInfo } from "../api";
 import MediaInfo from "../components/MediaInfo";
+import SubtitleSelect from "../components/SubtitleSelect";
 
 const styles = {
   root: css`
@@ -57,6 +52,7 @@ export default function () {
   const history = useHistory();
   const [episode, setEpisode] = useState<TvEpisode | null>(null);
   const [video, setVideo] = useState<VideoInfo | null>(null);
+  const [subtitle, setSubtitle] = useState<"none" | number>("none");
 
   useEffect(() => {
     api.tv.getEpisode(params.id).then(setEpisode);
@@ -65,6 +61,18 @@ export default function () {
 
   if (!episode || !video) {
     return <LinearProgress variant="indeterminate" />;
+  }
+
+  function onPlay() {
+    if (episode) {
+      let url = `/player/${episode.id}`;
+
+      if (subtitle !== "none") {
+        url += `?subtitle=${subtitle}`;
+      }
+
+      history.push(url);
+    }
   }
 
   return (
@@ -81,10 +89,22 @@ export default function () {
         variant="contained"
         startIcon={<Icon>play_arrow</Icon>}
         css={styles.play}
-        onClick={() => history.push(`/player/${episode.id}`)}
+        onClick={onPlay}
       >
         Play
       </Button>
+      <div
+        css={(theme) => css`
+          margin: 0 ${theme.spacing(2)};
+          margin-bottom: ${theme.spacing(2)};
+        `}
+      >
+        <SubtitleSelect
+          subtitles={video.subtitles}
+          value={subtitle}
+          onChange={setSubtitle}
+        />
+      </div>
       <Typography variant="body2" css={styles.overview}>
         {episode.overview}
       </Typography>

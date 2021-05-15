@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { css } from "@material-ui/styled-engine";
 
 import api, { ItemId, VideoInfo } from "../api";
@@ -18,25 +18,30 @@ function loadVideo(id: ItemId, info: VideoInfo, video: HTMLVideoElement) {
 
 export default function Player() {
   const params = useParams<any>();
+  const query = new URLSearchParams(useLocation().search);
   const video = useRef<HTMLVideoElement>(null);
   const [info, setInfo] = useState<VideoInfo | null>(null);
 
+  const requestedSubtitle = parseInt(query.get("subtitle") || "none");
+
   useEffect(() => {
-    api.videos.getVideoInfo(params.id).then(setInfo);
+    if (params.id) {
+      api.videos.getVideoInfo(params.id).then(setInfo);
 
-    const interval = setInterval(() => {
-      if (video.current) {
-        reportVideoPosition(params.id, video.current);
-      }
-    }, 2000);
+      const interval = setInterval(() => {
+        if (video.current) {
+          reportVideoPosition(params.id, video.current);
+        }
+      }, 2000);
 
-    return () => {
-      clearInterval(interval);
-    };
+      return () => {
+        clearInterval(interval);
+      };
+    }
   }, [params]);
 
   useEffect(() => {
-    if (info && video.current) {
+    if (params.id && info && video.current) {
       loadVideo(params.id, info, video.current);
     }
   }, [params, info]);
@@ -57,13 +62,16 @@ export default function Player() {
           height: 100%;
         `}
       >
-        {info &&
+        {params.id &&
+          info &&
           info.subtitles.map((subtitle) => (
             <track
+              key={subtitle.index}
               src={`/api/videos/${params.id}/subtitles/${subtitle.index}`}
               kind="subtitles"
               label={subtitle.title || subtitle.language || undefined}
               srcLang={subtitle.language || undefined}
+              default={requestedSubtitle === subtitle.index}
             />
           ))}
       </video>

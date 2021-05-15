@@ -5,6 +5,7 @@ import { Button, Icon, LinearProgress, Typography } from "@material-ui/core";
 
 import api, { Movie, VideoInfo } from "../api";
 import MediaInfo from "../components/MediaInfo";
+import SubtitleSelect from "../components/SubtitleSelect";
 
 function displayDuration(duration: number) {
   if (duration <= 90 * 60) {
@@ -51,6 +52,7 @@ export default function () {
   const history = useHistory();
   const [movie, setMovie] = useState<Movie | null>(null);
   const [video, setVideo] = useState<VideoInfo | null>(null);
+  const [subtitle, setSubtitle] = useState<"none" | number>("none");
 
   useEffect(() => {
     api.movies.getMovie(params.id).then(setMovie);
@@ -59,6 +61,18 @@ export default function () {
 
   if (!movie || !video) {
     return <LinearProgress variant="indeterminate" />;
+  }
+
+  function onPlay() {
+    if (movie) {
+      let url = `/player/${movie.id}`;
+
+      if (subtitle !== "none") {
+        url += `?subtitle=${subtitle}`;
+      }
+
+      history.push(url);
+    }
   }
 
   return (
@@ -74,10 +88,22 @@ export default function () {
         variant="contained"
         startIcon={<Icon>play_arrow</Icon>}
         css={styles.play}
-        onClick={() => history.push(`/player/${movie.id}`)}
+        onClick={onPlay}
       >
         Play
       </Button>
+      <div
+        css={(theme) => css`
+          margin: 0 ${theme.spacing(2)};
+          margin-bottom: ${theme.spacing(2)};
+        `}
+      >
+        <SubtitleSelect
+          subtitles={video.subtitles}
+          value={subtitle}
+          onChange={setSubtitle}
+        />
+      </div>
       <Typography variant="body2" css={styles.overview}>
         {movie.overview}
       </Typography>
