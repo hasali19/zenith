@@ -17,3 +17,6 @@ config.yml
 
 # Cache directory
 cache/
+
+# Media directory
+media/
