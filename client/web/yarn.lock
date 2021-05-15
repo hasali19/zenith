@@ -421,6 +421,38 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.9.2.tgz#adea7b6953cbb34651766b0548468e743c6a2353"
   integrity sha512-VZMYa7+fXHdwIq1TDhSXoVmSPEGM/aa+6Aiq3nVVJ9bXr24zScr+NlKFKC3iPljA7ho/GAZr+d2jOf5GIRC30Q==
 
+"@types/chrome@*":
+  version "0.0.140"
+  resolved "https://registry.yarnpkg.com/@types/chrome/-/chrome-0.0.140.tgz#5e9677d6716e53808f49b7c85640f9538c96e386"
+  integrity sha512-qv4rcmQMBCFDNuDgQgzThyMli8PyKmP6co6ySZbIsLfdi0AZ78k1+jUXBv+VjYMDfsO5GKvm8WNruLInxOrEQA==
+  dependencies:
+    "@types/filesystem" "*"
+    "@types/har-format" "*"
+
+"@types/chromecast-caf-sender@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@types/chromecast-caf-sender/-/chromecast-caf-sender-1.0.3.tgz#9bebbc16debc060463b56f3ca130052dfc499d4d"
+  integrity sha512-UhlRZxrHvtpoDJFiNNUTIM63LNRV18LJYrfPehEatqyp7jrQYdhc8o32PfTujFIHARSSfu6zUxnOFCDWG/nwVA==
+  dependencies:
+    "@types/chrome" "*"
+
+"@types/filesystem@*":
+  version "0.0.30"
+  resolved "https://registry.yarnpkg.com/@types/filesystem/-/filesystem-0.0.30.tgz#a7373a2edf34d13e298baf7ee1101f738b2efb7e"
+  integrity sha512-NCoRgmGmLpTT9VFL6Bb6z0jQuqI3d0E5FGl7M0JOv/J5RQYo9s5aOItPYnpckx9MbYQk1APLXcF8f20Vqnf2yA==
+  dependencies:
+    "@types/filewriter" "*"
+
+"@types/filewriter@*":
+  version "0.0.29"
+  resolved "https://registry.yarnpkg.com/@types/filewriter/-/filewriter-0.0.29.tgz#a48795ecadf957f6c0d10e0c34af86c098fa5bee"
+  integrity sha512-BsPXH/irW0ht0Ji6iw/jJaK8Lj3FJemon2gvEqHKpCdDCeemHa+rI3WBGq5z7cDMZgoLjY40oninGxqk+8NzNQ==
+
+"@types/har-format@*":
+  version "1.2.5"
+  resolved "https://registry.yarnpkg.com/@types/har-format/-/har-format-1.2.5.tgz#4f6648814d0fdcb6a510e3364a9db439a753c4b1"
+  integrity sha512-IG8AE1m2pWtPqQ7wXhFhy6Q59bwwnLwO36v5Rit2FrbXCIp8Sk8E2PfUCreyrdo17STwFSKDAkitVuVYbpEHvQ==
+
 "@types/history@*":
   version "4.7.8"
   resolved "https://registry.yarnpkg.com/@types/history/-/history-4.7.8.tgz#49348387983075705fe8f4e02fb67f7daaec4934"

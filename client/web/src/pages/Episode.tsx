@@ -63,9 +63,9 @@ export default function () {
     return <LinearProgress variant="indeterminate" />;
   }
 
-  function onPlay() {
+  function onPlay(player: "cast" | "player" = "player") {
     if (episode) {
-      let url = `/player/${episode.id}`;
+      let url = `/${player}/${episode.id}`;
 
       if (subtitle !== "none") {
         url += `?subtitle=${subtitle}`;
@@ -89,9 +89,12 @@ export default function () {
         variant="contained"
         startIcon={<Icon>play_arrow</Icon>}
         css={styles.play}
-        onClick={onPlay}
+        onClick={() => onPlay()}
       >
         Play
+      </Button>
+      <Button variant="outlined" onClick={() => onPlay("cast")}>
+        <Icon color="action">cast</Icon>
       </Button>
       <div
         css={(theme) => css`

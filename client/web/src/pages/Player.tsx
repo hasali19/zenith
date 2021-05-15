@@ -22,7 +22,7 @@ export default function Player() {
   const video = useRef<HTMLVideoElement>(null);
   const [info, setInfo] = useState<VideoInfo | null>(null);
 
-  const requestedSubtitle = parseInt(query.get("subtitle") || "none");
+  const requestedSubtitle = parseInt(query.get("subtitle") || "-1");
 
   useEffect(() => {
     if (params.id) {

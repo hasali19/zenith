@@ -3,7 +3,7 @@
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "typeRoots": ["node_modules/@types", "./types"],
-    "types": ["vite/client", "@emotion/react"],
+    "types": ["vite/client", "@emotion/react", "chromecast-caf-sender"],
     "allowJs": false,
     "skipLibCheck": false,
     "esModuleInterop": false,
