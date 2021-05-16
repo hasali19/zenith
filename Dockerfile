@@ -1,22 +1,12 @@
-FROM rust:1.49-buster as planner
-WORKDIR app
-RUN cargo install cargo-chef
-COPY Cargo.* ./
-COPY zenith zenith
-RUN cargo chef prepare --recipe-path recipe.json
-
-FROM rust:1.49-buster as cacher
-WORKDIR app
-RUN cargo install cargo-chef
-COPY --from=planner /app/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
-
 FROM rust:1.49-buster as builder-rust
 WORKDIR app
-COPY Cargo.* ./
-COPY zenith zenith
-COPY --from=cacher /app/target target
-COPY --from=cacher $CARGO_HOME $CARGO_HOME
+COPY Cargo.* .
+COPY zenith/Cargo.toml zenith/Cargo.toml
+RUN mkdir zenith/src && \
+    echo "fn main() {}" > zenith/src/main.rs && \
+    cargo build --release && \
+    rm -rf zenith/src
+COPY zenith/src zenith/src
 RUN cargo build --bin zenith --release
 
 FROM node:14 as builder-node
