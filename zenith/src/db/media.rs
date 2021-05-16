@@ -2,8 +2,10 @@ use std::convert::TryFrom;
 
 use eyre::eyre;
 use itertools::Itertools;
+use serde::Serialize;
+use sqlx::Type;
 
-#[derive(Clone, Copy, Debug, sqlx::Type)]
+#[derive(Clone, Copy, Debug, Type, Serialize)]
 #[repr(i32)]
 pub enum MediaItemType {
     Movie = 1,

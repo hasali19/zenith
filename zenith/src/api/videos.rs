@@ -9,6 +9,7 @@ use serde_json::json;
 use tokio::process::Command;
 
 use crate::config::Config;
+use crate::db::media::MediaItemType;
 use crate::db::Db;
 use crate::ext::CommandExt;
 use crate::ffprobe::Ffprobe;
@@ -59,13 +60,14 @@ async fn get_video_info(
     let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
-        SELECT file.path, data.position
+        SELECT file.path, item.item_type, data.position
         FROM video_files AS file
+        JOIN media_items AS item ON item.id = file.item_id
         LEFT JOIN user_item_data AS data ON file.item_id = data.item_id
         WHERE file.item_id = ?
     ";
 
-    let (path, position): (String, Option<f64>) = sqlx::query_as(sql)
+    let (path, item_type, position): (String, MediaItemType, Option<f64>) = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
         .await
@@ -115,6 +117,7 @@ async fn get_video_info(
 
     Ok(HttpResponse::Ok().json(&json!({
         "path": path,
+        "type": item_type,
         "format": info.format.format_name,
         "duration": info.format.duration.parse::<f64>().unwrap(),
         "position": position,
