@@ -72,3 +72,62 @@ jobs:
         with:
           name: web
           path: client/web/dist
+
+  deploy:
+    name: Deploy docker image
+    runs-on: ubuntu-latest
+    needs:
+      - build_server
+      - build_web_client
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Download server artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: zenith
+          path: target/release
+
+      - name: Download web client artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: web
+          path: client/web/dist
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: |
+            ghcr.io/hasali19/zenith:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      # Temp fix
+      # https://github.com/docker/build-push-action/issues/252
+      # https://github.com/moby/buildkit/issues/1896
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
