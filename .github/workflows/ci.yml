@@ -1,15 +1,85 @@
 name: CI
 
 on:
-  pull_request:
   push:
-    branches:
-      - master
 
 jobs:
-  deploy:
+  build_server:
+    name: Build server
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Cache cargo output
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo
+            target
+          key: ${{ runner.os }}-rust-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-rust-
+
+      - name: Check formatting
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Build application
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --bin zenith
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: zenith
+          path: target/release/zenith
+
+  build_web_client:
+    name: Build web client
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client/web
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v2
+
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build application
+        run: yarn build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: web
+          path: client/web/dist
+
+  deploy:
+    name: Deploy docker image
+    runs-on: ubuntu-latest
+    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs:
+      - build_server
+      - build_web_client
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v2
@@ -32,6 +102,18 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
 
+      - name: Download server artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: zenith
+          path: target/release
+
+      - name: Download web client artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: web
+          path: client/web/dist
+
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
@@ -41,7 +123,7 @@ jobs:
           tags: |
             ghcr.io/hasali19/zenith:latest
           cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
 
       # Temp fix
       # https://github.com/docker/build-push-action/issues/252
