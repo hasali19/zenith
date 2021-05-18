@@ -89,10 +89,7 @@ data class Episode(
 )
 
 @Serializable
-data class StreamInfo(val duration: Double, val position: Double?)
-
-@Serializable
-data class VideoInfo(val path: String)
+data class VideoInfo(val path: String, val position: Double?)
 
 @Serializable
 data class TranscoderState(val current: Int?, val queue: List<Int>)
@@ -590,8 +587,8 @@ fun SeasonDetailsScreen(client: HttpClient, navigator: Navigator, show: Show, se
 
 @Composable
 fun PlayerScreen(client: HttpClient, navigator: Navigator, id: Int) {
-    val info by produceState<StreamInfo?>(initialValue = null, id) {
-        value = client.get("https://zenith.hasali.uk/api/stream/$id/info")
+    val info by produceState<VideoInfo?>(initialValue = null, id) {
+        value = client.get("https://zenith.hasali.uk/api/videos/$id/info")
     }
 
     KeepScreenOn {
