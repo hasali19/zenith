@@ -17,17 +17,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.coil.rememberCoilPainter
-import io.ktor.client.*
-import io.ktor.client.request.*
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.*
 
 @Composable
-fun ShowDetailsScreen(client: HttpClient, navigator: Navigator, show: Show) {
+fun ShowDetailsScreen(client: ZenithApiClient, navigator: Navigator, show: Show) {
     val seasons by produceState(initialValue = emptyList<Season>()) {
-        value = client.get("https://zenith.hasali.uk/api/tv/shows/${show.id}/seasons")
+        value = client.getSeasons(show.id)
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {

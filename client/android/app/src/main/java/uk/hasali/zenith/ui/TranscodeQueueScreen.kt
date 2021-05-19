@@ -9,17 +9,16 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import io.ktor.client.*
-import io.ktor.client.request.*
 import uk.hasali.zenith.Navigator
 import uk.hasali.zenith.TranscoderState
 import uk.hasali.zenith.VideoInfo
+import uk.hasali.zenith.ZenithApiClient
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun TranscodeQueueScreen(client: HttpClient, navigator: Navigator) {
-    val state by produceState<TranscoderState?>(initialValue = null) {
-        value = client.get("https://zenith.hasali.uk/api/transcoder")
+fun TranscodeQueueScreen(client: ZenithApiClient, navigator: Navigator) {
+    val state by produceState<TranscoderState?>(null) {
+        value = client.getTranscoderState()
     }
 
     Scaffold(topBar = { AppBar(navigator = navigator, title = "Transcode queue", menu = false) }) {
@@ -41,7 +40,10 @@ fun TranscodeQueueScreen(client: HttpClient, navigator: Navigator) {
                 }
 
                 item {
-                    Text("Queued (${state?.queue?.size})", style = MaterialTheme.typography.subtitle2)
+                    Text(
+                        "Queued (${state?.queue?.size})",
+                        style = MaterialTheme.typography.subtitle2
+                    )
                 }
 
                 items(state!!.queue.size) { i ->
@@ -55,9 +57,9 @@ fun TranscodeQueueScreen(client: HttpClient, navigator: Navigator) {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun TranscodeQueueListItem(client: HttpClient, id: Int) {
+fun TranscodeQueueListItem(client: ZenithApiClient, id: Int) {
     val info by produceState<VideoInfo?>(initialValue = null, id) {
-        value = client.get("https://zenith.hasali.uk/api/videos/$id/info")
+        value = client.getVideoInfo(id)
     }
 
     ListItem(text = { Text(info?.path ?: id.toString()) })
