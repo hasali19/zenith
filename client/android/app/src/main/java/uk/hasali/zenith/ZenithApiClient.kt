@@ -51,7 +51,7 @@ class ZenithApiClient(private val client: HttpClient) {
     fun getVideoUrl(id: Int) = "https://zenith.hasali.uk/api/videos/$id"
 
     suspend fun getVideoInfo(id: Int): VideoInfo =
-        client.get("https://zenith.hasali.uk/api/videos/$id")
+        client.get("https://zenith.hasali.uk/api/videos/$id/info")
 
     suspend fun updateProgress(videoId: Int, position: Long): Unit =
         client.post("https://zenith.hasali.uk/api/progress/$videoId?position=$position")

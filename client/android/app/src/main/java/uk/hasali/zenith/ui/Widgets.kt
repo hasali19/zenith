@@ -1,8 +1,5 @@
 package uk.hasali.zenith.ui
 
-import android.content.Context
-import android.media.AudioManager
-import android.view.SoundEffectConstants
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,8 +16,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.insets.statusBarsHeight
-import uk.hasali.zenith.Navigator
-import uk.hasali.zenith.Screen
+import uk.hasali.zenith.playClick
 
 @Composable
 fun AppBar(navigator: Navigator, title: String = "Zenith", menu: Boolean = true) {
@@ -43,14 +39,19 @@ fun AppBar(navigator: Navigator, title: String = "Zenith", menu: Boolean = true)
 
 @Composable
 fun AppBarMenu(navigator: Navigator) {
+    val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
 
-    IconButton(onClick = { expanded = true }) {
+    IconButton(onClick = {
+        context.playClick()
+        expanded = true
+    }) {
         Icon(Icons.Default.MoreVert, contentDescription = "More")
     }
 
     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
         DropdownMenuItem(onClick = {
+            context.playClick()
             expanded = false
             navigator.push(Screen.TranscodeQueue)
         }) {
@@ -75,9 +76,7 @@ fun MediaItemWithPoster(poster: String, primary: String, secondary: String, onCl
                 modifier = Modifier
                     .size(width, height)
                     .clickable {
-                        val audioManager =
-                            context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                        audioManager.playSoundEffect(SoundEffectConstants.CLICK, 1.0f)
+                        context.playClick()
                         onClick()
                     }
             )

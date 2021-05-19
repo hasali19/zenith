@@ -1,8 +1,5 @@
 package uk.hasali.zenith.ui
 
-import android.content.Context
-import android.media.AudioManager
-import android.view.SoundEffectConstants
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -24,7 +21,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.coil.rememberCoilPainter
-import uk.hasali.zenith.*
+import uk.hasali.zenith.Episode
+import uk.hasali.zenith.Season
+import uk.hasali.zenith.ZenithApiClient
+import uk.hasali.zenith.playClick
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -60,12 +60,7 @@ fun SeasonDetailsScreen(client: ZenithApiClient, navigator: Navigator, season: S
                                                 .toDp(),
                                         )
                                         .clickable {
-                                            val audioManager =
-                                                context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                                            audioManager.playSoundEffect(
-                                                SoundEffectConstants.CLICK,
-                                                1.0f
-                                            )
+                                            context.playClick()
                                             navigator.push(Screen.Player(episode.id))
                                         }
                                 )

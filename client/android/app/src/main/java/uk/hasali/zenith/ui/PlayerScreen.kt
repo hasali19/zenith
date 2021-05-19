@@ -20,7 +20,6 @@ import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.Navigator
 import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.ZenithApiClient
 
