@@ -1,6 +1,7 @@
 import { css } from "@emotion/react";
 import { useHistory, useLocation } from "react-router";
 import {
+  Divider,
   Drawer,
   Icon,
   List,
@@ -72,6 +73,22 @@ function DrawerContent({ onClose }: { onClose: () => void }) {
             <ListItemText>{link.name}</ListItemText>
           </ListItem>
         ))}
+        <Divider />
+        <ListItem
+          button
+          selected={pathname === "/import"}
+          onClick={() => navigate("/import")}
+          css={(theme) => css`
+            margin: ${theme.spacing(1)};
+            width: calc(100% - ${theme.spacing(2)});
+            border-radius: 4px;
+          `}
+        >
+          <ListItemIcon>
+            <Icon>import_export</Icon>
+          </ListItemIcon>
+          <ListItemText>Import Queue</ListItemText>
+        </ListItem>
       </List>
     </div>
   );
@@ -83,7 +100,7 @@ export interface Props {
 }
 
 export default function ({ open, onClose }: Props) {
-  const mobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
+  const mobile = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
   return (
     <nav
       css={(theme) => css`

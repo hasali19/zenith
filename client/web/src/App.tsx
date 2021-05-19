@@ -15,6 +15,7 @@ import Season from "./pages/Season";
 import Episode from "./pages/Episode";
 import Player from "./pages/Player";
 import CastPlayer from "./pages/CastPlayer";
+import ImportQueue from "./pages/ImportQueue";
 
 const styles = {
   root: css`
@@ -118,6 +119,9 @@ export default function App() {
             </AnimatedScreen>
             <AnimatedScreen path="/shows">
               <Shows />
+            </AnimatedScreen>
+            <AnimatedScreen path="/import">
+              <ImportQueue />
             </AnimatedScreen>
             <AnimatedScreen path="/">
               <Home />
