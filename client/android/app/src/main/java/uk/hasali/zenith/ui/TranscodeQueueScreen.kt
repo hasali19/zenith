@@ -9,7 +9,6 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import uk.hasali.zenith.Navigator
 import uk.hasali.zenith.TranscoderState
 import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.ZenithApiClient
