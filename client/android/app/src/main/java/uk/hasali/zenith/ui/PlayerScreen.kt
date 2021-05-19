@@ -18,17 +18,16 @@ import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ui.PlayerView
-import io.ktor.client.*
-import io.ktor.client.request.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.Navigator
 import uk.hasali.zenith.VideoInfo
+import uk.hasali.zenith.ZenithApiClient
 
 @Composable
-fun PlayerScreen(client: HttpClient, navigator: Navigator, id: Int) {
+fun PlayerScreen(client: ZenithApiClient, navigator: Navigator, id: Int) {
     val info by produceState<VideoInfo?>(initialValue = null, id) {
-        value = client.get("https://zenith.hasali.uk/api/videos/$id/info")
+        value = client.getVideoInfo(id)
     }
 
     KeepScreenOn {
@@ -88,7 +87,12 @@ private fun FullScreen(content: @Composable() () -> Unit) {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-private fun VideoPlayer(id: Int, client: HttpClient, startPosition: Int, onVideoEnded: () -> Unit) {
+private fun VideoPlayer(
+    id: Int,
+    client: ZenithApiClient,
+    startPosition: Int,
+    onVideoEnded: () -> Unit,
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -109,7 +113,7 @@ private fun VideoPlayer(id: Int, client: HttpClient, startPosition: Int, onVideo
                         if (player.playWhenReady) {
                             val position = player.currentPosition / 1000
                             launch {
-                                client.post("https://zenith.hasali.uk/api/progress/$id?position=$position")
+                                client.updateProgress(id, position)
                             }
                         }
 
@@ -120,7 +124,9 @@ private fun VideoPlayer(id: Int, client: HttpClient, startPosition: Int, onVideo
     }
 
     DisposableEffect(id) {
-        player.setMediaItem(MediaItem.fromUri("https://zenith.hasali.uk/api/videos/$id"))
+        val item = MediaItem.fromUri(client.getVideoUrl(id))
+
+        player.setMediaItem(item)
         player.prepare()
         player.seekTo(startPosition.toLong() * 1000)
         player.play()

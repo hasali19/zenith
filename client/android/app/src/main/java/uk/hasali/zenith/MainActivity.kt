@@ -34,46 +34,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import uk.hasali.zenith.ui.*
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.zip.ZipInputStream
-
-@Serializable
-data class Show(
-    val id: Int,
-    val name: String,
-    val poster: String,
-    val backdrop: String,
-    val overview: String,
-    @SerialName("start_date") val startDate: Long,
-)
-
-@Serializable
-data class Season(
-    val id: Int,
-    val name: String,
-    val poster: String,
-)
-
-@Serializable
-data class Episode(
-    val id: Int,
-    val name: String,
-    val overview: String,
-    val thumbnail: String,
-    val duration: Double,
-    @SerialName("is_watched") val isWatched: Boolean,
-)
-
-@Serializable
-data class VideoInfo(val path: String, val position: Double?)
-
-@Serializable
-data class TranscoderState(val current: Int?, val queue: List<Int>)
 
 sealed class Screen {
     object TranscodeQueue : Screen()
@@ -167,26 +132,31 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
+                val zenithApiClient = ZenithApiClient(client)
+
                 ProvideWindowInsets {
                     Backstack(backstack = navigator.stack) { screen ->
                         when (screen) {
                             is Screen.TranscodeQueue -> TranscodeQueueScreen(
-                                client = client,
+                                client = zenithApiClient,
                                 navigator = navigator,
                             )
-                            is Screen.Shows -> ShowsScreen(client = client, navigator = navigator)
+                            is Screen.Shows -> ShowsScreen(
+                                client = zenithApiClient,
+                                navigator = navigator,
+                            )
                             is Screen.ShowDetails -> ShowDetailsScreen(
-                                client = client,
+                                client = zenithApiClient,
                                 navigator = navigator,
                                 show = screen.show,
                             )
                             is Screen.SeasonDetails -> SeasonDetailsScreen(
-                                client = client,
+                                client = zenithApiClient,
                                 navigator = navigator,
                                 season = screen.season,
                             )
                             is Screen.Player -> PlayerScreen(
-                                client = client,
+                                client = zenithApiClient,
                                 navigator = navigator,
                                 id = screen.id,
                             )

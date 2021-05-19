@@ -9,18 +9,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.unit.dp
-import io.ktor.client.*
-import io.ktor.client.request.*
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import uk.hasali.zenith.*
+import uk.hasali.zenith.Navigator
+import uk.hasali.zenith.Screen
+import uk.hasali.zenith.Show
+import uk.hasali.zenith.ZenithApiClient
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ShowsScreen(client: HttpClient, navigator: Navigator) {
+fun ShowsScreen(client: ZenithApiClient, navigator: Navigator) {
     val shows by produceState(initialValue = emptyList<Show>()) {
-        value = client.get("https://zenith.hasali.uk/api/tv/shows")
+        value = client.getShows()
     }
 
     Scaffold(topBar = { AppBar(navigator = navigator) }) {

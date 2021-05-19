@@ -24,16 +24,14 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.coil.rememberCoilPainter
-import io.ktor.client.*
-import io.ktor.client.request.*
 import uk.hasali.zenith.*
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SeasonDetailsScreen(client: HttpClient, navigator: Navigator, season: Season) {
+fun SeasonDetailsScreen(client: ZenithApiClient, navigator: Navigator, season: Season) {
     val context = LocalContext.current
     val episodes by produceState(initialValue = emptyList<Episode>()) {
-        value = client.get("https://zenith.hasali.uk/api/tv/seasons/${season.id}/episodes")
+        value = client.getEpisodes(season.id)
     }
 
     Scaffold(topBar = { AppBar(title = season.name, navigator = navigator) }) {
