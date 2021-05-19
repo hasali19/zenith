@@ -12,7 +12,8 @@ data class Show(
     val poster: String,
     val backdrop: String,
     val overview: String,
-    @SerialName("start_date") val startDate: Long,
+    @SerialName("start_date")
+    val startDate: Long,
 )
 
 @Serializable
@@ -26,10 +27,13 @@ data class Season(
 data class Episode(
     val id: Int,
     val name: String,
+    @SerialName("episode_number")
+    val episodeNumber: Int,
     val overview: String,
     val thumbnail: String,
     val duration: Double,
-    @SerialName("is_watched") val isWatched: Boolean,
+    @SerialName("is_watched")
+    val isWatched: Boolean,
 )
 
 @Serializable

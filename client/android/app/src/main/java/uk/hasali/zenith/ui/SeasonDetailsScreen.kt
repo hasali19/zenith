@@ -97,7 +97,7 @@ fun SeasonDetailsScreen(client: ZenithApiClient, navigator: Navigator, season: S
                                 }
 
                                 Text(
-                                    episode.name,
+                                    "${episode.episodeNumber} - ${episode.name}",
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     style = MaterialTheme.typography.subtitle2
