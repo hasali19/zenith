@@ -202,7 +202,6 @@ class MainActivity : ComponentActivity() {
                             is Screen.SeasonDetails -> SeasonDetailsScreen(
                                 client = client,
                                 navigator = navigator,
-                                show = screen.show,
                                 season = screen.season,
                             )
                             is Screen.Player -> PlayerScreen(
@@ -241,9 +240,9 @@ class MainActivity : ComponentActivity() {
         CoroutineScope(Dispatchers.Main).launch {
             val response: ByteArray = client.get(url)
             val zip = ZipInputStream(ByteArrayInputStream(response))
-            val entry = zip.nextEntry
             val content = ByteArrayOutputStream()
 
+            zip.nextEntry
             zip.copyTo(content)
 
             var session: PackageInstaller.Session? = null
@@ -360,7 +359,7 @@ fun TranscodeQueueScreen(client: HttpClient, navigator: Navigator) {
                     Text("Queued (${state?.queue?.size})", style = MaterialTheme.typography.subtitle2)
                 }
 
-                items(state!!.queue.size ?: 0) { i ->
+                items(state!!.queue.size) { i ->
                     TranscodeQueueListItem(client = client, id = state!!.queue[i])
                     Divider()
                 }
@@ -482,7 +481,7 @@ fun ShowDetailsScreen(client: HttpClient, navigator: Navigator, show: Show) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SeasonDetailsScreen(client: HttpClient, navigator: Navigator, show: Show, season: Season) {
+fun SeasonDetailsScreen(client: HttpClient, navigator: Navigator, season: Season) {
     val context = LocalContext.current
     val episodes by produceState(initialValue = emptyList<Episode>()) {
         value = client.get("https://zenith.hasali.uk/api/tv/seasons/${season.id}/episodes")
@@ -656,7 +655,7 @@ fun VideoPlayer(id: Int, client: HttpClient, startPosition: Int, onVideoEnded: (
         SimpleExoPlayer.Builder(context)
             .build()
             .also { player ->
-                player.addListener(object : Player.EventListener {
+                player.addListener(object : Player.Listener {
                     override fun onPlaybackStateChanged(state: Int) {
                         if (state == ExoPlayer.STATE_ENDED) {
                             onVideoEnded()
