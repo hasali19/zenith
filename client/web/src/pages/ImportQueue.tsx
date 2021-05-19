@@ -168,7 +168,7 @@ const ImportDialog: FC<{ item: any | null; onClose: () => void }> = ({
         <Button onClick={onClose}>Cancel</Button>
         <Button
           onClick={async () => {
-            if (!show || !name || !season || !episode) {
+            if (!show || (show === "new" && !name) || !season || !episode) {
               return;
             }
 
