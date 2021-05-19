@@ -73,12 +73,7 @@ pub async fn scan_movies(
 ) -> eyre::Result<()> {
     library.validate().await?;
 
-    for entry in WalkDir::new(path)
-        .into_iter()
-        .filter_map(|e| e.ok())
-        .filter(|e| e.file_type().is_file())
-        .filter(is_video_file)
-    {
+    for entry in get_video_files(path) {
         let name = entry.path().file_name().and_then(|v| v.to_str()).unwrap();
         let path = entry.path().to_str().unwrap();
 
@@ -202,6 +197,15 @@ pub async fn scan_shows(
     }
 
     Ok(())
+}
+
+/// Recursively searches a directory for video files
+pub fn get_video_files(path: impl AsRef<Path>) -> impl Iterator<Item = DirEntry> {
+    WalkDir::new(path)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file())
+        .filter(is_video_file)
 }
 
 /// Extracts a show name, season and episode number from an episode path

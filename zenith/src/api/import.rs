@@ -2,13 +2,42 @@ use std::path::Path;
 use std::sync::Arc;
 
 use actix_http::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
+use actix_web::web::ServiceConfig;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
+use serde_json::json;
 
 use crate::config::Config;
 use crate::db::Db;
+use crate::library::scanner;
 
 use super::ApiResult;
+
+pub fn configure(config: &mut ServiceConfig) {
+    config.route("/import/queue", web::get().to(get_import_queue));
+}
+
+async fn get_import_queue(req: HttpRequest) -> ApiResult {
+    let config: &Arc<Config> = req.app_data().unwrap();
+    let import_path = match config.import.path.as_deref() {
+        Some(path) => path,
+        None => return Ok(HttpResponse::Ok().json(vec![(); 0])),
+    };
+
+    let mut entries = vec![];
+
+    for entry in scanner::get_video_files(import_path) {
+        let name = entry.file_name().to_str().unwrap();
+        let path = entry.path().to_str().unwrap();
+
+        entries.push(json!({
+            "name": name,
+            "path": path,
+        }));
+    }
+
+    Ok(HttpResponse::Ok().json(entries))
+}
 
 #[derive(Deserialize)]
 #[serde(tag = "type")]

@@ -19,6 +19,7 @@ pub fn service(path: &str) -> Scope {
         .configure(metadata::configure)
         .configure(progress::configure)
         .configure(transcoder::configure)
+        .configure(import::configure)
         .configure(events::configure)
         .default_service(web::route().to(HttpResponse::NotFound))
 }

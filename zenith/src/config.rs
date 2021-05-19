@@ -13,6 +13,8 @@ pub struct Config {
     pub transcoding: Transcoding,
     #[serde(default)]
     pub database: Database,
+    #[serde(default)]
+    pub import: Import,
 }
 
 #[derive(Deserialize)]
@@ -48,6 +50,12 @@ pub struct Transcoding {
 pub struct Database {
     #[serde(default = "Database::default_path")]
     pub path: String,
+}
+
+#[derive(Default, Deserialize)]
+pub struct Import {
+    #[serde(default)]
+    pub path: Option<String>,
 }
 
 impl Config {
