@@ -44,7 +44,7 @@ export default function () {
 
   return (
     <div css={styles.root}>
-      <AppBar />
+      <AppBar title="Zenith" />
       <Toolbar />
       <Typography
         variant="h5"

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router";
 import { css, Theme } from "@emotion/react";
-import { LinearProgress, Toolbar, Typography } from "@material-ui/core";
+import { LinearProgress, Typography } from "@material-ui/core";
 
 import api, { TvSeason, TvShow } from "../api";
 import AppBar from "../AppBar";
@@ -67,8 +67,7 @@ export default function () {
 
   return (
     <div css={styles.root}>
-      <AppBar />
-      <Toolbar />
+      <AppBar translucent />
       <img src={show.backdrop!!} css={styles.backdrop} />
       <Typography variant="h4" css={styles.title}>
         {show.name}

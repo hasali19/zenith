@@ -9,17 +9,29 @@ import {
 
 import { useAppContext } from "./App";
 
-export default function AppBar() {
+export interface Props {
+  title?: string | boolean;
+  translucent?: boolean;
+}
+
+export default function AppBar({ translucent, title }: Props) {
   const app = useAppContext();
   return (
     <MuiAppBar
-      color="inherit"
+      color={translucent ? "transparent" : "inherit"}
       position="fixed"
+      elevation={translucent ? 0 : undefined}
       css={(theme: any) => css`
         z-index: ${theme.zIndex.drawer + 1};
       `}
     >
-      <Toolbar>
+      <Toolbar
+        style={{
+          background: translucent
+            ? "linear-gradient(to bottom, #000a, #0000)"
+            : undefined,
+        }}
+      >
         <IconButton
           edge="start"
           color="inherit"
@@ -36,15 +48,17 @@ export default function AppBar() {
         >
           <Icon>menu</Icon>
         </IconButton>
-        <Typography
-          variant="h6"
-          component="div"
-          css={css`
-            flex-grow: 1;
-          `}
-        >
-          Zenith
-        </Typography>
+        {title && (
+          <Typography
+            variant="h6"
+            component="div"
+            css={css`
+              flex-grow: 1;
+            `}
+          >
+            {title}
+          </Typography>
+        )}
       </Toolbar>
     </MuiAppBar>
   );

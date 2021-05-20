@@ -24,7 +24,7 @@ export default function () {
         flex-direction: column;
       `}
     >
-      <AppBar />
+      <AppBar title="Shows" />
       <Toolbar />
       <div
         css={css`

@@ -25,7 +25,7 @@ import api, { TvShow } from "../api";
 import AppBar from "../AppBar";
 
 const ImportQueueScreen: FC<{}> = ({}) => {
-  const [queue, setQueue] = useState<any[]>([]);
+  const [queue, setQueue] = useState<any[] | null>(null);
   const [selected, setSelected] = useState<any | null>(null);
 
   useEffect(() => {
@@ -35,29 +35,42 @@ const ImportQueueScreen: FC<{}> = ({}) => {
   }, []);
 
   return (
-    <div>
-      <AppBar />
+    <div
+      css={css`
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      `}
+    >
+      <AppBar title="Import Queue" />
       <Toolbar />
-      <Typography
-        variant="h4"
-        css={(theme) =>
-          css`
-            margin: ${theme.spacing(2)};
-          `
-        }
-      >
-        Import Queue
-      </Typography>
-      <List>
-        {queue.map((item) => (
-          <ListItem key={item.path} button onClick={() => setSelected(item)}>
-            <ListItemIcon>
-              <Icon>videocam</Icon>
-            </ListItemIcon>
-            <ListItemText primary={item.name} secondary={item.path} />
-          </ListItem>
-        ))}
-      </List>
+      {queue && queue.length === 0 && (
+        <div
+          css={css`
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+          `}
+        >
+          <Icon>done_all</Icon>
+          <Typography variant="body2">All done 🙂</Typography>
+        </div>
+      )}
+      {queue && queue.length > 0 && (
+        <List>
+          {queue?.map((item) => (
+            <ListItem key={item.path} button onClick={() => setSelected(item)}>
+              <ListItemIcon>
+                <Icon>videocam</Icon>
+              </ListItemIcon>
+              <ListItemText primary={item.name} secondary={item.path} />
+            </ListItem>
+          ))}
+        </List>
+      )}
       <ImportDialog item={selected} onClose={() => setSelected(null)} />
     </div>
   );

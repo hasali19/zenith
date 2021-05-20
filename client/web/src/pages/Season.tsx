@@ -86,13 +86,10 @@ export default function () {
 
   return (
     <div css={styles.root}>
-      <AppBar />
+      <AppBar title={show.name} />
       <Toolbar />
       <Typography variant="h4" css={styles.title}>
         {season.name}
-      </Typography>
-      <Typography variant="caption" component="div" css={styles.subtitle}>
-        {show.name}
       </Typography>
       <Typography variant="body2" css={styles.overview}>
         {season.overview || show.overview}

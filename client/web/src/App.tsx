@@ -57,7 +57,7 @@ function AnimatedScreen({
         >
           {(state) => {
             const shown = state === "entering" || state === "entered";
-            const offset = state === "exited" ? 50 : 0;
+            const offset = state === "exited" ? 76 : 0;
             return (
               <div
                 ref={ref}
