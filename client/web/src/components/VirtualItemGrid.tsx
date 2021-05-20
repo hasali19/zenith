@@ -36,7 +36,7 @@ export default function VirtualItemGrid({ count, children }: Props) {
     const colCount = Math.floor(bounds.width / 136);
     const colWidth = (bounds.width - 8) / colCount;
     const rowCount = Math.ceil(count / colCount);
-    const rowHeight = colWidth * 1.5 + 69;
+    const rowHeight = colWidth * 1.5 + 64;
 
     const items = [];
 

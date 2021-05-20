@@ -1,5 +1,5 @@
-import { css } from "@emotion/react";
 import { useHistory, useLocation } from "react-router";
+import { css } from "@emotion/react";
 import {
   Divider,
   Drawer,
@@ -10,6 +10,7 @@ import {
   ListItemText,
   Theme,
   Toolbar,
+  Typography,
   useMediaQuery,
 } from "@material-ui/core";
 
@@ -50,6 +51,9 @@ function DrawerContent({ onClose }: { onClose: () => void }) {
         width: ${WIDTH}px;
       `}
     >
+      <Toolbar>
+        <Typography variant="h6">Library</Typography>
+      </Toolbar>
       <List
         css={css`
           padding: 0;
@@ -116,12 +120,12 @@ export default function ({ open, onClose }: Props) {
           open={open}
           onClose={onClose}
           ModalProps={{ keepMounted: true }}
+          PaperProps={{ style: { backgroundImage: "none" } }}
         >
           <DrawerContent onClose={onClose} />
         </Drawer>
       ) : (
         <Drawer variant="permanent" open>
-          <Toolbar />
           <DrawerContent onClose={onClose} />
         </Drawer>
       )}

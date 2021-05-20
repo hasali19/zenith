@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router";
 import { css, Theme } from "@emotion/react";
-import { LinearProgress, Typography } from "@material-ui/core";
+import { LinearProgress, Toolbar, Typography } from "@material-ui/core";
 
 import api, { TvSeason, TvShow } from "../api";
+import AppBar from "../AppBar";
 import PosterMediaItem from "../components/PosterMediaItem";
 
 const styles = {
@@ -66,6 +67,8 @@ export default function () {
 
   return (
     <div css={styles.root}>
+      <AppBar />
+      <Toolbar />
       <img src={show.backdrop!!} css={styles.backdrop} />
       <Typography variant="h4" css={styles.title}>
         {show.name}

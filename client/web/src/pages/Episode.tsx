@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router";
 import { css, Theme } from "@emotion/react";
-import { Button, Icon, LinearProgress, Typography } from "@material-ui/core";
+import {
+  Button,
+  Icon,
+  LinearProgress,
+  Toolbar,
+  Typography,
+} from "@material-ui/core";
 
 import api, { TvEpisode, VideoInfo } from "../api";
+import AppBar from "../AppBar";
 import MediaInfo from "../components/MediaInfo";
 import SubtitleSelect from "../components/SubtitleSelect";
 
@@ -77,6 +84,8 @@ export default function () {
 
   return (
     <div css={styles.root}>
+      <AppBar />
+      <Toolbar />
       <img src={episode.thumbnail!!} css={styles.backdrop} />
       <Typography variant="h4" css={styles.title}>
         {episode.name}

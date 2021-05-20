@@ -17,9 +17,12 @@ import {
   MenuItem,
   Select,
   TextField,
+  Toolbar,
   Typography,
 } from "@material-ui/core";
+
 import api, { TvShow } from "../api";
+import AppBar from "../AppBar";
 
 const ImportQueueScreen: FC<{}> = ({}) => {
   const [queue, setQueue] = useState<any[]>([]);
@@ -33,6 +36,8 @@ const ImportQueueScreen: FC<{}> = ({}) => {
 
   return (
     <div>
+      <AppBar />
+      <Toolbar />
       <Typography
         variant="h4"
         css={(theme) =>

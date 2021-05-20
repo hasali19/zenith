@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router";
 import { css, Theme } from "@emotion/react";
-import { Button, Icon, LinearProgress, Typography } from "@material-ui/core";
+import {
+  Button,
+  Icon,
+  LinearProgress,
+  Toolbar,
+  Typography,
+} from "@material-ui/core";
 
 import api, { Movie, VideoInfo } from "../api";
 import MediaInfo from "../components/MediaInfo";
 import SubtitleSelect from "../components/SubtitleSelect";
+import AppBar from "../AppBar";
 
 function displayDuration(duration: number) {
   if (duration <= 90 * 60) {
@@ -77,6 +84,8 @@ export default function () {
 
   return (
     <div css={styles.root}>
+      <AppBar />
+      <Toolbar />
       <img src={movie.backdrop!!} css={styles.backdrop} />
       <Typography variant="h4" css={styles.title}>
         {movie.title}

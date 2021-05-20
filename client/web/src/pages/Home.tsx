@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useHistory } from "react-router";
 import { css, Theme } from "@emotion/react";
-import { Typography } from "@material-ui/core";
+import { Toolbar, Typography } from "@material-ui/core";
 
 import api, { Movie, TvShow } from "../api";
 import PosterMediaItem from "../components/PosterMediaItem";
+import AppBar from "../AppBar";
 
 const styles = {
   root: (theme: Theme) => css`
@@ -43,6 +44,8 @@ export default function () {
 
   return (
     <div css={styles.root}>
+      <AppBar />
+      <Toolbar />
       <Typography
         variant="h5"
         css={(theme) =>

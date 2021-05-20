@@ -1,22 +1,18 @@
 import { css } from "@emotion/react";
 import {
-  AppBar,
+  AppBar as MuiAppBar,
   Icon,
   IconButton,
   Toolbar,
   Typography,
-  useTheme,
 } from "@material-ui/core";
 
-export interface Props {
-  onToggleDrawer: () => void;
-}
+import { useAppContext } from "./App";
 
-export default function ({ onToggleDrawer }: Props) {
-  const theme = useTheme();
-  console.log(theme.breakpoints.up('md'));
+export default function AppBar() {
+  const app = useAppContext();
   return (
-    <AppBar
+    <MuiAppBar
       color="inherit"
       position="fixed"
       css={(theme: any) => css`
@@ -27,15 +23,15 @@ export default function ({ onToggleDrawer }: Props) {
         <IconButton
           edge="start"
           color="inherit"
-          onClick={onToggleDrawer}
+          onClick={app.openDrawer}
           css={(theme) =>
             css`
-                margin-right: ${theme.spacing(2)};
+              margin-right: ${theme.spacing(2)};
 
-                ${theme.breakpoints.up('md')} {
-                  display: none;
-                }
-              `
+              ${theme.breakpoints.up("md")} {
+                display: none;
+              }
+            `
           }
         >
           <Icon>menu</Icon>
@@ -50,6 +46,6 @@ export default function ({ onToggleDrawer }: Props) {
           Zenith
         </Typography>
       </Toolbar>
-    </AppBar>
+    </MuiAppBar>
   );
 }

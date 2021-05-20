@@ -1,10 +1,8 @@
-import React, { useRef, useState } from "react";
+import React, { createContext, useContext, useRef, useState } from "react";
 import { BrowserRouter, Route } from "react-router-dom";
 import { Transition } from "react-transition-group";
 import { css, Theme } from "@emotion/react";
-import { Toolbar } from "@material-ui/core";
 
-import AppBar from "./AppBar";
 import Drawer from "./Drawer";
 import Home from "./pages/Home";
 import Movies from "./pages/Movies";
@@ -86,49 +84,65 @@ function AnimatedScreen({
   );
 }
 
+interface AppContext {
+  openDrawer(): void;
+}
+
+const AppContext = createContext<AppContext>({} as AppContext);
+
+export function useAppContext() {
+  return useContext(AppContext);
+}
+
 export default function App() {
   const [open, setOpen] = useState(false);
   return (
-    <BrowserRouter>
-      <div css={styles.root}>
-        <AppBar onToggleDrawer={() => setOpen((v) => !v)} />
-        <Drawer open={open} onClose={() => setOpen(false)} />
-        <div css={styles.content}>
-          <Toolbar />
-          <main css={styles.main}>
-            <AnimatedScreen path="/player/:id">
-              <Player />
-            </AnimatedScreen>
-            <AnimatedScreen path="/cast/:id">
-              <CastPlayer />
-            </AnimatedScreen>
-            <AnimatedScreen path="/movies/:id">
-              <Movie />
-            </AnimatedScreen>
-            <AnimatedScreen path="/shows/:id">
-              <Show />
-            </AnimatedScreen>
-            <AnimatedScreen path="/seasons/:id">
-              <Season />
-            </AnimatedScreen>
-            <AnimatedScreen path="/episodes/:id">
-              <Episode />
-            </AnimatedScreen>
-            <AnimatedScreen path="/movies">
-              <Movies />
-            </AnimatedScreen>
-            <AnimatedScreen path="/shows">
-              <Shows />
-            </AnimatedScreen>
-            <AnimatedScreen path="/import">
-              <ImportQueue />
-            </AnimatedScreen>
-            <AnimatedScreen path="/">
-              <Home />
-            </AnimatedScreen>
-          </main>
+    <AppContext.Provider
+      value={{
+        openDrawer() {
+          setOpen(true);
+        },
+      }}
+    >
+      <BrowserRouter>
+        <div css={styles.root}>
+          <Drawer open={open} onClose={() => setOpen(false)} />
+          <div css={styles.content}>
+            <main css={styles.main}>
+              <AnimatedScreen path="/player/:id">
+                <Player />
+              </AnimatedScreen>
+              <AnimatedScreen path="/cast/:id">
+                <CastPlayer />
+              </AnimatedScreen>
+              <AnimatedScreen path="/movies/:id">
+                <Movie />
+              </AnimatedScreen>
+              <AnimatedScreen path="/shows/:id">
+                <Show />
+              </AnimatedScreen>
+              <AnimatedScreen path="/seasons/:id">
+                <Season />
+              </AnimatedScreen>
+              <AnimatedScreen path="/episodes/:id">
+                <Episode />
+              </AnimatedScreen>
+              <AnimatedScreen path="/movies">
+                <Movies />
+              </AnimatedScreen>
+              <AnimatedScreen path="/shows">
+                <Shows />
+              </AnimatedScreen>
+              <AnimatedScreen path="/import">
+                <ImportQueue />
+              </AnimatedScreen>
+              <AnimatedScreen path="/">
+                <Home />
+              </AnimatedScreen>
+            </main>
+          </div>
         </div>
-      </div>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AppContext.Provider>
   );
 }
