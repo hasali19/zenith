@@ -7,12 +7,20 @@ mod transcoder;
 mod tv;
 mod videos;
 
-use actix_web::{web, HttpResponse, Scope};
+use actix_http::http::header;
+use actix_web::dev::HttpServiceFactory;
+use actix_web::middleware::DefaultHeaders;
+use actix_web::{web, HttpResponse};
 
 pub type ApiResult<T = HttpResponse> = actix_web::Result<T>;
 
-pub fn service(path: &str) -> Scope {
+pub fn service(path: &str) -> impl HttpServiceFactory {
+    let default_headers = DefaultHeaders::new()
+        .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+        .header(header::CACHE_CONTROL, "no-cache");
+
     web::scope(path)
+        .wrap(default_headers)
         .configure(movies::configure)
         .configure(tv::configure)
         .configure(videos::configure)
