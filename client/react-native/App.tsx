@@ -1,23 +1,12 @@
 import React, { FC } from "react";
-import { useColorScheme, View } from "react-native";
+import { useColorScheme } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
-import { Button, Provider as PaperProvider, Text } from "react-native-paper";
-import { navigationTheme } from "./theme";
+import { Provider as PaperProvider } from "react-native-paper";
 
-const HomeScreen: FC = () => (
-  <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-    <Text>Home Screen</Text>
-    <Button
-      mode="contained"
-      style={{ margin: 8 }}
-      onPress={() => console.log("Hello, world!")}
-    >
-      Click Me
-    </Button>
-  </View>
-);
+import { navigationTheme } from "./theme";
+import { ShowsScreen } from "./screens/Shows";
 
 const Stack = createStackNavigator();
 
@@ -29,7 +18,11 @@ const App: FC = () => {
       <NavigationContainer theme={theme}>
         <StatusBar />
         <Stack.Navigator>
-          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen
+            name="Shows"
+            component={ShowsScreen}
+            options={{ headerTitle: "Zenith" }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>
