@@ -60,6 +60,7 @@ const styles = StyleSheet.create({
 
   headerRowTextContainer: {
     marginLeft: 16,
+    flex: 1,
   },
 
   showName: {
