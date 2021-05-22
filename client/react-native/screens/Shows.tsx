@@ -6,7 +6,8 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { Text, useTheme } from "react-native-paper";
+import { useNavigation } from "@react-navigation/core";
+import { Text, TouchableRipple, useTheme } from "react-native-paper";
 
 import api, { TvShow } from "../api";
 
@@ -42,6 +43,7 @@ const GridItem: FC<{ item: TvShow; width: number; padding: number }> = ({
   padding,
 }) => {
   const theme = useTheme();
+  const navigation = useNavigation();
 
   const posterWidth = width - padding * 2;
   const posterHeight = posterWidth * (3 / 2);
@@ -67,6 +69,18 @@ const GridItem: FC<{ item: TvShow; width: number; padding: number }> = ({
           }}
         />
       )}
+      <TouchableRipple
+        onPress={() => navigation.navigate("ShowDetails", { show: item })}
+        style={{
+          position: "absolute",
+          top: padding,
+          left: padding,
+          width: posterWidth,
+          height: posterHeight,
+        }}
+      >
+        <View />
+      </TouchableRipple>
       <Text numberOfLines={1} style={styles.itemName}>
         {item.name}
       </Text>

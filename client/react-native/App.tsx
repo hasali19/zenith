@@ -7,6 +7,7 @@ import { Provider as PaperProvider } from "react-native-paper";
 
 import { navigationTheme } from "./theme";
 import { ShowsScreen } from "./screens/Shows";
+import { ShowDetailsScreen } from "./screens/ShowDetails";
 
 const Stack = createStackNavigator();
 
@@ -22,6 +23,11 @@ const App: FC = () => {
             name="Shows"
             component={ShowsScreen}
             options={{ headerTitle: "Zenith" }}
+          />
+          <Stack.Screen
+            name="ShowDetails"
+            component={ShowDetailsScreen}
+            options={{ headerShown: false }}
           />
         </Stack.Navigator>
       </NavigationContainer>
