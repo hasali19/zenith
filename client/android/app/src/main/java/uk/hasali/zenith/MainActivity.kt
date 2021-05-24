@@ -91,7 +91,14 @@ class MainActivity : ComponentActivity() {
                         is Screen.SeasonDetails -> SeasonDetailsScreen(
                             client = zenithApiClient,
                             navigator = navigator,
+                            show = screen.show,
                             season = screen.season,
+                        )
+                        is Screen.EpisodeDetails -> EpisodeDetailsScreen(
+                            client = zenithApiClient,
+                            navigator = navigator,
+                            season = screen.season,
+                            episode = screen.episode,
                         )
                         is Screen.Player -> PlayerScreen(
                             client = zenithApiClient,

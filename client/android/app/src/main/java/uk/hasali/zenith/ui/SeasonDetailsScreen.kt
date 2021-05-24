@@ -21,14 +21,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.coil.rememberCoilPainter
-import uk.hasali.zenith.Episode
-import uk.hasali.zenith.Season
-import uk.hasali.zenith.ZenithApiClient
-import uk.hasali.zenith.playClick
+import uk.hasali.zenith.*
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SeasonDetailsScreen(client: ZenithApiClient, navigator: Navigator, season: Season) {
+fun SeasonDetailsScreen(client: ZenithApiClient, navigator: Navigator, show: Show, season: Season) {
     val context = LocalContext.current
     val episodes by produceState(initialValue = emptyList<Episode>()) {
         value = client.getEpisodes(season.id)
@@ -61,7 +58,13 @@ fun SeasonDetailsScreen(client: ZenithApiClient, navigator: Navigator, season: S
                                         )
                                         .clickable {
                                             context.playClick()
-                                            navigator.push(Screen.Player(episode.id))
+                                            navigator.push(
+                                                Screen.EpisodeDetails(
+                                                    show,
+                                                    season,
+                                                    episode,
+                                                )
+                                            )
                                         }
                                 )
 

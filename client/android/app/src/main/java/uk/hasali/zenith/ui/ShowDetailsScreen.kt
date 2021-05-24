@@ -47,7 +47,7 @@ fun ShowDetailsScreen(client: ZenithApiClient, navigator: Navigator, show: Show)
                             painter = rememberCoilPainter(request = show.poster, fadeIn = true),
                             contentDescription = "Poster",
                             modifier = Modifier
-                                .width(140.dp)
+                                .width(150.dp)
                                 .aspectRatio(2f / 3f),
                         )
                     }
