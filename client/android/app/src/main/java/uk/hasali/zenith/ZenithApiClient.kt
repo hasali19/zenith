@@ -39,7 +39,36 @@ data class Episode(
 )
 
 @Serializable
-data class VideoInfo(val path: String, val position: Double?)
+data class VideoInfo(
+    val path: String,
+    val type: String,
+    val format: String,
+    val duration: Double,
+    val position: Double?,
+    val video: VideoStreamInfo,
+    val audio: AudioStreamInfo,
+    val subtitles: List<SubtitleStreamInfo>,
+)
+
+@Serializable
+data class VideoStreamInfo(
+    val codec: String,
+    val profile: String,
+    val width: Long,
+    val height: Long,
+)
+
+@Serializable
+data class AudioStreamInfo(
+    val codec: String,
+)
+
+@Serializable
+data class SubtitleStreamInfo(
+    val index: Int,
+    val title: String?,
+    val language: String?,
+)
 
 @Serializable
 data class TranscoderState(val current: Int?, val queue: List<Int>)
@@ -64,4 +93,7 @@ class ZenithApiClient(private val client: HttpClient) {
 
     suspend fun getTranscoderState(): TranscoderState =
         client.get("https://zenith.hasali.uk/api/transcoder")
+
+    suspend fun startTranscode(videoId: Int): Unit =
+        client.post("https://zenith.hasali.uk/api/transcoder?video_id=$videoId")
 }
