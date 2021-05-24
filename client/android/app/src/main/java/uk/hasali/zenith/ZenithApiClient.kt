@@ -20,6 +20,8 @@ data class Show(
 data class Season(
     val id: Int,
     val name: String,
+    @SerialName("season_number")
+    val seasonNumber: Int,
     val poster: String,
 )
 
