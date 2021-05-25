@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -26,105 +27,73 @@ import uk.hasali.zenith.*
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SeasonDetailsScreen(client: ZenithApiClient, navigator: Navigator, show: Show, season: Season) {
-    val context = LocalContext.current
     val episodes by produceState(initialValue = emptyList<Episode>()) {
         value = client.getEpisodes(season.id)
     }
 
     Scaffold(topBar = { AppBar(title = season.name, navigator = navigator) }) {
         LazyVerticalGrid(cells = GridCells.Adaptive(200.dp), contentPadding = PaddingValues(4.dp)) {
-            items(episodes.size) { i ->
-                val episode = episodes[i]
-
-                BoxWithConstraints(modifier = Modifier.padding(4.dp)) {
-                    with(LocalDensity.current) {
-                        val width = constraints.maxWidth
-                        val height = width * (9.0 / 16.0)
-
-                        Column {
-                            Card {
-                                Image(
-                                    painter = rememberCoilPainter(
-                                        request = episode.thumbnail,
-                                        fadeIn = true
-                                    ),
-                                    contentDescription = "Thumbnail",
-                                    modifier = Modifier
-                                        .size(
-                                            width.toDp(),
-                                            height
-                                                .toInt()
-                                                .toDp(),
-                                        )
-                                        .clickable {
-                                            context.playClick()
-                                            navigator.push(
-                                                Screen.EpisodeDetails(
-                                                    show,
-                                                    season,
-                                                    episode,
-                                                )
-                                            )
-                                        }
-                                )
-
-                                if (episode.isWatched) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(
-                                                width.toDp(),
-                                                height
-                                                    .toInt()
-                                                    .toDp(),
-                                            )
-                                            .background(Color.Black.copy(alpha = 0.4f))
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Check,
-                                            contentDescription = "Watched",
-                                            modifier = Modifier.align(Alignment.Center),
-                                        )
-                                    }
-                                }
-                            }
-
-                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                                val duration = if (episode.duration <= 90 * 60) {
-                                    val minutes = (episode.duration / 60).toInt()
-                                    "${minutes}m"
-                                } else {
-                                    val hours = (episode.duration / 3600).toInt()
-                                    val minutes = ((episode.duration % 3600) / 60).toInt()
-                                    "${hours}h ${minutes}m"
-
-                                }
-
-                                Text(
-                                    "${episode.episodeNumber} - ${episode.name}",
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    style = MaterialTheme.typography.subtitle2
-                                )
-
-                                Text(
-                                    duration,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    color = Color.LightGray.copy(alpha = 0.8f),
-                                    style = MaterialTheme.typography.caption
-                                )
-
-                                Text(
-                                    episode.overview,
-                                    maxLines = 3,
-                                    overflow = TextOverflow.Ellipsis,
-                                    style = MaterialTheme.typography.caption
-                                )
-                            }
-                        }
-                    }
-                }
+            items(episodes) { episode ->
+                EpisodeItem(
+                    episode = episode,
+                    onClick = {
+                        navigator.push(Screen.EpisodeDetails(show, season, episode))
+                    },
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun WatchedOverlay(visible: Boolean) {
+    if (!visible) return
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.4f))
+    ) {
+        Icon(
+            imageVector = Icons.Default.Check,
+            contentDescription = "Watched",
+            modifier = Modifier.align(Alignment.Center),
+        )
+    }
+}
+
+@Composable
+private fun EpisodeItem(episode: Episode, onClick: () -> Unit) {
+    Column(modifier = Modifier.padding(4.dp)) {
+        Thumbnail(
+            url = episode.thumbnail,
+            modifier = Modifier.fillMaxWidth(),
+            overlay = { WatchedOverlay(visible = episode.isWatched) },
+            onClick = onClick,
+        )
+
+        Column(modifier = Modifier.padding(vertical = 8.dp)) {
+            Text(
+                text = "${episode.episodeNumber} - ${episode.name}",
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.subtitle2
+            )
+
+            Text(
+                text = displayDuration(episode.duration),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = Color.LightGray.copy(alpha = 0.8f),
+                style = MaterialTheme.typography.caption
+            )
+
+            Text(
+                text = episode.overview,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.caption
+            )
         }
     }
 }

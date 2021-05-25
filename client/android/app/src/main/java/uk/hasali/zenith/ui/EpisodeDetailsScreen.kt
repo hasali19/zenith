@@ -28,7 +28,6 @@ fun EpisodeDetailsScreen(
     season: Season,
     episode: Episode,
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     val info by produceState<VideoInfo?>(null, episode) {
@@ -41,6 +40,13 @@ fun EpisodeDetailsScreen(
         }
     }
 
+    fun onActionInvoked(action: Action) {
+        when (action) {
+            Action.Play -> navigator.push(Screen.Player(episode.id))
+            Action.ConvertVideo -> convertVideo()
+        }
+    }
+
     Surface(modifier = Modifier.fillMaxSize()) {
         BoxWithConstraints(modifier = Modifier.verticalScroll(rememberScrollState())) {
             Column(modifier = Modifier.padding()) {
@@ -50,47 +56,67 @@ fun EpisodeDetailsScreen(
                     modifier = Modifier.aspectRatio(16f / 9f)
                 )
 
-                val seasonNumber = twoDigitNumber(season.seasonNumber)
-                val episodeNumber = twoDigitNumber(episode.episodeNumber)
-                val duration = displayDuration(episode.duration)
-
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(episode.name, style = MaterialTheme.typography.h5)
-                    Text(
-                        "S${seasonNumber}E${episodeNumber} - $duration",
-                        style = MaterialTheme.typography.caption,
-                    )
+                    HeaderSection(season = season, episode = episode)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Button(
-                            onClick = {
-                                context.playClick()
-                                navigator.push(Screen.Player(episode.id))
-                            },
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.PlayArrow, contentDescription = "Play")
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text("Play")
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        ActionsMenu(
-                            onConvertClick = { convertVideo() }
-                        )
-                    }
+                    ActionsSection { action -> onActionInvoked(action) }
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(episode.overview, style = MaterialTheme.typography.body2)
+                    OverviewSection(content = episode.overview)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     info?.let {
-                        MediaInfo(info = it)
+                        MediaInfoSection(info = it)
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun HeaderSection(season: Season, episode: Episode) {
+    val seasonNumber = twoDigitNumber(season.seasonNumber)
+    val episodeNumber = twoDigitNumber(episode.episodeNumber)
+    val duration = displayDuration(episode.duration)
+
+    Text(text = episode.name, style = MaterialTheme.typography.h4)
+    Text(
+        text = "S${seasonNumber}E${episodeNumber} - $duration",
+        style = MaterialTheme.typography.caption,
+    )
+}
+
+private enum class Action {
+    Play,
+    ConvertVideo,
+}
+
+@Composable
+private fun ActionsSection(onActionInvoked: (Action) -> Unit) {
+    val context = LocalContext.current
+
+    @Composable
+    fun PlayButton(onClick: () -> Unit) {
+        Button(onClick = onClick) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+                Spacer(modifier = Modifier.width(12.dp))
+                Text("Play")
+            }
+        }
+    }
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        PlayButton(onClick = {
+            context.playClick()
+            onActionInvoked(Action.Play)
+        })
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        ActionsMenu(onConvertClick = {
+            onActionInvoked(Action.ConvertVideo)
+        })
     }
 }
 
@@ -120,7 +146,14 @@ private fun ActionsMenu(onConvertClick: () -> Unit) {
 }
 
 @Composable
-fun MediaInfo(info: VideoInfo) {
+private fun OverviewSection(content: String) {
+    Text(text = "Overview", style = MaterialTheme.typography.h6)
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(text = content, style = MaterialTheme.typography.body2)
+}
+
+@Composable
+fun MediaInfoSection(info: VideoInfo) {
     @Composable
     fun Field(name: String, value: String) {
         Text(buildAnnotatedString {
@@ -158,14 +191,3 @@ fun MediaInfo(info: VideoInfo) {
         }
     }
 }
-
-private fun twoDigitNumber(number: Int) = "$number".padStart(2, '0')
-
-private fun displayDuration(duration: Double) =
-    if (duration <= 90 * 60) {
-        "${(duration / 60).toInt()}m";
-    } else {
-        val hours = (duration / 3600).toInt()
-        val minutes = ((duration % 3600) / 60).toInt();
-        "${hours}h ${minutes}m";
-    }

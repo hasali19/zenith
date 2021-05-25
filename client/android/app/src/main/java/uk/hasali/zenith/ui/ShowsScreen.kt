@@ -2,12 +2,15 @@ package uk.hasali.zenith.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -38,6 +41,9 @@ fun ShowsScreen(client: ZenithApiClient, navigator: Navigator) {
                     primary = show.name,
                     secondary = year.toString(),
                     onClick = { navigator.push(Screen.ShowDetails(shows[i])) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(4.dp),
                 )
             }
         }
