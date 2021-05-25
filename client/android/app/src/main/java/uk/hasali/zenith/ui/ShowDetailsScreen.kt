@@ -3,6 +3,7 @@ package uk.hasali.zenith.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Card
@@ -20,7 +21,9 @@ import com.google.accompanist.coil.rememberCoilPainter
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import uk.hasali.zenith.*
+import uk.hasali.zenith.Season
+import uk.hasali.zenith.Show
+import uk.hasali.zenith.ZenithApiClient
 
 @Composable
 fun ShowDetailsScreen(client: ZenithApiClient, navigator: Navigator, show: Show) {
@@ -41,55 +44,79 @@ fun ShowDetailsScreen(client: ZenithApiClient, navigator: Navigator, show: Show)
             }
 
             Column(modifier = Modifier.padding(top = backdropHeight - 48.dp)) {
-                Row(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    Card {
-                        Image(
-                            painter = rememberCoilPainter(request = show.poster, fadeIn = true),
-                            contentDescription = "Poster",
-                            modifier = Modifier
-                                .width(150.dp)
-                                .aspectRatio(2f / 3f),
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.align(Alignment.CenterVertically)) {
-                        val year = Instant.fromEpochSeconds(show.startDate)
-                            .toLocalDateTime(TimeZone.UTC)
-                            .year
-
-                        Text(show.name, style = MaterialTheme.typography.h5)
-                        Text(year.toString(), style = MaterialTheme.typography.caption)
-                    }
-                }
-
+                HeaderSection(show = show)
                 Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    show.overview,
-                    style = MaterialTheme.typography.body2,
-                    modifier = Modifier.padding(horizontal = 16.dp),
+                OverviewSection(content = show.overview)
+                Spacer(modifier = Modifier.height(16.dp))
+                SeasonsSection(
+                    show = show,
+                    seasons = seasons,
+                    onItemClick = { navigator.push(Screen.SeasonDetails(show, it)) },
                 )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                LazyRow(contentPadding = PaddingValues(12.dp, 0.dp)) {
-                    items(seasons.size) { i ->
-                        val season = seasons[i]
-                        Box(modifier = Modifier.width(120.dp)) {
-                            MediaItemWithPoster(
-                                poster = season.poster,
-                                primary = season.name,
-                                secondary = show.name,
-                                onClick = {
-                                    navigator.push(Screen.SeasonDetails(show, season))
-                                }
-                            )
-                        }
-                    }
-                }
             }
+        }
+    }
+}
+
+@Composable
+private fun HeaderSection(show: Show) {
+    Row(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Poster(url = show.poster, modifier = Modifier.width(150.dp))
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.align(Alignment.CenterVertically)) {
+            val year = Instant.fromEpochSeconds(show.startDate)
+                .toLocalDateTime(TimeZone.UTC)
+                .year
+
+            Text(show.name, style = MaterialTheme.typography.h5)
+            Text(year.toString(), style = MaterialTheme.typography.caption)
+        }
+    }
+}
+
+@Composable
+private fun OverviewSection(content: String) {
+    Text(
+        text = "Overview",
+        style = MaterialTheme.typography.h6,
+        modifier = Modifier.padding(horizontal = 16.dp),
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+        text = content,
+        style = MaterialTheme.typography.body2,
+        modifier = Modifier.padding(horizontal = 16.dp),
+    )
+}
+
+@Composable
+private fun SeasonsSection(show: Show, seasons: List<Season>, onItemClick: (Season) -> Unit) {
+    Text(
+        text = "Seasons",
+        style = MaterialTheme.typography.h6,
+        modifier = Modifier.padding(horizontal = 16.dp),
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    SeasonsList(
+        show = show,
+        seasons = seasons,
+        onItemClick = onItemClick,
+    )
+}
+
+@Composable
+private fun SeasonsList(show: Show, seasons: List<Season>, onItemClick: (Season) -> Unit) {
+    LazyRow(contentPadding = PaddingValues(12.dp, 0.dp)) {
+        items(seasons) { season ->
+            MediaItemWithPoster(
+                poster = season.poster,
+                primary = season.name,
+                secondary = show.name,
+                onClick = { onItemClick(season) },
+                modifier = Modifier
+                    .width(120.dp)
+                    .padding(4.dp)
+            )
         }
     }
 }
