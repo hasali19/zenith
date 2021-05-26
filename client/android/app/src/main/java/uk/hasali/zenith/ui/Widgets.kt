@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
@@ -72,6 +73,7 @@ fun Poster(url: String, modifier: Modifier = Modifier, onClick: (() -> Unit)? = 
             Image(
                 painter = rememberCoilPainter(request = url, fadeIn = true),
                 contentDescription = "Poster",
+                contentScale = ContentScale.Crop,
                 modifier = modifier
                     .fillMaxSize()
                     .clickable(enabled = onClick != null) {
@@ -101,6 +103,7 @@ fun Thumbnail(
             Image(
                 painter = rememberCoilPainter(request = url, fadeIn = true),
                 contentDescription = "Thumbnail",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
                     .clickable(enabled = onClick != null) {
