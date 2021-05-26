@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.coil.rememberCoilPainter
@@ -62,17 +63,23 @@ fun AppBarMenu(navigator: Navigator) {
 fun Poster(url: String, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
     val context = LocalContext.current
 
-    Card {
-        Image(
-            painter = rememberCoilPainter(request = url, fadeIn = true),
-            contentDescription = "Poster",
-            modifier = modifier
-                .aspectRatio(2f / 3f)
-                .clickable(enabled = onClick != null) {
-                    context.playClick()
-                    onClick?.invoke()
-                },
-        )
+    BoxWithConstraints(modifier = modifier) {
+        val width = with(LocalDensity.current) {
+            constraints.maxWidth.toDp()
+        }
+
+        Card(modifier = Modifier.size(width, width * (3f / 2f))) {
+            Image(
+                painter = rememberCoilPainter(request = url, fadeIn = true),
+                contentDescription = "Poster",
+                modifier = modifier
+                    .fillMaxSize()
+                    .clickable(enabled = onClick != null) {
+                        context.playClick()
+                        onClick?.invoke()
+                    },
+            )
+        }
     }
 }
 
@@ -85,19 +92,25 @@ fun Thumbnail(
 ) {
     val context = LocalContext.current
 
-    Card(modifier = modifier.aspectRatio(16f / 9f)) {
-        Image(
-            painter = rememberCoilPainter(request = url, fadeIn = true),
-            contentDescription = "Thumbnail",
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(enabled = onClick != null) {
-                    context.playClick()
-                    onClick?.invoke()
-                },
-        )
+    BoxWithConstraints(modifier = modifier) {
+        val width = with(LocalDensity.current) {
+            constraints.maxWidth.toDp()
+        }
 
-        overlay?.invoke()
+        Card(modifier = Modifier.size(width, width * (9f / 16f))) {
+            Image(
+                painter = rememberCoilPainter(request = url, fadeIn = true),
+                contentDescription = "Thumbnail",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(enabled = onClick != null) {
+                        context.playClick()
+                        onClick?.invoke()
+                    },
+            )
+
+            overlay?.invoke()
+        }
     }
 }
 
