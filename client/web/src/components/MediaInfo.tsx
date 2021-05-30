@@ -9,14 +9,7 @@ export interface Props {
 
 export default function MediaInfo({ info }: Props) {
   return (
-    <Card
-      css={(theme) =>
-        css`
-          margin: ${theme.spacing(2)};
-          padding: ${theme.spacing(2)};
-        `
-      }
-    >
+    <div>
       <Typography variant="h6">Media Info</Typography>
       <div
         css={(theme) =>
@@ -63,6 +56,6 @@ export default function MediaInfo({ info }: Props) {
           <strong>Codec:</strong> {info.audio.codec}
         </Typography>
       </div>
-    </Card>
+    </div>
   );
 }

@@ -109,7 +109,16 @@ export default function () {
       <Typography variant="body2" css={styles.overview}>
         {movie.overview}
       </Typography>
-      <MediaInfo info={video} />
+      <div
+        css={(theme) =>
+          css`
+            margin-top: ${theme.spacing(2)};
+            padding: 0 ${theme.spacing(2)};
+          `
+        }
+      >
+        <MediaInfo info={video} />
+      </div>
     </div>
   );
 }
