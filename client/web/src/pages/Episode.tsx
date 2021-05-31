@@ -134,6 +134,7 @@ const HeaderSection: FC<{
       align-items: center;
 
       ${theme.breakpoints.down("md")} {
+        align-items: flex-end;
         padding: ${theme.spacing(2)};
         margin-top: -80px;
       }
@@ -164,13 +165,22 @@ const HeaderSection: FC<{
         }
       `}
     >
-      <Typography variant={mobile ? "h5" : "h3"}>{episode.name}</Typography>
+      <Typography
+        variant={mobile ? "h5" : "h3"}
+        css={(theme) => css`
+          ${theme.breakpoints.down("md")} {
+            font-size: 1.2rem;
+          }
+        `}
+      >
+        {episode.name}
+      </Typography>
       <Typography variant={mobile ? "caption" : "h6"} component="div">
         S{season.season_number.toString().padStart(2, "0")}E
         {episode.episode_number.toString().padStart(2, "0")} -{" "}
         {displayDuration(episode.duration)}
       </Typography>
-      {!mobile && <ActionsRow onPlay={onPlay} />}
+      <ActionsRow onPlay={onPlay} />
       {!mobile && (
         <Typography
           variant="body2"
