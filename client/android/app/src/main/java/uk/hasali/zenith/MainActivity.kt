@@ -79,7 +79,7 @@ class MainActivity : ComponentActivity() {
                             client = zenithApiClient,
                             navigator = navigator,
                         )
-                        is Screen.Shows -> ShowsScreen(
+                        is Screen.Main -> MainScreen(
                             client = zenithApiClient,
                             navigator = navigator,
                         )
