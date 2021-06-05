@@ -10,7 +10,7 @@ import uk.hasali.zenith.Show
 
 sealed class Screen {
     object TranscodeQueue : Screen()
-    object Shows : Screen()
+    object Main : Screen()
     data class ShowDetails(val show: Show) : Screen()
     data class SeasonDetails(val show: Show, val season: Season) : Screen()
     data class EpisodeDetails(val show: Show, val season: Season, val episode: Episode) : Screen()
@@ -18,7 +18,7 @@ sealed class Screen {
 }
 
 class Navigator : ViewModel() {
-    var stack by mutableStateOf(listOf<Screen>(Screen.Shows))
+    var stack by mutableStateOf(listOf<Screen>(Screen.Main))
 
     fun push(screen: Screen) {
         stack = stack + screen

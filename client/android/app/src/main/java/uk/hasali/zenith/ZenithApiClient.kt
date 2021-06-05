@@ -6,6 +6,17 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class Movie(
+    val id: Int,
+    val title: String,
+    val poster: String,
+    val backdrop: String,
+    val overview: String,
+    @SerialName("release_date")
+    val releaseDate: Long,
+)
+
+@Serializable
 data class Show(
     val id: Int,
     val name: String,
@@ -74,6 +85,9 @@ data class SubtitleStreamInfo(
 data class TranscoderState(val current: Int?, val queue: List<Int>)
 
 class ZenithApiClient(private val client: HttpClient) {
+    suspend fun getMovies(): List<Movie> =
+        client.get("https://zenith.hasali.uk/api/movies")
+
     suspend fun getShows(): List<Show> =
         client.get("https://zenith.hasali.uk/api/tv/shows")
 
