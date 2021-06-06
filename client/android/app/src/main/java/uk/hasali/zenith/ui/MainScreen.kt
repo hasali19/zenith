@@ -14,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.datetime.Instant
@@ -22,6 +24,7 @@ import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.Movie
 import uk.hasali.zenith.Show
 import uk.hasali.zenith.ZenithApiClient
+import uk.hasali.zenith.playClick
 
 private enum class MainScreen {
     Home,
@@ -93,27 +96,24 @@ private fun ShowsScreen(client: ZenithApiClient, navigator: Navigator) {
 
 @Composable
 private fun MainBottomNavigation(screen: MainScreen, onChangeScreen: (MainScreen) -> Unit) {
+    @Composable
+    fun RowScope.NavigationItem(name: String, icon: ImageVector, value: MainScreen) {
+        val context = LocalContext.current
+        BottomNavigationItem(
+            selected = screen == value,
+            icon = { Icon(icon, contentDescription = name) },
+            label = { Text(name) },
+            onClick = {
+                context.playClick()
+                onChangeScreen(value)
+            },
+        )
+    }
+
     BottomNavigation {
-        BottomNavigationItem(
-            selected = screen == MainScreen.Home,
-            onClick = { onChangeScreen(MainScreen.Home) },
-            icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-            label = { Text("Home") },
-        )
-
-        BottomNavigationItem(
-            selected = screen == MainScreen.Movies,
-            onClick = { onChangeScreen(MainScreen.Movies) },
-            icon = { Icon(Icons.Default.Movie, contentDescription = "Movies") },
-            label = { Text("Movies") },
-        )
-
-        BottomNavigationItem(
-            selected = screen == MainScreen.Shows,
-            onClick = { onChangeScreen(MainScreen.Shows) },
-            icon = { Icon(Icons.Default.Tv, contentDescription = "Shows") },
-            label = { Text("Shows") },
-        )
+        NavigationItem(name = "Home", icon = Icons.Default.Home, value = MainScreen.Home)
+        NavigationItem(name = "Movies", icon = Icons.Default.Movie, value = MainScreen.Movies)
+        NavigationItem(name = "Shows", icon = Icons.Default.Tv, value = MainScreen.Shows)
     }
 }
 
