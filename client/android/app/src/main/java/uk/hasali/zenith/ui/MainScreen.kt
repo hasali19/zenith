@@ -129,6 +129,7 @@ private fun <T> ListScreen(
     LazyVerticalGrid(
         cells = GridCells.Adaptive(120.dp),
         contentPadding = PaddingValues(4.dp),
+        state = rememberSaveableLazyListState(),
     ) {
         items(items.size) { i ->
             val item = items[i]

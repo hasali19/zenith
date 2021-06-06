@@ -48,7 +48,7 @@ fun EpisodeDetailsScreen(
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {
-        BoxWithConstraints(modifier = Modifier.verticalScroll(rememberScrollState())) {
+        BoxWithConstraints(modifier = Modifier.verticalScroll(rememberSaveableScrollState())) {
             Column(modifier = Modifier.padding()) {
                 Image(
                     painter = rememberCoilPainter(request = episode.thumbnail, fadeIn = true),

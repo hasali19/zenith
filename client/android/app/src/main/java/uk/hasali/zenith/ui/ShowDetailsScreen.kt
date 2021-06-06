@@ -32,7 +32,7 @@ fun ShowDetailsScreen(client: ZenithApiClient, navigator: Navigator, show: Show)
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {
-        BoxWithConstraints(modifier = Modifier.verticalScroll(rememberScrollState())) {
+        BoxWithConstraints(modifier = Modifier.verticalScroll(rememberSaveableScrollState())) {
             Image(
                 painter = rememberCoilPainter(request = show.backdrop, fadeIn = true),
                 contentDescription = "Backdrop",
