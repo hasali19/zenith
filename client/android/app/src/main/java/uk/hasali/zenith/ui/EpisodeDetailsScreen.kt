@@ -169,7 +169,7 @@ fun MediaInfoSection(info: VideoInfo) {
         })
     }
 
-    Card {
+    Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text("Media Info", style = MaterialTheme.typography.h6)
             Spacer(modifier = Modifier.height(8.dp))
