@@ -29,6 +29,10 @@ const styles = {
   item: (theme: Theme) => css`
     min-width: 130px;
     padding: ${theme.spacing(0.5)};
+
+    ${theme.breakpoints.up("md")} {
+      min-width: 172px;
+    }
   `,
 };
 

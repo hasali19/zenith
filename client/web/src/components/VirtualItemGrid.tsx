@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { css } from "@emotion/react";
+import { css, Theme } from "@emotion/react";
+import { useMediaQuery } from "@material-ui/core";
 
 export interface Props {
   count: number;
@@ -8,6 +9,7 @@ export interface Props {
 
 export default function VirtualItemGrid({ count, children }: Props) {
   const div = useRef<HTMLDivElement>(null);
+  const desktop = useMediaQuery((theme: Theme) => theme.breakpoints.up("md"));
 
   const [bounds, setBounds] = useState<DOMRect | null>(null);
   const [scroll, setScroll] = useState(0);
@@ -33,8 +35,15 @@ export default function VirtualItemGrid({ count, children }: Props) {
   let content = null;
 
   if (bounds && bounds.width > 0 && bounds.height > 0 && count > 0) {
-    const colCount = Math.floor(bounds.width / 136);
-    const colWidth = (bounds.width - 8) / colCount;
+    let padding = 4;
+    let targetColWidth = 136;
+
+    if (desktop) {
+      targetColWidth = 172;
+    }
+
+    const colCount = Math.floor(bounds.width / targetColWidth);
+    const colWidth = (bounds.width - padding * 2) / colCount;
     const rowCount = Math.ceil(count / colCount);
     const rowHeight = colWidth * 1.5 + 64;
 
@@ -56,9 +65,9 @@ export default function VirtualItemGrid({ count, children }: Props) {
             width: colWidth,
             height: rowHeight,
             position: "absolute",
-            top: 4 + i * rowHeight,
-            left: (j % colCount) * colWidth + 4,
-            padding: 4,
+            top: padding + i * rowHeight,
+            left: (j % colCount) * colWidth + padding,
+            padding,
           })
         );
       }
