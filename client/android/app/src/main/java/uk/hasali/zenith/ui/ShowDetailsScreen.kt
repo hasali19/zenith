@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.coil.rememberCoilPainter
+import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -31,7 +32,11 @@ fun ShowDetailsScreen(client: ZenithApiClient, navigator: Navigator, show: Show)
         value = client.getSeasons(show.id)
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding(),
+    ) {
         BoxWithConstraints(modifier = Modifier.verticalScroll(rememberSaveableScrollState())) {
             Image(
                 painter = rememberCoilPainter(request = show.backdrop, fadeIn = true),

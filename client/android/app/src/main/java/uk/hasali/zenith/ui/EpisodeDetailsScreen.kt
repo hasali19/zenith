@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.coil.rememberCoilPainter
+import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.*
 
@@ -47,7 +48,11 @@ fun EpisodeDetailsScreen(
         }
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding(),
+    ) {
         BoxWithConstraints(modifier = Modifier.verticalScroll(rememberSaveableScrollState())) {
             Column(modifier = Modifier.padding()) {
                 Image(

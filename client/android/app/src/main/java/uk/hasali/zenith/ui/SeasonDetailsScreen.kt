@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.coil.rememberCoilPainter
+import com.google.accompanist.insets.navigationBarsPadding
 import uk.hasali.zenith.*
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -34,7 +35,10 @@ fun SeasonDetailsScreen(client: ZenithApiClient, navigator: Navigator, show: Sho
         value = client.getEpisodes(season.id)
     }
 
-    Scaffold(topBar = { AppBar(title = season.name, navigator = navigator) }) {
+    Scaffold(
+        topBar = { AppBar(title = season.name, navigator = navigator) },
+        modifier = Modifier.navigationBarsPadding(),
+    ) {
         LazyVerticalGrid(
             cells = GridCells.Adaptive(200.dp),
             contentPadding = PaddingValues(4.dp),
