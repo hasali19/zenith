@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use actix_http::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
@@ -43,6 +44,47 @@ async fn get_import_queue(req: HttpRequest) -> ApiResult {
 #[serde(tag = "type")]
 pub enum ImportSource {
     Local { path: String },
+}
+
+#[derive(Deserialize)]
+pub struct ImportMovieRequest {
+    source: ImportSource,
+    title: String,
+    year: u32,
+}
+
+pub async fn import_movie(
+    req: HttpRequest,
+    data: web::Json<ImportMovieRequest>,
+) -> ApiResult<impl Responder> {
+    let data = data.into_inner();
+    let config: &Arc<Config> = req.app_data().unwrap();
+
+    let src_path = match data.source {
+        ImportSource::Local { path } => path,
+    };
+
+    let src_path = PathBuf::from(src_path);
+    let src_ext = src_path
+        .extension()
+        .ok_or_else(|| ErrorBadRequest("source file has no extension"))?;
+
+    let dst_name = format!("{} ({})", data.title, data.year);
+    let dst_dir = Path::new(&config.libraries.movies).join(&dst_name);
+
+    if dst_dir.exists() {
+        return Err(ErrorBadRequest(format!("{:?} already exists", dst_dir)));
+    }
+
+    let dst_path = dst_dir.join(dst_name).with_extension(src_ext);
+
+    // Just move the file into the library and let the fs watcher
+    // take care of the rest
+    tracing::info!("moving {:?} to {:?}", src_path, dst_path);
+    std::fs::create_dir(&dst_dir).map_err(ErrorInternalServerError)?;
+    std::fs::rename(src_path, dst_path).map_err(ErrorInternalServerError)?;
+
+    Ok(HttpResponse::Ok())
 }
 
 #[derive(Deserialize)]

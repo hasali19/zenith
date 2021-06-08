@@ -1,5 +1,5 @@
 use actix_http::error::{ErrorInternalServerError, ErrorNotFound};
-use actix_web::web::ServiceConfig;
+use actix_web::web::{get, post, ServiceConfig};
 use actix_web::{web, Responder};
 use actix_web::{HttpRequest, HttpResponse};
 use serde::Serialize;
@@ -9,9 +9,15 @@ use sqlx::{FromRow, Row};
 use crate::db::Db;
 use crate::utils;
 
+use super::import::import_movie;
+
 pub fn configure(config: &mut ServiceConfig) {
+    let movies = web::resource("/movies")
+        .route(get().to(get_movies))
+        .route(post().to(import_movie));
+
     config
-        .route("/movies", web::get().to(get_movies))
+        .service(movies)
         .route("/movies/recent", web::get().to(get_recent_movies))
         .route("/movies/{id}", web::get().to(get_movie));
 }
