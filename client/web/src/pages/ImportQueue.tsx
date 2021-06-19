@@ -60,16 +60,27 @@ const ImportQueueScreen: FC<{}> = ({}) => {
         </div>
       )}
       {queue && queue.length > 0 && (
-        <List>
-          {queue?.map((item) => (
-            <ListItem key={item.path} button onClick={() => setSelected(item)}>
-              <ListItemIcon>
-                <Icon>videocam</Icon>
-              </ListItemIcon>
-              <ListItemText primary={item.name} secondary={item.path} />
-            </ListItem>
-          ))}
-        </List>
+        <div
+          css={css`
+            height: 100%;
+            overflow-y: auto;
+          `}
+        >
+          <List>
+            {queue?.map((item) => (
+              <ListItem
+                key={item.path}
+                button
+                onClick={() => setSelected(item)}
+              >
+                <ListItemIcon>
+                  <Icon>videocam</Icon>
+                </ListItemIcon>
+                <ListItemText primary={item.name} secondary={item.path} />
+              </ListItem>
+            ))}
+          </List>
+        </div>
       )}
       <ImportDialog item={selected} onClose={() => setSelected(null)} />
     </div>
