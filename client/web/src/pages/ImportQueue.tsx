@@ -92,11 +92,13 @@ const ImportDialog: FC<{ item: any | null; onClose: () => void }> = ({
   onClose,
 }) => {
   const [shows, setShows] = useState<TvShow[]>([]);
-  const [type, setType] = useState("TvEpisode");
+  const [type, setType] = useState<"Movie" | "TvEpisode">("TvEpisode");
   const [show, setShow] = useState<number | "" | "new">("");
   const [name, setName] = useState("");
   const [season, setSeason] = useState("");
   const [episode, setEpisode] = useState("");
+  const [title, setTitle] = useState("");
+  const [year, setYear] = useState("");
 
   let content = <React.Fragment></React.Fragment>;
 
@@ -118,13 +120,24 @@ const ImportDialog: FC<{ item: any | null; onClose: () => void }> = ({
           </Select>
         </FormControl>
         {type === "Movie" && (
-          <Typography
-            css={css`
-              margin-top: 16px;
-            `}
-          >
-            TODO 🙂
-          </Typography>
+          <React.Fragment>
+            <TextField
+              fullWidth
+              label="Title"
+              margin="dense"
+              variant="standard"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              label="Year"
+              margin="dense"
+              variant="standard"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+            />
+          </React.Fragment>
         )}
         {type === "TvEpisode" && (
           <React.Fragment>
@@ -197,28 +210,31 @@ const ImportDialog: FC<{ item: any | null; onClose: () => void }> = ({
         <Button onClick={onClose}>Cancel</Button>
         <Button
           onClick={async () => {
-            if (!show || (show === "new" && !name) || !season || !episode) {
-              return;
-            }
+            if (type === "Movie") {
+              if (!title || !year) {
+                return;
+              }
 
-            const episodeData = {
-              source: {
-                type: "Local",
-                path: item.path,
-              },
-              season_number: parseInt(season),
-              episode_number: parseInt(episode),
-            };
+              const yearNum = parseInt(year);
+              // Probably not watching movies older than 1900, and won't be watching movies from
+              // the future.
+              // This will need to be updated once time travel becomes a thing.
+              if (yearNum < 1900 || yearNum > new Date().getFullYear() + 1) {
+                return;
+              }
 
-            if (show === "new") {
-              const res = await fetch(`/api/tv/shows`, {
+              const res = await fetch(`/api/movies`, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  name: name,
-                  episodes: [episodeData],
+                  source: {
+                    type: "Local",
+                    path: item.path,
+                  },
+                  title,
+                  year: yearNum,
                 }),
               });
 
@@ -228,18 +244,50 @@ const ImportDialog: FC<{ item: any | null; onClose: () => void }> = ({
                 console.error(await res.text());
               }
             } else {
-              const res = await fetch(`/api/tv/shows/${show}/episodes`, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(episodeData),
-              });
+              if (!show || (show === "new" && !name) || !season || !episode) {
+                return;
+              }
 
-              if (res.status === 200) {
-                onClose();
+              const episodeData = {
+                source: {
+                  type: "Local",
+                  path: item.path,
+                },
+                season_number: parseInt(season),
+                episode_number: parseInt(episode),
+              };
+
+              if (show === "new") {
+                const res = await fetch(`/api/tv/shows`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    name: name,
+                    episodes: [episodeData],
+                  }),
+                });
+
+                if (res.status === 200) {
+                  onClose();
+                } else {
+                  console.error(await res.text());
+                }
               } else {
-                console.error(await res.text());
+                const res = await fetch(`/api/tv/shows/${show}/episodes`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(episodeData),
+                });
+
+                if (res.status === 200) {
+                  onClose();
+                } else {
+                  console.error(await res.text());
+                }
               }
             }
           }}
