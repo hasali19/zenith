@@ -48,13 +48,13 @@ impl LibraryScanner {
                 if let Err(e) =
                     scan_movies(library.movies(), &metadata, &config.libraries.movies).await
                 {
-                    tracing::error!("{}", e);
+                    tracing::error!("{:?}", e);
                 };
 
                 if let Err(e) =
                     scan_shows(library.shows(), &metadata, &config.libraries.tv_shows).await
                 {
-                    tracing::error!("{}", e);
+                    tracing::error!("{:?}", e);
                 };
 
                 is_running.store(false, Ordering::SeqCst);

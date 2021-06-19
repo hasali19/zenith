@@ -71,9 +71,15 @@ impl MovieLibrary {
     pub async fn remove_movie(&self, id: i64) -> eyre::Result<()> {
         let mut transaction = self.db.begin().await?;
 
-        let path: String = sqlx::query_scalar("SELECT path FROM movies WHERE item_id = ?")
+        let sql = "
+            SELECT path FROM movies AS m
+            JOIN video_files AS v ON m.item_id = v.item_id
+            WHERE m.item_id = ?
+        ";
+
+        let path: Option<String> = sqlx::query_scalar(sql)
             .bind(id)
-            .fetch_one(&mut transaction)
+            .fetch_optional(&mut transaction)
             .await?;
 
         sqlx::query("DELETE FROM user_item_data WHERE item_id = ?")
@@ -96,8 +102,10 @@ impl MovieLibrary {
             .execute(&mut transaction)
             .await?;
 
-        if Path::new(&path).is_file() {
-            std::fs::remove_file(&path)?;
+        if let Some(path) = path {
+            if Path::new(&path).is_file() {
+                std::fs::remove_file(&path)?;
+            }
         }
 
         transaction.commit().await?;
