@@ -88,8 +88,14 @@ class ZenithApiClient(private val client: HttpClient) {
     suspend fun getMovies(): List<Movie> =
         client.get("https://zenith.hasali.uk/api/movies")
 
+    suspend fun getRecentMovies(): List<Movie> =
+        client.get("https://zenith.hasali.uk/api/movies/recent")
+
     suspend fun getShows(): List<Show> =
         client.get("https://zenith.hasali.uk/api/tv/shows")
+
+    suspend fun getRecentShows(): List<Show> =
+        client.get("https://zenith.hasali.uk/api/tv/shows/recent")
 
     suspend fun getSeasons(showId: Int): List<Season> =
         client.get("https://zenith.hasali.uk/api/tv/shows/$showId/seasons")

@@ -4,6 +4,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -12,7 +13,6 @@ import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -59,8 +59,76 @@ fun MainScreen(client: ZenithApiClient, navigator: Navigator) {
 
 @Composable
 private fun HomeScreen(client: ZenithApiClient, navigator: Navigator) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Icon(Icons.Default.Home, contentDescription = "Home", modifier = Modifier.size(48.dp))
+    val movies by produceState(emptyList<Movie>()) {
+        value = client.getRecentMovies()
+    }
+
+    val shows by produceState(initialValue = emptyList<Show>()) {
+        value = client.getRecentShows()
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (movies.isNotEmpty()) {
+            Text(
+                text = "Recently Added Movies",
+                style = MaterialTheme.typography.h6,
+                modifier = Modifier
+                    .padding(horizontal = 12.dp)
+                    .padding(top = 16.dp, bottom = 8.dp),
+            )
+            LazyRow(
+                state = rememberSaveableLazyListState(),
+                contentPadding = PaddingValues(horizontal = 8.dp),
+            ) {
+                items(movies.size) { i ->
+                    val item = movies[i]
+                    val year = Instant.fromEpochSeconds(item.releaseDate)
+                        .toLocalDateTime(TimeZone.UTC)
+                        .year
+
+                    MediaItemWithPoster(
+                        poster = item.poster,
+                        primary = item.title,
+                        secondary = year.toString(),
+                        onClick = { navigator.push(Screen.Player(item.id)) },
+                        modifier = Modifier
+                            .width(120.dp)
+                            .padding(4.dp),
+                    )
+                }
+            }
+        }
+
+        if (shows.isNotEmpty()) {
+            Text(
+                text = "Recently Updated Shows",
+                style = MaterialTheme.typography.h6,
+                modifier = Modifier
+                    .padding(horizontal = 12.dp)
+                    .padding(top = 16.dp, bottom = 8.dp),
+            )
+            LazyRow(
+                state = rememberSaveableLazyListState(),
+                contentPadding = PaddingValues(horizontal = 8.dp),
+            ) {
+                items(shows.size) { i ->
+                    val item = shows[i]
+                    val year = Instant.fromEpochSeconds(item.startDate)
+                        .toLocalDateTime(TimeZone.UTC)
+                        .year
+
+                    MediaItemWithPoster(
+                        poster = item.poster,
+                        primary = item.name,
+                        secondary = year.toString(),
+                        onClick = { navigator.push(Screen.ShowDetails(item)) },
+                        modifier = Modifier
+                            .width(120.dp)
+                            .padding(4.dp),
+                    )
+                }
+            }
+        }
     }
 }
 
