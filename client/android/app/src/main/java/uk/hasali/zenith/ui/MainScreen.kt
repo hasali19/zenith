@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -67,7 +68,11 @@ private fun HomeScreen(client: ZenithApiClient, navigator: Navigator) {
         value = client.getRecentShows()
     }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(state = rememberSaveableScrollState()),
+    ) {
         if (movies.isNotEmpty()) {
             Text(
                 text = "Recently Added Movies",
