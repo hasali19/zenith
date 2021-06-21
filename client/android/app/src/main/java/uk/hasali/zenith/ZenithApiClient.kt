@@ -2,6 +2,7 @@ package uk.hasali.zenith
 
 import io.ktor.client.*
 import io.ktor.client.request.*
+import io.ktor.http.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -84,6 +85,34 @@ data class SubtitleStreamInfo(
 @Serializable
 data class TranscoderState(val current: Int?, val queue: List<Int>)
 
+@Serializable
+data class ImportQueueItem(
+    val name: String,
+    val path: String,
+)
+
+@Serializable
+sealed class ImportSource {
+    @Serializable
+    @SerialName("Local")
+    data class LocalImportSource(val path: String) : ImportSource()
+}
+
+@Serializable
+data class ImportShowRequest(
+    val name: String,
+    val episodes: List<ImportEpisodeRequest>,
+)
+
+@Serializable
+data class ImportEpisodeRequest(
+    val source: ImportSource,
+    @SerialName("season_number")
+    val seasonNumber: Int,
+    @SerialName("episode_number")
+    val episodeNumber: Int,
+)
+
 class ZenithApiClient(private val client: HttpClient) {
     suspend fun getMovies(): List<Movie> =
         client.get("https://zenith.hasali.uk/api/movies")
@@ -116,4 +145,19 @@ class ZenithApiClient(private val client: HttpClient) {
 
     suspend fun startTranscode(videoId: Int): Unit =
         client.post("https://zenith.hasali.uk/api/transcoder?video_id=$videoId")
+
+    suspend fun getImportQueue(): List<ImportQueueItem> =
+        client.get("https://zenith.hasali.uk/api/import/queue")
+
+    suspend fun importShow(show: ImportShowRequest): Unit =
+        client.post("https://zenith.hasali.uk/api/tv/shows") {
+            contentType(ContentType.Application.Json)
+            body = show
+        }
+
+    suspend fun importEpisode(showId: Int, episode: ImportEpisodeRequest): Unit =
+        client.post("https://zenith.hasali.uk/api/tv/shows/$showId/episodes") {
+            contentType(ContentType.Application.Json)
+            body = episode
+        }
 }
