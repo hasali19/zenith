@@ -75,6 +75,10 @@ class MainActivity : ComponentActivity() {
             ProvideWindowInsets {
                 Backstack(backstack = navigator.stack) { screen ->
                     when (screen) {
+                        is Screen.ImportQueue -> ImportQueueScreen(
+                            client = zenithApiClient,
+                            navigator = navigator,
+                        )
                         is Screen.TranscodeQueue -> TranscodeQueueScreen(
                             client = zenithApiClient,
                             navigator = navigator,

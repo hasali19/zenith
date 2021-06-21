@@ -9,6 +9,7 @@ import uk.hasali.zenith.Season
 import uk.hasali.zenith.Show
 
 sealed class Screen {
+    object ImportQueue : Screen()
     object TranscodeQueue : Screen()
     object Main : Screen()
     data class ShowDetails(val show: Show) : Screen()

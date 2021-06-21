@@ -53,6 +53,14 @@ fun AppBarMenu(navigator: Navigator) {
         DropdownMenuItem(onClick = {
             context.playClick()
             expanded = false
+            navigator.push(Screen.ImportQueue)
+        }) {
+            Text("Import queue")
+        }
+
+        DropdownMenuItem(onClick = {
+            context.playClick()
+            expanded = false
             navigator.push(Screen.TranscodeQueue)
         }) {
             Text("Transcode queue")
