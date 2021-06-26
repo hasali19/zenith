@@ -5,7 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.features.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
@@ -14,13 +17,22 @@ import java.io.IOException
 import java.util.zip.ZipInputStream
 
 class AppUpdater(private val context: Context, private val client: HttpClient) {
-    suspend fun downloadAndInstall() {
-        downloadAndInstall("https://nightly.link/hasali19/zenith/workflows/android/android/zenith-apk.zip")
+    suspend fun downloadAndInstall(onProgress: (Float) -> Unit = {}) {
+        downloadAndInstall(
+            url = "https://nightly.link/hasali19/zenith/workflows/android/android/zenith-apk.zip",
+            onProgress = onProgress,
+        )
     }
 
-    suspend fun downloadAndInstall(url: String) {
-        val response: ByteArray = client.get(url)
-        val zip = ZipInputStream(ByteArrayInputStream(response))
+    private suspend fun downloadAndInstall(url: String, onProgress: (Float) -> Unit) {
+        val response: HttpResponse = client.get(url) {
+            onDownload { bytesSentTotal, _ ->
+                // Report progress in MiB
+                onProgress(bytesSentTotal.toFloat() / 1024f / 1024f)
+            }
+        }
+
+        val zip = ZipInputStream(ByteArrayInputStream(response.receive()))
         val content = ByteArrayOutputStream()
 
         zip.nextEntry

@@ -5,15 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -123,6 +121,7 @@ class MainActivity : ComponentActivity() {
     private fun UpdateDialog() {
         val scope = rememberCoroutineScope()
         var isDownloading by remember { mutableStateOf(false) }
+        var progress by remember { mutableStateOf(0f) }
 
         AlertDialog(
             title = {
@@ -134,7 +133,11 @@ class MainActivity : ComponentActivity() {
 
                     if (isDownloading) {
                         Spacer(modifier = Modifier.height(16.dp))
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            LinearProgressIndicator(modifier = Modifier.weight(1f))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(text = "%.1f MiB".format(progress))
+                        }
                     }
                 }
             },
@@ -146,7 +149,7 @@ class MainActivity : ComponentActivity() {
                         isDownloading = true
                         scope.launch {
                             AppUpdater(application, client)
-                                .downloadAndInstall()
+                                .downloadAndInstall { progress = it }
                         }
                     },
                 ) {
