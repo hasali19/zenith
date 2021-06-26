@@ -42,28 +42,30 @@ fun AppBarMenu(navigator: Navigator) {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
 
-    IconButton(onClick = {
-        context.playClick()
-        expanded = true
-    }) {
-        Icon(Icons.Default.MoreVert, contentDescription = "More")
-    }
-
-    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-        DropdownMenuItem(onClick = {
+    Box {
+        IconButton(onClick = {
             context.playClick()
-            expanded = false
-            navigator.push(Screen.ImportQueue)
+            expanded = true
         }) {
-            Text("Import queue")
+            Icon(Icons.Default.MoreVert, contentDescription = "More")
         }
 
-        DropdownMenuItem(onClick = {
-            context.playClick()
-            expanded = false
-            navigator.push(Screen.TranscodeQueue)
-        }) {
-            Text("Transcode queue")
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(onClick = {
+                context.playClick()
+                expanded = false
+                navigator.push(Screen.ImportQueue)
+            }) {
+                Text("Import queue")
+            }
+
+            DropdownMenuItem(onClick = {
+                context.playClick()
+                expanded = false
+                navigator.push(Screen.TranscodeQueue)
+            }) {
+                Text("Transcode queue")
+            }
         }
     }
 }
