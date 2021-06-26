@@ -83,8 +83,10 @@ class MainActivity : ComponentActivity() {
                     LocalNavigator provides navigator,
                     LocalZenithClient provides zenithApiClient,
                 ) {
-                    saveableStateHolder.SaveableStateProvider(screen.hashCode()) {
-                        Crossfade(targetState = screen, content = { Screen(it) })
+                    Crossfade(targetState = screen) {
+                        saveableStateHolder.SaveableStateProvider(it.hashCode()) {
+                            Screen(it)
+                        }
                     }
                 }
             }
