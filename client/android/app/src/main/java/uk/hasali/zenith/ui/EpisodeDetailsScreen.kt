@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -55,6 +56,7 @@ fun EpisodeDetailsScreen(season: Season, episode: Episode) {
                 Image(
                     painter = rememberCoilPainter(request = episode.thumbnail, fadeIn = true),
                     contentDescription = "Backdrop",
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier.aspectRatio(16f / 9f)
                 )
 
