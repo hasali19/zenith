@@ -20,14 +20,28 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.*
 
+@Composable
+fun rememberImportQueue(client: ZenithApiClient): Pair<List<ImportQueueItem>, suspend () -> Unit> {
+    var items by remember { mutableStateOf(emptyList<ImportQueueItem>()) }
+
+    val refresh = suspend {
+        items = client.getImportQueue()
+    }
+
+    LaunchedEffect(client) {
+        refresh()
+    }
+
+    return Pair(items, refresh)
+}
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ImportQueueScreen(client: ZenithApiClient, navigator: Navigator) {
     val context = LocalContext.current
-    val items by produceState(emptyList<ImportQueueItem>()) {
-        value = client.getImportQueue()
-    }
+    val scope = rememberCoroutineScope()
 
+    val (items, refresh) = rememberImportQueue(client)
     var selected: ImportQueueItem? by remember { mutableStateOf(null) }
 
     Scaffold(topBar = { AppBar(navigator = navigator, title = "Import queue", menu = false) }) {
@@ -56,7 +70,14 @@ fun ImportQueueScreen(client: ZenithApiClient, navigator: Navigator) {
         }
 
         selected?.let {
-            ImportDialog(client = client, item = it, onDismiss = { selected = null })
+            ImportDialog(
+                client = client,
+                item = it,
+                onDismiss = {
+                    selected = null
+                    scope.launch { refresh() }
+                },
+            )
         }
     }
 }
@@ -77,30 +98,49 @@ private fun ImportDialog(client: ZenithApiClient, item: ImportQueueItem, onDismi
     var season by remember { mutableStateOf("") }
     var episode by remember { mutableStateOf("") }
 
-    fun onImportClick() {
-        val data = ImportEpisodeRequest(
-            source = ImportSource.LocalImportSource(path = item.path),
-            seasonNumber = season.toInt(),
-            episodeNumber = episode.toInt(),
-        )
+    var title by remember { mutableStateOf("") }
+    var year by remember { mutableStateOf("") }
 
+    fun onImportClick() {
+        val source = ImportSource.LocalImportSource(path = item.path)
         scope.launch {
-            show.let { show ->
-                try {
-                    if (show != null) {
-                        client.importEpisode(showId = show.id, episode = data)
-                    } else {
-                        client.importShow(
-                            show = ImportShowRequest(
-                                name = showName,
-                                episodes = listOf(data),
-                            ),
+            try {
+                when (type) {
+                    ItemType.Movie -> {
+                        client.importMovie(
+                            ImportMovieRequest(
+                                source = source,
+                                title = title,
+                                year = year.toInt(),
+                            )
                         )
                     }
-                } catch (e: Exception) {
-                    Toast.makeText(context, e.message, Toast.LENGTH_SHORT)
-                        .show()
+                    ItemType.Episode -> {
+                        val data = ImportEpisodeRequest(
+                            source = ImportSource.LocalImportSource(path = item.path),
+                            seasonNumber = season.toInt(),
+                            episodeNumber = episode.toInt(),
+                        )
+
+                        show.let { show ->
+                            if (show != null) {
+                                client.importEpisode(showId = show.id, episode = data)
+                            } else {
+                                client.importShow(
+                                    show = ImportShowRequest(
+                                        name = showName,
+                                        episodes = listOf(data),
+                                    ),
+                                )
+                            }
+                        }
+                    }
                 }
+
+                onDismiss()
+            } catch (e: Exception) {
+                Toast.makeText(context, e.message, Toast.LENGTH_SHORT)
+                    .show()
             }
         }
     }
@@ -145,15 +185,28 @@ private fun ImportDialog(client: ZenithApiClient, item: ImportQueueItem, onDismi
                     }
                 }
 
+                Spacer(modifier = Modifier.height(8.dp))
+
                 when (type) {
                     ItemType.Movie -> {
+                        OutlinedTextField(
+                            value = title,
+                            onValueChange = { title = it },
+                            label = { Text(text = "Title") },
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = year,
+                            onValueChange = { year = it },
+                            label = { Text(text = "Year") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        )
                     }
                     ItemType.Episode -> {
                         val shows by produceState(emptyList<Show?>()) {
                             value = listOf(null) + client.getShows()
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
                         ShowSelect(
                             values = shows,
                             text = { it?.name ?: "New Show" },
