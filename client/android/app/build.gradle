@@ -121,6 +121,8 @@ dependencies {
     implementation "com.google.accompanist:accompanist-coil:$accompanist_version"
     implementation "com.google.accompanist:accompanist-insets:$accompanist_version"
 
+    implementation 'com.github.fornewid:material-motion-compose:0.5.0'
+
     implementation "io.ktor:ktor-client-core:$ktor_version"
     implementation "io.ktor:ktor-client-android:$ktor_version"
     implementation "io.ktor:ktor-client-serialization:$ktor_version"
