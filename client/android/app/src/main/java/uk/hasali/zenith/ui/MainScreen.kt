@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -74,65 +75,25 @@ private fun HomeScreen(client: ZenithApiClient, navigator: Navigator) {
             .verticalScroll(state = rememberSaveableScrollState()),
     ) {
         if (movies.isNotEmpty()) {
-            Text(
-                text = "Recently Added Movies",
-                style = MaterialTheme.typography.h6,
-                modifier = Modifier
-                    .padding(horizontal = 12.dp)
-                    .padding(top = 16.dp, bottom = 8.dp),
+            FeaturedSection(
+                title = "Recently Added Movies",
+                items = movies,
+                poster = { it.poster },
+                name = { it.title },
+                date = { it.releaseDate },
+                onClick = { navigator.push(Screen.Player(it.id)) }
             )
-            LazyRow(
-                state = rememberSaveableLazyListState(),
-                contentPadding = PaddingValues(horizontal = 8.dp),
-            ) {
-                items(movies.size) { i ->
-                    val item = movies[i]
-                    val year = Instant.fromEpochSeconds(item.releaseDate)
-                        .toLocalDateTime(TimeZone.UTC)
-                        .year
-
-                    MediaItemWithPoster(
-                        poster = item.poster,
-                        primary = item.title,
-                        secondary = year.toString(),
-                        onClick = { navigator.push(Screen.Player(item.id)) },
-                        modifier = Modifier
-                            .width(120.dp)
-                            .padding(4.dp),
-                    )
-                }
-            }
         }
 
         if (shows.isNotEmpty()) {
-            Text(
-                text = "Recently Updated Shows",
-                style = MaterialTheme.typography.h6,
-                modifier = Modifier
-                    .padding(horizontal = 12.dp)
-                    .padding(top = 16.dp, bottom = 8.dp),
+            FeaturedSection(
+                title = "Recently Updated Shows",
+                items = shows,
+                poster = { it.poster },
+                name = { it.name },
+                date = { it.startDate },
+                onClick = { navigator.push(Screen.ShowDetails(it)) },
             )
-            LazyRow(
-                state = rememberSaveableLazyListState(),
-                contentPadding = PaddingValues(horizontal = 8.dp),
-            ) {
-                items(shows.size) { i ->
-                    val item = shows[i]
-                    val year = Instant.fromEpochSeconds(item.startDate)
-                        .toLocalDateTime(TimeZone.UTC)
-                        .year
-
-                    MediaItemWithPoster(
-                        poster = item.poster,
-                        primary = item.name,
-                        secondary = year.toString(),
-                        onClick = { navigator.push(Screen.ShowDetails(item)) },
-                        modifier = Modifier
-                            .width(120.dp)
-                            .padding(4.dp),
-                    )
-                }
-            }
         }
     }
 }
@@ -187,6 +148,47 @@ private fun MainBottomNavigation(screen: MainScreen, onChangeScreen: (MainScreen
         NavigationItem(name = "Home", icon = Icons.Default.Home, value = MainScreen.Home)
         NavigationItem(name = "Movies", icon = Icons.Default.Movie, value = MainScreen.Movies)
         NavigationItem(name = "Shows", icon = Icons.Default.Tv, value = MainScreen.Shows)
+    }
+}
+
+@Composable
+private fun <T> FeaturedSection(
+    title: String,
+    items: List<T>,
+    poster: (T) -> String,
+    name: (T) -> String,
+    date: (T) -> Long,
+    onClick: (T) -> Unit,
+) {
+    Column(modifier = Modifier.padding(top = 16.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.h6,
+            modifier = Modifier.padding(horizontal = 12.dp),
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LazyRow(
+            state = rememberSaveableLazyListState(),
+            contentPadding = PaddingValues(horizontal = 8.dp),
+        ) {
+            items(items) { item ->
+                val year = Instant.fromEpochSeconds(date(item))
+                    .toLocalDateTime(TimeZone.UTC)
+                    .year
+
+                MediaItemWithPoster(
+                    poster = poster(item),
+                    primary = name(item),
+                    secondary = year.toString(),
+                    onClick = { onClick(item) },
+                    modifier = Modifier
+                        .width(120.dp)
+                        .padding(4.dp),
+                )
+            }
+        }
     }
 }
 
