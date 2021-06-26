@@ -113,6 +113,13 @@ data class ImportEpisodeRequest(
     val episodeNumber: Int,
 )
 
+@Serializable
+data class ImportMovieRequest(
+    val source: ImportSource,
+    val title: String,
+    val year: Int,
+)
+
 class ZenithApiClient(private val client: HttpClient) {
     suspend fun getMovies(): List<Movie> =
         client.get("https://zenith.hasali.uk/api/movies")
@@ -159,5 +166,11 @@ class ZenithApiClient(private val client: HttpClient) {
         client.post("https://zenith.hasali.uk/api/tv/shows/$showId/episodes") {
             contentType(ContentType.Application.Json)
             body = episode
+        }
+
+    suspend fun importMovie(movie: ImportMovieRequest): Unit =
+        client.post("https://zenith.hasali.uk/api/movies") {
+            contentType(ContentType.Application.Json)
+            body = movie
         }
 }
