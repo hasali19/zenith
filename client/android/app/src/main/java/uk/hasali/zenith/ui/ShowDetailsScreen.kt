@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.coil.rememberCoilPainter
@@ -44,6 +45,7 @@ fun ShowDetailsScreen(show: Show) {
             Image(
                 painter = rememberCoilPainter(request = show.backdrop, fadeIn = true),
                 contentDescription = "Backdrop",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier.aspectRatio(16f / 9f)
             )
 
