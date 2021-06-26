@@ -107,6 +107,8 @@ async fn get_recent_movies(req: HttpRequest) -> actix_web::Result<impl Responder
         FROM movies AS movie
         JOIN media_items AS item ON item.id = movie.item_id
         JOIN video_files AS video ON video.item_id = movie.item_id
+        LEFT JOIN user_item_data AS u ON u.item_id = movie.item_id
+        WHERE COALESCE(u.is_watched, 0) = 0
         ORDER BY added_at DESC, title
         LIMIT 30
     ";
