@@ -15,7 +15,10 @@ import uk.hasali.zenith.ZenithApiClient
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun TranscodeQueueScreen(client: ZenithApiClient, navigator: Navigator) {
+fun TranscodeQueueScreen() {
+    val client = LocalZenithClient.current
+    val navigator = LocalNavigator.current
+
     val state by produceState<TranscoderState?>(null) {
         value = client.getTranscoderState()
     }

@@ -27,7 +27,10 @@ import uk.hasali.zenith.Show
 import uk.hasali.zenith.ZenithApiClient
 
 @Composable
-fun ShowDetailsScreen(client: ZenithApiClient, navigator: Navigator, show: Show) {
+fun ShowDetailsScreen(show: Show) {
+    val client = LocalZenithClient.current
+    val navigator = LocalNavigator.current
+
     val seasons by produceState(initialValue = emptyList<Season>()) {
         value = client.getSeasons(show.id)
     }

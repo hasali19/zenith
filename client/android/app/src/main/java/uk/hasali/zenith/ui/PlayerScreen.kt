@@ -25,7 +25,10 @@ import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.ZenithApiClient
 
 @Composable
-fun PlayerScreen(client: ZenithApiClient, navigator: Navigator, id: Int) {
+fun PlayerScreen(id: Int) {
+    val client = LocalZenithClient.current
+    val navigator = LocalNavigator.current
+
     val info by produceState<VideoInfo?>(initialValue = null, id) {
         value = client.getVideoInfo(id)
     }

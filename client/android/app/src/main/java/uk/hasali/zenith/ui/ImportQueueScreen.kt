@@ -37,7 +37,9 @@ fun rememberImportQueue(client: ZenithApiClient): Pair<List<ImportQueueItem>, su
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ImportQueueScreen(client: ZenithApiClient, navigator: Navigator) {
+fun ImportQueueScreen() {
+    val client = LocalZenithClient.current
+    val navigator = LocalNavigator.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
