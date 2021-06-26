@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.AlertDialog
@@ -23,6 +22,8 @@ import io.ktor.client.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import kotlinx.coroutines.launch
+import soup.compose.material.motion.MaterialMotion
+import soup.compose.material.motion.materialFadeThrough
 import uk.hasali.zenith.ui.*
 
 class MainActivity : ComponentActivity() {
@@ -83,7 +84,10 @@ class MainActivity : ComponentActivity() {
                     LocalNavigator provides navigator,
                     LocalZenithClient provides zenithApiClient,
                 ) {
-                    Crossfade(targetState = screen) {
+                    MaterialMotion(
+                        targetState = screen,
+                        motionSpec = materialFadeThrough(),
+                    ) {
                         saveableStateHolder.SaveableStateProvider(it.hashCode()) {
                             Screen(it)
                         }
