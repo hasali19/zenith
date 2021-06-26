@@ -18,6 +18,7 @@ import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ui.PlayerView
+import com.google.android.exoplayer2.ui.StyledPlayerView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.VideoInfo
@@ -147,7 +148,7 @@ private fun VideoPlayer(
     ) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
-            factory = { context -> PlayerView(context) },
+            factory = { context -> StyledPlayerView(context).apply { setShowSubtitleButton(true) } },
             update = { playerView -> playerView.player = player },
         )
     }
