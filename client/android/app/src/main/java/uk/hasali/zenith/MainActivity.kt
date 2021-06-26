@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.zachklipp.compose.backstack.Backstack
 import io.ktor.client.*
@@ -29,6 +30,8 @@ class MainActivity : ComponentActivity() {
     private val navigator: Navigator by viewModels()
 
     private lateinit var client: HttpClient
+
+    private var isUpdateAvailable by mutableStateOf(false)
 
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,6 +53,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        lifecycleScope.launch {
+            isUpdateAvailable = checkForUpdates()
+        }
+    }
+
     override fun onBackPressed() {
         if (!navigator.pop()) {
             super.onBackPressed()
@@ -59,21 +70,14 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun App() {
         val zenithApiClient = remember { ZenithApiClient(client) }
-        var showUpdateDialog by remember { mutableStateOf(false) }
-
-        LaunchedEffect(Unit) {
-            if (checkForUpdates()) {
-                showUpdateDialog = true
-            }
-        }
 
         AppTheme {
-            if (showUpdateDialog) {
-                UpdateDialog()
-            }
-
             ProvideWindowInsets {
                 Backstack(backstack = navigator.stack) { screen ->
+                    if (isUpdateAvailable && screen !is Screen.Player) {
+                        UpdateDialog()
+                    }
+
                     when (screen) {
                         is Screen.ImportQueue -> ImportQueueScreen(
                             client = zenithApiClient,
