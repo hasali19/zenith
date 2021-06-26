@@ -1,6 +1,7 @@
 package uk.hasali.zenith.ui
 
 import android.app.Activity
+import android.support.v4.media.session.MediaSessionCompat
 import android.view.WindowManager
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +18,7 @@ import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.ui.StyledPlayerView
 import kotlinx.coroutines.delay
@@ -99,6 +101,9 @@ private fun VideoPlayer(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    val session = remember { MediaSessionCompat(context, context.packageName) }
+    val connector = remember { MediaSessionConnector(session) }
+
     val player = remember {
         SimpleExoPlayer.Builder(context)
             .build()
@@ -140,7 +145,11 @@ private fun VideoPlayer(
     }
 
     DisposableEffect(Unit) {
+        connector.setPlayer(player)
+
         onDispose {
+            connector.setPlayer(null)
+            session.release()
             player.release()
         }
     }
