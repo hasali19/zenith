@@ -1,7 +1,9 @@
 package uk.hasali.zenith.ui
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.SaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import uk.hasali.zenith.Episode
@@ -18,8 +20,11 @@ sealed class Screen {
     data class Player(val id: Int) : Screen()
 }
 
-class Navigator : ViewModel() {
-    var stack by mutableStateOf(listOf<Screen>(Screen.Main))
+class Navigator(private val saveableStateHolder: SaveableStateHolder) : ViewModel() {
+    private var stack by mutableStateOf(listOf<Screen>(Screen.Main))
+
+    val currentScreen
+        get() = stack.last()
 
     fun push(screen: Screen) {
         stack = stack + screen
@@ -27,10 +32,18 @@ class Navigator : ViewModel() {
 
     fun pop(): Boolean {
         return if (stack.size > 1) {
+            saveableStateHolder.removeState(currentScreen.hashCode())
             stack = stack.dropLast(1)
             true
         } else {
             false
+        }
+    }
+
+    @Composable
+    fun SaveableStateProvider(screen: Screen, content: @Composable () -> Unit) {
+        saveableStateHolder.SaveableStateProvider(screen.hashCode()) {
+            content()
         }
     }
 }

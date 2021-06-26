@@ -3,7 +3,6 @@ package uk.hasali.zenith
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.AlertDialog
@@ -27,7 +26,7 @@ import soup.compose.material.motion.materialFadeThrough
 import uk.hasali.zenith.ui.*
 
 class MainActivity : ComponentActivity() {
-    private val navigator: Navigator by viewModels()
+    private var navigator: Navigator? = null
 
     private lateinit var client: HttpClient
 
@@ -62,7 +61,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onBackPressed() {
-        if (!navigator.pop()) {
+        if (navigator?.pop() != true) {
             super.onBackPressed()
         }
     }
@@ -72,11 +71,12 @@ class MainActivity : ComponentActivity() {
         val zenithApiClient = remember { ZenithApiClient(client) }
         val saveableStateHolder = rememberSaveableStateHolder()
 
+        val navigator = remember { Navigator(saveableStateHolder) }
+            .also { this.navigator = it }
+
         AppTheme {
             ProvideWindowInsets {
-                val screen = navigator.stack.last()
-
-                if (isUpdateAvailable && screen !is Screen.Player) {
+                if (isUpdateAvailable && navigator.currentScreen !is Screen.Player) {
                     UpdateDialog()
                 }
 
@@ -85,11 +85,11 @@ class MainActivity : ComponentActivity() {
                     LocalZenithClient provides zenithApiClient,
                 ) {
                     MaterialMotion(
-                        targetState = screen,
+                        targetState = navigator.currentScreen,
                         motionSpec = materialFadeThrough(),
-                    ) {
-                        saveableStateHolder.SaveableStateProvider(it.hashCode()) {
-                            Screen(it)
+                    ) { screen ->
+                        navigator.SaveableStateProvider(screen) {
+                            Screen(screen)
                         }
                     }
                 }
