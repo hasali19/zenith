@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.AlertDialog
@@ -17,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.insets.ProvideWindowInsets
-import com.zachklipp.compose.backstack.Backstack
 import io.ktor.client.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
@@ -71,11 +71,13 @@ class MainActivity : ComponentActivity() {
 
         AppTheme {
             ProvideWindowInsets {
-                Backstack(backstack = navigator.stack) { screen ->
-                    if (isUpdateAvailable && screen !is Screen.Player) {
-                        UpdateDialog()
-                    }
+                val screen = navigator.stack.last()
 
+                if (isUpdateAvailable && screen !is Screen.Player) {
+                    UpdateDialog()
+                }
+
+                Crossfade(targetState = screen) { screen ->
                     when (screen) {
                         is Screen.ImportQueue -> ImportQueueScreen(
                             client = zenithApiClient,
