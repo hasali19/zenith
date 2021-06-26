@@ -28,7 +28,10 @@ import uk.hasali.zenith.ZenithApiClient
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SeasonDetailsScreen(client: ZenithApiClient, navigator: Navigator, show: Show, season: Season) {
+fun SeasonDetailsScreen(show: Show, season: Season) {
+    val client = LocalZenithClient.current
+    val navigator = LocalNavigator.current
+
     val episodes by produceState(initialValue = emptyList<Episode>()) {
         value = client.getEpisodes(season.id)
     }

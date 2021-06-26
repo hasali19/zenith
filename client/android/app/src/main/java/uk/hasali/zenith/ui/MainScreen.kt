@@ -28,15 +28,18 @@ import uk.hasali.zenith.Show
 import uk.hasali.zenith.ZenithApiClient
 import uk.hasali.zenith.playClick
 
-private enum class MainScreen {
+private enum class MainScreenType {
     Home,
     Movies,
     Shows,
 }
 
 @Composable
-fun MainScreen(client: ZenithApiClient, navigator: Navigator) {
-    var screen by rememberSaveable { mutableStateOf(MainScreen.Home) }
+fun MainScreen() {
+    val client = LocalZenithClient.current
+    val navigator = LocalNavigator.current
+
+    var screen by rememberSaveable { mutableStateOf(MainScreenType.Home) }
 
     Scaffold(
         modifier = Modifier.navigationBarsPadding(),
@@ -50,9 +53,9 @@ fun MainScreen(client: ZenithApiClient, navigator: Navigator) {
         Box(modifier = Modifier.padding(padding)) {
             Crossfade(targetState = screen) {
                 when (it) {
-                    MainScreen.Home -> HomeScreen(client = client, navigator = navigator)
-                    MainScreen.Movies -> MoviesScreen(client = client, navigator = navigator)
-                    MainScreen.Shows -> ShowsScreen(client = client, navigator = navigator)
+                    MainScreenType.Home -> HomeScreen(client = client, navigator = navigator)
+                    MainScreenType.Movies -> MoviesScreen(client = client, navigator = navigator)
+                    MainScreenType.Shows -> ShowsScreen(client = client, navigator = navigator)
                 }
             }
         }
@@ -129,9 +132,9 @@ private fun ShowsScreen(client: ZenithApiClient, navigator: Navigator) {
 }
 
 @Composable
-private fun MainBottomNavigation(screen: MainScreen, onChangeScreen: (MainScreen) -> Unit) {
+private fun MainBottomNavigation(screen: MainScreenType, onChangeScreen: (MainScreenType) -> Unit) {
     @Composable
-    fun RowScope.NavigationItem(name: String, icon: ImageVector, value: MainScreen) {
+    fun RowScope.NavigationItem(name: String, icon: ImageVector, value: MainScreenType) {
         val context = LocalContext.current
         BottomNavigationItem(
             selected = screen == value,
@@ -145,9 +148,9 @@ private fun MainBottomNavigation(screen: MainScreen, onChangeScreen: (MainScreen
     }
 
     BottomNavigation {
-        NavigationItem(name = "Home", icon = Icons.Default.Home, value = MainScreen.Home)
-        NavigationItem(name = "Movies", icon = Icons.Default.Movie, value = MainScreen.Movies)
-        NavigationItem(name = "Shows", icon = Icons.Default.Tv, value = MainScreen.Shows)
+        NavigationItem(name = "Home", icon = Icons.Default.Home, value = MainScreenType.Home)
+        NavigationItem(name = "Movies", icon = Icons.Default.Movie, value = MainScreenType.Movies)
+        NavigationItem(name = "Shows", icon = Icons.Default.Tv, value = MainScreenType.Shows)
     }
 }
 

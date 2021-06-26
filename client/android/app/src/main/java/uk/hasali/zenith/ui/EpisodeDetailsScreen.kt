@@ -23,12 +23,9 @@ import kotlinx.coroutines.launch
 import uk.hasali.zenith.*
 
 @Composable
-fun EpisodeDetailsScreen(
-    client: ZenithApiClient,
-    navigator: Navigator,
-    season: Season,
-    episode: Episode,
-) {
+fun EpisodeDetailsScreen(season: Season, episode: Episode) {
+    val client = LocalZenithClient.current
+    val navigator = LocalNavigator.current
     val scope = rememberCoroutineScope()
 
     val info by produceState<VideoInfo?>(null, episode) {

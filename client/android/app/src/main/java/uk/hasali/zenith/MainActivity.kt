@@ -77,48 +77,32 @@ class MainActivity : ComponentActivity() {
                     UpdateDialog()
                 }
 
-                Crossfade(targetState = screen, content = { Screen(it, zenithApiClient) })
+                CompositionLocalProvider(
+                    LocalNavigator provides navigator,
+                    LocalZenithClient provides zenithApiClient,
+                ) {
+                    Crossfade(targetState = screen, content = { Screen(it) })
+                }
             }
         }
     }
 
     @Composable
-    private fun Screen(screen: Screen, client: ZenithApiClient) {
+    private fun Screen(screen: Screen) {
         when (screen) {
-            is Screen.ImportQueue -> ImportQueueScreen(
-                client = client,
-                navigator = navigator,
-            )
-            is Screen.TranscodeQueue -> TranscodeQueueScreen(
-                client = client,
-                navigator = navigator,
-            )
-            is Screen.Main -> MainScreen(
-                client = client,
-                navigator = navigator,
-            )
-            is Screen.ShowDetails -> ShowDetailsScreen(
-                client = client,
-                navigator = navigator,
-                show = screen.show,
-            )
+            is Screen.ImportQueue -> ImportQueueScreen()
+            is Screen.TranscodeQueue -> TranscodeQueueScreen()
+            is Screen.Main -> MainScreen()
+            is Screen.ShowDetails -> ShowDetailsScreen(show = screen.show)
             is Screen.SeasonDetails -> SeasonDetailsScreen(
-                client = client,
-                navigator = navigator,
                 show = screen.show,
                 season = screen.season,
             )
             is Screen.EpisodeDetails -> EpisodeDetailsScreen(
-                client = client,
-                navigator = navigator,
                 season = screen.season,
                 episode = screen.episode,
             )
-            is Screen.Player -> PlayerScreen(
-                client = client,
-                navigator = navigator,
-                id = screen.id,
-            )
+            is Screen.Player -> PlayerScreen(id = screen.id)
         }
     }
 
