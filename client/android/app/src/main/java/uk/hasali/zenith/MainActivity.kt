@@ -12,6 +12,7 @@ import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -68,6 +69,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun App() {
         val zenithApiClient = remember { ZenithApiClient(client) }
+        val saveableStateHolder = rememberSaveableStateHolder()
 
         AppTheme {
             ProvideWindowInsets {
@@ -81,7 +83,9 @@ class MainActivity : ComponentActivity() {
                     LocalNavigator provides navigator,
                     LocalZenithClient provides zenithApiClient,
                 ) {
-                    Crossfade(targetState = screen, content = { Screen(it) })
+                    saveableStateHolder.SaveableStateProvider(screen.hashCode()) {
+                        Crossfade(targetState = screen, content = { Screen(it) })
+                    }
                 }
             }
         }
