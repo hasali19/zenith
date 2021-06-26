@@ -77,45 +77,48 @@ class MainActivity : ComponentActivity() {
                     UpdateDialog()
                 }
 
-                Crossfade(targetState = screen) { screen ->
-                    when (screen) {
-                        is Screen.ImportQueue -> ImportQueueScreen(
-                            client = zenithApiClient,
-                            navigator = navigator,
-                        )
-                        is Screen.TranscodeQueue -> TranscodeQueueScreen(
-                            client = zenithApiClient,
-                            navigator = navigator,
-                        )
-                        is Screen.Main -> MainScreen(
-                            client = zenithApiClient,
-                            navigator = navigator,
-                        )
-                        is Screen.ShowDetails -> ShowDetailsScreen(
-                            client = zenithApiClient,
-                            navigator = navigator,
-                            show = screen.show,
-                        )
-                        is Screen.SeasonDetails -> SeasonDetailsScreen(
-                            client = zenithApiClient,
-                            navigator = navigator,
-                            show = screen.show,
-                            season = screen.season,
-                        )
-                        is Screen.EpisodeDetails -> EpisodeDetailsScreen(
-                            client = zenithApiClient,
-                            navigator = navigator,
-                            season = screen.season,
-                            episode = screen.episode,
-                        )
-                        is Screen.Player -> PlayerScreen(
-                            client = zenithApiClient,
-                            navigator = navigator,
-                            id = screen.id,
-                        )
-                    }
-                }
+                Crossfade(targetState = screen, content = { Screen(it, zenithApiClient) })
             }
+        }
+    }
+
+    @Composable
+    private fun Screen(screen: Screen, client: ZenithApiClient) {
+        when (screen) {
+            is Screen.ImportQueue -> ImportQueueScreen(
+                client = client,
+                navigator = navigator,
+            )
+            is Screen.TranscodeQueue -> TranscodeQueueScreen(
+                client = client,
+                navigator = navigator,
+            )
+            is Screen.Main -> MainScreen(
+                client = client,
+                navigator = navigator,
+            )
+            is Screen.ShowDetails -> ShowDetailsScreen(
+                client = client,
+                navigator = navigator,
+                show = screen.show,
+            )
+            is Screen.SeasonDetails -> SeasonDetailsScreen(
+                client = client,
+                navigator = navigator,
+                show = screen.show,
+                season = screen.season,
+            )
+            is Screen.EpisodeDetails -> EpisodeDetailsScreen(
+                client = client,
+                navigator = navigator,
+                season = screen.season,
+                episode = screen.episode,
+            )
+            is Screen.Player -> PlayerScreen(
+                client = client,
+                navigator = navigator,
+                id = screen.id,
+            )
         }
     }
 
