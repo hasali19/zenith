@@ -52,7 +52,6 @@ export default function () {
           }
         `}
       >
-        <AppBar translucent />
         {mobile && show.backdrop && <MobileBackdrop src={show.backdrop} />}
         <HeaderSection show={show} mobile={mobile} />
         {mobile && (

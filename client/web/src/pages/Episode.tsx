@@ -12,8 +12,6 @@ import {
 } from "@material-ui/core";
 
 import api, { TvEpisode, TvSeason, VideoInfo } from "../api";
-import AppBar from "../AppBar";
-import MediaInfo from "../components/MediaInfo";
 
 function displayDuration(duration: number) {
   if (duration <= 90 * 60) {
@@ -70,7 +68,6 @@ export default function () {
           }
         `}
       >
-        <AppBar translucent />
         {mobile && episode.thumbnail && (
           <MobileBackdrop src={episode.thumbnail} />
         )}
@@ -90,23 +87,6 @@ export default function () {
             {episode.overview}
           </Typography>
         )}
-        <div
-          css={(theme) =>
-            css`
-              margin-top: ${theme.spacing(2)};
-
-              ${theme.breakpoints.up("md")} {
-                margin-top: ${theme.spacing(4)};
-              }
-
-              ${theme.breakpoints.down("md")} {
-                padding: 0 ${theme.spacing(2)};
-              }
-            `
-          }
-        >
-          <MediaInfo info={video} />
-        </div>
       </div>
     </div>
   );

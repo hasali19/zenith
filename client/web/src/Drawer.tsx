@@ -34,7 +34,7 @@ const links = [
   },
 ];
 
-function DrawerContent({ onClose }: { onClose: () => void }) {
+export function DrawerContent({ onClose }: { onClose: () => void }) {
   const { push } = useHistory();
   const { pathname } = useLocation();
 
@@ -125,7 +125,11 @@ export default function ({ open, onClose }: Props) {
           <DrawerContent onClose={onClose} />
         </Drawer>
       ) : (
-        <Drawer variant="permanent" open>
+        <Drawer
+          variant="permanent"
+          open
+          PaperProps={{ style: { borderRight: "none" } }}
+        >
           <DrawerContent onClose={onClose} />
         </Drawer>
       )}

@@ -7,12 +7,10 @@ import {
   CardMedia,
   Icon,
   LinearProgress,
-  Toolbar,
   Typography,
 } from "@material-ui/core";
 
 import api, { TvEpisode, TvSeason, TvShow } from "../api";
-import AppBar from "../AppBar";
 
 const styles = {
   root: css`
@@ -86,8 +84,6 @@ export default function () {
 
   return (
     <div css={styles.root}>
-      <AppBar title={show.name} />
-      <Toolbar />
       <Typography variant="h4" css={styles.title}>
         {season.name}
       </Typography>

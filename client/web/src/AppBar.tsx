@@ -11,27 +11,21 @@ import { useAppContext } from "./App";
 
 export interface Props {
   title?: string | boolean;
-  translucent?: boolean;
+  transparent?: boolean;
 }
 
-export default function AppBar({ translucent, title }: Props) {
+export default function AppBar({ transparent, title }: Props) {
   const app = useAppContext();
   return (
     <MuiAppBar
-      color={translucent ? "transparent" : "inherit"}
+      color={transparent ? "transparent" : "inherit"}
       position="fixed"
-      elevation={translucent ? 0 : undefined}
+      elevation={transparent ? 0 : undefined}
       css={(theme: any) => css`
         z-index: ${theme.zIndex.drawer + 1};
       `}
     >
-      <Toolbar
-        style={{
-          background: translucent
-            ? "linear-gradient(to bottom, #000a, #0000)"
-            : undefined,
-        }}
-      >
+      <Toolbar>
         <IconButton
           edge="start"
           color="inherit"

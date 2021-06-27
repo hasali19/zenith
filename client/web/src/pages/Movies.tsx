@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { css } from "@emotion/react";
-import { Toolbar } from "@material-ui/core";
 import { useHistory } from "react-router";
 
 import api, { Movie } from "../api";
-import AppBar from "../AppBar";
 import PosterMediaItem from "../components/PosterMediaItem";
 import VirtualItemGrid from "../components/VirtualItemGrid";
 
@@ -24,8 +22,6 @@ export default function () {
         flex-direction: column;
       `}
     >
-      <AppBar title="Movies" />
-      <Toolbar />
       <div
         css={css`
           min-height: 0;
