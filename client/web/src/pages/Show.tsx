@@ -1,16 +1,15 @@
 import { FC, useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router";
-import { css, Theme } from "@emotion/react";
+import { css } from "@emotion/react";
 import {
+  Box,
   Card,
   CardMedia,
   LinearProgress,
   Typography,
-  useMediaQuery,
 } from "@material-ui/core";
 
 import api, { TvSeason, TvShow } from "../api";
-import AppBar from "../AppBar";
 import PosterMediaItem from "../components/PosterMediaItem";
 
 export default function () {
@@ -18,7 +17,6 @@ export default function () {
   const history = useHistory();
   const [show, setShow] = useState<TvShow | null>(null);
   const [seasons, setSeasons] = useState<TvSeason[]>([]);
-  const mobile = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
 
   useEffect(() => {
     api.tv.getShow(params.id).then(setShow);
@@ -38,34 +36,18 @@ export default function () {
         background-position: center;
       `}
       style={{
-        backgroundImage: mobile ? undefined : `url(${show.backdrop})`,
+        backgroundImage: `url(${show.backdrop})`,
       }}
     >
       <div
-        css={(theme) => css`
+        css={css`
           height: 100%;
           overflow-y: auto;
-
-          ${theme.breakpoints.up("md")} {
-            padding: 5%;
-            background-color: #000a;
-          }
+          padding: 5%;
+          background-color: #000a;
         `}
       >
-        {mobile && show.backdrop && <MobileBackdrop src={show.backdrop} />}
-        <HeaderSection show={show} mobile={mobile} />
-        {mobile && (
-          <Typography
-            variant="body2"
-            css={(theme) =>
-              css`
-                margin: 0 ${theme.spacing(2)};
-              `
-            }
-          >
-            {show.overview}
-          </Typography>
-        )}
+        <HeaderSection show={show} />
         <SeasonsSection
           show={show}
           seasons={seasons}
@@ -76,85 +58,34 @@ export default function () {
   );
 }
 
-const MobileBackdrop: FC<{ src: string }> = ({ src }) => (
-  <img
-    src={src}
-    css={css`
-      width: 100%;
-      aspect-ratio: 16 / 9;
-    `}
-  />
-);
-
-const HeaderSection: FC<{ show: TvShow; mobile: boolean }> = ({
-  show,
-  mobile,
-}) => {
+const HeaderSection: FC<{ show: TvShow }> = ({ show }) => {
   return (
     <div
-      css={(theme) => css`
+      css={css`
         display: flex;
         align-items: center;
-
-        ${theme.breakpoints.down("md")} {
-          padding: ${theme.spacing(2)};
-          margin-top: -80px;
-        }
       `}
     >
       <Poster src={show.poster!!} />
-      <HeaderContent show={show} mobile={mobile} />
+      <HeaderContent show={show} />
     </div>
   );
 };
 
 const Poster: FC<{ src: string }> = ({ src }) => (
-  <Card
-    css={(theme) => css`
-      min-width: 150px;
-
-      ${theme.breakpoints.up("md")} {
-        min-width: 240px;
-      }
-    `}
-  >
-    <CardMedia
-      image={src}
-      css={css`
-        aspect-ratio: 2/3;
-      `}
-    />
+  <Card sx={{ minWidth: 240 }}>
+    <CardMedia image={src} sx={{ aspectRatio: "2/3" }} />
   </Card>
 );
 
-const HeaderContent: FC<{ show: TvShow; mobile: boolean }> = ({
-  show,
-  mobile,
-}) => (
-  <div
-    css={(theme) => css`
-      margin-left: ${theme.spacing(2)};
-
-      ${theme.breakpoints.up("md")} {
-        margin-left: ${theme.spacing(4)};
-      }
-    `}
-  >
-    <Typography variant={mobile ? "h4" : "h2"}>{show.name}</Typography>
-    <Typography variant={mobile ? "caption" : "h5"} component="div">
-      {show.startYear()}
+const HeaderContent: FC<{ show: TvShow }> = ({ show }) => (
+  <Box ml={4}>
+    <Typography variant="h2">{show.name}</Typography>
+    <Typography variant="h5">{show.startYear()}</Typography>
+    <Typography variant="body2" sx={{ mt: 2 }}>
+      {show.overview}
     </Typography>
-    {!mobile && (
-      <Typography
-        variant="body2"
-        css={(theme) => css`
-          margin-top: ${theme.spacing(2)};
-        `}
-      >
-        {show.overview}
-      </Typography>
-    )}
-  </div>
+  </Box>
 );
 
 const SeasonsSection: FC<{
@@ -162,59 +93,20 @@ const SeasonsSection: FC<{
   seasons: TvSeason[];
   onItemClick: (item: TvSeason) => void;
 }> = ({ show, seasons, onItemClick }) => (
-  <div
-    css={(theme) => css`
-      margin: ${theme.spacing(2)} 0px;
-      padding: 0px ${theme.spacing(1.5)};
-
-      ${theme.breakpoints.up("md")} {
-        margin-top: ${theme.spacing(8)};
-        padding: 0;
-      }
-    `}
-  >
-    <Typography
-      variant="h6"
-      css={(theme) =>
-        css`
-          margin: 0 ${theme.spacing(0.5)};
-
-          ${theme.breakpoints.up("md")} {
-            font-size: 1.5em;
-          }
-        `
-      }
-    >
+  <Box my={2} mt={8}>
+    <Typography variant="h6" sx={{ mx: 0.5, fontSize: "1.5em" }}>
       Seasons
     </Typography>
-    <div
-      css={(theme) => css`
-        display: flex;
-        overflow-x: scroll;
-
-        &::-webkit-scrollbar {
-          width: 0;
-          height: 0;
-        }
-
-        ${theme.breakpoints.up("md")} {
-          margin-top: ${theme.spacing(2)};
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-          grid-gap: ${theme.spacing(2)};
-        }
-      `}
+    <Box
+      sx={{
+        mt: 2,
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+        gridGap: (theme) => theme.spacing(2),
+      }}
     >
       {seasons.map((season) => (
-        <div
-          key={season.id}
-          css={(theme) => css`
-            ${theme.breakpoints.down("md")} {
-              min-width: 130px;
-              padding: ${theme.spacing(0.5)};
-            }
-          `}
-        >
+        <div key={season.id}>
           <PosterMediaItem
             poster={season.poster || undefined}
             primary={season.name || ""}
@@ -223,6 +115,6 @@ const SeasonsSection: FC<{
           />
         </div>
       ))}
-    </div>
-  </div>
+    </Box>
+  </Box>
 );
