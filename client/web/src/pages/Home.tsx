@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router";
 import { css, Theme } from "@emotion/react";
 import { Typography } from "@material-ui/core";
@@ -35,6 +35,27 @@ const styles = {
   `,
 };
 
+interface FeaturedSectionProps<T> {
+  title: string;
+  items: T[];
+  render: (item: T) => React.ReactNode;
+}
+
+function FeaturedSection<T>({ title, items, render }: FeaturedSectionProps<T>) {
+  if (items.length == 0) {
+    return null;
+  }
+
+  return (
+    <React.Fragment>
+      <Typography variant="h5" sx={{ mx: 2 }}>
+        {title}
+      </Typography>
+      <div css={styles.slider}>{items.map(render)}</div>
+    </React.Fragment>
+  );
+}
+
 export default function () {
   const history = useHistory();
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -47,18 +68,10 @@ export default function () {
 
   return (
     <div css={styles.root}>
-      <Typography
-        variant="h5"
-        css={(theme) =>
-          css`
-            margin: 0 ${theme.spacing(2)};
-          `
-        }
-      >
-        New Movies
-      </Typography>
-      <div css={styles.slider}>
-        {movies.map((movie) => (
+      <FeaturedSection
+        title="New Movies"
+        items={movies}
+        render={(movie) => (
           <div key={movie.id} css={styles.item}>
             <PosterMediaItem
               poster={movie.poster || undefined}
@@ -67,20 +80,12 @@ export default function () {
               onClick={() => history.push(`/movies/${movie.id}`)}
             />
           </div>
-        ))}
-      </div>
-      <Typography
-        variant="h5"
-        css={(theme) =>
-          css`
-            margin: 0 ${theme.spacing(2)};
-          `
-        }
-      >
-        Updated Shows
-      </Typography>
-      <div css={styles.slider}>
-        {shows.map((show) => (
+        )}
+      />
+      <FeaturedSection
+        title="Updated Shows"
+        items={shows}
+        render={(show) => (
           <div key={show.id} css={styles.item}>
             <PosterMediaItem
               poster={show.poster || undefined}
@@ -89,8 +94,8 @@ export default function () {
               onClick={() => history.push(`/shows/${show.id}`)}
             />
           </div>
-        ))}
-      </div>
+        )}
+      />
     </div>
   );
 }
