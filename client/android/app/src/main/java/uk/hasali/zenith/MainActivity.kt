@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
         val zenithApiClient = remember { ZenithApiClient(client) }
         val saveableStateHolder = rememberSaveableStateHolder()
 
-        val navigator = remember { Navigator(saveableStateHolder) }
+        val navigator = remember { Navigator(saveableStateHolder, this.navigator) }
             .also { this.navigator = it }
 
         AppTheme {
@@ -109,6 +109,7 @@ class MainActivity : ComponentActivity() {
                 season = screen.season,
             )
             is Screen.EpisodeDetails -> EpisodeDetailsScreen(
+                show = screen.show,
                 season = screen.season,
                 episode = screen.episode,
             )
