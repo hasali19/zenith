@@ -20,13 +20,20 @@ sealed class Screen {
     data class Player(val id: Int) : Screen()
 }
 
-class Navigator(private val saveableStateHolder: SaveableStateHolder, navigator: Navigator? = null) : ViewModel() {
+class Navigator(
+    private val saveableStateHolder: SaveableStateHolder,
+    navigator: Navigator? = null,
+) : ViewModel() {
     private var stack: List<Screen> by mutableStateOf(navigator?.stack ?: listOf(Screen.Main))
+
+    private var _push = true
+    val push get() = _push
 
     val currentScreen
         get() = stack.last()
 
     fun push(screen: Screen) {
+        _push = true
         stack = stack + screen
     }
 
@@ -34,6 +41,7 @@ class Navigator(private val saveableStateHolder: SaveableStateHolder, navigator:
         return if (stack.size > 1) {
             saveableStateHolder.removeState(currentScreen.hashCode())
             stack = stack.dropLast(1)
+            _push = false
             true
         } else {
             false
