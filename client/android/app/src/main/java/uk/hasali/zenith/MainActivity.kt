@@ -21,8 +21,9 @@ import io.ktor.client.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import kotlinx.coroutines.launch
+import soup.compose.material.motion.Axis
 import soup.compose.material.motion.MaterialMotion
-import soup.compose.material.motion.materialFadeThrough
+import soup.compose.material.motion.materialSharedAxis
 import uk.hasali.zenith.ui.*
 
 class MainActivity : ComponentActivity() {
@@ -86,7 +87,10 @@ class MainActivity : ComponentActivity() {
                 ) {
                     MaterialMotion(
                         targetState = navigator.currentScreen,
-                        motionSpec = materialFadeThrough(),
+                        motionSpec = materialSharedAxis(
+                            axis = Axis.Z,
+                            forward = navigator.push,
+                        ),
                     ) { screen ->
                         navigator.SaveableStateProvider(screen) {
                             Screen(screen)
