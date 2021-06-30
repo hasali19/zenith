@@ -44,7 +44,7 @@ data class Episode(
     @SerialName("episode_number")
     val episodeNumber: Int,
     val overview: String,
-    val thumbnail: String,
+    val thumbnail: String?,
     val duration: Double,
     @SerialName("is_watched")
     val isWatched: Boolean,
@@ -173,4 +173,7 @@ class ZenithApiClient(private val client: HttpClient) {
             contentType(ContentType.Application.Json)
             body = movie
         }
+
+    suspend fun refreshMetadata(id: Int): Unit =
+        client.post("https://zenith.hasali.uk/api/metadata/$id/refresh")
 }
