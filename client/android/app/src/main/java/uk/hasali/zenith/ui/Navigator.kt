@@ -20,8 +20,8 @@ sealed class Screen {
     data class Player(val id: Int) : Screen()
 }
 
-class Navigator(private val saveableStateHolder: SaveableStateHolder) : ViewModel() {
-    private var stack by mutableStateOf(listOf<Screen>(Screen.Main))
+class Navigator(private val saveableStateHolder: SaveableStateHolder, navigator: Navigator? = null) : ViewModel() {
+    private var stack: List<Screen> by mutableStateOf(navigator?.stack ?: listOf(Screen.Main))
 
     val currentScreen
         get() = stack.last()
