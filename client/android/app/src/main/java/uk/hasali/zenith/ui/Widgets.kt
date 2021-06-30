@@ -95,9 +95,10 @@ fun Poster(url: String, modifier: Modifier = Modifier, onClick: (() -> Unit)? = 
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun Thumbnail(
-    url: String,
+    url: String?,
     modifier: Modifier = Modifier,
     overlay: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
@@ -109,18 +110,21 @@ fun Thumbnail(
             constraints.maxWidth.toDp()
         }
 
-        Card(modifier = Modifier.size(width, width * (9f / 16f))) {
-            Image(
-                painter = rememberCoilPainter(request = url, fadeIn = true),
-                contentDescription = "Thumbnail",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable(enabled = onClick != null) {
-                        context.playClick()
-                        onClick?.invoke()
-                    },
-            )
+        Card(
+            enabled = onClick != null,
+            modifier = Modifier.size(width, width * (9f / 16f)),
+            onClick = {
+                context.playClick()
+                onClick?.invoke()
+            }
+        ) {
+            if (url != null)
+                Image(
+                    painter = rememberCoilPainter(request = url, fadeIn = true),
+                    contentDescription = "Thumbnail",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
 
             overlay?.invoke()
         }

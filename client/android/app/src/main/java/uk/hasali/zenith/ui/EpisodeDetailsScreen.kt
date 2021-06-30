@@ -1,16 +1,19 @@
 package uk.hasali.zenith.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
@@ -21,7 +24,10 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.*
+import uk.hasali.zenith.Episode
+import uk.hasali.zenith.Season
+import uk.hasali.zenith.VideoInfo
+import uk.hasali.zenith.playClick
 
 @Composable
 fun EpisodeDetailsScreen(season: Season, episode: Episode) {
@@ -33,16 +39,15 @@ fun EpisodeDetailsScreen(season: Season, episode: Episode) {
         value = client.getVideoInfo(episode.id)
     }
 
-    fun convertVideo() {
-        scope.launch {
-            client.startTranscode(episode.id)
-        }
-    }
-
     fun onActionInvoked(action: Action) {
         when (action) {
             Action.Play -> navigator.push(Screen.Player(episode.id))
-            Action.ConvertVideo -> convertVideo()
+            Action.ConvertVideo -> scope.launch {
+                client.startTranscode(episode.id)
+            }
+            Action.RefreshMetadata -> scope.launch {
+                client.refreshMetadata(episode.id)
+            }
         }
     }
 
@@ -51,26 +56,42 @@ fun EpisodeDetailsScreen(season: Season, episode: Episode) {
             .fillMaxSize()
             .navigationBarsPadding(),
     ) {
-        BoxWithConstraints(modifier = Modifier.verticalScroll(rememberSaveableScrollState())) {
-            Column(modifier = Modifier.padding()) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Box(modifier = Modifier.aspectRatio(16f / 9f)) {
                 Image(
                     painter = rememberCoilPainter(request = episode.thumbnail, fadeIn = true),
                     contentDescription = "Backdrop",
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.aspectRatio(16f / 9f)
                 )
 
-                Column(modifier = Modifier.padding(16.dp)) {
-                    HeaderSection(season = season, episode = episode)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ActionsSection { action -> onActionInvoked(action) }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OverviewSection(content = episode.overview)
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    info?.let {
-                        MediaInfoSection(info = it)
+                if (episode.isWatched) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.4f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Watched",
+                            modifier = Modifier
+                                .size(32.dp)
+                                .align(Alignment.Center),
+                            tint = Color.White,
+                        )
                     }
+                }
+            }
+
+            Column(modifier = Modifier.padding(16.dp)) {
+                HeaderSection(season = season, episode = episode)
+                Spacer(modifier = Modifier.height(16.dp))
+                ActionsSection { action -> onActionInvoked(action) }
+                Spacer(modifier = Modifier.height(16.dp))
+                OverviewSection(content = episode.overview)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                info?.let {
+                    MediaInfoSection(info = it)
                 }
             }
         }
@@ -93,6 +114,7 @@ private fun HeaderSection(season: Season, episode: Episode) {
 private enum class Action {
     Play,
     ConvertVideo,
+    RefreshMetadata,
 }
 
 @Composable
@@ -118,16 +140,25 @@ private fun ActionsSection(onActionInvoked: (Action) -> Unit) {
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        ActionsMenu(onConvertClick = {
-            onActionInvoked(Action.ConvertVideo)
-        })
+        ActionsMenu(onActionInvoked = onActionInvoked)
     }
 }
 
 @Composable
-private fun ActionsMenu(onConvertClick: () -> Unit) {
+private fun ActionsMenu(onActionInvoked: (Action) -> Unit) {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
+
+    @Composable
+    fun MenuItem(action: Action, label: String) {
+        DropdownMenuItem(onClick = {
+            context.playClick()
+            expanded = false
+            onActionInvoked(action)
+        }) {
+            Text(label)
+        }
+    }
 
     Box {
         IconButton(onClick = {
@@ -138,13 +169,8 @@ private fun ActionsMenu(onConvertClick: () -> Unit) {
         }
 
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(onClick = {
-                context.playClick()
-                expanded = false
-                onConvertClick()
-            }) {
-                Text("Convert")
-            }
+            MenuItem(Action.ConvertVideo, "Convert")
+            MenuItem(Action.RefreshMetadata, "Refresh Metadata")
         }
     }
 }
