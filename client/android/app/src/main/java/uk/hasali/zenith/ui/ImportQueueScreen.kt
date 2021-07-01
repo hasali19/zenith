@@ -47,7 +47,7 @@ fun ImportQueueScreen() {
     var selected: ImportQueueItem? by remember { mutableStateOf(null) }
 
     Scaffold(topBar = { AppBar(navigator = navigator, title = "Import queue", menu = false) }) {
-        LazyColumn(state = rememberSaveableLazyListState()) {
+        LazyColumn {
             items(items) {
                 ListItem(
                     icon = {

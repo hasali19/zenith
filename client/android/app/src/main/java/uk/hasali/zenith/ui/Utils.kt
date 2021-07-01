@@ -17,33 +17,3 @@ fun displayDuration(duration: Double) =
         val minutes = ((duration % 3600) / 60).toInt();
         "${hours}h ${minutes}m";
     }
-
-@Composable
-fun rememberSaveableScrollState(): ScrollState {
-    val saver = Saver<ScrollState, Int>(
-        save = { it.value },
-        restore = { ScrollState(it) },
-    )
-
-    return rememberSaveable(saver = saver) { ScrollState(0) }
-}
-
-@Composable
-fun rememberSaveableLazyListState(): LazyListState {
-    val saver = listSaver<LazyListState, Int>(
-        save = {
-            listOf(
-                it.firstVisibleItemIndex,
-                it.firstVisibleItemScrollOffset,
-            )
-        },
-        restore = {
-            LazyListState(
-                firstVisibleItemIndex = it[0],
-                firstVisibleItemScrollOffset = it[1],
-            )
-        }
-    )
-
-    return rememberSaveable(saver = saver) { LazyListState() }
-}

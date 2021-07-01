@@ -41,7 +41,7 @@ fun ShowDetailsScreen(show: Show) {
             .fillMaxSize()
             .navigationBarsPadding(),
     ) {
-        BoxWithConstraints(modifier = Modifier.verticalScroll(rememberSaveableScrollState())) {
+        BoxWithConstraints(modifier = Modifier.verticalScroll(rememberScrollState())) {
             Image(
                 painter = rememberCoilPainter(request = show.backdrop, fadeIn = true),
                 contentDescription = "Backdrop",

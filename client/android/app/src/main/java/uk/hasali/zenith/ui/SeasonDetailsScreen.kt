@@ -43,7 +43,6 @@ fun SeasonDetailsScreen(show: Show, season: Season) {
         LazyVerticalGrid(
             cells = GridCells.Adaptive(200.dp),
             contentPadding = PaddingValues(4.dp),
-            state = rememberSaveableLazyListState(),
         ) {
             items(episodes) { episode ->
                 EpisodeItem(
