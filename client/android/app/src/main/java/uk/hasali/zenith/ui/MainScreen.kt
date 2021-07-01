@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -75,7 +76,7 @@ private fun HomeScreen(client: ZenithApiClient, navigator: Navigator) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .verticalScroll(state = rememberSaveableScrollState()),
+            .verticalScroll(state = rememberScrollState()),
     ) {
         if (movies.isNotEmpty()) {
             FeaturedSection(
@@ -172,10 +173,7 @@ private fun <T> FeaturedSection(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        LazyRow(
-            state = rememberSaveableLazyListState(),
-            contentPadding = PaddingValues(horizontal = 8.dp),
-        ) {
+        LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
             items(items) { item ->
                 val year = Instant.fromEpochSeconds(date(item))
                     .toLocalDateTime(TimeZone.UTC)
@@ -207,7 +205,6 @@ private fun <T> ListScreen(
     LazyVerticalGrid(
         cells = GridCells.Adaptive(120.dp),
         contentPadding = PaddingValues(4.dp),
-        state = rememberSaveableLazyListState(),
     ) {
         items(items.size) { i ->
             val item = items[i]

@@ -3,6 +3,7 @@ package uk.hasali.zenith.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -63,7 +64,7 @@ fun EpisodeDetailsScreen(show: Show, season: Season, episode: Episode) {
             .fillMaxSize()
             .navigationBarsPadding(),
     ) {
-        BoxWithConstraints(modifier = Modifier.verticalScroll(rememberSaveableScrollState())) {
+        BoxWithConstraints(modifier = Modifier.verticalScroll(rememberScrollState())) {
             Box(modifier = Modifier.aspectRatio(16f / 9f)) {
                 Image(
                     painter = rememberCoilPainter(request = episode.thumbnail, fadeIn = true),
