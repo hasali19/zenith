@@ -2,7 +2,7 @@ pub mod media;
 
 use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteConnectOptions;
-use sqlx::{Executor, Sqlite, SqlitePool, Transaction};
+use sqlx::{Sqlite, SqlitePool, Transaction};
 
 #[derive(Clone, Debug)]
 pub struct Db(SqlitePool);
@@ -15,7 +15,9 @@ impl Db {
 
         let pool = SqlitePool::connect_with(options).await?;
 
-        pool.execute(include_str!("schema.sql")).await?;
+        // Migrate database to latest version
+        tracing::info!("running migrations");
+        migrations::migrate(&pool).await?;
 
         Ok(Db(pool))
     }

@@ -1,11 +1,11 @@
-create table if not exists media_items (
+create table media_items (
     id integer primary key,
     item_type integer not null,
     added_at integer default (strftime('%s', 'now')),
     updated_at integer
 );
 
-create table if not exists video_files (
+create table video_files (
     item_id integer not null,
     path text not null,
     duration real not null,
@@ -13,7 +13,7 @@ create table if not exists video_files (
     foreign key (item_id) references media_items (id)
 );
 
-create table if not exists movies (
+create table movies (
     item_id integer primary key,
     title text not null,
     release_date integer,
@@ -24,7 +24,7 @@ create table if not exists movies (
     foreign key (item_id) references media_items (id)
 );
 
-create table if not exists tv_shows (
+create table tv_shows (
     item_id integer primary key,
     path text not null,
     name text not null,
@@ -38,7 +38,7 @@ create table if not exists tv_shows (
     foreign key (item_id) references media_items (id)
 );
 
-create table if not exists tv_seasons (
+create table tv_seasons (
     item_id integer primary key,
     show_id integer not null,
     season_number integer not null,
@@ -50,7 +50,7 @@ create table if not exists tv_seasons (
     foreign key (item_id) references media_items (id)
 );
 
-create table if not exists tv_episodes (
+create table tv_episodes (
     item_id integer primary key,
     season_id integer not null,
     episode_number integer not null,
@@ -63,7 +63,7 @@ create table if not exists tv_episodes (
     foreign key (item_id) references media_items (id)
 );
 
-create table if not exists user_item_data (
+create table user_item_data (
     item_id integer primary key,
     position real not null default 0,
     is_watched boolean not null default 0,
