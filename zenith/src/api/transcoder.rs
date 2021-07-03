@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use actix_http::error::ErrorBadRequest;
+use actix_web::error::ErrorBadRequest;
 use actix_web::web::ServiceConfig;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;

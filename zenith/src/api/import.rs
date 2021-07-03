@@ -2,7 +2,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use actix_http::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
+use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
 use actix_web::web::ServiceConfig;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
@@ -148,7 +148,7 @@ pub async fn import_episode(
 mod inner {
     use std::path::{Path, PathBuf};
 
-    use actix_http::error::{ErrorBadRequest, ErrorInternalServerError};
+    use actix_web::error::{ErrorBadRequest, ErrorInternalServerError};
     use actix_web::{HttpResponse, Responder};
 
     use crate::api::ApiResult;

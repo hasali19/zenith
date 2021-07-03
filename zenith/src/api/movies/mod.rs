@@ -1,4 +1,4 @@
-use actix_http::error::{ErrorInternalServerError, ErrorNotFound};
+use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
 use actix_web::web::{get, post, ServiceConfig};
 use actix_web::{web, Responder};
 use actix_web::{HttpRequest, HttpResponse};

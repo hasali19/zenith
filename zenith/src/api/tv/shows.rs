@@ -1,4 +1,4 @@
-use actix_http::error::{ErrorInternalServerError, ErrorNotFound};
+use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;

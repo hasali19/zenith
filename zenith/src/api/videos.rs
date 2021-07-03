@@ -2,7 +2,7 @@ use std::process::Stdio;
 use std::sync::Arc;
 
 use actix_files::NamedFile;
-use actix_http::error::{ErrorInternalServerError, ErrorNotFound};
+use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
 use actix_web::web::ServiceConfig;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde_json::json;
