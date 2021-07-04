@@ -37,7 +37,8 @@ impl<'r> FromRow<'r, SqliteRow> for Show {
     }
 }
 
-pub(super) async fn get_shows(req: HttpRequest) -> actix_web::Result<impl Responder> {
+/// GET /api/tv/shows
+pub async fn get_shows(req: HttpRequest) -> actix_web::Result<impl Responder> {
     let db: &Db = req.app_data().unwrap();
     let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
@@ -63,42 +64,8 @@ pub(super) async fn get_shows(req: HttpRequest) -> actix_web::Result<impl Respon
     Ok(HttpResponse::Ok().json(&shows))
 }
 
-pub(super) async fn get_show(
-    req: HttpRequest,
-    path: web::Path<(i64,)>,
-) -> actix_web::Result<impl Responder> {
-    let (id,) = path.into_inner();
-
-    let db: &Db = req.app_data().unwrap();
-    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
-
-    let sql = "
-        SELECT
-            show.item_id, name, start_date, end_date,
-            overview, poster, backdrop, (
-                SELECT COUNT(*)
-                FROM tv_episodes AS episode
-                JOIN tv_seasons AS season ON season.item_id = episode.season_id
-                LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
-                WHERE season.show_id = show.item_id AND COALESCE(u.is_watched, 0) = 0
-            )
-        FROM tv_shows AS show
-        WHERE show.item_id = ?
-    ";
-
-    let show: Show = sqlx::query_as(sql)
-        .bind(id)
-        .fetch_optional(&mut conn)
-        .await
-        .map_err(ErrorInternalServerError)?
-        .ok_or_else(|| ErrorNotFound(""))?;
-
-    Ok(HttpResponse::Ok().json(&show))
-}
-
-pub(super) async fn get_recently_updated_shows(
-    req: HttpRequest,
-) -> actix_web::Result<impl Responder> {
+/// GET /api/tv/shows/recent
+pub async fn get_recently_updated_shows(req: HttpRequest) -> actix_web::Result<impl Responder> {
     let db: &Db = req.app_data().unwrap();
     let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
@@ -131,4 +98,38 @@ pub(super) async fn get_recently_updated_shows(
         .map_err(ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok().json(&shows))
+}
+
+/// GET /api/tv/shows/{id}
+pub async fn get_show(
+    req: HttpRequest,
+    path: web::Path<(i64,)>,
+) -> actix_web::Result<impl Responder> {
+    let (id,) = path.into_inner();
+
+    let db: &Db = req.app_data().unwrap();
+    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
+
+    let sql = "
+        SELECT
+            show.item_id, name, start_date, end_date,
+            overview, poster, backdrop, (
+                SELECT COUNT(*)
+                FROM tv_episodes AS episode
+                JOIN tv_seasons AS season ON season.item_id = episode.season_id
+                LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
+                WHERE season.show_id = show.item_id AND COALESCE(u.is_watched, 0) = 0
+            )
+        FROM tv_shows AS show
+        WHERE show.item_id = ?
+    ";
+
+    let show: Show = sqlx::query_as(sql)
+        .bind(id)
+        .fetch_optional(&mut conn)
+        .await
+        .map_err(ErrorInternalServerError)?
+        .ok_or_else(|| ErrorNotFound(""))?;
+
+    Ok(HttpResponse::Ok().json(&show))
 }

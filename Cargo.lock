@@ -2723,6 +2723,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "sqlx",
+ "syn",
  "time",
  "tokio",
  "tokio-stream",

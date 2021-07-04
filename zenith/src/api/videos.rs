@@ -3,7 +3,6 @@ use std::sync::Arc;
 
 use actix_files::NamedFile;
 use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
-use actix_web::web::ServiceConfig;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde_json::json;
 use tokio::process::Command;
@@ -16,14 +15,8 @@ use crate::ffprobe::Ffprobe;
 
 use super::ApiResult;
 
-pub fn configure(config: &mut ServiceConfig) {
-    config
-        .route("/videos/{id}", web::get().to(get_video_content))
-        .route("/videos/{id}/info", web::get().to(get_video_info))
-        .service(get_subtitles);
-}
-
-async fn get_video_content(
+/// GET /api/videos/{id}
+pub async fn get_video_content(
     req: HttpRequest,
     path: web::Path<(i64,)>,
 ) -> actix_web::Result<impl Responder> {
@@ -48,7 +41,8 @@ async fn get_video_content(
     Ok(NamedFile::open(path))
 }
 
-async fn get_video_info(
+/// GET /api/videos/{id}/info
+pub async fn get_video_info(
     req: HttpRequest,
     path: web::Path<(i64,)>,
 ) -> actix_web::Result<impl Responder> {
@@ -127,8 +121,8 @@ async fn get_video_info(
     })))
 }
 
-#[actix_web::get("/videos/{id}/subtitles/{index}")]
-async fn get_subtitles(req: HttpRequest, path: web::Path<(i64, u32)>) -> ApiResult {
+/// GET /videos/{id}/subtitles/{index}
+pub async fn get_subtitles(req: HttpRequest, path: web::Path<(i64, u32)>) -> ApiResult {
     let (id, stream_index) = path.into_inner();
 
     let config: &Arc<Config> = req.app_data().unwrap();

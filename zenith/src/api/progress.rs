@@ -1,20 +1,16 @@
 use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
-use actix_web::web::ServiceConfig;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 
 use crate::db::Db;
 
-pub fn configure(config: &mut ServiceConfig) {
-    config.route("/progress/{id}", web::post().to(update_progress));
-}
-
 #[derive(Deserialize)]
-struct ProgressUpdate {
+pub struct ProgressUpdate {
     position: f64,
 }
 
-async fn update_progress(
+/// POST /api/progress/{id}
+pub async fn update_progress(
     req: HttpRequest,
     path: web::Path<(i64,)>,
     query: web::Query<ProgressUpdate>,

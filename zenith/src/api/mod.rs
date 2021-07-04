@@ -1,4 +1,5 @@
 mod events;
+mod handlers;
 mod import;
 mod metadata;
 mod movies;
@@ -21,13 +22,6 @@ pub fn service(path: &str) -> impl HttpServiceFactory {
 
     web::scope(path)
         .wrap(default_headers)
-        .configure(movies::configure)
-        .configure(tv::configure)
-        .configure(videos::configure)
-        .configure(metadata::configure)
-        .configure(progress::configure)
-        .configure(transcoder::configure)
-        .configure(import::configure)
-        .configure(events::configure)
+        .configure(handlers::configure)
         .default_service(web::route().to(HttpResponse::NotFound))
 }

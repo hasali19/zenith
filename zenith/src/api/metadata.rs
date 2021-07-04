@@ -1,16 +1,12 @@
 use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
-use actix_web::web::ServiceConfig;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 
 use crate::db::media::MediaItemType;
 use crate::db::Db;
 use crate::metadata::{MetadataManager, RefreshRequest};
 
-pub fn configure(config: &mut ServiceConfig) {
-    config.route("/metadata/{id}/refresh", web::post().to(refresh_metadata));
-}
-
-async fn refresh_metadata(
+/// POST /api/metadata/{id}/refresh
+pub async fn refresh_metadata(
     req: HttpRequest,
     path: web::Path<(i64,)>,
 ) -> actix_web::Result<impl Responder> {

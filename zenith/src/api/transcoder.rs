@@ -1,22 +1,14 @@
 use std::sync::Arc;
 
 use actix_web::error::ErrorBadRequest;
-use actix_web::web::ServiceConfig;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 use serde_json::json;
 
 use crate::transcoder::{Job, Transcoder};
 
-pub fn configure(config: &mut ServiceConfig) {
-    config.service(
-        web::resource("/transcoder")
-            .route(web::get().to(get_state))
-            .route(web::post().to(transcode)),
-    );
-}
-
-async fn get_state(req: HttpRequest) -> actix_web::Result<impl Responder> {
+/// GET /api/transcoder
+pub async fn get_state(req: HttpRequest) -> actix_web::Result<impl Responder> {
     let transcoder: &Arc<Transcoder> = req.app_data().unwrap();
     let current = transcoder.current().await;
     let queue = transcoder.queue().await;
@@ -35,7 +27,8 @@ pub struct TranscodeParams {
     all: bool,
 }
 
-async fn transcode(
+/// POST /api/transcoder
+pub async fn transcode(
     req: HttpRequest,
     query: web::Query<TranscodeParams>,
 ) -> actix_web::Result<impl Responder> {

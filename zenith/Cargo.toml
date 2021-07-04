@@ -49,3 +49,6 @@ features = ["macros", "runtime-actix-native-tls", "sqlite"]
 [dependencies.tokio]
 version = "1.5"
 features = ["macros", "fs", "process"]
+
+[build-dependencies]
+syn = "1.0"
