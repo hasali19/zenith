@@ -35,7 +35,8 @@ impl<'r> FromRow<'r, SqliteRow> for Season {
     }
 }
 
-pub(super) async fn get_seasons(
+/// GET /api/tv/shows/{id}/seasons
+pub async fn get_seasons(
     req: HttpRequest,
     path: web::Path<(i64,)>,
 ) -> actix_web::Result<impl Responder> {
@@ -61,7 +62,8 @@ pub(super) async fn get_seasons(
     Ok(HttpResponse::Ok().json(&seasons))
 }
 
-pub(super) async fn get_season(
+/// GET /api/tv/seasons/{id}
+pub async fn get_season(
     req: HttpRequest,
     path: web::Path<(i64,)>,
 ) -> actix_web::Result<impl Responder> {

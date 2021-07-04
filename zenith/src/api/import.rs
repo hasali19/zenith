@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError, ErrorNotFound};
-use actix_web::web::ServiceConfig;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 use serde_json::json;
@@ -14,11 +13,8 @@ use crate::library::scanner;
 
 use super::ApiResult;
 
-pub fn configure(config: &mut ServiceConfig) {
-    config.route("/import/queue", web::get().to(get_import_queue));
-}
-
-async fn get_import_queue(req: HttpRequest) -> ApiResult {
+/// GET /api/import/queue
+pub async fn get_import_queue(req: HttpRequest) -> ApiResult {
     let config: &Arc<Config> = req.app_data().unwrap();
     let import_path = match config.import.path.as_deref() {
         Some(path) => path,
@@ -53,6 +49,7 @@ pub struct ImportMovieRequest {
     year: u32,
 }
 
+/// POST /api/movies
 pub async fn import_movie(
     req: HttpRequest,
     data: web::Json<ImportMovieRequest>,
@@ -93,6 +90,7 @@ pub struct ImportShowRequest {
     episodes: Vec<ImportEpisodeRequest>,
 }
 
+/// POST /api/shows
 pub async fn import_show(
     req: HttpRequest,
     data: web::Json<ImportShowRequest>,
@@ -125,6 +123,7 @@ pub struct ImportEpisodeRequest {
     episode_number: u32,
 }
 
+/// POST /api/shows/{id}/episodes
 pub async fn import_episode(
     req: HttpRequest,
     path: web::Path<(i64,)>,
