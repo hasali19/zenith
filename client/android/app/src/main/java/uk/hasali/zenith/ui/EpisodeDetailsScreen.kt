@@ -216,7 +216,11 @@ private fun ActionsMenu(onActionInvoked: (Action) -> Unit) {
 
 @Composable
 private fun OverviewSection(content: String) {
-    Text(text = "Overview", style = MaterialTheme.typography.subtitle2, color = Color.Black)
+    Text(
+        text = "Overview",
+        style = MaterialTheme.typography.subtitle2,
+        color = if (MaterialTheme.colors.isLight) Color.Black else Color.White,
+    )
     Spacer(modifier = Modifier.height(8.dp))
     Text(text = content, style = MaterialTheme.typography.body2)
 }
