@@ -118,7 +118,8 @@ async fn refresh_movie_metadata(
         SET title    = ?,
             overview = ?,
             poster   = ?,
-            backdrop = ?
+            backdrop = ?,
+            tmdb_id  = ?
         WHERE item_id = ?
     ";
 
@@ -127,6 +128,7 @@ async fn refresh_movie_metadata(
         .bind(result.overview)
         .bind(poster.map(|p| p.to_string()))
         .bind(backdrop.map(|b| b.to_string()))
+        .bind(result.id)
         .bind(id)
         .execute(&mut *db)
         .await?;
