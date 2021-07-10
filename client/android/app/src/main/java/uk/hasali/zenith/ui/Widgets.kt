@@ -71,7 +71,7 @@ fun AppBarMenu(navigator: Navigator) {
 }
 
 @Composable
-fun Poster(url: String, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
+fun Poster(url: String?, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
     val context = LocalContext.current
 
     BoxWithConstraints(modifier = modifier) {
