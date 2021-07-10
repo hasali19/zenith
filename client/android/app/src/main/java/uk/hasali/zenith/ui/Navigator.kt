@@ -7,6 +7,7 @@ import androidx.compose.runtime.saveable.SaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import uk.hasali.zenith.Episode
+import uk.hasali.zenith.Movie
 import uk.hasali.zenith.Season
 import uk.hasali.zenith.Show
 
@@ -14,6 +15,7 @@ sealed class Screen {
     object ImportQueue : Screen()
     object TranscodeQueue : Screen()
     object Main : Screen()
+    data class MovieDetails(val movie: Movie) : Screen()
     data class ShowDetails(val show: Show) : Screen()
     data class SeasonDetails(val show: Show, val season: Season) : Screen()
     data class EpisodeDetails(val show: Show, val season: Season, val episode: Episode) : Screen()
