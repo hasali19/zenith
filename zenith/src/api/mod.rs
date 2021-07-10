@@ -1,3 +1,4 @@
+mod common;
 mod events;
 mod import;
 mod metadata;

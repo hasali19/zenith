@@ -4,6 +4,7 @@ use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
 
+use crate::api::common::ExternalIds;
 use crate::db::Db;
 use crate::utils;
 
@@ -19,6 +20,7 @@ struct Episode {
     thumbnail: Option<String>,
     duration: f64,
     is_watched: bool,
+    external_ids: ExternalIds,
 }
 
 impl<'r> FromRow<'r, SqliteRow> for Episode {
@@ -36,6 +38,9 @@ impl<'r> FromRow<'r, SqliteRow> for Episode {
             thumbnail: thumbnail.as_deref().map(utils::get_image_url),
             duration: row.try_get(8)?,
             is_watched: row.try_get(9)?,
+            external_ids: ExternalIds {
+                tmdb: row.try_get(10)?,
+            },
         })
     }
 }
@@ -53,7 +58,7 @@ pub(super) async fn get_episodes(
         SELECT
             episode.item_id, show.item_id, season.item_id, episode_number,
             episode.name, episode.air_date, episode.overview, episode.thumbnail,
-            video.duration, COALESCE(user.is_watched, 0)
+            video.duration, COALESCE(user.is_watched, 0), episode.tmdb_id
         FROM tv_episodes AS episode
         JOIN tv_seasons AS season ON season.item_id = episode.season_id
         JOIN tv_shows AS show ON show.item_id = season.show_id
@@ -85,7 +90,7 @@ pub(super) async fn get_episode(
         SELECT
             episode.item_id, show.item_id, season.item_id, episode_number,
             episode.name, episode.air_date, episode.overview, episode.thumbnail,
-            video.duration, COALESCE(user.is_watched, 0)
+            video.duration, COALESCE(user.is_watched, 0), episode.tmdb_id
         FROM tv_episodes AS episode
         JOIN tv_seasons AS season ON season.item_id = episode.season_id
         JOIN tv_shows AS show ON show.item_id = season.show_id

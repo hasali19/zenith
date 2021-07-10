@@ -4,6 +4,7 @@ use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
 
+use crate::api::common::ExternalIds;
 use crate::db::Db;
 use crate::utils;
 
@@ -17,6 +18,7 @@ struct Show {
     poster: Option<String>,
     backdrop: Option<String>,
     unwatched_episodes: u32,
+    external_ids: ExternalIds,
 }
 
 impl<'r> FromRow<'r, SqliteRow> for Show {
@@ -33,6 +35,9 @@ impl<'r> FromRow<'r, SqliteRow> for Show {
             poster: poster.as_deref().map(utils::get_image_url),
             backdrop: backdrop.as_deref().map(utils::get_image_url),
             unwatched_episodes: row.try_get(7)?,
+            external_ids: ExternalIds {
+                tmdb: row.try_get(8)?,
+            },
         })
     }
 }
@@ -50,7 +55,8 @@ pub(super) async fn get_shows(req: HttpRequest) -> actix_web::Result<impl Respon
                 JOIN tv_seasons AS season ON season.item_id = episode.season_id
                 LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
                 WHERE season.show_id = show.item_id AND COALESCE(u.is_watched, 0) = 0
-            )
+            ),
+            show.tmdb_id
         FROM tv_shows AS show
         ORDER BY name
     ";
@@ -81,7 +87,8 @@ pub(super) async fn get_show(
                 JOIN tv_seasons AS season ON season.item_id = episode.season_id
                 LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
                 WHERE season.show_id = show.item_id AND COALESCE(u.is_watched, 0) = 0
-            )
+            ),
+            show.tmdb_id
         FROM tv_shows AS show
         WHERE show.item_id = ?
     ";
@@ -114,7 +121,8 @@ pub(super) async fn get_recently_updated_shows(
                 LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
                 WHERE season.show_id = show.item_id AND COALESCE(u.is_watched, 0) = 0
             ) AS unwatched_episodes,
-            MAX(item.added_at) AS latest_episode_added_at
+            MAX(item.added_at) AS latest_episode_added_at,
+            show.tmdb_id
         FROM tv_shows AS show
         JOIN tv_seasons AS season ON season.show_id = show.item_id
         JOIN tv_episodes AS episode ON episode.season_id = season.item_id

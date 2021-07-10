@@ -4,6 +4,7 @@ use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
 
+use crate::api::common::ExternalIds;
 use crate::db::Db;
 use crate::utils;
 
@@ -16,6 +17,7 @@ struct Season {
     overview: Option<String>,
     poster: Option<String>,
     backdrop: Option<String>,
+    external_ids: ExternalIds,
 }
 
 impl<'r> FromRow<'r, SqliteRow> for Season {
@@ -31,6 +33,9 @@ impl<'r> FromRow<'r, SqliteRow> for Season {
             overview: row.try_get(4)?,
             poster: poster.as_deref().map(utils::get_image_url),
             backdrop: backdrop.as_deref().map(utils::get_image_url),
+            external_ids: ExternalIds {
+                tmdb: row.try_get(7)?,
+            },
         })
     }
 }
@@ -45,7 +50,15 @@ pub(super) async fn get_seasons(
     let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
-        SELECT season.item_id, season.show_id, season_number, season.name, season.overview, season.poster, show.backdrop
+        SELECT
+            season.item_id,
+            season.show_id,
+            season_number,
+            season.name,
+            season.overview,
+            season.poster,
+            show.backdrop,
+            season.tmdb_id
         FROM tv_seasons AS season
         JOIN tv_shows AS show ON show.item_id = season.show_id
         WHERE season.show_id = ?
@@ -71,7 +84,15 @@ pub(super) async fn get_season(
     let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
     let sql = "
-        SELECT season.item_id, season.show_id, season_number, season.name, season.overview, season.poster, show.backdrop
+        SELECT
+            season.item_id,
+            season.show_id,
+            season_number,
+            season.name,
+            season.overview,
+            season.poster,
+            show.backdrop,
+            season.tmdb_id
         FROM tv_seasons AS season
         JOIN tv_shows AS show ON show.item_id = season.show_id
         WHERE season.item_id = ?
