@@ -26,6 +26,8 @@ data class Show(
     val overview: String,
     @SerialName("start_date")
     val startDate: Long,
+    @SerialName("unwatched_episodes")
+    val unwatchedEpisodes: Int,
 )
 
 @Serializable
