@@ -1472,11 +1472,12 @@ dependencies = [
 
 [[package]]
 name = "opentelemetry"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b91cea1dfd50064e52db033179952d18c770cbc5dfefc8eba45d619357ba3914"
+checksum = "492848ff47f11b7f9de0443b404e2c5775f695e1af6b7076ca25f999581d547a"
 dependencies = [
  "async-trait",
+ "crossbeam-channel",
  "futures",
  "js-sys",
  "lazy_static",
@@ -2308,8 +2309,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-actix-web"
-version = "0.4.0-beta.7"
-source = "git+https://github.com/thalesfragoso/tracing-actix-web?branch=betas-8#5307ed744ee5ee8d7266ce516e3a09068b4ab55d"
+version = "0.4.0-beta.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbf0bd99dd88c8f08976f20a70720128aae2d5f1bf1f2a28d36d975d73a2ede7"
 dependencies = [
  "actix-http",
  "actix-service",
@@ -2375,9 +2377,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-opentelemetry"
-version = "0.12.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99003208b647dae59dcefc49c98aecaa3512fbc29351685d4b9ef23a9218458e"
+checksum = "e2f4cb277b92a8ba1170b3b911056428ce2ef9993351baf5965bb0359a2e5963"
 dependencies = [
  "opentelemetry",
  "tracing",
