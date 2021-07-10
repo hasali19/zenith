@@ -1,7 +1,6 @@
 name: Android
 
 on:
-  pull_request:
   push:
     branches:
       - android
