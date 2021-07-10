@@ -85,7 +85,7 @@ private fun HomeScreen(client: ZenithApiClient, navigator: Navigator) {
                 poster = { it.poster },
                 name = { it.title },
                 date = { it.releaseDate },
-                onClick = { navigator.push(Screen.Player(it.id)) }
+                onClick = { navigator.push(Screen.MovieDetails(it)) }
             )
         }
 
@@ -113,7 +113,7 @@ private fun MoviesScreen(client: ZenithApiClient, navigator: Navigator) {
         poster = { it.poster },
         name = { it.title },
         date = { it.releaseDate },
-        onClick = { navigator.push(Screen.Player(it.id)) },
+        onClick = { navigator.push(Screen.MovieDetails(it)) },
     )
 }
 

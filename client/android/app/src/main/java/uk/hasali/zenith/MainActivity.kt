@@ -107,6 +107,7 @@ class MainActivity : ComponentActivity() {
             is Screen.ImportQueue -> ImportQueueScreen()
             is Screen.TranscodeQueue -> TranscodeQueueScreen()
             is Screen.Main -> MainScreen()
+            is Screen.MovieDetails -> MovieDetailsScreen(movie = screen.movie)
             is Screen.ShowDetails -> ShowDetailsScreen(show = screen.show)
             is Screen.SeasonDetails -> SeasonDetailsScreen(
                 show = screen.show,
