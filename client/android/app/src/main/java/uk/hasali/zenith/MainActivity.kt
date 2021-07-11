@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
         // Enable drawing under the status bar
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        client = HttpClient() {
+        client = HttpClient {
             install(JsonFeature) {
                 serializer = KotlinxSerializer(kotlinx.serialization.json.Json {
                     ignoreUnknownKeys = true
@@ -93,32 +93,11 @@ class MainActivity : ComponentActivity() {
                         ),
                     ) { screen ->
                         navigator.SaveableStateProvider(screen) {
-                            Screen(screen)
+                            screen.Composable()
                         }
                     }
                 }
             }
-        }
-    }
-
-    @Composable
-    private fun Screen(screen: Screen) {
-        when (screen) {
-            is Screen.ImportQueue -> ImportQueueScreen()
-            is Screen.TranscodeQueue -> TranscodeQueueScreen()
-            is Screen.Main -> MainScreen()
-            is Screen.MovieDetails -> MovieDetailsScreen(movie = screen.movie)
-            is Screen.ShowDetails -> ShowDetailsScreen(show = screen.show)
-            is Screen.SeasonDetails -> SeasonDetailsScreen(
-                show = screen.show,
-                season = screen.season,
-            )
-            is Screen.EpisodeDetails -> EpisodeDetailsScreen(
-                show = screen.show,
-                season = screen.season,
-                episode = screen.episode,
-            )
-            is Screen.Player -> PlayerScreen(id = screen.id)
         }
     }
 

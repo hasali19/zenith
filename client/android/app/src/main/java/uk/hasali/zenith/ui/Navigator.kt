@@ -19,7 +19,28 @@ sealed class Screen {
     data class ShowDetails(val show: Show) : Screen()
     data class SeasonDetails(val show: Show, val season: Season) : Screen()
     data class EpisodeDetails(val show: Show, val season: Season, val episode: Episode) : Screen()
-    data class Player(val id: Int) : Screen()
+    data class Player(val id: Int, val title: String) : Screen()
+}
+
+@Composable
+fun Screen.Composable() {
+    when (this) {
+        is Screen.ImportQueue -> ImportQueueScreen()
+        is Screen.TranscodeQueue -> TranscodeQueueScreen()
+        is Screen.Main -> MainScreen()
+        is Screen.MovieDetails -> MovieDetailsScreen(movie = movie)
+        is Screen.ShowDetails -> ShowDetailsScreen(show = show)
+        is Screen.SeasonDetails -> SeasonDetailsScreen(
+            show = show,
+            season = season,
+        )
+        is Screen.EpisodeDetails -> EpisodeDetailsScreen(
+            show = show,
+            season = season,
+            episode = episode,
+        )
+        is Screen.Player -> PlayerScreen(id = id, title = title)
+    }
 }
 
 class Navigator(

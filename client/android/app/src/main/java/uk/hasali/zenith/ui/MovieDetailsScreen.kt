@@ -11,12 +11,15 @@ import uk.hasali.zenith.Movie
 
 @Composable
 fun MovieDetailsScreen(movie: Movie) {
+    val navigator = LocalNavigator.current
+
     VideoItemDetailsScreen(id = movie.id,
         backdrop = movie.backdrop,
         poster = movie.poster,
         overview = movie.overview,
         isWatched = false /* TODO */,
         headerContent = { HeaderContent(movie = movie) },
+        onPlay = { navigator.push(Screen.Player(movie.id, movie.title)) }
     )
 }
 

@@ -23,9 +23,9 @@ fun VideoItemDetailsScreen(
     overview: String?,
     isWatched: Boolean,
     headerContent: @Composable () -> Unit,
+    onPlay: () -> Unit,
 ) {
     val client = LocalZenithClient.current
-    val navigator = LocalNavigator.current
     val scope = rememberCoroutineScope()
 
     val info by produceState<VideoInfo?>(null, id) {
@@ -36,7 +36,7 @@ fun VideoItemDetailsScreen(
 
     fun onActionInvoked(action: Action) {
         when (action) {
-            Action.Play -> navigator.push(Screen.Player(id))
+            Action.Play -> onPlay()
             Action.ConvertVideo -> scope.launch { client.startTranscode(id) }
             Action.RefreshMetadata -> scope.launch { client.refreshMetadata(id) }
             Action.MediaInfo -> showMediaInfo = true
