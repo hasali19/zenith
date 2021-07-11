@@ -14,6 +14,8 @@ import uk.hasali.zenith.Show
 
 @Composable
 fun EpisodeDetailsScreen(show: Show, season: Season, episode: Episode) {
+    val navigator = LocalNavigator.current
+
     VideoItemDetailsScreen(
         id = episode.id,
         backdrop = episode.thumbnail,
@@ -21,6 +23,7 @@ fun EpisodeDetailsScreen(show: Show, season: Season, episode: Episode) {
         overview = episode.overview,
         isWatched = episode.isWatched,
         headerContent = { HeaderContent(show = show, season = season, episode = episode) },
+        onPlay = { navigator.push(Screen.Player(episode.id, episode.name)) }
     )
 }
 
