@@ -49,7 +49,7 @@ import uk.hasali.zenith.ZenithApiClient
 import uk.hasali.zenith.playClick
 
 @Composable
-fun PlayerScreen(id: Int, title: String) {
+fun PlayerScreen(id: Int, title: String, playFromStart: Boolean) {
     val client = LocalZenithClient.current
     val navigator = LocalNavigator.current
 
@@ -59,12 +59,21 @@ fun PlayerScreen(id: Int, title: String) {
 
     KeepScreenOn {
         FullScreen {
-            if (info != null) {
+            info.let { info ->
+                if (info == null) {
+                    return@let
+                }
+
+                val startPosition = if (playFromStart) 0 else {
+                    info.position?.toLong() ?: 0
+                }
+
                 VideoPlayer(
                     id = id,
                     title = title,
                     client = client,
-                    startPosition = info!!.position?.toInt() ?: 0,
+                    startPosition = startPosition,
+                    duration = info.duration.toLong(),
                     onVideoEnded = { navigator.pop() },
                 )
             }
@@ -119,7 +128,8 @@ private fun VideoPlayer(
     id: Int,
     title: String,
     client: ZenithApiClient,
-    startPosition: Int,
+    startPosition: Long,
+    duration: Long,
     onVideoEnded: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -129,7 +139,6 @@ private fun VideoPlayer(
     val connector = remember { MediaSessionConnector(session) }
 
     var position by remember { mutableStateOf(0L) }
-    var duration by remember { mutableStateOf(0L) }
     var isPlaying by remember { mutableStateOf(true) }
 
     val player = remember {
@@ -138,10 +147,6 @@ private fun VideoPlayer(
             .also { player ->
                 player.addListener(object : Player.Listener {
                     override fun onPlaybackStateChanged(state: Int) {
-                        if (state == ExoPlayer.STATE_READY) {
-                            duration = player.duration / 1000
-                        }
-
                         if (state == ExoPlayer.STATE_ENDED) {
                             onVideoEnded()
                         }

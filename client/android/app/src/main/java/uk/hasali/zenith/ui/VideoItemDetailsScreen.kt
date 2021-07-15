@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +24,7 @@ fun VideoItemDetailsScreen(
     overview: String?,
     isWatched: Boolean,
     headerContent: @Composable () -> Unit,
-    onPlay: () -> Unit,
+    onPlay: (replay: Boolean) -> Unit,
 ) {
     val client = LocalZenithClient.current
     val scope = rememberCoroutineScope()
@@ -36,7 +37,8 @@ fun VideoItemDetailsScreen(
 
     fun onActionInvoked(action: Action) {
         when (action) {
-            Action.Play -> onPlay()
+            Action.Play -> onPlay(false)
+            Action.PlayFromStart -> onPlay(true)
             Action.ConvertVideo -> scope.launch { client.startTranscode(id) }
             Action.RefreshMetadata -> scope.launch { client.refreshMetadata(id) }
             Action.MediaInfo -> showMediaInfo = true
@@ -49,11 +51,19 @@ fun VideoItemDetailsScreen(
         }
     }
 
+    val showReplayButton = info.let {
+        it != null && (it.position?.toFloat() ?: 0f) > it.duration * 0.1f
+    }
+
     ItemDetailsScreen(
         backdrop = backdrop,
         poster = poster,
         headerContent = headerContent,
-        actionsRow = { ActionsSection { action -> onActionInvoked(action) } },
+        actionsRow = {
+            ActionsSection(showReplayButton) { action ->
+                onActionInvoked(action)
+            }
+        },
         overview = overview,
         isWatched = isWatched,
     )
@@ -61,13 +71,14 @@ fun VideoItemDetailsScreen(
 
 private enum class Action {
     Play,
+    PlayFromStart,
     ConvertVideo,
     RefreshMetadata,
     MediaInfo,
 }
 
 @Composable
-private fun ActionsSection(onActionInvoked: (Action) -> Unit) {
+private fun ActionsSection(showReplayButton: Boolean, onActionInvoked: (Action) -> Unit) {
     val context = LocalContext.current
 
     @Composable
@@ -94,6 +105,17 @@ private fun ActionsSection(onActionInvoked: (Action) -> Unit) {
         Spacer(modifier = Modifier.width(8.dp))
 
         Row(horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
+            if (showReplayButton) {
+                IconButton(
+                    onClick = {
+                        context.playClick()
+                        onActionInvoked(Action.PlayFromStart)
+                    },
+                ) {
+                    Icon(Icons.Default.Replay, contentDescription = "Replay")
+                }
+            }
+
             IconButton(
                 onClick = {
                     context.playClick()
