@@ -1,6 +1,6 @@
 <resources>
 
-    <style name="Theme.Zenith" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Zenith" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
