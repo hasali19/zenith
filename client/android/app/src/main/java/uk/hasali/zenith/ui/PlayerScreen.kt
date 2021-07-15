@@ -15,15 +15,14 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -369,12 +368,23 @@ private fun Controls(
                 exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center),
                 modifier = Modifier.align(Alignment.Center)
             ) {
-                Row {
-                    // TODO: Add ff and rewind buttons
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.pointerInput(Unit) { detectTapGestures { /* Consume tap events */ } },
+                ) {
+                    SeekButton(Icons.Default.Replay10) {
+                        controls.showAndHideDelayed()
+                        onSeekEnd(maxOf(0, position - 10))
+                    }
 
                     PlayPauseButton(isPlaying = isPlaying) {
                         controls.showAndHideDelayed()
                         onTogglePlaying()
+                    }
+
+                    SeekButton(Icons.Default.Forward30) {
+                        controls.showAndHideDelayed()
+                        onSeekEnd(minOf(duration, position + 30))
                     }
                 }
             }
@@ -420,6 +430,32 @@ private fun PlayPauseButton(isPlaying: Boolean, onClick: () -> Unit) {
         Icon(
             if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
             contentDescription = if (isPlaying) "Pause" else "Play",
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(8.dp)
+                .fillMaxSize(),
+        )
+    }
+}
+
+@Composable
+private fun SeekButton(imageVector: ImageVector, onClick: () -> Unit) {
+    val context = LocalContext.current
+
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple(bounded = false, radius = 40.dp),
+            ) {
+                context.playClick()
+                onClick()
+            },
+    ) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = null,
             modifier = Modifier
                 .align(Alignment.Center)
                 .padding(8.dp)
