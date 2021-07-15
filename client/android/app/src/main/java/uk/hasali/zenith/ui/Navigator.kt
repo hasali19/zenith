@@ -19,7 +19,7 @@ sealed class Screen {
     data class ShowDetails(val show: Show) : Screen()
     data class SeasonDetails(val show: Show, val season: Season) : Screen()
     data class EpisodeDetails(val show: Show, val season: Season, val episode: Episode) : Screen()
-    data class Player(val id: Int, val title: String) : Screen()
+    data class Player(val id: Int, val title: String, val playFromStart: Boolean = false) : Screen()
 }
 
 @Composable
@@ -39,7 +39,11 @@ fun Screen.Composable() {
             season = season,
             episode = episode,
         )
-        is Screen.Player -> PlayerScreen(id = id, title = title)
+        is Screen.Player -> PlayerScreen(
+            id = id,
+            title = title,
+            playFromStart = playFromStart,
+        )
     }
 }
 
