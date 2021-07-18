@@ -1,7 +1,6 @@
 package uk.hasali.zenith
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
@@ -15,8 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.insets.ProvideWindowInsets
+import com.google.android.gms.cast.framework.CastContext
 import io.ktor.client.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
@@ -26,7 +27,7 @@ import soup.compose.material.motion.MaterialMotion
 import soup.compose.material.motion.materialSharedAxis
 import uk.hasali.zenith.ui.*
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     private var navigator: Navigator? = null
 
     private lateinit var client: HttpClient
@@ -47,6 +48,9 @@ class MainActivity : ComponentActivity() {
                 })
             }
         }
+
+        // Initialise cast context
+        CastContext.getSharedInstance(this)
 
         setContent {
             App()

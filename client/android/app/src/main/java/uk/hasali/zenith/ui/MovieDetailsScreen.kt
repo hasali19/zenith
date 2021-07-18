@@ -20,7 +20,13 @@ fun MovieDetailsScreen(movie: Movie) {
         isWatched = false /* TODO */,
         headerContent = { HeaderContent(movie = movie) },
         onPlay = { replay ->
-            navigator.push(Screen.Player(movie.id, movie.title, replay))
+            navigator.push(Screen.Player(
+                movie.id,
+                movie.title,
+                MediaItemType.Movie,
+                movie.backdrop,
+                replay,
+            ))
         }
     )
 }

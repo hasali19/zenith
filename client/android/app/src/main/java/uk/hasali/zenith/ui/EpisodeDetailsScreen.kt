@@ -24,7 +24,13 @@ fun EpisodeDetailsScreen(show: Show, season: Season, episode: Episode) {
         isWatched = episode.isWatched,
         headerContent = { HeaderContent(show = show, season = season, episode = episode) },
         onPlay = { replay ->
-            navigator.push(Screen.Player(episode.id, episode.name, replay))
+            navigator.push(Screen.Player(
+                episode.id,
+                episode.name,
+                MediaItemType.TvShow,
+                episode.thumbnail,
+                replay,
+            ))
         }
     )
 }

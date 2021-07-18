@@ -143,6 +143,9 @@ class ZenithApiClient(private val client: HttpClient) {
 
     fun getVideoUrl(id: Int) = "https://zenith.hasali.uk/api/videos/$id"
 
+    fun getSubtitleUrl(videoId: Int, subtitleIndex: Int) =
+        "https://zenith.hasali.uk/api/videos/$videoId/subtitles/$subtitleIndex"
+
     suspend fun getVideoInfo(id: Int): VideoInfo =
         client.get("https://zenith.hasali.uk/api/videos/$id/info")
 

@@ -28,6 +28,7 @@ fun AppBar(navigator: Navigator, title: String = "Zenith", menu: Boolean = true)
                 backgroundColor = Color.Transparent,
                 elevation = 0.dp,
                 actions = {
+                    CastButton()
                     if (menu) {
                         AppBarMenu(navigator = navigator)
                     }

@@ -6,13 +6,17 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.text.format.DateUtils
 import android.view.WindowManager
 import android.widget.SeekBar
+import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -24,22 +28,30 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
 import androidx.core.graphics.BlendModeColorFilterCompat
 import androidx.core.graphics.BlendModeCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.google.accompanist.coil.rememberCoilPainter
+import com.google.accompanist.insets.statusBarsPadding
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ui.PlayerView
+import com.google.android.gms.cast.*
+import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastSession
+import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -48,35 +60,277 @@ import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.ZenithApiClient
 import uk.hasali.zenith.playClick
 
+enum class MediaItemType {
+    Movie,
+    TvShow,
+}
+
+private fun MediaItemType.toCastMediaType() = when (this) {
+    MediaItemType.Movie -> MediaMetadata.MEDIA_TYPE_MOVIE
+    MediaItemType.TvShow -> MediaMetadata.MEDIA_TYPE_TV_SHOW
+}
+
 @Composable
-fun PlayerScreen(id: Int, title: String, playFromStart: Boolean) {
+fun PlayerScreen(
+    id: Int,
+    title: String,
+    type: MediaItemType,
+    backdrop: String?,
+    playFromStart: Boolean,
+) {
     val client = LocalZenithClient.current
-    val navigator = LocalNavigator.current
 
     val info by produceState<VideoInfo?>(initialValue = null, id) {
         value = client.getVideoInfo(id)
     }
 
+    if (info == null) return
+
+    val context = LocalContext.current
+    val castSession = remember {
+        CastContext.getSharedInstance(context)
+            .sessionManager
+            .currentCastSession
+    }
+
+    info?.let {
+        if (castSession != null && castSession.isConnected) {
+            RemotePlayer(id = id,
+                title = title,
+                type = type,
+                backdrop = backdrop,
+                info = it,
+                session = castSession)
+        } else {
+            LocalPlayer(id = id, title = title, info = it, playFromStart = playFromStart)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun RemotePlayer(
+    id: Int,
+    title: String,
+    type: MediaItemType,
+    backdrop: String?,
+    info: VideoInfo,
+    session: CastSession,
+) {
+    val context = LocalContext.current
+    val client = LocalZenithClient.current
+    val navigator = LocalNavigator.current
+    val mediaClient = session.remoteMediaClient
+
+    var position by remember { mutableStateOf(0L) }
+    var isPlaying by remember { mutableStateOf(true) }
+
+    val callback = remember {
+        object : RemoteMediaClient.Callback() {
+            override fun onStatusUpdated() {
+                isPlaying = mediaClient.isPlaying
+            }
+        }
+    }
+
+    val progressListener = remember {
+        RemoteMediaClient.ProgressListener { progress, _ ->
+            position = progress / 1000
+        }
+    }
+
+    DisposableEffect(Unit) {
+        val metadata = MediaMetadata(type.toCastMediaType()).apply {
+            putString(MediaMetadata.KEY_TITLE, title)
+        }
+
+        val subtitleTracks = info.subtitles
+            .map {
+                MediaTrack.Builder(it.index.toLong(), MediaTrack.TYPE_TEXT)
+                    .setName(it.title ?: it.language)
+                    .setSubtype(MediaTrack.SUBTYPE_SUBTITLES)
+                    .setContentId(client.getSubtitleUrl(id, it.index))
+                    .setContentType("text/vtt")
+                    .setLanguage(it.language)
+                    .build()
+            }
+
+        val mediaInfo = MediaInfo.Builder(client.getVideoUrl(id))
+            .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
+            .setContentType("video/mp4")
+            .setMetadata(metadata)
+            .setMediaTracks(subtitleTracks)
+            .build()
+
+        val request = MediaLoadRequestData.Builder()
+            .setMediaInfo(mediaInfo)
+            .setAutoplay(true)
+            .setActiveTrackIds(longArrayOf())
+            .build()
+
+        mediaClient.registerCallback(callback)
+        mediaClient.addProgressListener(progressListener, 500)
+        mediaClient.load(request)
+
+        onDispose {
+            mediaClient.unregisterCallback(callback)
+            mediaClient.removeProgressListener(progressListener)
+        }
+    }
+
+    CompositionLocalProvider(
+        LocalContentColor provides Color.White,
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                rememberCoilPainter(request = backdrop, fadeIn = true),
+                contentDescription = "Backdrop",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f)),
+            )
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = {
+                        context.playClick()
+                        navigator.pop()
+                    }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                title = {
+                    Text(
+                        text = title,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                backgroundColor = Color.Transparent,
+                elevation = 0.dp,
+                actions = {
+                    var showCaptionsMenu by remember { mutableStateOf(false) }
+
+                    IconButton(
+                        onClick = {
+                            context.playClick()
+                            showCaptionsMenu = true
+                        },
+                    ) {
+                        Icon(Icons.Default.ClosedCaption, contentDescription = "Captions")
+                    }
+
+                    if (showCaptionsMenu) {
+                        AlertDialog(
+                            onDismissRequest = { showCaptionsMenu = false },
+                            buttons = {
+                                TextButton(
+                                    onClick = {
+                                        context.playClick()
+                                        showCaptionsMenu = false
+                                    },
+                                ) {
+                                }
+                            },
+                            title = {
+                                Text("Subtitles")
+                            },
+                            text = {
+                                LazyColumn {
+                                    item {
+                                        ListItem(
+                                            text = { Text("None") },
+                                            modifier = Modifier.clickable {
+                                                context.playClick()
+                                                mediaClient.setActiveMediaTracks(longArrayOf()).setResultCallback {
+                                                    Toast.makeText(context, it.status.statusMessage, Toast.LENGTH_SHORT)
+                                                        .show()
+                                                }
+                                                showCaptionsMenu = false
+                                            },
+                                        )
+                                    }
+
+                                    items(info.subtitles) {
+                                        ListItem(
+                                            text = {
+                                                val label = it.title
+                                                    ?: it.language
+                                                    ?: "Track ${it.index}"
+
+                                                Text(label)
+                                            },
+                                            modifier = Modifier.clickable {
+                                                context.playClick()
+                                                mediaClient.setActiveMediaTracks(longArrayOf(it.index.toLong()))
+                                                showCaptionsMenu = false
+                                            },
+                                        )
+                                    }
+                                }
+                            },
+                        )
+                    }
+
+                    IconButton(onClick = {
+                        context.playClick()
+                        mediaClient.stop()
+                        navigator.pop()
+                    }) {
+                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    }
+                },
+                modifier = Modifier.statusBarsPadding(),
+            )
+
+            PlayPauseButton(
+                isPlaying = isPlaying,
+                modifier = Modifier.align(Alignment.Center),
+                onClick = {
+                    mediaClient.togglePlayback()
+                },
+            )
+
+            SeekBar(
+                position = position,
+                duration = info.duration.toLong(),
+                onSeekStart = {
+                    mediaClient.pause()
+                },
+                onSeekEnd = {
+                    mediaClient.seek(MediaSeekOptions.Builder()
+                        .setPosition(it * 1000)
+                        .setResumeState(MediaSeekOptions.RESUME_STATE_PLAY)
+                        .build())
+                },
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
+    }
+}
+
+@Composable
+private fun LocalPlayer(id: Int, title: String, info: VideoInfo, playFromStart: Boolean) {
+    val client = LocalZenithClient.current
+    val navigator = LocalNavigator.current
+
     KeepScreenOn {
         FullScreen {
-            info.let { info ->
-                if (info == null) {
-                    return@let
-                }
-
-                val startPosition = if (playFromStart) 0 else {
-                    info.position?.toLong() ?: 0
-                }
-
-                VideoPlayer(
-                    id = id,
-                    title = title,
-                    client = client,
-                    startPosition = startPosition,
-                    duration = info.duration.toLong(),
-                    onVideoEnded = { navigator.pop() },
-                )
+            val startPosition = if (playFromStart) 0 else {
+                info.position?.toLong() ?: 0
             }
+
+            VideoPlayer(
+                id = id,
+                title = title,
+                client = client,
+                startPosition = startPosition,
+                duration = info.duration.toLong(),
+                onVideoEnded = { navigator.pop() },
+            )
         }
     }
 }
@@ -382,10 +636,10 @@ private fun Controls(
                         onSeekEnd(maxOf(0, position - 10))
                     }
 
-                    PlayPauseButton(isPlaying = isPlaying) {
+                    PlayPauseButton(isPlaying = isPlaying, onClick = {
                         controls.showAndHideDelayed()
                         onTogglePlaying()
-                    }
+                    })
 
                     SeekButton(Icons.Default.Forward30) {
                         controls.showAndHideDelayed()
@@ -418,11 +672,15 @@ private fun Controls(
 }
 
 @Composable
-private fun PlayPauseButton(isPlaying: Boolean, onClick: () -> Unit) {
+private fun PlayPauseButton(
+    isPlaying: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(72.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
