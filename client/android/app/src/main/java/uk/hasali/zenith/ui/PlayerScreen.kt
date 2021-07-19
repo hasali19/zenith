@@ -34,7 +34,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
 import androidx.core.graphics.BlendModeColorFilterCompat
 import androidx.core.graphics.BlendModeCompat
 import androidx.core.view.WindowCompat
@@ -42,13 +41,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.insets.statusBarsPadding
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.gms.cast.*
+import com.google.android.gms.cast.MediaMetadata
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.media.RemoteMediaClient
@@ -56,6 +53,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import uk.hasali.zenith.SubtitleStreamInfo
 import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.ZenithApiClient
 import uk.hasali.zenith.playClick
@@ -120,7 +118,7 @@ private fun RemotePlayer(
     val context = LocalContext.current
     val client = LocalZenithClient.current
     val navigator = LocalNavigator.current
-    val mediaClient = session.remoteMediaClient
+    val mediaClient = session.remoteMediaClient!!
 
     var position by remember { mutableStateOf(0L) }
     var isPlaying by remember { mutableStateOf(true) }
@@ -178,6 +176,40 @@ private fun RemotePlayer(
         }
     }
 
+    var showSubtitlesMenu by remember { mutableStateOf(false) }
+
+    val onSelectSubtitle = { subtitle: SubtitleStreamInfo? ->
+        val tracks = if (subtitle == null) {
+            longArrayOf()
+        } else {
+            longArrayOf(subtitle.index.toLong())
+        }
+
+        mediaClient.setActiveMediaTracks(tracks)
+            .setResultCallback { result ->
+                Toast.makeText(context, result.status.statusMessage, Toast.LENGTH_SHORT)
+                    .show()
+            }
+
+        mediaClient.setTextTrackStyle(TextTrackStyle().apply {
+            backgroundColor = Color.Black.copy(alpha = 0.05f).toArgb()
+            foregroundColor = Color.White.toArgb()
+            edgeType = TextTrackStyle.EDGE_TYPE_OUTLINE
+            edgeColor = Color.Black.toArgb()
+            windowColor = Color.Blue.toArgb()
+        })
+
+        Unit
+    }
+
+    if (showSubtitlesMenu) {
+        SubtitlesMenu(
+            subtitles = info.subtitles,
+            onSelectItem = onSelectSubtitle,
+            onDismiss = { showSubtitlesMenu = false },
+        )
+    }
+
     CompositionLocalProvider(
         LocalContentColor provides Color.White,
     ) {
@@ -188,100 +220,20 @@ private fun RemotePlayer(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.4f)),
             )
-            TopAppBar(
-                navigationIcon = {
-                    IconButton(onClick = {
-                        context.playClick()
-                        navigator.pop()
-                    }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                title = {
-                    Text(
-                        text = title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                backgroundColor = Color.Transparent,
-                elevation = 0.dp,
-                actions = {
-                    var showCaptionsMenu by remember { mutableStateOf(false) }
 
-                    IconButton(
-                        onClick = {
-                            context.playClick()
-                            showCaptionsMenu = true
-                        },
-                    ) {
-                        Icon(Icons.Default.ClosedCaption, contentDescription = "Captions")
-                    }
-
-                    if (showCaptionsMenu) {
-                        AlertDialog(
-                            onDismissRequest = { showCaptionsMenu = false },
-                            buttons = {
-                                TextButton(
-                                    onClick = {
-                                        context.playClick()
-                                        showCaptionsMenu = false
-                                    },
-                                ) {
-                                }
-                            },
-                            title = {
-                                Text("Subtitles")
-                            },
-                            text = {
-                                LazyColumn {
-                                    item {
-                                        ListItem(
-                                            text = { Text("None") },
-                                            modifier = Modifier.clickable {
-                                                context.playClick()
-                                                mediaClient.setActiveMediaTracks(longArrayOf()).setResultCallback {
-                                                    Toast.makeText(context, it.status.statusMessage, Toast.LENGTH_SHORT)
-                                                        .show()
-                                                }
-                                                showCaptionsMenu = false
-                                            },
-                                        )
-                                    }
-
-                                    items(info.subtitles) {
-                                        ListItem(
-                                            text = {
-                                                val label = it.title
-                                                    ?: it.language
-                                                    ?: "Track ${it.index}"
-
-                                                Text(label)
-                                            },
-                                            modifier = Modifier.clickable {
-                                                context.playClick()
-                                                mediaClient.setActiveMediaTracks(longArrayOf(it.index.toLong()))
-                                                showCaptionsMenu = false
-                                            },
-                                        )
-                                    }
-                                }
-                            },
-                        )
-                    }
-
-                    IconButton(onClick = {
-                        context.playClick()
-                        mediaClient.stop()
-                        navigator.pop()
-                    }) {
-                        Icon(Icons.Default.Close, contentDescription = "Close")
-                    }
+            AppBar(
+                title = title,
+                onBackPressed = { navigator.pop() },
+                onShowSubtitlesMenu = { showSubtitlesMenu = true },
+                onClosePlayer = {
+                    mediaClient.stop()
+                    navigator.pop()
                 },
                 modifier = Modifier.statusBarsPadding(),
             )
@@ -310,6 +262,120 @@ private fun RemotePlayer(
             )
         }
     }
+}
+
+@Composable
+private fun AppBar(
+    title: String,
+    onBackPressed: () -> Unit,
+    onShowSubtitlesMenu: () -> Unit,
+    modifier: Modifier = Modifier,
+    onClosePlayer: (() -> Unit)? = null,
+) {
+    val context = LocalContext.current
+
+    TopAppBar(
+        navigationIcon = {
+            IconButton(onClick = {
+                context.playClick()
+                onBackPressed()
+            }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            }
+        },
+        title = {
+            Text(
+                text = title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        backgroundColor = Color.Transparent,
+        elevation = 0.dp,
+        actions = {
+            IconButton(
+                onClick = {
+                    context.playClick()
+                    onShowSubtitlesMenu()
+                },
+            ) {
+                Icon(Icons.Default.ClosedCaption, contentDescription = "Captions")
+            }
+
+            if (onClosePlayer != null) {
+                IconButton(onClick = {
+                    context.playClick()
+                    onClosePlayer()
+                }) {
+                    Icon(Icons.Default.Close, contentDescription = "Close")
+                }
+            }
+        },
+        modifier = modifier,
+    )
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun SubtitlesMenu(
+    subtitles: List<SubtitleStreamInfo>,
+    onSelectItem: (SubtitleStreamInfo?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        text = {
+            Column {
+                Text("Subtitles")
+                Spacer(modifier = Modifier.height(16.dp))
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 400.dp),
+                ) {
+                    item {
+                        ListItem(
+                            text = { Text("None") },
+                            modifier = Modifier.clickable {
+                                context.playClick()
+                                onSelectItem(null)
+                                onDismiss()
+                            },
+                        )
+                    }
+
+                    items(subtitles) {
+                        ListItem(
+                            text = {
+                                val label = it.title
+                                    ?: it.language
+                                    ?: "Track ${it.index}"
+
+                                Text(label)
+                            },
+                            modifier = Modifier.clickable {
+                                context.playClick()
+                                onSelectItem(it)
+                                onDismiss()
+                            },
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    context.playClick()
+                    onDismiss()
+                },
+            ) {
+                Text("Close")
+            }
+        },
+    )
 }
 
 @Composable
@@ -440,7 +506,7 @@ private fun VideoPlayer(
 
         player.setMediaItem(item)
         player.prepare()
-        player.seekTo(startPosition.toLong() * 1000)
+        player.seekTo(startPosition * 1000)
         player.play()
 
         onDispose {
@@ -480,6 +546,9 @@ private fun VideoPlayer(
             },
             onTogglePlaying = {
                 player.playWhenReady = !isPlaying
+            },
+            onShowSubtitlesMenu = {
+                // TODO
             }
         )
     }
@@ -569,8 +638,8 @@ private fun Controls(
     onSeekStart: () -> Unit,
     onSeekEnd: (Long) -> Unit,
     onTogglePlaying: () -> Unit,
+    onShowSubtitlesMenu: () -> Unit,
 ) {
-    val context = LocalContext.current
     val navigator = LocalNavigator.current
 
     val controls = rememberControlsController()
@@ -597,28 +666,11 @@ private fun Controls(
                 exit = slideOutVertically() + fadeOut(),
                 modifier = Modifier.align(Alignment.TopCenter),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .padding(horizontal = 16.dp),
-                ) {
-                    IconButton(onClick = {
-                        context.playClick()
-                        navigator.pop()
-                    }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.h6,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
+                AppBar(
+                    title = title,
+                    onBackPressed = { navigator.pop() },
+                    onShowSubtitlesMenu = onShowSubtitlesMenu,
+                )
             }
 
             AnimatedVisibility(
