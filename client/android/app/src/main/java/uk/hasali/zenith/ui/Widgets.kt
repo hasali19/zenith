@@ -14,7 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.coil.rememberCoilPainter
+import coil.compose.rememberImagePainter
 import com.google.accompanist.insets.statusBarsHeight
 import uk.hasali.zenith.playClick
 
@@ -82,7 +82,7 @@ fun Poster(url: String?, modifier: Modifier = Modifier, onClick: (() -> Unit)? =
 
         Card(modifier = Modifier.size(width, width * (3f / 2f))) {
             Image(
-                painter = rememberCoilPainter(request = url, fadeIn = true),
+                painter = rememberImagePainter(url, builder = { crossfade(true) }),
                 contentDescription = "Poster",
                 contentScale = ContentScale.Crop,
                 modifier = modifier
@@ -121,7 +121,7 @@ fun Thumbnail(
         ) {
             if (url != null)
                 Image(
-                    painter = rememberCoilPainter(request = url, fadeIn = true),
+                    painter = rememberImagePainter(url, builder = { crossfade(true) }),
                     contentDescription = "Thumbnail",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),

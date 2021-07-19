@@ -43,7 +43,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
-import com.google.accompanist.coil.rememberCoilPainter
+import coil.compose.rememberImagePainter
 import com.google.accompanist.insets.statusBarsPadding
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
@@ -246,7 +246,7 @@ private fun RemotePlayer(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
-                rememberCoilPainter(request = backdrop, fadeIn = true),
+                rememberImagePainter(backdrop, builder = { crossfade(true) }),
                 contentDescription = "Backdrop",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),

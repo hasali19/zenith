@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.coil.rememberCoilPainter
+import coil.compose.rememberImagePainter
 import com.google.accompanist.insets.navigationBarsPadding
 
 @Composable
@@ -39,7 +39,7 @@ fun ItemDetailsScreen(
         BoxWithConstraints(modifier = Modifier.verticalScroll(rememberScrollState())) {
             Box(modifier = Modifier.aspectRatio(16f / 9f)) {
                 Image(
-                    painter = rememberCoilPainter(request = backdrop, fadeIn = true),
+                    painter = rememberImagePainter(backdrop, builder = { crossfade(true) }),
                     contentDescription = "Backdrop",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxWidth(),
