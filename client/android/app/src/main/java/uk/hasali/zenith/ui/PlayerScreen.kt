@@ -41,11 +41,13 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.insets.statusBarsPadding
-import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.gms.cast.*
-import com.google.android.gms.cast.MediaMetadata
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.media.RemoteMediaClient
@@ -238,13 +240,31 @@ private fun RemotePlayer(
                 modifier = Modifier.statusBarsPadding(),
             )
 
-            PlayPauseButton(
-                isPlaying = isPlaying,
-                modifier = Modifier.align(Alignment.Center),
-                onClick = {
-                    mediaClient.togglePlayback()
-                },
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .pointerInput(Unit) { detectTapGestures { /* Consume tap events */ } },
+            ) {
+                SeekButton(Icons.Default.Replay10) {
+                    mediaClient.seek(MediaSeekOptions.Builder()
+                        .setPosition(maxOf(0, position - 10) * 1000)
+                        .build())
+                }
+
+                PlayPauseButton(
+                    isPlaying = isPlaying,
+                    onClick = {
+                        mediaClient.togglePlayback()
+                    },
+                )
+
+                SeekButton(Icons.Default.Forward30) {
+                    mediaClient.seek(MediaSeekOptions.Builder()
+                        .setPosition(minOf(info.duration.toLong(), position + 30) * 1000)
+                        .build())
+                }
+            }
 
             SeekBar(
                 position = position,
