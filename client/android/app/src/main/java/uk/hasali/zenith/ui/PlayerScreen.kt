@@ -266,7 +266,6 @@ private fun RemotePlayer(
                     mediaClient.stop()
                     navigator.pop()
                 },
-                modifier = Modifier.statusBarsPadding(),
             )
 
             Row(
@@ -318,7 +317,6 @@ private fun AppBar(
     title: String,
     onBackPressed: () -> Unit,
     onShowSubtitlesMenu: () -> Unit,
-    modifier: Modifier = Modifier,
     onClosePlayer: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
@@ -360,7 +358,7 @@ private fun AppBar(
                 }
             }
         },
-        modifier = modifier,
+        modifier = Modifier.statusBarsPadding(),
     )
 }
 

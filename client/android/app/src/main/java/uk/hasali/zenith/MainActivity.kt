@@ -97,7 +97,7 @@ class MainActivity : FragmentActivity() {
                         ),
                     ) { screen ->
                         navigator.SaveableStateProvider(screen) {
-                            screen.Composable()
+                            ScreenComposable(screen)
                         }
                     }
                 }

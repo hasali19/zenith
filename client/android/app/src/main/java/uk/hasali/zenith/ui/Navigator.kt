@@ -29,29 +29,31 @@ sealed class Screen {
 }
 
 @Composable
-fun Screen.Composable() {
-    when (this) {
-        is Screen.ImportQueue -> ImportQueueScreen()
-        is Screen.TranscodeQueue -> TranscodeQueueScreen()
-        is Screen.Main -> MainScreen()
-        is Screen.MovieDetails -> MovieDetailsScreen(movie = movie)
-        is Screen.ShowDetails -> ShowDetailsScreen(show = show)
-        is Screen.SeasonDetails -> SeasonDetailsScreen(
-            show = show,
-            season = season,
-        )
-        is Screen.EpisodeDetails -> EpisodeDetailsScreen(
-            show = show,
-            season = season,
-            episode = episode,
-        )
-        is Screen.Player -> PlayerScreen(
-            id = id,
-            title = title,
-            type = type,
-            backdrop = backdrop,
-            playFromStart = playFromStart,
-        )
+fun ScreenComposable(screen: Screen) {
+    screen.apply {
+        when (this) {
+            is Screen.ImportQueue -> ImportQueueScreen()
+            is Screen.TranscodeQueue -> TranscodeQueueScreen()
+            is Screen.Main -> MainScreen()
+            is Screen.MovieDetails -> MovieDetailsScreen(movie = movie)
+            is Screen.ShowDetails -> ShowDetailsScreen(show = show)
+            is Screen.SeasonDetails -> SeasonDetailsScreen(
+                show = show,
+                season = season,
+            )
+            is Screen.EpisodeDetails -> EpisodeDetailsScreen(
+                show = show,
+                season = season,
+                episode = episode,
+            )
+            is Screen.Player -> PlayerScreen(
+                id = id,
+                title = title,
+                type = type,
+                backdrop = backdrop,
+                playFromStart = playFromStart,
+            )
+        }
     }
 }
 
