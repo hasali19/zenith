@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,9 @@ import androidx.core.graphics.BlendModeCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.insets.statusBarsPadding
 import com.google.android.exoplayer2.ExoPlayer
@@ -103,6 +107,21 @@ fun PlayerScreen(
                 session = castSession)
         } else {
             LocalPlayer(id = id, title = title, info = it, playFromStart = playFromStart)
+        }
+    }
+}
+
+@Composable fun LifecycleObserver(onEvent: (owner: LifecycleOwner, event: Lifecycle.Event) -> Unit) {
+    val owner = LocalLifecycleOwner.current
+    val observer = remember(onEvent) {
+        LifecycleEventObserver(onEvent)
+    }
+
+    DisposableEffect(owner, observer) {
+        val lifecycle = owner.lifecycle
+        lifecycle.addObserver(observer)
+        onDispose {
+            lifecycle.removeObserver(observer)
         }
     }
 }
@@ -175,6 +194,16 @@ private fun RemotePlayer(
         onDispose {
             mediaClient.unregisterCallback(callback)
             mediaClient.removeProgressListener(progressListener)
+        }
+    }
+
+    LifecycleObserver { _, event ->
+        if (event == Lifecycle.Event.ON_PAUSE) {
+            mediaClient.unregisterCallback(callback)
+            mediaClient.removeProgressListener(progressListener)
+        } else if (event == Lifecycle.Event.ON_RESUME) {
+            mediaClient.registerCallback(callback)
+            mediaClient.addProgressListener(progressListener, 500)
         }
     }
 
