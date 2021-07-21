@@ -16,7 +16,6 @@ use zenith::library::MediaLibrary;
 use zenith::metadata::MetadataManager;
 use zenith::tmdb::TmdbClient;
 use zenith::transcoder::Transcoder;
-use zenith::watcher::FileWatcher;
 
 #[actix_web::main]
 async fn main() -> eyre::Result<()> {
@@ -36,7 +35,7 @@ async fn main() -> eyre::Result<()> {
     let library = Arc::new(MediaLibrary::new(db.clone(), video_info_provider));
     let transcoder = Transcoder::new(db.clone());
     let scanner = Arc::new(LibraryScanner::new(
-        library,
+        library.clone(),
         metadata.clone(),
         config.clone(),
     ));
@@ -69,16 +68,6 @@ async fn main() -> eyre::Result<()> {
     scanner.start_scan();
     transcoder.clone().start();
 
-    let mut watcher = FileWatcher::spawn({
-        let scanner = scanner.clone();
-        move |_| {
-            scanner.start_scan();
-        }
-    });
-
-    watcher.watch(&config.libraries.movies);
-    watcher.watch(&config.libraries.tv_shows);
-
     let addr = SocketAddr::from_str(&format!("{}:{}", config.http.host, config.http.port))?;
 
     HttpServer::new({
@@ -90,6 +79,7 @@ async fn main() -> eyre::Result<()> {
                 .app_data(metadata.clone())
                 .app_data(transcoder.clone())
                 .app_data(broadcaster.clone())
+                .app_data(scanner.clone())
                 .wrap(NormalizePath::new(TrailingSlash::Trim))
                 .wrap(Logger::default())
                 .wrap(TracingLogger::default())

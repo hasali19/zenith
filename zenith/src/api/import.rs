@@ -10,7 +10,7 @@ use serde_json::json;
 
 use crate::config::Config;
 use crate::db::Db;
-use crate::library::scanner;
+use crate::library::scanner::{self, LibraryScanner};
 
 use super::ApiResult;
 
@@ -59,6 +59,7 @@ pub async fn import_movie(
 ) -> ApiResult<impl Responder> {
     let data = data.into_inner();
     let config: &Arc<Config> = req.app_data().unwrap();
+    let scanner: &Arc<LibraryScanner> = req.app_data().unwrap();
 
     let src_path = match data.source {
         ImportSource::Local { path } => path,
@@ -78,11 +79,11 @@ pub async fn import_movie(
 
     let dst_path = dst_dir.join(dst_name).with_extension(src_ext);
 
-    // Just move the file into the library and let the fs watcher
-    // take care of the rest
     tracing::info!("moving {:?} to {:?}", src_path, dst_path);
     std::fs::create_dir(&dst_dir).map_err(ErrorInternalServerError)?;
     std::fs::rename(src_path, dst_path).map_err(ErrorInternalServerError)?;
+
+    scanner.start_scan();
 
     Ok(HttpResponse::Ok())
 }
@@ -99,6 +100,7 @@ pub async fn import_show(
 ) -> ApiResult<impl Responder> {
     let data = data.into_inner();
     let config: &Arc<Config> = req.app_data().unwrap();
+    let scanner: &Arc<LibraryScanner> = req.app_data().unwrap();
 
     if data.episodes.is_empty() {
         return Err(ErrorBadRequest("show must have at least one episode"));
@@ -114,6 +116,8 @@ pub async fn import_show(
     for episode in data.episodes {
         inner::import_episode(&show_path, episode).await?;
     }
+
+    scanner.start_scan();
 
     Ok(HttpResponse::Ok())
 }
@@ -133,6 +137,7 @@ pub async fn import_episode(
     let (show_id,) = path.into_inner();
     let data = data.into_inner();
     let db: &Db = req.app_data().unwrap();
+    let scanner: &Arc<LibraryScanner> = req.app_data().unwrap();
 
     let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
     let show_path: String = sqlx::query_scalar("SELECT path from tv_shows WHERE item_id = ?")
@@ -142,7 +147,11 @@ pub async fn import_episode(
         .map_err(ErrorInternalServerError)?
         .ok_or_else(|| ErrorNotFound("show not found"))?;
 
-    inner::import_episode(Path::new(&show_path), data).await
+    let res = inner::import_episode(Path::new(&show_path), data).await?;
+
+    scanner.start_scan();
+
+    Ok(res)
 }
 
 mod inner {
