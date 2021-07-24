@@ -45,13 +45,12 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import coil.compose.rememberImagePainter
 import com.google.accompanist.insets.statusBarsPadding
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.gms.cast.*
+import com.google.android.gms.cast.MediaMetadata
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.media.RemoteMediaClient
@@ -59,10 +58,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.SubtitleStreamInfo
+import uk.hasali.zenith.*
 import uk.hasali.zenith.VideoInfo
-import uk.hasali.zenith.ZenithApiClient
-import uk.hasali.zenith.playClick
 
 enum class MediaItemType {
     Movie,
@@ -111,7 +108,8 @@ fun PlayerScreen(
     }
 }
 
-@Composable fun LifecycleObserver(onEvent: (owner: LifecycleOwner, event: Lifecycle.Event) -> Unit) {
+@Composable
+fun LifecycleObserver(onEvent: (owner: LifecycleOwner, event: Lifecycle.Event) -> Unit) {
     val owner = LocalLifecycleOwner.current
     val observer = remember(onEvent) {
         LifecycleEventObserver(onEvent)
@@ -442,6 +440,7 @@ private fun LocalPlayer(id: Int, title: String, info: VideoInfo, playFromStart: 
                 client = client,
                 startPosition = startPosition,
                 duration = info.duration.toLong(),
+                subtitles = info.subtitles,
                 onVideoEnded = { navigator.pop() },
             )
         }
@@ -497,6 +496,7 @@ private fun VideoPlayer(
     client: ZenithApiClient,
     startPosition: Long,
     duration: Long,
+    subtitles: List<SubtitleStreamInfo>,
     onVideoEnded: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -508,8 +508,65 @@ private fun VideoPlayer(
     var position by remember { mutableStateOf(0L) }
     var isPlaying by remember { mutableStateOf(true) }
 
+    var showSubtitlesMenu by remember { mutableStateOf(false) }
+
+    val selector = remember { DefaultTrackSelector(context) }
+    var textRenderer: Int? by remember { mutableStateOf(null) }
+
+    fun onSelectSubtitle(subtitle: SubtitleStreamInfo?) {
+        val renderer = textRenderer ?: return
+
+        if (subtitle == null) {
+            selector.parameters = selector.buildUponParameters()
+                .setRendererDisabled(renderer, true)
+                .build()
+        } else {
+            val mappedTrackInfo = selector.currentMappedTrackInfo ?: return
+            val trackGroups = mappedTrackInfo.getTrackGroups(renderer)
+
+            var track: Pair<Int, Int>? = null
+            for (i in 0 until trackGroups.length) {
+                val group = trackGroups[i]
+                for (j in 0 until group.length) {
+                    val format = group.getFormat(j)
+                    // TODO: Investigate if there's a better way to find the right track
+                    if (format.id?.toIntOrNull() == subtitle.index + 1) {
+                        track = Pair(i, j)
+                    }
+                }
+            }
+
+            if (track == null) {
+                val toast = Toast.makeText(
+                    context,
+                    "Failed to find requested subtitle track",
+                    Toast.LENGTH_SHORT
+                )
+                return toast.show()
+            }
+
+            selector.parameters = selector.buildUponParameters()
+                .setRendererDisabled(renderer, false)
+                .setSelectionOverride(
+                    renderer,
+                    trackGroups,
+                    DefaultTrackSelector.SelectionOverride(track.first, track.second),
+                )
+                .build()
+        }
+    }
+
+    if (showSubtitlesMenu) {
+        SubtitlesMenu(
+            subtitles = subtitles,
+            onSelectItem = { onSelectSubtitle(it) },
+            onDismiss = { showSubtitlesMenu = false },
+        )
+    }
+
     val player = remember {
         SimpleExoPlayer.Builder(context)
+            .setTrackSelector(selector)
             .build()
             .also { player ->
                 player.addListener(object : Player.Listener {
@@ -524,6 +581,25 @@ private fun VideoPlayer(
                     }
                 })
 
+                for (i in 0 until player.rendererCount) {
+                    if (player.getRendererType(i) == C.TRACK_TYPE_TEXT) {
+                        textRenderer = i
+                        break
+                    }
+                }
+
+                // Disable the text renderer initially
+                textRenderer.let { textRenderer ->
+                    if (textRenderer == null) {
+                        Toast.makeText(context, "Missing text renderer", Toast.LENGTH_LONG)
+                            .show()
+                    } else {
+                        selector.parameters = selector.buildUponParameters()
+                            .setRendererDisabled(textRenderer, true)
+                            .build()
+                    }
+                }
+
                 scope.launch {
                     var counter = 0
                     while (true) {
@@ -531,7 +607,7 @@ private fun VideoPlayer(
 
                         if (player.playWhenReady) {
                             position = player.currentPosition / 1000
-                            if (counter == 4) {
+                            if (!BuildConfig.DEBUG && counter == 4) {
                                 launch {
                                     client.updateProgress(id, position)
                                 }
@@ -595,7 +671,7 @@ private fun VideoPlayer(
                 player.playWhenReady = !isPlaying
             },
             onShowSubtitlesMenu = {
-                // TODO
+                showSubtitlesMenu = true
             }
         )
     }
