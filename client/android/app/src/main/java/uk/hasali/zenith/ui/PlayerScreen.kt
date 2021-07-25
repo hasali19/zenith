@@ -1,7 +1,9 @@
 package uk.hasali.zenith.ui
 
 import android.app.Activity
+import android.content.Intent
 import android.content.res.ColorStateList
+import android.net.Uri
 import android.support.v4.media.session.MediaSessionCompat
 import android.text.format.DateUtils
 import android.view.WindowManager
@@ -315,6 +317,7 @@ private fun AppBar(
     title: String,
     onBackPressed: () -> Unit,
     onShowSubtitlesMenu: () -> Unit,
+    onLaunchExternal: (() -> Unit)? = null,
     onClosePlayer: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
@@ -345,6 +348,15 @@ private fun AppBar(
                 },
             ) {
                 Icon(Icons.Default.ClosedCaption, contentDescription = "Captions")
+            }
+
+            if (onLaunchExternal != null) {
+                IconButton(onClick = {
+                    context.playClick()
+                    onLaunchExternal()
+                }) {
+                    Icon(Icons.Default.Launch, contentDescription = "Launch external")
+                }
             }
 
             if (onClosePlayer != null) {
@@ -425,6 +437,7 @@ private fun SubtitlesMenu(
 
 @Composable
 private fun LocalPlayer(id: Int, title: String, info: VideoInfo, playFromStart: Boolean) {
+    val context = LocalContext.current
     val client = LocalZenithClient.current
     val navigator = LocalNavigator.current
 
@@ -442,6 +455,12 @@ private fun LocalPlayer(id: Int, title: String, info: VideoInfo, playFromStart: 
                 duration = info.duration.toLong(),
                 subtitles = info.subtitles,
                 onVideoEnded = { navigator.pop() },
+                onLaunchExternal = {
+                    navigator.pop()
+                    context.startActivity(Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(Uri.parse(client.getVideoUrl(id)), "video/x-matroska")
+                    })
+                }
             )
         }
     }
@@ -498,6 +517,7 @@ private fun VideoPlayer(
     duration: Long,
     subtitles: List<SubtitleStreamInfo>,
     onVideoEnded: () -> Unit,
+    onLaunchExternal: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -672,7 +692,10 @@ private fun VideoPlayer(
             },
             onShowSubtitlesMenu = {
                 showSubtitlesMenu = true
-            }
+            },
+            onLaunchExternal = {
+                onLaunchExternal()
+            },
         )
     }
 }
@@ -762,6 +785,7 @@ private fun Controls(
     onSeekEnd: (Long) -> Unit,
     onTogglePlaying: () -> Unit,
     onShowSubtitlesMenu: () -> Unit,
+    onLaunchExternal: () -> Unit,
 ) {
     val navigator = LocalNavigator.current
 
@@ -793,6 +817,7 @@ private fun Controls(
                     title = title,
                     onBackPressed = { navigator.pop() },
                     onShowSubtitlesMenu = onShowSubtitlesMenu,
+                    onLaunchExternal = onLaunchExternal,
                 )
             }
 
