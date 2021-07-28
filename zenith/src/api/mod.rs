@@ -4,6 +4,7 @@ mod import;
 mod metadata;
 mod movies;
 mod progress;
+mod subtitles;
 mod transcoder;
 mod tv;
 mod videos;
@@ -25,6 +26,7 @@ pub fn service(path: &str) -> impl HttpServiceFactory {
         .configure(movies::configure)
         .configure(tv::configure)
         .configure(videos::configure)
+        .configure(subtitles::configure)
         .configure(metadata::configure)
         .configure(progress::configure)
         .configure(transcoder::configure)

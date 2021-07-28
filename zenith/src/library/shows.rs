@@ -4,7 +4,8 @@ use std::sync::Arc;
 use sqlx::Connection;
 
 use crate::db::media::MediaItemType;
-use crate::db::Db;
+use crate::db::subtitles::{NewSubtitle, SubtitlePath};
+use crate::db::{self, Db};
 use crate::ffprobe::VideoInfoProvider;
 
 pub struct ShowLibrary {
@@ -233,6 +234,22 @@ impl ShowLibrary {
             .bind(duration)
             .execute(&mut *transaction)
             .await?;
+
+        for stream in info
+            .streams
+            .iter()
+            .filter(|stream| stream.codec_type == "subtitle")
+        {
+            let tags = stream.properties.get("tags").unwrap().as_object().unwrap();
+            let subtitle = NewSubtitle {
+                video_id: id,
+                path: SubtitlePath::Embedded(stream.index),
+                title: tags.get("title").map(|v| v.as_str().unwrap()),
+                language: tags.get("language").map(|v| v.as_str().unwrap()),
+            };
+
+            db::subtitles::insert(&mut *transaction, &subtitle).await?;
+        }
 
         transaction.commit().await?;
 

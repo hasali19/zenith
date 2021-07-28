@@ -1,4 +1,6 @@
 pub mod media;
+pub mod subtitles;
+pub mod videos;
 
 use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteConnectOptions;
