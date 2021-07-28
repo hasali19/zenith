@@ -134,13 +134,16 @@ async fn get_subtitles(req: HttpRequest, path: web::Path<(i64,)>) -> ApiResult {
 }
 
 fn subtitle_to_json(subtitle: Subtitle) -> Value {
+    let (subtitle_type, path_key, path_val) = match &subtitle.path {
+        SubtitlePath::External(path) => ("external", "path", json!(path.as_ref())),
+        SubtitlePath::Embedded(index) => ("embedded", "index", json!(index)),
+    };
+
     json!({
         "id": subtitle.id,
         "title": subtitle.title,
         "language": subtitle.language,
-        "type": match subtitle.path {
-            SubtitlePath::External(_) => "external",
-            SubtitlePath::Embedded(_) => "embedded",
-        },
+        "type": subtitle_type,
+        path_key: path_val,
     })
 }
