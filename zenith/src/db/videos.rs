@@ -14,3 +14,23 @@ pub async fn get_path(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Opti
 
     Ok(path)
 }
+
+pub struct UpdateVideo {
+    pub duration: f64,
+}
+
+pub async fn update(conn: &mut SqliteConnection, id: i64, data: UpdateVideo) -> eyre::Result<()> {
+    let sql = "
+        UPDATE video_files
+        SET duration = ?
+        WHERE item_id = ?
+    ";
+
+    sqlx::query(sql)
+        .bind(data.duration)
+        .bind(id)
+        .execute(conn)
+        .await?;
+
+    Ok(())
+}

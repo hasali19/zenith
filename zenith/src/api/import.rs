@@ -10,7 +10,7 @@ use serde_json::json;
 
 use crate::config::Config;
 use crate::db::Db;
-use crate::library::scanner::{self, LibraryScanner};
+use crate::library::scanner::{self, LibraryScanner, ScanOptions, VideoFileType};
 
 use super::ApiResult;
 
@@ -81,9 +81,12 @@ pub async fn import_movie(
 
     tracing::info!("moving {:?} to {:?}", src_path, dst_path);
     std::fs::create_dir(&dst_dir).map_err(ErrorInternalServerError)?;
-    std::fs::rename(src_path, dst_path).map_err(ErrorInternalServerError)?;
+    std::fs::rename(&src_path, &dst_path).map_err(ErrorInternalServerError)?;
 
-    scanner.start_scan();
+    scanner
+        .scan_file(VideoFileType::Movie, &dst_path, ScanOptions::quick())
+        .await
+        .map_err(ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok())
 }
@@ -114,10 +117,12 @@ pub async fn import_show(
     std::fs::create_dir(&show_path).map_err(ErrorInternalServerError)?;
 
     for episode in data.episodes {
-        inner::import_episode(&show_path, episode).await?;
+        let path = inner::import_episode(&show_path, episode).await?;
+        scanner
+            .scan_file(VideoFileType::Episode, &path, ScanOptions::quick())
+            .await
+            .map_err(ErrorInternalServerError)?;
     }
-
-    scanner.start_scan();
 
     Ok(HttpResponse::Ok())
 }
@@ -147,27 +152,26 @@ pub async fn import_episode(
         .map_err(ErrorInternalServerError)?
         .ok_or_else(|| ErrorNotFound("show not found"))?;
 
-    let res = inner::import_episode(Path::new(&show_path), data).await?;
+    let path = inner::import_episode(Path::new(&show_path), data).await?;
 
-    scanner.start_scan();
+    scanner
+        .scan_file(VideoFileType::Episode, &path, ScanOptions::quick())
+        .await
+        .map_err(ErrorInternalServerError)?;
 
-    Ok(res)
+    Ok(HttpResponse::Ok())
 }
 
 mod inner {
     use std::path::{Path, PathBuf};
 
     use actix_web::error::{ErrorBadRequest, ErrorInternalServerError};
-    use actix_web::{HttpResponse, Responder};
 
     use crate::api::ApiResult;
 
     use super::{ImportEpisodeRequest, ImportSource};
 
-    pub async fn import_episode(
-        show_path: &Path,
-        req: ImportEpisodeRequest,
-    ) -> ApiResult<impl Responder> {
+    pub async fn import_episode(show_path: &Path, req: ImportEpisodeRequest) -> ApiResult<PathBuf> {
         let src_path = match req.source {
             ImportSource::Local { path } => path,
         };
@@ -183,8 +187,8 @@ mod inner {
         // Just move the file into the library and let the fs watcher
         // take care of the rest
         tracing::info!("moving {:?} to {:?}", src_path, dst_path);
-        std::fs::rename(src_path, dst_path).map_err(ErrorInternalServerError)?;
+        std::fs::rename(&src_path, &dst_path).map_err(ErrorInternalServerError)?;
 
-        Ok(HttpResponse::Ok())
+        Ok(dst_path)
     }
 }

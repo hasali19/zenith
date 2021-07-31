@@ -2,7 +2,8 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::db::media::MediaItemType;
-use crate::db::Db;
+use crate::db::subtitles::{NewSubtitle, SubtitlePath};
+use crate::db::{self, Db};
 use crate::ffprobe::VideoInfoProvider;
 
 pub struct MovieLibrary {
@@ -62,6 +63,22 @@ impl MovieLibrary {
             .execute(&mut transaction)
             .await?;
 
+        for stream in info
+            .streams
+            .iter()
+            .filter(|stream| stream.codec_type == "subtitle")
+        {
+            let tags = stream.properties.get("tags").unwrap().as_object().unwrap();
+            let subtitle = NewSubtitle {
+                video_id: id,
+                path: SubtitlePath::Embedded(stream.index),
+                title: tags.get("title").map(|v| v.as_str().unwrap()),
+                language: tags.get("language").map(|v| v.as_str().unwrap()),
+            };
+
+            db::subtitles::insert(&mut *transaction, &subtitle).await?;
+        }
+
         transaction.commit().await?;
 
         Ok(id)
@@ -114,19 +131,19 @@ impl MovieLibrary {
     }
 
     /// Checks if a movie exists with the given path
-    pub async fn exists_by_path(&self, path: &str) -> eyre::Result<bool> {
+    pub async fn get_id_by_path(&self, path: &str) -> eyre::Result<Option<i64>> {
         let sql = "
             SELECT m.item_id FROM movies AS m
             JOIN video_files AS v ON m.item_id = v.item_id
             WHERE v.path = ?
         ";
 
-        let id = sqlx::query(sql)
+        let id = sqlx::query_scalar(sql)
             .bind(path)
             .fetch_optional(&mut *self.db.acquire().await?)
             .await?;
 
-        Ok(id.is_some())
+        Ok(id)
     }
 
     /// Removes any movies that no longer exist on the filesystem

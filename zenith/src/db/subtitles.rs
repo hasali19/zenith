@@ -48,6 +48,10 @@ pub async fn insert(conn: &mut SqliteConnection, subtitle: &NewSubtitle<'_>) -> 
             (video_id, path, title, language)
         VALUES
             (?, ?, ?, ?)
+        ON CONFLICT (video_id, path)
+        DO UPDATE SET
+            title = excluded.title,
+            language = excluded.language
     ";
 
     let query = sqlx::query(sql).bind(subtitle.video_id);
