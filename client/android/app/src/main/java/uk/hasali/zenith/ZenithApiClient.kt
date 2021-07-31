@@ -3,6 +3,7 @@ package uk.hasali.zenith
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import kotlinx.serialization.SerialInfo
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -78,11 +79,29 @@ data class AudioStreamInfo(
 )
 
 @Serializable
-data class SubtitleStreamInfo(
-    val index: Int,
-    val title: String?,
-    val language: String?,
-)
+sealed class SubtitleStreamInfo {
+    abstract val id: Int
+    abstract val title: String?
+    abstract val language: String?
+
+    @Serializable
+    @SerialName("embedded")
+    data class Embedded(
+        override val id: Int,
+        override val title: String?,
+        override val language: String?,
+        val index: Int,
+    ) : SubtitleStreamInfo()
+
+    @Serializable
+    @SerialName("external")
+    data class External(
+        override val id: Int,
+        override val title: String?,
+        override val language: String?,
+        val path: String,
+    ) : SubtitleStreamInfo()
+}
 
 @Serializable
 data class TranscoderState(val current: Int?, val queue: List<Int>)
@@ -143,8 +162,7 @@ class ZenithApiClient(private val client: HttpClient) {
 
     fun getVideoUrl(id: Int) = "https://zenith.hasali.uk/api/videos/$id"
 
-    fun getSubtitleUrl(videoId: Int, subtitleIndex: Int) =
-        "https://zenith.hasali.uk/api/videos/$videoId/subtitles/$subtitleIndex"
+    fun getSubtitleUrl(id: Int) = "https://zenith.hasali.uk/api/subtitles/$id"
 
     suspend fun getVideoInfo(id: Int): VideoInfo =
         client.get("https://zenith.hasali.uk/api/videos/$id/info")

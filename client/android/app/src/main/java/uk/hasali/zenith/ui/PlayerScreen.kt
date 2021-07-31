@@ -165,10 +165,10 @@ private fun RemotePlayer(
 
         val subtitleTracks = info.subtitles
             .map {
-                MediaTrack.Builder(it.index.toLong(), MediaTrack.TYPE_TEXT)
+                MediaTrack.Builder(it.id.toLong(), MediaTrack.TYPE_TEXT)
                     .setName(it.title ?: it.language)
                     .setSubtype(MediaTrack.SUBTYPE_SUBTITLES)
-                    .setContentId(client.getSubtitleUrl(id, it.index))
+                    .setContentId(client.getSubtitleUrl(it.id))
                     .setContentType("text/vtt")
                     .setLanguage(it.language)
                     .build()
@@ -213,7 +213,7 @@ private fun RemotePlayer(
         val tracks = if (subtitle == null) {
             longArrayOf()
         } else {
-            longArrayOf(subtitle.index.toLong())
+            longArrayOf(subtitle.id.toLong())
         }
 
         mediaClient.setActiveMediaTracks(tracks)
@@ -408,7 +408,10 @@ private fun SubtitlesMenu(
                             text = {
                                 val label = it.title
                                     ?: it.language
-                                    ?: "Track ${it.index}"
+                                    ?: when (it) {
+                                        is SubtitleStreamInfo.Embedded -> "Track ${it.index}"
+                                        is SubtitleStreamInfo.External -> it.path
+                                    }
 
                                 Text(label)
                             },
@@ -541,38 +544,50 @@ private fun VideoPlayer(
                 .setRendererDisabled(renderer, true)
                 .build()
         } else {
-            val mappedTrackInfo = selector.currentMappedTrackInfo ?: return
-            val trackGroups = mappedTrackInfo.getTrackGroups(renderer)
+            when (subtitle) {
+                is SubtitleStreamInfo.External -> {
+                    val toast = Toast.makeText(
+                        context,
+                        "External subtitles are not yet supported",
+                        Toast.LENGTH_SHORT
+                    )
+                    return toast.show()
+                }
+                is SubtitleStreamInfo.Embedded -> {
+                    val mappedTrackInfo = selector.currentMappedTrackInfo ?: return
+                    val trackGroups = mappedTrackInfo.getTrackGroups(renderer)
 
-            var track: Pair<Int, Int>? = null
-            for (i in 0 until trackGroups.length) {
-                val group = trackGroups[i]
-                for (j in 0 until group.length) {
-                    val format = group.getFormat(j)
-                    // TODO: Investigate if there's a better way to find the right track
-                    if (format.id?.toIntOrNull() == subtitle.index + 1) {
-                        track = Pair(i, j)
+                    var track: Pair<Int, Int>? = null
+                    for (i in 0 until trackGroups.length) {
+                        val group = trackGroups[i]
+                        for (j in 0 until group.length) {
+                            val format = group.getFormat(j)
+                            // TODO: Investigate if there's a better way to find the right track
+                            if (format.id?.toIntOrNull() == subtitle.index!! + 1) {
+                                track = Pair(i, j)
+                            }
+                        }
                     }
+
+                    if (track == null) {
+                        val toast = Toast.makeText(
+                            context,
+                            "Failed to find requested subtitle track",
+                            Toast.LENGTH_SHORT
+                        )
+                        return toast.show()
+                    }
+
+                    selector.parameters = selector.buildUponParameters()
+                        .setRendererDisabled(renderer, false)
+                        .setSelectionOverride(
+                            renderer,
+                            trackGroups,
+                            DefaultTrackSelector.SelectionOverride(track.first, track.second),
+                        )
+                        .build()
                 }
             }
-
-            if (track == null) {
-                val toast = Toast.makeText(
-                    context,
-                    "Failed to find requested subtitle track",
-                    Toast.LENGTH_SHORT
-                )
-                return toast.show()
-            }
-
-            selector.parameters = selector.buildUponParameters()
-                .setRendererDisabled(renderer, false)
-                .setSelectionOverride(
-                    renderer,
-                    trackGroups,
-                    DefaultTrackSelector.SelectionOverride(track.first, track.second),
-                )
-                .build()
         }
     }
 
