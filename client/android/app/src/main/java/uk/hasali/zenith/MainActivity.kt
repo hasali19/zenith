@@ -4,10 +4,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.LinearProgressIndicator
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
@@ -89,15 +86,17 @@ class MainActivity : FragmentActivity() {
                     LocalNavigator provides navigator,
                     LocalZenithClient provides zenithApiClient,
                 ) {
-                    MaterialMotion(
-                        targetState = navigator.currentScreen,
-                        motionSpec = materialSharedAxis(
-                            axis = Axis.Z,
-                            forward = navigator.push,
-                        ),
-                    ) { screen ->
-                        navigator.SaveableStateProvider(screen) {
-                            ScreenComposable(screen)
+                    Surface {
+                        MaterialMotion(
+                            targetState = navigator.currentScreen,
+                            motionSpec = materialSharedAxis(
+                                axis = Axis.Z,
+                                forward = navigator.push,
+                            ),
+                        ) { screen ->
+                            navigator.SaveableStateProvider(screen) {
+                                ScreenComposable(screen)
+                            }
                         }
                     }
                 }
