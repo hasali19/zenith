@@ -17,13 +17,12 @@ import uk.hasali.zenith.ZenithApiClient
 @Composable
 fun TranscodeQueueScreen() {
     val client = LocalZenithClient.current
-    val navigator = LocalNavigator.current
 
     val state by produceState<TranscoderState?>(null) {
         value = client.getTranscoderState()
     }
 
-    Scaffold(topBar = { AppBar(navigator = navigator, title = "Transcode queue", menu = false) }) {
+    Scaffold(topBar = { AppBar(title = "Transcode queue", menu = false) }) {
         if (state == null) {
             Box(modifier = Modifier.fillMaxSize()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))

@@ -37,7 +37,7 @@ fun SeasonDetailsScreen(show: Show, season: Season) {
     }
 
     Scaffold(
-        topBar = { AppBar(title = season.name, navigator = navigator) },
+        topBar = { AppBar(title = season.name) },
         modifier = Modifier.navigationBarsPadding(),
     ) {
         LazyVerticalGrid(

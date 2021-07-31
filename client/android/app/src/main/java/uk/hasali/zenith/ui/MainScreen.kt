@@ -44,7 +44,7 @@ fun MainScreen() {
 
     Scaffold(
         modifier = Modifier.navigationBarsPadding(),
-        topBar = { AppBar(navigator = navigator) },
+        topBar = { AppBar(title = "Zenith", backButton = false) },
         bottomBar = {
             MainBottomNavigation(screen = screen) {
                 screen = it

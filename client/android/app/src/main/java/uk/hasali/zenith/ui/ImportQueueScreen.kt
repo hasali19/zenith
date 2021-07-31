@@ -39,14 +39,13 @@ fun rememberImportQueue(client: ZenithApiClient): Pair<List<ImportQueueItem>, su
 @Composable
 fun ImportQueueScreen() {
     val client = LocalZenithClient.current
-    val navigator = LocalNavigator.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     val (items, refresh) = rememberImportQueue(client)
     var selected: ImportQueueItem? by remember { mutableStateOf(null) }
 
-    Scaffold(topBar = { AppBar(navigator = navigator, title = "Import queue", menu = false) }) {
+    Scaffold(topBar = { AppBar(title = "Import queue", menu = false) }) {
         LazyColumn {
             items(items) {
                 ListItem(

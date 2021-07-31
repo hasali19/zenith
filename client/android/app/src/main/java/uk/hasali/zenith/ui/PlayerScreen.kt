@@ -563,7 +563,7 @@ private fun VideoPlayer(
                         for (j in 0 until group.length) {
                             val format = group.getFormat(j)
                             // TODO: Investigate if there's a better way to find the right track
-                            if (format.id?.toIntOrNull() == subtitle.index!! + 1) {
+                            if (format.id?.toIntOrNull() == subtitle.index + 1) {
                                 track = Pair(i, j)
                             }
                         }

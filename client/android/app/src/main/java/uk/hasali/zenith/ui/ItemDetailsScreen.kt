@@ -1,25 +1,23 @@
 package uk.hasali.zenith.ui
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
 import com.google.accompanist.insets.navigationBarsPadding
+import com.google.accompanist.insets.statusBarsHeight
+import com.google.accompanist.insets.statusBarsPadding
 
 @Composable
 fun ItemDetailsScreen(
@@ -31,12 +29,18 @@ fun ItemDetailsScreen(
     isWatched: Boolean = false,
     content: @Composable () -> Unit = {},
 ) {
+    val scrollState = rememberScrollState()
+
     Surface(
         modifier = Modifier
             .fillMaxSize()
             .navigationBarsPadding(),
     ) {
-        BoxWithConstraints(modifier = Modifier.verticalScroll(rememberScrollState())) {
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState),
+        ) {
             Box(modifier = Modifier.aspectRatio(16f / 9f)) {
                 Image(
                     painter = rememberImagePainter(backdrop, builder = { crossfade(true) }),
@@ -87,6 +91,8 @@ fun ItemDetailsScreen(
             }
         }
     }
+
+    FadingAppBar(alpha = scrollState.value / 400f)
 }
 
 @Composable

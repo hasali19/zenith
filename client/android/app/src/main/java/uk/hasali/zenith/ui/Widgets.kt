@@ -2,13 +2,16 @@ package uk.hasali.zenith.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -16,15 +19,30 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
 import com.google.accompanist.insets.statusBarsHeight
+import com.google.accompanist.insets.statusBarsPadding
 import uk.hasali.zenith.playClick
 
 @Composable
-fun AppBar(navigator: Navigator, title: String = "Zenith", menu: Boolean = true) {
+fun AppBar(
+    title: String? = null,
+    menu: Boolean = true,
+    backButton: Boolean = true,
+) {
+    val navigator = LocalNavigator.current
+    val navigationIcon: (@Composable () -> Unit)? = if (!backButton) null else {
+        {
+            IconButton(onClick = { navigator.pop() }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            }
+        }
+    }
+
     Surface(color = MaterialTheme.colors.primarySurface, elevation = 4.dp) {
         Column {
             Spacer(modifier = Modifier.statusBarsHeight())
             TopAppBar(
-                title = { Text(title) },
+                title = { Text(title ?: "") },
+                navigationIcon = navigationIcon,
                 backgroundColor = Color.Transparent,
                 elevation = 0.dp,
                 actions = {
@@ -32,7 +50,7 @@ fun AppBar(navigator: Navigator, title: String = "Zenith", menu: Boolean = true)
                     if (menu) {
                         AppBarMenu(navigator = navigator)
                     }
-                }
+                },
             )
         }
     }
@@ -68,6 +86,41 @@ fun AppBarMenu(navigator: Navigator) {
                 Text("Transcode queue")
             }
         }
+    }
+}
+
+@Composable
+fun FadingAppBar(alpha: Float) {
+    val navigator = LocalNavigator.current
+
+    Box {
+        Surface(
+            content = {},
+            color = MaterialTheme.colors.primarySurface,
+            elevation = 4.dp,
+            modifier = Modifier
+                .matchParentSize()
+                .graphicsLayer { this.alpha = minOf(alpha, 1f) },
+        )
+        TopAppBar(
+            title = { },
+            navigationIcon = {
+                IconButton(onClick = { navigator.pop() }) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = if (isSystemInDarkTheme()) {
+                            MaterialTheme.colors.onSurface
+                        } else {
+                            MaterialTheme.colors.onPrimary
+                        },
+                    )
+                }
+            },
+            backgroundColor = Color.Transparent,
+            elevation = 0.dp,
+            modifier = Modifier.statusBarsPadding(),
+        )
     }
 }
 
