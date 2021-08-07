@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.net.Uri
+import android.os.Build
 import android.support.v4.media.session.MediaSessionCompat
 import android.text.format.DateUtils
 import android.view.WindowManager
@@ -494,6 +495,13 @@ private fun FullScreen(content: @Composable () -> Unit) {
 
     if (window != null) {
         DisposableEffect(Unit) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                window.attributes = window.attributes.apply {
+                    layoutInDisplayCutoutMode =
+                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
+            }
+
             val controller = WindowCompat.getInsetsController(window, window.decorView)
             if (controller != null) {
                 controller.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
@@ -503,6 +511,13 @@ private fun FullScreen(content: @Composable () -> Unit) {
 
             onDispose {
                 controller?.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    window.attributes = window.attributes.apply {
+                        layoutInDisplayCutoutMode =
+                            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                    }
+                }
             }
         }
     }
