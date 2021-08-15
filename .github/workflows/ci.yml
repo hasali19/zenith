@@ -7,6 +7,11 @@ jobs:
   build_server:
     name: Build server
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - armv7-unknown-linux-gnueabihf
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v2
@@ -18,18 +23,16 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Install lld
-        run: sudo apt-get install lld
-
       - name: Cache cargo output
         uses: actions/cache@v2
         with:
           path: |
             ~/.cargo
             target
-          key: ${{ runner.os }}-rust-${{ github.sha }}
+          key: ${{ runner.os }}-${{ matrix.target }}-server-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-rust-
+            ${{ runner.os }}-${{ matrix.target }}-server-
+            ${{ runner.os }}-server-
 
       - name: Check formatting
         uses: actions-rs/cargo@v1
@@ -41,13 +44,14 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --bin zenith
+          args: --release --bin zenith --target ${{ matrix.target }}
+          use-cross: true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: zenith
-          path: target/release/zenith
+          name: zenith-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/zenith
 
   build_web_client:
     name: Build web client
@@ -108,7 +112,7 @@ jobs:
       - name: Download server artifact
         uses: actions/download-artifact@v2
         with:
-          name: zenith
+          name: zenith-x86_64-unknown-linux-gnu
           path: target/release
 
       - name: Download web client artifact
