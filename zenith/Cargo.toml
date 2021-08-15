@@ -34,7 +34,8 @@ migrations = { path = "../migrations" }
 
 [dependencies.reqwest]
 version = "0.11"
-features = ["json"]
+default-features = false
+features = ["json", "rustls-tls"]
 
 [dependencies.serde]
 version = "1.0"
@@ -43,7 +44,7 @@ features = ["derive"]
 [dependencies.sqlx]
 version = "0.5"
 default-features = false
-features = ["macros", "runtime-actix-native-tls", "sqlite"]
+features = ["macros", "runtime-actix-rustls", "sqlite"]
 
 [dependencies.tokio]
 version = "1.8"
