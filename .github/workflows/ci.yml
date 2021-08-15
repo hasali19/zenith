@@ -11,7 +11,7 @@ jobs:
       matrix:
         target:
           - x86_64-unknown-linux-gnu
-          - aarch64-unknown-linux-gnu
+          - aarch64-unknown-linux-musl
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v2
@@ -115,7 +115,7 @@ jobs:
       - name: Download server artifact
         uses: actions/download-artifact@v2
         with:
-          name: zenith-aarch64-unknown-linux-gnu
+          name: zenith-aarch64-unknown-linux-musl
           path: target/release
 
       - name: Download web client artifact
