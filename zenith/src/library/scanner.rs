@@ -40,7 +40,7 @@ pub struct ScanOptions {
 impl Default for ScanOptions {
     fn default() -> Self {
         ScanOptions {
-            rescan_files: true,
+            rescan_files: false,
             refresh_metadata: false,
         }
     }
