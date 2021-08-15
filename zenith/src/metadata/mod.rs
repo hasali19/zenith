@@ -1,5 +1,6 @@
 use eyre::eyre;
 use sqlx::SqliteConnection;
+use time::{format_description, Date, Time};
 use tokio::sync::mpsc;
 
 use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType};
@@ -170,8 +171,8 @@ async fn refresh_tv_show_metadata(
 
     let first_air_date = result
         .first_air_date
-        .and_then(|date| time::Date::parse(date, "%F").ok())
-        .map(|date| date.with_time(time::Time::try_from_hms(0, 0, 0).unwrap()))
+        .and_then(|date| Date::parse(&date, &format_description::parse("%F").ok()?).ok())
+        .and_then(|date| Some(date.with_time(Time::from_hms(0, 0, 0).ok()?)))
         .map(|dt| dt.assume_utc().unix_timestamp());
 
     let poster = result.poster_path.as_deref().map(|poster| MediaImage {
