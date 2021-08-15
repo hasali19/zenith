@@ -11,7 +11,7 @@ jobs:
       matrix:
         target:
           - x86_64-unknown-linux-gnu
-          - armv7-unknown-linux-gnueabihf
+          - aarch64-unknown-linux-gnu
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v2
@@ -32,7 +32,6 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.target }}-server-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-server-
-            ${{ runner.os }}-server-
 
       - name: Check formatting
         uses: actions-rs/cargo@v1
@@ -91,7 +90,11 @@ jobs:
       - name: Checkout git repo
         uses: actions/checkout@v2
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
       - name: Set up Docker Buildx
+        id: buildx
         uses: docker/setup-buildx-action@v1
 
       - name: Cache Docker layers
@@ -112,7 +115,7 @@ jobs:
       - name: Download server artifact
         uses: actions/download-artifact@v2
         with:
-          name: zenith-x86_64-unknown-linux-gnu
+          name: zenith-aarch64-unknown-linux-gnu
           path: target/release
 
       - name: Download web client artifact
@@ -124,8 +127,10 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
+          builder: ${{ steps.buildx.outputs.name }}
           context: .
           file: ./Dockerfile
+          platforms: linux/arm64
           push: true
           tags: |
             ghcr.io/hasali19/zenith:latest
