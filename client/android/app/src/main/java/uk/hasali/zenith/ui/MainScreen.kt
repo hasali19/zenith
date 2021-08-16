@@ -161,7 +161,7 @@ private fun <T> FeaturedSection(
     items: List<T>,
     poster: (T) -> String,
     name: (T) -> String,
-    date: (T) -> Long,
+    date: (T) -> Long?,
     onClick: (T) -> Unit,
 ) {
     Column(modifier = Modifier.padding(top = 16.dp)) {
@@ -175,14 +175,16 @@ private fun <T> FeaturedSection(
 
         LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
             items(items) { item ->
-                val year = Instant.fromEpochSeconds(date(item))
-                    .toLocalDateTime(TimeZone.UTC)
-                    .year
+                val dateVal = date(item)
+                val year = if (dateVal == null) null else
+                    Instant.fromEpochSeconds(dateVal)
+                        .toLocalDateTime(TimeZone.UTC)
+                        .year
 
                 MediaItemWithPoster(
                     poster = poster(item),
                     primary = name(item),
-                    secondary = year.toString(),
+                    secondary = year?.toString() ?: "",
                     onClick = { onClick(item) },
                     modifier = Modifier
                         .width(120.dp)
@@ -199,7 +201,7 @@ private fun <T> ListScreen(
     items: List<T>,
     poster: (T) -> String,
     name: (T) -> String,
-    date: (T) -> Long,
+    date: (T) -> Long?,
     onClick: (T) -> Unit,
 ) {
     LazyVerticalGrid(
@@ -208,14 +210,16 @@ private fun <T> ListScreen(
     ) {
         items(items.size) { i ->
             val item = items[i]
-            val year = Instant.fromEpochSeconds(date(item))
-                .toLocalDateTime(TimeZone.UTC)
-                .year
+            val dateVal = date(item)
+            val year = if (dateVal == null) null else
+                Instant.fromEpochSeconds(dateVal)
+                    .toLocalDateTime(TimeZone.UTC)
+                    .year
 
             MediaItemWithPoster(
                 poster = poster(item),
                 primary = name(item),
-                secondary = year.toString(),
+                secondary = year?.toString() ?: "",
                 onClick = { onClick(item) },
                 modifier = Modifier
                     .fillMaxWidth()

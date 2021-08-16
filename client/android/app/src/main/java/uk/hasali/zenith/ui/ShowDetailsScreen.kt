@@ -44,12 +44,16 @@ fun ShowDetailsScreen(show: Show) {
 @Composable
 private fun HeaderContent(show: Show) {
     Column {
-        val year = Instant.fromEpochSeconds(show.startDate)
-            .toLocalDateTime(TimeZone.UTC)
-            .year
+        val dateVal = show.startDate
+        val year = if (dateVal == null) null else
+            Instant.fromEpochSeconds(dateVal)
+                .toLocalDateTime(TimeZone.UTC)
+                .year
 
         Text(show.name, style = MaterialTheme.typography.h6)
-        Text(year.toString(), style = MaterialTheme.typography.caption)
+
+        if (year != null)
+            Text(year.toString(), style = MaterialTheme.typography.caption)
     }
 }
 

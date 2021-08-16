@@ -26,7 +26,7 @@ data class Show(
     val backdrop: String,
     val overview: String,
     @SerialName("start_date")
-    val startDate: Long,
+    val startDate: Long?,
     @SerialName("unwatched_episodes")
     val unwatchedEpisodes: Int,
 )
