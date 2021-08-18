@@ -45,7 +45,7 @@ async fn get_subtitle(req: HttpRequest, path: web::Path<(i64, i64)>) -> ApiResul
             Ok(HttpResponse::Ok()
                 .content_type("text/vtt")
                 .append_header(("access-control-allow-origin", "*"))
-                .body(extract_embedded_subtitle(&config, &path, index).await?))
+                .body(extract_embedded_subtitle(config, &path, index).await?))
         }
     }
 }

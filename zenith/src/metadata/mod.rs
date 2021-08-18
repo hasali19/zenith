@@ -156,7 +156,7 @@ async fn refresh_tv_show_metadata(
         .ok_or_else(|| eyre!("invalid tv show path"))?;
 
     let query = TvShowSearchQuery {
-        name: &name,
+        name,
         page: None,
         first_air_date_year: None,
     };

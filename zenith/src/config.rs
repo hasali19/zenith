@@ -42,8 +42,6 @@ pub struct Transcoding {
     pub ffprobe_path: String,
     #[serde(default = "Transcoding::default_ffmpeg_path")]
     pub ffmpeg_path: String,
-    #[serde(default)]
-    pub use_hw_encoder: bool,
 }
 
 #[derive(Deserialize)]
@@ -100,7 +98,6 @@ impl Default for Transcoding {
         Transcoding {
             ffprobe_path: Transcoding::default_ffprobe_path(),
             ffmpeg_path: Transcoding::default_ffmpeg_path(),
-            use_hw_encoder: false,
         }
     }
 }

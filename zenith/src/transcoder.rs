@@ -130,35 +130,27 @@ impl Transcoder {
             let mut transcode_any = false;
 
             for stream in info.streams {
-                // Transcode video stream if not already in h264
-                if stream.codec_type == "video" {
-                    cmd.arg_pair("-map", format!("0:{}", stream.index));
-
-                    if stream.codec_name == "h264" {
+                match stream.codec_type.as_str() {
+                    // Copy all video and subtitle streams
+                    "video" | "subtitle" => {
+                        cmd.arg_pair("-map", format!("0:{}", stream.index));
                         cmd.arg_pair(format!("-c:{}", stream.index), "copy");
-                    } else {
-                        cmd.arg_pair(format!("-c:{}", stream.index), "libx264");
-                        transcode_any = true;
                     }
-                }
+                    // Transcode audio stream if not already in aac
+                    "audio" => {
+                        cmd.arg_pair("-map", format!("0:{}", stream.index));
 
-                // Transcode audio stream if not already in aac
-                if stream.codec_type == "audio" {
-                    cmd.arg_pair("-map", format!("0:{}", stream.index));
-
-                    if stream.codec_name == "aac" {
-                        cmd.arg_pair(format!("-c:{}", stream.index), "copy");
-                    } else {
-                        cmd.arg_pair(format!("-c:{}", stream.index), "aac");
-                        cmd.arg_pair(format!("-ac:{}", stream.index), "2");
-                        transcode_any = true;
+                        if stream.codec_name == "aac" {
+                            cmd.arg_pair(format!("-c:{}", stream.index), "copy");
+                        } else {
+                            cmd.arg_pair(format!("-c:{}", stream.index), "aac");
+                            cmd.arg_pair(format!("-ac:{}", stream.index), "2");
+                            transcode_any = true;
+                        }
                     }
-                }
-
-                // Copy all subtitle streams
-                if stream.codec_type == "subtitle" {
-                    cmd.arg_pair("-map", format!("0:{}", stream.index));
-                    cmd.arg_pair(format!("-c:{}", stream.index), "copy");
+                    _ => {
+                        tracing::info!(%stream.codec_type, "skipping unrecognised stream type");
+                    }
                 }
             }
 
