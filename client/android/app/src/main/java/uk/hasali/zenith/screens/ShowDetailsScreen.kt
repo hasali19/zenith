@@ -1,4 +1,4 @@
-package uk.hasali.zenith.ui
+package uk.hasali.zenith.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -16,27 +16,58 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.Season
 import uk.hasali.zenith.Show
+import uk.hasali.zenith.ui.CenteredLoadingIndicator
+import uk.hasali.zenith.ui.ItemDetailsScreen
+import uk.hasali.zenith.ui.LocalZenithClient
+import uk.hasali.zenith.ui.MediaItemWithPoster
 
 @Composable
-fun ShowDetailsScreen(show: Show) {
+fun ShowDetailsScreen(id: Int, onNavigateToSeason: (Season) -> Unit, onNavigateUp: () -> Unit) {
     val client = LocalZenithClient.current
-    val navigator = LocalNavigator.current
 
-    val seasons by produceState(initialValue = emptyList<Season>()) {
-        value = client.getSeasons(show.id)
+    val show by produceState<Show?>(null) {
+        value = client.getShow(id)
     }
 
+    val seasons by produceState(emptyList<Season>(), show) {
+        show?.let { show ->
+            value = client.getSeasons(show.id)
+        }
+    }
+
+    show.let {
+        if (it == null) {
+            CenteredLoadingIndicator()
+        } else {
+            ShowDetailsScreen(
+                show = it,
+                seasons = seasons,
+                onNavigateToSeason = onNavigateToSeason,
+                onNavigateUp = onNavigateUp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ShowDetailsScreen(
+    show: Show,
+    seasons: List<Season>,
+    onNavigateToSeason: (Season) -> Unit,
+    onNavigateUp: () -> Unit,
+) {
     ItemDetailsScreen(
         backdrop = show.backdrop,
         poster = show.poster,
         headerContent = { HeaderContent(show = show) },
         overview = show.overview,
         isWatched = show.unwatchedEpisodes == 0,
+        onNavigateUp = onNavigateUp,
     ) {
         SeasonsSection(
             show = show,
             seasons = seasons,
-            onItemClick = { navigator.push(Screen.SeasonDetails(show, it)) },
+            onItemClick = onNavigateToSeason,
         )
     }
 }

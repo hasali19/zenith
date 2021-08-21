@@ -1,4 +1,4 @@
-package uk.hasali.zenith.ui
+package uk.hasali.zenith.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -19,6 +19,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.*
+import uk.hasali.zenith.ui.AppBar
+import uk.hasali.zenith.ui.LocalZenithClient
 
 @Composable
 fun rememberImportQueue(client: ZenithApiClient): Pair<List<ImportQueueItem>, suspend () -> Unit> {
@@ -37,7 +39,7 @@ fun rememberImportQueue(client: ZenithApiClient): Pair<List<ImportQueueItem>, su
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ImportQueueScreen() {
+fun ImportQueueScreen(onNavigateUp: () -> Unit) {
     val client = LocalZenithClient.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -45,7 +47,7 @@ fun ImportQueueScreen() {
     val (items, refresh) = rememberImportQueue(client)
     var selected: ImportQueueItem? by remember { mutableStateOf(null) }
 
-    Scaffold(topBar = { AppBar(title = "Import queue", menu = false) }) {
+    Scaffold(topBar = { AppBar(title = "Import queue", onBackPressed = onNavigateUp) }) {
         LazyColumn {
             items(items) {
                 ListItem(
@@ -268,7 +270,7 @@ private fun <T> ShowSelect(
     values: List<T>,
     selected: T,
     text: (T) -> String,
-    onChange: (T) -> Unit
+    onChange: (T) -> Unit,
 ) {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }

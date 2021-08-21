@@ -3,7 +3,6 @@ package uk.hasali.zenith
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import kotlinx.serialization.SerialInfo
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -34,18 +33,26 @@ data class Show(
 @Serializable
 data class Season(
     val id: Int,
-    val name: String,
+    @SerialName("show_id")
+    val showId: Int,
     @SerialName("season_number")
     val seasonNumber: Int,
+    val name: String,
+    val overview: String,
     val poster: String,
+    val backdrop: String,
 )
 
 @Serializable
 data class Episode(
     val id: Int,
-    val name: String,
+    @SerialName("show_id")
+    val showId: Int,
+    @SerialName("season_id")
+    val seasonId: Int,
     @SerialName("episode_number")
     val episodeNumber: Int,
+    val name: String,
     val overview: String,
     val thumbnail: String?,
     val duration: Double,
@@ -148,17 +155,29 @@ class ZenithApiClient(private val client: HttpClient) {
     suspend fun getRecentMovies(): List<Movie> =
         client.get("https://zenith.hasali.uk/api/movies/recent")
 
+    suspend fun getMovie(id: Int): Movie =
+        client.get("https://zenith.hasali.uk/api/movies/$id")
+
     suspend fun getShows(): List<Show> =
         client.get("https://zenith.hasali.uk/api/tv/shows")
 
     suspend fun getRecentShows(): List<Show> =
         client.get("https://zenith.hasali.uk/api/tv/shows/recent")
 
+    suspend fun getShow(id: Int): Show =
+        client.get("https://zenith.hasali.uk/api/tv/shows/$id")
+
     suspend fun getSeasons(showId: Int): List<Season> =
         client.get("https://zenith.hasali.uk/api/tv/shows/$showId/seasons")
 
+    suspend fun getSeason(id: Int): Season =
+        client.get("https://zenith.hasali.uk/api/tv/seasons/$id")
+
     suspend fun getEpisodes(seasonId: Int): List<Episode> =
         client.get("https://zenith.hasali.uk/api/tv/seasons/$seasonId/episodes")
+
+    suspend fun getEpisode(id: Int): Episode =
+        client.get("https://zenith.hasali.uk/api/tv/episodes/$id")
 
     fun getVideoUrl(id: Int) = "https://zenith.hasali.uk/api/videos/$id"
 

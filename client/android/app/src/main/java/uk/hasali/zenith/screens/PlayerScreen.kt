@@ -1,4 +1,4 @@
-package uk.hasali.zenith.ui
+package uk.hasali.zenith.screens
 
 import android.app.Activity
 import android.content.Intent
@@ -63,6 +63,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.*
 import uk.hasali.zenith.VideoInfo
+import uk.hasali.zenith.ui.LifecycleObserver
+import uk.hasali.zenith.ui.LocalZenithClient
 
 enum class MediaItemType {
     Movie,
@@ -75,12 +77,49 @@ private fun MediaItemType.toCastMediaType() = when (this) {
 }
 
 @Composable
-fun PlayerScreen(
+fun PlayerScreen(id: Int, type: MediaItemType, replay: Boolean, onNavigateUp: () -> Unit) {
+    val client = LocalZenithClient.current
+
+    when (type) {
+        MediaItemType.Movie -> {
+            val movie by produceState<Movie?>(null) {
+                value = client.getMovie(id)
+            }
+
+            PlayerScreen(
+                id = id,
+                title = movie?.title ?: "",
+                type = MediaItemType.Movie,
+                backdrop = movie?.backdrop,
+                replay = replay,
+                onNavigateUp = onNavigateUp,
+            )
+        }
+        MediaItemType.TvShow -> {
+            val episode by produceState<Episode?>(null) {
+                value = client.getEpisode(id)
+            }
+
+            PlayerScreen(
+                id = id,
+                title = episode?.name ?: "",
+                type = MediaItemType.TvShow,
+                backdrop = episode?.thumbnail,
+                replay = replay,
+                onNavigateUp = onNavigateUp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlayerScreen(
     id: Int,
     title: String,
     type: MediaItemType,
     backdrop: String?,
-    playFromStart: Boolean,
+    replay: Boolean,
+    onNavigateUp: () -> Unit,
 ) {
     val client = LocalZenithClient.current
 
@@ -99,30 +138,23 @@ fun PlayerScreen(
 
     info?.let {
         if (castSession != null && castSession.isConnected) {
-            RemotePlayer(id = id,
+            RemotePlayer(
+                id = id,
                 title = title,
                 type = type,
                 backdrop = backdrop,
                 info = it,
-                session = castSession)
+                session = castSession,
+                onNavigateUp = onNavigateUp,
+            )
         } else {
-            LocalPlayer(id = id, title = title, info = it, playFromStart = playFromStart)
-        }
-    }
-}
-
-@Composable
-fun LifecycleObserver(onEvent: (owner: LifecycleOwner, event: Lifecycle.Event) -> Unit) {
-    val owner = LocalLifecycleOwner.current
-    val observer = remember(onEvent) {
-        LifecycleEventObserver(onEvent)
-    }
-
-    DisposableEffect(owner, observer) {
-        val lifecycle = owner.lifecycle
-        lifecycle.addObserver(observer)
-        onDispose {
-            lifecycle.removeObserver(observer)
+            LocalPlayer(
+                id = id,
+                title = title,
+                info = it,
+                replay = replay,
+                onNavigateUp = onNavigateUp,
+            )
         }
     }
 }
@@ -136,10 +168,10 @@ private fun RemotePlayer(
     backdrop: String?,
     info: VideoInfo,
     session: CastSession,
+    onNavigateUp: () -> Unit,
 ) {
     val context = LocalContext.current
     val client = LocalZenithClient.current
-    val navigator = LocalNavigator.current
     val mediaClient = session.remoteMediaClient!!
 
     var position by remember { mutableStateOf(0L) }
@@ -261,11 +293,11 @@ private fun RemotePlayer(
 
             AppBar(
                 title = title,
-                onBackPressed = { navigator.pop() },
+                onBackPressed = { onNavigateUp() },
                 onShowSubtitlesMenu = { showSubtitlesMenu = true },
                 onClosePlayer = {
                     mediaClient.stop()
-                    navigator.pop()
+                    onNavigateUp()
                 },
             )
 
@@ -440,14 +472,19 @@ private fun SubtitlesMenu(
 }
 
 @Composable
-private fun LocalPlayer(id: Int, title: String, info: VideoInfo, playFromStart: Boolean) {
+private fun LocalPlayer(
+    id: Int,
+    title: String,
+    info: VideoInfo,
+    replay: Boolean,
+    onNavigateUp: () -> Unit,
+) {
     val context = LocalContext.current
     val client = LocalZenithClient.current
-    val navigator = LocalNavigator.current
 
     KeepScreenOn {
         FullScreen {
-            val startPosition = if (playFromStart) 0 else {
+            val startPosition = if (replay) 0 else {
                 info.position?.toLong() ?: 0
             }
 
@@ -458,13 +495,14 @@ private fun LocalPlayer(id: Int, title: String, info: VideoInfo, playFromStart: 
                 startPosition = startPosition,
                 duration = info.duration.toLong(),
                 subtitles = info.subtitles,
-                onVideoEnded = { navigator.pop() },
+                onVideoEnded = { onNavigateUp() },
                 onLaunchExternal = {
-                    navigator.pop()
+                    onNavigateUp()
                     context.startActivity(Intent(Intent.ACTION_VIEW).apply {
                         setDataAndType(Uri.parse(client.getVideoUrl(id)), "video/x-matroska")
                     })
-                }
+                },
+                onBackPressed = onNavigateUp,
             )
         }
     }
@@ -536,6 +574,7 @@ private fun VideoPlayer(
     subtitles: List<SubtitleStreamInfo>,
     onVideoEnded: () -> Unit,
     onLaunchExternal: () -> Unit,
+    onBackPressed: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -723,9 +762,8 @@ private fun VideoPlayer(
             onShowSubtitlesMenu = {
                 showSubtitlesMenu = true
             },
-            onLaunchExternal = {
-                onLaunchExternal()
-            },
+            onLaunchExternal = onLaunchExternal,
+            onBackPressed = onBackPressed,
         )
     }
 }
@@ -816,9 +854,8 @@ private fun Controls(
     onTogglePlaying: () -> Unit,
     onShowSubtitlesMenu: () -> Unit,
     onLaunchExternal: () -> Unit,
+    onBackPressed: () -> Unit,
 ) {
-    val navigator = LocalNavigator.current
-
     val controls = rememberControlsController()
     val opacity by animateFloatAsState(if (controls.visible) 0.4f else 0f)
 
@@ -845,7 +882,7 @@ private fun Controls(
             ) {
                 AppBar(
                     title = title,
-                    onBackPressed = { navigator.pop() },
+                    onBackPressed = onBackPressed,
                     onShowSubtitlesMenu = onShowSubtitlesMenu,
                     onLaunchExternal = onLaunchExternal,
                 )

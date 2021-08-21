@@ -25,6 +25,7 @@ fun VideoItemDetailsScreen(
     isWatched: Boolean,
     headerContent: @Composable () -> Unit,
     onPlay: (replay: Boolean) -> Unit,
+    onNavigateUp: () -> Unit,
 ) {
     val client = LocalZenithClient.current
     val scope = rememberCoroutineScope()
@@ -66,6 +67,7 @@ fun VideoItemDetailsScreen(
         },
         overview = overview,
         isWatched = isWatched,
+        onNavigateUp = onNavigateUp,
     )
 }
 

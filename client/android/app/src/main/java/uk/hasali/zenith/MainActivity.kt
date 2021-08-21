@@ -2,36 +2,34 @@ package uk.hasali.zenith
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.LinearProgressIndicator
+import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.android.gms.cast.framework.CastContext
 import io.ktor.client.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import kotlinx.coroutines.launch
-import soup.compose.material.motion.Axis
-import soup.compose.material.motion.MaterialMotion
-import soup.compose.material.motion.materialSharedAxis
-import uk.hasali.zenith.ui.*
+import uk.hasali.zenith.ui.AppTheme
+import uk.hasali.zenith.ui.LocalZenithClient
 
 class MainActivity : FragmentActivity() {
-    private var navigator: Navigator? = null
-
     private lateinit var client: HttpClient
 
     private var isUpdateAvailable by mutableStateOf(false)
 
-    @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -62,43 +60,24 @@ class MainActivity : FragmentActivity() {
         }
     }
 
-    override fun onBackPressed() {
-        if (navigator?.pop() != true) {
-            super.onBackPressed()
-        }
-    }
-
     @Composable
     private fun App() {
         val zenithApiClient = remember { ZenithApiClient(client) }
-        val saveableStateHolder = rememberSaveableStateHolder()
-
-        val navigator = remember { Navigator(saveableStateHolder, this.navigator) }
-            .also { this.navigator = it }
+        val nav = rememberNavController()
 
         AppTheme {
             ProvideWindowInsets {
-                if (isUpdateAvailable && navigator.currentScreen !is Screen.Player) {
+                val entry by nav.currentBackStackEntryAsState()
+                val route = entry?.destination?.route
+
+                if (isUpdateAvailable && route?.startsWith("player") != true) {
                     UpdateDialog()
                 }
 
                 CompositionLocalProvider(
-                    LocalNavigator provides navigator,
                     LocalZenithClient provides zenithApiClient,
                 ) {
-                    Surface {
-                        MaterialMotion(
-                            targetState = navigator.currentScreen,
-                            motionSpec = materialSharedAxis(
-                                axis = Axis.Z,
-                                forward = navigator.push,
-                            ),
-                        ) { screen ->
-                            navigator.SaveableStateProvider(screen) {
-                                ScreenComposable(screen)
-                            }
-                        }
-                    }
+                    AppNavigation(nav = nav)
                 }
             }
         }
@@ -111,9 +90,7 @@ class MainActivity : FragmentActivity() {
         var progress by remember { mutableStateOf(0f) }
 
         AlertDialog(
-            title = {
-                Text("Update")
-            },
+            title = { Text("Update") },
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text("An update is available")

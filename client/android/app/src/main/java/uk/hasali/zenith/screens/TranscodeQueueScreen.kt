@@ -1,4 +1,4 @@
-package uk.hasali.zenith.ui
+package uk.hasali.zenith.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,17 +12,19 @@ import androidx.compose.ui.unit.dp
 import uk.hasali.zenith.TranscoderState
 import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.ZenithApiClient
+import uk.hasali.zenith.ui.AppBar
+import uk.hasali.zenith.ui.LocalZenithClient
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun TranscodeQueueScreen() {
+fun TranscodeQueueScreen(onNavigateUp: () -> Unit) {
     val client = LocalZenithClient.current
 
     val state by produceState<TranscoderState?>(null) {
         value = client.getTranscoderState()
     }
 
-    Scaffold(topBar = { AppBar(title = "Transcode queue", menu = false) }) {
+    Scaffold(topBar = { AppBar(title = "Transcode queue", onBackPressed = onNavigateUp) }) {
         if (state == null) {
             Box(modifier = Modifier.fillMaxSize()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))

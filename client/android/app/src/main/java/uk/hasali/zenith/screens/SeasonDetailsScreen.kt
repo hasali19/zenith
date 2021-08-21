@@ -1,4 +1,4 @@
-package uk.hasali.zenith.ui
+package uk.hasali.zenith.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -12,9 +12,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,21 +21,47 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.insets.navigationBarsPadding
 import uk.hasali.zenith.Episode
 import uk.hasali.zenith.Season
-import uk.hasali.zenith.Show
-import uk.hasali.zenith.ZenithApiClient
+import uk.hasali.zenith.ui.AppBar
+import uk.hasali.zenith.ui.LocalZenithClient
+import uk.hasali.zenith.ui.Thumbnail
+import uk.hasali.zenith.ui.displayDuration
+
+@Composable
+fun SeasonDetailsScreen(
+    id: Int,
+    onNavigateToEpisode: (Episode) -> Unit,
+    onNavigateUp: () -> Unit,
+) {
+    val client = LocalZenithClient.current
+
+    val season by produceState<Season?>(null) {
+        value = client.getSeason(id)
+    }
+
+    val episodes by produceState(emptyList<Episode>(), season) {
+        season?.let { season ->
+            value = client.getEpisodes(season.id)
+        }
+    }
+
+    SeasonDetailsScreen(
+        season = season,
+        episodes = episodes,
+        onNavigateToEpisode = onNavigateToEpisode,
+        onNavigateUp = onNavigateUp,
+    )
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SeasonDetailsScreen(show: Show, season: Season) {
-    val client = LocalZenithClient.current
-    val navigator = LocalNavigator.current
-
-    val episodes by produceState(initialValue = emptyList<Episode>()) {
-        value = client.getEpisodes(season.id)
-    }
-
+private fun SeasonDetailsScreen(
+    season: Season?,
+    episodes: List<Episode>,
+    onNavigateToEpisode: (Episode) -> Unit,
+    onNavigateUp: () -> Unit,
+) {
     Scaffold(
-        topBar = { AppBar(title = season.name) },
+        topBar = { AppBar(title = season?.name, onBackPressed = onNavigateUp) },
         modifier = Modifier.navigationBarsPadding(),
     ) {
         LazyVerticalGrid(
@@ -47,9 +71,7 @@ fun SeasonDetailsScreen(show: Show, season: Season) {
             items(episodes) { episode ->
                 EpisodeItem(
                     episode = episode,
-                    onClick = {
-                        navigator.push(Screen.EpisodeDetails(show, season, episode))
-                    },
+                    onClick = { onNavigateToEpisode(episode) },
                 )
             }
         }

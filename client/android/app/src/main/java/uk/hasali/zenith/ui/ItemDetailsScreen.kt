@@ -27,6 +27,7 @@ fun ItemDetailsScreen(
     actionsRow: (@Composable () -> Unit)? = null,
     overview: String? = null,
     isWatched: Boolean = false,
+    onNavigateUp: () -> Unit,
     content: @Composable () -> Unit = {},
 ) {
     val scrollState = rememberScrollState()
@@ -92,7 +93,7 @@ fun ItemDetailsScreen(
         }
     }
 
-    FadingAppBar(alpha = scrollState.value / 400f)
+    FadingAppBar(alpha = scrollState.value / 400f, onBackPressed = onNavigateUp)
 }
 
 @Composable
