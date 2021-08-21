@@ -37,7 +37,7 @@ private fun MovieDetailsScreen(movie: Movie, onPlay: (Boolean) -> Unit, onNaviga
         backdrop = movie.backdrop,
         poster = movie.poster,
         overview = movie.overview,
-        isWatched = false, /* TODO */
+        isWatched = movie.isWatched,
         headerContent = { HeaderContent(movie = movie) },
         onPlay = onPlay,
         onNavigateUp = onNavigateUp,

@@ -112,6 +112,7 @@ private fun SeasonsList(show: Show, seasons: List<Season>, onItemClick: (Season)
                 poster = season.poster,
                 primary = season.name,
                 secondary = show.name,
+                isWatched = show.unwatchedEpisodes == 0,
                 onClick = { onItemClick(season) },
                 modifier = Modifier
                     .width(120.dp)

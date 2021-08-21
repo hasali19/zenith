@@ -20,6 +20,7 @@ fun <T> PosterGridListScreen(
     poster: (T) -> String,
     name: (T) -> String,
     date: (T) -> Long?,
+    isWatched: (T) -> Boolean = { false },
     onClick: (T) -> Unit,
 ) {
     LazyVerticalGrid(
@@ -38,6 +39,7 @@ fun <T> PosterGridListScreen(
                 poster = poster(item),
                 primary = name(item),
                 secondary = year?.toString() ?: "",
+                isWatched = isWatched(item),
                 onClick = { onClick(item) },
                 modifier = Modifier
                     .fillMaxWidth()

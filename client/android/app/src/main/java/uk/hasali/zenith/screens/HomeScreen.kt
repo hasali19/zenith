@@ -47,7 +47,8 @@ fun HomeScreen(
                 poster = { it.poster },
                 name = { it.title },
                 date = { it.releaseDate },
-                onClick = onNavigateToMovie
+                isWatched = { it.isWatched },
+                onClick = onNavigateToMovie,
             )
         }
 
@@ -58,7 +59,8 @@ fun HomeScreen(
                 poster = { it.poster },
                 name = { it.name },
                 date = { it.startDate },
-                onClick = onNavigateToShow
+                isWatched = { it.unwatchedEpisodes == 0 },
+                onClick = onNavigateToShow,
             )
         }
     }
@@ -71,6 +73,7 @@ private fun <T> Section(
     poster: (T) -> String,
     name: (T) -> String,
     date: (T) -> Long?,
+    isWatched: (T) -> Boolean = { false },
     onClick: (T) -> Unit,
 ) {
     Column(modifier = Modifier.padding(top = 16.dp)) {
@@ -94,6 +97,7 @@ private fun <T> Section(
                     poster = poster(item),
                     primary = name(item),
                     secondary = year?.toString() ?: "",
+                    isWatched = isWatched(item),
                     onClick = { onClick(item) },
                     modifier = Modifier
                         .width(120.dp)

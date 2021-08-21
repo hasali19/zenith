@@ -15,6 +15,8 @@ data class Movie(
     val overview: String,
     @SerialName("release_date")
     val releaseDate: Long,
+    @SerialName("is_watched")
+    val isWatched: Boolean,
 )
 
 @Serializable
