@@ -32,6 +32,7 @@ struct Movie {
     poster: Option<String>,
     backdrop: Option<String>,
     duration: f64,
+    is_watched: bool,
     external_ids: ExternalIds,
 }
 
@@ -48,6 +49,7 @@ impl<'r> FromRow<'r, SqliteRow> for Movie {
             poster: poster.as_deref().map(utils::get_image_url),
             backdrop: backdrop.as_deref().map(utils::get_image_url),
             duration: row.try_get(6)?,
+            is_watched: row.try_get(8)?,
             external_ids: ExternalIds {
                 tmdb: row.try_get(7)?,
             },
@@ -62,9 +64,11 @@ async fn get_movies(req: HttpRequest) -> actix_web::Result<impl Responder> {
     let sql = "
         SELECT
             movie.item_id, title, release_date, overview,
-            poster, backdrop, video.duration, tmdb_id
+            poster, backdrop, video.duration, tmdb_id,
+            COALESCE(u.is_watched, 0)
         FROM movies AS movie
         JOIN video_files AS video ON video.item_id = movie.item_id
+        LEFT JOIN user_item_data AS u ON u.item_id = movie.item_id
         ORDER BY title
     ";
 
@@ -84,9 +88,11 @@ async fn get_movie(req: HttpRequest, path: web::Path<(i64,)>) -> actix_web::Resu
     let sql = "
         SELECT
             movie.item_id, title, release_date, overview,
-            poster, backdrop, video.duration, tmdb_id
+            poster, backdrop, video.duration, tmdb_id,
+            COALESCE(u.is_watched, 0)
         FROM movies AS movie
         JOIN video_files AS video ON video.item_id = movie.item_id
+        LEFT JOIN user_item_data AS u ON u.item_id = movie.item_id
         WHERE movie.item_id = ?
         ORDER BY title
     ";
@@ -108,7 +114,8 @@ async fn get_recent_movies(req: HttpRequest) -> actix_web::Result<impl Responder
     let sql = "
         SELECT
             movie.item_id, title, release_date, overview,
-            poster, backdrop, video.duration, tmdb_id
+            poster, backdrop, video.duration, tmdb_id,
+            COALESCE(u.is_watched, 0)
         FROM movies AS movie
         JOIN media_items AS item ON item.id = movie.item_id
         JOIN video_files AS video ON video.item_id = movie.item_id
