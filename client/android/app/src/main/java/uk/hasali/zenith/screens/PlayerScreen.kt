@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.support.v4.media.session.MediaSessionCompat
 import android.text.format.DateUtils
+import android.util.Log
 import android.view.WindowManager
 import android.widget.SeekBar
 import android.widget.Toast
@@ -57,6 +58,7 @@ import com.google.android.gms.cast.MediaMetadata
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.media.RemoteMediaClient
+import io.ktor.client.features.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -698,7 +700,14 @@ private fun VideoPlayer(
                             position = player.currentPosition / 1000
                             if (!BuildConfig.DEBUG && counter == 4) {
                                 launch {
-                                    client.updateProgress(id, position)
+                                    try {
+                                        client.updateProgress(id, position)
+                                    } catch (e: ServerResponseException) {
+                                        Log.w(
+                                            "PlayerScreen",
+                                            "Failed to update progress on server: ${e.message}",
+                                        )
+                                    }
                                 }
                             }
                         }
