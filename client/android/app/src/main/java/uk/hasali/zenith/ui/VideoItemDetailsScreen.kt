@@ -12,36 +12,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.playClick
 
 @Composable
 fun VideoItemDetailsScreen(
-    id: Int,
     backdrop: String?,
     poster: String?,
     overview: String?,
     isWatched: Boolean,
     headerContent: @Composable () -> Unit,
+    info: VideoInfo?,
     onPlay: (replay: Boolean) -> Unit,
+    onTranscode: () -> Unit,
+    onRefreshMetadata: () -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    val client = LocalZenithClient.current
-    val scope = rememberCoroutineScope()
-
-    val info by produceState<VideoInfo?>(null, id) {
-        value = client.getVideoInfo(id)
-    }
-
     var showMediaInfo by remember { mutableStateOf(false) }
 
     fun onActionInvoked(action: Action) {
         when (action) {
             Action.Play -> onPlay(false)
             Action.PlayFromStart -> onPlay(true)
-            Action.ConvertVideo -> scope.launch { client.startTranscode(id) }
-            Action.RefreshMetadata -> scope.launch { client.refreshMetadata(id) }
+            Action.ConvertVideo -> onTranscode()
+            Action.RefreshMetadata -> onRefreshMetadata()
             Action.MediaInfo -> showMediaInfo = true
         }
     }
@@ -52,9 +46,7 @@ fun VideoItemDetailsScreen(
         }
     }
 
-    val showReplayButton = info.let {
-        it != null && (it.position?.toFloat() ?: 0f) > it.duration * 0.1f
-    }
+    val showReplayButton = (info?.position?.toFloat() ?: 0f) > 0
 
     ItemDetailsScreen(
         backdrop = backdrop,

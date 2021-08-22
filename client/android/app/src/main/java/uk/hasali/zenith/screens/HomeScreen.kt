@@ -17,6 +17,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.Movie
 import uk.hasali.zenith.Show
+import uk.hasali.zenith.ui.CenteredLoadingIndicator
 import uk.hasali.zenith.ui.LocalZenithClient
 import uk.hasali.zenith.ui.MediaItemWithPoster
 
@@ -27,41 +28,61 @@ fun HomeScreen(
 ) {
     val client = LocalZenithClient.current
 
-    val movies by produceState(emptyList<Movie>()) {
+    val movies by produceState<List<Movie>?>(null) {
         value = client.getRecentMovies()
     }
 
-    val shows by produceState(initialValue = emptyList<Show>()) {
+    val shows by produceState<List<Show>?>(null) {
         value = client.getRecentShows()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(state = rememberScrollState()),
-    ) {
-        if (movies.isNotEmpty()) {
-            Section(
-                title = "Recently Added Movies",
-                items = movies,
-                poster = { it.poster },
-                name = { it.title },
-                date = { it.releaseDate },
-                isWatched = { it.isWatched },
-                onClick = onNavigateToMovie,
-            )
-        }
+    HomeScreen(
+        movies = movies,
+        shows = shows,
+        onNavigateToMovie = onNavigateToMovie,
+        onNavigateToShow = onNavigateToShow,
+    )
+}
 
-        if (shows.isNotEmpty()) {
-            Section(
-                title = "Recently Updated Shows",
-                items = shows,
-                poster = { it.poster },
-                name = { it.name },
-                date = { it.startDate },
-                isWatched = { it.unwatchedEpisodes == 0 },
-                onClick = onNavigateToShow,
-            )
+@Composable
+private fun HomeScreen(
+    movies: List<Movie>?,
+    shows: List<Show>?,
+    onNavigateToMovie: (Movie) -> Unit,
+    onNavigateToShow: (Show) -> Unit,
+) {
+    when {
+        movies == null || shows == null -> CenteredLoadingIndicator()
+        else -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(state = rememberScrollState()),
+            ) {
+                if (movies.isNotEmpty()) {
+                    Section(
+                        title = "Recently Added Movies",
+                        items = movies,
+                        poster = { it.poster },
+                        name = { it.title },
+                        date = { it.releaseDate },
+                        isWatched = { it.isWatched },
+                        onClick = onNavigateToMovie,
+                    )
+                }
+
+                if (shows.isNotEmpty()) {
+                    Section(
+                        title = "Recently Updated Shows",
+                        items = shows,
+                        poster = { it.poster },
+                        name = { it.name },
+                        date = { it.startDate },
+                        isWatched = { it.unwatchedEpisodes == 0 },
+                        onClick = onNavigateToShow,
+                    )
+                }
+            }
         }
     }
 }

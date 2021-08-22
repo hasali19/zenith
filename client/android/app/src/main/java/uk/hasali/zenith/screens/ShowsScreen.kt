@@ -11,7 +11,7 @@ import uk.hasali.zenith.ui.PosterGridListScreen
 fun ShowsScreen(onNavigateToShow: (Show) -> Unit) {
     val client = LocalZenithClient.current
 
-    val shows by produceState(initialValue = emptyList<Show>()) {
+    val shows by produceState<List<Show>?>(null) {
         value = client.getShows()
     }
 

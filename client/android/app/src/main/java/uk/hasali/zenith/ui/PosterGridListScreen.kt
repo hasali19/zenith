@@ -16,35 +16,38 @@ import kotlinx.datetime.toLocalDateTime
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <T> PosterGridListScreen(
-    items: List<T>,
+    items: List<T>?,
     poster: (T) -> String,
     name: (T) -> String,
     date: (T) -> Long?,
     isWatched: (T) -> Boolean = { false },
     onClick: (T) -> Unit,
 ) {
-    LazyVerticalGrid(
-        cells = GridCells.Adaptive(120.dp),
-        contentPadding = PaddingValues(4.dp),
-    ) {
-        items(items.size) { i ->
-            val item = items[i]
-            val dateVal = date(item)
-            val year = if (dateVal == null) null else
-                Instant.fromEpochSeconds(dateVal)
-                    .toLocalDateTime(TimeZone.UTC)
-                    .year
+    when (items) {
+        null -> CenteredLoadingIndicator()
+        else -> LazyVerticalGrid(
+            cells = GridCells.Adaptive(120.dp),
+            contentPadding = PaddingValues(4.dp),
+        ) {
+            items(items.size) { i ->
+                val item = items[i]
+                val dateVal = date(item)
+                val year = if (dateVal == null) null else
+                    Instant.fromEpochSeconds(dateVal)
+                        .toLocalDateTime(TimeZone.UTC)
+                        .year
 
-            MediaItemWithPoster(
-                poster = poster(item),
-                primary = name(item),
-                secondary = year?.toString() ?: "",
-                isWatched = isWatched(item),
-                onClick = { onClick(item) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp),
-            )
+                MediaItemWithPoster(
+                    poster = poster(item),
+                    primary = name(item),
+                    secondary = year?.toString() ?: "",
+                    isWatched = isWatched(item),
+                    onClick = { onClick(item) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(4.dp),
+                )
+            }
         }
     }
 }

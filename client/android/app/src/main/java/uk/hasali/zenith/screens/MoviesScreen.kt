@@ -11,7 +11,7 @@ import uk.hasali.zenith.ui.PosterGridListScreen
 fun MoviesScreen(onNavigateToMovie: (Movie) -> Unit) {
     val client = LocalZenithClient.current
 
-    val movies by produceState(emptyList<Movie>()) {
+    val movies by produceState<List<Movie>?>(null) {
         value = client.getMovies()
     }
 

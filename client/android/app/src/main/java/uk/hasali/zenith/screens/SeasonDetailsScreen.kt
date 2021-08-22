@@ -12,7 +12,9 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,10 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.insets.navigationBarsPadding
 import uk.hasali.zenith.Episode
 import uk.hasali.zenith.Season
-import uk.hasali.zenith.ui.AppBar
-import uk.hasali.zenith.ui.LocalZenithClient
-import uk.hasali.zenith.ui.Thumbnail
-import uk.hasali.zenith.ui.displayDuration
+import uk.hasali.zenith.ui.*
 
 @Composable
 fun SeasonDetailsScreen(
@@ -34,14 +33,12 @@ fun SeasonDetailsScreen(
 ) {
     val client = LocalZenithClient.current
 
-    val season by produceState<Season?>(null) {
+    val season by produceState<Season?>(null, id) {
         value = client.getSeason(id)
     }
 
-    val episodes by produceState(emptyList<Episode>(), season) {
-        season?.let { season ->
-            value = client.getEpisodes(season.id)
-        }
+    val episodes by produceState<List<Episode>?>(null, id) {
+        value = client.getEpisodes(id)
     }
 
     SeasonDetailsScreen(
@@ -56,7 +53,7 @@ fun SeasonDetailsScreen(
 @Composable
 private fun SeasonDetailsScreen(
     season: Season?,
-    episodes: List<Episode>,
+    episodes: List<Episode>?,
     onNavigateToEpisode: (Episode) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
@@ -64,15 +61,20 @@ private fun SeasonDetailsScreen(
         topBar = { AppBar(title = season?.name, onBackPressed = onNavigateUp) },
         modifier = Modifier.navigationBarsPadding(),
     ) {
-        LazyVerticalGrid(
-            cells = GridCells.Adaptive(200.dp),
-            contentPadding = PaddingValues(4.dp),
-        ) {
-            items(episodes) { episode ->
-                EpisodeItem(
-                    episode = episode,
-                    onClick = { onNavigateToEpisode(episode) },
-                )
+        when (episodes) {
+            null -> CenteredLoadingIndicator()
+            else -> {
+                LazyVerticalGrid(
+                    cells = GridCells.Adaptive(200.dp),
+                    contentPadding = PaddingValues(4.dp),
+                ) {
+                    items(episodes) { episode ->
+                        EpisodeItem(
+                            episode = episode,
+                            onClick = { onNavigateToEpisode(episode) },
+                        )
+                    }
+                }
             }
         }
     }

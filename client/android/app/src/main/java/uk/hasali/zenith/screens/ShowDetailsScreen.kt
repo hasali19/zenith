@@ -25,50 +25,47 @@ import uk.hasali.zenith.ui.MediaItemWithPoster
 fun ShowDetailsScreen(id: Int, onNavigateToSeason: (Season) -> Unit, onNavigateUp: () -> Unit) {
     val client = LocalZenithClient.current
 
-    val show by produceState<Show?>(null) {
+    val show by produceState<Show?>(null, id) {
         value = client.getShow(id)
     }
 
-    val seasons by produceState(emptyList<Season>(), show) {
-        show?.let { show ->
-            value = client.getSeasons(show.id)
-        }
+    val seasons by produceState<List<Season>?>(null, id) {
+        value = client.getSeasons(id)
     }
 
-    show.let {
-        if (it == null) {
-            CenteredLoadingIndicator()
-        } else {
-            ShowDetailsScreen(
-                show = it,
-                seasons = seasons,
-                onNavigateToSeason = onNavigateToSeason,
-                onNavigateUp = onNavigateUp,
-            )
-        }
-    }
+    ShowDetailsScreen(
+        show = show,
+        seasons = seasons,
+        onNavigateToSeason = onNavigateToSeason,
+        onNavigateUp = onNavigateUp,
+    )
 }
 
 @Composable
 private fun ShowDetailsScreen(
-    show: Show,
-    seasons: List<Season>,
+    show: Show?,
+    seasons: List<Season>?,
     onNavigateToSeason: (Season) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    ItemDetailsScreen(
-        backdrop = show.backdrop,
-        poster = show.poster,
-        headerContent = { HeaderContent(show = show) },
-        overview = show.overview,
-        isWatched = show.unwatchedEpisodes == 0,
-        onNavigateUp = onNavigateUp,
-    ) {
-        SeasonsSection(
-            show = show,
-            seasons = seasons,
-            onItemClick = onNavigateToSeason,
-        )
+    when {
+        show == null || seasons == null -> CenteredLoadingIndicator()
+        else -> ItemDetailsScreen(
+            backdrop = show.backdrop,
+            poster = show.poster,
+            headerContent = { HeaderContent(show = show) },
+            overview = show.overview,
+            isWatched = show.unwatchedEpisodes == 0,
+            onNavigateUp = onNavigateUp,
+        ) {
+            if (seasons.isNotEmpty()) {
+                SeasonsSection(
+                    show = show,
+                    seasons = seasons,
+                    onItemClick = onNavigateToSeason,
+                )
+            }
+        }
     }
 }
 
