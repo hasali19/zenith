@@ -1,5 +1,6 @@
 package uk.hasali.zenith.ui
 
+import android.text.format.DateUtils
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -11,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.playClick
@@ -46,14 +48,12 @@ fun VideoItemDetailsScreen(
         }
     }
 
-    val showReplayButton = (info?.position?.toFloat() ?: 0f) > 0
-
     ItemDetailsScreen(
         backdrop = backdrop,
         poster = poster,
         headerContent = headerContent,
         actionsRow = {
-            ActionsSection(showReplayButton) { action ->
+            ActionsSection(info = info) { action ->
                 onActionInvoked(action)
             }
         },
@@ -72,17 +72,17 @@ private enum class Action {
 }
 
 @Composable
-private fun ActionsSection(showReplayButton: Boolean, onActionInvoked: (Action) -> Unit) {
+private fun ActionsSection(info: VideoInfo?, onActionInvoked: (Action) -> Unit) {
     val context = LocalContext.current
 
     @Composable
-    fun PlayButton(onClick: () -> Unit) {
+    fun PlayButton(resume: Boolean, onClick: () -> Unit) {
         Button(onClick = onClick, modifier = Modifier.width(150.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center) {
                 Icon(Icons.Default.PlayArrow, contentDescription = "Play")
                 Spacer(modifier = Modifier.width(12.dp))
-                Text("Play")
+                Text(if (resume) "Resume" else "Play")
                 // Without this spacer the button content ends up looking
                 // slightly off center
                 Spacer(modifier = Modifier.width(8.dp))
@@ -90,36 +90,50 @@ private fun ActionsSection(showReplayButton: Boolean, onActionInvoked: (Action) 
         }
     }
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        PlayButton(onClick = {
-            context.playClick()
-            onActionInvoked(Action.Play)
-        })
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            PlayButton(
+                resume = info?.position ?: 0.0 > 0,
+                onClick = {
+                    context.playClick()
+                    onActionInvoked(Action.Play)
+                },
+            )
 
-        Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
-        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
-            if (showReplayButton) {
+            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
+                if ((info?.position?.toFloat() ?: 0f) > 0) {
+                    IconButton(
+                        onClick = {
+                            context.playClick()
+                            onActionInvoked(Action.PlayFromStart)
+                        },
+                    ) {
+                        Icon(Icons.Default.Replay, contentDescription = "Replay")
+                    }
+                }
+
                 IconButton(
                     onClick = {
                         context.playClick()
-                        onActionInvoked(Action.PlayFromStart)
+                        onActionInvoked(Action.MediaInfo)
                     },
                 ) {
-                    Icon(Icons.Default.Replay, contentDescription = "Replay")
+                    Icon(Icons.Default.Info, contentDescription = "Media info")
                 }
-            }
 
-            IconButton(
-                onClick = {
-                    context.playClick()
-                    onActionInvoked(Action.MediaInfo)
-                },
-            ) {
-                Icon(Icons.Default.Info, contentDescription = "Media info")
+                ActionsMenu(onActionInvoked = onActionInvoked)
             }
+        }
 
-            ActionsMenu(onActionInvoked = onActionInvoked)
+        if (info?.position != null && info.position > 0) {
+            Text(
+                text = "Resume from ${DateUtils.formatElapsedTime(info.position.toLong())}",
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.caption,
+                modifier = Modifier.widthIn(min = 150.dp),
+            )
         }
     }
 }
