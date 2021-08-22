@@ -28,7 +28,7 @@ fun PlayerScreen(id: Int, type: MediaItemType, replay: Boolean, onNavigateUp: ()
     }
 
     val onVideoProgress: (Long) -> Unit = { position ->
-        scope.launch {
+        if (!BuildConfig.DEBUG) scope.launch {
             try {
                 client.updateProgress(id, position)
             } catch (e: ServerResponseException) {
