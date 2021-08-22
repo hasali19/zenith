@@ -151,74 +151,74 @@ data class ImportMovieRequest(
     val year: Int,
 )
 
-class ZenithApiClient(private val client: HttpClient) {
+class ZenithApiClient(private val client: HttpClient, private val baseUrl: String) {
     suspend fun getMovies(): List<Movie> =
-        client.get("https://zenith.hasali.uk/api/movies")
+        client.get("$baseUrl/api/movies")
 
     suspend fun getRecentMovies(): List<Movie> =
-        client.get("https://zenith.hasali.uk/api/movies/recent")
+        client.get("$baseUrl/api/movies/recent")
 
     suspend fun getMovie(id: Int): Movie =
-        client.get("https://zenith.hasali.uk/api/movies/$id")
+        client.get("$baseUrl/api/movies/$id")
 
     suspend fun getShows(): List<Show> =
-        client.get("https://zenith.hasali.uk/api/tv/shows")
+        client.get("$baseUrl/api/tv/shows")
 
     suspend fun getRecentShows(): List<Show> =
-        client.get("https://zenith.hasali.uk/api/tv/shows/recent")
+        client.get("$baseUrl/api/tv/shows/recent")
 
     suspend fun getShow(id: Int): Show =
-        client.get("https://zenith.hasali.uk/api/tv/shows/$id")
+        client.get("$baseUrl/api/tv/shows/$id")
 
     suspend fun getSeasons(showId: Int): List<Season> =
-        client.get("https://zenith.hasali.uk/api/tv/shows/$showId/seasons")
+        client.get("$baseUrl/api/tv/shows/$showId/seasons")
 
     suspend fun getSeason(id: Int): Season =
-        client.get("https://zenith.hasali.uk/api/tv/seasons/$id")
+        client.get("$baseUrl/api/tv/seasons/$id")
 
     suspend fun getEpisodes(seasonId: Int): List<Episode> =
-        client.get("https://zenith.hasali.uk/api/tv/seasons/$seasonId/episodes")
+        client.get("$baseUrl/api/tv/seasons/$seasonId/episodes")
 
     suspend fun getEpisode(id: Int): Episode =
-        client.get("https://zenith.hasali.uk/api/tv/episodes/$id")
+        client.get("$baseUrl/api/tv/episodes/$id")
 
-    fun getVideoUrl(id: Int) = "https://zenith.hasali.uk/api/videos/$id"
+    fun getVideoUrl(id: Int) = "$baseUrl/api/videos/$id"
 
-    fun getSubtitleUrl(id: Int) = "https://zenith.hasali.uk/api/subtitles/$id"
+    fun getSubtitleUrl(id: Int) = "$baseUrl/api/subtitles/$id"
 
     suspend fun getVideoInfo(id: Int): VideoInfo =
-        client.get("https://zenith.hasali.uk/api/videos/$id/info")
+        client.get("$baseUrl/api/videos/$id/info")
 
     suspend fun updateProgress(videoId: Int, position: Long): Unit =
-        client.post("https://zenith.hasali.uk/api/progress/$videoId?position=$position")
+        client.post("$baseUrl/api/progress/$videoId?position=$position")
 
     suspend fun getTranscoderState(): TranscoderState =
-        client.get("https://zenith.hasali.uk/api/transcoder")
+        client.get("$baseUrl/api/transcoder")
 
     suspend fun startTranscode(videoId: Int): Unit =
-        client.post("https://zenith.hasali.uk/api/transcoder?video_id=$videoId")
+        client.post("$baseUrl/api/transcoder?video_id=$videoId")
 
     suspend fun getImportQueue(): List<ImportQueueItem> =
-        client.get("https://zenith.hasali.uk/api/import/queue")
+        client.get("$baseUrl/api/import/queue")
 
     suspend fun importShow(show: ImportShowRequest): Unit =
-        client.post("https://zenith.hasali.uk/api/tv/shows") {
+        client.post("$baseUrl/api/tv/shows") {
             contentType(ContentType.Application.Json)
             body = show
         }
 
     suspend fun importEpisode(showId: Int, episode: ImportEpisodeRequest): Unit =
-        client.post("https://zenith.hasali.uk/api/tv/shows/$showId/episodes") {
+        client.post("$baseUrl/api/tv/shows/$showId/episodes") {
             contentType(ContentType.Application.Json)
             body = episode
         }
 
     suspend fun importMovie(movie: ImportMovieRequest): Unit =
-        client.post("https://zenith.hasali.uk/api/movies") {
+        client.post("$baseUrl/api/movies") {
             contentType(ContentType.Application.Json)
             body = movie
         }
 
     suspend fun refreshMetadata(id: Int): Unit =
-        client.post("https://zenith.hasali.uk/api/metadata/$id/refresh")
+        client.post("$baseUrl/api/metadata/$id/refresh")
 }
