@@ -12,6 +12,7 @@ data class Movie(
     val title: String,
     val poster: String,
     val backdrop: String,
+    val duration: Double,
     val overview: String,
     @SerialName("release_date")
     val releaseDate: Long,

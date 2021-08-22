@@ -16,6 +16,7 @@ import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.ui.CenteredLoadingIndicator
 import uk.hasali.zenith.ui.LocalZenithClient
 import uk.hasali.zenith.ui.VideoItemDetailsScreen
+import uk.hasali.zenith.ui.displayDuration
 
 @Composable
 fun MovieDetailsScreen(id: Int, onPlay: (replay: Boolean) -> Unit, onNavigateUp: () -> Unit) {
@@ -69,11 +70,12 @@ private fun MovieDetailsScreen(
 @Composable
 private fun HeaderContent(movie: Movie) {
     Column {
+        val duration = displayDuration(movie.duration)
         val year = Instant.fromEpochSeconds(movie.releaseDate)
             .toLocalDateTime(TimeZone.UTC)
             .year
 
         Text(movie.title, style = MaterialTheme.typography.h6)
-        Text(year.toString(), style = MaterialTheme.typography.caption)
+        Text("$year - $duration", style = MaterialTheme.typography.caption)
     }
 }
