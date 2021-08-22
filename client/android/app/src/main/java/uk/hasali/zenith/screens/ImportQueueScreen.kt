@@ -2,7 +2,6 @@ package uk.hasali.zenith.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -16,30 +15,35 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.*
+import uk.hasali.zenith.ImportQueueItem
+import uk.hasali.zenith.playClick
 import uk.hasali.zenith.ui.AppBar
-import uk.hasali.zenith.ui.CenteredLoadingIndicator
 import uk.hasali.zenith.ui.ImportItemDialog
 import uk.hasali.zenith.ui.LocalZenithClient
+import uk.hasali.zenith.ui.SwipeRefreshLazyColumn
 
 @Composable
 fun ImportQueueScreen(onNavigateUp: () -> Unit) {
     val client = LocalZenithClient.current
     val scope = rememberCoroutineScope()
 
+    var isRefreshing by remember { mutableStateOf(false) }
     var items by remember { mutableStateOf<List<ImportQueueItem>?>(null) }
 
-    LaunchedEffect(Unit) {
+    suspend fun refresh() {
+        isRefreshing = true
         items = client.getImportQueue()
+        isRefreshing = false
+    }
+
+    LaunchedEffect(Unit) {
+        refresh()
     }
 
     ImportQueueScreen(
         items = items,
-        onRefreshItems = {
-            scope.launch {
-                items = client.getImportQueue()
-            }
-        },
+        isRefreshing = isRefreshing,
+        onRefresh = { scope.launch { refresh() } },
         onNavigateUp = onNavigateUp,
     )
 }
@@ -47,7 +51,8 @@ fun ImportQueueScreen(onNavigateUp: () -> Unit) {
 @Composable
 private fun ImportQueueScreen(
     items: List<ImportQueueItem>?,
-    onRefreshItems: () -> Unit,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
     onNavigateUp: () -> Unit,
 ) {
     var selected: ImportQueueItem? by remember { mutableStateOf(null) }
@@ -56,42 +61,36 @@ private fun ImportQueueScreen(
         topBar = { AppBar(title = "Import queue", onBackPressed = onNavigateUp) },
         modifier = Modifier.navigationBarsPadding(),
     ) {
-        when {
-            items == null -> CenteredLoadingIndicator()
-
-            items.isEmpty() -> Row(
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Default.DoneAll, contentDescription = "All done")
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("All done 🙂")
+        SwipeRefreshLazyColumn(
+            isRefreshing = isRefreshing,
+            isEmpty = items?.isEmpty() == true,
+            onRefresh = onRefresh,
+            emptyContent = { ImportQueueEmpty() },
+        ) {
+            if (items != null) {
+                items(items) {
+                    ImportQueueListItem(item = it) {
+                        selected = it
+                    }
+                }
             }
-
-            else -> ImportQueueList(
-                items = items,
-                onSelectItem = { selected = it },
-            )
         }
 
         selected?.let {
             ImportItemDialog(item = it) {
                 selected = null
-                onRefreshItems()
+                onRefresh()
             }
         }
     }
 }
 
 @Composable
-private fun ImportQueueList(items: List<ImportQueueItem>, onSelectItem: (ImportQueueItem) -> Unit) {
-    LazyColumn {
-        items(items) {
-            ImportQueueListItem(item = it) {
-                onSelectItem(it)
-            }
-        }
+private fun BoxScope.ImportQueueEmpty() {
+    Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.align(Alignment.Center)) {
+        Icon(Icons.Default.DoneAll, contentDescription = "All done")
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("All done 🙂")
     }
 }
 

@@ -7,17 +7,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.Movie
 import uk.hasali.zenith.Show
-import uk.hasali.zenith.ui.CenteredLoadingIndicator
 import uk.hasali.zenith.ui.LocalZenithClient
 import uk.hasali.zenith.ui.MediaItemWithPoster
 
@@ -26,19 +26,29 @@ fun HomeScreen(
     onNavigateToMovie: (Movie) -> Unit,
     onNavigateToShow: (Show) -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
     val client = LocalZenithClient.current
 
-    val movies by produceState<List<Movie>?>(null) {
-        value = client.getRecentMovies()
+    var isRefreshing by remember { mutableStateOf(true) }
+    var movies by remember { mutableStateOf(emptyList<Movie>()) }
+    var shows by remember { mutableStateOf(emptyList<Show>()) }
+
+    suspend fun refresh() {
+        isRefreshing = true
+        movies = client.getRecentMovies()
+        shows = client.getRecentShows()
+        isRefreshing = false
     }
 
-    val shows by produceState<List<Show>?>(null) {
-        value = client.getRecentShows()
+    LaunchedEffect(Unit) {
+        refresh()
     }
 
     HomeScreen(
         movies = movies,
         shows = shows,
+        isRefreshing = isRefreshing,
+        onRefresh = { scope.launch { refresh() } },
         onNavigateToMovie = onNavigateToMovie,
         onNavigateToShow = onNavigateToShow,
     )
@@ -46,42 +56,41 @@ fun HomeScreen(
 
 @Composable
 private fun HomeScreen(
-    movies: List<Movie>?,
-    shows: List<Show>?,
+    movies: List<Movie>,
+    shows: List<Show>,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
     onNavigateToMovie: (Movie) -> Unit,
     onNavigateToShow: (Show) -> Unit,
 ) {
-    when {
-        movies == null || shows == null -> CenteredLoadingIndicator()
-        else -> {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(state = rememberScrollState()),
-            ) {
-                if (movies.isNotEmpty()) {
-                    Section(
-                        title = "Recently Added Movies",
-                        items = movies,
-                        poster = { it.poster },
-                        name = { it.title },
-                        date = { it.releaseDate },
-                        isWatched = { it.isWatched },
-                        onClick = onNavigateToMovie,
-                    )
-                }
+    SwipeRefresh(state = rememberSwipeRefreshState(isRefreshing), onRefresh = onRefresh) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(state = rememberScrollState()),
+        ) {
+            if (movies.isNotEmpty()) {
+                Section(
+                    title = "Recently Added Movies",
+                    items = movies,
+                    poster = { it.poster },
+                    name = { it.title },
+                    date = { it.releaseDate },
+                    isWatched = { it.isWatched },
+                    onClick = onNavigateToMovie,
+                )
+            }
 
-                if (shows.isNotEmpty()) {
-                    Section(
-                        title = "Recently Updated Shows",
-                        items = shows,
-                        poster = { it.poster },
-                        name = { it.name },
-                        date = { it.startDate },
-                        isWatched = { it.unwatchedEpisodes == 0 },
-                        onClick = onNavigateToShow,
-                    )
-                }
+            if (shows.isNotEmpty()) {
+                Section(
+                    title = "Recently Updated Shows",
+                    items = shows,
+                    poster = { it.poster },
+                    name = { it.name },
+                    date = { it.startDate },
+                    isWatched = { it.unwatchedEpisodes == 0 },
+                    onClick = onNavigateToShow,
+                )
             }
         }
     }
