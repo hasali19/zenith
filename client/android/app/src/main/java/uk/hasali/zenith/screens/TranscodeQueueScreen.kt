@@ -1,5 +1,6 @@
 package uk.hasali.zenith.screens
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.items
@@ -60,6 +61,7 @@ private fun TranscodeQueueScreen(
         SwipeRefreshLazyColumn(
             isRefreshing = isRefreshing,
             isEmpty = state?.current == null && state?.queue?.isEmpty() == true,
+            contentPadding = PaddingValues(16.dp),
             onRefresh = onRefresh,
             emptyContent = {
                 Text(

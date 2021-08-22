@@ -2,6 +2,7 @@ package uk.hasali.zenith.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -18,6 +19,7 @@ fun SwipeRefreshLazyColumn(
     onRefresh: () -> Unit,
     isEmpty: Boolean = false,
     emptyContent: @Composable BoxScope.() -> Unit = {},
+    contentPadding: PaddingValues = PaddingValues(),
     content: LazyListScope.() -> Unit,
 ) {
     val state = rememberSwipeRefreshState(isRefreshing)
@@ -31,7 +33,11 @@ fun SwipeRefreshLazyColumn(
                     .verticalScroll(rememberScrollState()),
             )
         } else {
-            LazyColumn(content = content)
+            LazyColumn(
+                contentPadding = contentPadding,
+                content = content,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 }
