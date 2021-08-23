@@ -1,5 +1,6 @@
 package uk.hasali.zenith.screens.player
 
+import android.net.Uri
 import android.support.v4.media.session.MediaSessionCompat
 import android.widget.Toast
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -12,12 +13,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
+import com.google.android.exoplayer2.source.MergingMediaSource
+import com.google.android.exoplayer2.source.SingleSampleMediaSource
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.PlayerView
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
+import com.google.android.exoplayer2.util.MimeTypes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.SubtitleStreamInfo
 import uk.hasali.zenith.VideoInfo
+import uk.hasali.zenith.ui.LocalZenithClient
 
 @Composable
 fun LocalPlayer(
@@ -64,6 +71,7 @@ private fun VideoPlayer(
     onBackPressed: () -> Unit,
 ) {
     val context = LocalContext.current
+    val client = LocalZenithClient.current
     val scope = rememberCoroutineScope()
 
     val session = remember { MediaSessionCompat(context, context.packageName) }
@@ -85,50 +93,42 @@ private fun VideoPlayer(
                 .setRendererDisabled(renderer, true)
                 .build()
         } else {
-            when (subtitle) {
-                is SubtitleStreamInfo.External -> {
-                    val toast = Toast.makeText(
-                        context,
-                        "External subtitles are not yet supported",
-                        Toast.LENGTH_SHORT
-                    )
-                    return toast.show()
-                }
-                is SubtitleStreamInfo.Embedded -> {
-                    val mappedTrackInfo = selector.currentMappedTrackInfo ?: return
-                    val trackGroups = mappedTrackInfo.getTrackGroups(renderer)
+            val trackId = when (subtitle) {
+                is SubtitleStreamInfo.External -> "external:${subtitle.id}"
+                is SubtitleStreamInfo.Embedded -> (subtitle.index + 1).toString()
+            }
 
-                    var track: Pair<Int, Int>? = null
-                    for (i in 0 until trackGroups.length) {
-                        val group = trackGroups[i]
-                        for (j in 0 until group.length) {
-                            val format = group.getFormat(j)
-                            // TODO: Investigate if there's a better way to find the right track
-                            if (format.id?.toIntOrNull() == subtitle.index + 1) {
-                                track = Pair(i, j)
-                            }
-                        }
+            val mappedTrackInfo = selector.currentMappedTrackInfo ?: return
+            val trackGroups = mappedTrackInfo.getTrackGroups(renderer)
+
+            var track: Pair<Int, Int>? = null
+            for (i in 0 until trackGroups.length) {
+                val group = trackGroups[i]
+                for (j in 0 until group.length) {
+                    val format = group.getFormat(j)
+                    if (format.id == trackId) {
+                        track = Pair(i, j)
                     }
-
-                    if (track == null) {
-                        val toast = Toast.makeText(
-                            context,
-                            "Failed to find requested subtitle track",
-                            Toast.LENGTH_SHORT
-                        )
-                        return toast.show()
-                    }
-
-                    selector.parameters = selector.buildUponParameters()
-                        .setRendererDisabled(renderer, false)
-                        .setSelectionOverride(
-                            renderer,
-                            trackGroups,
-                            DefaultTrackSelector.SelectionOverride(track.first, track.second),
-                        )
-                        .build()
                 }
             }
+
+            if (track == null) {
+                val toast = Toast.makeText(
+                    context,
+                    "Failed to find requested subtitle track",
+                    Toast.LENGTH_SHORT
+                )
+                return toast.show()
+            }
+
+            selector.parameters = selector.buildUponParameters()
+                .setRendererDisabled(renderer, false)
+                .setSelectionOverride(
+                    renderer,
+                    trackGroups,
+                    DefaultTrackSelector.SelectionOverride(track.first, track.second),
+                )
+                .build()
         }
     }
 
@@ -201,9 +201,28 @@ private fun VideoPlayer(
     DisposableEffect(url) {
         val item = MediaItem.fromUri(url)
 
-        player.setMediaItem(item)
+        val dataSourceFactory = DefaultHttpDataSource.Factory()
+        val sources = mutableListOf(
+            DefaultMediaSourceFactory(context)
+                .createMediaSource(item)
+        )
+
+        subtitles.filterIsInstance<SubtitleStreamInfo.External>()
+            .forEach {
+                val uri = Uri.parse(client.getSubtitleUrl(it.id))
+                val subtitle = MediaItem.Subtitle(uri, MimeTypes.APPLICATION_SUBRIP, null)
+
+                val source = SingleSampleMediaSource.Factory(dataSourceFactory)
+                    .setTrackId("external:${it.id}")
+                    .createMediaSource(subtitle, C.TIME_UNSET)
+
+                sources.add(source)
+            }
+
+        val mergedSource = MergingMediaSource(*sources.toTypedArray())
+
+        player.setMediaSource(mergedSource, startPosition * 1000)
         player.prepare()
-        player.seekTo(startPosition * 1000)
         player.play()
 
         onDispose {
@@ -241,12 +260,8 @@ private fun VideoPlayer(
                 player.seekTo(it * 1000)
                 player.play()
             },
-            onTogglePlaying = {
-                player.playWhenReady = !isPlaying
-            },
-            onShowSubtitlesMenu = {
-                showSubtitlesMenu = true
-            },
+            onTogglePlaying = { player.playWhenReady = !isPlaying },
+            onShowSubtitlesMenu = { showSubtitlesMenu = true },
             onLaunchExternal = onLaunchExternal,
             onBackPressed = onBackPressed,
         )
