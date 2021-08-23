@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -7,15 +8,21 @@ use actix_web::web::ServiceConfig;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use serde::Deserialize;
 use serde_json::json;
+use uuid::Uuid;
 
 use crate::config::Config;
+use crate::db;
+use crate::db::subtitles::NewSubtitle;
+use crate::db::subtitles::SubtitlePath;
 use crate::db::Db;
 use crate::library::scanner::{self, LibraryScanner, ScanOptions, VideoFileType};
 
 use super::ApiResult;
 
 pub fn configure(config: &mut ServiceConfig) {
-    config.route("/import/queue", web::get().to(get_import_queue));
+    config
+        .route("/import/queue", web::get().to(get_import_queue))
+        .route("/import/subtitles", web::post().to(import_subtitle));
 }
 
 async fn get_import_queue(req: HttpRequest) -> ApiResult {
@@ -43,7 +50,71 @@ async fn get_import_queue(req: HttpRequest) -> ApiResult {
 #[derive(Deserialize)]
 #[serde(tag = "type")]
 pub enum ImportSource {
-    Local { path: String },
+    Local { path: String, copy: Option<bool> },
+}
+
+#[derive(Deserialize)]
+pub struct ImportSubtitleRequest {
+    source: ImportSource,
+    video_id: i64,
+    title: Option<String>,
+    language: Option<String>,
+}
+
+async fn import_subtitle(
+    req: HttpRequest,
+    data: web::Json<ImportSubtitleRequest>,
+) -> ApiResult<impl Responder> {
+    let data = data.into_inner();
+    let config: &Arc<Config> = req.app_data().unwrap();
+    let db: &Db = req.app_data().unwrap();
+
+    let (src_path, copy) = match data.source {
+        ImportSource::Local { path, copy } => (path, copy.unwrap_or(true)),
+    };
+
+    let src_path = PathBuf::from(src_path);
+    let src_ext = src_path
+        .extension()
+        .ok_or_else(|| ErrorBadRequest("source file has no extension"))?;
+
+    let dst_name = Uuid::new_v4().to_string();
+    let dst_path = config.subtitles.path.join(dst_name).with_extension(src_ext);
+
+    if dst_path.exists() {
+        return Err(ErrorBadRequest(format!("{:?} already exists", dst_path)));
+    }
+
+    let mut transaction = db.begin().await.map_err(ErrorInternalServerError)?;
+    let subtitles = NewSubtitle {
+        video_id: data.video_id,
+        path: SubtitlePath::External(Cow::Borrowed(dst_path.to_str().unwrap())),
+        title: data.title.as_deref(),
+        language: data.language.as_deref(),
+    };
+
+    db::subtitles::insert(&mut transaction, &subtitles)
+        .await
+        .map_err(ErrorInternalServerError)?;
+
+    if !config.subtitles.path.exists() {
+        std::fs::create_dir_all(&config.subtitles.path).map_err(ErrorInternalServerError)?;
+    }
+
+    if copy {
+        tracing::info!("copying {:?} to {:?}", src_path, dst_path);
+        std::fs::copy(&src_path, &dst_path).map_err(ErrorInternalServerError)?;
+    } else {
+        tracing::info!("moving {:?} to {:?}", src_path, dst_path);
+        std::fs::rename(&src_path, &dst_path).map_err(ErrorInternalServerError)?;
+    }
+
+    transaction
+        .commit()
+        .await
+        .map_err(ErrorInternalServerError)?;
+
+    Ok(HttpResponse::Ok())
 }
 
 #[derive(Deserialize)]
@@ -62,7 +133,7 @@ pub async fn import_movie(
     let scanner: &Arc<LibraryScanner> = req.app_data().unwrap();
 
     let src_path = match data.source {
-        ImportSource::Local { path } => path,
+        ImportSource::Local { path, copy: _ } => path,
     };
 
     let src_path = PathBuf::from(src_path);
@@ -173,7 +244,7 @@ mod inner {
 
     pub async fn import_episode(show_path: &Path, req: ImportEpisodeRequest) -> ApiResult<PathBuf> {
         let src_path = match req.source {
-            ImportSource::Local { path } => path,
+            ImportSource::Local { path, copy: _ } => path,
         };
 
         let src_path = PathBuf::from(src_path);

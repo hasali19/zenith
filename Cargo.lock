@@ -2492,6 +2492,7 @@ dependencies = [
  "tracing-actix-web",
  "tracing-subscriber",
  "url",
+ "uuid",
  "walkdir",
 ]
 

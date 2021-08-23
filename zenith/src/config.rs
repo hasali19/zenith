@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::BufReader;
+use std::path::PathBuf;
 
 use serde::Deserialize;
 
@@ -15,6 +16,8 @@ pub struct Config {
     pub database: Database,
     #[serde(default)]
     pub import: Import,
+    #[serde(default)]
+    pub subtitles: Subtitles,
 }
 
 #[derive(Deserialize)]
@@ -54,6 +57,12 @@ pub struct Database {
 pub struct Import {
     #[serde(default)]
     pub path: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct Subtitles {
+    #[serde(default = "Subtitles::default_path")]
+    pub path: PathBuf,
 }
 
 impl Config {
@@ -112,6 +121,20 @@ impl Default for Database {
     fn default() -> Self {
         Database {
             path: Database::default_path(),
+        }
+    }
+}
+
+impl Subtitles {
+    fn default_path() -> PathBuf {
+        "data/subtitles".into()
+    }
+}
+
+impl Default for Subtitles {
+    fn default() -> Self {
+        Subtitles {
+            path: Subtitles::default_path(),
         }
     }
 }
