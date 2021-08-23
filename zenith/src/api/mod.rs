@@ -1,5 +1,6 @@
 mod common;
 mod events;
+mod files;
 mod import;
 mod metadata;
 mod movies;
@@ -30,6 +31,7 @@ pub fn service(path: &str) -> impl HttpServiceFactory {
         .configure(metadata::configure)
         .configure(progress::configure)
         .configure(transcoder::configure)
+        .configure(files::configure)
         .configure(import::configure)
         .configure(events::configure)
         .default_service(web::route().to(HttpResponse::NotFound))
