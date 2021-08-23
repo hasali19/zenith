@@ -17,23 +17,23 @@ pub fn configure(config: &mut ServiceConfig) {
     config.route("/subtitles/{id}", web::get().to(get_subtitle));
 }
 
-async fn get_subtitle(req: HttpRequest, path: web::Path<(i64, i64)>) -> ApiResult {
-    let (video_id, subtitle_id) = path.into_inner();
+async fn get_subtitle(req: HttpRequest, path: web::Path<i64>) -> ApiResult {
+    let subtitle_id = path.into_inner();
 
     let config: &Arc<Config> = req.app_data().unwrap();
     let db: &Db = req.app_data().unwrap();
 
     let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
 
-    let path = db::videos::get_path(&mut conn, video_id)
-        .await
-        .map_err(ErrorInternalServerError)?
-        .ok_or_else(|| ErrorNotFound("video not found"))?;
-
     let subtitle = db::subtitles::get_by_id(&mut conn, subtitle_id)
         .await
         .map_err(ErrorInternalServerError)?
         .ok_or_else(|| ErrorNotFound("subtitle not found"))?;
+
+    let path = db::videos::get_path(&mut conn, subtitle.video_id)
+        .await
+        .map_err(ErrorInternalServerError)?
+        .ok_or_else(|| ErrorNotFound("video not found"))?;
 
     match subtitle.path {
         db::subtitles::SubtitlePath::External(path) => {
