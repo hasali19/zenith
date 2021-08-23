@@ -18,5 +18,11 @@ config.yml
 # Cache directory
 cache/
 
+# Data directory
+data/
+
 # Media directory
 media/
+
+# Import directory
+import/
