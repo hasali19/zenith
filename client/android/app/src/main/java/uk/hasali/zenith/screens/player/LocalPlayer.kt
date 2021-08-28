@@ -5,7 +5,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.widget.Toast
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Surface
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -57,7 +57,7 @@ fun LocalPlayer(
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class)
 @Composable
 private fun VideoPlayer(
     url: String,
@@ -80,7 +80,7 @@ private fun VideoPlayer(
     var position by remember { mutableStateOf(0L) }
     var isPlaying by remember { mutableStateOf(true) }
 
-    var showSubtitlesMenu by remember { mutableStateOf(false) }
+    var selectedSubtitle by remember { mutableStateOf<SubtitleStreamInfo?>(null) }
 
     val selector = remember { DefaultTrackSelector(context) }
     var textRenderer: Int? by remember { mutableStateOf(null) }
@@ -89,6 +89,7 @@ private fun VideoPlayer(
         val renderer = textRenderer ?: return
 
         if (subtitle == null) {
+            selectedSubtitle = null
             selector.parameters = selector.buildUponParameters()
                 .setRendererDisabled(renderer, true)
                 .build()
@@ -129,15 +130,9 @@ private fun VideoPlayer(
                     DefaultTrackSelector.SelectionOverride(track.first, track.second),
                 )
                 .build()
-        }
-    }
 
-    if (showSubtitlesMenu) {
-        SubtitlesMenu(
-            subtitles = subtitles,
-            onSelectItem = { onSelectSubtitle(it) },
-            onDismiss = { showSubtitlesMenu = false },
-        )
+            selectedSubtitle = subtitle
+        }
     }
 
     val player = remember {
@@ -240,30 +235,49 @@ private fun VideoPlayer(
         }
     }
 
-    Surface(
-        color = Color.Black,
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { context -> PlayerView(context).apply { useController = false } },
-            update = { playerView -> playerView.player = player },
-        )
+    val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 
-        Controls(
-            title = title,
-            position = position,
-            duration = duration,
-            isPlaying = isPlaying,
-            onSeekStart = { player.pause() },
-            onSeekEnd = {
-                player.seekTo(it * 1000)
-                player.play()
-            },
-            onTogglePlaying = { player.playWhenReady = !isPlaying },
-            onShowSubtitlesMenu = { showSubtitlesMenu = true },
-            onLaunchExternal = onLaunchExternal,
-            onBackPressed = onBackPressed,
-        )
+    ModalBottomSheetLayout(
+        sheetState = sheetState,
+        scrimColor = MaterialTheme.colors.surface.copy(alpha = 0.32f),
+        sheetContent = {
+            SubtitlesMenu(
+                subtitles = subtitles,
+                current = selectedSubtitle,
+                onSelectSubtitle = {
+                    onSelectSubtitle(it)
+                    scope.launch {
+                        sheetState.hide()
+                    }
+                },
+            )
+        },
+    ) {
+        Surface(
+            color = Color.Black,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { context -> PlayerView(context).apply { useController = false } },
+                update = { playerView -> playerView.player = player },
+            )
+
+            Controls(
+                title = title,
+                position = position,
+                duration = duration,
+                isPlaying = isPlaying,
+                onSeekStart = { player.pause() },
+                onSeekEnd = {
+                    player.seekTo(it * 1000)
+                    player.play()
+                },
+                onTogglePlaying = { player.playWhenReady = !isPlaying },
+                onShowSubtitlesMenu = { scope.launch { sheetState.show() } },
+                onLaunchExternal = onLaunchExternal,
+                onBackPressed = onBackPressed,
+            )
+        }
     }
 }

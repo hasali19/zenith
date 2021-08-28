@@ -7,8 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.LocalContentColor
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Forward30
 import androidx.compose.material.icons.filled.Replay10
@@ -24,6 +23,7 @@ import coil.compose.rememberImagePainter
 import com.google.android.gms.cast.*
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.media.RemoteMediaClient
+import kotlinx.coroutines.launch
 import uk.hasali.zenith.SubtitleStreamInfo
 import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.ui.LifecycleObserver
@@ -47,10 +47,12 @@ fun RemotePlayer(
 ) {
     val context = LocalContext.current
     val client = LocalZenithClient.current
+    val scope = rememberCoroutineScope()
     val mediaClient = session.remoteMediaClient!!
 
     var position by remember { mutableStateOf(0L) }
     var isPlaying by remember { mutableStateOf(true) }
+    var selectedSubtitle by remember { mutableStateOf<SubtitleStreamInfo?>(null) }
 
     val callback = remember {
         object : RemoteMediaClient.Callback() {
@@ -115,8 +117,6 @@ fun RemotePlayer(
         }
     }
 
-    var showSubtitlesMenu by remember { mutableStateOf(false) }
-
     val onSelectSubtitle = { subtitle: SubtitleStreamInfo? ->
         val tracks = if (subtitle == null) {
             longArrayOf()
@@ -138,57 +138,68 @@ fun RemotePlayer(
             windowColor = Color.Blue.toArgb()
         })
 
-        Unit
+        selectedSubtitle = subtitle
     }
 
-    if (showSubtitlesMenu) {
-        SubtitlesMenu(
-            subtitles = info.subtitles,
-            onSelectItem = onSelectSubtitle,
-            onDismiss = { showSubtitlesMenu = false },
-        )
-    }
+    val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 
-    CompositionLocalProvider(LocalContentColor provides Color.White) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Image(
-                rememberImagePainter(backdrop, builder = { crossfade(true) }),
-                contentDescription = "Backdrop",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f)),
-            )
-
-            Controls(
-                title = title,
-                position = position,
-                duration = info.duration.toLong(),
-                isPlaying = isPlaying,
-                onTogglePlaying = { mediaClient.togglePlayback() },
-                onSeekStart = { mediaClient.pause() },
-                onSeekEnd = { position, resume ->
-                    mediaClient.seek(MediaSeekOptions.Builder()
-                        .setPosition(position)
-                        .setResumeState(
-                            if (resume)
-                                MediaSeekOptions.RESUME_STATE_PLAY
-                            else
-                                MediaSeekOptions.RESUME_STATE_UNCHANGED
-                        )
-                        .build())
-                },
-                onNavigateUp = onNavigateUp,
-                onShowSubtitlesMenu = { showSubtitlesMenu = true },
-                onClosePlayer = {
-                    mediaClient.stop()
-                    onNavigateUp()
+    ModalBottomSheetLayout(
+        sheetState = sheetState,
+        scrimColor = MaterialTheme.colors.surface.copy(alpha = 0.32f),
+        sheetContent = {
+            SubtitlesMenu(
+                subtitles = info.subtitles,
+                current = selectedSubtitle,
+                onSelectSubtitle = {
+                    onSelectSubtitle(it)
+                    scope.launch {
+                        sheetState.hide()
+                    }
                 },
             )
+        },
+    ) {
+        CompositionLocalProvider(LocalContentColor provides Color.White) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Image(
+                    rememberImagePainter(backdrop) { crossfade(true) },
+                    contentDescription = "Backdrop",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.4f)),
+                )
+
+                Controls(
+                    title = title,
+                    position = position,
+                    duration = info.duration.toLong(),
+                    isPlaying = isPlaying,
+                    onTogglePlaying = { mediaClient.togglePlayback() },
+                    onSeekStart = { mediaClient.pause() },
+                    onSeekEnd = { position, resume ->
+                        mediaClient.seek(MediaSeekOptions.Builder()
+                            .setPosition(position)
+                            .setResumeState(
+                                if (resume)
+                                    MediaSeekOptions.RESUME_STATE_PLAY
+                                else
+                                    MediaSeekOptions.RESUME_STATE_UNCHANGED
+                            )
+                            .build())
+                    },
+                    onNavigateUp = onNavigateUp,
+                    onShowSubtitlesMenu = { scope.launch { sheetState.show() } },
+                    onClosePlayer = {
+                        mediaClient.stop()
+                        onNavigateUp()
+                    },
+                )
+            }
         }
     }
 }
