@@ -235,49 +235,32 @@ private fun VideoPlayer(
         }
     }
 
-    val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
-
-    ModalBottomSheetLayout(
-        sheetState = sheetState,
-        scrimColor = MaterialTheme.colors.surface.copy(alpha = 0.32f),
-        sheetContent = {
-            SubtitlesMenu(
-                subtitles = subtitles,
-                current = selectedSubtitle,
-                onSelectSubtitle = {
-                    onSelectSubtitle(it)
-                    scope.launch {
-                        sheetState.hide()
-                    }
-                },
-            )
-        },
+    Surface(
+        color = Color.Black,
+        modifier = Modifier.fillMaxSize(),
     ) {
-        Surface(
-            color = Color.Black,
+        AndroidView(
             modifier = Modifier.fillMaxSize(),
-        ) {
-            AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { context -> PlayerView(context).apply { useController = false } },
-                update = { playerView -> playerView.player = player },
-            )
+            factory = { context -> PlayerView(context).apply { useController = false } },
+            update = { playerView -> playerView.player = player },
+        )
 
-            Controls(
-                title = title,
-                position = position,
-                duration = duration,
-                isPlaying = isPlaying,
-                onSeekStart = { player.pause() },
-                onSeekEnd = {
-                    player.seekTo(it * 1000)
-                    player.play()
-                },
-                onTogglePlaying = { player.playWhenReady = !isPlaying },
-                onShowSubtitlesMenu = { scope.launch { sheetState.show() } },
-                onLaunchExternal = onLaunchExternal,
-                onBackPressed = onBackPressed,
-            )
-        }
+        Controls(
+            title = title,
+            position = position,
+            duration = duration,
+            isPlaying = isPlaying,
+            subtitles = subtitles,
+            selectedSubtitle = selectedSubtitle,
+            onSeekStart = { player.pause() },
+            onSeekEnd = {
+                player.seekTo(it * 1000)
+                player.play()
+            },
+            onTogglePlaying = { player.playWhenReady = !isPlaying },
+            onSelectSubtitle = { onSelectSubtitle(it) },
+            onLaunchExternal = onLaunchExternal,
+            onBackPressed = onBackPressed,
+        )
     }
 }

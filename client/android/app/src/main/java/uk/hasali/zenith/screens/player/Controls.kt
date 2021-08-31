@@ -7,7 +7,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.LocalContentColor
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Forward30
 import androidx.compose.material.icons.filled.Replay10
@@ -16,88 +16,98 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import uk.hasali.zenith.SubtitleStreamInfo
 
-class ControlsController(private val scope: CoroutineScope) {
-    private var _visible by mutableStateOf(false)
-    val visible get() = _visible
-
-    private var job: Job? = null
-    private var isPlaying = true
-
-    /**
-     * Toggles the current visibility. If the controls are shown, a coroutine
-     * is started to hide them after a delay.
-     */
-    fun toggle() {
-        if (!_visible) {
-            showAndHideDelayed()
-        } else {
-            _visible = false
-        }
-    }
-
-    /**
-     * Shows the controls immediately, and starts a coroutine to hide
-     * them after a delay.
-     */
-    fun showAndHideDelayed() {
-        _visible = true
-        job?.cancel()
-        job = scope.launch {
-            delay(5000)
-            _visible = false
-        }
-    }
-
-    /**
-     * Cancels the current delayed hide job (if any).
-     */
-    fun cancelHide() {
-        job?.cancel()
-        job = null
-    }
-
-    /**
-     * Notifies controller of playback state changes.
-     *
-     * If the video has been paused, the current hide job is cancelled
-     * and the controls are set to be visible indefinitely.
-     *
-     * If the video is resumed, controls will be hidden after a delay.
-     */
-    fun setPlaying(isPlaying: Boolean) {
-        if (!isPlaying && this.isPlaying) {
-            cancelHide()
-            _visible = true
-        } else if (isPlaying && !this.isPlaying) {
-            showAndHideDelayed()
-        }
-
-        this.isPlaying = isPlaying
-    }
-}
-
+@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class)
 @Composable
-private fun rememberControlsController(): ControlsController {
+fun Controls(
+    title: String,
+    position: Long,
+    duration: Long,
+    isPlaying: Boolean,
+    subtitles: List<SubtitleStreamInfo>,
+    selectedSubtitle: SubtitleStreamInfo?,
+    onSeekStart: () -> Unit,
+    onSeekEnd: (Long) -> Unit,
+    onTogglePlaying: () -> Unit,
+    onSelectSubtitle: (SubtitleStreamInfo?) -> Unit,
+    onLaunchExternal: () -> Unit,
+    onBackPressed: () -> Unit,
+) {
     val scope = rememberCoroutineScope()
-    val controls = remember { ControlsController(scope) }
+    val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 
-    // Set controls as initially visible
-    DisposableEffect(Unit) {
-        controls.showAndHideDelayed()
-        onDispose { }
+    // interactionCount is incremented on any user interaction, triggering the effect
+    // below to reset the delayed hide
+    var interactionCount by remember { mutableStateOf(0) }
+    var isInteracting by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(true) }
+
+    LaunchedEffect(isPlaying, isInteracting, interactionCount) {
+        if (!isPlaying) {
+            isVisible = true
+        } else if (!isInteracting) {
+            delay(5000)
+            isVisible = false
+        }
     }
 
-    return controls
+    ModalBottomSheetLayout(
+        sheetState = sheetState,
+        scrimColor = MaterialTheme.colors.surface.copy(alpha = 0.32f),
+        sheetContent = {
+            SubtitlesMenu(
+                subtitles = subtitles,
+                current = selectedSubtitle,
+                onSelectSubtitle = {
+                    onSelectSubtitle(it)
+                    scope.launch {
+                        sheetState.hide()
+                    }
+                },
+            )
+        },
+    ) {
+        Controls(
+            isVisible = isVisible || sheetState.isVisible,
+            title = title,
+            position = position,
+            duration = duration,
+            isPlaying = isPlaying,
+            onSeekStart = {
+                interactionCount++
+                isInteracting = true
+                onSeekStart()
+            },
+            onSeekEnd = {
+                interactionCount++
+                isInteracting = false
+                onSeekEnd(it)
+            },
+            onTogglePlaying = {
+                interactionCount++
+                onTogglePlaying()
+            },
+            onShowSubtitlesMenu = {
+                interactionCount++
+                scope.launch { sheetState.show() }
+            },
+            onLaunchExternal = onLaunchExternal,
+            onBackPressed = onBackPressed,
+            onToggleVisibility = {
+                interactionCount++
+                isVisible = !isVisible
+            },
+        )
+    }
 }
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun Controls(
+private fun Controls(
+    isVisible: Boolean,
     title: String,
     position: Long,
     duration: Long,
@@ -108,13 +118,9 @@ fun Controls(
     onShowSubtitlesMenu: () -> Unit,
     onLaunchExternal: () -> Unit,
     onBackPressed: () -> Unit,
+    onToggleVisibility: () -> Unit,
 ) {
-    val controls = rememberControlsController()
-    val opacity by animateFloatAsState(if (controls.visible) 0.4f else 0f)
-
-    SideEffect {
-        controls.setPlaying(isPlaying)
-    }
+    val opacity by animateFloatAsState(if (isVisible) 0.4f else 0f)
 
     CompositionLocalProvider(
         LocalContentColor provides Color.White,
@@ -124,11 +130,11 @@ fun Controls(
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = opacity))
                 .pointerInput(Unit) {
-                    detectTapGestures(onTap = { controls.toggle() })
+                    detectTapGestures(onTap = { onToggleVisibility() })
                 },
         ) {
             AnimatedVisibility(
-                visible = controls.visible,
+                visible = isVisible,
                 enter = slideInVertically() + fadeIn(),
                 exit = slideOutVertically() + fadeOut(),
                 modifier = Modifier.align(Alignment.TopCenter),
@@ -142,7 +148,7 @@ fun Controls(
             }
 
             AnimatedVisibility(
-                visible = controls.visible,
+                visible = isVisible,
                 enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
                 exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center),
                 modifier = Modifier.align(Alignment.Center)
@@ -152,24 +158,21 @@ fun Controls(
                     modifier = Modifier.pointerInput(Unit) { detectTapGestures { /* Consume tap events */ } },
                 ) {
                     SeekButton(Icons.Default.Replay10) {
-                        controls.showAndHideDelayed()
                         onSeekEnd(maxOf(0, position - 10))
                     }
 
                     PlayPauseButton(isPlaying = isPlaying, onClick = {
-                        controls.showAndHideDelayed()
                         onTogglePlaying()
                     })
 
                     SeekButton(Icons.Default.Forward30) {
-                        controls.showAndHideDelayed()
                         onSeekEnd(minOf(duration, position + 30))
                     }
                 }
             }
 
             AnimatedVisibility(
-                visible = controls.visible,
+                visible = isVisible,
                 enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(),
                 modifier = Modifier.align(Alignment.BottomCenter),
@@ -177,14 +180,8 @@ fun Controls(
                 SeekBar(
                     position = position,
                     duration = duration,
-                    onSeekStart = {
-                        controls.cancelHide()
-                        onSeekStart()
-                    },
-                    onSeekEnd = {
-                        controls.showAndHideDelayed()
-                        onSeekEnd(it)
-                    },
+                    onSeekStart = { onSeekStart() },
+                    onSeekEnd = { onSeekEnd(it) },
                 )
             }
         }
