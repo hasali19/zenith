@@ -1,7 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.21'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.30'
 }
 
 def keystoreProperties = new Properties()
@@ -93,13 +93,13 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion '1.0.1'
+        kotlinCompilerExtensionVersion '1.1.0-alpha03'
     }
 }
 
 dependencies {
-    def compose_version = '1.0.1'
-    def accompanist_version = '0.17.0'
+    def compose_version = '1.1.0-alpha03'
+    def accompanist_version = '0.18.0'
     def ktor_version = '1.6.3'
     def exoplayer_version = '2.15.0'
 
