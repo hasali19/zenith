@@ -1,10 +1,12 @@
-use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
-use actix_web::{web, HttpRequest, HttpResponse, Responder};
+use atium::respond::RespondRequestExt;
+use atium::router::RouterRequestExt;
+use atium::{endpoint, Request};
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
 
 use crate::api::common::ExternalIds;
+use crate::api::ext::OptionExt;
 use crate::db::Db;
 use crate::utils;
 
@@ -45,14 +47,12 @@ impl<'r> FromRow<'r, SqliteRow> for Episode {
     }
 }
 
-pub(super) async fn get_episodes(
-    req: HttpRequest,
-    path: web::Path<(i64,)>,
-) -> actix_web::Result<impl Responder> {
-    let (season_id,) = path.into_inner();
+#[endpoint]
+pub(super) async fn get_episodes(req: &mut Request) -> eyre::Result<()> {
+    let season_id: i64 = req.param("id")?;
 
-    let db: &Db = req.app_data().unwrap();
-    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
+    let db: &Db = req.ext().unwrap();
+    let mut conn = db.acquire().await?;
 
     let sql = "
         SELECT
@@ -71,20 +71,19 @@ pub(super) async fn get_episodes(
     let episodes: Vec<Episode> = sqlx::query_as(sql)
         .bind(season_id)
         .fetch_all(&mut conn)
-        .await
-        .map_err(ErrorInternalServerError)?;
+        .await?;
 
-    Ok(HttpResponse::Ok().json(&episodes))
+    req.ok().json(&episodes)?;
+
+    Ok(())
 }
 
-pub(super) async fn get_episode(
-    req: HttpRequest,
-    path: web::Path<(i64,)>,
-) -> actix_web::Result<impl Responder> {
-    let (id,) = path.into_inner();
+#[endpoint]
+pub(super) async fn get_episode(req: &mut Request) -> eyre::Result<()> {
+    let id: i64 = req.param("id")?;
 
-    let db: &Db = req.app_data().unwrap();
-    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
+    let db: &Db = req.ext().unwrap();
+    let mut conn = db.acquire().await?;
 
     let sql = "
         SELECT
@@ -102,9 +101,10 @@ pub(super) async fn get_episode(
     let episode: Episode = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
-        .await
-        .map_err(ErrorInternalServerError)?
-        .ok_or_else(|| ErrorNotFound(""))?;
+        .await?
+        .or_not_found("episode not found")?;
 
-    Ok(HttpResponse::Ok().json(&episode))
+    req.ok().json(&episode)?;
+
+    Ok(())
 }

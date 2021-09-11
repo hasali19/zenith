@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
-use actix_files::NamedFile;
-use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
-use actix_web::web::ServiceConfig;
-use actix_web::{web, HttpRequest, HttpResponse, Responder};
+use atium::respond::RespondRequestExt;
+use atium::router::{Router, RouterRequestExt};
+use atium::{endpoint, Request};
 use serde_json::{json, Value};
 
 use crate::config::Config;
@@ -12,23 +11,20 @@ use crate::db::subtitles::{Subtitle, SubtitlePath};
 use crate::db::{self, Db};
 use crate::ffprobe::Ffprobe;
 
-use super::ApiResult;
+use super::ext::OptionExt;
 
-pub fn configure(config: &mut ServiceConfig) {
-    config
-        .route("/videos/{id}", web::get().to(get_video_content))
-        .route("/videos/{id}/info", web::get().to(get_video_info))
-        .route("/videos/{id}/subtitles", web::get().to(get_subtitles));
+pub fn routes(router: &mut Router) {
+    router.route("/videos/:id").get(get_video_content);
+    router.route("/videos/:id/info").get(get_video_info);
+    router.route("/videos/:id/subtitles").get(get_subtitles);
 }
 
-async fn get_video_content(
-    req: HttpRequest,
-    path: web::Path<(i64,)>,
-) -> actix_web::Result<impl Responder> {
-    let (id,) = path.into_inner();
+#[endpoint]
+async fn get_video_content(req: &mut Request) -> eyre::Result<()> {
+    let id: i64 = req.param("id")?;
 
-    let db: &Db = req.app_data().unwrap();
-    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
+    let db: &Db = req.ext().unwrap();
+    let mut conn = db.acquire().await?;
 
     let sql = "
         SELECT path
@@ -39,23 +35,22 @@ async fn get_video_content(
     let path: String = sqlx::query_scalar(sql)
         .bind(id)
         .fetch_optional(&mut conn)
-        .await
-        .map_err(ErrorInternalServerError)?
-        .ok_or_else(|| ErrorNotFound("video not found"))?;
+        .await?
+        .or_not_found("video not found")?;
 
-    Ok(NamedFile::open(path))
+    req.respond_file(path).await?;
+
+    Ok(())
 }
 
-async fn get_video_info(
-    req: HttpRequest,
-    path: web::Path<(i64,)>,
-) -> actix_web::Result<impl Responder> {
-    let (id,) = path.into_inner();
+#[endpoint]
+async fn get_video_info(req: &mut Request) -> eyre::Result<()> {
+    let id: i64 = req.param("id")?;
 
-    let config: &Arc<Config> = req.app_data().unwrap();
-    let db: &Db = req.app_data().unwrap();
+    let config: &Arc<Config> = req.ext().unwrap();
+    let db: &Db = req.ext().unwrap();
 
-    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
+    let mut conn = db.acquire().await?;
 
     let sql = "
         SELECT file.path, item.item_type, data.position
@@ -68,14 +63,12 @@ async fn get_video_info(
     let (path, item_type, position): (String, MediaItemType, Option<f64>) = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
-        .await
-        .map_err(ErrorInternalServerError)?
-        .ok_or_else(|| ErrorNotFound("video not found"))?;
+        .await?
+        .or_not_found("video not found")?;
 
     let info = Ffprobe::new(&config.transcoding.ffprobe_path)
         .probe(&path)
-        .await
-        .map_err(ErrorInternalServerError)?;
+        .await?;
 
     let video = info
         .streams
@@ -101,12 +94,11 @@ async fn get_video_info(
         });
 
     let subtitles = db::subtitles::get_for_video(&mut conn, id)
-        .await
-        .map_err(ErrorInternalServerError)?
+        .await?
         .into_iter()
         .map(subtitle_to_json);
 
-    Ok(HttpResponse::Ok().json(&json!({
+    req.ok().json(&json!({
         "path": path,
         "type": item_type,
         "format": info.format.format_name,
@@ -115,22 +107,27 @@ async fn get_video_info(
         "video": video,
         "audio": audio,
         "subtitles": subtitles.collect::<Vec<_>>(),
-    })))
+    }))?;
+
+    Ok(())
 }
 
-async fn get_subtitles(req: HttpRequest, path: web::Path<(i64,)>) -> ApiResult {
-    let (id,) = path.into_inner();
+#[endpoint]
+async fn get_subtitles(req: &mut Request) -> eyre::Result<()> {
+    let id: i64 = req.param("id")?;
 
-    let db: &Db = req.app_data().unwrap();
-    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
+    let db: &Db = req.ext().unwrap();
+    let mut conn = db.acquire().await?;
 
-    let subtitles = db::subtitles::get_for_video(&mut conn, id)
-        .await
-        .map_err(ErrorInternalServerError)?
+    let subtitles: Vec<_> = db::subtitles::get_for_video(&mut conn, id)
+        .await?
         .into_iter()
-        .map(subtitle_to_json);
+        .map(subtitle_to_json)
+        .collect();
 
-    Ok(HttpResponse::Ok().json(&subtitles.collect::<Vec<_>>()))
+    req.ok().json(&subtitles)?;
+
+    Ok(())
 }
 
 fn subtitle_to_json(subtitle: Subtitle) -> Value {

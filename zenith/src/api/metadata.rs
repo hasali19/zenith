@@ -1,41 +1,43 @@
-use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
-use actix_web::web::ServiceConfig;
-use actix_web::{web, HttpRequest, HttpResponse, Responder};
+use atium::respond::RespondRequestExt;
+use atium::router::{Router, RouterRequestExt};
+use atium::{endpoint, Request};
 
 use crate::db::media::MediaItemType;
 use crate::db::Db;
 use crate::metadata::{MetadataManager, RefreshRequest};
 
-pub fn configure(config: &mut ServiceConfig) {
-    config.route("/metadata/{id}/refresh", web::post().to(refresh_metadata));
+use super::ext::OptionExt;
+
+pub fn routes(router: &mut Router) {
+    router
+        .route("/metadata/{id}/refresh")
+        .post(refresh_metadata);
 }
 
-async fn refresh_metadata(
-    req: HttpRequest,
-    path: web::Path<(i64,)>,
-) -> actix_web::Result<impl Responder> {
-    let (id,) = path.into_inner();
+#[endpoint]
+async fn refresh_metadata(req: &mut Request) -> eyre::Result<()> {
+    let id: i64 = req.param("id")?;
 
-    let metadata: &MetadataManager = req.app_data().unwrap();
-    let db: &Db = req.app_data().unwrap();
-    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
+    let metadata: &MetadataManager = req.ext().unwrap();
+    let db: &Db = req.ext().unwrap();
+    let mut conn = db.acquire().await?;
 
     let item_type: MediaItemType =
         sqlx::query_scalar("SELECT item_type FROM media_items WHERE id = ?")
             .bind(id)
             .fetch_optional(&mut conn)
-            .await
-            .map_err(ErrorInternalServerError)?
-            .ok_or_else(|| ErrorNotFound(""))?;
+            .await?
+            .or_not_found("media item not found")?;
 
-    let req = match item_type {
+    let refresh_req = match item_type {
         MediaItemType::Movie => RefreshRequest::Movie(id),
         MediaItemType::TvShow => RefreshRequest::TvShow(id),
         MediaItemType::TvSeason => RefreshRequest::TvSeason(id),
         MediaItemType::TvEpisode => RefreshRequest::TvEpisode(id),
     };
 
-    metadata.enqueue(req);
+    metadata.enqueue(refresh_req);
+    req.ok();
 
-    Ok(HttpResponse::Ok())
+    Ok(())
 }

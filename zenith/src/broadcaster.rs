@@ -1,3 +1,4 @@
+use std::convert::Infallible;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -32,10 +33,10 @@ impl Broadcaster {
         });
 
         // Ping clients every 15 seconds to check if they're still connected
-        actix_web::rt::spawn({
+        tokio::spawn({
             let broadcaster = broadcaster.clone();
             async move {
-                let mut interval = actix_web::rt::time::interval(Duration::from_secs(15));
+                let mut interval = tokio::time::interval(Duration::from_secs(15));
                 loop {
                     interval.tick().await;
                     broadcaster.remove_disconnected_clients();
@@ -58,7 +59,7 @@ impl Broadcaster {
         *clients = connected_clients.collect();
     }
 
-    pub async fn new_client(&self) -> impl Stream<Item = actix_web::Result<Bytes>> {
+    pub async fn new_client(&self) -> impl Stream<Item = Result<Bytes, Infallible>> {
         let (tx, rx) = mpsc::channel(100);
         tx.try_send(Message::Connected.into()).unwrap();
         self.clients.lock().unwrap().push(tx);

@@ -1,17 +1,18 @@
 use std::sync::Arc;
 
-use actix_web::error::ErrorBadRequest;
-use actix_web::web::{self, Query, ServiceConfig};
-use actix_web::{HttpRequest, HttpResponse};
+use atium::query::QueryRequestExt;
+use atium::respond::RespondRequestExt;
+use atium::router::Router;
+use atium::{endpoint, Request};
 use serde::Deserialize;
 use serde_json::json;
 
 use crate::config::Config;
 
-use super::ApiResult;
+use super::error::bad_request;
 
-pub fn configure(config: &mut ServiceConfig) {
-    config.route("/files", web::get().to(get_files));
+pub fn routes(router: &mut Router) {
+    router.route("/files").get(get_files);
 }
 
 #[derive(Deserialize)]
@@ -19,16 +20,23 @@ struct GetFilesQuery {
     path: Option<String>,
 }
 
-async fn get_files(req: HttpRequest, Query(query): Query<GetFilesQuery>) -> ApiResult {
-    let config: &Arc<Config> = req.app_data().unwrap();
+#[endpoint]
+async fn get_files(req: &mut Request) -> eyre::Result<()> {
+    let query: GetFilesQuery = req.query()?;
+    let config: &Arc<Config> = req.ext().unwrap();
 
-    let path = query.path.as_deref().or(config.import.path.as_deref());
+    let path = query
+        .path
+        .as_deref()
+        .or_else(|| config.import.path.as_deref());
+
     let path = match path {
         Some(path) => path,
         None => {
-            return Err(ErrorBadRequest(
+            return Err(bad_request(
                 "No path specified, and no default import path has been configured",
-            ));
+            )
+            .into());
         }
     };
 
@@ -55,5 +63,7 @@ async fn get_files(req: HttpRequest, Query(query): Query<GetFilesQuery>) -> ApiR
         })
         .collect::<Vec<_>>();
 
-    Ok(HttpResponse::Ok().json(&files))
+    req.ok().json(&files)?;
+
+    Ok(())
 }

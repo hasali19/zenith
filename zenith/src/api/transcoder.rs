@@ -1,30 +1,32 @@
 use std::sync::Arc;
 
-use actix_web::error::ErrorBadRequest;
-use actix_web::web::ServiceConfig;
-use actix_web::{web, HttpRequest, HttpResponse, Responder};
+use atium::query::QueryRequestExt;
+use atium::respond::RespondRequestExt;
+use atium::router::Router;
+use atium::{endpoint, Request};
 use serde::Deserialize;
 use serde_json::json;
 
 use crate::transcoder::{Job, Transcoder};
 
-pub fn configure(config: &mut ServiceConfig) {
-    config.service(
-        web::resource("/transcoder")
-            .route(web::get().to(get_state))
-            .route(web::post().to(transcode)),
-    );
+use super::error::bad_request;
+
+pub fn routes(router: &mut Router) {
+    router.route("/transcoder").get(get_state).post(transcode);
 }
 
-async fn get_state(req: HttpRequest) -> actix_web::Result<impl Responder> {
-    let transcoder: &Arc<Transcoder> = req.app_data().unwrap();
+#[endpoint]
+async fn get_state(req: &mut Request) -> eyre::Result<()> {
+    let transcoder: &Arc<Transcoder> = req.ext().unwrap();
     let current = transcoder.current().await;
     let queue = transcoder.queue().await;
 
-    Ok(HttpResponse::Ok().json(json!({
+    req.ok().json(&json!({
         "current": current.map(|j| j.video_id),
         "queue": queue.iter().map(|j| j.video_id).collect::<Vec<_>>(),
-    })))
+    }))?;
+
+    Ok(())
 }
 
 #[derive(Deserialize)]
@@ -35,18 +37,18 @@ pub struct TranscodeParams {
     all: bool,
 }
 
-async fn transcode(
-    req: HttpRequest,
-    query: web::Query<TranscodeParams>,
-) -> actix_web::Result<impl Responder> {
-    let params = query.into_inner();
-    let transcoder: &Arc<Transcoder> = req.app_data().unwrap();
+#[endpoint]
+async fn transcode(req: &mut Request) -> eyre::Result<()> {
+    let params: TranscodeParams = req.query()?;
+    let transcoder: &Arc<Transcoder> = req.ext().unwrap();
 
     match params.video_id {
         Some(id) => transcoder.enqueue(Job { video_id: id }).await,
         None if params.all => transcoder.enqueue_all().await,
-        None => return Err(ErrorBadRequest("no video to transcode")),
+        None => return Err(bad_request("no video to transcode").into()),
     }
 
-    Ok(HttpResponse::Ok())
+    req.ok();
+
+    Ok(())
 }
