@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,11 +18,9 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.ImportQueueItem
+import uk.hasali.zenith.ImportQueueItemInfo
 import uk.hasali.zenith.playClick
-import uk.hasali.zenith.ui.AppBar
-import uk.hasali.zenith.ui.ImportItemDialog
-import uk.hasali.zenith.ui.LocalZenithClient
-import uk.hasali.zenith.ui.SwipeRefreshLazyColumn
+import uk.hasali.zenith.ui.*
 
 @Composable
 fun ImportQueueScreen(onNavigateUp: () -> Unit) {
@@ -99,11 +99,28 @@ private fun BoxScope.ImportQueueEmpty() {
 private fun ImportQueueListItem(item: ImportQueueItem, onClick: () -> Unit) {
     val context = LocalContext.current
 
+    val icon = when (item.info) {
+        is ImportQueueItemInfo.Movie -> Icons.Default.Movie
+        is ImportQueueItemInfo.Episode -> Icons.Default.Tv
+        else -> Icons.Default.Videocam
+    }
+
+    val primary = when (item.info) {
+        is ImportQueueItemInfo.Movie -> item.info.title
+        is ImportQueueItemInfo.Episode -> {
+            val name = item.info.name
+            val season = twoDigitNumber(item.info.season)
+            val episode = twoDigitNumber(item.info.episode)
+            "$name S${season}E${episode}"
+        }
+        else -> item.name
+    }
+
     ListItem(
-        icon = { Icon(Icons.Default.Videocam, contentDescription = "Video") },
+        icon = { Icon(icon, contentDescription = "Video") },
         secondaryText = {
             Text(
-                text = item.path,
+                text = item.name,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(bottom = 12.dp),
@@ -114,6 +131,6 @@ private fun ImportQueueListItem(item: ImportQueueItem, onClick: () -> Unit) {
             onClick()
         },
     ) {
-        Text(text = item.name)
+        Text(text = primary)
     }
 }

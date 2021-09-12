@@ -120,7 +120,19 @@ data class TranscoderState(val current: Int?, val queue: List<Int>)
 data class ImportQueueItem(
     val name: String,
     val path: String,
+    val info: ImportQueueItemInfo?,
 )
+
+@Serializable
+sealed class ImportQueueItemInfo {
+    @Serializable
+    @SerialName("movie")
+    data class Movie(val title: String, val year: Int?) : ImportQueueItemInfo()
+
+    @Serializable
+    @SerialName("episode")
+    data class Episode(val name: String, val season: Int, val episode: Int) : ImportQueueItemInfo()
+}
 
 @Serializable
 sealed class ImportSource {

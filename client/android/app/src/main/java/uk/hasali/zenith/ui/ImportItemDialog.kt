@@ -9,14 +9,37 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.*
 
+private class EpisodeData(
+    show: Show?,
+    showName: String,
+    season: String,
+    episode: String,
+) {
+    val show = mutableStateOf(show)
+    val showName = mutableStateOf(showName)
+    val season = mutableStateOf(season)
+    val episode = mutableStateOf(episode)
+}
+
+private class MovieData(
+    title: String,
+    year: String,
+) {
+    val title = mutableStateOf(title)
+    val year = mutableStateOf(year)
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ImportItemDialog(
     item: ImportQueueItem,
@@ -26,28 +49,63 @@ fun ImportItemDialog(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var type by remember { mutableStateOf(ItemType.Episode) }
+    val shows by produceState(emptyList<Show>()) {
+        value = client.getShows()
+    }
 
-    var show: Show? by remember { mutableStateOf(null) }
-    var showName by remember { mutableStateOf("") }
-    var season by remember { mutableStateOf("") }
-    var episode by remember { mutableStateOf("") }
+    var type by remember(item) {
+        mutableStateOf(
+            when (item.info) {
+                is ImportQueueItemInfo.Movie -> ItemType.Movie
+                else -> ItemType.Episode
+            }
+        )
+    }
 
-    var title by remember { mutableStateOf("") }
-    var year by remember { mutableStateOf("") }
+    val movie = remember(item) {
+        if (item.info is ImportQueueItemInfo.Movie) {
+            MovieData(
+                title = item.info.title,
+                year = item.info.year?.toString() ?: "",
+            )
+        } else {
+            MovieData(
+                title = "",
+                year = "",
+            )
+        }
+    }
+
+    val episode = remember(item, shows) {
+        if (item.info is ImportQueueItemInfo.Episode) {
+            EpisodeData(
+                show = shows.find { it.name.equals(item.info.name, ignoreCase = true) },
+                showName = item.info.name,
+                season = item.info.season.toString(),
+                episode = item.info.episode.toString(),
+            )
+        } else {
+            EpisodeData(
+                show = null,
+                showName = "",
+                season = "",
+                episode = "",
+            )
+        }
+    }
 
     fun onImportClick() {
         scope.launch {
             try {
                 val source = ImportSource.LocalImportSource(path = item.path)
                 when (type) {
-                    ItemType.Movie -> client.importMovie(source, title, year)
+                    ItemType.Movie -> client.importMovie(source, movie.title.value, movie.year.value)
                     ItemType.Episode -> client.importEpisode(
                         source,
-                        show,
-                        showName,
-                        season,
-                        episode,
+                        episode.show.value,
+                        episode.showName.value,
+                        episode.season.value,
+                        episode.episode.value,
                     )
                 }
 
@@ -80,26 +138,22 @@ fun ImportItemDialog(
 
                 when (type) {
                     ItemType.Movie -> ImportMovieForm(
-                        title = title,
-                        year = year,
-                        onTitleChange = { title = it },
-                        onYearChange = { year = it },
+                        title = movie.title.value,
+                        year = movie.year.value,
+                        onTitleChange = { movie.title.value = it },
+                        onYearChange = { movie.year.value = it },
                     )
                     ItemType.Episode -> {
-                        val shows by produceState(emptyList<Show?>()) {
-                            value = listOf(null) + client.getShows()
-                        }
-
                         ImportEpisodeForm(
-                            shows = shows,
-                            show = show,
-                            showName = showName,
-                            season = season,
-                            episode = episode,
-                            onShowChange = { show = it },
-                            onShowNameChange = { showName = it },
-                            onSeasonChange = { season = it },
-                            onEpisodeChange = { episode = it },
+                            shows = listOf(null) + shows,
+                            show = episode.show.value,
+                            showName = episode.showName.value,
+                            season = episode.season.value,
+                            episode = episode.episode.value,
+                            onShowChange = { episode.show.value = it },
+                            onShowNameChange = { episode.showName.value = it },
+                            onSeasonChange = { episode.season.value = it },
+                            onEpisodeChange = { episode.episode.value = it },
                         )
                     }
                 }
@@ -121,6 +175,8 @@ fun ImportItemDialog(
                 Text("Cancel")
             }
         },
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier.padding(32.dp),
     )
 }
 
