@@ -37,10 +37,12 @@ async fn get_import_queue(req: HttpRequest) -> ApiResult {
     for entry in scanner::get_video_files(import_path) {
         let name = entry.file_name().to_str().unwrap();
         let path = entry.path().to_str().unwrap();
+        let info = scanner::parse_video_filename(&config.import.matchers, name);
 
         entries.push(json!({
             "name": name,
             "path": path,
+            "info": info,
         }));
     }
 

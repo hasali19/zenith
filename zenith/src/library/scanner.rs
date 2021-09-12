@@ -3,11 +3,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use once_cell::sync::OnceCell;
-use regex::{Captures, Regex};
+use regex::Regex;
 use time::{Date, Instant, OffsetDateTime};
 use walkdir::{DirEntry, WalkDir};
 
-use crate::config::Config;
+use crate::config::{Config, ImportMatcher, ImportMatcherTarget};
 use crate::db::subtitles::{NewSubtitle, SubtitlePath};
 use crate::db::videos::UpdateVideo;
 use crate::db::{self, Db};
@@ -300,11 +300,15 @@ impl LibraryScanner {
     }
 }
 
-/// Extracts a title and (optional) year from a filename
+/// Extracts a title and (optional) year from a filename.
+///
+/// Supported formats:
+/// - `This is the title.mp4`
+/// - `This is the title (2021).mp4`
 pub fn parse_movie_filename(name: &str) -> Option<(String, Option<OffsetDateTime>)> {
     static REGEX: OnceCell<Regex> = OnceCell::new();
 
-    let captures: Captures = REGEX
+    let captures = REGEX
         .get_or_init(|| Regex::new(r"^(\S.*?)(?: \((\d\d\d\d)\))?(?:\.\w+)?$").unwrap())
         .captures(name)?;
 
@@ -329,13 +333,16 @@ pub fn get_video_files(path: impl AsRef<Path>) -> impl Iterator<Item = DirEntry>
         .filter(is_video_file)
 }
 
-/// Extracts a show name, season and episode number from an episode path
+/// Extracts a show name, season and episode number from an episode path.
+///
+/// Supported formats:
+/// - `Show Name/S01E02.mp4`
 pub fn parse_episode_path(path: &Path) -> Option<(String, u32, u32)> {
     static REGEX: OnceCell<Regex> = OnceCell::new();
 
     let file_name = path.file_name()?.to_str()?;
     let folder_name = path.parent()?.file_name()?.to_str()?;
-    let captures: Captures = REGEX
+    let captures = REGEX
         .get_or_init(|| Regex::new(r"^S(\d\d)E(\d\d)\.\S+$").unwrap())
         .captures(file_name)?;
 
@@ -343,6 +350,51 @@ pub fn parse_episode_path(path: &Path) -> Option<(String, u32, u32)> {
     let episode = captures.get(2)?.as_str().parse().ok()?;
 
     Some((folder_name.to_owned(), season, episode))
+}
+
+#[derive(serde::Serialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum VideoFilenameMeta {
+    Movie {
+        title: String,
+        year: Option<u32>,
+    },
+    Episode {
+        name: String,
+        season: u32,
+        episode: u32,
+    },
+}
+
+/// Extracts info about a video file from a filename, using a list of matchers.
+pub fn parse_video_filename(
+    matchers: &[ImportMatcher],
+    filename: &str,
+) -> Option<VideoFilenameMeta> {
+    matchers.iter().find_map(|matcher| {
+        let captures = matcher.regex.captures(filename)?;
+        let result = match matcher.target {
+            ImportMatcherTarget::Movie => {
+                let title = captures.name("title")?.as_str().replace('.', " ");
+                let year = captures.name("year").and_then(|v| v.as_str().parse().ok());
+
+                VideoFilenameMeta::Movie { title, year }
+            }
+            ImportMatcherTarget::Episode => {
+                let name = captures.name("name")?.as_str().replace('.', " ");
+                let season = captures.name("season")?.as_str().parse().ok()?;
+                let episode = captures.name("episode")?.as_str().parse().ok()?;
+
+                VideoFilenameMeta::Episode {
+                    name,
+                    season,
+                    episode,
+                }
+            }
+        };
+
+        Some(result)
+    })
 }
 
 fn is_video_file(entry: &DirEntry) -> bool {

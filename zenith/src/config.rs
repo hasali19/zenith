@@ -2,7 +2,9 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
 
-use serde::Deserialize;
+use regex::Regex;
+use serde::de::Visitor;
+use serde::{Deserialize, Deserializer};
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -57,6 +59,22 @@ pub struct Database {
 pub struct Import {
     #[serde(default)]
     pub path: Option<String>,
+    #[serde(default)]
+    pub matchers: Vec<ImportMatcher>,
+}
+
+#[derive(Deserialize)]
+pub struct ImportMatcher {
+    pub target: ImportMatcherTarget,
+    #[serde(deserialize_with = "deserialize_regex")]
+    pub regex: Regex,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ImportMatcherTarget {
+    Movie,
+    Episode,
 }
 
 #[derive(Deserialize)]
@@ -137,4 +155,25 @@ impl Default for Subtitles {
             path: Subtitles::default_path(),
         }
     }
+}
+
+fn deserialize_regex<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Regex, D::Error> {
+    struct RegexVisitor;
+
+    impl<'de> Visitor<'de> for RegexVisitor {
+        type Value = Regex;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("a valid regex")
+        }
+
+        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        where
+            E: serde::de::Error,
+        {
+            Regex::new(v).map_err(E::custom)
+        }
+    }
+
+    deserializer.deserialize_str(RegexVisitor)
 }
