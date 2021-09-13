@@ -1,5 +1,7 @@
-use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
-use actix_web::{web, HttpRequest, HttpResponse, Responder};
+use atium::respond::RespondRequestExt;
+use atium::router::RouterRequestExt;
+use atium::{endpoint, Request};
+use eyre::ContextCompat;
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
@@ -42,9 +44,10 @@ impl<'r> FromRow<'r, SqliteRow> for Show {
     }
 }
 
-pub(super) async fn get_shows(req: HttpRequest) -> actix_web::Result<impl Responder> {
-    let db: &Db = req.app_data().unwrap();
-    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
+#[endpoint]
+pub(super) async fn get_shows(req: &mut Request) -> eyre::Result<()> {
+    let db: &Db = req.ext().unwrap();
+    let mut conn = db.acquire().await?;
 
     let sql = "
         SELECT
@@ -61,22 +64,19 @@ pub(super) async fn get_shows(req: HttpRequest) -> actix_web::Result<impl Respon
         ORDER BY name
     ";
 
-    let shows: Vec<Show> = sqlx::query_as(sql)
-        .fetch_all(&mut conn)
-        .await
-        .map_err(ErrorInternalServerError)?;
+    let shows: Vec<Show> = sqlx::query_as(sql).fetch_all(&mut conn).await?;
 
-    Ok(HttpResponse::Ok().json(&shows))
+    req.ok().json(&shows)?;
+
+    Ok(())
 }
 
-pub(super) async fn get_show(
-    req: HttpRequest,
-    path: web::Path<(i64,)>,
-) -> actix_web::Result<impl Responder> {
-    let (id,) = path.into_inner();
+#[endpoint]
+pub(super) async fn get_show(req: &mut Request) -> eyre::Result<()> {
+    let id: i64 = req.param("id")?;
 
-    let db: &Db = req.app_data().unwrap();
-    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
+    let db: &Db = req.ext().unwrap();
+    let mut conn = db.acquire().await?;
 
     let sql = "
         SELECT
@@ -96,18 +96,18 @@ pub(super) async fn get_show(
     let show: Show = sqlx::query_as(sql)
         .bind(id)
         .fetch_optional(&mut conn)
-        .await
-        .map_err(ErrorInternalServerError)?
-        .ok_or_else(|| ErrorNotFound(""))?;
+        .await?
+        .context("show not found")?;
 
-    Ok(HttpResponse::Ok().json(&show))
+    req.ok().json(&show)?;
+
+    Ok(())
 }
 
-pub(super) async fn get_recently_updated_shows(
-    req: HttpRequest,
-) -> actix_web::Result<impl Responder> {
-    let db: &Db = req.app_data().unwrap();
-    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
+#[endpoint]
+pub(super) async fn get_recently_updated_shows(req: &mut Request) -> eyre::Result<()> {
+    let db: &Db = req.ext().unwrap();
+    let mut conn = db.acquire().await?;
 
     // Get shows sorted by the added_at of their most recently added episode
     // (i.e. shows that have had an episode added recently will appear higher up)
@@ -133,10 +133,9 @@ pub(super) async fn get_recently_updated_shows(
         LIMIT 30
     ";
 
-    let shows: Vec<Show> = sqlx::query_as(sql)
-        .fetch_all(&mut conn)
-        .await
-        .map_err(ErrorInternalServerError)?;
+    let shows: Vec<Show> = sqlx::query_as(sql).fetch_all(&mut conn).await?;
 
-    Ok(HttpResponse::Ok().json(&shows))
+    req.ok().json(&shows)?;
+
+    Ok(())
 }

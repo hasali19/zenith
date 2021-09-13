@@ -1,5 +1,6 @@
 mod common;
 mod events;
+mod ext;
 mod files;
 mod import;
 mod metadata;
@@ -10,29 +11,48 @@ mod transcoder;
 mod tv;
 mod videos;
 
-use actix_http::http::header;
-use actix_web::dev::HttpServiceFactory;
-use actix_web::middleware::DefaultHeaders;
-use actix_web::{web, HttpResponse};
+pub mod error;
 
-pub type ApiResult<T = HttpResponse> = actix_web::Result<T>;
+use atium::headers::AccessControlAllowOrigin;
+use atium::router::Router;
+use atium::{async_trait, endpoint, Handler, Request};
 
-pub fn service(path: &str) -> impl HttpServiceFactory {
-    let default_headers = DefaultHeaders::new()
-        .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")
-        .header(header::CACHE_CONTROL, "no-cache");
+use crate::api::error::ErrorHandler;
 
-    web::scope(path)
-        .wrap(default_headers)
-        .configure(movies::configure)
-        .configure(tv::configure)
-        .configure(videos::configure)
-        .configure(subtitles::configure)
-        .configure(metadata::configure)
-        .configure(progress::configure)
-        .configure(transcoder::configure)
-        .configure(files::configure)
-        .configure(import::configure)
-        .configure(events::configure)
-        .default_service(web::route().to(HttpResponse::NotFound))
+pub fn handler() -> impl Handler {
+    let router = Router::new()
+        .with(movies::routes)
+        .with(tv::routes)
+        .with(import::routes)
+        .with(videos::routes)
+        .with(subtitles::routes)
+        .with(files::routes)
+        .with(progress::routes)
+        .with(metadata::routes)
+        .with(transcoder::routes)
+        .with(events::routes);
+
+    atium::compose!(DefaultHeaders, ErrorHandler, router, not_found)
+}
+
+struct DefaultHeaders;
+
+#[async_trait]
+impl Handler for DefaultHeaders {
+    async fn run(&self, req: atium::Request, next: &dyn atium::Next) -> atium::Request {
+        let mut req = next.run(req).await;
+
+        if let Some(res) = req.res_mut() {
+            res.set_header(AccessControlAllowOrigin::ANY);
+        }
+
+        req
+    }
+}
+
+#[endpoint]
+async fn not_found(req: &mut Request) -> eyre::Result<()> {
+    Ok({
+        req.set_res(error::not_found("invalid request path"));
+    })
 }

@@ -3,10 +3,11 @@ use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use actix_files::NamedFile;
-use actix_web::middleware::{Logger, NormalizePath, TrailingSlash};
-use actix_web::{web, App, HttpRequest, HttpServer, Responder};
-use tracing_actix_web::TracingLogger;
+use atium::logger::Logger;
+use atium::respond::RespondRequestExt;
+use atium::router::Router;
+use atium::state::State;
+use atium::Request;
 use zenith::broadcaster::Broadcaster;
 use zenith::config::Config;
 use zenith::db::Db;
@@ -17,7 +18,7 @@ use zenith::metadata::MetadataManager;
 use zenith::tmdb::TmdbClient;
 use zenith::transcoder::Transcoder;
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> eyre::Result<()> {
     color_eyre::install()?;
 
@@ -49,26 +50,22 @@ async fn main() -> eyre::Result<()> {
 
     let addr = SocketAddr::from_str(&format!("{}:{}", config.http.host, config.http.port))?;
 
-    HttpServer::new({
-        let db = db.clone();
-        move || {
-            App::new()
-                .app_data(config.clone())
-                .app_data(db.clone())
-                .app_data(metadata.clone())
-                .app_data(transcoder.clone())
-                .app_data(broadcaster.clone())
-                .app_data(scanner.clone())
-                .wrap(NormalizePath::new(TrailingSlash::Trim))
-                .wrap(Logger::default())
-                .wrap(TracingLogger::default())
-                .service(zenith::api::service("/api"))
-                .default_service(web::to(spa))
-        }
-    })
-    .bind(addr)?
-    .run()
-    .await?;
+    let router = Router::new().with(|r| {
+        r.route("/api/*").any(zenith::api::handler());
+    });
+
+    let state = atium::compose!(
+        State(config),
+        State(db.clone()),
+        State(metadata),
+        State(transcoder),
+        State(broadcaster),
+        State(scanner)
+    );
+
+    let app = atium::compose!(Logger::default(), state, router, spa);
+
+    atium::run(addr, app).await?;
 
     db.close().await;
 
@@ -101,7 +98,8 @@ fn start_event_broadcaster(broadcaster: Arc<Broadcaster>, transcoder: &Transcode
     });
 }
 
-async fn spa(req: HttpRequest) -> actix_web::Result<impl Responder> {
+#[atium::endpoint]
+async fn spa(req: &mut Request) -> eyre::Result<()> {
     let path = Path::new("client/web/dist").join(req.uri().path().trim_start_matches('/'));
     let path = if path.is_file() {
         path.as_path()
@@ -109,5 +107,7 @@ async fn spa(req: HttpRequest) -> actix_web::Result<impl Responder> {
         Path::new("client/web/dist/index.html")
     };
 
-    Ok(NamedFile::open(path)?)
+    req.respond_file(path).await?;
+
+    Ok(())
 }

@@ -1,20 +1,25 @@
 use std::sync::Arc;
 
-use actix_web::web::ServiceConfig;
-use actix_web::{web, HttpRequest, HttpResponse, Responder};
+use atium::headers::{CacheControl, ContentType};
+use atium::respond::RespondRequestExt;
+use atium::router::Router;
+use atium::{endpoint, Body, Request};
 
 use crate::broadcaster::Broadcaster;
 
-pub fn configure(config: &mut ServiceConfig) {
-    config.route("/events", web::get().to(connect));
+pub fn routes(router: &mut Router) {
+    router.route("/events").get(connect);
 }
 
-async fn connect(req: HttpRequest) -> impl Responder {
-    let broadcaster: &Arc<Broadcaster> = req.app_data().unwrap();
+#[endpoint]
+async fn connect(req: &mut Request) -> eyre::Result<()> {
+    let broadcaster: &Arc<Broadcaster> = req.ext().unwrap();
     let stream = broadcaster.new_client().await;
 
-    HttpResponse::Ok()
-        .append_header(("cache-control", "no-cache"))
-        .append_header(("content-type", "text/event-stream"))
-        .streaming(stream)
+    req.ok()
+        .header(CacheControl::new().with_no_cache())
+        .header(ContentType::from(mime::TEXT_EVENT_STREAM))
+        .body(Body::wrap_stream(stream));
+
+    Ok(())
 }

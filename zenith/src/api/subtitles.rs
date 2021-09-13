@@ -1,53 +1,57 @@
 use std::process::Stdio;
+use std::str::FromStr;
 use std::sync::Arc;
 
-use actix_files::NamedFile;
-use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
-use actix_web::web::ServiceConfig;
-use actix_web::{web, HttpRequest, HttpResponse};
+use atium::headers::ContentType;
+use atium::respond::RespondRequestExt;
+use atium::router::{Router, RouterRequestExt};
+use atium::{endpoint, Request, Response};
+use mime::Mime;
 use tokio::process::Command;
 
 use crate::config::Config;
 use crate::db::{self, Db};
 use crate::ext::CommandExt;
 
-use super::ApiResult;
+use super::ext::OptionExt;
 
-pub fn configure(config: &mut ServiceConfig) {
-    config.route("/subtitles/{id}", web::get().to(get_subtitle));
+pub fn routes(router: &mut Router) {
+    router.route("/subtitles/:id").get(get_subtitle);
 }
 
-async fn get_subtitle(req: HttpRequest, path: web::Path<i64>) -> ApiResult {
-    let subtitle_id = path.into_inner();
+#[endpoint]
+async fn get_subtitle(req: &mut Request) -> eyre::Result<()> {
+    let subtitle_id: i64 = req.param("id")?;
 
-    let config: &Arc<Config> = req.app_data().unwrap();
-    let db: &Db = req.app_data().unwrap();
+    let config: &Arc<Config> = req.ext().unwrap();
+    let db: &Db = req.ext().unwrap();
 
-    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
+    let mut conn = db.acquire().await?;
 
     let subtitle = db::subtitles::get_by_id(&mut conn, subtitle_id)
-        .await
-        .map_err(ErrorInternalServerError)?
-        .ok_or_else(|| ErrorNotFound("subtitle not found"))?;
+        .await?
+        .or_not_found("subtitle not found")?;
 
     let path = db::videos::get_path(&mut conn, subtitle.video_id)
-        .await
-        .map_err(ErrorInternalServerError)?
-        .ok_or_else(|| ErrorNotFound("video not found"))?;
+        .await?
+        .or_not_found("video not found")?;
 
     match subtitle.path {
         db::subtitles::SubtitlePath::External(path) => {
             // Subtitle is an external file, return it directly
-            Ok(NamedFile::open(path.as_ref())?.into_response(&req))
+            req.respond_file(path.as_ref()).await?;
         }
         db::subtitles::SubtitlePath::Embedded(index) => {
             // Subtitle is embedded, extract it from the video file
-            Ok(HttpResponse::Ok()
-                .content_type("text/vtt")
-                .append_header(("access-control-allow-origin", "*"))
-                .body(extract_embedded_subtitle(config, &path, index).await?))
+            let res = Response::ok()
+                .with_header(ContentType::from(Mime::from_str("text/vtt")?))
+                .with_body(extract_embedded_subtitle(config, &path, index).await?);
+
+            req.set_res(res);
         }
     }
+
+    Ok(())
 }
 
 async fn extract_embedded_subtitle(

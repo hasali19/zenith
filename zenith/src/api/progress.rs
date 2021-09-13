@@ -1,12 +1,15 @@
-use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
-use actix_web::web::ServiceConfig;
-use actix_web::{web, HttpRequest, HttpResponse, Responder};
+use atium::query::QueryRequestExt;
+use atium::respond::RespondRequestExt;
+use atium::router::{Router, RouterRequestExt};
+use atium::{endpoint, Request};
 use serde::Deserialize;
 
 use crate::db::Db;
 
-pub fn configure(config: &mut ServiceConfig) {
-    config.route("/progress/{id}", web::post().to(update_progress));
+use super::ext::OptionExt;
+
+pub fn routes(router: &mut Router) {
+    router.route("/progress/:id").post(update_progress);
 }
 
 #[derive(Deserialize)]
@@ -14,16 +17,13 @@ struct ProgressUpdate {
     position: f64,
 }
 
-async fn update_progress(
-    req: HttpRequest,
-    path: web::Path<(i64,)>,
-    query: web::Query<ProgressUpdate>,
-) -> actix_web::Result<impl Responder> {
-    let (id,) = path.into_inner();
-    let query = query.into_inner();
+#[endpoint]
+async fn update_progress(req: &mut Request) -> eyre::Result<()> {
+    let id: i64 = req.param("id")?;
+    let query: ProgressUpdate = req.query()?;
 
-    let db: &Db = req.app_data().unwrap();
-    let mut conn = db.acquire().await.map_err(ErrorInternalServerError)?;
+    let db: &Db = req.ext().unwrap();
+    let mut conn = db.acquire().await?;
 
     let sql = "
         SELECT duration
@@ -34,9 +34,8 @@ async fn update_progress(
     let duration: f64 = sqlx::query_scalar(sql)
         .bind(id)
         .fetch_optional(&mut conn)
-        .await
-        .map_err(ErrorInternalServerError)?
-        .ok_or_else(|| ErrorNotFound(""))?;
+        .await?
+        .or_not_found("video not found")?;
 
     let sql = "
         INSERT INTO user_item_data (item_id, position, is_watched)
@@ -51,8 +50,9 @@ async fn update_progress(
         .bind(query.position)
         .bind((query.position / duration) >= 0.9)
         .execute(&mut conn)
-        .await
-        .map_err(ErrorInternalServerError)?;
+        .await?;
 
-    Ok(HttpResponse::Ok())
+    req.ok();
+
+    Ok(())
 }
