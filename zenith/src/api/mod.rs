@@ -14,10 +14,8 @@ mod videos;
 pub mod error;
 
 use atium::headers::AccessControlAllowOrigin;
-use atium::respond::RespondRequestExt;
 use atium::router::Router;
-use atium::{async_trait, endpoint, Handler, Request, StatusCode};
-use serde_json::json;
+use atium::{async_trait, endpoint, Handler, Request};
 
 use crate::api::error::ErrorHandler;
 
@@ -54,7 +52,7 @@ impl Handler for DefaultHeaders {
 
 #[endpoint]
 async fn not_found(req: &mut Request) -> eyre::Result<()> {
-    req.respond(StatusCode::NOT_FOUND)
-        .json(&json!({"error": "invalid request path"}))?;
-    Ok(())
+    Ok({
+        req.set_res(error::not_found("invalid request path"));
+    })
 }

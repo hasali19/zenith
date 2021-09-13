@@ -1,5 +1,3 @@
-use atium::StatusCode;
-
 use super::error::{self, ErrorResponse};
 
 pub trait OptionExt<T> {
@@ -13,6 +11,6 @@ impl<T> OptionExt<T> for Option<T> {
     }
 
     fn or_not_found(self, msg: impl Into<String>) -> Result<T, ErrorResponse> {
-        self.ok_or_else(|| ErrorResponse::new(StatusCode::NOT_FOUND, msg.into()))
+        self.ok_or_else(|| error::not_found(msg.into()))
     }
 }

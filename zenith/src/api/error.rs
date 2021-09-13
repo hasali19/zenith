@@ -40,6 +40,10 @@ pub fn bad_request(msg: impl Into<String>) -> ErrorResponse {
     ErrorResponse::new(StatusCode::BAD_REQUEST, msg.into())
 }
 
+pub fn not_found(msg: impl Into<String>) -> ErrorResponse {
+    ErrorResponse::new(StatusCode::NOT_FOUND, msg.into())
+}
+
 pub struct ErrorHandler;
 
 #[async_trait]
