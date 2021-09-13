@@ -14,15 +14,12 @@ mod videos;
 pub mod error;
 
 use atium::headers::AccessControlAllowOrigin;
-use atium::query::QueryError;
 use atium::respond::RespondRequestExt;
-use atium::router::{ParamError, Router};
+use atium::router::Router;
 use atium::{async_trait, endpoint, Handler, Request, StatusCode};
 use serde_json::json;
 
-use crate::api::error::ErrorResponse;
-
-use self::error::bad_request;
+use crate::api::error::ErrorHandler;
 
 pub fn handler() -> impl Handler {
     let router = Router::new()
@@ -49,31 +46,6 @@ impl Handler for DefaultHeaders {
 
         if let Some(res) = req.res_mut() {
             res.set_header(AccessControlAllowOrigin::ANY);
-        }
-
-        req
-    }
-}
-
-struct ErrorHandler;
-
-#[async_trait]
-impl Handler for ErrorHandler {
-    async fn run(&self, req: atium::Request, next: &dyn atium::Next) -> atium::Request {
-        let mut req = next.run(req).await;
-
-        if let Some(mut e) = req.take_ext::<eyre::Report>() {
-            let res: ErrorResponse = if let Some(e) = e.downcast_mut::<ErrorResponse>() {
-                std::mem::take(e).into()
-            } else if let Some(e) = e.downcast_ref::<ParamError>() {
-                bad_request(e.to_string()).into()
-            } else if let Some(e) = e.downcast_ref::<QueryError>() {
-                bad_request(e.to_string()).into()
-            } else {
-                ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into()
-            };
-
-            req.set_res(res);
         }
 
         req
