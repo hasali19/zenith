@@ -53,13 +53,13 @@ impl Handler for ErrorHandler {
 
         if let Some(mut e) = req.take_ext::<eyre::Report>() {
             let res: ErrorResponse = if let Some(e) = e.downcast_mut::<ErrorResponse>() {
-                std::mem::take(e).into()
+                std::mem::take(e)
             } else if let Some(e) = e.downcast_ref::<ParamError>() {
-                bad_request(e.to_string()).into()
+                bad_request(e.to_string())
             } else if let Some(e) = e.downcast_ref::<QueryError>() {
-                bad_request(e.to_string()).into()
+                bad_request(e.to_string())
             } else {
-                ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into()
+                ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
             };
 
             req.set_res(res);

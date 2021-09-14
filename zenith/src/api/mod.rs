@@ -52,7 +52,6 @@ impl Handler for DefaultHeaders {
 
 #[endpoint]
 async fn not_found(req: &mut Request) -> eyre::Result<()> {
-    Ok({
-        req.set_res(error::not_found("invalid request path"));
-    })
+    req.set_res(error::not_found("invalid request path"));
+    Ok(())
 }
