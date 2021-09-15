@@ -9,9 +9,7 @@ use crate::metadata::{MetadataManager, RefreshRequest};
 use super::ext::OptionExt;
 
 pub fn routes(router: &mut Router) {
-    router
-        .route("/metadata/{id}/refresh")
-        .post(refresh_metadata);
+    router.route("/metadata/:id/refresh").post(refresh_metadata);
 }
 
 #[endpoint]
