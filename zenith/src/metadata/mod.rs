@@ -169,9 +169,10 @@ async fn refresh_tv_show_metadata(
 
     tracing::info!("match found: {}", result.name);
 
+    let date_fmt = format_description::parse("[year]-[month]-[day]")?;
     let first_air_date = result
         .first_air_date
-        .and_then(|date| Date::parse(&date, &format_description::parse("%F").ok()?).ok())
+        .and_then(|date| Date::parse(&date, &date_fmt).ok())
         .and_then(|date| Some(date.with_time(Time::from_hms(0, 0, 0).ok()?)))
         .map(|dt| dt.assume_utc().unix_timestamp());
 
