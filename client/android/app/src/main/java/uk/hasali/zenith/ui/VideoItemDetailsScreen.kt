@@ -1,6 +1,7 @@
 package uk.hasali.zenith.ui
 
 import android.text.format.DateUtils
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -44,6 +45,10 @@ fun VideoItemDetailsScreen(
             Action.RefreshMetadata -> onRefreshMetadata()
             Action.MediaInfo -> scope.launch { sheetState.show() }
         }
+    }
+
+    BackHandler(enabled = sheetState.isVisible) {
+        scope.launch { sheetState.hide() }
     }
 
     ModalBottomSheetLayout(
