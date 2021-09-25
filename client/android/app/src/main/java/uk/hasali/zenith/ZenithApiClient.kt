@@ -1,10 +1,27 @@
 package uk.hasali.zenith
 
+import com.squareup.moshi.Json
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.onFailure
+import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.sse.EventSource
+import okhttp3.sse.EventSourceListener
+import okhttp3.sse.EventSources
+import java.util.concurrent.TimeUnit
 
 @Serializable
 data class Movie(
@@ -113,8 +130,32 @@ sealed class SubtitleStreamInfo {
     ) : SubtitleStreamInfo()
 }
 
-@Serializable
-data class TranscoderState(val current: Int?, val queue: List<Int>)
+sealed class TranscoderJob {
+    abstract val id: Int
+
+    data class Queued(@Json(name = "video_id") override val id: Int) : TranscoderJob()
+    data class Processing(@Json(name = "video_id") override val id: Int, val progress: Double) :
+        TranscoderJob()
+}
+
+sealed class TranscoderEvent {
+    data class InitialState(val queue: List<TranscoderJob>) : TranscoderEvent()
+
+    data class Queued(val id: Int) : TranscoderEvent() {
+        fun toJob() = TranscoderJob.Queued(id)
+    }
+
+    data class Started(val id: Int) : TranscoderEvent() {
+        fun toJob() = TranscoderJob.Processing(id, 0.0)
+    }
+
+    data class Progress(val id: Int, val progress: Double) : TranscoderEvent() {
+        fun toJob() = TranscoderJob.Processing(id, progress)
+    }
+
+    data class Success(val id: Int) : TranscoderEvent()
+    data class Failure(val id: Int) : TranscoderEvent()
+}
 
 @Serializable
 data class ImportQueueItem(
@@ -163,7 +204,71 @@ data class ImportMovieRequest(
     val year: Int,
 )
 
+private class EventSourceClient(private val moshi: Moshi) {
+    private val client = OkHttpClient.Builder()
+        .readTimeout(0, TimeUnit.SECONDS)
+        .build()
+
+    private val eventSourceFactory = EventSources.createFactory(client)
+
+    private class Listener<T>(
+        private val type: Class<T>,
+        private val channel: SendChannel<T>,
+        private val moshi: Moshi
+    ) : EventSourceListener() {
+        override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
+            channel.trySendBlocking(moshi.adapter(this.type).fromJson(data)!!)
+                .onFailure { channel.close(it) }
+        }
+
+        override fun onClosed(eventSource: EventSource) {
+            channel.close()
+        }
+
+        override fun onFailure(
+            eventSource: EventSource,
+            t: Throwable?,
+            response: Response?
+        ) {
+            channel.close(t)
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    inline fun <reified T> get(url: String) = callbackFlow<T> {
+        val req = Request.Builder()
+            .url(url)
+            .build()
+
+        val source = eventSourceFactory.newEventSource(req, Listener(T::class.java, channel, moshi))
+
+        awaitClose {
+            source.cancel()
+        }
+    }
+}
+
 class ZenithApiClient(private val client: HttpClient, private val baseUrl: String) {
+    private val moshi = Moshi.Builder()
+        .add(
+            PolymorphicJsonAdapterFactory.of(TranscoderJob::class.java, "state")
+                .withSubtype(TranscoderJob.Queued::class.java, "queued")
+                .withSubtype(TranscoderJob.Processing::class.java, "processing")
+        )
+        .add(
+            PolymorphicJsonAdapterFactory.of(TranscoderEvent::class.java, "type")
+                .withSubtype(TranscoderEvent.InitialState::class.java, "initial_state")
+                .withSubtype(TranscoderEvent.Queued::class.java, "queued")
+                .withSubtype(TranscoderEvent.Started::class.java, "started")
+                .withSubtype(TranscoderEvent.Progress::class.java, "progress")
+                .withSubtype(TranscoderEvent.Success::class.java, "success")
+                .withSubtype(TranscoderEvent.Failure::class.java, "failure")
+        )
+        .addLast(KotlinJsonAdapterFactory())
+        .build()
+
+    private val sseClient = EventSourceClient(moshi)
+
     suspend fun getMovies(): List<Movie> =
         client.get("$baseUrl/api/movies")
 
@@ -204,8 +309,7 @@ class ZenithApiClient(private val client: HttpClient, private val baseUrl: Strin
     suspend fun updateProgress(videoId: Int, position: Long): Unit =
         client.post("$baseUrl/api/progress/$videoId?position=$position")
 
-    suspend fun getTranscoderState(): TranscoderState =
-        client.get("$baseUrl/api/transcoder")
+    fun getTranscoderEvents() = sseClient.get<TranscoderEvent>("$baseUrl/api/transcoder/events")
 
     suspend fun startTranscode(videoId: Int): Unit =
         client.post("$baseUrl/api/transcoder?video_id=$videoId")
