@@ -250,6 +250,8 @@ impl Transcoder {
                 }
             }
 
+            tracing::info!("finished reading ffmpeg progress");
+
             match child.wait().await {
                 Ok(status) => {
                     if !status.success() {
