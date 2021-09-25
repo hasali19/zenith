@@ -1,5 +1,6 @@
 use reqwest::header::{self, HeaderMap};
 use reqwest::Client as HttpClient;
+use serde::de::DeserializeOwned;
 use url::Url;
 
 pub struct TmdbClient {
@@ -52,6 +53,12 @@ pub struct TvShowSearchResult {
     pub overview: Option<String>,
     pub poster_path: Option<String>,
     pub backdrop_path: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+pub struct TvShowResponse {
+    pub id: i32,
+    pub last_air_date: Option<String>,
 }
 
 #[derive(serde::Deserialize)]
@@ -123,7 +130,7 @@ impl TmdbClient {
             }
         }
 
-        Ok(self.client.get(url.as_str()).send().await?.json().await?)
+        self.get_json(url.as_str()).await
     }
 
     pub async fn search_tv_shows(
@@ -147,7 +154,12 @@ impl TmdbClient {
             }
         }
 
-        Ok(self.client.get(url.as_str()).send().await?.json().await?)
+        self.get_json(url.as_str()).await
+    }
+
+    pub async fn get_tv_show(&self, id: i32) -> eyre::Result<TvShowResponse> {
+        let url = format!("https://api.themoviedb.org/3/tv/{}", id);
+        self.get_json(&url).await
     }
 
     pub async fn get_tv_season(&self, tv_id: i32, season: i32) -> eyre::Result<TvSeasonResponse> {
@@ -156,7 +168,7 @@ impl TmdbClient {
             tv_id, season
         );
 
-        Ok(self.client.get(&url).send().await?.json().await?)
+        self.get_json(&url).await
     }
 
     pub async fn get_tv_episode(
@@ -170,7 +182,7 @@ impl TmdbClient {
             tv_id, season, episode
         );
 
-        Ok(self.client.get(&url).send().await?.json().await?)
+        self.get_json(&url).await
     }
 
     pub async fn get_tv_episode_images(
@@ -184,6 +196,10 @@ impl TmdbClient {
             tv_id, season, episode
         );
 
-        Ok(self.client.get(&url).send().await?.json().await?)
+        self.get_json(&url).await
+    }
+
+    async fn get_json<T: DeserializeOwned>(&self, url: &str) -> eyre::Result<T> {
+        Ok(self.client.get(url).send().await?.json().await?)
     }
 }

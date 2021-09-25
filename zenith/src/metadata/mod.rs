@@ -176,6 +176,13 @@ async fn refresh_tv_show_metadata(
         .and_then(|date| Some(date.with_time(Time::from_hms(0, 0, 0).ok()?)))
         .map(|dt| dt.assume_utc().unix_timestamp());
 
+    let details = tmdb.get_tv_show(result.id).await?;
+    let last_air_date = details
+        .last_air_date
+        .and_then(|date| Date::parse(&date, &date_fmt).ok())
+        .and_then(|date| Some(date.with_time(Time::from_hms(0, 0, 0).ok()?)))
+        .map(|dt| dt.assume_utc().unix_timestamp());
+
     let poster = result.poster_path.as_deref().map(|poster| MediaImage {
         img_type: MediaImageType::Poster,
         src_type: MediaImageSrcType::Tmdb,
@@ -192,6 +199,7 @@ async fn refresh_tv_show_metadata(
         UPDATE tv_shows
         SET name = ?,
             start_date = ?,
+            end_date = ?,
             overview = ?,
             poster = ?,
             backdrop = ?,
@@ -202,6 +210,7 @@ async fn refresh_tv_show_metadata(
     sqlx::query(sql)
         .bind(result.name)
         .bind(first_air_date)
+        .bind(last_air_date)
         .bind(result.overview)
         .bind(poster.map(|p| p.to_string()))
         .bind(backdrop.map(|b| b.to_string()))
