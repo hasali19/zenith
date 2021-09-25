@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 use std::path::Path;
 use std::process::Stdio;
 use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
 use tokio::io::{AsyncBufReadExt, BufReader};
@@ -148,6 +149,10 @@ impl Transcoder {
 
     #[tracing::instrument(skip(self))]
     async fn run(self: Arc<Self>) {
+        if !Path::new("data/reports").is_dir() {
+            std::fs::create_dir_all("data/reports").expect("failed to create report directory");
+        }
+
         loop {
             let job = self.dequeue_job().await;
             let id = job.video_id;
@@ -225,6 +230,16 @@ impl Transcoder {
             cmd.arg(&output);
 
             cmd.stdout(Stdio::piped());
+
+            let current_time = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("have we invented a time machine?")
+                .as_secs();
+
+            cmd.env(
+                "FFREPORT",
+                format!("file=data/reports/{}.log", current_time),
+            );
 
             let mut child = match cmd.spawn() {
                 Ok(child) => child,
