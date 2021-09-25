@@ -231,15 +231,7 @@ impl Transcoder {
 
             cmd.stdout(Stdio::piped());
 
-            let current_time = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .expect("have we invented a time machine?")
-                .as_secs();
-
-            cmd.env(
-                "FFREPORT",
-                format!("file=data/reports/{}.log", current_time),
-            );
+            cmd.env("FFREPORT", "file=data/reports/%p-%t.log:level=32");
 
             let mut child = match cmd.spawn() {
                 Ok(child) => child,
