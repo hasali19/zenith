@@ -34,7 +34,7 @@ async fn main() -> eyre::Result<()> {
     let metadata = MetadataManager::new(db.clone(), tmdb);
     let video_info_provider = Arc::new(Ffprobe::new(&config.transcoding.ffprobe_path));
     let library = Arc::new(MediaLibrary::new(db.clone(), video_info_provider.clone()));
-    let transcoder = Transcoder::new(db.clone());
+    let transcoder = Transcoder::new(db.clone(), config.clone());
     let scanner = Arc::new(LibraryScanner::new(
         db.clone(),
         library.clone(),
@@ -42,8 +42,6 @@ async fn main() -> eyre::Result<()> {
         config.clone(),
         video_info_provider,
     ));
-
-    start_event_broadcaster(broadcaster.clone(), &transcoder);
 
     scanner.clone().start_scan(ScanOptions::default());
     transcoder.clone().start();
@@ -70,32 +68,6 @@ async fn main() -> eyre::Result<()> {
     db.close().await;
 
     Ok(())
-}
-
-fn start_event_broadcaster(broadcaster: Arc<Broadcaster>, transcoder: &Transcoder) {
-    // Broadcast events from transcoder to SSE clients
-    tokio::spawn({
-        let mut events = transcoder.subscribe();
-        async move {
-            loop {
-                let event = match events.recv().await {
-                    Ok(event) => event,
-                    Err(_) => continue,
-                };
-
-                let (event, id) = match event {
-                    zenith::transcoder::Event::Queued(id) => ("transcoder.queued", id),
-                    zenith::transcoder::Event::Started(id) => ("transcoder.started", id),
-                    zenith::transcoder::Event::Success(id) => ("transcoder.success", id),
-                    zenith::transcoder::Event::Error(id) => ("transcoder.error", id),
-                };
-
-                let message = format!("data: {{\"event\": \"{}\", \"id\": {}}}\n\n", event, id);
-
-                broadcaster.send(message);
-            }
-        }
-    });
 }
 
 #[atium::endpoint]

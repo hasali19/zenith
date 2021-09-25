@@ -70,10 +70,11 @@ dependencies = [
 [[package]]
 name = "atium"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/atium#0a41255f637f4699b3949f819fe189e507531f6f"
+source = "git+https://github.com/hasali19/atium#96dee55ff490fa096f7ab447d79fc1a00171ba8b"
 dependencies = [
  "async-trait",
  "atium-macros",
+ "futures",
  "headers",
  "hyper",
  "log",
@@ -91,7 +92,7 @@ dependencies = [
 [[package]]
 name = "atium-macros"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/atium#0a41255f637f4699b3949f819fe189e507531f6f"
+source = "git+https://github.com/hasali19/atium#96dee55ff490fa096f7ab447d79fc1a00171ba8b"
 dependencies = [
  "quote",
  "syn",
@@ -1511,6 +1512,7 @@ dependencies = [
  "futures-core",
  "pin-project-lite",
  "tokio",
+ "tokio-util",
 ]
 
 [[package]]
