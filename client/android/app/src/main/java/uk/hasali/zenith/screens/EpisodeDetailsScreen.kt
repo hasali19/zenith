@@ -67,7 +67,7 @@ private fun EpisodeDetailsScreen(
     onNavigateUp: () -> Unit,
 ) {
     when {
-        show == null || season == null || episode == null -> CenteredLoadingIndicator()
+        show == null || season == null || episode == null || info == null -> CenteredLoadingIndicator()
         else -> VideoItemDetailsScreen(
             backdrop = episode.thumbnail,
             poster = season.poster,

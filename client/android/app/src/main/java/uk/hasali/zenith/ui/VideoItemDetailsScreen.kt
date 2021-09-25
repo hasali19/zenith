@@ -24,7 +24,7 @@ fun VideoItemDetailsScreen(
     overview: String?,
     isWatched: Boolean,
     headerContent: @Composable () -> Unit,
-    info: VideoInfo?,
+    info: VideoInfo,
     onPlay: (replay: Boolean) -> Unit,
     onTranscode: () -> Unit,
     onRefreshMetadata: () -> Unit,
@@ -43,9 +43,7 @@ fun VideoItemDetailsScreen(
     }
 
     if (showMediaInfo) {
-        info?.let {
-            MediaInfoDialog(info = it, onDismiss = { showMediaInfo = false })
-        }
+        MediaInfoDialog(info = info, onDismiss = { showMediaInfo = false })
     }
 
     ItemDetailsScreen(

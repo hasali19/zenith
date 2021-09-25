@@ -50,8 +50,8 @@ private fun MovieDetailsScreen(
     onRefreshMetadata: () -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    when (movie) {
-        null -> CenteredLoadingIndicator()
+    when {
+        movie == null || info == null -> CenteredLoadingIndicator()
         else -> VideoItemDetailsScreen(
             backdrop = movie.backdrop,
             poster = movie.poster,
