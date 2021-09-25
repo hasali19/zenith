@@ -14,9 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.insets.navigationBarsPadding
+import kotlinx.coroutines.launch
 import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.playClick
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun VideoItemDetailsScreen(
     backdrop: String?,
@@ -30,7 +33,8 @@ fun VideoItemDetailsScreen(
     onRefreshMetadata: () -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    var showMediaInfo by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 
     fun onActionInvoked(action: Action) {
         when (action) {
@@ -38,27 +42,28 @@ fun VideoItemDetailsScreen(
             Action.PlayFromStart -> onPlay(true)
             Action.ConvertVideo -> onTranscode()
             Action.RefreshMetadata -> onRefreshMetadata()
-            Action.MediaInfo -> showMediaInfo = true
+            Action.MediaInfo -> scope.launch { sheetState.show() }
         }
     }
 
-    if (showMediaInfo) {
-        MediaInfoDialog(info = info, onDismiss = { showMediaInfo = false })
+    ModalBottomSheetLayout(
+        sheetState = sheetState,
+        sheetContent = { MediaInfoSheet(info = info) },
+    ) {
+        ItemDetailsScreen(
+            backdrop = backdrop,
+            poster = poster,
+            headerContent = headerContent,
+            actionsRow = {
+                ActionsSection(info = info) { action ->
+                    onActionInvoked(action)
+                }
+            },
+            overview = overview,
+            isWatched = isWatched,
+            onNavigateUp = onNavigateUp,
+        )
     }
-
-    ItemDetailsScreen(
-        backdrop = backdrop,
-        poster = poster,
-        headerContent = headerContent,
-        actionsRow = {
-            ActionsSection(info = info) { action ->
-                onActionInvoked(action)
-            }
-        },
-        overview = overview,
-        isWatched = isWatched,
-        onNavigateUp = onNavigateUp,
-    )
 }
 
 private enum class Action {
@@ -76,8 +81,10 @@ private fun ActionsSection(info: VideoInfo?, onActionInvoked: (Action) -> Unit) 
     @Composable
     fun PlayButton(resume: Boolean, onClick: () -> Unit) {
         Button(onClick = onClick, modifier = Modifier.width(150.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = "Play")
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(if (resume) "Resume" else "Play")
@@ -165,6 +172,38 @@ private fun ActionsMenu(onActionInvoked: (Action) -> Unit) {
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             MenuItem(Action.ConvertVideo, "Convert")
             MenuItem(Action.RefreshMetadata, "Refresh Metadata")
+        }
+    }
+}
+
+@Composable
+private fun MediaInfoSheet(info: VideoInfo) {
+    Column(modifier = Modifier.navigationBarsPadding()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(16.dp),
+        ) {
+            Icon(Icons.Default.Info, null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Media Info",
+                style = MaterialTheme.typography.subtitle2,
+            )
+        }
+
+        Divider()
+
+        DescriptionList(modifier = Modifier.padding(16.dp)) {
+            entry("Format", info.format)
+            entry("Path", info.path)
+
+            heading("Video")
+            entry("Codec", info.video.codec)
+            entry("Profile", info.video.profile)
+            entry("Resolution", "${info.video.width}x${info.video.height}")
+
+            heading("Audio")
+            entry("Codec", info.audio.codec)
         }
     }
 }
