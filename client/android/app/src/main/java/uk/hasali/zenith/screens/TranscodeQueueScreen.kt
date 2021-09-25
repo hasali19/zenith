@@ -9,8 +9,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.flowWithLifecycle
 import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
@@ -26,6 +28,7 @@ import uk.hasali.zenith.ui.LocalZenithClient
 fun TranscodeQueueScreen(onNavigateUp: () -> Unit) {
     val context = LocalContext.current
     val client = LocalZenithClient.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     val queue = remember { mutableStateListOf<TranscoderJob>() }
 
@@ -38,6 +41,7 @@ fun TranscodeQueueScreen(onNavigateUp: () -> Unit) {
         while (true) {
             try {
                 client.getTranscoderEvents()
+                    .flowWithLifecycle(lifecycleOwner.lifecycle)
                     .collect {
                         when (it) {
                             is TranscoderEvent.InitialState -> {
