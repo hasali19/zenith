@@ -225,7 +225,6 @@ impl Transcoder {
             cmd.arg(&output);
 
             cmd.stdout(Stdio::piped());
-            cmd.stderr(Stdio::piped());
 
             let mut child = match cmd.spawn() {
                 Ok(child) => child,
