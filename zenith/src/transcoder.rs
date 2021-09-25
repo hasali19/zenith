@@ -241,11 +241,17 @@ impl Transcoder {
             let stderr = child.stdout.take().unwrap();
             let mut reader = BufReader::new(stderr).lines();
             while let Ok(Some(line)) = reader.next_line().await {
-                if let Some(("out_time_us", value)) = line.split_once('=') {
-                    if let Ok(time) = value.parse::<u64>() {
-                        let progress = (time as f64 / 1000f64) / duration;
-                        self.set_current(Some(job.progress(progress))).await;
-                        self.sender.send(Event::Progress(id, progress)).ok();
+                if let Some((key, value)) = line.split_once('=') {
+                    match key {
+                        "progress" if value == "end" => break,
+                        "out_time_us" => {
+                            if let Ok(time) = value.parse::<u64>() {
+                                let progress = (time as f64 / 1000f64) / duration;
+                                self.set_current(Some(job.progress(progress))).await;
+                                self.sender.send(Event::Progress(id, progress)).ok();
+                            }
+                        }
+                        _ => {}
                     }
                 }
             }
