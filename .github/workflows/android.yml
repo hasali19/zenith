@@ -1,0 +1,35 @@
+name: Android
+
+on:
+  push:
+    paths:
+      - client/android/**
+
+jobs:
+  build_android:
+    name: Build android app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: "12.x"
+
+      - name: Build signed APK
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          ANDROID_KEYSTORE_KEY_ALIAS: ${{ secrets.ANDROID_KEYSTORE_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEYSTORE_PATH: ../keystore.jks
+        working-directory: client/android
+        run: |
+          echo $ANDROID_KEYSTORE | base64 -d > keystore.jks
+          ./gradlew assemble
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: zenith-apk
+          path: client/android/app/build/outputs/apk/release/app-release.apk
