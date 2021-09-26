@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import uk.hasali.zenith.Episode
 import uk.hasali.zenith.Season
 import uk.hasali.zenith.Show
+import uk.hasali.zenith.VideoUserDataPatch
 import uk.hasali.zenith.ui.*
 
 @Composable
@@ -42,6 +43,11 @@ fun EpisodeDetailsScreen(id: Int, onPlay: (replay: Boolean) -> Unit, onNavigateU
         show = show,
         season = season,
         episode = episode,
+        onSetWatched = {
+            scope.launch {
+                client.updateUserData(id, VideoUserDataPatch(isWatched = it))
+            }
+        },
         onPlay = onPlay,
         onTranscode = { scope.launch { client.startTranscode(id) } },
         onRefreshMetadata = { scope.launch { client.refreshMetadata(id) } },
@@ -54,6 +60,7 @@ private fun EpisodeDetailsScreen(
     show: Show?,
     season: Season?,
     episode: Episode?,
+    onSetWatched: (Boolean) -> Unit,
     onPlay: (Boolean) -> Unit,
     onTranscode: () -> Unit,
     onRefreshMetadata: () -> Unit,
@@ -65,10 +72,10 @@ private fun EpisodeDetailsScreen(
             backdrop = episode.thumbnail,
             poster = season.poster,
             overview = episode.overview,
-            isWatched = episode.userData.isWatched,
             headerContent = { HeaderContent(show = show, episode = episode) },
             info = episode.videoInfo,
             userData = episode.userData,
+            onSetWatched = onSetWatched,
             onPlay = onPlay,
             onTranscode = onTranscode,
             onRefreshMetadata = onRefreshMetadata,

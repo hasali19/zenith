@@ -27,10 +27,13 @@ import java.util.concurrent.TimeUnit
 enum class MediaItemType {
     @SerialName("movie")
     Movie,
+
     @SerialName("show")
     Show,
+
     @SerialName("season")
     Season,
+
     @SerialName("episode")
     Episode,
 }
@@ -137,6 +140,13 @@ data class VideoUserData(
     @SerialName("is_watched")
     val isWatched: Boolean,
     val position: Double?,
+)
+
+@Serializable
+data class VideoUserDataPatch(
+    @SerialName("is_watched")
+    val isWatched: Boolean? = null,
+    val position: Double? = null,
 )
 
 @Serializable
@@ -323,6 +333,11 @@ class ZenithApiClient(private val client: HttpClient, private val baseUrl: Strin
 
     suspend fun getItem(id: Int, extendedVideoInfo: Boolean = true): MediaItem =
         client.get("$baseUrl/api/items/$id?extended_video_info=$extendedVideoInfo")
+
+    suspend fun updateUserData(id: Int, data: VideoUserDataPatch): Unit = client.patch("$baseUrl/api/items/$id/user_data") {
+        contentType(ContentType.Application.Json)
+        body = data
+    }
 
     suspend fun getMovies(): List<Movie> =
         client.get("$baseUrl/api/movies")

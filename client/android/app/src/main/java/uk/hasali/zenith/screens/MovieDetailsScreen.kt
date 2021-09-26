@@ -12,6 +12,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.Movie
+import uk.hasali.zenith.VideoUserDataPatch
 import uk.hasali.zenith.ui.CenteredLoadingIndicator
 import uk.hasali.zenith.ui.LocalZenithClient
 import uk.hasali.zenith.ui.VideoItemDetailsScreen
@@ -28,6 +29,11 @@ fun MovieDetailsScreen(id: Int, onPlay: (replay: Boolean) -> Unit, onNavigateUp:
 
     MovieDetailsScreen(
         movie = movie,
+        onSetWatched = {
+            scope.launch {
+                client.updateUserData(id, VideoUserDataPatch(isWatched = it))
+            }
+        },
         onPlay = onPlay,
         onTranscode = { scope.launch { client.startTranscode(id) } },
         onRefreshMetadata = { scope.launch { client.refreshMetadata(id) } },
@@ -38,6 +44,7 @@ fun MovieDetailsScreen(id: Int, onPlay: (replay: Boolean) -> Unit, onNavigateUp:
 @Composable
 private fun MovieDetailsScreen(
     movie: Movie?,
+    onSetWatched: (Boolean) -> Unit,
     onPlay: (Boolean) -> Unit,
     onTranscode: () -> Unit,
     onRefreshMetadata: () -> Unit,
@@ -49,10 +56,10 @@ private fun MovieDetailsScreen(
             backdrop = movie.backdrop,
             poster = movie.poster,
             overview = movie.overview,
-            isWatched = movie.userData.isWatched,
             headerContent = { HeaderContent(movie = movie) },
             info = movie.videoInfo,
             userData = movie.userData,
+            onSetWatched = onSetWatched,
             onPlay = onPlay,
             onTranscode = onTranscode,
             onRefreshMetadata = onRefreshMetadata,

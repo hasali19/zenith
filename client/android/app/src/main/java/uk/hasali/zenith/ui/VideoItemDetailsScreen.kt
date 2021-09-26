@@ -2,13 +2,11 @@ package uk.hasali.zenith.ui
 
 import android.text.format.DateUtils
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,10 +25,10 @@ fun VideoItemDetailsScreen(
     backdrop: String?,
     poster: String?,
     overview: String?,
-    isWatched: Boolean,
     headerContent: @Composable () -> Unit,
     info: VideoInfo,
     userData: VideoUserData,
+    onSetWatched: (Boolean) -> Unit,
     onPlay: (replay: Boolean) -> Unit,
     onTranscode: () -> Unit,
     onRefreshMetadata: () -> Unit,
@@ -38,6 +36,8 @@ fun VideoItemDetailsScreen(
 ) {
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+
+    var isWatched by remember(userData) { mutableStateOf(userData.isWatched) }
 
     fun onActionInvoked(action: Action) {
         when (action) {
@@ -62,9 +62,17 @@ fun VideoItemDetailsScreen(
             poster = poster,
             headerContent = headerContent,
             actionsRow = {
-                ActionsSection(userData = userData) { action ->
-                    onActionInvoked(action)
-                }
+                ActionsSection(
+                    position = userData.position,
+                    isWatched = isWatched,
+                    onSetWatched = {
+                        isWatched = it
+                        onSetWatched(it)
+                    },
+                    onActionInvoked = { action ->
+                        onActionInvoked(action)
+                    },
+                )
             },
             overview = overview,
             isWatched = isWatched,
@@ -82,7 +90,12 @@ private enum class Action {
 }
 
 @Composable
-private fun ActionsSection(userData: VideoUserData, onActionInvoked: (Action) -> Unit) {
+private fun ActionsSection(
+    position: Double?,
+    isWatched: Boolean,
+    onSetWatched: (Boolean) -> Unit,
+    onActionInvoked: (Action) -> Unit
+) {
     val context = LocalContext.current
 
     @Composable
@@ -105,7 +118,7 @@ private fun ActionsSection(userData: VideoUserData, onActionInvoked: (Action) ->
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
             PlayButton(
-                resume = userData.position ?: 0.0 > 0,
+                resume = position ?: 0.0 > 0,
                 onClick = {
                     context.playClick()
                     onActionInvoked(Action.Play)
@@ -115,7 +128,19 @@ private fun ActionsSection(userData: VideoUserData, onActionInvoked: (Action) ->
             Spacer(modifier = Modifier.width(8.dp))
 
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
-                if ((userData.position?.toFloat() ?: 0f) > 0) {
+                IconToggleButton(checked = isWatched, onCheckedChange = onSetWatched) {
+                    val tint by animateColorAsState(
+                        if (isWatched) {
+                            MaterialTheme.colors.secondary
+                        } else {
+                            LocalContentColor.current
+                        }
+                    )
+
+                    Icon(Icons.Default.CheckCircleOutline, null, tint = tint)
+                }
+
+                if ((position?.toFloat() ?: 0f) > 0) {
                     IconButton(
                         onClick = {
                             context.playClick()
@@ -139,9 +164,9 @@ private fun ActionsSection(userData: VideoUserData, onActionInvoked: (Action) ->
             }
         }
 
-        if (userData.position != null && userData.position > 0) {
+        if (position != null && position > 0) {
             Text(
-                text = "Resume from ${DateUtils.formatElapsedTime(userData.position.toLong())}",
+                text = "Resume from ${DateUtils.formatElapsedTime(position.toLong())}",
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.caption,
                 modifier = Modifier.widthIn(min = 150.dp),
