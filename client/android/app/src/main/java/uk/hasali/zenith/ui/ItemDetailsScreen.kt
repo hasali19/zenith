@@ -29,7 +29,7 @@ import com.google.accompanist.insets.navigationBarsPadding
 @Composable
 fun ItemDetailsScreen(
     backdrop: String?,
-    poster: String?,
+    poster: @Composable BoxScope.() -> Unit,
     headerContent: @Composable () -> Unit,
     actionsRow: (@Composable () -> Unit)? = null,
     overview: String? = null,
@@ -104,9 +104,11 @@ fun ItemDetailsScreen(
 }
 
 @Composable
-private fun HeaderSection(poster: String?, content: @Composable () -> Unit) {
+private fun HeaderSection(poster: @Composable BoxScope.() -> Unit, content: @Composable () -> Unit) {
     Row {
-        Poster(url = poster, modifier = Modifier.width(150.dp))
+        Box(modifier = Modifier.width(150.dp)) {
+            poster()
+        }
         Spacer(modifier = Modifier.width(16.dp))
         Box(modifier = Modifier.align(Alignment.CenterVertically)) {
             content()

@@ -16,10 +16,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.Season
 import uk.hasali.zenith.Show
-import uk.hasali.zenith.ui.CenteredLoadingIndicator
-import uk.hasali.zenith.ui.ItemDetailsScreen
-import uk.hasali.zenith.ui.LocalZenithClient
-import uk.hasali.zenith.ui.MediaItemWithPoster
+import uk.hasali.zenith.ui.*
 
 @Composable
 fun ShowDetailsScreen(id: Int, onNavigateToSeason: (Season) -> Unit, onNavigateUp: () -> Unit) {
@@ -52,7 +49,7 @@ private fun ShowDetailsScreen(
         show == null || seasons == null -> CenteredLoadingIndicator()
         else -> ItemDetailsScreen(
             backdrop = show.backdrop,
-            poster = show.poster,
+            poster = { Poster(url = show.poster) },
             headerContent = { HeaderContent(show = show) },
             overview = show.overview,
             isWatched = show.userData.unwatched == 0,

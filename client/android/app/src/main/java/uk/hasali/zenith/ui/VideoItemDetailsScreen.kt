@@ -3,6 +3,7 @@ package uk.hasali.zenith.ui
 import android.text.format.DateUtils
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -37,6 +39,7 @@ fun VideoItemDetailsScreen(
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
 
+    val position = userData.position ?: 0.0
     var isWatched by remember(userData) { mutableStateOf(userData.isWatched) }
 
     fun onActionInvoked(action: Action) {
@@ -59,7 +62,12 @@ fun VideoItemDetailsScreen(
     ) {
         ItemDetailsScreen(
             backdrop = backdrop,
-            poster = poster,
+            poster = {
+                Poster(
+                    url = poster,
+                    overlay = { if (position > 0) VideoPositionOverlay(position) },
+                )
+            },
             headerContent = headerContent,
             actionsRow = {
                 ActionsSection(
@@ -78,6 +86,29 @@ fun VideoItemDetailsScreen(
             isWatched = isWatched,
             onNavigateUp = onNavigateUp,
         )
+    }
+}
+
+@Composable
+private fun VideoPositionOverlay(position: Double) {
+    Box {
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .background(Color.Black.copy(alpha = 0.5f))
+                .padding(vertical = 4.dp),
+        ) {
+            Icon(Icons.Default.HourglassBottom, null, modifier = Modifier.size(12.dp))
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = DateUtils.formatElapsedTime(position.toLong()),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.caption,
+            )
+        }
     }
 }
 
@@ -162,15 +193,6 @@ private fun ActionsSection(
 
                 ActionsMenu(onActionInvoked = onActionInvoked)
             }
-        }
-
-        if (position != null && position > 0) {
-            Text(
-                text = "Resume from ${DateUtils.formatElapsedTime(position.toLong())}",
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.caption,
-                modifier = Modifier.widthIn(min = 150.dp),
-            )
         }
     }
 }
