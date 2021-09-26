@@ -1,7 +1,9 @@
-name: CI
+name: Server
 
 on:
   push:
+    paths-ignore:
+      - client/android/**
 
 jobs:
   build_server:
