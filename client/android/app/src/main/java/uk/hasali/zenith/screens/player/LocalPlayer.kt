@@ -34,21 +34,17 @@ fun LocalPlayer(
     title: String,
     info: VideoInfo,
     userData: VideoUserData,
-    replay: Boolean,
+    startPosition: Double,
     onVideoProgress: (Long) -> Unit,
     onLaunchExternal: () -> Unit,
     onNavigateUp: () -> Unit,
 ) {
     KeepScreenOn {
         FullScreen {
-            val startPosition = if (replay) 0 else {
-                userData.position?.toLong() ?: 0
-            }
-
             VideoPlayer(
                 url = url,
                 title = title,
-                startPosition = startPosition,
+                startPosition = startPosition.toLong(),
                 duration = info.duration.toLong(),
                 subtitles = info.subtitles.orEmpty(),
                 onVideoProgress = onVideoProgress,

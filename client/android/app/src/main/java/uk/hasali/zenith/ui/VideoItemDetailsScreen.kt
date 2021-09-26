@@ -31,7 +31,7 @@ fun VideoItemDetailsScreen(
     info: VideoInfo,
     userData: VideoUserData,
     onSetWatched: (Boolean) -> Unit,
-    onPlay: (replay: Boolean) -> Unit,
+    onPlay: (position: Double?) -> Unit,
     onTranscode: () -> Unit,
     onRefreshMetadata: () -> Unit,
     onNavigateUp: () -> Unit,
@@ -44,8 +44,6 @@ fun VideoItemDetailsScreen(
 
     fun onActionInvoked(action: Action) {
         when (action) {
-            Action.Play -> onPlay(false)
-            Action.PlayFromStart -> onPlay(true)
             Action.ConvertVideo -> onTranscode()
             Action.RefreshMetadata -> onRefreshMetadata()
             Action.MediaInfo -> scope.launch { sheetState.show() }
@@ -71,12 +69,14 @@ fun VideoItemDetailsScreen(
             headerContent = headerContent,
             actionsRow = {
                 ActionsSection(
+                    duration = info.duration,
                     position = userData.position,
                     isWatched = isWatched,
                     onSetWatched = {
                         isWatched = it
                         onSetWatched(it)
                     },
+                    onPlay = onPlay,
                     onActionInvoked = { action ->
                         onActionInvoked(action)
                     },
@@ -113,8 +113,6 @@ private fun VideoPositionOverlay(position: Double) {
 }
 
 private enum class Action {
-    Play,
-    PlayFromStart,
     ConvertVideo,
     RefreshMetadata,
     MediaInfo,
@@ -122,9 +120,11 @@ private enum class Action {
 
 @Composable
 private fun ActionsSection(
+    duration: Double,
     position: Double?,
     isWatched: Boolean,
     onSetWatched: (Boolean) -> Unit,
+    onPlay: (position: Double?) -> Unit,
     onActionInvoked: (Action) -> Unit
 ) {
     val context = LocalContext.current
@@ -148,11 +148,13 @@ private fun ActionsSection(
 
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            val resume = position != null && position > 0 && position < 0.9 * duration
+
             PlayButton(
-                resume = position ?: 0.0 > 0,
+                resume = resume,
                 onClick = {
                     context.playClick()
-                    onActionInvoked(Action.Play)
+                    onPlay(if (resume) position else null)
                 },
             )
 
@@ -169,17 +171,6 @@ private fun ActionsSection(
                     )
 
                     Icon(Icons.Default.CheckCircleOutline, null, tint = tint)
-                }
-
-                if ((position?.toFloat() ?: 0f) > 0) {
-                    IconButton(
-                        onClick = {
-                            context.playClick()
-                            onActionInvoked(Action.PlayFromStart)
-                        },
-                    ) {
-                        Icon(Icons.Default.Replay, contentDescription = "Replay")
-                    }
                 }
 
                 IconButton(

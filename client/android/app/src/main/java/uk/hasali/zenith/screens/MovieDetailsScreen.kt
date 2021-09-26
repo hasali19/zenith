@@ -19,7 +19,7 @@ import uk.hasali.zenith.ui.VideoItemDetailsScreen
 import uk.hasali.zenith.ui.displayDuration
 
 @Composable
-fun MovieDetailsScreen(id: Int, onPlay: (replay: Boolean) -> Unit, onNavigateUp: () -> Unit) {
+fun MovieDetailsScreen(id: Int, onPlay: (position: Double?) -> Unit, onNavigateUp: () -> Unit) {
     val scope = rememberCoroutineScope()
     val client = LocalZenithClient.current
 
@@ -45,7 +45,7 @@ fun MovieDetailsScreen(id: Int, onPlay: (replay: Boolean) -> Unit, onNavigateUp:
 private fun MovieDetailsScreen(
     movie: Movie?,
     onSetWatched: (Boolean) -> Unit,
-    onPlay: (Boolean) -> Unit,
+    onPlay: (Double?) -> Unit,
     onTranscode: () -> Unit,
     onRefreshMetadata: () -> Unit,
     onNavigateUp: () -> Unit,

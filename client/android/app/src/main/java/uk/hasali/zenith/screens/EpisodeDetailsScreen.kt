@@ -19,7 +19,7 @@ import uk.hasali.zenith.VideoUserDataPatch
 import uk.hasali.zenith.ui.*
 
 @Composable
-fun EpisodeDetailsScreen(id: Int, onPlay: (replay: Boolean) -> Unit, onNavigateUp: () -> Unit) {
+fun EpisodeDetailsScreen(id: Int, onPlay: (position: Double?) -> Unit, onNavigateUp: () -> Unit) {
     val scope = rememberCoroutineScope()
     val client = LocalZenithClient.current
 
@@ -61,7 +61,7 @@ private fun EpisodeDetailsScreen(
     season: Season?,
     episode: Episode?,
     onSetWatched: (Boolean) -> Unit,
-    onPlay: (Boolean) -> Unit,
+    onPlay: (Double?) -> Unit,
     onTranscode: () -> Unit,
     onRefreshMetadata: () -> Unit,
     onNavigateUp: () -> Unit,

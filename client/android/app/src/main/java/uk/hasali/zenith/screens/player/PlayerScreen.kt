@@ -18,7 +18,7 @@ enum class MediaItemType {
 }
 
 @Composable
-fun PlayerScreen(id: Int, type: MediaItemType, replay: Boolean, onNavigateUp: () -> Unit) {
+fun PlayerScreen(id: Int, type: MediaItemType, startPosition: Double?, onNavigateUp: () -> Unit) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val client = LocalZenithClient.current
@@ -50,7 +50,7 @@ fun PlayerScreen(id: Int, type: MediaItemType, replay: Boolean, onNavigateUp: ()
     PlayerScreen(
         item = item,
         type = type,
-        replay = replay,
+        startPosition = startPosition,
         onVideoProgress = onVideoProgress,
         onLaunchExternal = onLaunchExternal,
         onNavigateUp = onNavigateUp,
@@ -61,7 +61,7 @@ fun PlayerScreen(id: Int, type: MediaItemType, replay: Boolean, onNavigateUp: ()
 private fun PlayerScreen(
     item: MediaItem?,
     type: MediaItemType,
-    replay: Boolean,
+    startPosition: Double?,
     onVideoProgress: (Long) -> Unit,
     onLaunchExternal: () -> Unit,
     onNavigateUp: () -> Unit,
@@ -116,7 +116,7 @@ private fun PlayerScreen(
                     title = title ?: "",
                     info = videoInfo,
                     userData = userData,
-                    replay = replay,
+                    startPosition = startPosition ?: 0.0,
                     onVideoProgress = onVideoProgress,
                     onLaunchExternal = onLaunchExternal,
                     onNavigateUp = onNavigateUp,

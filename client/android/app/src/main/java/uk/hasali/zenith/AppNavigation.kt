@@ -29,6 +29,12 @@ fun AppNavigation(nav: NavHostController) {
         }
     }
 
+    val navigateToPlayer = { id: Int, type: String, position: Double? ->
+        var route = "player/$type/$id"
+        if (position != null) route += "?position=$position"
+        nav.navigate(route)
+    }
+
     NavHost(
         navController = nav,
         startDestination = "main",
@@ -68,7 +74,7 @@ fun AppNavigation(nav: NavHostController) {
 
             MovieDetailsScreen(
                 id = id,
-                onPlay = { replay -> nav.navigate("player/movie/$id?replay=$replay") },
+                onPlay = { position -> navigateToPlayer(id, "movie", position) },
                 onNavigateUp = { nav.popBackStack() },
             )
         }
@@ -107,23 +113,23 @@ fun AppNavigation(nav: NavHostController) {
 
             EpisodeDetailsScreen(
                 id = id,
-                onPlay = { replay -> nav.navigate("player/show/$id?replay=$replay") },
+                onPlay = { position -> navigateToPlayer(id, "show", position) },
                 onNavigateUp = { nav.popBackStack() },
             )
         }
 
-        composable("player/{type}/{id}?replay={replay}", arguments = listOf(
+        composable("player/{type}/{id}?position={position}", arguments = listOf(
             navArgument("type") { type = NavType.StringType },
             navArgument("id") { type = NavType.IntType },
-            navArgument("replay") {
-                type = NavType.BoolType
-                defaultValue = false
-            },
+            navArgument("position") {
+                type = NavType.FloatType
+                defaultValue = 0.0
+            }
         )) {
             val args = it.arguments!!
 
             val id = args.getInt("id")
-            val replay = args.getBoolean("replay")
+            val position = args.getFloat("position")
             val type = when (val type = args.getString("type")) {
                 "movie" -> MediaItemType.Movie
                 "show" -> MediaItemType.TvShow
@@ -133,7 +139,7 @@ fun AppNavigation(nav: NavHostController) {
             PlayerScreen(
                 id = id,
                 type = type,
-                replay = replay,
+                startPosition = position.toDouble(),
                 onNavigateUp = { nav.popBackStack() },
             )
         }
