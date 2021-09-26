@@ -17,7 +17,7 @@ import kotlinx.datetime.toLocalDateTime
 @Composable
 fun <T> PosterGridListScreen(
     items: List<T>?,
-    poster: (T) -> String,
+    poster: (T) -> String?,
     name: (T) -> String,
     date: (T) -> Long?,
     isWatched: (T) -> Boolean = { false },

@@ -76,7 +76,7 @@ private fun HomeScreen(
                     poster = { it.poster },
                     name = { it.title },
                     date = { it.releaseDate },
-                    isWatched = { it.isWatched },
+                    isWatched = { it.userData.isWatched },
                     onClick = onNavigateToMovie,
                 )
             }
@@ -88,7 +88,7 @@ private fun HomeScreen(
                     poster = { it.poster },
                     name = { it.name },
                     date = { it.startDate },
-                    isWatched = { it.unwatchedEpisodes == 0 },
+                    isWatched = { it.userData.unwatched == 0 },
                     onClick = onNavigateToShow,
                 )
             }
@@ -100,7 +100,7 @@ private fun HomeScreen(
 private fun <T> Section(
     title: String,
     items: List<T>,
-    poster: (T) -> String,
+    poster: (T) -> String?,
     name: (T) -> String,
     date: (T) -> Long?,
     isWatched: (T) -> Boolean = { false },

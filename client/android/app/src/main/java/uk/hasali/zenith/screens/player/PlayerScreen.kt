@@ -23,8 +23,8 @@ fun PlayerScreen(id: Int, type: MediaItemType, replay: Boolean, onNavigateUp: ()
     val context = LocalContext.current
     val client = LocalZenithClient.current
 
-    val info by produceState<VideoInfo?>(null, id) {
-        value = client.getVideoInfo(id)
+    val item by produceState<MediaItem?>(null, id) {
+        value = client.getItem(id)
     }
 
     val onVideoProgress: (Long) -> Unit = { position ->
@@ -47,35 +47,10 @@ fun PlayerScreen(id: Int, type: MediaItemType, replay: Boolean, onNavigateUp: ()
         })
     }
 
-    val title: String?
-    val backdrop: String?
-
-    when (type) {
-        MediaItemType.Movie -> {
-            val movie by produceState<Movie?>(null, id) {
-                value = client.getMovie(id)
-            }
-
-            title = movie?.title
-            backdrop = movie?.backdrop
-        }
-        MediaItemType.TvShow -> {
-            val episode by produceState<Episode?>(null, id) {
-                value = client.getEpisode(id)
-            }
-
-            title = episode?.name
-            backdrop = episode?.thumbnail
-        }
-    }
-
     PlayerScreen(
-        id = id,
-        title = title ?: "",
+        item = item,
         type = type,
-        backdrop = backdrop,
         replay = replay,
-        info = info,
         onVideoProgress = onVideoProgress,
         onLaunchExternal = onLaunchExternal,
         onNavigateUp = onNavigateUp,
@@ -84,19 +59,40 @@ fun PlayerScreen(id: Int, type: MediaItemType, replay: Boolean, onNavigateUp: ()
 
 @Composable
 private fun PlayerScreen(
-    id: Int,
-    title: String,
+    item: MediaItem?,
     type: MediaItemType,
-    backdrop: String?,
     replay: Boolean,
-    info: VideoInfo?,
     onVideoProgress: (Long) -> Unit,
     onLaunchExternal: () -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    when (info) {
+    when (item) {
         null -> CenteredLoadingIndicator()
         else -> {
+            val title: String?
+            val backdrop: String?
+            val videoInfo: VideoInfo?
+            val userData: VideoUserData?
+
+
+            when (item) {
+                is Movie -> {
+                    title = item.title
+                    backdrop = item.backdrop
+                    videoInfo = item.videoInfo
+                    userData = item.userData
+                }
+
+                is Episode -> {
+                    title = item.name
+                    backdrop = item.thumbnail
+                    videoInfo = item.videoInfo
+                    userData = item.userData
+                }
+
+                else -> return
+            }
+
             val context = LocalContext.current
             val castSession = remember {
                 CastContext.getSharedInstance(context)
@@ -106,19 +102,20 @@ private fun PlayerScreen(
 
             if (castSession != null && castSession.isConnected) {
                 RemotePlayer(
-                    id = id,
-                    title = title,
+                    id = item.id,
+                    title = title ?: "",
                     type = type,
                     backdrop = backdrop,
-                    info = info,
+                    info = videoInfo,
                     session = castSession,
                     onNavigateUp = onNavigateUp,
                 )
             } else {
                 LocalPlayer(
-                    url = LocalZenithClient.current.getVideoUrl(id),
-                    title = title,
-                    info = info,
+                    url = LocalZenithClient.current.getVideoUrl(item.id),
+                    title = title ?: "",
+                    info = videoInfo,
+                    userData = userData,
                     replay = replay,
                     onVideoProgress = onVideoProgress,
                     onLaunchExternal = onLaunchExternal,

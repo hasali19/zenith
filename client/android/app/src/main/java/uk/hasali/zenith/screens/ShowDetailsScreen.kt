@@ -55,7 +55,7 @@ private fun ShowDetailsScreen(
             poster = show.poster,
             headerContent = { HeaderContent(show = show) },
             overview = show.overview,
-            isWatched = show.unwatchedEpisodes == 0,
+            isWatched = show.userData.unwatched == 0,
             onNavigateUp = onNavigateUp,
         ) {
             if (seasons.isNotEmpty()) {
@@ -107,9 +107,9 @@ private fun SeasonsList(show: Show, seasons: List<Season>, onItemClick: (Season)
         items(seasons) { season ->
             MediaItemWithPoster(
                 poster = season.poster,
-                primary = season.name,
+                primary = season.name ?: "Season ${season.seasonNumber}",
                 secondary = show.name,
-                isWatched = show.unwatchedEpisodes == 0,
+                isWatched = season.userData.unwatched == 0,
                 onClick = { onItemClick(season) },
                 modifier = Modifier
                     .width(120.dp)

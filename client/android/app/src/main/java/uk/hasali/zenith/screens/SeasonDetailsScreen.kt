@@ -104,7 +104,7 @@ private fun EpisodeItem(episode: Episode, onClick: () -> Unit) {
         Thumbnail(
             url = episode.thumbnail,
             modifier = Modifier.fillMaxWidth(),
-            overlay = { WatchedOverlay(visible = episode.isWatched) },
+            overlay = { WatchedOverlay(visible = episode.userData.isWatched) },
             onClick = onClick,
         )
 
@@ -117,7 +117,7 @@ private fun EpisodeItem(episode: Episode, onClick: () -> Unit) {
             )
 
             Text(
-                text = displayDuration(episode.duration),
+                text = displayDuration(episode.videoInfo.duration),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 color = Color.LightGray.copy(alpha = 0.8f),
@@ -125,7 +125,7 @@ private fun EpisodeItem(episode: Episode, onClick: () -> Unit) {
             )
 
             Text(
-                text = episode.overview,
+                text = episode.overview ?: "",
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.caption

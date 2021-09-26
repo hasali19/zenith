@@ -24,8 +24,8 @@ import com.google.android.gms.cast.*
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.SubtitleStreamInfo
 import uk.hasali.zenith.VideoInfo
+import uk.hasali.zenith.SubtitleStreamInfo
 import uk.hasali.zenith.ui.LifecycleObserver
 import uk.hasali.zenith.ui.LocalZenithClient
 
@@ -73,7 +73,7 @@ fun RemotePlayer(
             putString(MediaMetadata.KEY_TITLE, title)
         }
 
-        val subtitleTracks = info.subtitles
+        val subtitleTracks = info.subtitles.orEmpty()
             .map {
                 MediaTrack.Builder(it.id.toLong(), MediaTrack.TYPE_TEXT)
                     .setName(it.title ?: it.language)
@@ -148,7 +148,7 @@ fun RemotePlayer(
         scrimColor = MaterialTheme.colors.surface.copy(alpha = 0.32f),
         sheetContent = {
             SubtitlesMenu(
-                subtitles = info.subtitles,
+                subtitles = info.subtitles.orEmpty(),
                 current = selectedSubtitle,
                 onSelectSubtitle = {
                     onSelectSubtitle(it)
@@ -182,15 +182,17 @@ fun RemotePlayer(
                     onTogglePlaying = { mediaClient.togglePlayback() },
                     onSeekStart = { mediaClient.pause() },
                     onSeekEnd = { position, resume ->
-                        mediaClient.seek(MediaSeekOptions.Builder()
-                            .setPosition(position)
-                            .setResumeState(
-                                if (resume)
-                                    MediaSeekOptions.RESUME_STATE_PLAY
-                                else
-                                    MediaSeekOptions.RESUME_STATE_UNCHANGED
-                            )
-                            .build())
+                        mediaClient.seek(
+                            MediaSeekOptions.Builder()
+                                .setPosition(position)
+                                .setResumeState(
+                                    if (resume)
+                                        MediaSeekOptions.RESUME_STATE_PLAY
+                                    else
+                                        MediaSeekOptions.RESUME_STATE_UNCHANGED
+                                )
+                                .build()
+                        )
                     },
                     onNavigateUp = onNavigateUp,
                     onShowSubtitlesMenu = { scope.launch { sheetState.show() } },

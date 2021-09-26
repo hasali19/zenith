@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun MediaItemWithPoster(
-    poster: String,
+    poster: String?,
     primary: String,
     secondary: String,
     isWatched: Boolean,

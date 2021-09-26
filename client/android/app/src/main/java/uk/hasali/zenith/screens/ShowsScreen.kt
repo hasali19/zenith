@@ -20,7 +20,7 @@ fun ShowsScreen(onNavigateToShow: (Show) -> Unit) {
         poster = { it.poster },
         name = { it.name },
         date = { it.startDate },
-        isWatched = { it.unwatchedEpisodes == 0 },
+        isWatched = { it.userData.unwatched == 0 },
         onClick = onNavigateToShow,
     )
 }

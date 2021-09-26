@@ -16,10 +16,7 @@ import androidx.lifecycle.flowWithLifecycle
 import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
-import uk.hasali.zenith.TranscoderEvent
-import uk.hasali.zenith.TranscoderJob
-import uk.hasali.zenith.VideoInfo
-import uk.hasali.zenith.ZenithApiClient
+import uk.hasali.zenith.*
 import uk.hasali.zenith.ui.AppBar
 import uk.hasali.zenith.ui.LocalZenithClient
 
@@ -120,19 +117,22 @@ private fun TranscodeQueueScreen(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun TranscodeQueueListItem(client: ZenithApiClient, id: Int, progress: Double? = null) {
-    // TODO: This is not ideal - return this info directly from transcoder api
-    val info by produceState<VideoInfo?>(initialValue = null, id) {
-        value = client.getVideoInfo(id)
+    val item by produceState<MediaItem?>(initialValue = null, id) {
+        value = client.getItem(id)
+    }
+
+    val label = item.let {
+        when (it) {
+            is Movie -> it.videoInfo.path
+            is Episode -> it.videoInfo.path
+            else -> id.toString()
+        }
     }
 
     ListItem {
         if (progress != null) {
             Column {
-                Text(
-                    info?.path ?: id.toString(),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(
                     progress = progress.toFloat(),
@@ -140,7 +140,7 @@ private fun TranscodeQueueListItem(client: ZenithApiClient, id: Int, progress: D
                 )
             }
         } else {
-            Text(info?.path ?: id.toString())
+            Text(label)
         }
     }
 }

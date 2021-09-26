@@ -20,7 +20,7 @@ fun MoviesScreen(onNavigateToMovie: (Movie) -> Unit) {
         poster = { it.poster },
         name = { it.title },
         date = { it.releaseDate },
-        isWatched = { it.isWatched },
+        isWatched = { it.userData.isWatched },
         onClick = onNavigateToMovie,
     )
 }

@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import uk.hasali.zenith.Episode
 import uk.hasali.zenith.Season
 import uk.hasali.zenith.Show
-import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.ui.*
 
 @Composable
@@ -24,11 +23,7 @@ fun EpisodeDetailsScreen(id: Int, onPlay: (replay: Boolean) -> Unit, onNavigateU
     val client = LocalZenithClient.current
 
     val episode by produceState<Episode?>(null, id) {
-        value = client.getEpisode(id)
-    }
-
-    val info by produceState<VideoInfo?>(null, id) {
-        value = client.getVideoInfo(id)
+        value = client.getItem(id) as Episode
     }
 
     val season by produceState<Season?>(null, episode) {
@@ -47,7 +42,6 @@ fun EpisodeDetailsScreen(id: Int, onPlay: (replay: Boolean) -> Unit, onNavigateU
         show = show,
         season = season,
         episode = episode,
-        info = info,
         onPlay = onPlay,
         onTranscode = { scope.launch { client.startTranscode(id) } },
         onRefreshMetadata = { scope.launch { client.refreshMetadata(id) } },
@@ -60,21 +54,21 @@ private fun EpisodeDetailsScreen(
     show: Show?,
     season: Season?,
     episode: Episode?,
-    info: VideoInfo?,
     onPlay: (Boolean) -> Unit,
     onTranscode: () -> Unit,
     onRefreshMetadata: () -> Unit,
     onNavigateUp: () -> Unit,
 ) {
     when {
-        show == null || season == null || episode == null || info == null -> CenteredLoadingIndicator()
+        show == null || season == null || episode == null -> CenteredLoadingIndicator()
         else -> VideoItemDetailsScreen(
             backdrop = episode.thumbnail,
             poster = season.poster,
             overview = episode.overview,
-            isWatched = episode.isWatched,
-            headerContent = { HeaderContent(show = show, season = season, episode = episode) },
-            info = info,
+            isWatched = episode.userData.isWatched,
+            headerContent = { HeaderContent(show = show, episode = episode) },
+            info = episode.videoInfo,
+            userData = episode.userData,
             onPlay = onPlay,
             onTranscode = onTranscode,
             onRefreshMetadata = onRefreshMetadata,
@@ -84,14 +78,15 @@ private fun EpisodeDetailsScreen(
 }
 
 @Composable
-private fun HeaderContent(show: Show, season: Season, episode: Episode) {
-    val seasonNumber = twoDigitNumber(season.seasonNumber)
+private fun HeaderContent(show: Show, episode: Episode) {
+    val seasonNumber = twoDigitNumber(episode.seasonNumber)
     val episodeNumber = twoDigitNumber(episode.episodeNumber)
-    val duration = displayDuration(episode.duration)
+    val duration = displayDuration(episode.videoInfo.duration)
+    val name = episode.name ?: "Episode ${episode.episodeNumber}"
 
     Column {
         Text(text = show.name, style = MaterialTheme.typography.caption)
-        Text(text = episode.name, style = MaterialTheme.typography.h6)
+        Text(text = name, style = MaterialTheme.typography.h6)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "S${seasonNumber}E${episodeNumber} - $duration",

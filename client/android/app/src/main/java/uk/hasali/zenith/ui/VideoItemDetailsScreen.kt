@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.VideoInfo
+import uk.hasali.zenith.VideoUserData
 import uk.hasali.zenith.playClick
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -29,6 +30,7 @@ fun VideoItemDetailsScreen(
     isWatched: Boolean,
     headerContent: @Composable () -> Unit,
     info: VideoInfo,
+    userData: VideoUserData,
     onPlay: (replay: Boolean) -> Unit,
     onTranscode: () -> Unit,
     onRefreshMetadata: () -> Unit,
@@ -60,7 +62,7 @@ fun VideoItemDetailsScreen(
             poster = poster,
             headerContent = headerContent,
             actionsRow = {
-                ActionsSection(info = info) { action ->
+                ActionsSection(userData = userData) { action ->
                     onActionInvoked(action)
                 }
             },
@@ -80,7 +82,7 @@ private enum class Action {
 }
 
 @Composable
-private fun ActionsSection(info: VideoInfo?, onActionInvoked: (Action) -> Unit) {
+private fun ActionsSection(userData: VideoUserData, onActionInvoked: (Action) -> Unit) {
     val context = LocalContext.current
 
     @Composable
@@ -103,7 +105,7 @@ private fun ActionsSection(info: VideoInfo?, onActionInvoked: (Action) -> Unit) 
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
             PlayButton(
-                resume = info?.position ?: 0.0 > 0,
+                resume = userData.position ?: 0.0 > 0,
                 onClick = {
                     context.playClick()
                     onActionInvoked(Action.Play)
@@ -113,7 +115,7 @@ private fun ActionsSection(info: VideoInfo?, onActionInvoked: (Action) -> Unit) 
             Spacer(modifier = Modifier.width(8.dp))
 
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
-                if ((info?.position?.toFloat() ?: 0f) > 0) {
+                if ((userData.position?.toFloat() ?: 0f) > 0) {
                     IconButton(
                         onClick = {
                             context.playClick()
@@ -137,9 +139,9 @@ private fun ActionsSection(info: VideoInfo?, onActionInvoked: (Action) -> Unit) 
             }
         }
 
-        if (info?.position != null && info.position > 0) {
+        if (userData.position != null && userData.position > 0) {
             Text(
-                text = "Resume from ${DateUtils.formatElapsedTime(info.position.toLong())}",
+                text = "Resume from ${DateUtils.formatElapsedTime(userData.position.toLong())}",
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.caption,
                 modifier = Modifier.widthIn(min = 150.dp),
@@ -199,16 +201,16 @@ private fun MediaInfoSheet(info: VideoInfo) {
         Divider()
 
         DescriptionList(modifier = Modifier.padding(16.dp)) {
-            entry("Format", info.format)
+            entry("Format", info.format!!)
             entry("Path", info.path)
 
             heading("Video")
-            entry("Codec", info.video.codec)
+            entry("Codec", info.video!!.codec)
             entry("Profile", info.video.profile)
             entry("Resolution", "${info.video.width}x${info.video.height}")
 
             heading("Audio")
-            entry("Codec", info.audio.codec)
+            entry("Codec", info.audio!!.codec)
         }
     }
 }

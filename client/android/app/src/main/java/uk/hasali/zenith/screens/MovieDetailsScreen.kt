@@ -12,7 +12,6 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.Movie
-import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.ui.CenteredLoadingIndicator
 import uk.hasali.zenith.ui.LocalZenithClient
 import uk.hasali.zenith.ui.VideoItemDetailsScreen
@@ -24,16 +23,11 @@ fun MovieDetailsScreen(id: Int, onPlay: (replay: Boolean) -> Unit, onNavigateUp:
     val client = LocalZenithClient.current
 
     val movie by produceState<Movie?>(null, id) {
-        value = client.getMovie(id)
-    }
-
-    val info by produceState<VideoInfo?>(null, id) {
-        value = client.getVideoInfo(id)
+        value = client.getItem(id) as Movie
     }
 
     MovieDetailsScreen(
         movie = movie,
-        info = info,
         onPlay = onPlay,
         onTranscode = { scope.launch { client.startTranscode(id) } },
         onRefreshMetadata = { scope.launch { client.refreshMetadata(id) } },
@@ -44,21 +38,21 @@ fun MovieDetailsScreen(id: Int, onPlay: (replay: Boolean) -> Unit, onNavigateUp:
 @Composable
 private fun MovieDetailsScreen(
     movie: Movie?,
-    info: VideoInfo?,
     onPlay: (Boolean) -> Unit,
     onTranscode: () -> Unit,
     onRefreshMetadata: () -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    when {
-        movie == null || info == null -> CenteredLoadingIndicator()
+    when (movie) {
+        null -> CenteredLoadingIndicator()
         else -> VideoItemDetailsScreen(
             backdrop = movie.backdrop,
             poster = movie.poster,
             overview = movie.overview,
-            isWatched = movie.isWatched,
+            isWatched = movie.userData.isWatched,
             headerContent = { HeaderContent(movie = movie) },
-            info = info,
+            info = movie.videoInfo,
+            userData = movie.userData,
             onPlay = onPlay,
             onTranscode = onTranscode,
             onRefreshMetadata = onRefreshMetadata,
@@ -70,12 +64,20 @@ private fun MovieDetailsScreen(
 @Composable
 private fun HeaderContent(movie: Movie) {
     Column {
-        val duration = displayDuration(movie.duration)
-        val year = Instant.fromEpochSeconds(movie.releaseDate)
-            .toLocalDateTime(TimeZone.UTC)
-            .year
+        val duration = displayDuration(movie.videoInfo.duration)
+        val year = movie.releaseDate?.let {
+            Instant.fromEpochSeconds(it)
+                .toLocalDateTime(TimeZone.UTC)
+                .year
+        }
+
+        val secondary = if (year != null) {
+            "$year - $duration"
+        } else {
+            duration
+        }
 
         Text(movie.title, style = MaterialTheme.typography.h6)
-        Text("$year - $duration", style = MaterialTheme.typography.caption)
+        Text(secondary, style = MaterialTheme.typography.caption)
     }
 }

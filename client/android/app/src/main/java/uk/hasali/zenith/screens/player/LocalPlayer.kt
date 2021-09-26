@@ -5,7 +5,8 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.widget.Toast
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.*
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,8 +23,9 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.MimeTypes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.SubtitleStreamInfo
 import uk.hasali.zenith.VideoInfo
+import uk.hasali.zenith.SubtitleStreamInfo
+import uk.hasali.zenith.VideoUserData
 import uk.hasali.zenith.ui.LocalZenithClient
 
 @Composable
@@ -31,6 +33,7 @@ fun LocalPlayer(
     url: String,
     title: String,
     info: VideoInfo,
+    userData: VideoUserData,
     replay: Boolean,
     onVideoProgress: (Long) -> Unit,
     onLaunchExternal: () -> Unit,
@@ -39,7 +42,7 @@ fun LocalPlayer(
     KeepScreenOn {
         FullScreen {
             val startPosition = if (replay) 0 else {
-                info.position?.toLong() ?: 0
+                userData.position?.toLong() ?: 0
             }
 
             VideoPlayer(
@@ -47,7 +50,7 @@ fun LocalPlayer(
                 title = title,
                 startPosition = startPosition,
                 duration = info.duration.toLong(),
-                subtitles = info.subtitles,
+                subtitles = info.subtitles.orEmpty(),
                 onVideoProgress = onVideoProgress,
                 onVideoEnded = onNavigateUp,
                 onLaunchExternal = onLaunchExternal,

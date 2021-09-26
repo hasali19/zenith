@@ -24,72 +24,124 @@ import okhttp3.sse.EventSources
 import java.util.concurrent.TimeUnit
 
 @Serializable
-data class Movie(
-    val id: Int,
-    val title: String,
-    val poster: String,
-    val backdrop: String,
-    val duration: Double,
-    val overview: String,
-    @SerialName("release_date")
-    val releaseDate: Long,
-    @SerialName("is_watched")
-    val isWatched: Boolean,
-)
+enum class MediaItemType {
+    @SerialName("movie")
+    Movie,
+    @SerialName("show")
+    Show,
+    @SerialName("season")
+    Season,
+    @SerialName("episode")
+    Episode,
+}
 
 @Serializable
+sealed class MediaItem {
+    abstract val id: Int
+    abstract val type: MediaItemType
+}
+
+@Serializable
+@SerialName("movie")
+data class Movie(
+    override val id: Int,
+    val title: String,
+    @SerialName("release_date")
+    val releaseDate: Long?,
+    val overview: String?,
+    val poster: String?,
+    val backdrop: String?,
+    @SerialName("video_info")
+    val videoInfo: VideoInfo,
+    @SerialName("user_data")
+    val userData: VideoUserData,
+) : MediaItem() {
+    override val type: MediaItemType
+        get() = MediaItemType.Movie
+}
+
+@Serializable
+@SerialName("show")
 data class Show(
-    val id: Int,
+    override val id: Int,
     val name: String,
-    val poster: String,
-    val backdrop: String,
-    val overview: String,
     @SerialName("start_date")
     val startDate: Long?,
-    @SerialName("unwatched_episodes")
-    val unwatchedEpisodes: Int,
-)
+    @SerialName("end_date")
+    val endDate: Long?,
+    val overview: String?,
+    val poster: String?,
+    val backdrop: String?,
+    @SerialName("user_data")
+    val userData: CollectionUserData,
+) : MediaItem() {
+    override val type: MediaItemType
+        get() = MediaItemType.Show
+}
 
 @Serializable
+@SerialName("season")
 data class Season(
-    val id: Int,
+    override val id: Int,
     @SerialName("show_id")
     val showId: Int,
     @SerialName("season_number")
     val seasonNumber: Int,
-    val name: String,
-    val overview: String,
-    val poster: String,
-    val backdrop: String,
-)
+    val name: String?,
+    val overview: String?,
+    val poster: String?,
+    val backdrop: String?,
+    @SerialName("user_data")
+    val userData: CollectionUserData,
+) : MediaItem() {
+    override val type: MediaItemType
+        get() = MediaItemType.Season
+}
 
 @Serializable
+@SerialName("episode")
 data class Episode(
-    val id: Int,
+    override val id: Int,
     @SerialName("show_id")
     val showId: Int,
     @SerialName("season_id")
     val seasonId: Int,
+    @SerialName("season_number")
+    val seasonNumber: Int,
     @SerialName("episode_number")
     val episodeNumber: Int,
-    val name: String,
-    val overview: String,
+    val name: String?,
+    val overview: String?,
     val thumbnail: String?,
-    val duration: Double,
-    @SerialName("is_watched")
-    val isWatched: Boolean,
-)
+    @SerialName("video_info")
+    val videoInfo: VideoInfo,
+    @SerialName("user_data")
+    val userData: VideoUserData,
+) : MediaItem() {
+    override val type: MediaItemType
+        get() = MediaItemType.Episode
+}
 
 @Serializable
 data class VideoInfo(
     val path: String,
-    val type: String,
-    val format: String,
     val duration: Double,
+    val format: String? = null,
+    val video: VideoStreamInfo? = null,
+    val audio: AudioStreamInfo? = null,
+    val subtitles: List<SubtitleStreamInfo>? = null,
+)
+
+@Serializable
+data class VideoUserData(
+    @SerialName("is_watched")
+    val isWatched: Boolean,
     val position: Double?,
-    val video: VideoStreamInfo,
-    val audio: AudioStreamInfo,
-    val subtitles: List<SubtitleStreamInfo>,
+)
+
+@Serializable
+data class CollectionUserData(
+    val unwatched: Int,
 )
 
 @Serializable
@@ -269,12 +321,16 @@ class ZenithApiClient(private val client: HttpClient, private val baseUrl: Strin
 
     private val sseClient = EventSourceClient(moshi)
 
+    suspend fun getItem(id: Int, extendedVideoInfo: Boolean = true): MediaItem =
+        client.get("$baseUrl/api/items/$id?extended_video_info=$extendedVideoInfo")
+
     suspend fun getMovies(): List<Movie> =
         client.get("$baseUrl/api/movies")
 
     suspend fun getRecentMovies(): List<Movie> =
         client.get("$baseUrl/api/movies/recent")
 
+    @Suppress("unused")
     suspend fun getMovie(id: Int): Movie =
         client.get("$baseUrl/api/movies/$id")
 
@@ -296,15 +352,13 @@ class ZenithApiClient(private val client: HttpClient, private val baseUrl: Strin
     suspend fun getEpisodes(seasonId: Int): List<Episode> =
         client.get("$baseUrl/api/tv/seasons/$seasonId/episodes")
 
+    @Suppress("unused")
     suspend fun getEpisode(id: Int): Episode =
         client.get("$baseUrl/api/tv/episodes/$id")
 
     fun getVideoUrl(id: Int) = "$baseUrl/api/videos/$id"
 
     fun getSubtitleUrl(id: Int) = "$baseUrl/api/subtitles/$id"
-
-    suspend fun getVideoInfo(id: Int): VideoInfo =
-        client.get("$baseUrl/api/videos/$id/info")
 
     suspend fun updateProgress(videoId: Int, position: Long): Unit =
         client.post("$baseUrl/api/progress/$videoId?position=$position")
