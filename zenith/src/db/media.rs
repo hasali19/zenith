@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 use eyre::eyre;
 use itertools::Itertools;
 use serde::Serialize;
-use sqlx::Type;
+use sqlx::{SqliteConnection, Type};
 
 #[derive(Clone, Copy, Debug, Type, Serialize)]
 #[repr(i32)]
@@ -88,4 +88,15 @@ impl<'a> ToString for MediaImage<'a> {
             self.img_type as i32, self.src_type as i32, self.src
         )
     }
+}
+
+pub async fn get_item_type(
+    conn: &mut SqliteConnection,
+    id: i64,
+) -> eyre::Result<Option<MediaItemType>> {
+    sqlx::query_scalar("SELECT item_type FROM media_items WHERE id = ?")
+        .bind(id)
+        .fetch_optional(conn)
+        .await
+        .map_err(|e| e.into())
 }

@@ -3,6 +3,7 @@ mod events;
 mod ext;
 mod files;
 mod import;
+mod items;
 mod metadata;
 mod movies;
 mod progress;
@@ -21,6 +22,7 @@ use crate::api::error::ErrorHandler;
 
 pub fn handler() -> impl Handler {
     let router = Router::new()
+        .with(items::routes)
         .with(movies::routes)
         .with(tv::routes)
         .with(import::routes)

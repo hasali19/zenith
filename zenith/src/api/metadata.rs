@@ -3,7 +3,7 @@ use atium::router::{Router, RouterRequestExt};
 use atium::{endpoint, Request};
 
 use crate::db::media::MediaItemType;
-use crate::db::Db;
+use crate::db::{self, Db};
 use crate::metadata::{MetadataManager, RefreshRequest};
 
 use super::ext::OptionExt;
@@ -20,12 +20,9 @@ async fn refresh_metadata(req: &mut Request) -> eyre::Result<()> {
     let db: &Db = req.ext().unwrap();
     let mut conn = db.acquire().await?;
 
-    let item_type: MediaItemType =
-        sqlx::query_scalar("SELECT item_type FROM media_items WHERE id = ?")
-            .bind(id)
-            .fetch_optional(&mut conn)
-            .await?
-            .or_not_found("media item not found")?;
+    let item_type = db::media::get_item_type(&mut conn, id)
+        .await?
+        .or_not_found("media item not found")?;
 
     let refresh_req = match item_type {
         MediaItemType::Movie => RefreshRequest::Movie(id),

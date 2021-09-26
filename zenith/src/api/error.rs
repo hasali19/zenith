@@ -36,12 +36,18 @@ impl Display for ErrorResponse {
 
 impl StdError for ErrorResponse {}
 
-pub fn bad_request(msg: impl Into<String>) -> ErrorResponse {
-    ErrorResponse::new(StatusCode::BAD_REQUEST, msg.into())
+impl<T, E: From<ErrorResponse>> From<ErrorResponse> for Result<T, E> {
+    fn from(val: ErrorResponse) -> Self {
+        Err(val.into())
+    }
 }
 
-pub fn not_found(msg: impl Into<String>) -> ErrorResponse {
-    ErrorResponse::new(StatusCode::NOT_FOUND, msg.into())
+pub fn bad_request(msg: impl ToString) -> ErrorResponse {
+    ErrorResponse::new(StatusCode::BAD_REQUEST, msg.to_string())
+}
+
+pub fn not_found(msg: impl ToString) -> ErrorResponse {
+    ErrorResponse::new(StatusCode::NOT_FOUND, msg.to_string())
 }
 
 pub struct ErrorHandler;
