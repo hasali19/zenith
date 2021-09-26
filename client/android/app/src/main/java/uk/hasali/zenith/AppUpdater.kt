@@ -19,7 +19,7 @@ import java.util.zip.ZipInputStream
 class AppUpdater(private val context: Context, private val client: HttpClient) {
     suspend fun downloadAndInstall(onProgress: (Float) -> Unit = {}) {
         downloadAndInstall(
-            url = "https://nightly.link/hasali19/zenith/workflows/android/android/zenith-apk.zip",
+            url = "https://nightly.link/hasali19/zenith/workflows/android/master/zenith-apk.zip",
             onProgress = onProgress,
         )
     }
