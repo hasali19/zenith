@@ -117,7 +117,7 @@ jobs:
       - name: Download server artifact
         uses: actions/download-artifact@v2
         with:
-          name: zenith-aarch64-unknown-linux-musl
+          name: zenith-x86_64-unknown-linux-musl
           path: target/release
 
       - name: Download web client artifact
@@ -132,7 +132,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
           file: ./Dockerfile
-          platforms: linux/arm64
+          platforms: linux/amd64
           push: true
           tags: |
             ghcr.io/hasali19/zenith:latest
