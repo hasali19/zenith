@@ -10,7 +10,7 @@ import com.google.android.gms.cast.framework.SessionProvider
 class CastOptionsProvider : OptionsProvider {
     override fun getCastOptions(context: Context): CastOptions =
         CastOptions.Builder()
-            .setReceiverApplicationId(CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID)
+            .setReceiverApplicationId("97F381C3")
             .build()
 
     override fun getAdditionalSessionProviders(context: Context): MutableList<SessionProvider>? =

@@ -14,7 +14,6 @@ fun CastButton() {
             MediaRouteButton(it).apply {
                 routeSelector = MediaRouteSelector.Builder()
                     .addControlCategory(MediaControlIntent.CATEGORY_REMOTE_PLAYBACK)
-                    .addControlCategory(MediaControlIntent.CATEGORY_LIVE_VIDEO)
                     .build()
 
                 CastButtonFactory.setUpMediaRouteButton(it, this)
