@@ -42,12 +42,27 @@ async fn get_subtitle(req: &mut Request) -> eyre::Result<()> {
             req.respond_file(path.as_ref()).await?;
         }
         db::subtitles::SubtitlePath::Embedded(index) => {
-            // Subtitle is embedded, extract it from the video file
-            let res = Response::ok()
-                .with_header(ContentType::from(Mime::from_str("text/vtt")?))
-                .with_body(extract_embedded_subtitle(config, &path, index).await?);
+            let cached_path = config
+                .subtitles
+                .path
+                .join(subtitle.video_id.to_string())
+                .join(format!("{}.extracted.vtt", index));
 
-            req.set_res(res);
+            if cached_path.is_file() {
+                // Return directly if embedded subtitle has already been extracted
+                tracing::info!("using cached subtitle");
+                req.respond_file(cached_path).await?;
+            } else {
+                // Otherwise extract now
+                // TODO: Cache the extracted subtitle?
+                tracing::info!("extracting subtitle");
+
+                let res = Response::ok()
+                    .with_header(ContentType::from(Mime::from_str("text/vtt")?))
+                    .with_body(extract_embedded_subtitle(config, &path, index).await?);
+
+                req.set_res(res);
+            }
         }
     }
 
