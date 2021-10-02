@@ -58,6 +58,8 @@ impl Handler for ErrorHandler {
         let mut req = next.run(req).await;
 
         if let Some(mut e) = req.take_ext::<eyre::Report>() {
+            tracing::error!("{:?}", e);
+
             let res: ErrorResponse = if let Some(e) = e.downcast_mut::<ErrorResponse>() {
                 std::mem::take(e)
             } else if let Some(e) = e.downcast_ref::<ParamError>() {
