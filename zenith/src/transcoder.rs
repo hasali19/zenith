@@ -150,7 +150,9 @@ impl Transcoder {
     #[tracing::instrument(skip(self))]
     async fn run(self: Arc<Self>) {
         if !Path::new("data/reports").is_dir() {
-            std::fs::create_dir_all("data/reports").expect("failed to create report directory");
+            tokio::fs::create_dir_all("data/reports")
+                .await
+                .expect("failed to create report directory");
         }
 
         loop {
@@ -173,6 +175,7 @@ impl Transcoder {
         }
     }
 
+    #[tracing::instrument(skip(self, job), fields(video_id = job.video_id))]
     async fn process_job(&self, job: Job) -> eyre::Result<()> {
         let id = job.video_id;
 
@@ -196,44 +199,91 @@ impl Transcoder {
 
     async fn convert_video(&self, job: &Job, path: &str, info: &VideoInfo) -> eyre::Result<()> {
         let id = job.video_id;
+        let output = Path::new(path).with_extension("mkv.temp");
+
+        enum StreamMapping {
+            Copy(u32),
+            ConvertAudio(u32),
+        }
+
+        // Build list of mappings for each stream in the file
+        let mut transcode_any = false;
+        let mut mappings = vec![];
+        for stream in &info.streams {
+            if stream.codec_type == "audio" {
+                // Transcode audio stream if not already aac
+                if stream.codec_name == "aac" {
+                    mappings.push(StreamMapping::Copy(stream.index));
+                } else {
+                    transcode_any = true;
+                    mappings.push(StreamMapping::ConvertAudio(stream.index));
+                }
+            } else {
+                // Copy all other streams
+                mappings.push(StreamMapping::Copy(stream.index));
+            }
+        }
+
         let mut cmd = Command::new(&self.config.transcoding.ffmpeg_path);
 
         cmd.arg_pair("-i", path);
 
-        let mut transcode_any = false;
-
-        for stream in &info.streams {
-            match stream.codec_type.as_str() {
-                // Transcode audio stream if not already aac
-                "audio" => {
-                    cmd.arg_pair("-map", format!("0:{}", stream.index));
-
-                    if stream.codec_name == "aac" {
-                        cmd.arg_pair(format!("-c:{}", stream.index), "copy");
-                    } else {
-                        cmd.arg_pair(format!("-c:{}", stream.index), "aac");
-                        cmd.arg_pair(format!("-ac:{}", stream.index), "2");
-                        transcode_any = true;
+        // Generate ffmpeg args for all the mappings, but only if we're actually
+        // transcoding at least one stream
+        if transcode_any {
+            for mapping in mappings {
+                match mapping {
+                    StreamMapping::Copy(index) => {
+                        cmd.arg_pair("-map", format!("0:{}", index));
+                        cmd.arg_pair(format!("-c:{}", index), "copy");
+                    }
+                    StreamMapping::ConvertAudio(index) => {
+                        cmd.arg_pair("-map", format!("0:{}", index));
+                        cmd.arg_pair(format!("-c:{}", index), "aac");
+                        cmd.arg_pair(format!("-ac:{}", index), "2");
                     }
                 }
-                // Copy all other streams
-                _ => {
-                    cmd.arg_pair("-map", format!("0:{}", stream.index));
-                    cmd.arg_pair(format!("-c:{}", stream.index), "copy");
+            }
+
+            cmd.arg_pair("-f", "matroska");
+            cmd.arg(&output);
+        }
+
+        // Extract subtitles
+        let subtitles_dir = self.config.subtitles.path.join(id.to_string());
+        let mut subtitle_tmps = vec![];
+        for stream in &info.streams {
+            if stream.codec_type.as_str() == "subtitle" {
+                let output = subtitles_dir.join(format!("{}.extracted.vtt.tmp", stream.index));
+
+                if output.with_extension("").exists() {
+                    // Skip if the subtitle has already been extracted
+                    // TODO: Option to re-extract subtitles
+                    continue;
                 }
+
+                cmd.arg_pair("-map", format!("0:{}", stream.index));
+                cmd.arg_pair(format!("-c:{}", stream.index), "copy");
+                cmd.arg_pair("-f", "webvtt");
+                cmd.arg(&output);
+
+                subtitle_tmps.push(output);
             }
         }
 
-        if !transcode_any {
-            tracing::info!("skipping {} - no streams to transcode", id);
+        // Finish if no streams need transcoding and no subtitles
+        // need extracting
+        if !transcode_any && subtitle_tmps.is_empty() {
+            tracing::info!("skipping - nothing to do");
             return Ok(());
         }
 
-        cmd.arg_pair("-f", "matroska");
-
-        let output = Path::new(path).with_extension("mkv.temp");
-
-        cmd.arg(&output);
+        // Ensure the subtitle directory exists
+        if !subtitle_tmps.is_empty() {
+            tokio::fs::create_dir_all(subtitles_dir)
+                .await
+                .wrap_err("failed to create subtitles directory")?;
+        }
 
         cmd.arg_pair("-progress", "-");
         cmd.arg("-y");
@@ -243,6 +293,7 @@ impl Transcoder {
 
         let mut child = cmd.spawn().wrap_err("failed to spawn ffmpeg")?;
 
+        // Monitor progress from the ffmpeg process
         let duration = info.format.duration.parse::<f64>().unwrap() * 1000f64;
         let stderr = child.stdout.take().unwrap();
         let mut reader = BufReader::new(stderr).lines();
@@ -267,15 +318,26 @@ impl Transcoder {
             return Err(eyre!("ffmpeg terminated unsuccessfully"));
         }
 
-        std::fs::remove_file(path).wrap_err("failed to remove old video file")?;
+        if transcode_any {
+            tokio::fs::remove_file(path)
+                .await
+                .wrap_err("failed to remove original video file")?;
 
-        let path = output.with_extension("");
+            self.rename_tmp_file(&output).await?;
+            self.update_video_path(id, &output.with_extension("")).await;
+        }
 
-        std::fs::rename(&output, &path).wrap_err("failed to rename new video file")?;
-
-        self.update_video_path(id, &path).await;
+        for path in subtitle_tmps {
+            self.rename_tmp_file(&path).await?;
+        }
 
         Ok(())
+    }
+
+    async fn rename_tmp_file(&self, path: &Path) -> eyre::Result<()> {
+        tokio::fs::rename(path, path.with_extension(""))
+            .await
+            .wrap_err("failed to rename new video file")
     }
 
     async fn update_job_progress(&self, job: &Job, progress: f64) {
