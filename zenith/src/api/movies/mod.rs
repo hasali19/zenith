@@ -31,7 +31,8 @@ async fn get_movies(req: &mut Request) -> eyre::Result<()> {
             path,
             duration,
             COALESCE(is_watched, 0) AS is_watched,
-            position
+            position,
+            format_name
         FROM movies AS movie
         JOIN video_files AS video ON movie.item_id = video.item_id
         LEFT JOIN user_item_data AS user_data ON movie.item_id = user_data.item_id
@@ -77,7 +78,8 @@ async fn get_recent_movies(req: &mut Request) -> eyre::Result<()> {
             path,
             duration,
             COALESCE(is_watched, 0) AS is_watched,
-            position
+            position,
+            format_name
         FROM movies AS movie
         JOIN media_items AS item ON item.id = movie.item_id
         JOIN video_files AS video ON video.item_id = movie.item_id

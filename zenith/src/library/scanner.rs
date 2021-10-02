@@ -4,11 +4,15 @@ use std::sync::Arc;
 
 use once_cell::sync::OnceCell;
 use regex::Regex;
+use sqlx::sqlite::SqliteArguments;
+use sqlx::Arguments;
 use time::{Date, Instant, OffsetDateTime};
 use walkdir::{DirEntry, WalkDir};
 
 use crate::config::{Config, ImportMatcher, ImportMatcherTarget};
+use crate::db::media::VideoFileStreamType;
 use crate::db::subtitles::{NewSubtitle, SubtitlePath};
+use crate::db::utils::SqlPlaceholders;
 use crate::db::videos::UpdateVideo;
 use crate::db::{self, Db};
 use crate::ffprobe::VideoInfoProvider;
@@ -162,7 +166,7 @@ impl LibraryScanner {
             }
 
             if options.rescan_files {
-                self.rescan_video_file(id, path_str).await?;
+                self.rescan_video_file_path(id, path_str).await?;
             }
 
             return Ok(());
@@ -246,7 +250,7 @@ impl LibraryScanner {
             }
 
             if options.rescan_files {
-                self.rescan_video_file(id, path_str).await?;
+                self.rescan_video_file_path(id, path_str).await?;
             }
 
             return Ok(());
@@ -266,7 +270,23 @@ impl LibraryScanner {
         Ok(())
     }
 
-    async fn rescan_video_file(&self, id: i64, path: &str) -> eyre::Result<()> {
+    #[tracing::instrument(skip(self))]
+    pub async fn rescan_video_file(&self, id: i64) -> eyre::Result<()> {
+        tracing::info!("rescanning video file");
+
+        let mut conn = self.db.acquire().await?;
+        let path = match db::videos::get_path(&mut conn, id).await? {
+            Some(path) => path,
+            None => {
+                tracing::warn!("video not found in db");
+                return Ok(());
+            }
+        };
+
+        self.rescan_video_file_path(id, &path).await
+    }
+
+    async fn rescan_video_file_path(&self, id: i64, path: &str) -> eyre::Result<()> {
         let mut transaction = self.db.begin().await?;
 
         tracing::debug!(id, path, "rescanning video file");
@@ -274,24 +294,124 @@ impl LibraryScanner {
         let info = self.video_info.get_video_info(path).await?;
         let data = UpdateVideo {
             duration: info.format.duration.parse()?,
+            format_name: Some(info.format.format_name.as_str()),
         };
 
         db::videos::update(&mut transaction, id, data).await?;
 
-        for stream in info
-            .streams
-            .iter()
-            .filter(|stream| stream.codec_type == "subtitle")
-        {
-            let tags = stream.properties.get("tags").unwrap().as_object().unwrap();
-            let subtitle = NewSubtitle {
-                video_id: id,
-                path: SubtitlePath::Embedded(stream.index),
-                title: tags.get("title").map(|v| v.as_str().unwrap()),
-                language: tags.get("language").map(|v| v.as_str().unwrap()),
-            };
+        // TODO: Move database code to separate module
 
-            db::subtitles::insert(&mut transaction, &subtitle).await?;
+        let mut stream_count = 0;
+        for stream in &info.streams {
+            let tags = stream.properties.get("tags").and_then(|v| v.as_object());
+            match stream.codec_type.as_str() {
+                "video" => {
+                    let sql = "
+                        INSERT INTO video_file_streams
+                            (
+                                video_id,
+                                stream_index,
+                                stream_type,
+                                codec_name,
+                                v_width,
+                                v_height
+                            )
+                        VALUES
+                            (?, ?, ?, ?, ?, ?)
+                        ON CONFLICT (video_id, stream_index)
+                        DO UPDATE SET
+                            stream_type = excluded.stream_type,
+                            codec_name = excluded.codec_name,
+                            v_width = excluded.v_width,
+                            v_height = excluded.v_height
+                    ";
+
+                    sqlx::query(sql)
+                        .bind(id)
+                        .bind(stream.index)
+                        .bind(VideoFileStreamType::Video)
+                        .bind(&stream.codec_name)
+                        .bind(stream.properties.get("width").and_then(|v| v.as_i64()))
+                        .bind(stream.properties.get("height").and_then(|v| v.as_i64()))
+                        .execute(&mut transaction)
+                        .await?;
+
+                    stream_count += 1;
+                }
+                "audio" => {
+                    let sql = "
+                        INSERT INTO video_file_streams
+                            (
+                                video_id,
+                                stream_index,
+                                stream_type,
+                                codec_name,
+                                a_language
+                            )
+                        VALUES
+                            (?, ?, ?, ?, ?)
+                        ON CONFLICT (video_id, stream_index)
+                        DO UPDATE SET
+                            stream_type = excluded.stream_type,
+                            codec_name = excluded.codec_name,
+                            v_width = excluded.v_width,
+                            v_height = excluded.v_height
+                    ";
+
+                    let language = tags
+                        .and_then(|tags| tags.get("language"))
+                        .and_then(|v| v.as_str());
+
+                    sqlx::query(sql)
+                        .bind(id)
+                        .bind(stream.index)
+                        .bind(VideoFileStreamType::Audio)
+                        .bind(&stream.codec_name)
+                        .bind(language)
+                        .execute(&mut transaction)
+                        .await?;
+
+                    stream_count += 1;
+                }
+                "subtitle" => {
+                    let title = tags
+                        .and_then(|tags| tags.get("title"))
+                        .and_then(|v| v.as_str());
+
+                    let language = tags
+                        .and_then(|tags| tags.get("language"))
+                        .and_then(|v| v.as_str());
+
+                    let subtitle = NewSubtitle {
+                        video_id: id,
+                        path: SubtitlePath::Embedded(stream.index),
+                        title,
+                        language,
+                    };
+
+                    db::subtitles::insert(&mut transaction, &subtitle).await?;
+                }
+                _ => {}
+            }
+        }
+
+        // Remove non-existent streams
+        {
+            let sql = format!(
+                "DELETE FROM video_file_streams
+                WHERE video_id = ? AND stream_index NOT IN ({})",
+                SqlPlaceholders(stream_count)
+            );
+
+            let mut args = SqliteArguments::default();
+            args.add(id);
+            for stream in &info.streams {
+                args.add(stream.index);
+            }
+
+            sqlx::query_with(&sql, args)
+                .execute(&mut transaction)
+                .await?;
         }
 
         transaction.commit().await?;

@@ -3,6 +3,7 @@ use std::path::Path;
 use std::process::Stdio;
 use std::sync::Arc;
 
+use eyre::{eyre, Context};
 use serde::Serialize;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
@@ -11,7 +12,7 @@ use tokio::sync::{broadcast, RwLock, Semaphore};
 use crate::config::Config;
 use crate::db::Db;
 use crate::ext::CommandExt;
-use crate::ffprobe::Ffprobe;
+use crate::ffprobe::{Ffprobe, VideoInfo};
 
 #[derive(Clone, Serialize)]
 pub struct Job {
@@ -159,147 +160,129 @@ impl Transcoder {
             self.set_current(Some(job.progress(0.0))).await;
             self.sender.send(Event::Started(id)).ok();
 
-            tracing::info!("starting transcode for video (id: {})", id);
-
-            let path = match self.get_video_path(id).await {
-                Ok(Some(path)) => path,
-                Ok(None) => {
-                    tracing::error!("no video found with id {}", id);
+            match self.process_job(job).await {
+                Ok(_) => {
                     self.set_current(None).await;
-                    self.sender.send(Event::Error(id)).ok();
-                    continue;
+                    self.sender.send(Event::Success(id)).ok();
                 }
-                Err(e) => {
-                    tracing::error!("db error: {}", e);
+                Err(_) => {
                     self.set_current(None).await;
                     self.sender.send(Event::Error(id)).ok();
-                    continue;
                 }
             };
-
-            let info = Ffprobe::new(&self.config.transcoding.ffprobe_path)
-                .probe(&path)
-                .await
-                .unwrap();
-
-            let mut cmd = Command::new(&self.config.transcoding.ffmpeg_path);
-
-            cmd.arg_pair("-i", &path);
-
-            let mut transcode_any = false;
-
-            for stream in info.streams {
-                match stream.codec_type.as_str() {
-                    // Copy all video and subtitle streams
-                    "video" | "subtitle" => {
-                        cmd.arg_pair("-map", format!("0:{}", stream.index));
-                        cmd.arg_pair(format!("-c:{}", stream.index), "copy");
-                    }
-                    // Transcode audio stream if not already aac
-                    "audio" => {
-                        cmd.arg_pair("-map", format!("0:{}", stream.index));
-
-                        if stream.codec_name == "aac" {
-                            cmd.arg_pair(format!("-c:{}", stream.index), "copy");
-                        } else {
-                            cmd.arg_pair(format!("-c:{}", stream.index), "aac");
-                            cmd.arg_pair(format!("-ac:{}", stream.index), "2");
-                            transcode_any = true;
-                        }
-                    }
-                    _ => {
-                        tracing::info!(%stream.codec_type, "skipping unrecognised stream type");
-                    }
-                }
-            }
-
-            if !transcode_any {
-                tracing::info!("skipping {} - no streams to transcode", id);
-                self.set_current(None).await;
-                self.sender.send(Event::Success(id)).ok();
-                continue;
-            }
-
-            cmd.arg_pair("-f", "matroska");
-            cmd.arg_pair("-progress", "-");
-            cmd.arg("-y");
-
-            let output = Path::new(&path).with_extension("mkv.temp");
-
-            cmd.arg(&output);
-
-            cmd.stdout(Stdio::piped());
-
-            cmd.env("FFREPORT", "file=data/reports/%p-%t.log:level=32");
-
-            let mut child = match cmd.spawn() {
-                Ok(child) => child,
-                Err(e) => {
-                    tracing::error!("failed to spawn ffmpeg: {}", e);
-                    self.set_current(None).await;
-                    self.sender.send(Event::Error(id)).ok();
-                    continue;
-                }
-            };
-
-            let duration = info.format.duration.parse::<f64>().unwrap() * 1000f64;
-            let stderr = child.stdout.take().unwrap();
-            let mut reader = BufReader::new(stderr).lines();
-            while let Ok(Some(line)) = reader.next_line().await {
-                if let Some((key, value)) = line.split_once('=') {
-                    match key {
-                        "progress" if value == "end" => break,
-                        "out_time_us" => {
-                            if let Ok(time) = value.parse::<u64>() {
-                                let progress = (time as f64 / 1000f64) / duration;
-                                self.set_current(Some(job.progress(progress))).await;
-                                self.sender.send(Event::Progress(id, progress)).ok();
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-            }
-
-            tracing::info!("finished reading ffmpeg progress");
-
-            match child.wait().await {
-                Ok(status) => {
-                    if !status.success() {
-                        tracing::error!("ffmpeg terminated unsuccessfully");
-                        self.set_current(None).await;
-                        self.sender.send(Event::Error(id)).ok();
-                        continue;
-                    }
-                }
-                Err(e) => {
-                    tracing::error!("{}", e);
-                    self.set_current(None).await;
-                    self.sender.send(Event::Error(id)).ok();
-                    continue;
-                }
-            }
-
-            if let Err(e) = std::fs::remove_file(&path) {
-                tracing::error!("failed to remove file: {}", e);
-                self.set_current(None).await;
-                self.sender.send(Event::Error(id)).ok();
-                continue;
-            }
-
-            let path = output.with_extension("");
-
-            if let Err(e) = std::fs::rename(&output, &path) {
-                tracing::error!("failed to rename file: {}", e);
-                self.set_current(None).await;
-                self.sender.send(Event::Error(id)).ok();
-                continue;
-            }
-
-            self.update_video_path(id, &path).await;
-            self.set_current(None).await;
-            self.sender.send(Event::Success(id)).ok();
         }
+    }
+
+    async fn process_job(&self, job: Job) -> eyre::Result<()> {
+        let id = job.video_id;
+
+        tracing::info!("starting transcode for video (id: {})", id);
+
+        let path = self
+            .get_video_path(id)
+            .await
+            .wrap_err("failed to get video path")?
+            .ok_or_else(|| eyre!("no video found with id: {}", id))?;
+
+        let info = Ffprobe::new(&self.config.transcoding.ffprobe_path)
+            .probe(&path)
+            .await
+            .wrap_err("ffprobe failed to get video info")?;
+
+        self.convert_video(&job, &path, &info).await?;
+
+        Ok(())
+    }
+
+    async fn convert_video(&self, job: &Job, path: &str, info: &VideoInfo) -> eyre::Result<()> {
+        let id = job.video_id;
+        let mut cmd = Command::new(&self.config.transcoding.ffmpeg_path);
+
+        cmd.arg_pair("-i", path);
+
+        let mut transcode_any = false;
+
+        for stream in &info.streams {
+            match stream.codec_type.as_str() {
+                // Transcode audio stream if not already aac
+                "audio" => {
+                    cmd.arg_pair("-map", format!("0:{}", stream.index));
+
+                    if stream.codec_name == "aac" {
+                        cmd.arg_pair(format!("-c:{}", stream.index), "copy");
+                    } else {
+                        cmd.arg_pair(format!("-c:{}", stream.index), "aac");
+                        cmd.arg_pair(format!("-ac:{}", stream.index), "2");
+                        transcode_any = true;
+                    }
+                }
+                // Copy all other streams
+                _ => {
+                    cmd.arg_pair("-map", format!("0:{}", stream.index));
+                    cmd.arg_pair(format!("-c:{}", stream.index), "copy");
+                }
+            }
+        }
+
+        if !transcode_any {
+            tracing::info!("skipping {} - no streams to transcode", id);
+            return Ok(());
+        }
+
+        cmd.arg_pair("-f", "matroska");
+
+        let output = Path::new(path).with_extension("mkv.temp");
+
+        cmd.arg(&output);
+
+        cmd.arg_pair("-progress", "-");
+        cmd.arg("-y");
+        cmd.stdout(Stdio::piped());
+
+        cmd.env("FFREPORT", "file=data/reports/%p-%t.log:level=32");
+
+        let mut child = cmd.spawn().wrap_err("failed to spawn ffmpeg")?;
+
+        let duration = info.format.duration.parse::<f64>().unwrap() * 1000f64;
+        let stderr = child.stdout.take().unwrap();
+        let mut reader = BufReader::new(stderr).lines();
+        while let Ok(Some(line)) = reader.next_line().await {
+            if let Some((key, value)) = line.split_once('=') {
+                match key {
+                    "progress" if value == "end" => break,
+                    "out_time_us" => {
+                        if let Ok(time) = value.parse::<u64>() {
+                            let progress = (time as f64 / 1000f64) / duration;
+                            self.update_job_progress(job, progress).await;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        tracing::info!("finished reading ffmpeg progress");
+
+        if !child.wait().await?.success() {
+            return Err(eyre!("ffmpeg terminated unsuccessfully"));
+        }
+
+        std::fs::remove_file(path).wrap_err("failed to remove old video file")?;
+
+        let path = output.with_extension("");
+
+        std::fs::rename(&output, &path).wrap_err("failed to rename new video file")?;
+
+        self.update_video_path(id, &path).await;
+
+        Ok(())
+    }
+
+    async fn update_job_progress(&self, job: &Job, progress: f64) {
+        self.set_current(Some(job.progress(progress))).await;
+        self.sender
+            .send(Event::Progress(job.video_id, progress))
+            .ok();
     }
 
     async fn get_video_path(&self, id: i64) -> eyre::Result<Option<String>> {

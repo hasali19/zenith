@@ -100,3 +100,21 @@ pub async fn get_item_type(
         .await
         .map_err(|e| e.into())
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Type, Serialize)]
+pub enum VideoFileStreamType {
+    Video = 1,
+    Audio = 2,
+}
+
+impl TryFrom<&'_ str> for VideoFileStreamType {
+    type Error = ();
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "video" => Ok(VideoFileStreamType::Video),
+            "audio" => Ok(VideoFileStreamType::Audio),
+            _ => Err(()),
+        }
+    }
+}

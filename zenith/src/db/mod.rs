@@ -1,5 +1,6 @@
 pub mod media;
 pub mod subtitles;
+pub mod utils;
 pub mod videos;
 
 use sqlx::pool::PoolConnection;

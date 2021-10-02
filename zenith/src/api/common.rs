@@ -69,6 +69,7 @@ pub struct ExternalIds {
 pub struct VideoInfo {
     pub path: String,
     pub duration: f64,
+    pub format: Option<String>,
     #[serde(flatten)]
     pub extended: Option<Value>,
 }
@@ -102,6 +103,7 @@ impl<'r> FromRow<'r, SqliteRow> for Movie {
             video_info: VideoInfo {
                 path: row.try_get("path")?,
                 duration: row.try_get("duration")?,
+                format: row.try_get("format_name")?,
                 extended: None,
             },
             user_data: VideoUserData {
@@ -178,6 +180,7 @@ impl<'r> FromRow<'r, SqliteRow> for Episode {
             video_info: VideoInfo {
                 path: row.try_get("path")?,
                 duration: row.try_get("duration")?,
+                format: row.try_get("format_name")?,
                 extended: None,
             },
             user_data: VideoUserData {
@@ -201,7 +204,8 @@ pub async fn get_movie_item(conn: &mut SqliteConnection, id: i64) -> eyre::Resul
             path,
             duration,
             COALESCE(is_watched, 0) AS is_watched,
-            position
+            position,
+            format_name
         FROM movies AS movie
         JOIN video_files AS video ON movie.item_id = video.item_id
         LEFT JOIN user_item_data AS user_data ON movie.item_id = user_data.item_id
@@ -280,7 +284,8 @@ pub async fn get_episode_item(
             video.path,
             duration,
             COALESCE(is_watched, 0) AS is_watched,
-            position
+            position,
+            format_name
         FROM tv_episodes AS episode
         JOIN tv_seasons AS season ON season.item_id = episode.season_id
         JOIN tv_shows AS show ON show.item_id = season.show_id
