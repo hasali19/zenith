@@ -13,6 +13,7 @@ mod tv;
 mod videos;
 
 pub mod error;
+mod scanner;
 
 use atium::headers::AccessControlAllowOrigin;
 use atium::router::Router;
@@ -32,7 +33,8 @@ pub fn handler() -> impl Handler {
         .with(progress::routes)
         .with(metadata::routes)
         .with(transcoder::routes)
-        .with(events::routes);
+        .with(events::routes)
+        .with(scanner::routes);
 
     atium::compose!(DefaultHeaders, ErrorHandler, router, not_found)
 }

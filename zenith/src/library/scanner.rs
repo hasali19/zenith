@@ -77,35 +77,40 @@ impl LibraryScanner {
         }
     }
 
-    /// Starts a library scan if one is not already running
+    /// Starts a library scan if one is not already running.
+    ///
+    /// Returns immediately without waiting for the scan to finish.
     pub fn start_scan(self: Arc<Self>, options: ScanOptions) {
+        tokio::spawn(self.run_scan(options));
+    }
+
+    /// Starts a library scan if one is not already running
+    pub async fn run_scan(self: Arc<Self>, options: ScanOptions) {
         if !self.is_running.swap(true, Ordering::SeqCst) {
-            tokio::spawn(async move {
-                let start_time = Instant::now();
+            let start_time = Instant::now();
 
-                tracing::info!(?options, "starting library scan");
+            tracing::info!(?options, "starting library scan");
 
-                if let Err(e) = self
-                    .scan_movies(&self.config.libraries.movies, &options)
-                    .await
-                {
-                    tracing::error!("{:?}", e);
-                };
+            if let Err(e) = self
+                .scan_movies(&self.config.libraries.movies, &options)
+                .await
+            {
+                tracing::error!("{:?}", e);
+            };
 
-                if let Err(e) = self
-                    .scan_shows(&self.config.libraries.tv_shows, &options)
-                    .await
-                {
-                    tracing::error!("{:?}", e);
-                };
+            if let Err(e) = self
+                .scan_shows(&self.config.libraries.tv_shows, &options)
+                .await
+            {
+                tracing::error!("{:?}", e);
+            };
 
-                self.is_running.store(false, Ordering::SeqCst);
+            self.is_running.store(false, Ordering::SeqCst);
 
-                let duration = Instant::now() - start_time;
-                let seconds = duration.as_seconds_f32();
+            let duration = Instant::now() - start_time;
+            let seconds = duration.as_seconds_f32();
 
-                tracing::info!("completed scan in {:.3}s", seconds);
-            });
+            tracing::info!("completed scan in {:.3}s", seconds);
         }
     }
 
