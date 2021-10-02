@@ -70,7 +70,7 @@ dependencies = [
 [[package]]
 name = "atium"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/atium#96dee55ff490fa096f7ab447d79fc1a00171ba8b"
+source = "git+https://github.com/hasali19/atium#e6a96f361940e413e4382f8be4d0d9b3aec709da"
 dependencies = [
  "async-trait",
  "atium-macros",
@@ -92,7 +92,7 @@ dependencies = [
 [[package]]
 name = "atium-macros"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/atium#96dee55ff490fa096f7ab447d79fc1a00171ba8b"
+source = "git+https://github.com/hasali19/atium#e6a96f361940e413e4382f8be4d0d9b3aec709da"
 dependencies = [
  "quote",
  "syn",
@@ -827,6 +827,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "multer"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "408327e2999b839cd1af003fc01b2019a6c10a1361769542203f6fedc5179680"
+dependencies = [
+ "bytes",
+ "encoding_rs",
+ "futures-util",
+ "http",
+ "httparse",
+ "log",
+ "mime",
+ "spin 0.9.2",
+ "twoway",
+ "version_check",
+]
+
+[[package]]
 name = "nom"
 version = "7.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1061,7 +1079,7 @@ dependencies = [
  "cc",
  "libc",
  "once_cell",
- "spin",
+ "spin 0.5.2",
  "untrusted",
  "web-sys",
  "winapi",
@@ -1271,6 +1289,12 @@ name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "spin"
+version = "0.9.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "511254be0c5bcf062b019a6c89c01a664aa359ded62f78aa72c6fc137c0590e5"
 
 [[package]]
 name = "sqlformat"
@@ -1627,10 +1651,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
 
 [[package]]
+name = "twoway"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c57ffb460d7c24cd6eda43694110189030a3d1dfe418416d9468fd1c1d290b47"
+dependencies = [
+ "memchr",
+ "unchecked-index",
+]
+
+[[package]]
 name = "typenum"
 version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b63708a265f51345575b27fe43f9500ad611579e764c79edbc2037b1121959ec"
+
+[[package]]
+name = "unchecked-index"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eeba86d422ce181a719445e51872fa30f1f7413b62becb52e95ec91aa262d85c"
 
 [[package]]
 name = "unicase"
@@ -1909,6 +1949,7 @@ dependencies = [
  "itertools",
  "migrations",
  "mime",
+ "multer",
  "once_cell",
  "regex",
  "reqwest",

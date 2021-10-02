@@ -4,12 +4,21 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use atium::endpoint;
+use atium::headers::ContentType;
 use atium::respond::RespondRequestExt;
 use atium::router::Router;
 use atium::router::RouterRequestExt;
+use atium::Body;
 use atium::Request;
+use bytes::Buf;
+use eyre::eyre;
+use mime::Mime;
+use multer::Multipart;
 use serde::Deserialize;
 use serde_json::json;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
+use tokio::io::BufWriter;
 use uuid::Uuid;
 
 use crate::api::error::bad_request;
@@ -60,33 +69,112 @@ async fn get_import_queue(req: &mut Request) -> eyre::Result<()> {
 #[serde(tag = "type")]
 pub enum ImportSource {
     Local { path: String, copy: Option<bool> },
+    Upload,
 }
 
 #[derive(Deserialize)]
 pub struct ImportSubtitleRequest {
     source: ImportSource,
+    #[serde(flatten)]
+    data: ImportSubtitleRequestData,
+}
+
+#[derive(Deserialize)]
+pub struct ImportSubtitleRequestData {
     video_id: i64,
     title: Option<String>,
     language: Option<String>,
 }
 
+async fn multipart(req: &Request, body: Body) -> eyre::Result<Multipart<'static>> {
+    let content_type: Mime = req
+        .header::<ContentType>()
+        .or_bad_request("invalid content-type header")?
+        .into();
+
+    if content_type.essence_str() != "multipart/form-data" {
+        return Err(eyre!(bad_request(
+            "content-type must be multipart/form-data"
+        )));
+    }
+
+    let boundary = content_type
+        .get_param(mime::BOUNDARY)
+        .or_bad_request("missing boundary in content-type")?;
+
+    Ok(Multipart::new(body, boundary.as_str()))
+}
+
 #[endpoint]
 async fn import_subtitle(req: &mut Request) -> eyre::Result<()> {
-    let data: ImportSubtitleRequest = req.body_json().await?;
+    let body = req.body();
     let config: &Arc<Config> = req.ext().unwrap();
     let db: &Db = req.ext().unwrap();
 
-    let (src_path, copy) = match data.source {
-        ImportSource::Local { path, copy } => (path, copy.unwrap_or(true)),
+    let mut multipart = multipart(req, body).await?;
+
+    let ImportSubtitleRequest { source, data } = {
+        let field = multipart
+            .next_field()
+            .await?
+            .or_bad_request("missing data field in mutipart body")?;
+
+        if !matches!(field.name(), Some("data")) {
+            return Err(eyre!(bad_request(
+                "first field in multipart body must be 'data'"
+            )));
+        }
+
+        serde_json::from_reader(field.bytes().await?.reader())?
     };
 
-    let src_path = PathBuf::from(src_path);
-    let src_ext = src_path
-        .extension()
-        .or_bad_request("source file has no extension")?;
+    let (src_path, dst_path, copy) = match source {
+        ImportSource::Local { path, copy } => {
+            let src_path = PathBuf::from(path);
+            let src_ext = src_path
+                .extension()
+                .or_bad_request("source file has no extension")?;
 
-    let dst_name = Uuid::new_v4().to_string();
-    let dst_path = config.subtitles.path.join(dst_name).with_extension(src_ext);
+            let dst_name = Uuid::new_v4().to_string();
+            let dst_path = config.subtitles.path.join(dst_name).with_extension(src_ext);
+
+            (src_path, dst_path, copy.unwrap_or(false))
+        }
+        ImportSource::Upload => {
+            let mut field = multipart
+                .next_field()
+                .await?
+                .or_bad_request("upload import source specified but no file found in request")?;
+
+            let content_type = field
+                .content_type()
+                .map(|c| c.essence_str())
+                .or_bad_request("missing content-type for file upload");
+
+            let ext = match content_type? {
+                "text/vtt" => "vtt",
+                _ => return Err(eyre!(bad_request("unsupported subtitle content-type",))),
+            };
+
+            if !Path::new("data/tmp").exists() {
+                std::fs::create_dir_all("data/tmp")?;
+            }
+
+            let src_path = PathBuf::from(format!("data/tmp/{}.{}", Uuid::new_v4(), ext));
+            let mut file = BufWriter::new(File::create(&src_path).await?);
+
+            while let Some(chunk) = field.chunk().await? {
+                file.write_all(chunk.as_ref()).await?;
+            }
+
+            file.flush().await?;
+
+            let dst_name = Uuid::new_v4().to_string();
+            let dst_path = config.subtitles.path.join(dst_name).with_extension(ext);
+
+            (src_path, dst_path, false)
+        }
+    };
 
     if dst_path.exists() {
         return Err(bad_request(format!("{:?} already exists", dst_path)).into());
@@ -135,6 +223,7 @@ pub async fn import_movie(req: &mut Request) -> eyre::Result<()> {
 
     let src_path = match data.source {
         ImportSource::Local { path, copy: _ } => path,
+        _ => return Err(eyre!(bad_request("unsupported import source"))),
     };
 
     let src_path = PathBuf::from(src_path);
@@ -234,6 +323,9 @@ pub async fn import_episode(req: &mut Request) -> eyre::Result<()> {
 mod inner {
     use std::path::{Path, PathBuf};
 
+    use eyre::eyre;
+
+    use crate::api::error::bad_request;
     use crate::api::ext::OptionExt;
 
     use super::{ImportEpisodeRequest, ImportSource};
@@ -244,6 +336,7 @@ mod inner {
     ) -> eyre::Result<PathBuf> {
         let src_path = match req.source {
             ImportSource::Local { path, copy: _ } => path,
+            _ => return Err(eyre!(bad_request("unsupported import source"))),
         };
 
         let src_path = PathBuf::from(src_path);
