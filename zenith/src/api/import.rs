@@ -128,6 +128,7 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<()> {
         serde_json::from_reader(field.bytes().await?.reader())?
     };
 
+    let subtitles_dir = config.subtitles.path.join(data.video_id.to_string());
     let (src_path, dst_path, copy) = match source {
         ImportSource::Local { path, copy } => {
             let src_path = PathBuf::from(path);
@@ -136,7 +137,7 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<()> {
                 .or_bad_request("source file has no extension")?;
 
             let dst_name = Uuid::new_v4().to_string();
-            let dst_path = config.subtitles.path.join(dst_name).with_extension(src_ext);
+            let dst_path = subtitles_dir.join(dst_name).with_extension(src_ext);
 
             (src_path, dst_path, copy.unwrap_or(false))
         }
@@ -170,7 +171,7 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<()> {
             file.flush().await?;
 
             let dst_name = Uuid::new_v4().to_string();
-            let dst_path = config.subtitles.path.join(dst_name).with_extension(ext);
+            let dst_path = subtitles_dir.join(dst_name).with_extension(ext);
 
             (src_path, dst_path, false)
         }
@@ -190,8 +191,8 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<()> {
 
     db::subtitles::insert(&mut transaction, &subtitles).await?;
 
-    if !config.subtitles.path.exists() {
-        std::fs::create_dir_all(&config.subtitles.path)?;
+    if !subtitles_dir.exists() {
+        std::fs::create_dir_all(&subtitles_dir)?;
     }
 
     if copy {
