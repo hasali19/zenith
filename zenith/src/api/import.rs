@@ -1,13 +1,12 @@
 use std::borrow::Cow;
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::process::Stdio;
 use std::sync::Arc;
 
 use atium::endpoint;
 use atium::headers::ContentType;
 use atium::respond::RespondRequestExt;
-use atium::router::Router;
-use atium::router::RouterRequestExt;
+use atium::router::{Router, RouterRequestExt};
 use atium::Body;
 use atium::Request;
 use bytes::Buf;
@@ -17,17 +16,17 @@ use multer::Multipart;
 use serde::Deserialize;
 use serde_json::json;
 use tokio::fs::File;
-use tokio::io::AsyncWriteExt;
-use tokio::io::BufWriter;
+use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
+use tokio::process::Command;
 use uuid::Uuid;
 
 use crate::api::error::bad_request;
 use crate::api::ext::OptionExt;
 use crate::config::Config;
 use crate::db;
-use crate::db::subtitles::NewSubtitle;
-use crate::db::subtitles::SubtitlePath;
+use crate::db::subtitles::{NewSubtitle, SubtitlePath};
 use crate::db::Db;
+use crate::ext::CommandExt;
 use crate::library::scanner::{self, LibraryScanner, ScanOptions, VideoFileType};
 
 pub fn routes(router: &mut Router) {
@@ -130,16 +129,18 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<()> {
 
     let subtitles_dir = config.subtitles.path.join(data.video_id.to_string());
     let (src_path, dst_path, copy) = match source {
-        ImportSource::Local { path, copy } => {
-            let src_path = PathBuf::from(path);
-            let src_ext = src_path
-                .extension()
-                .or_bad_request("source file has no extension")?;
+        ImportSource::Local { path: _, copy: _ } => {
+            // let src_path = PathBuf::from(path);
+            // let src_ext = src_path
+            //     .extension()
+            //     .or_bad_request("source file has no extension")?;
 
-            let dst_name = Uuid::new_v4().to_string();
-            let dst_path = subtitles_dir.join(dst_name).with_extension(src_ext);
+            // let dst_name = Uuid::new_v4().to_string();
+            // let dst_path = subtitles_dir.join(dst_name).with_extension(src_ext);
 
-            (src_path, dst_path, copy.unwrap_or(false))
+            // (src_path, dst_path, copy.unwrap_or(false))
+
+            todo!()
         }
         ImportSource::Upload => {
             let mut field = multipart
@@ -152,26 +153,82 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<()> {
                 .map(|c| c.essence_str())
                 .or_bad_request("missing content-type for file upload");
 
-            let ext = match content_type? {
-                "text/vtt" => "vtt",
-                _ => return Err(eyre!(bad_request("unsupported subtitle content-type",))),
-            };
-
             if !Path::new("data/tmp").exists() {
                 std::fs::create_dir_all("data/tmp")?;
             }
 
-            let src_path = PathBuf::from(format!("data/tmp/{}.{}", Uuid::new_v4(), ext));
-            let mut file = BufWriter::new(File::create(&src_path).await?);
+            let src_path = match content_type? {
+                "text/vtt" => {
+                    let src_path = PathBuf::from(format!("data/tmp/{}.vtt", Uuid::new_v4()));
+                    let mut file = BufWriter::new(File::create(&src_path).await?);
 
-            while let Some(chunk) = field.chunk().await? {
-                file.write_all(chunk.as_ref()).await?;
-            }
+                    while let Some(chunk) = field.chunk().await? {
+                        file.write_all(chunk.as_ref()).await?;
+                    }
 
-            file.flush().await?;
+                    file.flush().await?;
+
+                    src_path
+                }
+                "application/x-subrip" => {
+                    let mut child = Command::new(&config.transcoding.ffmpeg_path)
+                        .arg_pair("-f", "srt")
+                        .arg_pair("-i", "-")
+                        .arg_pair("-f", "webvtt")
+                        .arg("pipe:1")
+                        .stdin(Stdio::piped())
+                        .stdout(Stdio::piped())
+                        .spawn()?;
+
+                    let mut stdin = child.stdin.take().unwrap();
+                    let mut stdout = child.stdout.take().unwrap();
+
+                    let input_fut = async move {
+                        while let Some(chunk) = field.chunk().await? {
+                            stdin.write_all(chunk.as_ref()).await?;
+                        }
+
+                        Ok::<_, eyre::Report>(())
+                    };
+
+                    let src_path = PathBuf::from(format!("data/tmp/{}.vtt", Uuid::new_v4()));
+                    let mut file = BufWriter::new(File::create(&src_path).await?);
+
+                    let output_fut = async move {
+                        let mut buffer = [0u8; 4096];
+
+                        loop {
+                            let n = stdout.read(&mut buffer).await?;
+                            if n == 0 {
+                                break;
+                            }
+
+                            file.write_all(&buffer[..n]).await?;
+                        }
+
+                        file.flush().await?;
+
+                        Ok::<_, eyre::Report>(())
+                    };
+
+                    tracing::info!("starting ffmpeg");
+
+                    let (_, _, res) =
+                        futures::future::join3(input_fut, output_fut, child.wait()).await;
+
+                    let status: std::process::ExitStatus = res?;
+
+                    if !status.success() {
+                        return Err(eyre!("failed to convert subtitles"));
+                    }
+
+                    src_path
+                }
+                _ => return Err(eyre!(bad_request("unsupported subtitle content-type",))),
+            };
 
             let dst_name = Uuid::new_v4().to_string();
-            let dst_path = subtitles_dir.join(dst_name).with_extension(ext);
+            let dst_path = subtitles_dir.join(dst_name).with_extension("vtt");
 
             (src_path, dst_path, false)
         }
