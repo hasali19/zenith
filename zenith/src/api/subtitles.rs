@@ -9,14 +9,19 @@ use atium::{endpoint, Request, Response};
 use mime::Mime;
 use tokio::process::Command;
 
+use crate::api::error::bad_request;
 use crate::config::Config;
+use crate::db::subtitles::SubtitlePath;
 use crate::db::{self, Db};
 use crate::ext::CommandExt;
 
 use super::ext::OptionExt;
 
 pub fn routes(router: &mut Router) {
-    router.route("/subtitles/:id").get(get_subtitle);
+    router
+        .route("/subtitles/:id")
+        .get(get_subtitle)
+        .delete(delete_subtitle);
 }
 
 #[endpoint]
@@ -84,4 +89,36 @@ async fn extract_embedded_subtitle(
         .output()
         .await
         .map(|output| output.stdout)
+}
+
+#[endpoint]
+async fn delete_subtitle(req: &mut Request) -> eyre::Result<()> {
+    let subtitle_id: i64 = req.param("id")?;
+    let db: &Db = req.ext().unwrap();
+
+    let mut conn = db.acquire().await?;
+
+    let subtitle = db::subtitles::get_by_id(&mut conn, subtitle_id)
+        .await?
+        .or_not_found("subtitle not found")?;
+
+    match subtitle.path {
+        SubtitlePath::Embedded(_) => {
+            return Err(eyre::eyre!(bad_request(
+                "embedded subtitled cannot be deleted"
+            )))
+        }
+        SubtitlePath::External(path) => {
+            sqlx::query("DELETE FROM subtitles WHERE id = ?")
+                .bind(subtitle_id)
+                .execute(&mut conn)
+                .await?;
+
+            std::fs::remove_file(path.as_ref())?;
+        }
+    }
+
+    req.ok();
+
+    Ok(())
 }
