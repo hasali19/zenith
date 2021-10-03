@@ -4,19 +4,15 @@ use std::sync::Arc;
 
 use once_cell::sync::OnceCell;
 use regex::Regex;
-use serde_json::Value;
 use time::{Date, Instant, OffsetDateTime};
 use walkdir::{DirEntry, WalkDir};
 
 use crate::config::{Config, ImportMatcher, ImportMatcherTarget};
-use crate::db::streams::{NewAudioStream, NewVideoStream};
-use crate::db::subtitles::{NewSubtitle, SubtitlePath};
-use crate::db::videos::UpdateVideo;
-use crate::db::{self, streams, Db};
+use crate::db::{self, Db};
 use crate::ffprobe::VideoInfoProvider;
 use crate::library::movies::NewMovie;
 use crate::library::shows::{NewEpisode, NewSeason, NewShow};
-use crate::library::MediaLibrary;
+use crate::library::{video_info, MediaLibrary};
 use crate::metadata::{MetadataManager, RefreshRequest};
 
 pub struct LibraryScanner {
@@ -290,79 +286,12 @@ impl LibraryScanner {
     }
 
     async fn rescan_video_file_path(&self, id: i64, path: &str) -> eyre::Result<()> {
-        let mut transaction = self.db.begin().await?;
-
         tracing::debug!(id, path, "rescanning video file");
 
+        let mut transaction = self.db.begin().await?;
         let info = self.video_info.get_video_info(path).await?;
-        let data = UpdateVideo {
-            duration: info.format.duration.parse()?,
-            format_name: Some(info.format.format_name.as_str()),
-        };
 
-        db::videos::update(&mut transaction, id, data).await?;
-
-        for stream in &info.streams {
-            let tags = stream.properties.get("tags").and_then(|v| v.as_object());
-            match stream.codec_type.as_str() {
-                "video" => {
-                    let (width, height) = if let (Some(width), Some(height)) = (
-                        stream.properties.get("width").and_then(Value::as_u64),
-                        stream.properties.get("height").and_then(Value::as_u64),
-                    ) {
-                        (width as u32, height as u32)
-                    } else {
-                        return Err(eyre::eyre!("missing width and height for video stream"));
-                    };
-
-                    let stream = NewVideoStream {
-                        video_id: id,
-                        index: stream.index,
-                        codec_name: &stream.codec_name,
-                        width,
-                        height,
-                    };
-
-                    streams::insert_video_stream(&mut transaction, &stream).await?;
-                }
-                "audio" => {
-                    let language = tags
-                        .and_then(|tags| tags.get("language"))
-                        .and_then(|v| v.as_str());
-
-                    let stream = NewAudioStream {
-                        video_id: id,
-                        index: stream.index,
-                        codec_name: &stream.codec_name,
-                        language,
-                    };
-
-                    streams::insert_audio_stream(&mut transaction, &stream).await?;
-                }
-                "subtitle" => {
-                    let title = tags
-                        .and_then(|tags| tags.get("title"))
-                        .and_then(|v| v.as_str());
-
-                    let language = tags
-                        .and_then(|tags| tags.get("language"))
-                        .and_then(|v| v.as_str());
-
-                    let subtitle = NewSubtitle {
-                        video_id: id,
-                        path: SubtitlePath::Embedded(stream.index),
-                        title,
-                        language,
-                    };
-
-                    db::subtitles::insert(&mut transaction, &subtitle).await?;
-                }
-                _ => {}
-            }
-        }
-
-        // Remove streams which no longer exist in the file
-        streams::remove_except(&mut transaction, id, info.streams.iter().map(|s| s.index)).await?;
+        video_info::update_video_info(&mut transaction, id, &info).await?;
 
         transaction.commit().await?;
 
