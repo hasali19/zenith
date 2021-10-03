@@ -4,17 +4,15 @@ use std::sync::Arc;
 
 use once_cell::sync::OnceCell;
 use regex::Regex;
-use sqlx::sqlite::SqliteArguments;
-use sqlx::Arguments;
+use serde_json::Value;
 use time::{Date, Instant, OffsetDateTime};
 use walkdir::{DirEntry, WalkDir};
 
 use crate::config::{Config, ImportMatcher, ImportMatcherTarget};
-use crate::db::media::VideoFileStreamType;
+use crate::db::streams::{NewAudioStream, NewVideoStream};
 use crate::db::subtitles::{NewSubtitle, SubtitlePath};
-use crate::db::utils::SqlPlaceholders;
 use crate::db::videos::UpdateVideo;
-use crate::db::{self, Db};
+use crate::db::{self, streams, Db};
 use crate::ffprobe::VideoInfoProvider;
 use crate::library::movies::NewMovie;
 use crate::library::shows::{NewEpisode, NewSeason, NewShow};
@@ -304,79 +302,42 @@ impl LibraryScanner {
 
         db::videos::update(&mut transaction, id, data).await?;
 
-        // TODO: Move database code to separate module
-
-        let mut stream_count = 0;
         for stream in &info.streams {
             let tags = stream.properties.get("tags").and_then(|v| v.as_object());
             match stream.codec_type.as_str() {
                 "video" => {
-                    let sql = "
-                        INSERT INTO video_file_streams
-                            (
-                                video_id,
-                                stream_index,
-                                stream_type,
-                                codec_name,
-                                v_width,
-                                v_height
-                            )
-                        VALUES
-                            (?, ?, ?, ?, ?, ?)
-                        ON CONFLICT (video_id, stream_index)
-                        DO UPDATE SET
-                            stream_type = excluded.stream_type,
-                            codec_name = excluded.codec_name,
-                            v_width = excluded.v_width,
-                            v_height = excluded.v_height
-                    ";
+                    let (width, height) = if let (Some(width), Some(height)) = (
+                        stream.properties.get("width").and_then(Value::as_u64),
+                        stream.properties.get("height").and_then(Value::as_u64),
+                    ) {
+                        (width as u32, height as u32)
+                    } else {
+                        return Err(eyre::eyre!("missing width and height for video stream"));
+                    };
 
-                    sqlx::query(sql)
-                        .bind(id)
-                        .bind(stream.index)
-                        .bind(VideoFileStreamType::Video)
-                        .bind(&stream.codec_name)
-                        .bind(stream.properties.get("width").and_then(|v| v.as_i64()))
-                        .bind(stream.properties.get("height").and_then(|v| v.as_i64()))
-                        .execute(&mut transaction)
-                        .await?;
+                    let stream = NewVideoStream {
+                        video_id: id,
+                        index: stream.index,
+                        codec_name: &stream.codec_name,
+                        width,
+                        height,
+                    };
 
-                    stream_count += 1;
+                    streams::insert_video_stream(&mut transaction, &stream).await?;
                 }
                 "audio" => {
-                    let sql = "
-                        INSERT INTO video_file_streams
-                            (
-                                video_id,
-                                stream_index,
-                                stream_type,
-                                codec_name,
-                                a_language
-                            )
-                        VALUES
-                            (?, ?, ?, ?, ?)
-                        ON CONFLICT (video_id, stream_index)
-                        DO UPDATE SET
-                            stream_type = excluded.stream_type,
-                            codec_name = excluded.codec_name,
-                            v_width = excluded.v_width,
-                            v_height = excluded.v_height
-                    ";
-
                     let language = tags
                         .and_then(|tags| tags.get("language"))
                         .and_then(|v| v.as_str());
 
-                    sqlx::query(sql)
-                        .bind(id)
-                        .bind(stream.index)
-                        .bind(VideoFileStreamType::Audio)
-                        .bind(&stream.codec_name)
-                        .bind(language)
-                        .execute(&mut transaction)
-                        .await?;
+                    let stream = NewAudioStream {
+                        video_id: id,
+                        index: stream.index,
+                        codec_name: &stream.codec_name,
+                        language,
+                    };
 
-                    stream_count += 1;
+                    streams::insert_audio_stream(&mut transaction, &stream).await?;
                 }
                 "subtitle" => {
                     let title = tags
@@ -400,24 +361,8 @@ impl LibraryScanner {
             }
         }
 
-        // Remove non-existent streams
-        {
-            let sql = format!(
-                "DELETE FROM video_file_streams
-                WHERE video_id = ? AND stream_index NOT IN ({})",
-                SqlPlaceholders(stream_count)
-            );
-
-            let mut args = SqliteArguments::default();
-            args.add(id);
-            for stream in &info.streams {
-                args.add(stream.index);
-            }
-
-            sqlx::query_with(&sql, args)
-                .execute(&mut transaction)
-                .await?;
-        }
+        // Remove streams which no longer exist in the file
+        streams::remove_except(&mut transaction, id, info.streams.iter().map(|s| s.index)).await?;
 
         transaction.commit().await?;
 

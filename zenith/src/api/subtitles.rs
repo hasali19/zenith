@@ -1,4 +1,3 @@
-use std::process::Stdio;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -7,13 +6,12 @@ use atium::respond::RespondRequestExt;
 use atium::router::{Router, RouterRequestExt};
 use atium::{endpoint, Request, Response};
 use mime::Mime;
-use tokio::process::Command;
 
 use crate::api::error::bad_request;
 use crate::config::Config;
 use crate::db::subtitles::SubtitlePath;
 use crate::db::{self, Db};
-use crate::ext::CommandExt;
+use crate::subtitles;
 
 use super::ext::OptionExt;
 
@@ -64,7 +62,7 @@ async fn get_subtitle(req: &mut Request) -> eyre::Result<()> {
 
                 let res = Response::ok()
                     .with_header(ContentType::from(Mime::from_str("text/vtt")?))
-                    .with_body(extract_embedded_subtitle(config, &path, index).await?);
+                    .with_body(subtitles::extract_embedded(config, &path, index).await?);
 
                 req.set_res(res);
             }
@@ -72,23 +70,6 @@ async fn get_subtitle(req: &mut Request) -> eyre::Result<()> {
     }
 
     Ok(())
-}
-
-async fn extract_embedded_subtitle(
-    config: &Config,
-    path: &str,
-    index: u32,
-) -> std::io::Result<Vec<u8>> {
-    Command::new(&config.transcoding.ffmpeg_path)
-        .arg_pair("-i", &path)
-        .arg_pair("-map", format!("0:{}", index))
-        .arg_pair("-c:s", "webvtt")
-        .arg_pair("-f", "webvtt")
-        .arg("pipe:1")
-        .stdout(Stdio::piped())
-        .output()
-        .await
-        .map(|output| output.stdout)
 }
 
 #[endpoint]

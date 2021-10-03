@@ -1,4 +1,5 @@
 pub mod media;
+pub mod streams;
 pub mod subtitles;
 pub mod utils;
 pub mod videos;
