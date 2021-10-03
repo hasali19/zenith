@@ -96,6 +96,11 @@ impl MovieLibrary {
             .execute(&mut transaction)
             .await?;
 
+        sqlx::query("DELETE FROM video_file_streams WHERE video_id = ?")
+            .bind(id)
+            .execute(&mut transaction)
+            .await?;
+
         sqlx::query("DELETE FROM video_files WHERE item_id = ?")
             .bind(id)
             .execute(&mut transaction)
