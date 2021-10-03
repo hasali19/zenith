@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 use std::path::{Path, PathBuf};
-use std::process::Stdio;
 use std::sync::Arc;
 
 use atium::endpoint;
@@ -16,18 +15,16 @@ use multer::Multipart;
 use serde::Deserialize;
 use serde_json::json;
 use tokio::fs::File;
-use tokio::io::{AsyncReadExt, AsyncWriteExt, BufWriter};
-use tokio::process::Command;
+use tokio::io::BufWriter;
 use uuid::Uuid;
 
 use crate::api::error::bad_request;
 use crate::api::ext::OptionExt;
 use crate::config::Config;
-use crate::db;
 use crate::db::subtitles::{NewSubtitle, SubtitlePath};
 use crate::db::Db;
-use crate::ext::CommandExt;
 use crate::library::scanner::{self, LibraryScanner, ScanOptions, VideoFileType};
+use crate::{db, subtitles, util};
 
 pub fn routes(router: &mut Router) {
     router.route("/import/queue").get(get_import_queue);
@@ -128,22 +125,35 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<()> {
     };
 
     let subtitles_dir = config.subtitles.path.join(data.video_id.to_string());
-    let (src_path, dst_path, copy) = match source {
-        ImportSource::Local { path: _, copy: _ } => {
-            // let src_path = PathBuf::from(path);
-            // let src_ext = src_path
-            //     .extension()
-            //     .or_bad_request("source file has no extension")?;
+    let src_path = match source {
+        ImportSource::Local { path, copy: _ } => {
+            let src_path = PathBuf::from(path);
+            let src_ext = src_path
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .or_bad_request("source file has no extension")?;
 
-            // let dst_name = Uuid::new_v4().to_string();
-            // let dst_path = subtitles_dir.join(dst_name).with_extension(src_ext);
+            match src_ext {
+                // vtt subtitles can be directly written to the file
+                "vtt" => src_path,
+                // srt subtitles need to be converted first
+                "srt" => {
+                    // TODO: Consider writing ffmpeg output directly to destination file to avoid
+                    // the extra temporary file
 
-            // (src_path, dst_path, copy.unwrap_or(false))
+                    let input_file = util::to_byte_stream(File::open(src_path).await?);
+                    let output_path = PathBuf::from(format!("data/tmp/{}.vtt", Uuid::new_v4()));
+                    let output_file = BufWriter::new(File::create(&output_path).await?);
 
-            todo!()
+                    subtitles::convert(config, input_file, output_file).await?;
+
+                    output_path
+                }
+                _ => return Err(eyre!(bad_request("unsupported subtitle file extension",))),
+            }
         }
         ImportSource::Upload => {
-            let mut field = multipart
+            let field = multipart
                 .next_field()
                 .await?
                 .or_bad_request("upload import source specified but no file found in request")?;
@@ -157,83 +167,23 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<()> {
                 std::fs::create_dir_all("data/tmp")?;
             }
 
-            let src_path = match content_type? {
-                "text/vtt" => {
-                    let src_path = PathBuf::from(format!("data/tmp/{}.vtt", Uuid::new_v4()));
-                    let mut file = BufWriter::new(File::create(&src_path).await?);
+            let src_path = format!("data/tmp/{}.vtt", Uuid::new_v4());
+            let file = BufWriter::new(File::create(&src_path).await?);
 
-                    while let Some(chunk) = field.chunk().await? {
-                        file.write_all(chunk.as_ref()).await?;
-                    }
-
-                    file.flush().await?;
-
-                    src_path
-                }
-                "application/x-subrip" => {
-                    let mut child = Command::new(&config.transcoding.ffmpeg_path)
-                        .arg_pair("-f", "srt")
-                        .arg_pair("-i", "-")
-                        .arg_pair("-f", "webvtt")
-                        .arg("pipe:1")
-                        .stdin(Stdio::piped())
-                        .stdout(Stdio::piped())
-                        .spawn()?;
-
-                    let mut stdin = child.stdin.take().unwrap();
-                    let mut stdout = child.stdout.take().unwrap();
-
-                    let input_fut = async move {
-                        while let Some(chunk) = field.chunk().await? {
-                            stdin.write_all(chunk.as_ref()).await?;
-                        }
-
-                        Ok::<_, eyre::Report>(())
-                    };
-
-                    let src_path = PathBuf::from(format!("data/tmp/{}.vtt", Uuid::new_v4()));
-                    let mut file = BufWriter::new(File::create(&src_path).await?);
-
-                    let output_fut = async move {
-                        let mut buffer = [0u8; 4096];
-
-                        loop {
-                            let n = stdout.read(&mut buffer).await?;
-                            if n == 0 {
-                                break;
-                            }
-
-                            file.write_all(&buffer[..n]).await?;
-                        }
-
-                        file.flush().await?;
-
-                        Ok::<_, eyre::Report>(())
-                    };
-
-                    tracing::info!("starting ffmpeg");
-
-                    let (_, _, res) =
-                        futures::future::join3(input_fut, output_fut, child.wait()).await;
-
-                    let status: std::process::ExitStatus = res?;
-
-                    if !status.success() {
-                        return Err(eyre!("failed to convert subtitles"));
-                    }
-
-                    src_path
-                }
+            match content_type? {
+                // vtt subtitles can be directly written to the file
+                "text/vtt" => util::copy_stream(field, file).await?,
+                // srt subtitles need to be converted first
+                "application/x-subrip" => subtitles::convert(config, field, file).await?,
                 _ => return Err(eyre!(bad_request("unsupported subtitle content-type",))),
-            };
+            }
 
-            let dst_name = Uuid::new_v4().to_string();
-            let dst_path = subtitles_dir.join(dst_name).with_extension("vtt");
-
-            (src_path, dst_path, false)
+            PathBuf::from(src_path)
         }
     };
 
+    let dst_name = Uuid::new_v4().to_string();
+    let dst_path = subtitles_dir.join(dst_name).with_extension("vtt");
     if dst_path.exists() {
         return Err(bad_request(format!("{:?} already exists", dst_path)).into());
     }
@@ -252,13 +202,8 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<()> {
         std::fs::create_dir_all(&subtitles_dir)?;
     }
 
-    if copy {
-        tracing::info!("copying {:?} to {:?}", src_path, dst_path);
-        std::fs::copy(&src_path, &dst_path)?;
-    } else {
-        tracing::info!("moving {:?} to {:?}", src_path, dst_path);
-        std::fs::rename(&src_path, &dst_path)?;
-    }
+    tracing::info!("copying {:?} to {:?}", src_path, dst_path);
+    std::fs::copy(&src_path, &dst_path)?;
 
     transaction.commit().await?;
     req.ok();

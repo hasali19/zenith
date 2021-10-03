@@ -7,6 +7,8 @@ pub mod db;
 pub mod ffprobe;
 pub mod library;
 pub mod metadata;
+pub mod subtitles;
 pub mod tmdb;
 pub mod transcoder;
+pub mod util;
 pub mod utils;
