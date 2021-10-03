@@ -131,7 +131,7 @@ data class VideoInfo(
     val duration: Double,
     val format: String? = null,
     val video: VideoStreamInfo? = null,
-    val audio: AudioStreamInfo? = null,
+    val audio: List<AudioStreamInfo>? = null,
     val subtitles: List<SubtitleStreamInfo>? = null,
 )
 
@@ -156,15 +156,19 @@ data class CollectionUserData(
 
 @Serializable
 data class VideoStreamInfo(
+    val id: Int,
+    val index: Int,
     val codec: String,
-    val profile: String,
     val width: Long,
     val height: Long,
 )
 
 @Serializable
 data class AudioStreamInfo(
+    val id: Int,
+    val index: Int,
     val codec: String,
+    val language: String?,
 )
 
 @Serializable

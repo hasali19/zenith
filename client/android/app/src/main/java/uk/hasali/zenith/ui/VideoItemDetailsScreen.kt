@@ -242,13 +242,15 @@ private fun MediaInfoSheet(info: VideoInfo) {
             entry("Format", info.format!!)
             entry("Path", info.path)
 
-            heading("Video")
-            entry("Codec", info.video!!.codec)
-            entry("Profile", info.video.profile)
+            heading("Video (#${info.video!!.index})")
+            entry("Codec", info.video.codec)
             entry("Resolution", "${info.video.width}x${info.video.height}")
 
-            heading("Audio")
-            entry("Codec", info.audio!!.codec)
+            for (stream in info.audio!!) {
+                heading("Audio (#${stream.index})")
+                entry("Codec", stream.codec)
+                entry("Language", stream.language ?: "Unknown")
+            }
         }
     }
 }
