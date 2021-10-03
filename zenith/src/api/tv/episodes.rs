@@ -28,7 +28,8 @@ pub(super) async fn get_episodes(req: &mut Request) -> eyre::Result<()> {
             video.path,
             duration,
             COALESCE(is_watched, 0) AS is_watched,
-            position
+            position,
+            format_name
         FROM tv_episodes AS episode
         JOIN tv_seasons AS season ON season.item_id = episode.season_id
         JOIN tv_shows AS show ON show.item_id = season.show_id

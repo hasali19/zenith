@@ -8,13 +8,11 @@ use time::{Date, Instant, OffsetDateTime};
 use walkdir::{DirEntry, WalkDir};
 
 use crate::config::{Config, ImportMatcher, ImportMatcherTarget};
-use crate::db::subtitles::{NewSubtitle, SubtitlePath};
-use crate::db::videos::UpdateVideo;
 use crate::db::{self, Db};
 use crate::ffprobe::VideoInfoProvider;
 use crate::library::movies::NewMovie;
 use crate::library::shows::{NewEpisode, NewSeason, NewShow};
-use crate::library::MediaLibrary;
+use crate::library::{video_info, MediaLibrary};
 use crate::metadata::{MetadataManager, RefreshRequest};
 
 pub struct LibraryScanner {
@@ -73,35 +71,40 @@ impl LibraryScanner {
         }
     }
 
-    /// Starts a library scan if one is not already running
+    /// Starts a library scan if one is not already running.
+    ///
+    /// Returns immediately without waiting for the scan to finish.
     pub fn start_scan(self: Arc<Self>, options: ScanOptions) {
+        tokio::spawn(self.run_scan(options));
+    }
+
+    /// Starts a library scan if one is not already running
+    pub async fn run_scan(self: Arc<Self>, options: ScanOptions) {
         if !self.is_running.swap(true, Ordering::SeqCst) {
-            tokio::spawn(async move {
-                let start_time = Instant::now();
+            let start_time = Instant::now();
 
-                tracing::info!(?options, "starting library scan");
+            tracing::info!(?options, "starting library scan");
 
-                if let Err(e) = self
-                    .scan_movies(&self.config.libraries.movies, &options)
-                    .await
-                {
-                    tracing::error!("{:?}", e);
-                };
+            if let Err(e) = self
+                .scan_movies(&self.config.libraries.movies, &options)
+                .await
+            {
+                tracing::error!("{:?}", e);
+            };
 
-                if let Err(e) = self
-                    .scan_shows(&self.config.libraries.tv_shows, &options)
-                    .await
-                {
-                    tracing::error!("{:?}", e);
-                };
+            if let Err(e) = self
+                .scan_shows(&self.config.libraries.tv_shows, &options)
+                .await
+            {
+                tracing::error!("{:?}", e);
+            };
 
-                self.is_running.store(false, Ordering::SeqCst);
+            self.is_running.store(false, Ordering::SeqCst);
 
-                let duration = Instant::now() - start_time;
-                let seconds = duration.as_seconds_f32();
+            let duration = Instant::now() - start_time;
+            let seconds = duration.as_seconds_f32();
 
-                tracing::info!("completed scan in {:.3}s", seconds);
-            });
+            tracing::info!("completed scan in {:.3}s", seconds);
         }
     }
 
@@ -162,7 +165,7 @@ impl LibraryScanner {
             }
 
             if options.rescan_files {
-                self.rescan_video_file(id, path_str).await?;
+                self.rescan_video_file_path(id, path_str).await?;
             }
 
             return Ok(());
@@ -246,7 +249,7 @@ impl LibraryScanner {
             }
 
             if options.rescan_files {
-                self.rescan_video_file(id, path_str).await?;
+                self.rescan_video_file_path(id, path_str).await?;
             }
 
             return Ok(());
@@ -266,33 +269,29 @@ impl LibraryScanner {
         Ok(())
     }
 
-    async fn rescan_video_file(&self, id: i64, path: &str) -> eyre::Result<()> {
-        let mut transaction = self.db.begin().await?;
+    #[tracing::instrument(skip(self))]
+    pub async fn rescan_video_file(&self, id: i64) -> eyre::Result<()> {
+        tracing::info!("rescanning video file");
 
-        tracing::debug!(id, path, "rescanning video file");
-
-        let info = self.video_info.get_video_info(path).await?;
-        let data = UpdateVideo {
-            duration: info.format.duration.parse()?,
+        let mut conn = self.db.acquire().await?;
+        let path = match db::videos::get_path(&mut conn, id).await? {
+            Some(path) => path,
+            None => {
+                tracing::warn!("video not found in db");
+                return Ok(());
+            }
         };
 
-        db::videos::update(&mut transaction, id, data).await?;
+        self.rescan_video_file_path(id, &path).await
+    }
 
-        for stream in info
-            .streams
-            .iter()
-            .filter(|stream| stream.codec_type == "subtitle")
-        {
-            let tags = stream.properties.get("tags").unwrap().as_object().unwrap();
-            let subtitle = NewSubtitle {
-                video_id: id,
-                path: SubtitlePath::Embedded(stream.index),
-                title: tags.get("title").map(|v| v.as_str().unwrap()),
-                language: tags.get("language").map(|v| v.as_str().unwrap()),
-            };
+    async fn rescan_video_file_path(&self, id: i64, path: &str) -> eyre::Result<()> {
+        tracing::debug!(id, path, "rescanning video file");
 
-            db::subtitles::insert(&mut transaction, &subtitle).await?;
-        }
+        let mut transaction = self.db.begin().await?;
+        let info = self.video_info.get_video_info(path).await?;
+
+        video_info::update_video_info(&mut transaction, id, &info).await?;
 
         transaction.commit().await?;
 
