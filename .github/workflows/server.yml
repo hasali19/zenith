@@ -2,8 +2,13 @@ name: Server
 
 on:
   push:
-    paths-ignore:
-      - client/android/**
+    paths:
+      - zenith/**
+      - migrations/**
+      - Cargo.lock
+      - Cargo.toml
+      - Dockerfile
+      - client/web/**
 
 jobs:
   build_server:
