@@ -3,6 +3,7 @@ name: Android
 on:
   push:
     paths:
+      - .github/workflows/android.yml
       - client/android/**
 
 jobs:

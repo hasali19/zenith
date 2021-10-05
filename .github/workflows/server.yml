@@ -3,6 +3,7 @@ name: Server
 on:
   push:
     paths:
+      - .github/workflows/server.yml
       - zenith/**
       - migrations/**
       - Cargo.lock
