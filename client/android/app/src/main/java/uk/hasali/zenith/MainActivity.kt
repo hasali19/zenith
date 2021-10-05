@@ -4,13 +4,12 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.LinearProgressIndicator
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.FragmentActivity
@@ -31,7 +30,7 @@ class MainActivity : FragmentActivity() {
     private lateinit var preferences: Preferences
     private lateinit var client: HttpClient
 
-    private var isUpdateAvailable by mutableStateOf(false)
+    private var availableUpdate by mutableStateOf<AvailableUpdate?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,7 +60,7 @@ class MainActivity : FragmentActivity() {
         super.onResume()
 
         lifecycleScope.launch {
-            isUpdateAvailable = checkForUpdates()
+            availableUpdate = checkForUpdates()
         }
     }
 
@@ -104,8 +103,10 @@ class MainActivity : FragmentActivity() {
                         val entry by nav.currentBackStackEntryAsState()
                         val route = entry?.destination?.route
 
-                        if (isUpdateAvailable && route?.startsWith("player") != true) {
-                            UpdateDialog()
+                        availableUpdate?.let {
+                            if (route?.startsWith("player") != true) {
+                                UpdateDialog(availableUpdate = it)
+                            }
                         }
 
                         CompositionLocalProvider(
@@ -120,7 +121,7 @@ class MainActivity : FragmentActivity() {
     }
 
     @Composable
-    private fun UpdateDialog() {
+    private fun UpdateDialog(availableUpdate: AvailableUpdate) {
         val scope = rememberCoroutineScope()
         var isDownloading by remember { mutableStateOf(false) }
         var progress by remember { mutableStateOf(0f) }
@@ -130,6 +131,26 @@ class MainActivity : FragmentActivity() {
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text("An update is available")
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(MaterialTheme.typography.subtitle2.toSpanStyle()) {
+                                append("Installed: ")
+                            }
+
+                            append(availableUpdate.installed)
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(MaterialTheme.typography.subtitle2.toSpanStyle()) {
+                                append("Latest: ")
+                            }
+
+                            append(availableUpdate.latest)
+                        }
+                    )
 
                     if (isDownloading) {
                         Spacer(modifier = Modifier.height(16.dp))
@@ -162,9 +183,11 @@ class MainActivity : FragmentActivity() {
         )
     }
 
-    private suspend fun checkForUpdates(): Boolean {
+    data class AvailableUpdate(val installed: String, val latest: String)
+
+    private suspend fun checkForUpdates(): AvailableUpdate? {
         if (BuildConfig.DEBUG) {
-            return false
+            return null
         }
 
         val github = GitHubApiClient(client)
@@ -173,6 +196,13 @@ class MainActivity : FragmentActivity() {
             it.status == "completed" && it.conclusion == "success"
         }
 
-        return run != null && run.headSha != BuildConfig.GIT_COMMIT_HASH
+        if (run == null || run.headSha == BuildConfig.GIT_COMMIT_HASH) {
+            return null
+        }
+
+        return AvailableUpdate(
+            installed = BuildConfig.GIT_COMMIT_HASH,
+            latest = run.headSha,
+        )
     }
 }
