@@ -17,6 +17,8 @@ data class ActionsWorkflowRun(
     val conclusion: String?,
     @SerialName("head_sha")
     val headSha: String,
+    @SerialName("head_branch")
+    val headBranch: String,
 )
 
 class GitHubApiClient(private val client: HttpClient) {
