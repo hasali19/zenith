@@ -5,6 +5,16 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <queries>
+        <!--Android 11 only makes certain apps on the system visible to your app. This list includes
+        the app that installed your app, which would typically be the Google Play Store.
+        However, in our case the app is sideloaded so the Play Store might not be visible (at least
+        it doesn't seem to be on my device running Lineage OS with OpenGapps) - this is a problem
+        since Google Play Services checks to make sure it's installed, so we need to explicitly add
+        this. See https://developer.android.com/training/package-visibility/automatic-->
+        <package android:name="com.android.vending" />
+    </queries>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
