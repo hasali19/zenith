@@ -167,7 +167,8 @@ impl Transcoder {
                     self.set_current(None).await;
                     self.sender.send(Event::Success(id)).ok();
                 }
-                Err(_) => {
+                Err(e) => {
+                    tracing::error!("{:?}", e);
                     self.set_current(None).await;
                     self.sender.send(Event::Error(id)).ok();
                 }
