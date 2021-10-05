@@ -1,9 +1,5 @@
 package uk.hasali.zenith
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -13,8 +9,11 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -196,31 +195,51 @@ sealed class SubtitleStreamInfo {
     ) : SubtitleStreamInfo()
 }
 
+@Serializable
 sealed class TranscoderJob {
     abstract val id: Int
 
-    data class Queued(@Json(name = "video_id") override val id: Int) : TranscoderJob()
-    data class Processing(@Json(name = "video_id") override val id: Int, val progress: Double) :
+    @Serializable
+    @SerialName("queued")
+    data class Queued(@SerialName("video_id") override val id: Int) : TranscoderJob()
+
+    @Serializable
+    @SerialName("processing")
+    data class Processing(@SerialName("video_id") override val id: Int, val progress: Double) :
         TranscoderJob()
 }
 
+@Serializable
 sealed class TranscoderEvent {
+    @Serializable
+    @SerialName("initial_state")
     data class InitialState(val queue: List<TranscoderJob>) : TranscoderEvent()
 
+    @Serializable
+    @SerialName("queued")
     data class Queued(val id: Int) : TranscoderEvent() {
         fun toJob() = TranscoderJob.Queued(id)
     }
 
+    @Serializable
+    @SerialName("started")
     data class Started(val id: Int) : TranscoderEvent() {
         fun toJob() = TranscoderJob.Processing(id, 0.0)
     }
 
+    @Serializable
+    @SerialName("progress")
     data class Progress(val id: Int, val progress: Double) : TranscoderEvent() {
         fun toJob() = TranscoderJob.Processing(id, progress)
     }
 
+    @Serializable
+    @SerialName("success")
     data class Success(val id: Int) : TranscoderEvent()
-    data class Failure(val id: Int) : TranscoderEvent()
+
+    @Serializable
+    @SerialName("error")
+    data class Error(val id: Int) : TranscoderEvent()
 }
 
 @Serializable
@@ -270,7 +289,7 @@ data class ImportMovieRequest(
     val year: Int,
 )
 
-private class EventSourceClient(private val moshi: Moshi) {
+private class EventSourceClient {
     private val client = OkHttpClient.Builder()
         .readTimeout(0, TimeUnit.SECONDS)
         .build()
@@ -278,12 +297,11 @@ private class EventSourceClient(private val moshi: Moshi) {
     private val eventSourceFactory = EventSources.createFactory(client)
 
     private class Listener<T>(
-        private val type: Class<T>,
-        private val channel: SendChannel<T>,
-        private val moshi: Moshi
+        private val deserializer: DeserializationStrategy<T>,
+        private val channel: SendChannel<T>
     ) : EventSourceListener() {
         override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
-            channel.trySendBlocking(moshi.adapter(this.type).fromJson(data)!!)
+            channel.trySendBlocking(Json.decodeFromString(deserializer, data))
                 .onFailure { channel.close(it) }
         }
 
@@ -306,7 +324,7 @@ private class EventSourceClient(private val moshi: Moshi) {
             .url(url)
             .build()
 
-        val source = eventSourceFactory.newEventSource(req, Listener(T::class.java, channel, moshi))
+        val source = eventSourceFactory.newEventSource(req, Listener(serializer(), channel))
 
         awaitClose {
             source.cancel()
@@ -315,33 +333,16 @@ private class EventSourceClient(private val moshi: Moshi) {
 }
 
 class ZenithApiClient(private val client: HttpClient, private val baseUrl: String) {
-    private val moshi = Moshi.Builder()
-        .add(
-            PolymorphicJsonAdapterFactory.of(TranscoderJob::class.java, "state")
-                .withSubtype(TranscoderJob.Queued::class.java, "queued")
-                .withSubtype(TranscoderJob.Processing::class.java, "processing")
-        )
-        .add(
-            PolymorphicJsonAdapterFactory.of(TranscoderEvent::class.java, "type")
-                .withSubtype(TranscoderEvent.InitialState::class.java, "initial_state")
-                .withSubtype(TranscoderEvent.Queued::class.java, "queued")
-                .withSubtype(TranscoderEvent.Started::class.java, "started")
-                .withSubtype(TranscoderEvent.Progress::class.java, "progress")
-                .withSubtype(TranscoderEvent.Success::class.java, "success")
-                .withSubtype(TranscoderEvent.Failure::class.java, "failure")
-        )
-        .addLast(KotlinJsonAdapterFactory())
-        .build()
-
-    private val sseClient = EventSourceClient(moshi)
+    private val sseClient = EventSourceClient()
 
     suspend fun getItem(id: Int, extendedVideoInfo: Boolean = true): MediaItem =
         client.get("$baseUrl/api/items/$id?extended_video_info=$extendedVideoInfo")
 
-    suspend fun updateUserData(id: Int, data: VideoUserDataPatch): Unit = client.patch("$baseUrl/api/items/$id/user_data") {
-        contentType(ContentType.Application.Json)
-        body = data
-    }
+    suspend fun updateUserData(id: Int, data: VideoUserDataPatch): Unit =
+        client.patch("$baseUrl/api/items/$id/user_data") {
+            contentType(ContentType.Application.Json)
+            body = data
+        }
 
     suspend fun getMovies(): List<Movie> =
         client.get("$baseUrl/api/movies")

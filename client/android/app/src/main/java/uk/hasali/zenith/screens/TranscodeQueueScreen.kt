@@ -54,7 +54,7 @@ fun TranscodeQueueScreen(onNavigateUp: () -> Unit) {
 
                             is TranscoderEvent.Success -> queue.removeAt(0)
 
-                            is TranscoderEvent.Failure -> {
+                            is TranscoderEvent.Error -> {
                                 queue.removeAt(0)
                                 showError("Transcoding failed (id: ${it.id})")
                             }
