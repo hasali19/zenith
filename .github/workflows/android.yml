@@ -28,7 +28,7 @@ jobs:
         working-directory: client/android
         run: |
           echo $ANDROID_KEYSTORE | base64 -d > keystore.jks
-          ./gradlew assemble
+          ./gradlew assembleRelease
 
       - uses: actions/upload-artifact@v2
         with:
