@@ -45,6 +45,10 @@ private fun AppBar(onNavigate: (String) -> Unit) {
             item("Transcode queue") {
                 onNavigate("transcode_queue")
             }
+
+            item("About") {
+                onNavigate("about")
+            }
         }
     }
 }

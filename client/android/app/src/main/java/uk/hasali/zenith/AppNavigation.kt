@@ -151,5 +151,9 @@ fun AppNavigation(nav: NavHostController) {
         composable("transcode_queue") {
             TranscodeQueueScreen(onNavigateUp = { nav.popBackStack() })
         }
+
+        composable("about") {
+            AboutScreen(onNavigateUp = { nav.popBackStack() })
+        }
     }
 }
