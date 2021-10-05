@@ -47,12 +47,14 @@ jobs:
           command: fmt
           args: --all -- --check
 
+      - name: Download cross
+        run: |
+          wget https://github.com/rust-embedded/cross/releases/download/v0.2.1/cross-v0.2.1-x86_64-unknown-linux-musl.tar.gz
+          sudo tar -xvf cross-v0.2.1-x86_64-unknown-linux-musl.tar.gz -C /usr/local/bin
+
       - name: Build application
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --bin zenith --target ${{ matrix.target }}
-          use-cross: true
+        run: |
+          cross build --release --bin zenith --target ${{ matrix.target }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
