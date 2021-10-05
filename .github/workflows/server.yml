@@ -119,17 +119,15 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
 
-      - name: Download server artifact
+      - name: Download artifacts
         uses: actions/download-artifact@v2
         with:
-          name: zenith-x86_64-unknown-linux-musl
-          path: target/release
+          path: artifacts
 
-      - name: Download web client artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: web
-          path: client/web/dist
+      - run: |
+          mkdir -p artifacts/linux/amd64 artifacts/linux/arm64/v8
+          mv -T artifacts/zenith-x86_64-unknown-linux-musl artifacts/linux/amd64
+          mv -T artifacts/zenith-aarch64-unknown-linux-musl artifacts/linux/arm64/v8
 
       - name: Build and push
         uses: docker/build-push-action@v2
@@ -137,7 +135,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64/v8
           push: true
           tags: |
             ghcr.io/hasali19/zenith:latest
