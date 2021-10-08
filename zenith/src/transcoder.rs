@@ -13,6 +13,7 @@ use crate::config::Config;
 use crate::db::Db;
 use crate::ext::CommandExt;
 use crate::ffprobe::{Ffprobe, VideoInfo};
+use crate::library::video_info;
 
 #[derive(Clone, Serialize)]
 pub struct Job {
@@ -194,6 +195,13 @@ impl Transcoder {
             .wrap_err("ffprobe failed to get video info")?;
 
         self.convert_video(&job, &path, &info).await?;
+
+        let info = Ffprobe::new(&self.config.transcoding.ffprobe_path)
+            .probe(&path)
+            .await
+            .wrap_err("ffprobe failed to get video info")?;
+
+        video_info::update_video_info(&mut *self.db.acquire().await?, id, &info).await?;
 
         Ok(())
     }
