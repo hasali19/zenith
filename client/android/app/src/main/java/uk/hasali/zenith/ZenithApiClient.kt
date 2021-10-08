@@ -9,11 +9,9 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.serializer
+import kotlinx.serialization.json.JsonClassDiscriminator
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -195,7 +193,9 @@ sealed class SubtitleStreamInfo {
     ) : SubtitleStreamInfo()
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
+@JsonClassDiscriminator("state")
 sealed class TranscoderJob {
     abstract val id: Int
 
