@@ -112,7 +112,7 @@ class MainActivity : FragmentActivity() {
                         CompositionLocalProvider(
                             LocalZenithClient provides zenithApiClient,
                         ) {
-                            AppNavigation(nav = nav)
+                            AppNavigation(topLevelNav = nav)
                         }
                     }
                 }

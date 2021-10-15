@@ -23,7 +23,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
-import com.google.accompanist.insets.navigationBarsPadding
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -39,11 +38,7 @@ fun ItemDetailsScreen(
 ) {
     val scrollState = rememberScrollState()
 
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .navigationBarsPadding(),
-    ) {
+    Surface(modifier = Modifier.fillMaxSize()) {
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
@@ -104,7 +99,10 @@ fun ItemDetailsScreen(
 }
 
 @Composable
-private fun HeaderSection(poster: @Composable BoxScope.() -> Unit, content: @Composable () -> Unit) {
+private fun HeaderSection(
+    poster: @Composable BoxScope.() -> Unit,
+    content: @Composable () -> Unit,
+) {
     Row {
         Box(modifier = Modifier.width(150.dp)) {
             poster()

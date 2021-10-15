@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.insets.navigationBarsPadding
 import uk.hasali.zenith.Episode
 import uk.hasali.zenith.Season
 import uk.hasali.zenith.ui.*
@@ -57,10 +56,7 @@ private fun SeasonDetailsScreen(
     onNavigateToEpisode: (Episode) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    Scaffold(
-        topBar = { AppBar(title = season?.name, onBackPressed = onNavigateUp) },
-        modifier = Modifier.navigationBarsPadding(),
-    ) {
+    Scaffold(topBar = { AppBar(title = season?.name, onBackPressed = onNavigateUp) }) {
         when (episodes) {
             null -> CenteredLoadingIndicator()
             else -> {

@@ -15,7 +15,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.VideoUserData
@@ -223,7 +222,7 @@ private fun ActionsMenu(onActionInvoked: (Action) -> Unit) {
 
 @Composable
 private fun MediaInfoSheet(info: VideoInfo) {
-    Column(modifier = Modifier.navigationBarsPadding()) {
+    Column {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(16.dp),
