@@ -11,7 +11,7 @@ import uk.hasali.zenith.ui.LocalZenithClient
 import uk.hasali.zenith.ui.PosterGridListScreen
 
 @Composable
-fun ShowsScreen(onNavigateToShow: (Show) -> Unit) {
+fun ShowsScreen(onNavigateToShow: (Show) -> Unit, onNavigateUp: () -> Unit) {
     val client = LocalZenithClient.current
 
     val shows by produceState<List<Show>?>(null) {
@@ -20,7 +20,7 @@ fun ShowsScreen(onNavigateToShow: (Show) -> Unit) {
 
     Scaffold(
         topBar = {
-            AppBar(title = "Shows") {
+            AppBar(title = "Shows", onBackPressed = onNavigateUp) {
                 CastButton()
             }
         },

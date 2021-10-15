@@ -95,12 +95,14 @@ private fun MainNavigation(
                 composable("library/movies") {
                     MoviesScreen(
                         onNavigateToMovie = { movie -> nav.navigate("library/movie_details/${movie.id}") },
+                        onNavigateUp = { nav.popBackStack() },
                     )
                 }
 
                 composable("library/shows") {
                     ShowsScreen(
                         onNavigateToShow = { show -> nav.navigate("library/show_details/${show.id}") },
+                        onNavigateUp = { nav.popBackStack() },
                     )
                 }
 
