@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.ImportQueueItem
 import uk.hasali.zenith.ImportQueueItemInfo
@@ -59,7 +58,6 @@ private fun ImportQueueScreen(
 
     Scaffold(
         topBar = { AppBar(title = "Import queue", onBackPressed = onNavigateUp) },
-        modifier = Modifier.navigationBarsPadding(),
     ) {
         SwipeRefreshLazyColumn(
             isRefreshing = isRefreshing,
@@ -133,4 +131,6 @@ private fun ImportQueueListItem(item: ImportQueueItem, onClick: () -> Unit) {
     ) {
         Text(text = primary)
     }
+
+    Divider()
 }

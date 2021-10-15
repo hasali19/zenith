@@ -1,9 +1,12 @@
 package uk.hasali.zenith.screens
 
+import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import uk.hasali.zenith.Movie
+import uk.hasali.zenith.ui.AppBar
+import uk.hasali.zenith.ui.CastButton
 import uk.hasali.zenith.ui.LocalZenithClient
 import uk.hasali.zenith.ui.PosterGridListScreen
 
@@ -15,12 +18,20 @@ fun MoviesScreen(onNavigateToMovie: (Movie) -> Unit) {
         value = client.getMovies()
     }
 
-    PosterGridListScreen(
-        items = movies,
-        poster = { it.poster },
-        name = { it.title },
-        date = { it.releaseDate },
-        isWatched = { it.userData.isWatched },
-        onClick = onNavigateToMovie,
-    )
+    Scaffold(
+        topBar = {
+            AppBar(title = "Movies") {
+                CastButton()
+            }
+        },
+    ) {
+        PosterGridListScreen(
+            items = movies,
+            poster = { it.poster },
+            name = { it.title },
+            date = { it.releaseDate },
+            isWatched = { it.userData.isWatched },
+            onClick = onNavigateToMovie,
+        )
+    }
 }

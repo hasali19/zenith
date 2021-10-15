@@ -7,9 +7,9 @@ import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -27,7 +27,6 @@ import com.google.accompanist.insets.navigationBarsPadding
 import uk.hasali.zenith.screens.*
 import uk.hasali.zenith.screens.player.MediaItemType
 import uk.hasali.zenith.screens.player.PlayerScreen
-import uk.hasali.zenith.ui.TopLevelScreenScaffold
 
 @Composable
 fun AppNavigation(topLevelNav: NavHostController) {
@@ -44,7 +43,6 @@ fun AppNavigation(topLevelNav: NavHostController) {
         composable("main") {
             MainNavigation(
                 onNavigateToPlayer = navigateToPlayer,
-                onTopLevelNavigate = { topLevelNav.navigate(it) },
             )
         }
 
@@ -73,23 +71,128 @@ fun AppNavigation(topLevelNav: NavHostController) {
                 onNavigateUp = { topLevelNav.popBackStack() },
             )
         }
-
-        composable("import_queue") {
-            ImportQueueScreen(onNavigateUp = { topLevelNav.popBackStack() })
-        }
-
-        composable("transcode_queue") {
-            TranscodeQueueScreen(onNavigateUp = { topLevelNav.popBackStack() })
-        }
-
-        composable("about") {
-            AboutScreen(onNavigateUp = { topLevelNav.popBackStack() })
-        }
     }
 }
 
 @Composable
-private fun BottomNavigation(nav: NavHostController) {
+private fun MainNavigation(
+    onNavigateToPlayer: (id: Int, type: String, position: Double?) -> Unit,
+) {
+    val nav = rememberNavController()
+
+    Column(modifier = Modifier.navigationBarsPadding()) {
+        NavHost(nav, startDestination = "library", modifier = Modifier.weight(1f)) {
+            navigation(route = "library", startDestination = "library/home") {
+                composable("library/home") {
+                    LibraryHomeScreen(
+                        onNavigateToMovies = { nav.navigate("library/movies") },
+                        onNavigateToShows = { nav.navigate("library/shows") },
+                        onNavigateToMovie = { movie -> nav.navigate("library/movie_details/${movie.id}") },
+                        onNavigateToShow = { show -> nav.navigate("library/show_details/${show.id}") },
+                    )
+                }
+
+                composable("library/movies") {
+                    MoviesScreen(
+                        onNavigateToMovie = { movie -> nav.navigate("library/movie_details/${movie.id}") },
+                    )
+                }
+
+                composable("library/shows") {
+                    ShowsScreen(
+                        onNavigateToShow = { show -> nav.navigate("library/show_details/${show.id}") },
+                    )
+                }
+
+                composable(
+                    "library/movie_details/{id}", arguments = listOf(
+                        navArgument("id") { type = NavType.IntType },
+                    )
+                ) {
+                    val args = it.arguments!!
+                    val id = args.getInt("id")
+
+                    MovieDetailsScreen(
+                        id = id,
+                        onPlay = { position -> onNavigateToPlayer(id, "movie", position) },
+                        onNavigateUp = { nav.popBackStack() },
+                    )
+                }
+
+                composable(
+                    "library/show_details/{id}", arguments = listOf(
+                        navArgument("id") { type = NavType.IntType },
+                    )
+                ) {
+                    val args = it.arguments!!
+                    val id = args.getInt("id")
+
+                    ShowDetailsScreen(
+                        id = id,
+                        onNavigateToSeason = { season -> nav.navigate("library/season_details/${season.id}") },
+                        onNavigateUp = { nav.popBackStack() },
+                    )
+                }
+
+                composable(
+                    "library/season_details/{id}", arguments = listOf(
+                        navArgument("id") { type = NavType.IntType },
+                    )
+                ) {
+                    val args = it.arguments!!
+                    val id = args.getInt("id")
+
+                    SeasonDetailsScreen(
+                        id = id,
+                        onNavigateToEpisode = { episode -> nav.navigate("library/episode_details/${episode.id}") },
+                        onNavigateUp = { nav.popBackStack() },
+                    )
+                }
+
+                composable(
+                    "library/episode_details/{id}", arguments = listOf(
+                        navArgument("id") { type = NavType.IntType },
+                    )
+                ) {
+                    val args = it.arguments!!
+                    val id = args.getInt("id")
+
+                    EpisodeDetailsScreen(
+                        id = id,
+                        onPlay = { position -> onNavigateToPlayer(id, "show", position) },
+                        onNavigateUp = { nav.popBackStack() },
+                    )
+                }
+            }
+
+            navigation(route = "management", startDestination = "management/home") {
+                composable("management/home") {
+                    ManagementHomeScreen(
+                        onNavigateToImportQueue = { nav.navigate("management/import_queue") },
+                        onNavigateToTranscodeQueue = { nav.navigate("management/transcode_queue") },
+                    )
+                }
+
+                composable("management/import_queue") {
+                    ImportQueueScreen(onNavigateUp = { nav.popBackStack() })
+                }
+
+                composable("management/transcode_queue") {
+                    TranscodeQueueScreen(onNavigateUp = { nav.popBackStack() })
+                }
+            }
+
+            composable("about") {
+                AboutScreen()
+            }
+        }
+
+        BottomNavigationBar(nav = nav)
+    }
+}
+
+@Composable
+private fun BottomNavigationBar(nav: NavHostController) {
     val context = LocalContext.current
     val entry by nav.currentBackStackEntryAsState()
     val currentRoute = entry?.destination?.route
@@ -104,7 +207,7 @@ private fun BottomNavigation(nav: NavHostController) {
                 context.playClick()
                 if (currentRoute != route) {
                     nav.navigate(route) {
-                        if (nav.backQueue.any { it.destination.route?.contains(route) == true }) {
+                        if (nav.backQueue.any { it.destination.route == route }) {
                             popUpTo(route) {
                                 inclusive = true
                             }
@@ -116,109 +219,8 @@ private fun BottomNavigation(nav: NavHostController) {
     }
 
     BottomNavigation {
-        NavigationItem(name = "Home", icon = Icons.Default.Home, route = "main/home")
-        NavigationItem(name = "Movies", icon = Icons.Default.Movie, route = "main/movies")
-        NavigationItem(name = "Shows", icon = Icons.Default.Tv, route = "main/shows")
-    }
-}
-
-@Composable
-private fun MainNavigation(
-    onNavigateToPlayer: (id: Int, type: String, position: Double?) -> Unit,
-    onTopLevelNavigate: (String) -> Unit,
-) {
-    val nav = rememberNavController()
-
-    Column(modifier = Modifier.navigationBarsPadding()) {
-        NavHost(nav, startDestination = "main", modifier = Modifier.weight(1f)) {
-            navigation(route = "main", startDestination = "main/home") {
-                composable("main/home") {
-                    TopLevelScreenScaffold(onNavigate = onTopLevelNavigate) {
-                        HomeScreen(
-                            onNavigateToMovie = { movie -> nav.navigate("movie_details/${movie.id}") },
-                            onNavigateToShow = { show -> nav.navigate("show_details/${show.id}") },
-                        )
-                    }
-                }
-
-                composable("main/movies") {
-                    TopLevelScreenScaffold(onNavigate = onTopLevelNavigate) {
-                        MoviesScreen(
-                            onNavigateToMovie = { movie -> nav.navigate("movie_details/${movie.id}") },
-                        )
-                    }
-                }
-
-                composable("main/shows") {
-                    TopLevelScreenScaffold(onNavigate = onTopLevelNavigate) {
-                        ShowsScreen(
-                            onNavigateToShow = { show -> nav.navigate("show_details/${show.id}") },
-                        )
-                    }
-                }
-            }
-
-            composable(
-                "movie_details/{id}", arguments = listOf(
-                    navArgument("id") { type = NavType.IntType },
-                )
-            ) {
-                val args = it.arguments!!
-                val id = args.getInt("id")
-
-                MovieDetailsScreen(
-                    id = id,
-                    onPlay = { position -> onNavigateToPlayer(id, "movie", position) },
-                    onNavigateUp = { nav.popBackStack() },
-                )
-            }
-
-            composable(
-                "show_details/{id}", arguments = listOf(
-                    navArgument("id") { type = NavType.IntType },
-                )
-            ) {
-                val args = it.arguments!!
-                val id = args.getInt("id")
-
-                ShowDetailsScreen(
-                    id = id,
-                    onNavigateToSeason = { season -> nav.navigate("season_details/${season.id}") },
-                    onNavigateUp = { nav.popBackStack() },
-                )
-            }
-
-            composable(
-                "season_details/{id}", arguments = listOf(
-                    navArgument("id") { type = NavType.IntType },
-                )
-            ) {
-                val args = it.arguments!!
-                val id = args.getInt("id")
-
-                SeasonDetailsScreen(
-                    id = id,
-                    onNavigateToEpisode = { episode -> nav.navigate("episode_details/${episode.id}") },
-                    onNavigateUp = { nav.popBackStack() },
-                )
-            }
-
-            composable(
-                "episode_details/{id}", arguments = listOf(
-                    navArgument("id") { type = NavType.IntType },
-                )
-            ) {
-                val args = it.arguments!!
-                val id = args.getInt("id")
-
-                EpisodeDetailsScreen(
-                    id = id,
-                    onPlay = { position -> onNavigateToPlayer(id, "show", position) },
-                    onNavigateUp = { nav.popBackStack() },
-                )
-            }
-        }
-
-        BottomNavigation(nav = nav)
+        NavigationItem(name = "Library", icon = Icons.Default.VideoLibrary, route = "library")
+        NavigationItem(name = "Manage", icon = Icons.Default.Dns, route = "management")
+        NavigationItem(name = "About", icon = Icons.Default.Info, route = "about")
     }
 }

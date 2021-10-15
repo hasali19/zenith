@@ -13,7 +13,6 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.flowWithLifecycle
-import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import uk.hasali.zenith.*
@@ -83,7 +82,6 @@ private fun TranscodeQueueScreen(
 ) {
     Scaffold(
         topBar = { AppBar(title = "Transcode queue", onBackPressed = onNavigateUp) },
-        modifier = Modifier.navigationBarsPadding(),
     ) {
         if (queue.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize()) {

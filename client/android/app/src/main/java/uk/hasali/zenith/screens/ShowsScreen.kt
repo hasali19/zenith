@@ -1,9 +1,12 @@
 package uk.hasali.zenith.screens
 
+import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import uk.hasali.zenith.Show
+import uk.hasali.zenith.ui.AppBar
+import uk.hasali.zenith.ui.CastButton
 import uk.hasali.zenith.ui.LocalZenithClient
 import uk.hasali.zenith.ui.PosterGridListScreen
 
@@ -15,12 +18,20 @@ fun ShowsScreen(onNavigateToShow: (Show) -> Unit) {
         value = client.getShows()
     }
 
-    PosterGridListScreen(
-        items = shows,
-        poster = { it.poster },
-        name = { it.name },
-        date = { it.startDate },
-        isWatched = { it.userData.unwatched == 0 },
-        onClick = onNavigateToShow,
-    )
+    Scaffold(
+        topBar = {
+            AppBar(title = "Shows") {
+                CastButton()
+            }
+        },
+    ) {
+        PosterGridListScreen(
+            items = shows,
+            poster = { it.poster },
+            name = { it.name },
+            date = { it.startDate },
+            isWatched = { it.userData.unwatched == 0 },
+            onClick = onNavigateToShow,
+        )
+    }
 }

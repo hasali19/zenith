@@ -1,14 +1,21 @@
 package uk.hasali.zenith.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -18,11 +25,15 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.Movie
 import uk.hasali.zenith.Show
+import uk.hasali.zenith.ui.AppBar
+import uk.hasali.zenith.ui.CastButton
 import uk.hasali.zenith.ui.LocalZenithClient
 import uk.hasali.zenith.ui.MediaItemWithPoster
 
 @Composable
-fun HomeScreen(
+fun LibraryHomeScreen(
+    onNavigateToMovies: () -> Unit,
+    onNavigateToShows: () -> Unit,
     onNavigateToMovie: (Movie) -> Unit,
     onNavigateToShow: (Show) -> Unit,
 ) {
@@ -44,22 +55,34 @@ fun HomeScreen(
         refresh()
     }
 
-    HomeScreen(
-        movies = movies,
-        shows = shows,
-        isRefreshing = isRefreshing,
-        onRefresh = { scope.launch { refresh() } },
-        onNavigateToMovie = onNavigateToMovie,
-        onNavigateToShow = onNavigateToShow,
-    )
+    Scaffold(
+        topBar = {
+            AppBar(title = "Zenith") {
+                CastButton()
+            }
+        },
+    ) {
+        LibraryHomeScreen(
+            movies = movies,
+            shows = shows,
+            isRefreshing = isRefreshing,
+            onRefresh = { scope.launch { refresh() } },
+            onNavigateToMovies = onNavigateToMovies,
+            onNavigateToShows = onNavigateToShows,
+            onNavigateToMovie = onNavigateToMovie,
+            onNavigateToShow = onNavigateToShow,
+        )
+    }
 }
 
 @Composable
-private fun HomeScreen(
+private fun LibraryHomeScreen(
     movies: List<Movie>,
     shows: List<Show>,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
+    onNavigateToMovies: () -> Unit,
+    onNavigateToShows: () -> Unit,
     onNavigateToMovie: (Movie) -> Unit,
     onNavigateToShow: (Show) -> Unit,
 ) {
@@ -77,7 +100,8 @@ private fun HomeScreen(
                     name = { it.title },
                     date = { it.releaseDate },
                     isWatched = { it.userData.isWatched },
-                    onClick = onNavigateToMovie,
+                    onHeadingClick = onNavigateToMovies,
+                    onItemClick = onNavigateToMovie,
                 )
             }
 
@@ -89,7 +113,8 @@ private fun HomeScreen(
                     name = { it.name },
                     date = { it.startDate },
                     isWatched = { it.userData.unwatched == 0 },
-                    onClick = onNavigateToShow,
+                    onHeadingClick = onNavigateToShows,
+                    onItemClick = onNavigateToShow,
                 )
             }
         }
@@ -104,14 +129,26 @@ private fun <T> Section(
     name: (T) -> String,
     date: (T) -> Long?,
     isWatched: (T) -> Boolean = { false },
-    onClick: (T) -> Unit,
+    onHeadingClick: () -> Unit,
+    onItemClick: (T) -> Unit,
 ) {
     Column(modifier = Modifier.padding(top = 16.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.h6,
-            modifier = Modifier.padding(horizontal = 12.dp),
-        )
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp)
+                .clip(MaterialTheme.shapes.medium)
+                .clickable(onClick = onHeadingClick)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.h6,
+            )
+
+            Icon(Icons.Default.ChevronRight, null)
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -128,7 +165,7 @@ private fun <T> Section(
                     primary = name(item),
                     secondary = year?.toString() ?: "",
                     isWatched = isWatched(item),
-                    onClick = { onClick(item) },
+                    onClick = { onItemClick(item) },
                     modifier = Modifier
                         .width(120.dp)
                         .padding(4.dp),

@@ -12,11 +12,8 @@ import uk.hasali.zenith.ui.AppBar
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun AboutScreen(onNavigateUp: () -> Unit) {
-    Scaffold(
-        topBar = { AppBar(title = "About", onBackPressed = onNavigateUp) },
-        modifier = Modifier.navigationBarsPadding(),
-    ) {
+fun AboutScreen() {
+    Scaffold(topBar = { AppBar(title = "About") }) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             ListItem(secondaryText = { Text(BuildConfig.APPLICATION_ID) }) {
                 Text("App ID")
