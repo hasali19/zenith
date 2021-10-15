@@ -15,7 +15,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -132,25 +132,24 @@ private fun <T> Section(
     onHeadingClick: () -> Unit,
     onItemClick: (T) -> Unit,
 ) {
-    Column(modifier = Modifier.padding(top = 16.dp)) {
+    Column {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 12.dp)
-                .clip(MaterialTheme.shapes.medium)
+                .fillMaxWidth()
+                .padding(top = 8.dp, bottom = 4.dp)
                 .clickable(onClick = onHeadingClick)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.h6,
+                style = MaterialTheme.typography.subtitle1,
+                fontWeight = FontWeight.Bold,
             )
 
             Icon(Icons.Default.ChevronRight, null)
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
             items(items) { item ->
