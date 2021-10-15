@@ -72,22 +72,18 @@ private fun PlayerScreen(
             val title: String?
             val backdrop: String?
             val videoInfo: VideoInfo?
-            val userData: VideoUserData?
-
 
             when (item) {
                 is Movie -> {
                     title = item.title
                     backdrop = item.backdrop
                     videoInfo = item.videoInfo
-                    userData = item.userData
                 }
 
                 is Episode -> {
                     title = item.name
                     backdrop = item.thumbnail
                     videoInfo = item.videoInfo
-                    userData = item.userData
                 }
 
                 else -> return
@@ -115,7 +111,6 @@ private fun PlayerScreen(
                     url = LocalZenithClient.current.getVideoUrl(item.id),
                     title = title ?: "",
                     info = videoInfo,
-                    userData = userData,
                     startPosition = startPosition ?: 0.0,
                     onVideoProgress = onVideoProgress,
                     onLaunchExternal = onLaunchExternal,

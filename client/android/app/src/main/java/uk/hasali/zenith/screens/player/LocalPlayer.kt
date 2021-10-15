@@ -25,7 +25,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.SubtitleStreamInfo
-import uk.hasali.zenith.VideoUserData
 import uk.hasali.zenith.ui.LocalZenithClient
 
 @Composable
@@ -33,7 +32,6 @@ fun LocalPlayer(
     url: String,
     title: String,
     info: VideoInfo,
-    userData: VideoUserData,
     startPosition: Double,
     onVideoProgress: (Long) -> Unit,
     onLaunchExternal: () -> Unit,
