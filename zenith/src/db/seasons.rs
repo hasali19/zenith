@@ -6,6 +6,7 @@ use crate::utils;
 
 use super::collections::CollectionUserData;
 use super::items::ExternalIds;
+use super::media::MediaImage;
 
 #[derive(Serialize)]
 pub struct Season {
@@ -92,4 +93,37 @@ pub async fn get_for_show(conn: &mut SqliteConnection, show_id: i64) -> eyre::Re
     ";
 
     Ok(sqlx::query_as(sql).bind(show_id).fetch_all(conn).await?)
+}
+
+pub struct UpdateMetadata<'a> {
+    pub name: Option<&'a str>,
+    pub overview: Option<&'a str>,
+    pub poster: Option<MediaImage<'a>>,
+    pub tmdb_id: Option<i32>,
+}
+
+pub async fn update_metadata(
+    conn: &mut SqliteConnection,
+    id: i64,
+    data: UpdateMetadata<'_>,
+) -> eyre::Result<()> {
+    let sql = "
+        UPDATE tv_seasons
+        SET name = ?,
+            overview = ?,
+            poster = ?,
+            tmdb_id = ?
+        WHERE item_id = ?
+    ";
+
+    sqlx::query(sql)
+        .bind(data.name)
+        .bind(data.overview)
+        .bind(data.poster.map(|p| p.to_string()))
+        .bind(data.tmdb_id)
+        .bind(id)
+        .execute(conn)
+        .await?;
+
+    Ok(())
 }

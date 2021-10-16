@@ -8,6 +8,13 @@ use crate::db::subtitles;
 use super::streams::Stream;
 use super::subtitles::Subtitle;
 
+pub async fn get_all_ids(conn: &mut SqliteConnection) -> eyre::Result<Vec<i64>> {
+    sqlx::query_scalar("SELECT item_id FROM video_files")
+        .fetch_all(conn)
+        .await
+        .map_err(Into::into)
+}
+
 pub struct BasicVideoInfo {
     pub path: String,
     pub duration: f64,
@@ -105,8 +112,9 @@ pub struct VideoUserData {
 }
 
 pub struct UpdateVideo<'a> {
-    pub duration: f64,
-    pub format_name: Option<&'a str>,
+    pub path: Option<&'a str>,
+    pub duration: Option<f64>,
+    pub format_name: Option<Option<&'a str>>,
 }
 
 pub async fn update(
@@ -116,12 +124,14 @@ pub async fn update(
 ) -> eyre::Result<()> {
     let sql = "
         UPDATE video_files
-        SET duration = ?,
-            format_name = ?
+        SET path = COALESCE(?, path),
+            duration = COALESCE(?, duration),
+            format_name = COALESCE(?, format_name)
         WHERE item_id = ?
     ";
 
     sqlx::query(sql)
+        .bind(data.path)
         .bind(data.duration)
         .bind(data.format_name)
         .bind(id)

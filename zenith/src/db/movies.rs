@@ -5,6 +5,7 @@ use sqlx::{FromRow, Row, SqliteConnection};
 use crate::utils;
 
 use super::items::ExternalIds;
+use super::media::MediaImage;
 use super::videos::{self, VideoInfo, VideoUserData};
 
 #[derive(Serialize)]
@@ -138,4 +139,40 @@ pub async fn get_recently_added(conn: &mut SqliteConnection) -> eyre::Result<Vec
     ";
 
     Ok(sqlx::query_as(sql).fetch_all(conn).await?)
+}
+
+pub struct UpdateMetadata<'a> {
+    pub title: &'a str,
+    pub overview: Option<&'a str>,
+    pub poster: Option<MediaImage<'a>>,
+    pub backdrop: Option<MediaImage<'a>>,
+    pub tmdb_id: Option<i32>,
+}
+
+pub async fn update_metadata(
+    conn: &mut SqliteConnection,
+    id: i64,
+    data: UpdateMetadata<'_>,
+) -> eyre::Result<()> {
+    let sql = "
+        UPDATE movies
+        SET title    = ?,
+            overview = ?,
+            poster   = ?,
+            backdrop = ?,
+            tmdb_id  = ?
+        WHERE item_id = ?
+    ";
+
+    sqlx::query(sql)
+        .bind(data.title)
+        .bind(data.overview)
+        .bind(data.poster.map(|v| v.to_string()))
+        .bind(data.backdrop.map(|v| v.to_string()))
+        .bind(data.tmdb_id)
+        .bind(id)
+        .execute(conn)
+        .await?;
+
+    Ok(())
 }

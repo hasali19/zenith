@@ -5,6 +5,7 @@ use sqlx::{FromRow, Row, SqliteConnection};
 use crate::utils;
 
 use super::items::ExternalIds;
+use super::media::MediaImage;
 use super::videos::{self, VideoInfo, VideoUserData};
 
 #[derive(Serialize)]
@@ -130,4 +131,37 @@ pub async fn get_for_season(
     ";
 
     Ok(sqlx::query_as(sql).bind(season_id).fetch_all(conn).await?)
+}
+
+pub struct UpdateMetadata<'a> {
+    pub name: Option<&'a str>,
+    pub overview: Option<&'a str>,
+    pub thumbnail: Option<MediaImage<'a>>,
+    pub tmdb_id: Option<i32>,
+}
+
+pub async fn update_metadata(
+    conn: &mut SqliteConnection,
+    id: i64,
+    data: UpdateMetadata<'_>,
+) -> eyre::Result<()> {
+    let sql = "
+        UPDATE tv_episodes
+        SET name = ?,
+            overview = ?,
+            thumbnail = ?,
+            tmdb_id = ?
+        WHERE item_id = ?
+    ";
+
+    sqlx::query(sql)
+        .bind(data.name)
+        .bind(data.overview)
+        .bind(data.thumbnail.map(|t| t.to_string()))
+        .bind(data.tmdb_id)
+        .bind(id)
+        .execute(conn)
+        .await?;
+
+    Ok(())
 }

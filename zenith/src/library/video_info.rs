@@ -13,8 +13,9 @@ pub async fn update_video_info(
     info: &VideoInfo,
 ) -> eyre::Result<()> {
     let data = UpdateVideo {
-        duration: info.format.duration.parse()?,
-        format_name: Some(info.format.format_name.as_str()),
+        path: None,
+        duration: Some(info.format.duration.parse()?),
+        format_name: Some(Some(info.format.format_name.as_str())),
     };
 
     db::videos::update(&mut *conn, id, data).await?;

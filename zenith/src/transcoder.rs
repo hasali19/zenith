@@ -10,7 +10,8 @@ use tokio::process::Command;
 use tokio::sync::{broadcast, RwLock, Semaphore};
 
 use crate::config::Config;
-use crate::db::Db;
+use crate::db::videos::UpdateVideo;
+use crate::db::{self, Db};
 use crate::ext::CommandExt;
 use crate::ffprobe::{Ffprobe, VideoInfo};
 use crate::library::video_info;
@@ -108,11 +109,7 @@ impl Transcoder {
     pub async fn enqueue_all(&self) {
         let ids: Vec<i64> = {
             let mut conn = self.db.acquire().await.unwrap();
-
-            sqlx::query_scalar("SELECT item_id FROM video_files")
-                .fetch_all(&mut conn)
-                .await
-                .unwrap()
+            db::videos::get_all_ids(&mut conn).await.unwrap()
         };
 
         for id in ids {
@@ -333,7 +330,8 @@ impl Transcoder {
                 .wrap_err("failed to remove original video file")?;
 
             self.rename_tmp_file(&output).await?;
-            self.update_video_path(id, &output.with_extension("")).await;
+            self.update_video_path(id, &output.with_extension(""))
+                .await?;
         }
 
         for path in subtitle_tmps {
@@ -359,23 +357,25 @@ impl Transcoder {
     async fn get_video_path(&self, id: i64) -> eyre::Result<Option<String>> {
         let mut conn = self.db.acquire().await?;
 
-        let path = sqlx::query_scalar("SELECT path FROM video_files WHERE item_id = ?")
-            .bind(id)
-            .fetch_optional(&mut conn)
-            .await?;
+        let path = db::videos::get_basic_info(&mut conn, id)
+            .await?
+            .map(|info| info.path);
 
         Ok(path)
     }
 
-    async fn update_video_path(&self, id: i64, path: &Path) {
+    async fn update_video_path(&self, id: i64, path: &Path) -> eyre::Result<()> {
         let mut conn = self.db.acquire().await.unwrap();
 
-        sqlx::query("UPDATE video_files SET path = ? WHERE item_id = ?")
-            .bind(path.to_str().unwrap())
-            .bind(id)
-            .execute(&mut conn)
-            .await
-            .unwrap();
+        let data = UpdateVideo {
+            path: Some(path.to_str().unwrap()),
+            duration: None,
+            format_name: None,
+        };
+
+        db::videos::update(&mut conn, id, data).await?;
+
+        Ok(())
     }
 
     async fn dequeue_job(&self) -> Job {

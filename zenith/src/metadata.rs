@@ -4,7 +4,7 @@ use time::{format_description, Date, Time};
 use tokio::sync::mpsc;
 
 use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType};
-use crate::db::Db;
+use crate::db::{self, Db};
 use crate::library::scanner;
 use crate::tmdb::{MovieSearchQuery, TmdbClient, TvShowSearchQuery};
 
@@ -65,22 +65,18 @@ async fn refresh_movie_metadata(
 ) -> eyre::Result<()> {
     tracing::info!("updating metadata for movie (id: {})", id);
 
-    let sql = "
-        SELECT path FROM movies
-        JOIN video_files USING (item_id)
-        WHERE item_id = ?
-    ";
+    let movie = db::movies::get(&mut *db, id)
+        .await?
+        .ok_or_else(|| eyre!("movie not found: {}", id))?;
 
-    let path: String = sqlx::query_scalar(sql).bind(id).fetch_one(&mut *db).await?;
-
-    let path = std::path::Path::new(&path);
+    let path = std::path::Path::new(&movie.video_info.path);
     let name = path
         .file_name()
         .and_then(|v| v.to_str())
-        .ok_or_else(|| eyre!("invalid movie path"))?;
+        .ok_or_else(|| eyre!("invalid movie path: {:?}", path))?;
 
-    let (title, year) =
-        scanner::parse_movie_filename(name).ok_or_else(|| eyre!("failed to parse movie name"))?;
+    let (title, year) = scanner::parse_movie_filename(name)
+        .ok_or_else(|| eyre!("failed to parse movie name: {}", name))?;
 
     let query = MovieSearchQuery {
         title: &title,
@@ -114,25 +110,15 @@ async fn refresh_movie_metadata(
         src: backdrop,
     });
 
-    let sql = "
-        UPDATE movies
-        SET title    = ?,
-            overview = ?,
-            poster   = ?,
-            backdrop = ?,
-            tmdb_id  = ?
-        WHERE item_id = ?
-    ";
+    let data = db::movies::UpdateMetadata {
+        title: &result.title,
+        overview: result.overview.as_deref(),
+        poster,
+        backdrop,
+        tmdb_id: Some(result.id),
+    };
 
-    sqlx::query(sql)
-        .bind(result.title)
-        .bind(result.overview)
-        .bind(poster.map(|p| p.to_string()))
-        .bind(backdrop.map(|b| b.to_string()))
-        .bind(result.id)
-        .bind(id)
-        .execute(&mut *db)
-        .await?;
+    db::movies::update_metadata(&mut *db, id, data).await?;
 
     Ok(())
 }
@@ -144,10 +130,9 @@ async fn refresh_tv_show_metadata(
 ) -> eyre::Result<()> {
     tracing::info!("updating metadata for tv show (id: {})", id);
 
-    let path: String = sqlx::query_scalar("SELECT path FROM tv_shows WHERE item_id = ?")
-        .bind(id)
-        .fetch_one(&mut *db)
-        .await?;
+    let path = db::shows::get_path(&mut *db, id)
+        .await?
+        .ok_or_else(|| eyre!("show not found: {}", id))?;
 
     let path = std::path::Path::new(&path);
     let name = path
@@ -195,29 +180,17 @@ async fn refresh_tv_show_metadata(
         src: backdrop,
     });
 
-    let sql = "
-        UPDATE tv_shows
-        SET name = ?,
-            start_date = ?,
-            end_date = ?,
-            overview = ?,
-            poster = ?,
-            backdrop = ?,
-            tmdb_id = ?
-        WHERE item_id = ?
-    ";
+    let data = db::shows::UpdateMetadata {
+        name: &result.name,
+        start_date: first_air_date,
+        end_date: last_air_date,
+        overview: result.overview.as_deref(),
+        poster,
+        backdrop,
+        tmdb_id: Some(result.id),
+    };
 
-    sqlx::query(sql)
-        .bind(result.name)
-        .bind(first_air_date)
-        .bind(last_air_date)
-        .bind(result.overview)
-        .bind(poster.map(|p| p.to_string()))
-        .bind(backdrop.map(|b| b.to_string()))
-        .bind(result.id)
-        .bind(id)
-        .execute(&mut *db)
-        .await?;
+    db::shows::update_metadata(&mut *db, id, data).await?;
 
     Ok(())
 }
@@ -229,17 +202,23 @@ async fn refresh_tv_season_metadata(
 ) -> eyre::Result<()> {
     tracing::info!("updating metadata for tv season (id: {})", id);
 
-    let sql = "
-        SELECT show.tmdb_id, season.season_number
-        FROM tv_seasons AS season
-        JOIN tv_shows AS show ON show.item_id = season.show_id
-        WHERE season.item_id = ?
-    ";
+    let season = db::seasons::get(&mut *db, id)
+        .await?
+        .ok_or_else(|| eyre!("season not found: {}", id))?;
 
-    let (tmdb_show_id, season): (i32, i32) =
-        sqlx::query_as(sql).bind(id).fetch_one(&mut *db).await?;
+    let show = db::shows::get(&mut *db, season.show_id)
+        .await?
+        .ok_or_else(|| eyre!("show not found for season: {}", id))?;
 
-    let metadata = tmdb.get_tv_season(tmdb_show_id, season).await?;
+    let show_tmdb_id = show
+        .external_ids
+        .tmdb
+        .ok_or_else(|| eyre!("missing tmdb id for show: {}", show.id))?;
+
+    let metadata = tmdb
+        .get_tv_season(show_tmdb_id, season.season_number as i32)
+        .await?;
+
     let poster = metadata.poster_path.as_deref().map(|poster| MediaImage {
         img_type: MediaImageType::Poster,
         src_type: MediaImageSrcType::Tmdb,
@@ -251,23 +230,14 @@ async fn refresh_tv_season_metadata(
         metadata.name.as_deref().unwrap_or("unknown name")
     );
 
-    let sql = "
-        UPDATE tv_seasons
-        SET name = ?,
-            overview = ?,
-            poster = ?,
-            tmdb_id = ?
-        WHERE item_id = ?
-    ";
+    let data = db::seasons::UpdateMetadata {
+        name: metadata.name.as_deref(),
+        overview: metadata.overview.as_deref(),
+        poster,
+        tmdb_id: Some(metadata.id),
+    };
 
-    sqlx::query(sql)
-        .bind(metadata.name)
-        .bind(metadata.overview)
-        .bind(poster.map(|p| p.to_string()))
-        .bind(metadata.id)
-        .bind(id)
-        .execute(&mut *db)
-        .await?;
+    db::seasons::update_metadata(&mut *db, id, data).await?;
 
     Ok(())
 }
@@ -279,20 +249,25 @@ async fn refresh_tv_episode_metadata(
 ) -> eyre::Result<()> {
     tracing::info!("updating metadata for tv episode (id: {})", id);
 
-    let sql = "
-        SELECT show.tmdb_id, season.season_number, episode.episode_number
-        FROM tv_episodes AS episode
-        JOIN tv_seasons AS season ON season.item_id = episode.season_id
-        JOIN tv_shows AS show ON show.item_id = season.show_id
-        WHERE episode.item_id = ?
-    ";
+    let episode = db::episodes::get(&mut *db, id)
+        .await?
+        .ok_or_else(|| eyre!("show not found: {}", id))?;
 
-    let (tmdb_show_id, season, episode): (i32, i32, i32) =
-        sqlx::query_as(sql).bind(id).fetch_one(&mut *db).await?;
+    let show = db::shows::get(&mut *db, episode.show_id)
+        .await?
+        .ok_or_else(|| eyre!("show not found for episode: {}", episode.show_id))?;
 
-    let metadata = tmdb.get_tv_episode(tmdb_show_id, season, episode).await?;
+    let show_tmdb_id = show
+        .external_ids
+        .tmdb
+        .ok_or_else(|| eyre!("missing tmdb id for show: {}", show.id))?;
+
+    let season = episode.season_number as i32;
+    let episode = episode.episode_number as i32;
+
+    let metadata = tmdb.get_tv_episode(show_tmdb_id, episode, episode).await?;
     let thumbnail = tmdb
-        .get_tv_episode_images(tmdb_show_id, season, episode)
+        .get_tv_episode_images(show_tmdb_id, season, episode)
         .await
         .map(|images| images.stills.into_iter().next())
         .ok()
@@ -310,23 +285,14 @@ async fn refresh_tv_episode_metadata(
         metadata.name.as_deref().unwrap_or("unknown name")
     );
 
-    let sql = "
-        UPDATE tv_episodes
-        SET name = ?,
-            overview = ?,
-            thumbnail = ?,
-            tmdb_id = ?
-        WHERE item_id = ?
-    ";
+    let data = db::episodes::UpdateMetadata {
+        name: metadata.name.as_deref(),
+        overview: metadata.overview.as_deref(),
+        thumbnail,
+        tmdb_id: Some(metadata.id),
+    };
 
-    sqlx::query(sql)
-        .bind(metadata.name)
-        .bind(metadata.overview)
-        .bind(thumbnail.map(|t| t.to_string()))
-        .bind(metadata.id)
-        .bind(id)
-        .execute(&mut *db)
-        .await?;
+    db::episodes::update_metadata(&mut *db, id, data).await?;
 
     Ok(())
 }
