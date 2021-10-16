@@ -1,228 +1,242 @@
 package uk.hasali.zenith
 
+import android.os.Parcelable
+import androidx.compose.animation.*
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.material.BottomNavigation
-import androidx.compose.material.BottomNavigationItem
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.VideoLibrary
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import androidx.navigation.navigation
 import com.google.accompanist.insets.navigationBarsPadding
+import kotlinx.parcelize.Parcelize
+import uk.hasali.zenith.navigation.ContentHost
+import uk.hasali.zenith.navigation.StackNavigator
+import uk.hasali.zenith.navigation.rememberStackNavigator
 import uk.hasali.zenith.screens.*
-import uk.hasali.zenith.screens.player.MediaItemType
 import uk.hasali.zenith.screens.player.PlayerScreen
 
+sealed class Screen(val route: String) {
+    override fun equals(other: Any?) = other is Screen && other.route == route
+    override fun hashCode() = route.hashCode()
+    override fun toString() = "Screen=$route"
+}
+
+sealed interface TopLevelScreen : Parcelable {
+    @Parcelize
+    object Main : Screen("main"), TopLevelScreen
+
+    @Parcelize
+    class Player(val id: Int, val type: String, val position: Double?) :
+        Screen("player/$id/$type/$position"), TopLevelScreen
+}
+
+sealed interface BottomNavigationArea : Parcelable {
+    @Parcelize
+    object Library : Screen("main/library"), BottomNavigationArea
+
+    @Parcelize
+    object Management : Screen("main/management"), BottomNavigationArea
+
+    @Parcelize
+    object About : Screen("main/about"), BottomNavigationArea
+}
+
+sealed interface LibraryScreen : Parcelable {
+    @Parcelize
+    object Home : Screen("main/library/home"), LibraryScreen
+
+    @Parcelize
+    object Movies : Screen("main/library/movies"), LibraryScreen
+
+    @Parcelize
+    object Shows : Screen("main/library/shows"), LibraryScreen
+
+    @Parcelize
+    class MovieDetails(val id: Int) : Screen("main/library/movies/$id"), LibraryScreen
+
+    @Parcelize
+    class ShowDetails(val id: Int) : Screen("main/library/shows/$id"), LibraryScreen
+
+    @Parcelize
+    class SeasonDetails(val id: Int) : Screen("main/library/seasons/$id"), LibraryScreen
+
+    @Parcelize
+    class EpisodeDetails(val id: Int) : Screen("main/library/episodes/$id"), LibraryScreen
+}
+
+sealed interface ManagementScreen : Parcelable {
+    @Parcelize
+    object Home : Screen("main/management/home"), ManagementScreen
+
+    @Parcelize
+    object ImportQueue : Screen("main/management/import"), ManagementScreen
+
+    @Parcelize
+    object TranscodeQueue : Screen("main/management/transcode"), ManagementScreen
+}
+
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun AppNavigation(topLevelNav: NavHostController) {
-    val navigateToPlayer = { id: Int, type: String, position: Double? ->
-        var route = "player/$type/$id"
-        if (position != null) route += "?position=$position"
-        topLevelNav.navigate(route)
-    }
-
-    NavHost(
-        navController = topLevelNav,
-        startDestination = "main",
-    ) {
-        composable("main") {
-            MainNavigation(
-                onNavigateToPlayer = navigateToPlayer,
-            )
-        }
-
-        composable("player/{type}/{id}?position={position}", arguments = listOf(
-            navArgument("type") { type = NavType.StringType },
-            navArgument("id") { type = NavType.IntType },
-            navArgument("position") {
-                type = NavType.FloatType
-                defaultValue = 0.0
-            }
-        )) {
-            val args = it.arguments!!
-
-            val id = args.getInt("id")
-            val position = args.getFloat("position")
-            val type = when (val type = args.getString("type")) {
-                "movie" -> MediaItemType.Movie
-                "show" -> MediaItemType.TvShow
-                else -> throw IllegalArgumentException("Invalid item type: $type")
+fun AppNavigation(navigator: StackNavigator<TopLevelScreen>) {
+    navigator.ContentHost { screen ->
+        when (screen) {
+            is TopLevelScreen.Main -> {
+                TopLevelMain(
+                    onNavigateToPlayer = { id, type, pos ->
+                        navigator.push(TopLevelScreen.Player(id, type, pos))
+                    },
+                )
             }
 
-            PlayerScreen(
-                id = id,
-                type = type,
-                startPosition = position.toDouble(),
-                onNavigateUp = { topLevelNav.popBackStack() },
-            )
+            is TopLevelScreen.Player -> {
+                val type = when (val type = screen.type) {
+                    "movie" -> uk.hasali.zenith.screens.player.MediaItemType.Movie
+                    "show" -> uk.hasali.zenith.screens.player.MediaItemType.TvShow
+                    else -> throw IllegalArgumentException("Invalid item type: $type")
+                }
+
+                PlayerScreen(
+                    id = screen.id,
+                    type = type,
+                    startPosition = screen.position,
+                    onNavigateUp = { navigator.pop() },
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun MainNavigation(
-    onNavigateToPlayer: (id: Int, type: String, position: Double?) -> Unit,
-) {
-    val nav = rememberNavController()
+private fun TopLevelMain(onNavigateToPlayer: (Int, String, Double?) -> Unit) {
+    val holder = rememberSaveableStateHolder()
+    var area by rememberSaveable { mutableStateOf<BottomNavigationArea>(BottomNavigationArea.Library) }
 
+    val libraryNavigator = rememberStackNavigator<LibraryScreen>(LibraryScreen.Home)
+    val managementNavigator = rememberStackNavigator<ManagementScreen>(ManagementScreen.Home)
+
+    // TODO: Implement a proper tab navigator
     Column(modifier = Modifier.navigationBarsPadding()) {
-        NavHost(nav, startDestination = "library", modifier = Modifier.weight(1f)) {
-            navigation(route = "library", startDestination = "library/home") {
-                composable("library/home") {
-                    LibraryHomeScreen(
-                        onNavigateToMovies = { nav.navigate("library/movies") },
-                        onNavigateToShows = { nav.navigate("library/shows") },
-                        onNavigateToMovie = { movie -> nav.navigate("library/movie_details/${movie.id}") },
-                        onNavigateToShow = { show -> nav.navigate("library/show_details/${show.id}") },
-                    )
-                }
-
-                composable("library/movies") {
-                    MoviesScreen(
-                        onNavigateToMovie = { movie -> nav.navigate("library/movie_details/${movie.id}") },
-                        onNavigateUp = { nav.popBackStack() },
-                    )
-                }
-
-                composable("library/shows") {
-                    ShowsScreen(
-                        onNavigateToShow = { show -> nav.navigate("library/show_details/${show.id}") },
-                        onNavigateUp = { nav.popBackStack() },
-                    )
-                }
-
-                composable(
-                    "library/movie_details/{id}", arguments = listOf(
-                        navArgument("id") { type = NavType.IntType },
-                    )
-                ) {
-                    val args = it.arguments!!
-                    val id = args.getInt("id")
-
-                    MovieDetailsScreen(
-                        id = id,
-                        onPlay = { position -> onNavigateToPlayer(id, "movie", position) },
-                        onNavigateUp = { nav.popBackStack() },
-                    )
-                }
-
-                composable(
-                    "library/show_details/{id}", arguments = listOf(
-                        navArgument("id") { type = NavType.IntType },
-                    )
-                ) {
-                    val args = it.arguments!!
-                    val id = args.getInt("id")
-
-                    ShowDetailsScreen(
-                        id = id,
-                        onNavigateToSeason = { season -> nav.navigate("library/season_details/${season.id}") },
-                        onNavigateUp = { nav.popBackStack() },
-                    )
-                }
-
-                composable(
-                    "library/season_details/{id}", arguments = listOf(
-                        navArgument("id") { type = NavType.IntType },
-                    )
-                ) {
-                    val args = it.arguments!!
-                    val id = args.getInt("id")
-
-                    SeasonDetailsScreen(
-                        id = id,
-                        onNavigateToEpisode = { episode -> nav.navigate("library/episode_details/${episode.id}") },
-                        onNavigateUp = { nav.popBackStack() },
-                    )
-                }
-
-                composable(
-                    "library/episode_details/{id}", arguments = listOf(
-                        navArgument("id") { type = NavType.IntType },
-                    )
-                ) {
-                    val args = it.arguments!!
-                    val id = args.getInt("id")
-
-                    EpisodeDetailsScreen(
-                        id = id,
-                        onPlay = { position -> onNavigateToPlayer(id, "show", position) },
-                        onNavigateUp = { nav.popBackStack() },
-                    )
-                }
-            }
-
-            navigation(route = "management", startDestination = "management/home") {
-                composable("management/home") {
-                    ManagementHomeScreen(
-                        onNavigateToImportQueue = { nav.navigate("management/import_queue") },
-                        onNavigateToTranscodeQueue = { nav.navigate("management/transcode_queue") },
-                    )
-                }
-
-                composable("management/import_queue") {
-                    ImportQueueScreen(onNavigateUp = { nav.popBackStack() })
-                }
-
-                composable("management/transcode_queue") {
-                    TranscodeQueueScreen(onNavigateUp = { nav.popBackStack() })
-                }
-            }
-
-            composable("about") {
-                AboutScreen()
-            }
-        }
-
-        BottomNavigationBar(nav = nav)
-    }
-}
-
-@Composable
-private fun BottomNavigationBar(nav: NavHostController) {
-    val context = LocalContext.current
-    val entry by nav.currentBackStackEntryAsState()
-    val currentRoute = entry?.destination?.route
-
-    @Composable
-    fun RowScope.NavigationItem(name: String, icon: ImageVector, route: String) {
-        BottomNavigationItem(
-            selected = currentRoute?.startsWith(route) == true,
-            icon = { Icon(icon, contentDescription = name) },
-            label = { Text(name) },
-            onClick = {
-                context.playClick()
-                if (currentRoute != route) {
-                    nav.navigate(route) {
-                        if (nav.backQueue.any { it.destination.route == route }) {
-                            popUpTo(route) {
-                                inclusive = true
-                            }
-                        }
+        Box(modifier = Modifier.weight(1f)) {
+            Crossfade(area) { area ->
+                holder.SaveableStateProvider(area) {
+                    when (area) {
+                        is BottomNavigationArea.Library -> LibraryArea(
+                            libraryNavigator,
+                            onNavigateToPlayer
+                        )
+                        is BottomNavigationArea.Management -> ManagementArea(managementNavigator)
+                        is BottomNavigationArea.About -> AboutScreen()
                     }
                 }
-            },
-        )
-    }
+            }
+        }
 
-    BottomNavigation {
-        NavigationItem(name = "Library", icon = Icons.Default.VideoLibrary, route = "library")
-        NavigationItem(name = "Manage", icon = Icons.Default.Dns, route = "management")
-        NavigationItem(name = "About", icon = Icons.Default.Info, route = "about")
+        BottomNavigation {
+            BottomNavigationItem(
+                selected = area == BottomNavigationArea.Library,
+                onClick = {
+                    if (area != BottomNavigationArea.Library)
+                        area = BottomNavigationArea.Library
+                    else
+                        libraryNavigator.popAll()
+                },
+                icon = { Icon(Icons.Default.VideoLibrary, null) },
+                label = { Text("Library") },
+            )
+            BottomNavigationItem(
+                selected = area == BottomNavigationArea.Management,
+                onClick = {
+                    if (area != BottomNavigationArea.Management)
+                        area = BottomNavigationArea.Management
+                    else
+                        managementNavigator.popAll()
+                },
+                icon = { Icon(Icons.Default.Dns, null) },
+                label = { Text("Manage") },
+            )
+            BottomNavigationItem(
+                selected = area == BottomNavigationArea.About,
+                onClick = { area = BottomNavigationArea.About },
+                icon = { Icon(Icons.Default.Info, null) },
+                label = { Text("About") },
+            )
+        }
+    }
+}
+
+@Composable
+private fun LibraryArea(
+    navigator: StackNavigator<LibraryScreen>,
+    onNavigateToPlayer: (Int, String, Double?) -> Unit,
+) {
+    navigator.ContentHost { screen ->
+        when (screen) {
+            is LibraryScreen.Home -> LibraryHomeScreen(
+                onNavigateToMovies = { navigator.push(LibraryScreen.Movies) },
+                onNavigateToShows = { navigator.push(LibraryScreen.Shows) },
+                onNavigateToMovie = { navigator.push(LibraryScreen.MovieDetails(it.id)) },
+                onNavigateToShow = { navigator.push(LibraryScreen.ShowDetails(it.id)) },
+            )
+
+            is LibraryScreen.Movies -> MoviesScreen(
+                onNavigateToMovie = { navigator.push(LibraryScreen.MovieDetails(it.id)) },
+                onNavigateUp = { navigator.pop() },
+            )
+
+            is LibraryScreen.Shows -> ShowsScreen(
+                onNavigateToShow = { navigator.push(LibraryScreen.ShowDetails(it.id)) },
+                onNavigateUp = { navigator.pop() },
+            )
+
+            is LibraryScreen.MovieDetails -> MovieDetailsScreen(
+                id = screen.id,
+                onPlay = { onNavigateToPlayer(screen.id, "movie", it) },
+                onNavigateUp = { navigator.pop() },
+            )
+
+            is LibraryScreen.ShowDetails -> ShowDetailsScreen(
+                id = screen.id,
+                onNavigateToSeason = { navigator.push(LibraryScreen.SeasonDetails(it.id)) },
+                onNavigateUp = { navigator.pop() },
+            )
+
+            is LibraryScreen.SeasonDetails -> SeasonDetailsScreen(
+                id = screen.id,
+                onNavigateToEpisode = { navigator.push(LibraryScreen.EpisodeDetails(it.id)) },
+                onNavigateUp = { navigator.pop() },
+            )
+
+            is LibraryScreen.EpisodeDetails -> EpisodeDetailsScreen(
+                id = screen.id,
+                onPlay = { onNavigateToPlayer(screen.id, "episode", it) },
+                onNavigateUp = { navigator.pop() },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ManagementArea(navigator: StackNavigator<ManagementScreen>) {
+    navigator.ContentHost { screen ->
+        when (screen) {
+            is ManagementScreen.Home -> ManagementHomeScreen(
+                onNavigateToImportQueue = { navigator.push(ManagementScreen.ImportQueue) },
+                onNavigateToTranscodeQueue = { navigator.push(ManagementScreen.TranscodeQueue) },
+            )
+
+            is ManagementScreen.ImportQueue -> ImportQueueScreen(
+                onNavigateUp = { navigator.pop() },
+            )
+
+            is ManagementScreen.TranscodeQueue -> TranscodeQueueScreen(
+                onNavigateUp = { navigator.pop() },
+            )
+        }
     }
 }

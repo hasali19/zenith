@@ -14,8 +14,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.android.gms.cast.framework.CastContext
 import io.ktor.client.*
@@ -23,6 +21,7 @@ import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import uk.hasali.zenith.navigation.rememberStackNavigator
 import uk.hasali.zenith.ui.AppTheme
 import uk.hasali.zenith.ui.LocalZenithClient
 
@@ -96,15 +95,14 @@ class MainActivity : FragmentActivity() {
 
             else -> {
                 val zenithApiClient = remember { ZenithApiClient(client, serverUrl) }
-                val nav = rememberNavController()
+                val navigator = rememberStackNavigator<TopLevelScreen>(TopLevelScreen.Main)
 
                 AppTheme {
                     ProvideWindowInsets {
-                        val entry by nav.currentBackStackEntryAsState()
-                        val route = entry?.destination?.route
+                        val entry = navigator.stack.last()
 
                         availableUpdate?.let {
-                            if (route?.startsWith("player") != true) {
+                            if (entry.screen !is TopLevelScreen.Player) {
                                 UpdateDialog(availableUpdate = it)
                             }
                         }
@@ -112,7 +110,7 @@ class MainActivity : FragmentActivity() {
                         CompositionLocalProvider(
                             LocalZenithClient provides zenithApiClient,
                         ) {
-                            AppNavigation(topLevelNav = nav)
+                            AppNavigation(navigator)
                         }
                     }
                 }
