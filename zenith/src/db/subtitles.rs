@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqliteConnection};
 
@@ -10,26 +11,35 @@ pub struct NewSubtitle<'a> {
     pub language: Option<&'a str>,
 }
 
+#[derive(Serialize)]
 pub struct Subtitle {
     pub id: i64,
     pub video_id: i64,
+    #[serde(flatten)]
     pub path: SubtitlePath<'static>,
     pub title: Option<String>,
     pub language: Option<String>,
 }
 
+#[derive(Serialize)]
+#[serde(tag = "type")]
+#[serde(rename_all = "snake_case")]
 pub enum SubtitlePath<'a> {
-    External(Cow<'a, str>),
-    Embedded(u32),
+    External { path: Cow<'a, str> },
+    Embedded { index: u32 },
 }
 
 impl<'r> FromRow<'r, SqliteRow> for Subtitle {
     fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
         let path: &str = row.try_get(2)?;
         let path = if let Some(index) = path.strip_prefix("embedded://") {
-            SubtitlePath::Embedded(index.parse().expect("invalid index for embedded subtitle"))
+            SubtitlePath::Embedded {
+                index: index.parse().expect("invalid index for embedded subtitle"),
+            }
         } else {
-            SubtitlePath::External(Cow::Owned(path.to_owned()))
+            SubtitlePath::External {
+                path: Cow::Owned(path.to_owned()),
+            }
         };
 
         Ok(Subtitle {
@@ -56,8 +66,8 @@ pub async fn insert(conn: &mut SqliteConnection, subtitle: &NewSubtitle<'_>) -> 
 
     let query = sqlx::query(sql).bind(subtitle.video_id);
     let query = match &subtitle.path {
-        SubtitlePath::External(path) => query.bind(path.as_ref()),
-        SubtitlePath::Embedded(index) => query.bind(format!("embedded://{}", index)),
+        SubtitlePath::External { path } => query.bind(path.as_ref()),
+        SubtitlePath::Embedded { index } => query.bind(format!("embedded://{}", index)),
     };
 
     let res = query
@@ -98,4 +108,13 @@ pub async fn get_for_video(
         .fetch_all(conn)
         .await
         .map_err(|e| e.into())
+}
+
+pub async fn delete(conn: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
+    sqlx::query("DELETE FROM subtitles WHERE id = ?")
+        .bind(id)
+        .execute(conn)
+        .await?;
+
+    Ok(())
 }

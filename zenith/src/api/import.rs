@@ -191,7 +191,9 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<()> {
     let mut transaction = db.begin().await?;
     let subtitles = NewSubtitle {
         video_id: data.video_id,
-        path: SubtitlePath::External(Cow::Borrowed(dst_path.to_str().unwrap())),
+        path: SubtitlePath::External {
+            path: Cow::Borrowed(dst_path.to_str().unwrap()),
+        },
         title: data.title.as_deref(),
         language: data.language.as_deref(),
     };
@@ -306,9 +308,7 @@ pub async fn import_episode(req: &mut Request) -> eyre::Result<()> {
     let scanner: &Arc<LibraryScanner> = req.ext().unwrap();
 
     let mut conn = db.acquire().await?;
-    let show_path: String = sqlx::query_scalar("SELECT path from tv_shows WHERE item_id = ?")
-        .bind(show_id)
-        .fetch_optional(&mut conn)
+    let show_path = db::shows::get_path(&mut conn, show_id)
         .await?
         .or_not_found("show not found")?;
 

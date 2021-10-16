@@ -274,7 +274,7 @@ impl LibraryScanner {
         tracing::info!("rescanning video file");
 
         let mut conn = self.db.acquire().await?;
-        let path = match db::videos::get_path(&mut conn, id).await? {
+        let info = match db::videos::get_basic_info(&mut conn, id).await? {
             Some(path) => path,
             None => {
                 tracing::warn!("video not found in db");
@@ -282,7 +282,7 @@ impl LibraryScanner {
             }
         };
 
-        self.rescan_video_file_path(id, &path).await
+        self.rescan_video_file_path(id, &info.path).await
     }
 
     async fn rescan_video_file_path(&self, id: i64, path: &str) -> eyre::Result<()> {

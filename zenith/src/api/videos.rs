@@ -2,7 +2,7 @@ use atium::respond::RespondRequestExt;
 use atium::router::{Router, RouterRequestExt};
 use atium::{endpoint, Request};
 
-use crate::db::Db;
+use crate::db::{self, Db};
 
 use super::ext::OptionExt;
 
@@ -17,19 +17,11 @@ async fn get_video_content(req: &mut Request) -> eyre::Result<()> {
     let db: &Db = req.ext().unwrap();
     let mut conn = db.acquire().await?;
 
-    let sql = "
-        SELECT path
-        FROM video_files
-        WHERE item_id = ?
-    ";
-
-    let path: String = sqlx::query_scalar(sql)
-        .bind(id)
-        .fetch_optional(&mut conn)
+    let info = db::videos::get_basic_info(&mut conn, id)
         .await?
         .or_not_found("video not found")?;
 
-    req.respond_file(path).await?;
+    req.respond_file(info.path).await?;
 
     Ok(())
 }

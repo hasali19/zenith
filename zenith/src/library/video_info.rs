@@ -67,7 +67,9 @@ pub async fn update_video_info(
 
                 let subtitle = NewSubtitle {
                     video_id: id,
-                    path: SubtitlePath::Embedded(stream.index),
+                    path: SubtitlePath::Embedded {
+                        index: stream.index,
+                    },
                     title,
                     language,
                 };

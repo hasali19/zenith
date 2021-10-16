@@ -4,7 +4,8 @@ use atium::router::{Router, RouterRequestExt};
 use atium::{endpoint, Request};
 use serde::Deserialize;
 
-use crate::db::Db;
+use crate::db::videos::UpdateVideoUserData;
+use crate::db::{self, Db};
 
 use super::ext::OptionExt;
 
@@ -25,32 +26,17 @@ async fn update_progress(req: &mut Request) -> eyre::Result<()> {
     let db: &Db = req.ext().unwrap();
     let mut conn = db.acquire().await?;
 
-    let sql = "
-        SELECT duration
-        FROM video_files
-        WHERE item_id = ?
-    ";
-
-    let duration: f64 = sqlx::query_scalar(sql)
-        .bind(id)
-        .fetch_optional(&mut conn)
+    let duration = db::videos::get_basic_info(&mut conn, id)
         .await?
-        .or_not_found("video not found")?;
+        .or_not_found("video not found")?
+        .duration;
 
-    let sql = "
-        INSERT INTO user_item_data (item_id, position, is_watched)
-        VALUES (?, ?, ?)
-        ON CONFLICT (item_id) DO UPDATE
-        SET position = excluded.position,
-            is_watched = is_watched OR excluded.is_watched
-    ";
+    let data = UpdateVideoUserData {
+        position: Some(query.position),
+        is_watched: Some((query.position / duration) >= 0.9),
+    };
 
-    sqlx::query(sql)
-        .bind(id)
-        .bind(query.position)
-        .bind((query.position / duration) >= 0.9)
-        .execute(&mut conn)
-        .await?;
+    db::videos::update_user_data(&mut conn, id, data).await?;
 
     req.ok();
 

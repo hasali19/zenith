@@ -5,6 +5,7 @@ use atium::headers::ContentType;
 use atium::respond::RespondRequestExt;
 use atium::router::{Router, RouterRequestExt};
 use atium::{endpoint, Request, Response};
+use eyre::eyre;
 use mime::Mime;
 
 use crate::api::error::bad_request;
@@ -35,16 +36,16 @@ async fn get_subtitle(req: &mut Request) -> eyre::Result<()> {
         .await?
         .or_not_found("subtitle not found")?;
 
-    let path = db::videos::get_path(&mut conn, subtitle.video_id)
+    let info = db::videos::get_basic_info(&mut conn, subtitle.video_id)
         .await?
         .or_not_found("video not found")?;
 
     match subtitle.path {
-        db::subtitles::SubtitlePath::External(path) => {
+        db::subtitles::SubtitlePath::External { path } => {
             // Subtitle is an external file, return it directly
             req.respond_file(path.as_ref()).await?;
         }
-        db::subtitles::SubtitlePath::Embedded(index) => {
+        db::subtitles::SubtitlePath::Embedded { index } => {
             let cached_path = config
                 .subtitles
                 .path
@@ -62,7 +63,7 @@ async fn get_subtitle(req: &mut Request) -> eyre::Result<()> {
 
                 let res = Response::ok()
                     .with_header(ContentType::from(Mime::from_str("text/vtt")?))
-                    .with_body(subtitles::extract_embedded(config, &path, index).await?);
+                    .with_body(subtitles::extract_embedded(config, &info.path, index).await?);
 
                 req.set_res(res);
             }
@@ -84,17 +85,11 @@ async fn delete_subtitle(req: &mut Request) -> eyre::Result<()> {
         .or_not_found("subtitle not found")?;
 
     match subtitle.path {
-        SubtitlePath::Embedded(_) => {
-            return Err(eyre::eyre!(bad_request(
-                "embedded subtitled cannot be deleted"
-            )))
+        SubtitlePath::Embedded { .. } => {
+            return Err(eyre!(bad_request("embedded subtitled cannot be deleted")))
         }
-        SubtitlePath::External(path) => {
-            sqlx::query("DELETE FROM subtitles WHERE id = ?")
-                .bind(subtitle_id)
-                .execute(&mut conn)
-                .await?;
-
+        SubtitlePath::External { path } => {
+            db::subtitles::delete(&mut conn, subtitle_id).await?;
             std::fs::remove_file(path.as_ref())?;
         }
     }

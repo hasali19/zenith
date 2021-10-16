@@ -1,4 +1,3 @@
-mod common;
 mod events;
 mod ext;
 mod files;
@@ -12,7 +11,7 @@ mod transcoder;
 mod tv;
 mod videos;
 
-pub mod error;
+mod error;
 mod scanner;
 
 use atium::headers::AccessControlAllowOrigin;
