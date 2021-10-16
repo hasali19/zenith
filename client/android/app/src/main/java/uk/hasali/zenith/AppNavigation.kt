@@ -19,6 +19,7 @@ import uk.hasali.zenith.navigation.ContentHost
 import uk.hasali.zenith.navigation.StackNavigator
 import uk.hasali.zenith.navigation.rememberStackNavigator
 import uk.hasali.zenith.screens.*
+import uk.hasali.zenith.screens.player.MediaItemType
 import uk.hasali.zenith.screens.player.PlayerScreen
 
 sealed class Screen(val route: String) {
@@ -32,7 +33,7 @@ sealed interface TopLevelScreen : Parcelable {
     object Main : Screen("main"), TopLevelScreen
 
     @Parcelize
-    class Player(val id: Int, val type: String, val position: Double?) :
+    class Player(val id: Int, val type: MediaItemType, val position: Double?) :
         Screen("player/$id/$type/$position"), TopLevelScreen
 }
 
@@ -94,26 +95,18 @@ fun AppNavigation(navigator: StackNavigator<TopLevelScreen>) {
                 )
             }
 
-            is TopLevelScreen.Player -> {
-                val type = when (val type = screen.type) {
-                    "movie" -> uk.hasali.zenith.screens.player.MediaItemType.Movie
-                    "show" -> uk.hasali.zenith.screens.player.MediaItemType.TvShow
-                    else -> throw IllegalArgumentException("Invalid item type: $type")
-                }
-
-                PlayerScreen(
-                    id = screen.id,
-                    type = type,
-                    startPosition = screen.position,
-                    onNavigateUp = { navigator.pop() },
-                )
-            }
+            is TopLevelScreen.Player -> PlayerScreen(
+                id = screen.id,
+                type = screen.type,
+                startPosition = screen.position,
+                onNavigateUp = { navigator.pop() },
+            )
         }
     }
 }
 
 @Composable
-private fun TopLevelMain(onNavigateToPlayer: (Int, String, Double?) -> Unit) {
+private fun TopLevelMain(onNavigateToPlayer: (Int, MediaItemType, Double?) -> Unit) {
     val holder = rememberSaveableStateHolder()
     var area by rememberSaveable { mutableStateOf<BottomNavigationArea>(BottomNavigationArea.Library) }
 
@@ -173,7 +166,7 @@ private fun TopLevelMain(onNavigateToPlayer: (Int, String, Double?) -> Unit) {
 @Composable
 private fun LibraryArea(
     navigator: StackNavigator<LibraryScreen>,
-    onNavigateToPlayer: (Int, String, Double?) -> Unit,
+    onNavigateToPlayer: (Int, MediaItemType, Double?) -> Unit,
 ) {
     navigator.ContentHost { screen ->
         when (screen) {
@@ -196,7 +189,7 @@ private fun LibraryArea(
 
             is LibraryScreen.MovieDetails -> MovieDetailsScreen(
                 id = screen.id,
-                onPlay = { onNavigateToPlayer(screen.id, "movie", it) },
+                onPlay = { onNavigateToPlayer(screen.id, MediaItemType.Movie, it) },
                 onNavigateUp = { navigator.pop() },
             )
 
@@ -214,7 +207,7 @@ private fun LibraryArea(
 
             is LibraryScreen.EpisodeDetails -> EpisodeDetailsScreen(
                 id = screen.id,
-                onPlay = { onNavigateToPlayer(screen.id, "episode", it) },
+                onPlay = { onNavigateToPlayer(screen.id, MediaItemType.TvShow, it) },
                 onNavigateUp = { navigator.pop() },
             )
         }
