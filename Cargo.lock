@@ -70,7 +70,7 @@ dependencies = [
 [[package]]
 name = "atium"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/atium#77c134664ac6f256aa268ffc4214ef86a002a6a0"
+source = "git+https://github.com/hasali19/atium#fcb283996077da1e725053c412bdaa44cf7b11bf"
 dependencies = [
  "async-trait",
  "atium-macros",
@@ -83,7 +83,7 @@ dependencies = [
  "routefinder",
  "serde",
  "serde_json",
- "serde_urlencoded",
+ "serde_qs",
  "thiserror",
  "tokio",
  "tokio-util",
@@ -92,7 +92,7 @@ dependencies = [
 [[package]]
 name = "atium-macros"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/atium#77c134664ac6f256aa268ffc4214ef86a002a6a0"
+source = "git+https://github.com/hasali19/atium#fcb283996077da1e725053c412bdaa44cf7b11bf"
 dependencies = [
  "quote",
  "syn",
@@ -1174,6 +1174,17 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "serde_qs"
+version = "0.8.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c7715380eec75f029a4ef7de39a9200e0a63823176b759d055b613f5a87df6a6"
+dependencies = [
+ "percent-encoding",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
