@@ -70,7 +70,7 @@ dependencies = [
 [[package]]
 name = "atium"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/atium#e6a96f361940e413e4382f8be4d0d9b3aec709da"
+source = "git+https://github.com/hasali19/atium#77c134664ac6f256aa268ffc4214ef86a002a6a0"
 dependencies = [
  "async-trait",
  "atium-macros",
@@ -92,7 +92,7 @@ dependencies = [
 [[package]]
 name = "atium-macros"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/atium#e6a96f361940e413e4382f8be4d0d9b3aec709da"
+source = "git+https://github.com/hasali19/atium#77c134664ac6f256aa268ffc4214ef86a002a6a0"
 dependencies = [
  "quote",
  "syn",
