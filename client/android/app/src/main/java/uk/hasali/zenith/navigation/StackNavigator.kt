@@ -5,46 +5,35 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.*
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 
-interface StackNavigatorEntry<T> : NavEntry<T> {
-    val level: Int
-}
+class StackNavigator<T : Any>(
+    private val lifecycleOwner: LifecycleOwner,
+    private val viewModelStoreProvider: ViewModelStoreProvider,
+    stack: List<T>,
+) {
+    constructor(
+        lifecycleOwner: LifecycleOwner,
+        viewModelStoreProvider: ViewModelStoreProvider,
+        initial: T,
+    ) : this(lifecycleOwner, viewModelStoreProvider, listOf(initial))
 
-class StackNavigator<T>(private val lifecycleOwner: LifecycleOwner, stack: List<T>) {
-    constructor(lifecycleOwner: LifecycleOwner, initial: T) : this(lifecycleOwner, listOf(initial))
+    private val _entering = mutableListOf<DefaultNavEntry<T>>()
+    private val _suspending = mutableListOf<DefaultNavEntry<T>>()
+    private val _exiting = mutableListOf<DefaultNavEntry<T>>()
 
-    private class Entry<T> private constructor(
-        override val level: Int,
-        private val entry: DefaultNavEntry<T>,
-    ) : StackNavigatorEntry<T>, NavEntry<T> by entry {
-        constructor(level: Int, screen: T) : this(level, DefaultNavEntry(screen))
-
-        override fun equals(other: Any?): Boolean {
-            return other is Entry<*> && level == other.level && screen == other.screen
-        }
-
-        override fun hashCode(): Int {
-            return (screen.hashCode() * 31) + level.hashCode()
-        }
-    }
-
-    private val _entering = mutableListOf<Entry<T>>()
-    private val _suspending = mutableListOf<Entry<T>>()
-    private val _exiting = mutableListOf<Entry<T>>()
-
-    private val _stack = SnapshotStateList<Entry<T>>().apply {
-        for ((index, item) in stack.withIndex()) {
+    private val _stack = SnapshotStateList<DefaultNavEntry<T>>().apply {
+        for (item in stack) {
             add(
-                Entry(index, item).apply {
+                DefaultNavEntry(item, viewModelStoreProvider).apply {
                     setLifecycleState(Lifecycle.State.CREATED)
                     setParentLifecycleState(lifecycleOwner.lifecycle.currentState)
                 }
@@ -56,7 +45,7 @@ class StackNavigator<T>(private val lifecycleOwner: LifecycleOwner, stack: List<
         _entering.add(last())
     }
 
-    val stack: List<StackNavigatorEntry<T>> get() = _stack
+    val stack: List<NavEntry<T>> get() = _stack
 
     init {
         lifecycleOwner.lifecycle.addObserver(LifecycleEventObserver { _, event ->
@@ -75,13 +64,16 @@ class StackNavigator<T>(private val lifecycleOwner: LifecycleOwner, stack: List<
         _suspending.forEach { it.setLifecycleState(Lifecycle.State.CREATED) }
         _suspending.clear()
 
-        _exiting.forEach { it.setLifecycleState(Lifecycle.State.DESTROYED) }
+        _exiting.forEach {
+            it.setLifecycleState(Lifecycle.State.DESTROYED)
+            it.clearViewModels()
+        }
         _exiting.clear()
     }
 
     fun push(screen: T) {
         val from = _stack.last()
-        val to = Entry(_stack.size, screen).apply {
+        val to = DefaultNavEntry(screen, viewModelStoreProvider).apply {
             setLifecycleState(Lifecycle.State.CREATED)
             setParentLifecycleState(lifecycleOwner.lifecycle.currentState)
         }
@@ -120,20 +112,27 @@ class StackNavigator<T>(private val lifecycleOwner: LifecycleOwner, stack: List<
 @Composable
 fun <T : Parcelable> rememberStackNavigator(initial: T): StackNavigator<T> {
     val lifecycleOwner = LocalLifecycleOwner.current
+    val viewModelStoreOwner = requireNotNull(LocalViewModelStoreOwner.current)
+    val viewModelStoreProvider = ViewModelProvider(viewModelStoreOwner)
+        .get<ViewModelStoreProvider>()
+
     return rememberSaveable(
         saver = Saver(
             save = { v -> v.stack.map { it.screen }.toList() },
-            restore = { StackNavigator(lifecycleOwner, it) },
+            restore = { StackNavigator(lifecycleOwner, viewModelStoreProvider, it) },
         ),
     ) {
-        StackNavigator(lifecycleOwner, initial)
+        StackNavigator(lifecycleOwner, viewModelStoreProvider, initial)
     }
 }
+
+private data class CurrentNavEntry<T>(private val entry: NavEntry<T>, val level: Int) :
+    NavEntry<T> by entry
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun <T : Parcelable> StackNavigator<T>.ContentHost(content: @Composable (T) -> Unit) {
-    val current = stack.last()
+    val current = CurrentNavEntry(stack.last(), stack.size - 1)
     val holder = rememberSaveableStateHolder()
     val transition = updateTransition(current, "screen")
 
