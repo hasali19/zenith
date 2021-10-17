@@ -1,67 +1,35 @@
 package uk.hasali.zenith.screens.player
 
-import android.content.Intent
-import android.net.Uri
-import android.util.Log
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.cast.framework.CastContext
-import io.ktor.client.features.*
-import kotlinx.coroutines.launch
-import uk.hasali.zenith.*
+import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.CenteredLoadingIndicator
-import uk.hasali.zenith.ui.LocalZenithClient
-
-enum class MediaItemType {
-    Movie,
-    TvShow,
-}
+import uk.hasali.zenith.ui.rememberFlowWithLifecycle
 
 @Composable
-fun PlayerScreen(id: Int, type: MediaItemType, startPosition: Double?, onNavigateUp: () -> Unit) {
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val client = LocalZenithClient.current
-
-    val item by produceState<MediaItem?>(null, id) {
-        value = client.getItem(id)
-    }
-
-    val onVideoProgress: (Long) -> Unit = { position ->
-        if (!BuildConfig.DEBUG) scope.launch {
-            try {
-                client.updateProgress(id, position)
-            } catch (e: ServerResponseException) {
-                Log.w(
-                    "PlayerScreen",
-                    "Failed to update progress on server: ${e.message}",
-                )
-            }
-        }
-    }
-
-    val onLaunchExternal = {
-        onNavigateUp()
-        context.startActivity(Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(Uri.parse(client.getVideoUrl(id)), "video/x-matroska")
-        })
-    }
+fun PlayerScreen(
+    model: PlayerViewModel = hiltViewModel(),
+    onLaunchExternal: (String) -> Unit,
+    onNavigateUp: () -> Unit,
+) {
+    val item by rememberFlowWithLifecycle(model.item)
+        .collectAsState(null)
 
     PlayerScreen(
         item = item,
-        type = type,
-        startPosition = startPosition,
-        onVideoProgress = onVideoProgress,
-        onLaunchExternal = onLaunchExternal,
+        onVideoProgress = { model.updateProgress(it) },
+        onLaunchExternal = { item?.let { onLaunchExternal(it.url) } },
         onNavigateUp = onNavigateUp,
     )
 }
 
 @Composable
 private fun PlayerScreen(
-    item: MediaItem?,
-    type: MediaItemType,
-    startPosition: Double?,
+    item: VideoItem?,
     onVideoProgress: (Long) -> Unit,
     onLaunchExternal: () -> Unit,
     onNavigateUp: () -> Unit,
@@ -69,27 +37,8 @@ private fun PlayerScreen(
     when (item) {
         null -> CenteredLoadingIndicator()
         else -> {
-            val title: String?
-            val backdrop: String?
-            val videoInfo: VideoInfo?
-
-            when (item) {
-                is Movie -> {
-                    title = item.title
-                    backdrop = item.backdrop
-                    videoInfo = item.videoInfo
-                }
-
-                is Episode -> {
-                    title = item.name
-                    backdrop = item.thumbnail
-                    videoInfo = item.videoInfo
-                }
-
-                else -> return
-            }
-
             val context = LocalContext.current
+            // TODO: Move to viewmodel
             val castSession = remember {
                 CastContext.getSharedInstance(context)
                     .sessionManager
@@ -98,20 +47,13 @@ private fun PlayerScreen(
 
             if (castSession != null && castSession.isConnected) {
                 RemotePlayer(
-                    id = item.id,
-                    title = title ?: "",
-                    type = type,
-                    backdrop = backdrop,
-                    info = videoInfo,
+                    item = item,
                     session = castSession,
                     onNavigateUp = onNavigateUp,
                 )
             } else {
                 LocalPlayer(
-                    url = LocalZenithClient.current.getVideoUrl(item.id),
-                    title = title ?: "",
-                    info = videoInfo,
-                    startPosition = startPosition ?: 0.0,
+                    item = item,
                     onVideoProgress = onVideoProgress,
                     onLaunchExternal = onLaunchExternal,
                     onNavigateUp = onNavigateUp,

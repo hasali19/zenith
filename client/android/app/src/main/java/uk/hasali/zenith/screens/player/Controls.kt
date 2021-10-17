@@ -18,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.SubtitleStreamInfo
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class)
 @Composable
@@ -27,12 +26,12 @@ fun Controls(
     position: Long,
     duration: Long,
     isPlaying: Boolean,
-    subtitles: List<SubtitleStreamInfo>,
-    selectedSubtitle: SubtitleStreamInfo?,
+    subtitles: List<SubtitleTrack>,
+    selectedSubtitle: SubtitleTrack?,
     onSeekStart: () -> Unit,
     onSeekEnd: (Long) -> Unit,
     onTogglePlaying: () -> Unit,
-    onSelectSubtitle: (SubtitleStreamInfo?) -> Unit,
+    onSelectSubtitle: (SubtitleTrack?) -> Unit,
     onLaunchExternal: () -> Unit,
     onBackPressed: () -> Unit,
 ) {

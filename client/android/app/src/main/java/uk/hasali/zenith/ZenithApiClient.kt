@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonClassDiscriminator
@@ -19,6 +20,7 @@ import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 @Serializable
 enum class MediaItemType {
@@ -332,83 +334,82 @@ private class EventSourceClient {
     }
 }
 
-class ZenithApiClient(private val client: HttpClient, private val baseUrl: String) {
+class ZenithApiClient @Inject constructor(
+    private val client: HttpClient,
+    private val preferences: Preferences,
+) {
     private val sseClient = EventSourceClient()
 
-    suspend fun getItem(id: Int, extendedVideoInfo: Boolean = true): MediaItem =
-        client.get("$baseUrl/api/items/$id?extended_video_info=$extendedVideoInfo")
+    private suspend inline fun <reified T> withBaseUrl(block: (baseUrl: String?) -> T): T =
+        preferences.serverUrl.first().let {
+            if (it == null) {
+                throw IllegalStateException("Server base url is unset")
+            } else {
+                block(it)
+            }
+        }
+
+    private suspend fun url(path: String) = withBaseUrl {
+        "$it/api/$path"
+    }
+
+    private suspend inline fun <reified T> get(path: String): T = client.get(url(path))
+
+    suspend fun getItem(id: Int): MediaItem = get("items/$id")
 
     suspend fun updateUserData(id: Int, data: VideoUserDataPatch): Unit =
-        client.patch("$baseUrl/api/items/$id/user_data") {
+        client.patch(url("items/$id/user_data")) {
             contentType(ContentType.Application.Json)
             body = data
         }
 
-    suspend fun getMovies(): List<Movie> =
-        client.get("$baseUrl/api/movies")
+    suspend fun getMovies(): List<Movie> = get("movies")
 
-    suspend fun getRecentMovies(): List<Movie> =
-        client.get("$baseUrl/api/movies/recent")
+    suspend fun getRecentMovies(): List<Movie> = get("movies/recent")
 
     @Suppress("unused")
-    suspend fun getMovie(id: Int): Movie =
-        client.get("$baseUrl/api/movies/$id")
+    suspend fun getMovie(id: Int): Movie = get("movies/$id")
 
-    suspend fun getShows(): List<Show> =
-        client.get("$baseUrl/api/tv/shows")
+    suspend fun getShows(): List<Show> = get("tv/shows")
 
-    suspend fun getRecentShows(): List<Show> =
-        client.get("$baseUrl/api/tv/shows/recent")
+    suspend fun getRecentShows(): List<Show> = get("tv/shows/recent")
 
-    suspend fun getShow(id: Int): Show =
-        client.get("$baseUrl/api/tv/shows/$id")
+    suspend fun getShow(id: Int): Show = get("tv/shows/$id")
 
-    suspend fun getSeasons(showId: Int): List<Season> =
-        client.get("$baseUrl/api/tv/shows/$showId/seasons")
+    suspend fun getSeasons(showId: Int): List<Season> = get("tv/shows/$showId/seasons")
 
-    suspend fun getSeason(id: Int): Season =
-        client.get("$baseUrl/api/tv/seasons/$id")
+    suspend fun getSeason(id: Int): Season = get("tv/seasons/$id")
 
-    suspend fun getEpisodes(seasonId: Int): List<Episode> =
-        client.get("$baseUrl/api/tv/seasons/$seasonId/episodes")
+    suspend fun getEpisodes(seasonId: Int): List<Episode> = get("tv/seasons/$seasonId/episodes")
 
     @Suppress("unused")
-    suspend fun getEpisode(id: Int): Episode =
-        client.get("$baseUrl/api/tv/episodes/$id")
-
-    fun getVideoUrl(id: Int) = "$baseUrl/api/videos/$id"
-
-    fun getSubtitleUrl(id: Int) = "$baseUrl/api/subtitles/$id"
+    suspend fun getEpisode(id: Int): Episode = get("tv/episodes/$id")
 
     suspend fun updateProgress(videoId: Int, position: Long): Unit =
-        client.post("$baseUrl/api/progress/$videoId?position=$position")
+        client.post(url("progress/$videoId?position=$position"))
 
-    fun getTranscoderEvents() = sseClient.get<TranscoderEvent>("$baseUrl/api/transcoder/events")
+    suspend fun getTranscoderEvents() = sseClient.get<TranscoderEvent>(url("transcoder/events"))
 
     suspend fun startTranscode(videoId: Int): Unit =
-        client.post("$baseUrl/api/transcoder?video_id=$videoId")
+        client.post(url("transcoder?video_id=$videoId"))
 
-    suspend fun getImportQueue(): List<ImportQueueItem> =
-        client.get("$baseUrl/api/import/queue")
+    suspend fun getImportQueue(): List<ImportQueueItem> = get("import/queue")
 
-    suspend fun importShow(show: ImportShowRequest): Unit =
-        client.post("$baseUrl/api/tv/shows") {
-            contentType(ContentType.Application.Json)
-            body = show
-        }
+    suspend fun importShow(show: ImportShowRequest): Unit = client.post(url("tv/shows")) {
+        contentType(ContentType.Application.Json)
+        body = show
+    }
 
     suspend fun importEpisode(showId: Int, episode: ImportEpisodeRequest): Unit =
-        client.post("$baseUrl/api/tv/shows/$showId/episodes") {
+        client.post(url("tv/shows/$showId/episodes")) {
             contentType(ContentType.Application.Json)
             body = episode
         }
 
-    suspend fun importMovie(movie: ImportMovieRequest): Unit =
-        client.post("$baseUrl/api/movies") {
-            contentType(ContentType.Application.Json)
-            body = movie
-        }
+    suspend fun importMovie(movie: ImportMovieRequest): Unit = client.post(url("movies")) {
+        contentType(ContentType.Application.Json)
+        body = movie
+    }
 
-    suspend fun refreshMetadata(id: Int): Unit =
-        client.post("$baseUrl/api/metadata/$id/refresh")
+    suspend fun refreshMetadata(id: Int): Unit = client.post(url("metadata/$id/refresh"))
 }

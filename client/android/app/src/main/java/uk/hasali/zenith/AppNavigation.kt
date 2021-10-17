@@ -1,26 +1,36 @@
 package uk.hasali.zenith
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Parcelable
-import androidx.compose.animation.*
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material.*
+import androidx.compose.material.BottomNavigation
+import androidx.compose.material.BottomNavigationItem
+import androidx.compose.material.Icon
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.VideoLibrary
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.parcelize.Parcelize
 import uk.hasali.zenith.navigation.ContentHost
 import uk.hasali.zenith.navigation.StackNavigator
 import uk.hasali.zenith.navigation.rememberStackNavigator
 import uk.hasali.zenith.screens.*
-import uk.hasali.zenith.screens.player.MediaItemType
 import uk.hasali.zenith.screens.player.PlayerScreen
+import uk.hasali.zenith.screens.player.VideoItemType
 
 sealed class Screen(val route: String) {
     override fun equals(other: Any?) = other is Screen && other.route == route
@@ -33,7 +43,7 @@ sealed interface TopLevelScreen : Parcelable {
     object Main : Screen("main"), TopLevelScreen
 
     @Parcelize
-    class Player(val id: Int, val type: MediaItemType, val position: Double?) :
+    class Player(val id: Int, val type: VideoItemType, val position: Double?) :
         Screen("player/$id/$type/$position"), TopLevelScreen
 }
 
@@ -85,6 +95,15 @@ sealed interface ManagementScreen : Parcelable {
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigation(navigator: StackNavigator<TopLevelScreen>) {
+    val context = LocalContext.current
+
+    val navigateToExternalPlayer = { url: String ->
+        navigator.pop()
+        context.startActivity(Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(Uri.parse(url), "video/*")
+        })
+    }
+
     navigator.ContentHost { screen ->
         when (screen) {
             is TopLevelScreen.Main -> {
@@ -96,9 +115,7 @@ fun AppNavigation(navigator: StackNavigator<TopLevelScreen>) {
             }
 
             is TopLevelScreen.Player -> PlayerScreen(
-                id = screen.id,
-                type = screen.type,
-                startPosition = screen.position,
+                onLaunchExternal = navigateToExternalPlayer,
                 onNavigateUp = { navigator.pop() },
             )
         }
@@ -106,7 +123,7 @@ fun AppNavigation(navigator: StackNavigator<TopLevelScreen>) {
 }
 
 @Composable
-private fun TopLevelMain(onNavigateToPlayer: (Int, MediaItemType, Double?) -> Unit) {
+private fun TopLevelMain(onNavigateToPlayer: (Int, VideoItemType, Double?) -> Unit) {
     val holder = rememberSaveableStateHolder()
     var area by rememberSaveable { mutableStateOf<BottomNavigationArea>(BottomNavigationArea.Library) }
 
@@ -166,7 +183,7 @@ private fun TopLevelMain(onNavigateToPlayer: (Int, MediaItemType, Double?) -> Un
 @Composable
 private fun LibraryArea(
     navigator: StackNavigator<LibraryScreen>,
-    onNavigateToPlayer: (Int, MediaItemType, Double?) -> Unit,
+    onNavigateToPlayer: (Int, VideoItemType, Double?) -> Unit,
 ) {
     navigator.ContentHost { screen ->
         when (screen) {
@@ -189,7 +206,7 @@ private fun LibraryArea(
 
             is LibraryScreen.MovieDetails -> MovieDetailsScreen(
                 id = screen.id,
-                onPlay = { onNavigateToPlayer(screen.id, MediaItemType.Movie, it) },
+                onPlay = { onNavigateToPlayer(screen.id, VideoItemType.Movie, it) },
                 onNavigateUp = { navigator.pop() },
             )
 
@@ -207,7 +224,7 @@ private fun LibraryArea(
 
             is LibraryScreen.EpisodeDetails -> EpisodeDetailsScreen(
                 id = screen.id,
-                onPlay = { onNavigateToPlayer(screen.id, MediaItemType.TvShow, it) },
+                onPlay = { onNavigateToPlayer(screen.id, VideoItemType.TvShow, it) },
                 onNavigateUp = { navigator.pop() },
             )
         }

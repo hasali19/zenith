@@ -23,16 +23,10 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.MimeTypes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.VideoInfo
-import uk.hasali.zenith.SubtitleStreamInfo
-import uk.hasali.zenith.ui.LocalZenithClient
 
 @Composable
 fun LocalPlayer(
-    url: String,
-    title: String,
-    info: VideoInfo,
-    startPosition: Double,
+    item: VideoItem,
     onVideoProgress: (Long) -> Unit,
     onLaunchExternal: () -> Unit,
     onNavigateUp: () -> Unit,
@@ -40,11 +34,7 @@ fun LocalPlayer(
     KeepScreenOn {
         FullScreen {
             VideoPlayer(
-                url = url,
-                title = title,
-                startPosition = startPosition.toLong(),
-                duration = info.duration.toLong(),
-                subtitles = info.subtitles.orEmpty(),
+                item = item,
                 onVideoProgress = onVideoProgress,
                 onVideoEnded = onNavigateUp,
                 onLaunchExternal = onLaunchExternal,
@@ -57,18 +47,13 @@ fun LocalPlayer(
 @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class)
 @Composable
 private fun VideoPlayer(
-    url: String,
-    title: String,
-    startPosition: Long,
-    duration: Long,
-    subtitles: List<SubtitleStreamInfo>,
+    item: VideoItem,
     onVideoProgress: (Long) -> Unit,
     onVideoEnded: () -> Unit,
     onLaunchExternal: () -> Unit,
     onBackPressed: () -> Unit,
 ) {
     val context = LocalContext.current
-    val client = LocalZenithClient.current
     val scope = rememberCoroutineScope()
 
     val session = remember { MediaSessionCompat(context, context.packageName) }
@@ -77,12 +62,12 @@ private fun VideoPlayer(
     var position by remember { mutableStateOf(0L) }
     var isPlaying by remember { mutableStateOf(true) }
 
-    var selectedSubtitle by remember { mutableStateOf<SubtitleStreamInfo?>(null) }
+    var selectedSubtitle by remember { mutableStateOf<SubtitleTrack?>(null) }
 
     val selector = remember { DefaultTrackSelector(context) }
     var textRenderer: Int? by remember { mutableStateOf(null) }
 
-    fun onSelectSubtitle(subtitle: SubtitleStreamInfo?) {
+    fun onSelectSubtitle(subtitle: SubtitleTrack?) {
         val renderer = textRenderer ?: return
 
         if (subtitle == null) {
@@ -92,8 +77,8 @@ private fun VideoPlayer(
                 .build()
         } else {
             val trackId = when (subtitle) {
-                is SubtitleStreamInfo.External -> "external:${subtitle.id}"
-                is SubtitleStreamInfo.Embedded -> (subtitle.index + 1).toString()
+                is SubtitleTrack.External -> "external:${subtitle.id}"
+                is SubtitleTrack.Embedded -> (subtitle.index + 1).toString()
             }
 
             val mappedTrackInfo = selector.currentMappedTrackInfo ?: return
@@ -190,18 +175,18 @@ private fun VideoPlayer(
             }
     }
 
-    DisposableEffect(url) {
-        val item = MediaItem.fromUri(url)
+    DisposableEffect(item) {
+        val mediaItem = MediaItem.fromUri(item.url)
 
         val dataSourceFactory = DefaultHttpDataSource.Factory()
         val sources = mutableListOf(
             DefaultMediaSourceFactory(context)
-                .createMediaSource(item)
+                .createMediaSource(mediaItem)
         )
 
-        subtitles.filterIsInstance<SubtitleStreamInfo.External>()
+        item.subtitles.filterIsInstance<SubtitleTrack.External>()
             .forEach {
-                val uri = Uri.parse(client.getSubtitleUrl(it.id))
+                val uri = Uri.parse(it.url)
                 val subtitle = MediaItem.Subtitle(uri, MimeTypes.APPLICATION_SUBRIP, null)
 
                 val source = SingleSampleMediaSource.Factory(dataSourceFactory)
@@ -213,7 +198,7 @@ private fun VideoPlayer(
 
         val mergedSource = MergingMediaSource(*sources.toTypedArray())
 
-        player.setMediaSource(mergedSource, startPosition * 1000)
+        player.setMediaSource(mergedSource, item.startPosition.toLong() * 1000)
         player.prepare()
         player.play()
 
@@ -243,11 +228,11 @@ private fun VideoPlayer(
         )
 
         Controls(
-            title = title,
+            title = item.title,
             position = position,
-            duration = duration,
+            duration = item.duration.toLong(),
             isPlaying = isPlaying,
-            subtitles = subtitles,
+            subtitles = item.subtitles,
             selectedSubtitle = selectedSubtitle,
             onSeekStart = { player.pause() },
             onSeekEnd = {

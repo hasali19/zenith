@@ -19,40 +19,33 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
+import coil.annotation.ExperimentalCoilApi
 import coil.compose.rememberImagePainter
 import com.google.android.gms.cast.*
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.VideoInfo
-import uk.hasali.zenith.SubtitleStreamInfo
 import uk.hasali.zenith.ui.LifecycleObserver
-import uk.hasali.zenith.ui.LocalZenithClient
 
-private fun MediaItemType.toCastMediaType() = when (this) {
-    MediaItemType.Movie -> MediaMetadata.MEDIA_TYPE_MOVIE
-    MediaItemType.TvShow -> MediaMetadata.MEDIA_TYPE_TV_SHOW
+private fun VideoItemType.toCastMediaType() = when (this) {
+    VideoItemType.Movie -> MediaMetadata.MEDIA_TYPE_MOVIE
+    VideoItemType.TvShow -> MediaMetadata.MEDIA_TYPE_TV_SHOW
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalCoilApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun RemotePlayer(
-    id: Int,
-    title: String,
-    type: MediaItemType,
-    backdrop: String?,
-    info: VideoInfo,
+    item: VideoItem,
     session: CastSession,
     onNavigateUp: () -> Unit,
 ) {
     val context = LocalContext.current
-    val client = LocalZenithClient.current
     val scope = rememberCoroutineScope()
     val mediaClient = session.remoteMediaClient!!
 
     var position by remember { mutableStateOf(0L) }
     var isPlaying by remember { mutableStateOf(true) }
-    var selectedSubtitle by remember { mutableStateOf<SubtitleStreamInfo?>(null) }
+    var selectedSubtitle by remember { mutableStateOf<SubtitleTrack?>(null) }
 
     val callback = remember {
         object : RemoteMediaClient.Callback() {
@@ -68,23 +61,23 @@ fun RemotePlayer(
         }
     }
 
-    DisposableEffect(Unit) {
-        val metadata = MediaMetadata(type.toCastMediaType()).apply {
-            putString(MediaMetadata.KEY_TITLE, title)
+    DisposableEffect(item) {
+        val metadata = MediaMetadata(item.type.toCastMediaType()).apply {
+            putString(MediaMetadata.KEY_TITLE, item.title)
         }
 
-        val subtitleTracks = info.subtitles.orEmpty()
+        val subtitleTracks = item.subtitles
             .map {
                 MediaTrack.Builder(it.id.toLong(), MediaTrack.TYPE_TEXT)
                     .setName(it.title ?: it.language)
                     .setSubtype(MediaTrack.SUBTYPE_SUBTITLES)
-                    .setContentId(client.getSubtitleUrl(it.id))
+                    .setContentId(it.url)
                     .setContentType("text/vtt")
                     .setLanguage(it.language)
                     .build()
             }
 
-        val mediaInfo = MediaInfo.Builder(client.getVideoUrl(id))
+        val mediaInfo = MediaInfo.Builder(item.url)
             .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
             .setContentType("video/mp4")
             .setMetadata(metadata)
@@ -117,7 +110,7 @@ fun RemotePlayer(
         }
     }
 
-    val onSelectSubtitle = { subtitle: SubtitleStreamInfo? ->
+    val onSelectSubtitle = { subtitle: SubtitleTrack? ->
         val tracks = if (subtitle == null) {
             longArrayOf()
         } else {
@@ -148,7 +141,7 @@ fun RemotePlayer(
         scrimColor = MaterialTheme.colors.surface.copy(alpha = 0.32f),
         sheetContent = {
             SubtitlesMenu(
-                subtitles = info.subtitles.orEmpty(),
+                subtitles = item.subtitles.orEmpty(),
                 current = selectedSubtitle,
                 onSelectSubtitle = {
                     onSelectSubtitle(it)
@@ -162,7 +155,7 @@ fun RemotePlayer(
         CompositionLocalProvider(LocalContentColor provides Color.White) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Image(
-                    rememberImagePainter(backdrop) { crossfade(true) },
+                    rememberImagePainter(item.backdrop) { crossfade(true) },
                     contentDescription = "Backdrop",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
@@ -175,9 +168,9 @@ fun RemotePlayer(
                 )
 
                 Controls(
-                    title = title,
+                    title = item.title,
                     position = position,
-                    duration = info.duration.toLong(),
+                    duration = item.duration.toLong(),
                     isPlaying = isPlaying,
                     onTogglePlaying = { mediaClient.togglePlayback() },
                     onSeekStart = { mediaClient.pause() },

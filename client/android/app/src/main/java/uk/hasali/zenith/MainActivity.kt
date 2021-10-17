@@ -16,6 +16,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.android.gms.cast.framework.CastContext
+import dagger.hilt.android.AndroidEntryPoint
 import io.ktor.client.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
@@ -24,10 +25,18 @@ import kotlinx.coroutines.launch
 import uk.hasali.zenith.navigation.rememberStackNavigator
 import uk.hasali.zenith.ui.AppTheme
 import uk.hasali.zenith.ui.LocalZenithClient
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : FragmentActivity() {
-    private lateinit var preferences: Preferences
-    private lateinit var client: HttpClient
+    @Inject
+    lateinit var preferences: Preferences
+
+    @Inject
+    lateinit var client: HttpClient
+
+    @Inject
+    lateinit var zenithApiClient: ZenithApiClient
 
     private var availableUpdate by mutableStateOf<AvailableUpdate?>(null)
 
@@ -36,16 +45,6 @@ class MainActivity : FragmentActivity() {
 
         // Enable drawing under the status bar
         WindowCompat.setDecorFitsSystemWindows(window, false)
-
-        preferences = Preferences(this)
-
-        client = HttpClient {
-            install(JsonFeature) {
-                serializer = KotlinxSerializer(kotlinx.serialization.json.Json {
-                    ignoreUnknownKeys = true
-                })
-            }
-        }
 
         // Initialise cast context
         CastContext.getSharedInstance(this)
@@ -94,7 +93,6 @@ class MainActivity : FragmentActivity() {
             }
 
             else -> {
-                val zenithApiClient = remember { ZenithApiClient(client, serverUrl) }
                 val navigator = rememberStackNavigator<TopLevelScreen>(TopLevelScreen.Main)
 
                 AppTheme {
