@@ -10,4 +10,4 @@ edition = "2018"
 [dependencies.sqlx]
 version = "0.5"
 default-features = false
-features = ["macros", "migrate", "runtime-actix-rustls", "sqlite"]
+features = ["macros", "migrate", "runtime-tokio-rustls", "sqlite"]
