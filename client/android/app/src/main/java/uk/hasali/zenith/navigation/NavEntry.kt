@@ -1,5 +1,6 @@
 package uk.hasali.zenith.navigation
 
+import android.os.Parcelable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.saveable.SaveableStateHolder
@@ -58,13 +59,16 @@ class DefaultNavEntry<T : Any>(
 }
 
 @Composable
-fun <T : Any> NavEntry<T>.LocalsProvider(
+fun <T : Parcelable> NavEntry<T>.LocalsProvider(
     holder: SaveableStateHolder,
     content: @Composable () -> Unit
 ) {
+    val navScreenProvider = NavScreenProvider(LocalNavScreenProvider.current, screen)
+
     CompositionLocalProvider(
         LocalLifecycleOwner provides this,
         LocalViewModelStoreOwner provides this,
+        LocalNavScreenProvider provides navScreenProvider,
     ) {
         holder.SaveableStateProvider(screen) {
             content()
