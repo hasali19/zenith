@@ -27,6 +27,14 @@ class StackNavigator<T>(private val lifecycleOwner: LifecycleOwner, stack: List<
         private val entry: DefaultNavEntry<T>,
     ) : StackNavigatorEntry<T>, NavEntry<T> by entry {
         constructor(level: Int, screen: T) : this(level, DefaultNavEntry(screen))
+
+        override fun equals(other: Any?): Boolean {
+            return other is Entry<*> && level == other.level && screen == other.screen
+        }
+
+        override fun hashCode(): Int {
+            return (screen.hashCode() * 31) + level.hashCode()
+        }
     }
 
     private val _entering = mutableListOf<Entry<T>>()
