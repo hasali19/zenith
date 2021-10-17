@@ -1,14 +1,16 @@
 package uk.hasali.zenith
 
-import android.app.Activity
+import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
 
-private val Activity.preferences by preferencesDataStore("settings")
+private val Context.preferences by preferencesDataStore("settings")
 
-class Preferences(context: Activity) {
+class Preferences @Inject constructor(@ApplicationContext context: Context) {
     private val preferences = context.preferences
 
     object Keys {
