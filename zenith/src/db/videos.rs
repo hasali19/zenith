@@ -25,7 +25,7 @@ pub async fn get_basic_info(
     id: i64,
 ) -> eyre::Result<Option<BasicVideoInfo>> {
     let sql = "
-        SELECT path
+        SELECT path, duration
         FROM video_files
         WHERE item_id = ?
     ";
