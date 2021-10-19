@@ -265,7 +265,7 @@ async fn refresh_tv_episode_metadata(
     let season = episode.season_number as i32;
     let episode = episode.episode_number as i32;
 
-    let metadata = tmdb.get_tv_episode(show_tmdb_id, episode, episode).await?;
+    let metadata = tmdb.get_tv_episode(show_tmdb_id, season, episode).await?;
     let thumbnail = tmdb
         .get_tv_episode_images(show_tmdb_id, season, episode)
         .await
