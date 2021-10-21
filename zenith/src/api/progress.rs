@@ -1,7 +1,6 @@
 use atium::query::QueryRequestExt;
-use atium::respond::RespondRequestExt;
 use atium::router::{Router, RouterRequestExt};
-use atium::{endpoint, Request};
+use atium::{endpoint, Request, StatusCode};
 use serde::Deserialize;
 
 use crate::db::videos::UpdateVideoUserData;
@@ -19,7 +18,7 @@ struct ProgressUpdate {
 }
 
 #[endpoint]
-async fn update_progress(req: &mut Request) -> eyre::Result<()> {
+async fn update_progress(req: &mut Request) -> eyre::Result<impl Responder> {
     let id: i64 = req.param("id")?;
     let query: ProgressUpdate = req.query()?;
 
@@ -38,7 +37,5 @@ async fn update_progress(req: &mut Request) -> eyre::Result<()> {
 
     db::videos::update_user_data(&mut conn, id, data).await?;
 
-    req.ok();
-
-    Ok(())
+    Ok(StatusCode::OK)
 }

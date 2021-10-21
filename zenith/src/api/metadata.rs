@@ -1,6 +1,5 @@
-use atium::respond::RespondRequestExt;
 use atium::router::{Router, RouterRequestExt};
-use atium::{endpoint, Request};
+use atium::{endpoint, Request, StatusCode};
 
 use crate::db::media::MediaItemType;
 use crate::db::{self, Db};
@@ -13,7 +12,7 @@ pub fn routes(router: &mut Router) {
 }
 
 #[endpoint]
-async fn refresh_metadata(req: &mut Request) -> eyre::Result<()> {
+async fn refresh_metadata(req: &mut Request) -> eyre::Result<impl Responder> {
     let id: i64 = req.param("id")?;
 
     let metadata: &MetadataManager = req.ext().unwrap();
@@ -32,7 +31,6 @@ async fn refresh_metadata(req: &mut Request) -> eyre::Result<()> {
     };
 
     metadata.enqueue(refresh_req);
-    req.ok();
 
-    Ok(())
+    Ok(StatusCode::OK)
 }

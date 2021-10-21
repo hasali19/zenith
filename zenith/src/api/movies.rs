@@ -1,4 +1,4 @@
-use atium::respond::RespondRequestExt;
+use atium::responder::Json;
 use atium::router::{Router, RouterRequestExt};
 use atium::{endpoint, Request};
 
@@ -14,19 +14,15 @@ pub fn routes(router: &mut Router) {
 }
 
 #[endpoint]
-async fn get_movies(req: &mut Request) -> eyre::Result<()> {
+async fn get_movies(req: &mut Request) -> eyre::Result<impl Responder> {
     let db: &Db = req.ext().unwrap();
     let mut conn = db.acquire().await?;
-
     let movies = db::movies::get_all(&mut conn).await?;
-
-    req.ok().json(&movies)?;
-
-    Ok(())
+    Ok(Json(movies))
 }
 
 #[endpoint]
-async fn get_movie(req: &mut Request) -> eyre::Result<()> {
+async fn get_movie(req: &mut Request) -> eyre::Result<impl Responder> {
     let id: i64 = req.param("id")?;
     let db: &Db = req.ext().unwrap();
     let mut conn = db.acquire().await?;
@@ -35,19 +31,13 @@ async fn get_movie(req: &mut Request) -> eyre::Result<()> {
         .await?
         .or_not_found("movie not found")?;
 
-    req.ok().json(&movie)?;
-
-    Ok(())
+    Ok(Json(movie))
 }
 
 #[endpoint]
-async fn get_recent_movies(req: &mut Request) -> eyre::Result<()> {
+async fn get_recent_movies(req: &mut Request) -> eyre::Result<impl Responder> {
     let db: &Db = req.ext().unwrap();
     let mut conn = db.acquire().await?;
-
     let movies = db::movies::get_recently_added(&mut conn).await?;
-
-    req.ok().json(&movies)?;
-
-    Ok(())
+    Ok(Json(movies))
 }

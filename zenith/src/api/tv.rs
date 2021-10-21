@@ -1,4 +1,4 @@
-use atium::respond::RespondRequestExt;
+use atium::responder::Json;
 use atium::router::{Router, RouterRequestExt};
 use atium::{endpoint, Request};
 
@@ -23,19 +23,15 @@ pub fn routes(router: &mut Router) {
 }
 
 #[endpoint]
-pub(super) async fn get_shows(req: &mut Request) -> eyre::Result<()> {
+pub async fn get_shows(req: &mut Request) -> eyre::Result<impl Responder> {
     let db: &Db = req.ext().unwrap();
     let mut conn = db.acquire().await?;
-
     let shows = db::shows::get_all(&mut conn).await?;
-
-    req.ok().json(&shows)?;
-
-    Ok(())
+    Ok(Json(shows))
 }
 
 #[endpoint]
-pub(super) async fn get_show(req: &mut Request) -> eyre::Result<()> {
+pub async fn get_show(req: &mut Request) -> eyre::Result<impl Responder> {
     let id: i64 = req.param("id")?;
 
     let db: &Db = req.ext().unwrap();
@@ -45,25 +41,21 @@ pub(super) async fn get_show(req: &mut Request) -> eyre::Result<()> {
         .await?
         .or_not_found("show not found")?;
 
-    req.ok().json(&show)?;
-
-    Ok(())
+    Ok(Json(show))
 }
 
 #[endpoint]
-pub(super) async fn get_recently_updated_shows(req: &mut Request) -> eyre::Result<()> {
+pub async fn get_recently_updated_shows(req: &mut Request) -> eyre::Result<impl Responder> {
     let db: &Db = req.ext().unwrap();
     let mut conn = db.acquire().await?;
 
     let shows = db::shows::get_recently_updated(&mut conn).await?;
 
-    req.ok().json(&shows)?;
-
-    Ok(())
+    Ok(Json(shows))
 }
 
 #[endpoint]
-pub(super) async fn get_seasons(req: &mut Request) -> eyre::Result<()> {
+pub async fn get_seasons(req: &mut Request) -> eyre::Result<impl Responder> {
     let show_id: i64 = req.param("id")?;
 
     let db: &Db = req.ext().unwrap();
@@ -71,13 +63,11 @@ pub(super) async fn get_seasons(req: &mut Request) -> eyre::Result<()> {
 
     let seasons = db::seasons::get_for_show(&mut conn, show_id).await?;
 
-    req.ok().json(&seasons)?;
-
-    Ok(())
+    Ok(Json(seasons))
 }
 
 #[endpoint]
-pub(super) async fn get_season(req: &mut Request) -> eyre::Result<()> {
+pub async fn get_season(req: &mut Request) -> eyre::Result<impl Responder> {
     let id: i64 = req.param("id")?;
 
     let db: &Db = req.ext().unwrap();
@@ -87,13 +77,11 @@ pub(super) async fn get_season(req: &mut Request) -> eyre::Result<()> {
         .await?
         .or_not_found("season not found")?;
 
-    req.ok().json(&season)?;
-
-    Ok(())
+    Ok(Json(season))
 }
 
 #[endpoint]
-pub(super) async fn get_episodes(req: &mut Request) -> eyre::Result<()> {
+pub(super) async fn get_episodes(req: &mut Request) -> eyre::Result<impl Responder> {
     let season_id: i64 = req.param("id")?;
 
     let db: &Db = req.ext().unwrap();
@@ -101,13 +89,11 @@ pub(super) async fn get_episodes(req: &mut Request) -> eyre::Result<()> {
 
     let episodes = db::episodes::get_for_season(&mut conn, season_id).await?;
 
-    req.ok().json(&episodes)?;
-
-    Ok(())
+    Ok(Json(episodes))
 }
 
 #[endpoint]
-pub(super) async fn get_episode(req: &mut Request) -> eyre::Result<()> {
+pub(super) async fn get_episode(req: &mut Request) -> eyre::Result<impl Responder> {
     let id: i64 = req.param("id")?;
 
     let db: &Db = req.ext().unwrap();
@@ -117,7 +103,5 @@ pub(super) async fn get_episode(req: &mut Request) -> eyre::Result<()> {
         .await?
         .or_not_found("episode not found")?;
 
-    req.ok().json(&episode)?;
-
-    Ok(())
+    Ok(Json(episode))
 }

@@ -4,7 +4,7 @@ use std::sync::Arc;
 use atium::headers::ContentType;
 use atium::respond::RespondRequestExt;
 use atium::router::{Router, RouterRequestExt};
-use atium::{endpoint, Request, Response};
+use atium::{endpoint, Request, Response, StatusCode};
 use eyre::eyre;
 use mime::Mime;
 
@@ -74,7 +74,7 @@ async fn get_subtitle(req: &mut Request) -> eyre::Result<()> {
 }
 
 #[endpoint]
-async fn delete_subtitle(req: &mut Request) -> eyre::Result<()> {
+async fn delete_subtitle(req: &mut Request) -> eyre::Result<impl Responder> {
     let subtitle_id: i64 = req.param("id")?;
     let db: &Db = req.ext().unwrap();
 
@@ -94,7 +94,5 @@ async fn delete_subtitle(req: &mut Request) -> eyre::Result<()> {
         }
     }
 
-    req.ok();
-
-    Ok(())
+    Ok(StatusCode::OK)
 }

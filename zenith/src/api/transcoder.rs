@@ -4,8 +4,9 @@ use std::sync::Arc;
 use atium::headers::{CacheControl, ContentType};
 use atium::query::QueryRequestExt;
 use atium::respond::RespondRequestExt;
+use atium::responder::Json;
 use atium::router::Router;
-use atium::{endpoint, Body, Request};
+use atium::{endpoint, Body, Request, StatusCode};
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use tokio_stream::wrappers::BroadcastStream;
@@ -26,13 +27,10 @@ pub fn routes(router: &mut Router) {
 }
 
 #[endpoint]
-async fn get_state(req: &mut Request) -> eyre::Result<()> {
+async fn get_state(req: &mut Request) -> eyre::Result<impl Responder> {
     let transcoder: &Arc<Transcoder> = req.ext().unwrap();
     let queue = transcoder.queue().await;
-
-    req.ok().json(&State { queue })?;
-
-    Ok(())
+    Ok(Json(State { queue }))
 }
 
 #[derive(Serialize)]
@@ -102,7 +100,7 @@ pub struct TranscodeParams {
 }
 
 #[endpoint]
-async fn transcode(req: &mut Request) -> eyre::Result<()> {
+async fn transcode(req: &mut Request) -> eyre::Result<impl Responder> {
     let params: TranscodeParams = req.query()?;
     let transcoder: &Arc<Transcoder> = req.ext().unwrap();
 
@@ -112,7 +110,5 @@ async fn transcode(req: &mut Request) -> eyre::Result<()> {
         None => return Err(bad_request("no video to transcode").into()),
     }
 
-    req.ok();
-
-    Ok(())
+    Ok(StatusCode::OK)
 }

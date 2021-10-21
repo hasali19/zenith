@@ -2,12 +2,12 @@ use std::borrow::Cow;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use atium::endpoint;
 use atium::headers::ContentType;
 use atium::respond::RespondRequestExt;
 use atium::router::{Router, RouterRequestExt};
 use atium::Body;
 use atium::Request;
+use atium::{endpoint, StatusCode};
 use bytes::Buf;
 use eyre::eyre;
 use mime::Mime;
@@ -102,7 +102,7 @@ async fn multipart(req: &Request, body: Body) -> eyre::Result<Multipart<'static>
 }
 
 #[endpoint]
-async fn import_subtitle(req: &mut Request) -> eyre::Result<()> {
+async fn import_subtitle(req: &mut Request) -> eyre::Result<impl Responder> {
     let body = req.body();
     let config: &Arc<Config> = req.ext().unwrap();
     let db: &Db = req.ext().unwrap();
@@ -208,9 +208,8 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<()> {
     std::fs::copy(&src_path, &dst_path)?;
 
     transaction.commit().await?;
-    req.ok();
 
-    Ok(())
+    Ok(StatusCode::OK)
 }
 
 #[derive(Deserialize)]
@@ -221,7 +220,7 @@ pub struct ImportMovieRequest {
 }
 
 #[endpoint]
-pub async fn import_movie(req: &mut Request) -> eyre::Result<()> {
+pub async fn import_movie(req: &mut Request) -> eyre::Result<impl Responder> {
     let data: ImportMovieRequest = req.body_json().await?;
     let config: &Arc<Config> = req.ext().unwrap();
     let scanner: &Arc<LibraryScanner> = req.ext().unwrap();
@@ -253,9 +252,7 @@ pub async fn import_movie(req: &mut Request) -> eyre::Result<()> {
         .scan_file(VideoFileType::Movie, &dst_path, ScanOptions::quick())
         .await?;
 
-    req.ok();
-
-    Ok(())
+    Ok(StatusCode::OK)
 }
 
 #[derive(Deserialize)]
@@ -265,7 +262,7 @@ pub struct ImportShowRequest {
 }
 
 #[endpoint]
-pub async fn import_show(req: &mut Request) -> eyre::Result<()> {
+pub async fn import_show(req: &mut Request) -> eyre::Result<impl Responder> {
     let data: ImportShowRequest = req.body_json().await?;
     let config: &Arc<Config> = req.ext().unwrap();
     let scanner: &Arc<LibraryScanner> = req.ext().unwrap();
@@ -288,9 +285,7 @@ pub async fn import_show(req: &mut Request) -> eyre::Result<()> {
             .await?;
     }
 
-    req.ok();
-
-    Ok(())
+    Ok(StatusCode::OK)
 }
 
 #[derive(Deserialize)]
@@ -301,7 +296,7 @@ pub struct ImportEpisodeRequest {
 }
 
 #[endpoint]
-pub async fn import_episode(req: &mut Request) -> eyre::Result<()> {
+pub async fn import_episode(req: &mut Request) -> eyre::Result<impl Responder> {
     let show_id: i64 = req.param("show_id")?;
     let data: ImportEpisodeRequest = req.body_json().await?;
     let db: &Db = req.ext().unwrap();
@@ -318,9 +313,7 @@ pub async fn import_episode(req: &mut Request) -> eyre::Result<()> {
         .scan_file(VideoFileType::Episode, &path, ScanOptions::quick())
         .await?;
 
-    req.ok();
-
-    Ok(())
+    Ok(StatusCode::OK)
 }
 
 mod inner {

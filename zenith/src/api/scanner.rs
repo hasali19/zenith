@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use atium::respond::RespondRequestExt;
 use atium::router::{Router, RouterRequestExt};
 use atium::{endpoint, Request, StatusCode};
 
@@ -13,7 +12,7 @@ pub fn routes(router: &mut Router) {
 }
 
 #[endpoint]
-async fn start_scan(req: &mut Request) -> eyre::Result<()> {
+async fn start_scan(req: &mut Request) -> eyre::Result<impl Responder> {
     let scanner: &Arc<LibraryScanner> = req.ext().unwrap();
 
     scanner.clone().start_scan(ScanOptions {
@@ -21,18 +20,15 @@ async fn start_scan(req: &mut Request) -> eyre::Result<()> {
         refresh_metadata: false,
     });
 
-    req.respond(StatusCode::OK);
-
-    Ok(())
+    Ok(StatusCode::OK)
 }
 
 #[endpoint]
-async fn scan_item(req: &mut Request) -> eyre::Result<()> {
+async fn scan_item(req: &mut Request) -> eyre::Result<impl Responder> {
     let id: i64 = req.param("id")?;
     let scanner: &Arc<LibraryScanner> = req.ext().unwrap();
 
     scanner.rescan_video_file(id).await?;
-    req.respond(StatusCode::OK);
 
-    Ok(())
+    Ok(StatusCode::OK)
 }

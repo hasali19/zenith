@@ -29,6 +29,7 @@ migrations = { path = "../migrations" }
 
 [dependencies.atium]
 git = "https://github.com/hasali19/atium"
+features = ["eyre"]
 
 [dependencies.reqwest]
 version = "0.11"

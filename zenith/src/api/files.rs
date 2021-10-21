@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use atium::query::QueryRequestExt;
-use atium::respond::RespondRequestExt;
+use atium::responder::Json;
 use atium::router::Router;
 use atium::{endpoint, Request};
 use serde::Deserialize;
@@ -21,7 +21,7 @@ struct GetFilesQuery {
 }
 
 #[endpoint]
-async fn get_files(req: &mut Request) -> eyre::Result<()> {
+async fn get_files(req: &mut Request) -> eyre::Result<impl Responder> {
     let query: GetFilesQuery = req.query()?;
     let config: &Arc<Config> = req.ext().unwrap();
 
@@ -63,7 +63,5 @@ async fn get_files(req: &mut Request) -> eyre::Result<()> {
         })
         .collect::<Vec<_>>();
 
-    req.ok().json(&files)?;
-
-    Ok(())
+    Ok(Json(files))
 }
