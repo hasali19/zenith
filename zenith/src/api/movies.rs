@@ -1,6 +1,6 @@
 use atium::responder::Json;
 use atium::router::{Router, RouterRequestExt};
-use atium::{endpoint, Request};
+use atium::{endpoint, Request, Responder};
 
 use crate::db::{self, Db};
 

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use atium::query::QueryRequestExt;
 use atium::responder::Json;
 use atium::router::Router;
-use atium::{endpoint, Request};
+use atium::{endpoint, Request, Responder};
 use serde::Deserialize;
 use serde_json::json;
 

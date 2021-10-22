@@ -1,6 +1,6 @@
-use atium::respond::RespondRequestExt;
+use atium::responder::File;
 use atium::router::{Router, RouterRequestExt};
-use atium::{endpoint, Request};
+use atium::{endpoint, Request, Responder};
 
 use crate::db::{self, Db};
 
@@ -11,7 +11,7 @@ pub fn routes(router: &mut Router) {
 }
 
 #[endpoint]
-async fn get_video_content(req: &mut Request) -> eyre::Result<()> {
+async fn get_video_content(req: &mut Request) -> eyre::Result<impl Responder> {
     let id: i64 = req.param("id")?;
 
     let db: &Db = req.ext().unwrap();
@@ -21,7 +21,5 @@ async fn get_video_content(req: &mut Request) -> eyre::Result<()> {
         .await?
         .or_not_found("video not found")?;
 
-    req.respond_file(info.path).await?;
-
-    Ok(())
+    Ok(File::open(info.path).await?)
 }

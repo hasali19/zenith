@@ -6,7 +6,7 @@ use atium::query::QueryRequestExt;
 use atium::respond::RespondRequestExt;
 use atium::responder::Json;
 use atium::router::Router;
-use atium::{endpoint, Body, Request, StatusCode};
+use atium::{endpoint, Body, Request, Responder, StatusCode};
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use tokio_stream::wrappers::BroadcastStream;

@@ -1,6 +1,6 @@
 use atium::query::QueryRequestExt;
 use atium::router::{Router, RouterRequestExt};
-use atium::{endpoint, Request, StatusCode};
+use atium::{endpoint, Request, Responder, StatusCode};
 use serde::Deserialize;
 
 use crate::db::videos::UpdateVideoUserData;

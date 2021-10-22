@@ -1,10 +1,10 @@
+use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
 
 use atium::headers::ContentType;
-use atium::respond::RespondRequestExt;
 use atium::router::{Router, RouterRequestExt};
-use atium::{endpoint, Request, Response, StatusCode};
+use atium::{endpoint, Request, Responder, Response, StatusCode};
 use eyre::eyre;
 use mime::Mime;
 
@@ -24,7 +24,7 @@ pub fn routes(router: &mut Router) {
 }
 
 #[endpoint]
-async fn get_subtitle(req: &mut Request) -> eyre::Result<()> {
+async fn get_subtitle(req: &mut Request) -> eyre::Result<impl Responder> {
     let subtitle_id: i64 = req.param("id")?;
 
     let config: &Arc<Config> = req.ext().unwrap();
@@ -40,12 +40,9 @@ async fn get_subtitle(req: &mut Request) -> eyre::Result<()> {
         .await?
         .or_not_found("video not found")?;
 
-    match subtitle.path {
-        db::subtitles::SubtitlePath::External { path } => {
-            // Subtitle is an external file, return it directly
-            req.respond_file(path.as_ref()).await?;
-        }
-        db::subtitles::SubtitlePath::Embedded { index } => {
+    let res = match subtitle.path {
+        SubtitlePath::External { path } => SubtitleResponse::File(path.as_ref().into()),
+        SubtitlePath::Embedded { index } => {
             let cached_path = config
                 .subtitles
                 .path
@@ -55,22 +52,47 @@ async fn get_subtitle(req: &mut Request) -> eyre::Result<()> {
             if cached_path.is_file() {
                 // Return directly if embedded subtitle has already been extracted
                 tracing::info!("using cached subtitle");
-                req.respond_file(cached_path).await?;
+                SubtitleResponse::File(cached_path)
             } else {
                 // Otherwise extract now
                 // TODO: Cache the extracted subtitle?
                 tracing::info!("extracting subtitle");
+                SubtitleResponse::Bytes(
+                    subtitles::extract_embedded(config, &info.path, index).await?,
+                )
+            }
+        }
+    };
 
-                let res = Response::ok()
-                    .with_header(ContentType::from(Mime::from_str("text/vtt")?))
-                    .with_body(subtitles::extract_embedded(config, &info.path, index).await?);
+    Ok(res)
+}
 
-                req.set_res(res);
+enum SubtitleResponse {
+    File(PathBuf),
+    Bytes(Vec<u8>),
+}
+
+#[atium::async_trait]
+impl Responder for SubtitleResponse {
+    async fn respond_to(self, req: &mut Request) {
+        match self {
+            SubtitleResponse::File(path) => match atium::responder::File::open(path).await {
+                Ok(f) => f.respond_to(req).await,
+                Err(e) => {
+                    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+                        .respond_to(req)
+                        .await
+                }
+            },
+            SubtitleResponse::Bytes(bytes) => {
+                Response::ok()
+                    .with_header(ContentType::from(Mime::from_str("text/vtt").unwrap()))
+                    .with_body(bytes)
+                    .respond_to(req)
+                    .await
             }
         }
     }
-
-    Ok(())
 }
 
 #[endpoint]
@@ -86,7 +108,7 @@ async fn delete_subtitle(req: &mut Request) -> eyre::Result<impl Responder> {
 
     match subtitle.path {
         SubtitlePath::Embedded { .. } => {
-            return Err(eyre!(bad_request("embedded subtitled cannot be deleted")))
+            return Err(eyre!(bad_request("embedded subtitles cannot be deleted")))
         }
         SubtitlePath::External { path } => {
             db::subtitles::delete(&mut conn, subtitle_id).await?;

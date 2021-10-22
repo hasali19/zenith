@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use atium::router::{Router, RouterRequestExt};
-use atium::{endpoint, Request, StatusCode};
+use atium::{endpoint, Request, Responder, StatusCode};
 
 use crate::library::scanner::ScanOptions;
 use crate::library::LibraryScanner;

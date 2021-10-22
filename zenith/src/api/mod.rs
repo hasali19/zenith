@@ -16,7 +16,7 @@ mod scanner;
 
 use atium::headers::AccessControlAllowOrigin;
 use atium::router::Router;
-use atium::{async_trait, endpoint, Handler, Request};
+use atium::{async_trait, endpoint, Handler, Next, Request};
 
 use crate::api::error::ErrorHandler;
 
@@ -42,7 +42,7 @@ struct DefaultHeaders;
 
 #[async_trait]
 impl Handler for DefaultHeaders {
-    async fn run(&self, req: atium::Request, next: &dyn atium::Next) -> atium::Request {
+    async fn run(&self, req: Request, next: &dyn Next) -> Request {
         let mut req = next.run(req).await;
 
         if let Some(res) = req.res_mut() {

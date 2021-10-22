@@ -4,7 +4,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use atium::logger::Logger;
-use atium::respond::RespondRequestExt;
+use atium::responder::File;
 use atium::router::Router;
 use atium::state::State;
 use atium::Request;
@@ -71,7 +71,7 @@ async fn main() -> eyre::Result<()> {
 }
 
 #[atium::endpoint]
-async fn spa(req: &mut Request) -> eyre::Result<()> {
+async fn spa(req: &mut Request) -> eyre::Result<File> {
     let path = Path::new("client/web/dist").join(req.uri().path().trim_start_matches('/'));
     let path = if path.is_file() {
         path.as_path()
@@ -79,7 +79,5 @@ async fn spa(req: &mut Request) -> eyre::Result<()> {
         Path::new("client/web/dist/index.html")
     };
 
-    req.respond_file(path).await?;
-
-    Ok(())
+    Ok(File::open(path).await?)
 }

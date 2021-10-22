@@ -1,5 +1,5 @@
 use atium::router::{Router, RouterRequestExt};
-use atium::{endpoint, Request, StatusCode};
+use atium::{endpoint, Request, Responder, StatusCode};
 
 use crate::db::media::MediaItemType;
 use crate::db::{self, Db};

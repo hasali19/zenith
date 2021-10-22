@@ -1,7 +1,7 @@
 use atium::query::QueryRequestExt;
 use atium::responder::Json;
 use atium::router::{Router, RouterRequestExt};
-use atium::{endpoint, Request};
+use atium::{endpoint, Request, Responder};
 use serde::Deserialize;
 
 use crate::api::error::bad_request;

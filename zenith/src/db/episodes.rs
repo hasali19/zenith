@@ -37,7 +37,7 @@ impl<'r> FromRow<'r, SqliteRow> for Episode {
             name: row.try_get("name")?,
             air_date: row.try_get("air_date")?,
             overview: row.try_get("overview")?,
-            thumbnail: thumbnail.as_deref().map(utils::get_image_url),
+            thumbnail: thumbnail.map(utils::get_image_url),
             external_ids: ExternalIds {
                 tmdb: row.try_get("tmdb_id")?,
             },
