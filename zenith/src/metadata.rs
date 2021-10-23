@@ -1,12 +1,12 @@
 use eyre::eyre;
 use sqlx::SqliteConnection;
 use time::{format_description, Date, Time};
+use tmdb::{MovieSearchQuery, TmdbClient, TvShowSearchQuery};
 use tokio::sync::mpsc;
 
 use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType};
 use crate::db::{self, Db};
 use crate::library::scanner;
-use crate::tmdb::{MovieSearchQuery, TmdbClient, TvShowSearchQuery};
 
 #[derive(Debug)]
 pub enum RefreshRequest {

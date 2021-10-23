@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use actix_files::NamedFile;
 use actix_web::{web, App, HttpRequest, HttpServer};
+use tmdb::TmdbClient;
 use tracing_actix_web::TracingLogger;
 use zenith::config::Config;
 use zenith::db::Db;
@@ -12,7 +13,6 @@ use zenith::ffprobe::Ffprobe;
 use zenith::library::scanner::{LibraryScanner, ScanOptions};
 use zenith::library::MediaLibrary;
 use zenith::metadata::MetadataManager;
-use zenith::tmdb::TmdbClient;
 use zenith::transcoder::Transcoder;
 
 #[actix_web::main]
