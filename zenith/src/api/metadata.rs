@@ -1,22 +1,21 @@
-use atium::router::{Router, RouterRequestExt};
-use atium::{endpoint, Request, Responder, StatusCode};
+use actix_web::web::Path;
+use actix_web::{post, HttpResponse, Responder};
 
+use crate::api::ApiResult;
 use crate::db::media::MediaItemType;
 use crate::db::{self, Db};
 use crate::metadata::{MetadataManager, RefreshRequest};
+use crate::Ext;
 
 use super::ext::OptionExt;
 
-pub fn routes(router: &mut Router) {
-    router.route("/metadata/:id/refresh").post(refresh_metadata);
-}
-
-#[endpoint]
-async fn refresh_metadata(req: &mut Request) -> eyre::Result<impl Responder> {
-    let id: i64 = req.param("id")?;
-
-    let metadata: &MetadataManager = req.ext().unwrap();
-    let db: &Db = req.ext().unwrap();
+#[post("/metadata/{id}/refresh")]
+async fn refresh_metadata(
+    id: Path<i64>,
+    metadata: Ext<MetadataManager>,
+    db: Db,
+) -> ApiResult<impl Responder> {
+    let id = id.into_inner();
     let mut conn = db.acquire().await?;
 
     let item_type = db::media::get_item_type(&mut conn, id)
@@ -32,5 +31,5 @@ async fn refresh_metadata(req: &mut Request) -> eyre::Result<impl Responder> {
 
     metadata.enqueue(refresh_req);
 
-    Ok(StatusCode::OK)
+    Ok(HttpResponse::Ok())
 }

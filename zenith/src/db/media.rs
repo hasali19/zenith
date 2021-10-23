@@ -1,7 +1,6 @@
 use std::convert::TryFrom;
 
 use eyre::eyre;
-use itertools::Itertools;
 use serde::Serialize;
 use sqlx::{SqliteConnection, Type};
 
@@ -62,9 +61,13 @@ impl<'a> TryFrom<&'a str> for MediaImage<'a> {
     type Error = eyre::Error;
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-        let (img_type, src_type, src): (&str, &str, &str) = value
-            .splitn(3, '|')
-            .next_tuple()
+        let mut iter = value.splitn(3, '|');
+
+        let (img_type, src_type, src) = iter
+            // Unpack iterator into an (&str, &str, &str)
+            .next()
+            .and_then(|v| Some((v, iter.next()?)))
+            .and_then(|(v, w)| Some((v, w, iter.next()?)))
             .ok_or_else(|| eyre!("invalid image string"))?;
 
         let img_type = MediaImageType::try_from(img_type.parse::<i32>()?)

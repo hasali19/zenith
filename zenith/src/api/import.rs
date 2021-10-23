@@ -2,44 +2,30 @@ use std::borrow::Cow;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use atium::headers::ContentType;
-use atium::respond::RespondRequestExt;
-use atium::router::{Router, RouterRequestExt};
-use atium::Request;
-use atium::{endpoint, StatusCode};
-use atium::{Body, Responder};
-use bytes::Buf;
-use eyre::eyre;
-use mime::Mime;
-use multer::Multipart;
+use actix_multipart::Multipart;
+use actix_web::web::{self, Json};
+use actix_web::{get, post, HttpResponse, Responder};
 use serde::Deserialize;
-use serde_json::json;
+use serde_json::{json, Value};
 use tokio::fs::File;
 use tokio::io::BufWriter;
+use tokio_stream::StreamExt;
 use uuid::Uuid;
 
 use crate::api::error::bad_request;
 use crate::api::ext::OptionExt;
+use crate::api::ApiResult;
 use crate::config::Config;
 use crate::db::subtitles::{NewSubtitle, SubtitlePath};
 use crate::db::Db;
 use crate::library::scanner::{self, LibraryScanner, ScanOptions, VideoFileType};
-use crate::{db, subtitles, util};
+use crate::{db, subtitles, util, Ext};
 
-pub fn routes(router: &mut Router) {
-    router.route("/import/queue").get(get_import_queue);
-    router.route("/import/subtitle").post(import_subtitle);
-}
-
-#[endpoint]
-async fn get_import_queue(req: &mut Request) -> eyre::Result<()> {
-    let config: &Arc<Config> = req.ext().unwrap();
+#[get("/import/queue")]
+async fn get_import_queue(config: Ext<Arc<Config>>) -> ApiResult<Json<Vec<Value>>> {
     let import_path = match config.import.path.as_deref() {
         Some(path) => path,
-        None => {
-            req.ok().json(&vec![(); 0])?;
-            return Ok(());
-        }
+        None => return Ok(Json(vec![])),
     };
 
     let mut entries = vec![];
@@ -56,9 +42,7 @@ async fn get_import_queue(req: &mut Request) -> eyre::Result<()> {
         }));
     }
 
-    req.ok().json(&entries)?;
-
-    Ok(())
+    Ok(Json(entries))
 }
 
 #[derive(Deserialize)]
@@ -82,46 +66,33 @@ pub struct ImportSubtitleRequestData {
     language: Option<String>,
 }
 
-async fn multipart(req: &Request, body: Body) -> eyre::Result<Multipart<'static>> {
-    let content_type: Mime = req
-        .header::<ContentType>()
-        .or_bad_request("invalid content-type header")?
-        .into();
-
-    if content_type.essence_str() != "multipart/form-data" {
-        return Err(eyre!(bad_request(
-            "content-type must be multipart/form-data"
-        )));
-    }
-
-    let boundary = content_type
-        .get_param(mime::BOUNDARY)
-        .or_bad_request("missing boundary in content-type")?;
-
-    Ok(Multipart::new(body, boundary.as_str()))
-}
-
-#[endpoint]
-async fn import_subtitle(req: &mut Request) -> eyre::Result<impl Responder> {
-    let body = req.body();
-    let config: &Arc<Config> = req.ext().unwrap();
-    let db: &Db = req.ext().unwrap();
-
-    let mut multipart = multipart(req, body).await?;
-
+#[post("/import/subtitle")]
+pub async fn import_subtitle(
+    mut multipart: Multipart,
+    config: Ext<Arc<Config>>,
+    db: Db,
+) -> ApiResult<impl Responder> {
     let ImportSubtitleRequest { source, data } = {
-        let field = multipart
-            .next_field()
-            .await?
-            .or_bad_request("missing data field in mutipart body")?;
+        let mut field = multipart
+            .next()
+            .await
+            .or_bad_request("missing data field in mutipart body")?
+            .map_err(|e| bad_request(e))?;
 
-        if !matches!(field.name(), Some("data")) {
-            return Err(eyre!(bad_request(
-                "first field in multipart body must be 'data'"
-            )));
+        let content_disposition = field
+            .content_disposition()
+            .or_bad_request("missing content-disposition")?;
+
+        if !matches!(content_disposition.get_name(), Some("data")) {
+            return Err(bad_request("first field in multipart body must be 'data'"));
         }
 
-        serde_json::from_reader(field.bytes().await?.reader())?
+        let mut bytes = vec![];
+        while let Some(chunk) = field.next().await {
+            bytes.extend_from_slice(chunk.map_err(bad_request)?.as_ref());
+        }
+
+        serde_json::from_slice(&bytes).map_err(bad_request)?
     };
 
     let subtitles_dir = config.subtitles.path.join(data.video_id.to_string());
@@ -145,23 +116,19 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<impl Responder> {
                     let output_path = PathBuf::from(format!("data/tmp/{}.vtt", Uuid::new_v4()));
                     let output_file = BufWriter::new(File::create(&output_path).await?);
 
-                    subtitles::convert(config, input_file, output_file).await?;
+                    subtitles::convert(&config, input_file, output_file).await?;
 
                     output_path
                 }
-                _ => return Err(eyre!(bad_request("unsupported subtitle file extension",))),
+                _ => return Err(bad_request("unsupported subtitle file extension")),
             }
         }
         ImportSource::Upload => {
             let field = multipart
-                .next_field()
-                .await?
-                .or_bad_request("upload import source specified but no file found in request")?;
-
-            let content_type = field
-                .content_type()
-                .map(|c| c.essence_str())
-                .or_bad_request("missing content-type for file upload");
+                .next()
+                .await
+                .or_bad_request("upload import source specified but no file found in request")?
+                .map_err(bad_request)?;
 
             if !Path::new("data/tmp").exists() {
                 std::fs::create_dir_all("data/tmp")?;
@@ -170,12 +137,12 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<impl Responder> {
             let src_path = format!("data/tmp/{}.vtt", Uuid::new_v4());
             let file = BufWriter::new(File::create(&src_path).await?);
 
-            match content_type? {
+            match field.content_type().essence_str() {
                 // vtt subtitles can be directly written to the file
                 "text/vtt" => util::copy_stream(field, file).await?,
                 // srt subtitles need to be converted first
-                "application/x-subrip" => subtitles::convert(config, field, file).await?,
-                _ => return Err(eyre!(bad_request("unsupported subtitle content-type",))),
+                "application/x-subrip" => subtitles::convert(&config, field, file).await?,
+                _ => return Err(bad_request("unsupported subtitle content-type")),
             }
 
             PathBuf::from(src_path)
@@ -209,7 +176,7 @@ async fn import_subtitle(req: &mut Request) -> eyre::Result<impl Responder> {
 
     transaction.commit().await?;
 
-    Ok(StatusCode::OK)
+    Ok(HttpResponse::Ok())
 }
 
 #[derive(Deserialize)]
@@ -219,15 +186,15 @@ pub struct ImportMovieRequest {
     year: u32,
 }
 
-#[endpoint]
-pub async fn import_movie(req: &mut Request) -> eyre::Result<impl Responder> {
-    let data: ImportMovieRequest = req.body_json().await?;
-    let config: &Arc<Config> = req.ext().unwrap();
-    let scanner: &Arc<LibraryScanner> = req.ext().unwrap();
-
+#[post("/movies")]
+pub async fn import_movie(
+    Json(data): Json<ImportMovieRequest>,
+    config: Ext<Arc<Config>>,
+    scanner: Ext<Arc<LibraryScanner>>,
+) -> ApiResult<impl Responder> {
     let src_path = match data.source {
         ImportSource::Local { path, copy: _ } => path,
-        _ => return Err(eyre!(bad_request("unsupported import source"))),
+        _ => return Err(bad_request("unsupported import source")),
     };
 
     let src_path = PathBuf::from(src_path);
@@ -252,7 +219,7 @@ pub async fn import_movie(req: &mut Request) -> eyre::Result<impl Responder> {
         .scan_file(VideoFileType::Movie, &dst_path, ScanOptions::quick())
         .await?;
 
-    Ok(StatusCode::OK)
+    Ok(HttpResponse::Ok())
 }
 
 #[derive(Deserialize)]
@@ -261,19 +228,19 @@ pub struct ImportShowRequest {
     episodes: Vec<ImportEpisodeRequest>,
 }
 
-#[endpoint]
-pub async fn import_show(req: &mut Request) -> eyre::Result<impl Responder> {
-    let data: ImportShowRequest = req.body_json().await?;
-    let config: &Arc<Config> = req.ext().unwrap();
-    let scanner: &Arc<LibraryScanner> = req.ext().unwrap();
-
+#[post("/tv/shows")]
+pub async fn import_show(
+    Json(data): Json<ImportShowRequest>,
+    config: Ext<Arc<Config>>,
+    scanner: Ext<Arc<LibraryScanner>>,
+) -> ApiResult<impl Responder> {
     if data.episodes.is_empty() {
-        return Err(bad_request("show must have at least one episode").into());
+        return Err(bad_request("show must have at least one episode"));
     }
 
     let show_path = Path::new(&config.libraries.tv_shows).join(&data.name);
     if show_path.exists() {
-        return Err(bad_request(format!("{:?} already exists", show_path)).into());
+        return Err(bad_request(format!("{:?} already exists", show_path)));
     }
 
     std::fs::create_dir(&show_path)?;
@@ -285,7 +252,7 @@ pub async fn import_show(req: &mut Request) -> eyre::Result<impl Responder> {
             .await?;
     }
 
-    Ok(StatusCode::OK)
+    Ok(HttpResponse::Ok())
 }
 
 #[derive(Deserialize)]
@@ -295,15 +262,15 @@ pub struct ImportEpisodeRequest {
     episode_number: u32,
 }
 
-#[endpoint]
-pub async fn import_episode(req: &mut Request) -> eyre::Result<impl Responder> {
-    let show_id: i64 = req.param("show_id")?;
-    let data: ImportEpisodeRequest = req.body_json().await?;
-    let db: &Db = req.ext().unwrap();
-    let scanner: &Arc<LibraryScanner> = req.ext().unwrap();
-
+#[post("/tv/shows/{id}/episodes")]
+pub async fn import_episode(
+    show_id: web::Path<i64>,
+    Json(data): Json<ImportEpisodeRequest>,
+    db: Db,
+    scanner: Ext<Arc<LibraryScanner>>,
+) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
-    let show_path = db::shows::get_path(&mut conn, show_id)
+    let show_path = db::shows::get_path(&mut conn, *show_id)
         .await?
         .or_not_found("show not found")?;
 
@@ -313,26 +280,16 @@ pub async fn import_episode(req: &mut Request) -> eyre::Result<impl Responder> {
         .scan_file(VideoFileType::Episode, &path, ScanOptions::quick())
         .await?;
 
-    Ok(StatusCode::OK)
+    Ok(HttpResponse::Ok())
 }
 
 mod inner {
-    use std::path::{Path, PathBuf};
+    use super::*;
 
-    use eyre::eyre;
-
-    use crate::api::error::bad_request;
-    use crate::api::ext::OptionExt;
-
-    use super::{ImportEpisodeRequest, ImportSource};
-
-    pub async fn import_episode(
-        show_path: &Path,
-        req: ImportEpisodeRequest,
-    ) -> eyre::Result<PathBuf> {
+    pub async fn import_episode(show_path: &Path, req: ImportEpisodeRequest) -> ApiResult<PathBuf> {
         let src_path = match req.source {
             ImportSource::Local { path, copy: _ } => path,
-            _ => return Err(eyre!(bad_request("unsupported import source"))),
+            _ => return Err(bad_request("unsupported import source")),
         };
 
         let src_path = PathBuf::from(src_path);
@@ -343,8 +300,6 @@ mod inner {
         let dst_name = format!("S{:02}E{:02}", req.season_number, req.episode_number);
         let dst_path = Path::new(&show_path).join(dst_name).with_extension(src_ext);
 
-        // Just move the file into the library and let the fs watcher
-        // take care of the rest
         tracing::info!("moving {:?} to {:?}", src_path, dst_path);
         std::fs::rename(&src_path, &dst_path)?;
 

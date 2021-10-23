@@ -3,12 +3,9 @@ use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use atium::logger::Logger;
-use atium::responder::File;
-use atium::router::Router;
-use atium::state::State;
-use atium::Request;
-use zenith::broadcaster::Broadcaster;
+use actix_files::NamedFile;
+use actix_web::{web, App, HttpRequest, HttpServer};
+use tracing_actix_web::TracingLogger;
 use zenith::config::Config;
 use zenith::db::Db;
 use zenith::ffprobe::Ffprobe;
@@ -18,7 +15,7 @@ use zenith::metadata::MetadataManager;
 use zenith::tmdb::TmdbClient;
 use zenith::transcoder::Transcoder;
 
-#[tokio::main]
+#[actix_web::main]
 async fn main() -> eyre::Result<()> {
     color_eyre::install()?;
 
@@ -29,7 +26,6 @@ async fn main() -> eyre::Result<()> {
 
     let config = Arc::new(Config::load("config.yml")?);
     let db = Db::init(&config.database.path).await?;
-    let broadcaster = Broadcaster::new();
     let tmdb = TmdbClient::new(&config.tmdb.access_token);
     let metadata = MetadataManager::new(db.clone(), tmdb);
     let video_info_provider = Arc::new(Ffprobe::new(&config.transcoding.ffprobe_path));
@@ -48,30 +44,30 @@ async fn main() -> eyre::Result<()> {
 
     let addr = SocketAddr::from_str(&format!("{}:{}", config.http.host, config.http.port))?;
 
-    let router = Router::new().with(|r| {
-        r.route("/api/*").any(zenith::api::handler());
-    });
-
-    let state = atium::compose!(
-        State(config),
-        State(db.clone()),
-        State(metadata),
-        State(transcoder),
-        State(broadcaster),
-        State(scanner)
-    );
-
-    let app = atium::compose!(Logger::default(), state, router, spa);
-
-    atium::run(addr, app).await?;
+    HttpServer::new({
+        let db = db.clone();
+        move || {
+            App::new()
+                .app_data(config.clone())
+                .app_data(db.clone())
+                .app_data(metadata.clone())
+                .app_data(transcoder.clone())
+                .app_data(scanner.clone())
+                .wrap(TracingLogger::default())
+                .service(zenith::api::service())
+                .default_service(web::get().to(spa))
+        }
+    })
+    .bind(addr)?
+    .run()
+    .await?;
 
     db.close().await;
 
     Ok(())
 }
 
-#[atium::endpoint]
-async fn spa(req: &mut Request) -> eyre::Result<File> {
+async fn spa(req: HttpRequest) -> actix_web::Result<NamedFile> {
     let path = Path::new("client/web/dist").join(req.uri().path().trim_start_matches('/'));
     let path = if path.is_file() {
         path.as_path()
@@ -79,5 +75,5 @@ async fn spa(req: &mut Request) -> eyre::Result<File> {
         Path::new("client/web/dist/index.html")
     };
 
-    Ok(File::open(path).await?)
+    Ok(NamedFile::open(path)?)
 }

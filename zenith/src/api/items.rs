@@ -1,21 +1,14 @@
-use atium::query::QueryRequestExt;
-use atium::responder::Json;
-use atium::router::{Router, RouterRequestExt};
-use atium::{endpoint, Request, Responder};
+use actix_web::web::{Json, Path, Query};
+use actix_web::{get, patch, Responder};
 use serde::Deserialize;
 
 use crate::api::error::bad_request;
+use crate::api::ApiResult;
 use crate::db::media::MediaItemType;
 use crate::db::videos::UpdateVideoUserData;
 use crate::db::{self, Db};
 
 use super::ext::OptionExt;
-
-pub fn routes(router: &mut Router) {
-    router.route("/items").get(get_items);
-    router.route("/items/:id").get(get_item);
-    router.route("/items/:id/user_data").patch(update_user_data);
-}
 
 #[derive(Deserialize)]
 struct GetItemsQuery {
@@ -23,24 +16,18 @@ struct GetItemsQuery {
     ids: Vec<i64>,
 }
 
-#[endpoint]
-async fn get_items(req: &mut Request) -> eyre::Result<impl Responder> {
-    let query: GetItemsQuery = req.query()?;
-    let db: &Db = req.ext().unwrap();
+#[get("/items")]
+async fn get_items(Query(query): Query<GetItemsQuery>, db: Db) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
-
     let items = db::items::get_multiple(&mut conn, query.ids).await?;
-
     Ok(Json(items))
 }
 
-#[endpoint]
-async fn get_item(req: &mut Request) -> eyre::Result<impl Responder> {
-    let id: i64 = req.param("id")?;
-    let db: &Db = req.ext().unwrap();
+#[get("/items/{id}")]
+pub async fn get_item(id: Path<i64>, db: Db) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
 
-    let item = db::items::get(&mut conn, id)
+    let item = db::items::get(&mut conn, *id)
         .await?
         .or_not_found("media item not found")?;
 
@@ -55,27 +42,30 @@ struct VideoUserDataPatch {
     position: Option<f64>,
 }
 
-#[endpoint]
-async fn update_user_data(req: &mut Request) -> eyre::Result<impl Responder> {
-    let id: i64 = req.param("id")?;
-    let db: &Db = req.ext().unwrap();
+#[patch("/items/{id}/user_data")]
+async fn update_user_data(
+    id: Path<i64>,
+    data: Json<VideoUserDataPatch>,
+    db: Db,
+) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
 
-    let item_type = db::media::get_item_type(&mut conn, id)
+    let item_type = db::media::get_item_type(&mut conn, *id)
         .await?
         .or_not_found("media item not found")?;
 
     if !matches!(item_type, MediaItemType::Movie | MediaItemType::TvEpisode) {
-        return bad_request("updating user data is only allowed for movies and episodes").into();
+        return Err(bad_request(
+            "updating user data is only allowed for movies and episodes",
+        ));
     }
 
-    let data: VideoUserDataPatch = req.body_json().await.map_err(bad_request)?;
     let data = UpdateVideoUserData {
         is_watched: data.is_watched,
         position: data.position,
     };
 
-    let data = db::videos::update_user_data(&mut conn, id, data).await?;
+    let data = db::videos::update_user_data(&mut conn, *id, data).await?;
 
     Ok(Json(data))
 }

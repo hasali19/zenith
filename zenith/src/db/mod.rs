@@ -11,6 +11,9 @@ pub mod streams;
 pub mod subtitles;
 pub mod videos;
 
+use std::convert::Infallible;
+use std::future::{ready, Ready};
+
 use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::{Sqlite, SqlitePool, Transaction};
@@ -43,5 +46,14 @@ impl Db {
 
     pub async fn close(&self) {
         self.0.close().await
+    }
+}
+
+impl actix_web::FromRequest for Db {
+    type Error = Infallible;
+    type Future = Ready<Result<Self, Self::Error>>;
+
+    fn from_request(req: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
+        ready(Ok(req.app_data().cloned().unwrap()))
     }
 }

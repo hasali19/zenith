@@ -1,36 +1,29 @@
 use std::convert::Infallible;
 use std::sync::Arc;
 
-use atium::headers::{CacheControl, ContentType};
-use atium::query::QueryRequestExt;
-use atium::respond::RespondRequestExt;
-use atium::responder::Json;
-use atium::router::Router;
-use atium::{endpoint, Body, Request, Responder, StatusCode};
+use actix_web::http::header::{CacheControl, CacheDirective};
+use actix_web::web::{Json, Query};
+use actix_web::{get, post, HttpResponse, Responder};
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
 
+use crate::api::error::bad_request;
+use crate::api::ApiResult;
 use crate::transcoder::{self, Job, Transcoder};
-
-use super::error::bad_request;
+use crate::Ext;
 
 #[derive(Serialize)]
 struct State {
     queue: Vec<Job>,
 }
 
-pub fn routes(router: &mut Router) {
-    router.route("/transcoder").get(get_state).post(transcode);
-    router.route("/transcoder/events").get(get_events);
-}
-
-#[endpoint]
-async fn get_state(req: &mut Request) -> eyre::Result<impl Responder> {
-    let transcoder: &Arc<Transcoder> = req.ext().unwrap();
-    let queue = transcoder.queue().await;
-    Ok(Json(State { queue }))
+#[get("/transcoder")]
+pub async fn get_state(transcoder: Ext<Arc<Transcoder>>) -> ApiResult<impl Responder> {
+    Ok(Json(State {
+        queue: transcoder.queue().await,
+    }))
 }
 
 #[derive(Serialize)]
@@ -51,10 +44,8 @@ enum Event {
     Error { id: i64 },
 }
 
-#[endpoint]
-async fn get_events(req: &mut Request) -> eyre::Result<()> {
-    let transcoder: &Arc<Transcoder> = req.ext().unwrap();
-
+#[get("/transcoder/events")]
+pub async fn get_events(transcoder: Ext<Arc<Transcoder>>) -> ApiResult<impl Responder> {
     let queue = transcoder.queue().await;
 
     let initial = {
@@ -75,12 +66,10 @@ async fn get_events(req: &mut Request) -> eyre::Result<()> {
         Some(Ok::<_, Infallible>(sse_data(&event)))
     });
 
-    req.ok()
-        .header(CacheControl::new().with_no_cache())
-        .header(ContentType::from(mime::TEXT_EVENT_STREAM))
-        .body(Body::wrap_stream(initial.chain(events)));
-
-    Ok(())
+    Ok(HttpResponse::Ok()
+        .insert_header(CacheControl(vec![CacheDirective::NoCache]))
+        .content_type(mime::TEXT_EVENT_STREAM)
+        .streaming(initial.chain(events)))
 }
 
 fn sse_data(val: &impl Serialize) -> Bytes {
@@ -99,16 +88,16 @@ pub struct TranscodeParams {
     all: bool,
 }
 
-#[endpoint]
-async fn transcode(req: &mut Request) -> eyre::Result<impl Responder> {
-    let params: TranscodeParams = req.query()?;
-    let transcoder: &Arc<Transcoder> = req.ext().unwrap();
-
-    match params.video_id {
+#[post("/transcoder")]
+pub async fn transcode(
+    query: Query<TranscodeParams>,
+    transcoder: Ext<Arc<Transcoder>>,
+) -> ApiResult<impl Responder> {
+    match query.video_id {
         Some(id) => transcoder.enqueue(Job::new(id)).await,
-        None if params.all => transcoder.enqueue_all().await,
-        None => return Err(bad_request("no video to transcode").into()),
+        None if query.all => transcoder.enqueue_all().await,
+        None => return Err(bad_request("no video to transcode")),
     }
 
-    Ok(StatusCode::OK)
+    Ok(HttpResponse::Ok())
 }
