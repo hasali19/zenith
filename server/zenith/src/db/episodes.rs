@@ -133,6 +133,36 @@ pub async fn get_for_season(
     Ok(sqlx::query_as(sql).bind(season_id).fetch_all(conn).await?)
 }
 
+pub async fn get_for_show(conn: &mut SqliteConnection, show_id: i64) -> eyre::Result<Vec<Episode>> {
+    let sql = "
+        SELECT
+            episode.item_id AS id,
+            show_id,
+            season_id,
+            season_number,
+            episode_number,
+            episode.name,
+            episode.air_date,
+            episode.overview,
+            episode.thumbnail,
+            episode.tmdb_id,
+            video.path,
+            duration,
+            COALESCE(is_watched, 0) AS is_watched,
+            position,
+            format_name
+        FROM tv_episodes AS episode
+        JOIN tv_seasons AS season ON season.item_id = episode.season_id
+        JOIN tv_shows AS show ON show.item_id = season.show_id
+        JOIN video_files AS video ON video.item_id = episode.item_id
+        LEFT JOIN user_item_data AS user ON user.item_id = episode.item_id
+        WHERE season.show_id = ?
+        ORDER BY episode_number
+    ";
+
+    Ok(sqlx::query_as(sql).bind(show_id).fetch_all(conn).await?)
+}
+
 pub struct UpdateMetadata<'a> {
     pub name: Option<&'a str>,
     pub overview: Option<&'a str>,

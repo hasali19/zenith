@@ -40,6 +40,7 @@ fn configure_services(config: &mut ServiceConfig) {
     config
         .service(items::get_items)
         .service(items::get_item)
+        .service(items::update_user_data)
         .service(movies::get_movies)
         .service(movies::get_recent_movies)
         .service(movies::get_movie)

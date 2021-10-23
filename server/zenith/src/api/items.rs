@@ -1,8 +1,7 @@
 use actix_web::web::{Json, Path, Query};
-use actix_web::{get, patch, Responder};
+use actix_web::{get, patch, HttpResponse, Responder};
 use serde::Deserialize;
 
-use crate::api::error::bad_request;
 use crate::api::ApiResult;
 use crate::db::media::MediaItemType;
 use crate::db::videos::UpdateVideoUserData;
@@ -54,18 +53,32 @@ async fn update_user_data(
         .await?
         .or_not_found("media item not found")?;
 
-    if !matches!(item_type, MediaItemType::Movie | MediaItemType::TvEpisode) {
-        return Err(bad_request(
-            "updating user data is only allowed for movies and episodes",
-        ));
-    }
+    let mut ids = vec![];
 
-    let data = UpdateVideoUserData {
-        is_watched: data.is_watched,
-        position: data.position,
+    match item_type {
+        MediaItemType::Movie | MediaItemType::TvEpisode => ids.push(*id),
+        MediaItemType::TvShow => ids.extend(
+            db::episodes::get_for_show(&mut conn, *id)
+                .await?
+                .iter()
+                .map(|e| e.id),
+        ),
+        MediaItemType::TvSeason => ids.extend(
+            db::episodes::get_for_season(&mut conn, *id)
+                .await?
+                .iter()
+                .map(|e| e.id),
+        ),
     };
 
-    let data = db::videos::update_user_data(&mut conn, *id, data).await?;
+    for id in ids {
+        let data = UpdateVideoUserData {
+            is_watched: data.is_watched,
+            position: data.position,
+        };
 
-    Ok(Json(data))
+        db::videos::update_user_data(&mut conn, id, data).await?;
+    }
+
+    Ok(HttpResponse::Ok())
 }
