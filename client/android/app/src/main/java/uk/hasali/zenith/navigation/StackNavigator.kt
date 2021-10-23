@@ -15,18 +15,11 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import kotlinx.parcelize.Parcelize
-
-@Parcelize
-data class StackNavigatorState<T : Parcelable>(val backstack: List<NavEntryState<T>>) : Parcelable
-
-@Parcelize
-data class NavEntryState<T : Parcelable>(val screen: T, val state: Bundle) : Parcelable
 
 class StackNavigator<T : Parcelable> constructor(
     private val lifecycleOwner: LifecycleOwner,
     private val viewModelStoreProvider: ViewModelStoreProvider,
-    private val savedState: StackNavigatorState<T>?,
+    private val savedState: Bundle?,
 ) {
     private val _entering = mutableListOf<DefaultNavEntry<T>>()
     private val _suspending = mutableListOf<DefaultNavEntry<T>>()
@@ -35,8 +28,8 @@ class StackNavigator<T : Parcelable> constructor(
     private val _stack = SnapshotStateList<DefaultNavEntry<T>>().apply {
         if (savedState != null) {
             // Restore backstack from saved state
-            savedState.backstack.forEach {
-                add(createEntry(it.screen, it.state))
+            savedState.getParcelableArrayList<Bundle>("backstack")?.forEach {
+                add(createEntry(it.getParcelable("screen")!!, it.getBundle("state")))
             }
 
             // Ensure that the topmost entry gets RESUMED
@@ -106,8 +99,20 @@ class StackNavigator<T : Parcelable> constructor(
         _entering.add(_stack.last())
     }
 
-    fun saveState(): StackNavigatorState<T> {
-        return StackNavigatorState(_stack.map { NavEntryState(it.screen, it.saveState()) })
+    fun saveState(): Bundle {
+        val state = Bundle()
+        val stack = ArrayList<Bundle>(_stack.size)
+
+        for (item in _stack) {
+            stack.add(Bundle().apply {
+                putParcelable("screen", item.screen)
+                putBundle("state", item.saveState())
+            })
+        }
+
+        state.putParcelableArrayList("backstack", stack)
+
+        return state
     }
 
     private fun createEntry(screen: T, savedState: Bundle? = null): DefaultNavEntry<T> {
