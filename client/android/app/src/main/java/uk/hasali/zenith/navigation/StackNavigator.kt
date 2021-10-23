@@ -1,5 +1,6 @@
 package uk.hasali.zenith.navigation
 
+import android.os.Bundle
 import android.os.Parcelable
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
@@ -14,35 +15,36 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import kotlinx.parcelize.Parcelize
 
-class StackNavigator<T : Any>(
+@Parcelize
+data class StackNavigatorState<T : Parcelable>(val backstack: List<NavEntryState<T>>) : Parcelable
+
+@Parcelize
+data class NavEntryState<T : Parcelable>(val screen: T, val state: Bundle) : Parcelable
+
+class StackNavigator<T : Parcelable> constructor(
     private val lifecycleOwner: LifecycleOwner,
     private val viewModelStoreProvider: ViewModelStoreProvider,
-    stack: List<T>,
+    private val savedState: StackNavigatorState<T>?,
 ) {
-    constructor(
-        lifecycleOwner: LifecycleOwner,
-        viewModelStoreProvider: ViewModelStoreProvider,
-        initial: T,
-    ) : this(lifecycleOwner, viewModelStoreProvider, listOf(initial))
-
     private val _entering = mutableListOf<DefaultNavEntry<T>>()
     private val _suspending = mutableListOf<DefaultNavEntry<T>>()
     private val _exiting = mutableListOf<DefaultNavEntry<T>>()
 
     private val _stack = SnapshotStateList<DefaultNavEntry<T>>().apply {
-        for (item in stack) {
-            add(
-                DefaultNavEntry(item, viewModelStoreProvider).apply {
-                    setLifecycleState(Lifecycle.State.CREATED)
-                    setParentLifecycleState(lifecycleOwner.lifecycle.currentState)
-                }
-            )
-        }
+        if (savedState != null) {
+            // Restore backstack from saved state
+            savedState.backstack.forEach {
+                add(createEntry(it.screen, it.state))
+            }
 
-        // Ensure that the topmost entry gets put into RESUMED
-        // when it enters the screen
-        _entering.add(last())
+            // Ensure that the topmost entry gets RESUMED
+            // when it enters the screen
+            lastOrNull()?.let {
+                _entering.add(it)
+            }
+        }
     }
 
     val stack: List<NavEntry<T>> get() = _stack
@@ -72,15 +74,15 @@ class StackNavigator<T : Any>(
     }
 
     fun push(screen: T) {
-        val from = _stack.last()
-        val to = DefaultNavEntry(screen, viewModelStoreProvider).apply {
-            setLifecycleState(Lifecycle.State.CREATED)
-            setParentLifecycleState(lifecycleOwner.lifecycle.currentState)
-        }
+        val from = _stack.lastOrNull()
+        val to = createEntry(screen)
 
         _stack.add(to)
         _entering.add(to)
-        _suspending.add(from)
+
+        if (from != null) {
+            _suspending.add(from)
+        }
     }
 
     fun pop() {
@@ -88,10 +90,7 @@ class StackNavigator<T : Any>(
             return
         }
 
-        _stack.removeLast().also {
-            _exiting.add(it)
-        }
-
+        _exiting.add(_stack.removeLast())
         _entering.add(_stack.last())
     }
 
@@ -100,12 +99,22 @@ class StackNavigator<T : Any>(
             return
         }
 
-        _stack.last()
         while (stack.size > 1) {
             _exiting.add(_stack.removeLast())
         }
 
         _entering.add(_stack.last())
+    }
+
+    fun saveState(): StackNavigatorState<T> {
+        return StackNavigatorState(_stack.map { NavEntryState(it.screen, it.saveState()) })
+    }
+
+    private fun createEntry(screen: T, savedState: Bundle? = null): DefaultNavEntry<T> {
+        return DefaultNavEntry(screen, viewModelStoreProvider, savedState).apply {
+            setLifecycleState(Lifecycle.State.CREATED)
+            setParentLifecycleState(lifecycleOwner.lifecycle.currentState)
+        }
     }
 }
 
@@ -118,11 +127,13 @@ fun <T : Parcelable> rememberStackNavigator(initial: T): StackNavigator<T> {
 
     return rememberSaveable(
         saver = Saver(
-            save = { v -> v.stack.map { it.screen }.toList() },
+            save = { nav -> nav.saveState() },
             restore = { StackNavigator(lifecycleOwner, viewModelStoreProvider, it) },
         ),
     ) {
-        StackNavigator(lifecycleOwner, viewModelStoreProvider, initial)
+        StackNavigator<T>(lifecycleOwner, viewModelStoreProvider, null).apply {
+            push(initial)
+        }
     }
 }
 
@@ -148,6 +159,8 @@ fun <T : Parcelable> StackNavigator<T>.ContentHost(content: @Composable (T) -> U
             } else {
                 fadeIn(tween()) + scaleIn(tween(), initialScale = 1.1f) with
                         fadeOut(tween()) + scaleOut(tween(), targetScale = 0.8f)
+            }.apply {
+                targetContentZIndex = targetState.level.toFloat()
             }
         },
     ) { entry ->

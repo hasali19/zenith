@@ -1,27 +1,35 @@
 package uk.hasali.zenith.navigation
 
+import android.os.Bundle
 import android.os.Parcelable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.saveable.SaveableStateHolder
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalSavedStateRegistryOwner
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryController
+import androidx.savedstate.SavedStateRegistryOwner
 
-interface NavEntry<T> : LifecycleOwner, ViewModelStoreOwner {
+interface NavEntry<T> : LifecycleOwner, SavedStateRegistryOwner, ViewModelStoreOwner {
     val screen: T
 
     fun setLifecycleState(state: Lifecycle.State)
     fun setParentLifecycleState(state: Lifecycle.State)
 }
 
-class DefaultNavEntry<T : Any>(
+class DefaultNavEntry<T : Parcelable>(
     override val screen: T,
     private val viewModelStoreProvider: ViewModelStoreProvider,
+    private val savedState: Bundle?,
 ) : NavEntry<T> {
     private var parentLifecycleState = Lifecycle.State.INITIALIZED
     private var lifecycleState = Lifecycle.State.INITIALIZED
     private val lifecycle = LifecycleRegistry(this)
+    private val savedStateRegistryController = SavedStateRegistryController.create(this)
+        .apply { performRestore(savedState) }
 
     override fun setLifecycleState(state: Lifecycle.State) {
         lifecycleState = state
@@ -45,6 +53,10 @@ class DefaultNavEntry<T : Any>(
         return lifecycle
     }
 
+    override fun getSavedStateRegistry(): SavedStateRegistry {
+        return savedStateRegistryController.savedStateRegistry
+    }
+
     override fun getViewModelStore(): ViewModelStore {
         return viewModelStoreProvider.get(this)
     }
@@ -55,6 +67,10 @@ class DefaultNavEntry<T : Any>(
 
     override fun hashCode(): Int {
         return screen.hashCode()
+    }
+
+    fun saveState() = Bundle().apply {
+        savedStateRegistryController.performSave(this)
     }
 }
 
@@ -67,8 +83,9 @@ fun <T : Parcelable> NavEntry<T>.LocalsProvider(
 
     CompositionLocalProvider(
         LocalLifecycleOwner provides this,
-        LocalViewModelStoreOwner provides this,
         LocalNavScreenProvider provides navScreenProvider,
+        LocalSavedStateRegistryOwner provides this,
+        LocalViewModelStoreOwner provides this,
     ) {
         holder.SaveableStateProvider(screen) {
             content()
