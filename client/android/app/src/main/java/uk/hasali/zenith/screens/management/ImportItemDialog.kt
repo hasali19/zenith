@@ -1,4 +1,4 @@
-package uk.hasali.zenith.ui
+package uk.hasali.zenith.screens.management
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.*
+import uk.hasali.zenith.ui.LocalZenithClient
 
 private class EpisodeData(
     show: Show?,

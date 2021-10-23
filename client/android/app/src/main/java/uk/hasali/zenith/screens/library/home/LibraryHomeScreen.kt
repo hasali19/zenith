@@ -1,4 +1,4 @@
-package uk.hasali.zenith.screens
+package uk.hasali.zenith.screens.library.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,41 +19,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.Movie
 import uk.hasali.zenith.Show
-import uk.hasali.zenith.ui.AppBar
-import uk.hasali.zenith.ui.CastButton
-import uk.hasali.zenith.ui.LocalZenithClient
-import uk.hasali.zenith.ui.MediaItemWithPoster
+import uk.hasali.zenith.navigation.hiltViewModel
+import uk.hasali.zenith.ui.*
 
 @Composable
 fun LibraryHomeScreen(
+    model: LibraryHomeViewModel = hiltViewModel(),
     onNavigateToMovies: () -> Unit,
     onNavigateToShows: () -> Unit,
     onNavigateToMovie: (Movie) -> Unit,
     onNavigateToShow: (Show) -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
-    val client = LocalZenithClient.current
-
-    var isRefreshing by remember { mutableStateOf(true) }
-    var movies by remember { mutableStateOf(emptyList<Movie>()) }
-    var shows by remember { mutableStateOf(emptyList<Show>()) }
-
-    suspend fun refresh() {
-        isRefreshing = true
-        movies = client.getRecentMovies()
-        shows = client.getRecentShows()
-        isRefreshing = false
-    }
-
-    LaunchedEffect(Unit) {
-        refresh()
-    }
+    val state by rememberFlowWithLifecycle(model.state)
+        .collectAsState(LibraryHomeViewState())
 
     Scaffold(
         topBar = {
@@ -63,10 +46,10 @@ fun LibraryHomeScreen(
         },
     ) {
         LibraryHomeScreen(
-            movies = movies,
-            shows = shows,
-            isRefreshing = isRefreshing,
-            onRefresh = { scope.launch { refresh() } },
+            movies = state.movies,
+            shows = state.shows,
+            isRefreshing = state.isRefreshing,
+            onRefresh = model::refresh,
             onNavigateToMovies = onNavigateToMovies,
             onNavigateToShows = onNavigateToShows,
             onNavigateToMovie = onNavigateToMovie,

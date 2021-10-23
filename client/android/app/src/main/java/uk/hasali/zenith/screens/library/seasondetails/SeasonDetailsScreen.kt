@@ -1,4 +1,4 @@
-package uk.hasali.zenith.screens
+package uk.hasali.zenith.screens.library.seasondetails
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -13,8 +13,8 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,27 +22,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import uk.hasali.zenith.Episode
 import uk.hasali.zenith.Season
+import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.*
 
 @Composable
 fun SeasonDetailsScreen(
-    id: Int,
+    model: SeasonDetailsViewModel = hiltViewModel(),
     onNavigateToEpisode: (Episode) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    val client = LocalZenithClient.current
-
-    val season by produceState<Season?>(null, id) {
-        value = client.getSeason(id)
-    }
-
-    val episodes by produceState<List<Episode>?>(null, id) {
-        value = client.getEpisodes(id)
-    }
+    val state by rememberFlowWithLifecycle(model.state)
+        .collectAsState(SeasonDetailsViewState())
 
     SeasonDetailsScreen(
-        season = season,
-        episodes = episodes,
+        season = state.season,
+        episodes = state.episodes,
         onNavigateToEpisode = onNavigateToEpisode,
         onNavigateUp = onNavigateUp,
     )

@@ -29,6 +29,16 @@ import uk.hasali.zenith.navigation.ContentHost
 import uk.hasali.zenith.navigation.StackNavigator
 import uk.hasali.zenith.navigation.rememberStackNavigator
 import uk.hasali.zenith.screens.*
+import uk.hasali.zenith.screens.library.episodedetails.EpisodeDetailsScreen
+import uk.hasali.zenith.screens.library.home.LibraryHomeScreen
+import uk.hasali.zenith.screens.library.moviedetails.MovieDetailsScreen
+import uk.hasali.zenith.screens.library.movies.MoviesScreen
+import uk.hasali.zenith.screens.library.seasondetails.SeasonDetailsScreen
+import uk.hasali.zenith.screens.library.showdetails.ShowDetailsScreen
+import uk.hasali.zenith.screens.library.shows.ShowsScreen
+import uk.hasali.zenith.screens.management.ImportQueueScreen
+import uk.hasali.zenith.screens.management.ManagementHomeScreen
+import uk.hasali.zenith.screens.management.TranscodeQueueScreen
 import uk.hasali.zenith.screens.player.PlayerScreen
 import uk.hasali.zenith.screens.player.VideoItemType
 
@@ -205,25 +215,21 @@ private fun LibraryArea(
             )
 
             is LibraryScreen.MovieDetails -> MovieDetailsScreen(
-                id = screen.id,
                 onPlay = { onNavigateToPlayer(screen.id, VideoItemType.Movie, it) },
                 onNavigateUp = { navigator.pop() },
             )
 
             is LibraryScreen.ShowDetails -> ShowDetailsScreen(
-                id = screen.id,
                 onNavigateToSeason = { navigator.push(LibraryScreen.SeasonDetails(it.id)) },
                 onNavigateUp = { navigator.pop() },
             )
 
             is LibraryScreen.SeasonDetails -> SeasonDetailsScreen(
-                id = screen.id,
                 onNavigateToEpisode = { navigator.push(LibraryScreen.EpisodeDetails(it.id)) },
                 onNavigateUp = { navigator.pop() },
             )
 
             is LibraryScreen.EpisodeDetails -> EpisodeDetailsScreen(
-                id = screen.id,
                 onPlay = { onNavigateToPlayer(screen.id, VideoItemType.TvShow, it) },
                 onNavigateUp = { navigator.pop() },
             )

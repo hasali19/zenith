@@ -1,4 +1,4 @@
-package uk.hasali.zenith.screens
+package uk.hasali.zenith.screens.management
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*

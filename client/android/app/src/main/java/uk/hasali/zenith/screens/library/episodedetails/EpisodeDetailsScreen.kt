@@ -1,4 +1,4 @@
-package uk.hasali.zenith.screens
+package uk.hasali.zenith.screens.library.episodedetails
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -6,51 +6,31 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
-import uk.hasali.zenith.Episode
-import uk.hasali.zenith.Season
-import uk.hasali.zenith.Show
-import uk.hasali.zenith.VideoUserDataPatch
+import uk.hasali.zenith.*
+import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.*
 
 @Composable
-fun EpisodeDetailsScreen(id: Int, onPlay: (position: Double?) -> Unit, onNavigateUp: () -> Unit) {
-    val scope = rememberCoroutineScope()
-    val client = LocalZenithClient.current
-
-    val episode by produceState<Episode?>(null, id) {
-        value = client.getItem(id) as Episode
-    }
-
-    val season by produceState<Season?>(null, episode) {
-        episode?.let { episode ->
-            value = client.getSeason(episode.seasonId)
-        }
-    }
-
-    val show by produceState<Show?>(null, episode) {
-        episode?.let { episode ->
-            value = client.getShow(episode.showId)
-        }
-    }
+fun EpisodeDetailsScreen(
+    model: EpisodeDetailsViewModel = hiltViewModel(),
+    onPlay: (position: Double?) -> Unit,
+    onNavigateUp: () -> Unit,
+) {
+    val state by rememberFlowWithLifecycle(model.state)
+        .collectAsState(EpisodeDetailsViewState())
 
     EpisodeDetailsScreen(
-        show = show,
-        season = season,
-        episode = episode,
-        onSetWatched = {
-            scope.launch {
-                client.updateUserData(id, VideoUserDataPatch(isWatched = it))
-            }
-        },
+        show = state.show,
+        season = state.season,
+        episode = state.episode,
+        onSetWatched = model::setWatched,
         onPlay = onPlay,
-        onTranscode = { scope.launch { client.startTranscode(id) } },
-        onRefreshMetadata = { scope.launch { client.refreshMetadata(id) } },
+        onTranscode = model::startTranscode,
+        onRefreshMetadata = model::refreshMetadata,
         onNavigateUp = onNavigateUp,
     )
 }

@@ -1,22 +1,24 @@
-package uk.hasali.zenith.screens
+package uk.hasali.zenith.screens.library.shows
 
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import uk.hasali.zenith.Show
+import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.AppBar
 import uk.hasali.zenith.ui.CastButton
-import uk.hasali.zenith.ui.LocalZenithClient
 import uk.hasali.zenith.ui.PosterGridListScreen
+import uk.hasali.zenith.ui.rememberFlowWithLifecycle
 
 @Composable
-fun ShowsScreen(onNavigateToShow: (Show) -> Unit, onNavigateUp: () -> Unit) {
-    val client = LocalZenithClient.current
-
-    val shows by produceState<List<Show>?>(null) {
-        value = client.getShows()
-    }
+fun ShowsScreen(
+    model: ShowsViewModel = hiltViewModel(),
+    onNavigateToShow: (Show) -> Unit,
+    onNavigateUp: () -> Unit,
+) {
+    val shows by rememberFlowWithLifecycle(model.shows)
+        .collectAsState(null)
 
     Scaffold(
         topBar = {

@@ -1,4 +1,4 @@
-package uk.hasali.zenith.screens
+package uk.hasali.zenith.screens.management
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

@@ -1,22 +1,24 @@
-package uk.hasali.zenith.screens
+package uk.hasali.zenith.screens.library.movies
 
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import uk.hasali.zenith.Movie
+import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.AppBar
 import uk.hasali.zenith.ui.CastButton
-import uk.hasali.zenith.ui.LocalZenithClient
 import uk.hasali.zenith.ui.PosterGridListScreen
+import uk.hasali.zenith.ui.rememberFlowWithLifecycle
 
 @Composable
-fun MoviesScreen(onNavigateToMovie: (Movie) -> Unit, onNavigateUp: () -> Unit) {
-    val client = LocalZenithClient.current
-
-    val movies by produceState<List<Movie>?>(null) {
-        value = client.getMovies()
-    }
+fun MoviesScreen(
+    model: MoviesViewModel = hiltViewModel(),
+    onNavigateToMovie: (Movie) -> Unit,
+    onNavigateUp: () -> Unit,
+) {
+    val movies by rememberFlowWithLifecycle(model.movies)
+        .collectAsState(null)
 
     Scaffold(
         topBar = {

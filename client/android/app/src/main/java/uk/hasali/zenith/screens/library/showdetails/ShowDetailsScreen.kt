@@ -1,4 +1,4 @@
-package uk.hasali.zenith.screens
+package uk.hasali.zenith.screens.library.showdetails
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -6,8 +6,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -16,23 +16,21 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.Season
 import uk.hasali.zenith.Show
+import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.*
 
 @Composable
-fun ShowDetailsScreen(id: Int, onNavigateToSeason: (Season) -> Unit, onNavigateUp: () -> Unit) {
-    val client = LocalZenithClient.current
-
-    val show by produceState<Show?>(null, id) {
-        value = client.getShow(id)
-    }
-
-    val seasons by produceState<List<Season>?>(null, id) {
-        value = client.getSeasons(id)
-    }
+fun ShowDetailsScreen(
+    model: ShowDetailsViewModel = hiltViewModel(),
+    onNavigateToSeason: (Season) -> Unit,
+    onNavigateUp: () -> Unit
+) {
+    val state by rememberFlowWithLifecycle(model.state)
+        .collectAsState(ShowDetailsViewState())
 
     ShowDetailsScreen(
-        show = show,
-        seasons = seasons,
+        show = state.show,
+        seasons = state.seasons,
         onNavigateToSeason = onNavigateToSeason,
         onNavigateUp = onNavigateUp,
     )
