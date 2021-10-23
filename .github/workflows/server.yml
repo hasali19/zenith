@@ -4,12 +4,11 @@ on:
   push:
     paths:
       - .github/workflows/server.yml
-      - zenith/**
-      - migrations/**
+      - server/**
+      - client/web/**
       - Cargo.lock
       - Cargo.toml
       - Dockerfile
-      - client/web/**
 
 jobs:
   lint_server:
