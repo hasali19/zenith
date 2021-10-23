@@ -10,7 +10,7 @@ use crate::Ext;
 
 #[post("/scanner/start")]
 pub async fn start_scan(Ext(scanner): Ext<Arc<LibraryScanner>>) -> impl Responder {
-    scanner.clone().start_scan(ScanOptions {
+    scanner.start_scan(ScanOptions {
         rescan_files: true,
         refresh_metadata: false,
     });

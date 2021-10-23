@@ -34,15 +34,10 @@ impl<T: Clone + 'static> FromRequest for Ext<T> {
     type Future = Ready<Result<Self, Self::Error>>;
 
     fn from_request(req: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
-        ready(
-            req.app_data()
-                .cloned()
-                .map(|val: T| Ext(val))
-                .ok_or_else(|| {
-                    let type_name = type_name::<Self>();
-                    let message = format!("failed to extract {} from request", type_name);
-                    ErrorInternalServerError(message)
-                }),
-        )
+        ready(req.app_data().cloned().map(Ext).ok_or_else(|| {
+            let type_name = type_name::<Self>();
+            let message = format!("failed to extract {} from request", type_name);
+            ErrorInternalServerError(message)
+        }))
     }
 }

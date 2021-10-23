@@ -31,8 +31,7 @@ async fn get_files(
         None => {
             return Err(bad_request(
                 "No path specified, and no default import path has been configured",
-            )
-            .into());
+            ));
         }
     };
 

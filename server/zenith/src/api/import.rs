@@ -77,7 +77,7 @@ pub async fn import_subtitle(
             .next()
             .await
             .or_bad_request("missing data field in mutipart body")?
-            .map_err(|e| bad_request(e))?;
+            .map_err(bad_request)?;
 
         let content_disposition = field
             .content_disposition()
@@ -152,7 +152,7 @@ pub async fn import_subtitle(
     let dst_name = Uuid::new_v4().to_string();
     let dst_path = subtitles_dir.join(dst_name).with_extension("vtt");
     if dst_path.exists() {
-        return Err(bad_request(format!("{:?} already exists", dst_path)).into());
+        return Err(bad_request(format!("{:?} already exists", dst_path)));
     }
 
     let mut transaction = db.begin().await?;
@@ -206,7 +206,7 @@ pub async fn import_movie(
     let dst_dir = Path::new(&config.libraries.movies).join(&dst_name);
 
     if dst_dir.exists() {
-        return Err(bad_request(format!("{:?} already exists", dst_dir)).into());
+        return Err(bad_request(format!("{:?} already exists", dst_dir)));
     }
 
     let dst_path = dst_dir.join(dst_name).with_extension(src_ext);
