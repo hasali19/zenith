@@ -1,7 +1,6 @@
 package uk.hasali.zenith.screens.player
 
 import android.net.Uri
-import android.support.v4.media.session.MediaSessionCompat
 import android.widget.Toast
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,15 +11,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import com.google.android.exoplayer2.*
-import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
-import com.google.android.exoplayer2.source.MergingMediaSource
-import com.google.android.exoplayer2.source.SingleSampleMediaSource
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
-import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
-import com.google.android.exoplayer2.util.MimeTypes
+import androidx.media3.common.*
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.MergingMediaSource
+import androidx.media3.exoplayer.source.SingleSampleMediaSource
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.session.MediaSession
+import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -44,6 +44,7 @@ fun LocalPlayer(
     }
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class)
 @Composable
 private fun VideoPlayer(
@@ -55,9 +56,6 @@ private fun VideoPlayer(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
-    val session = remember { MediaSessionCompat(context, context.packageName) }
-    val connector = remember { MediaSessionConnector(session) }
 
     var position by remember { mutableStateOf(0L) }
     var isPlaying by remember { mutableStateOf(true) }
@@ -84,18 +82,20 @@ private fun VideoPlayer(
             val mappedTrackInfo = selector.currentMappedTrackInfo ?: return
             val trackGroups = mappedTrackInfo.getTrackGroups(renderer)
 
-            var track: Pair<Int, Int>? = null
-            for (i in 0 until trackGroups.length) {
-                val group = trackGroups[i]
+            var group: TrackGroup? = null
+            var track: Int? = null
+            outer@for (i in 0 until trackGroups.length) {
+                group = trackGroups[i]
                 for (j in 0 until group.length) {
                     val format = group.getFormat(j)
                     if (format.id == trackId) {
-                        track = Pair(i, j)
+                        track = j
+                        break@outer
                     }
                 }
             }
 
-            if (track == null) {
+            if (group == null || track == null) {
                 val toast = Toast.makeText(
                     context,
                     "Failed to find requested subtitle track",
@@ -104,13 +104,13 @@ private fun VideoPlayer(
                 return toast.show()
             }
 
+            val overrides = TrackSelectionOverrides.Builder()
+                .setOverrideForType(TrackSelectionOverrides.TrackSelectionOverride(group, listOf(track)))
+                .build()
+
             selector.parameters = selector.buildUponParameters()
                 .setRendererDisabled(renderer, false)
-                .setSelectionOverride(
-                    renderer,
-                    trackGroups,
-                    DefaultTrackSelector.SelectionOverride(track.first, track.second),
-                )
+                .setTrackSelectionOverrides(overrides)
                 .build()
 
             selectedSubtitle = subtitle
@@ -118,7 +118,7 @@ private fun VideoPlayer(
     }
 
     val player = remember {
-        SimpleExoPlayer.Builder(context)
+        ExoPlayer.Builder(context)
             .setTrackSelector(selector)
             .build()
             .also { player ->
@@ -175,6 +175,11 @@ private fun VideoPlayer(
             }
     }
 
+    val session = remember {
+        MediaSession.Builder(context, player)
+            .build()
+    }
+
     DisposableEffect(item) {
         val mediaItem = MediaItem.fromUri(item.url)
 
@@ -187,7 +192,12 @@ private fun VideoPlayer(
         item.subtitles.filterIsInstance<SubtitleTrack.External>()
             .forEach {
                 val uri = Uri.parse(it.url)
-                val subtitle = MediaItem.Subtitle(uri, MimeTypes.APPLICATION_SUBRIP, null)
+
+                val subtitle = MediaItem.SubtitleConfiguration.Builder(uri)
+                    .setMimeType(MimeTypes.TEXT_VTT)
+                    .setLanguage(it.language)
+                    .setLabel(it.title)
+                    .build()
 
                 val source = SingleSampleMediaSource.Factory(dataSourceFactory)
                     .setTrackId("external:${it.id}")
@@ -208,10 +218,7 @@ private fun VideoPlayer(
     }
 
     DisposableEffect(Unit) {
-        connector.setPlayer(player)
-
         onDispose {
-            connector.setPlayer(null)
             session.release()
             player.release()
         }

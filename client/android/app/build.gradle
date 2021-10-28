@@ -39,7 +39,6 @@ def getGitHash = { ->
 
 def accompanist_version = '0.19.0'
 def compose_version = '1.1.0-alpha06'
-def exoplayer_version = '2.15.1'
 def ktor_version = '1.6.4'
 
 android {
@@ -119,6 +118,10 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0-rc01"
     implementation 'androidx.mediarouter:mediarouter:1.2.5'
 
+    implementation "androidx.media3:media3-exoplayer:1.0.0-alpha01"
+    implementation "androidx.media3:media3-session:1.0.0-alpha01"
+    implementation "androidx.media3:media3-ui:1.0.0-alpha01"
+
     implementation "androidx.compose.ui:ui:$compose_version"
     implementation "androidx.compose.ui:ui-tooling:$compose_version"
     implementation "androidx.compose.foundation:foundation:$compose_version"
@@ -137,10 +140,6 @@ dependencies {
 
     implementation 'com.squareup.okhttp3:okhttp:4.9.2'
     implementation 'com.squareup.okhttp3:okhttp-sse:4.9.2'
-
-    implementation "com.google.android.exoplayer:exoplayer-core:$exoplayer_version"
-    implementation "com.google.android.exoplayer:exoplayer-ui:$exoplayer_version"
-    implementation "com.google.android.exoplayer:extension-mediasession:$exoplayer_version"
 
     implementation 'com.google.android.gms:play-services-cast-framework:20.0.0'
 }
