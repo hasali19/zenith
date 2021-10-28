@@ -1,22 +1,21 @@
 package uk.hasali.zenith.screens.player
 
-import android.content.res.ColorStateList
 import android.text.format.DateUtils
-import android.widget.SeekBar
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
+import androidx.annotation.OptIn
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.graphics.BlendModeColorFilterCompat
-import androidx.core.graphics.BlendModeCompat
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.DefaultTimeBar
+import androidx.media3.ui.TimeBar
 
+@OptIn(UnstableApi::class)
 @Composable
 fun SeekBar(
     position: Long,
@@ -25,7 +24,6 @@ fun SeekBar(
     onSeekEnd: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val primaryColor = MaterialTheme.colors.primary.toArgb()
     var sliderPosition by remember { mutableStateOf(0L) }
 
     DisposableEffect(position) {
@@ -33,64 +31,75 @@ fun SeekBar(
         onDispose { }
     }
 
-    Row(modifier = modifier.padding(16.dp)) {
-        TimeText(
-            time = sliderPosition,
-            align = TextAlign.Start,
-        )
-
+    // TODO: This padding is a temporary hack for rounded corners. Ideally this can be removed
+    //       once we implement showing/hiding system UI along with controls
+    Column(modifier = modifier.padding(bottom = 32.dp)) {
         AndroidView(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxWidth(),
             factory = {
-                SeekBar(it).apply {
-                    // Set progress and thumb colors from Compose Material theme
-                    progressTintList = ColorStateList.valueOf(primaryColor)
-                    thumb.colorFilter = BlendModeColorFilterCompat
-                        .createBlendModeColorFilterCompat(primaryColor, BlendModeCompat.SRC_ATOP)
-
-                    setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                        override fun onProgressChanged(
-                            seekBar: SeekBar?,
-                            progress: Int,
-                            fromUser: Boolean,
-                        ) {
-                            sliderPosition = progress.toLong()
-                        }
-
-                        override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                DefaultTimeBar(it).apply {
+                    addListener(object : TimeBar.OnScrubListener {
+                        override fun onScrubStart(timeBar: TimeBar, position: Long) {
                             onSeekStart()
                         }
 
-                        override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                            onSeekEnd(progress.toLong())
+                        override fun onScrubMove(timeBar: TimeBar, position: Long) {
+                            sliderPosition = position
+                        }
+
+                        override fun onScrubStop(
+                            timeBar: TimeBar,
+                            position: Long,
+                            canceled: Boolean
+                        ) {
+                            onSeekEnd(position)
                         }
                     })
                 }
             },
             update = {
-                it.max = duration.toInt()
-                it.progress = position.toInt()
+                it.setDuration(duration)
+                it.setPosition(position)
             }
         )
 
-        TimeText(
-            time = duration - sliderPosition,
-            align = TextAlign.Start,
-        )
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth(),
+        ) {
+            Row {
+                TimeText(
+                    time = sliderPosition,
+                    alpha = 1.0f,
+                )
+
+                Text(
+                    text = "•",
+                    color = Color.White.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.caption,
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                )
+
+                TimeText(
+                    time = duration - sliderPosition,
+                    alpha = 0.7f,
+                )
+            }
+        }
     }
 }
 
 @Composable
 private fun TimeText(
     time: Long,
-    modifier: Modifier = Modifier,
-    align: TextAlign = TextAlign.Start,
+    alpha: Float,
 ) {
     Text(
         text = DateUtils.formatElapsedTime(time),
-        color = Color.White,
-        textAlign = align,
+        color = Color.White.copy(alpha = alpha),
         style = MaterialTheme.typography.caption,
-        modifier = modifier,
     )
 }
