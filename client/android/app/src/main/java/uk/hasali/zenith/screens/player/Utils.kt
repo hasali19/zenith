@@ -5,6 +5,9 @@ import android.os.Build
 import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -63,4 +66,13 @@ fun FullScreen(content: @Composable () -> Unit) {
     }
 
     content()
+}
+
+suspend fun AwaitPointerEventScope.awaitPointerEvent(type: PointerEventType): PointerEvent {
+    while (true) {
+        val e = awaitPointerEvent()
+        if (e.type == type) {
+            return e
+        }
+    }
 }

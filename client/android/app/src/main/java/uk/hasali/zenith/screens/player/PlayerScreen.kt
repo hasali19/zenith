@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.cast.framework.CastContext
-import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.CenteredLoadingIndicator
 import uk.hasali.zenith.ui.rememberFlowWithLifecycle
 

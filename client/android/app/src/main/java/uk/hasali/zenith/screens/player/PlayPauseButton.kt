@@ -29,7 +29,7 @@ fun PlayPauseButton(
 
     Box(
         modifier = modifier
-            .size(72.dp)
+            .size(84.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = rememberRipple(bounded = false, radius = 40.dp),

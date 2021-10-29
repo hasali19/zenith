@@ -4,9 +4,8 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.gestures.forEachGesture
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Forward30
@@ -15,9 +14,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.*
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class)
 @Composable
@@ -37,20 +37,10 @@ fun Controls(
 ) {
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+    val visibility = remember { OverlayVisibility() }
 
-    // interactionCount is incremented on any user interaction, triggering the effect
-    // below to reset the delayed hide
-    var interactionCount by remember { mutableStateOf(0) }
-    var isInteracting by remember { mutableStateOf(false) }
-    var isVisible by remember { mutableStateOf(true) }
-
-    LaunchedEffect(isPlaying, isInteracting, interactionCount) {
-        if (!isPlaying) {
-            isVisible = true
-        } else if (!isInteracting) {
-            delay(5000)
-            isVisible = false
-        }
+    LaunchedEffect(isPlaying) {
+        visibility.setAutoHideEnabled(isPlaying)
     }
 
     ModalBottomSheetLayout(
@@ -70,34 +60,38 @@ fun Controls(
         },
     ) {
         Controls(
-            isVisible = isVisible || sheetState.isVisible,
+            isVisible = visibility.isVisible || sheetState.isVisible,
             title = title,
             position = position,
             duration = duration,
             isPlaying = isPlaying,
-            onSeekStart = {
-                interactionCount++
-                isInteracting = true
-                onSeekStart()
-            },
-            onSeekEnd = {
-                interactionCount++
-                isInteracting = false
-                onSeekEnd(it)
-            },
-            onTogglePlaying = {
-                interactionCount++
-                onTogglePlaying()
-            },
-            onShowSubtitlesMenu = {
-                interactionCount++
-                scope.launch { sheetState.show() }
-            },
+            onSeekStart = onSeekStart,
+            onSeekEnd = onSeekEnd,
+            onTogglePlaying = onTogglePlaying,
+            onShowSubtitlesMenu = { scope.launch { sheetState.show() } },
             onLaunchExternal = onLaunchExternal,
             onBackPressed = onBackPressed,
-            onToggleVisibility = {
-                interactionCount++
-                isVisible = !isVisible
+            modifier = Modifier.pointerInput(Unit) {
+                forEachGesture {
+                    awaitPointerEventScope {
+                        // Wait for pointer press
+                        awaitPointerEvent(PointerEventType.Press)
+
+                        // User has started an interaction -> cancel pending hide
+                        visibility.cancelHide()
+
+                        // Wait for pointer release
+                        val up = awaitPointerEvent(PointerEventType.Release)
+                        val change = up.changes[0]
+                        if (change.consumed.downChange) {
+                            // User interacted with something -> hide after a delay
+                            visibility.hideAfterDelay()
+                        } else {
+                            // User pressed blank area -> toggle controls
+                            visibility.toggleVisibility()
+                        }
+                    }
+                }
             },
         )
     }
@@ -117,7 +111,7 @@ private fun Controls(
     onShowSubtitlesMenu: () -> Unit,
     onLaunchExternal: () -> Unit,
     onBackPressed: () -> Unit,
-    onToggleVisibility: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val opacity by animateFloatAsState(if (isVisible) 0.4f else 0f)
 
@@ -128,9 +122,7 @@ private fun Controls(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = opacity))
-                .pointerInput(Unit) {
-                    detectTapGestures(onTap = { onToggleVisibility() })
-                },
+                .then(modifier),
         ) {
             AnimatedVisibility(
                 visible = isVisible,
@@ -148,13 +140,17 @@ private fun Controls(
 
             AnimatedVisibility(
                 visible = isVisible,
-                enter = fadeIn() + expandIn(expandFrom = Alignment.Center),
-                exit = fadeOut() + shrinkOut(shrinkTowards = Alignment.Center),
+                enter = fadeIn(),
+                exit = fadeOut(),
                 modifier = Modifier.align(Alignment.Center)
             ) {
                 Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.pointerInput(Unit) { detectTapGestures { /* Consume tap events */ } },
+                    modifier = Modifier
+                        .widthIn(max = 400.dp)
+                        .fillMaxWidth()
+                        .pointerInput(Unit) { detectTapGestures { /* Consume tap events */ } },
                 ) {
                     SeekButton(Icons.Default.Replay10) {
                         onSeekEnd(maxOf(0, position - 10))
@@ -183,6 +179,51 @@ private fun Controls(
                     onSeekEnd = { onSeekEnd(it) },
                 )
             }
+        }
+    }
+}
+
+private class OverlayVisibility {
+    private var enabled = true
+
+    private var _isVisible by mutableStateOf(true)
+    val isVisible: Boolean
+        get() = _isVisible
+
+    private val scope = CoroutineScope(Dispatchers.Main)
+    private var job: Job? = null
+
+    fun toggleVisibility() {
+        if (_isVisible) {
+            cancelHide()
+            _isVisible = false
+        } else {
+            _isVisible = true
+            hideAfterDelay()
+        }
+    }
+
+    fun hideAfterDelay() {
+        if (enabled) {
+            cancelHide()
+            job = scope.launch {
+                delay(5000)
+                _isVisible = false
+            }
+        }
+    }
+
+    fun cancelHide() {
+        job?.cancel()
+    }
+
+    fun setAutoHideEnabled(enabled: Boolean) {
+        if (enabled) {
+            this.enabled = true
+            hideAfterDelay()
+        } else {
+            this.enabled = false
+            cancelHide()
         }
     }
 }
