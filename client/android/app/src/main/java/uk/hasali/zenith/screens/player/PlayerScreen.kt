@@ -12,7 +12,7 @@ import uk.hasali.zenith.ui.rememberFlowWithLifecycle
 
 @Composable
 fun PlayerScreen(
-    model: PlayerViewModel = hiltViewModel(),
+    model: PlayerViewModel,
     onLaunchExternal: (String) -> Unit,
     onNavigateUp: () -> Unit,
 ) {

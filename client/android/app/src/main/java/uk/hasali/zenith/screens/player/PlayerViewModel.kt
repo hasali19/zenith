@@ -10,17 +10,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.*
-import uk.hasali.zenith.navigation.NavScreenProvider
 import javax.inject.Inject
 
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
-    screenProvider: NavScreenProvider,
+    savedStateHandle: SavedStateHandle,
     preferences: Preferences,
     mediaUrlProvider: MediaUrlProvider,
     private val client: ZenithApiClient,
 ) : ViewModel() {
-    private val screen: TopLevelScreen.Player by screenProvider
+    private val id: Int = savedStateHandle["id"]!!
+    private val type: VideoItemType = savedStateHandle["type"]!!
+    private val position: Double = savedStateHandle["position"] ?: 0.0
 
     private val server = preferences.serverUrl
     private var _item = MutableStateFlow<MediaItem?>(null)
@@ -51,12 +52,12 @@ class PlayerViewModel @Inject constructor(
         }
 
         VideoItem(
-            type = screen.type,
+            type = type,
             url = MediaUrlProvider().getVideoUrl(server, item.id),
             title = title ?: "Untitled",
             backdrop = backdrop,
             duration = videoInfo.duration,
-            startPosition = screen.position ?: 0.0,
+            startPosition = position,
             subtitles = videoInfo.subtitles.orEmpty().map {
                 when (it) {
                     is SubtitleStreamInfo.Embedded -> SubtitleTrack.Embedded(
@@ -79,14 +80,14 @@ class PlayerViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            _item.value = client.getItem(screen.id)
+            _item.value = client.getItem(id)
         }
     }
 
     fun updateProgress(position: Long) {
         if (!BuildConfig.DEBUG) viewModelScope.launch {
             try {
-                client.updateProgress(screen.id, position)
+                client.updateProgress(id, position)
             } catch (e: ServerResponseException) {
                 Log.w(
                     "PlayerScreen",

@@ -1,7 +1,6 @@
 package uk.hasali.zenith
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Parcelable
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -28,7 +27,7 @@ import kotlinx.parcelize.Parcelize
 import uk.hasali.zenith.navigation.ContentHost
 import uk.hasali.zenith.navigation.StackNavigator
 import uk.hasali.zenith.navigation.rememberStackNavigator
-import uk.hasali.zenith.screens.*
+import uk.hasali.zenith.screens.AboutScreen
 import uk.hasali.zenith.screens.library.episodedetails.EpisodeDetailsScreen
 import uk.hasali.zenith.screens.library.home.LibraryHomeScreen
 import uk.hasali.zenith.screens.library.moviedetails.MovieDetailsScreen
@@ -39,22 +38,13 @@ import uk.hasali.zenith.screens.library.shows.ShowsScreen
 import uk.hasali.zenith.screens.management.ImportQueueScreen
 import uk.hasali.zenith.screens.management.ManagementHomeScreen
 import uk.hasali.zenith.screens.management.TranscodeQueueScreen
-import uk.hasali.zenith.screens.player.PlayerScreen
 import uk.hasali.zenith.screens.player.VideoItemType
+import uk.hasali.zenith.screens.player.VideoPlayerActivity
 
 sealed class Screen(val route: String) {
     override fun equals(other: Any?) = other is Screen && other.route == route
     override fun hashCode() = route.hashCode()
     override fun toString() = "Screen=$route"
-}
-
-sealed interface TopLevelScreen : Parcelable {
-    @Parcelize
-    object Main : Screen("main"), TopLevelScreen
-
-    @Parcelize
-    class Player(val id: Int, val type: VideoItemType, val position: Double?) :
-        Screen("player/$id/$type/$position"), TopLevelScreen
 }
 
 sealed interface BottomNavigationArea : Parcelable {
@@ -104,36 +94,25 @@ sealed interface ManagementScreen : Parcelable {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun AppNavigation(navigator: StackNavigator<TopLevelScreen>) {
+fun AppNavigation() {
     val context = LocalContext.current
 
-    val navigateToExternalPlayer = { url: String ->
-        navigator.pop()
-        context.startActivity(Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(Uri.parse(url), "video/*")
-        })
-    }
-
-    navigator.ContentHost { screen ->
-        when (screen) {
-            is TopLevelScreen.Main -> {
-                TopLevelMain(
-                    onNavigateToPlayer = { id, type, pos ->
-                        navigator.push(TopLevelScreen.Player(id, type, pos))
-                    },
-                )
-            }
-
-            is TopLevelScreen.Player -> PlayerScreen(
-                onLaunchExternal = navigateToExternalPlayer,
-                onNavigateUp = { navigator.pop() },
-            )
+    val navigateToPlayer = { id: Int, type: VideoItemType, pos: Double? ->
+        val intent = Intent(context, VideoPlayerActivity::class.java).apply {
+            putExtra("id", id)
+            putExtra("type", type)
+            putExtra("position", pos)
         }
+        context.startActivity(intent)
     }
+
+    AppNavigation(
+        onNavigateToPlayer = navigateToPlayer,
+    )
 }
 
 @Composable
-private fun TopLevelMain(onNavigateToPlayer: (Int, VideoItemType, Double?) -> Unit) {
+private fun AppNavigation(onNavigateToPlayer: (Int, VideoItemType, Double?) -> Unit) {
     val holder = rememberSaveableStateHolder()
     var area by rememberSaveable { mutableStateOf<BottomNavigationArea>(BottomNavigationArea.Library) }
 

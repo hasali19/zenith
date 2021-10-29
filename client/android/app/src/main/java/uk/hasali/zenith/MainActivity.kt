@@ -93,22 +93,16 @@ class MainActivity : FragmentActivity() {
             }
 
             else -> {
-                val navigator = rememberStackNavigator<TopLevelScreen>(TopLevelScreen.Main)
-
                 AppTheme {
                     ProvideWindowInsets {
-                        val entry = navigator.stack.last()
-
                         availableUpdate?.let {
-                            if (entry.screen !is TopLevelScreen.Player) {
-                                UpdateDialog(availableUpdate = it)
-                            }
+                            UpdateDialog(availableUpdate = it)
                         }
 
                         CompositionLocalProvider(
                             LocalZenithClient provides zenithApiClient,
                         ) {
-                            AppNavigation(navigator)
+                            AppNavigation()
                         }
                     }
                 }

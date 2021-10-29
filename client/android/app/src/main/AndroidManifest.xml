@@ -42,6 +42,11 @@
             android:name=".SelectServerActivity"
             android:theme="@style/Theme.Zenith" />
 
+        <activity
+            android:name=".screens.player.VideoPlayerActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:theme="@style/Theme.Zenith" />
+
         <receiver android:name=".InstallReceiver" />
 
         <meta-data
