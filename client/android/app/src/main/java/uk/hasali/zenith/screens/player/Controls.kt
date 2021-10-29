@@ -35,10 +35,10 @@ fun Controls(
     onSelectSubtitle: (SubtitleTrack?) -> Unit,
     onLaunchExternal: () -> Unit,
     onBackPressed: () -> Unit,
+    visibility: OverlayVisibility = rememberControlsVisibility(),
 ) {
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
-    val visibility = remember { OverlayVisibility() }
 
     LaunchedEffect(isPlaying) {
         visibility.setAutoHideEnabled(isPlaying)
@@ -186,7 +186,10 @@ private fun Controls(
     }
 }
 
-private class OverlayVisibility {
+@Composable
+fun rememberControlsVisibility() = remember { OverlayVisibility() }
+
+class OverlayVisibility {
     private var enabled = true
 
     private var _isVisible by mutableStateOf(true)
