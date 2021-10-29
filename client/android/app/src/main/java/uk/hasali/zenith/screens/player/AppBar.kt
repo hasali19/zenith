@@ -25,6 +25,7 @@ fun AppBar(
     onShowSubtitlesMenu: () -> Unit,
     onLaunchExternal: (() -> Unit)? = null,
     onClosePlayer: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
 
@@ -74,6 +75,6 @@ fun AppBar(
                 }
             }
         },
-        modifier = Modifier.statusBarsPadding(),
+        modifier = modifier.statusBarsPadding(),
     )
 }

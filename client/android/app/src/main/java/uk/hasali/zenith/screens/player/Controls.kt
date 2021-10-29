@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.*
@@ -135,6 +136,7 @@ private fun Controls(
                     onBackPressed = onBackPressed,
                     onShowSubtitlesMenu = onShowSubtitlesMenu,
                     onLaunchExternal = onLaunchExternal,
+                    modifier = Modifier.pointerInput(Unit) { consumeTapGestures() }
                 )
             }
 
@@ -150,7 +152,7 @@ private fun Controls(
                     modifier = Modifier
                         .widthIn(max = 400.dp)
                         .fillMaxWidth()
-                        .pointerInput(Unit) { detectTapGestures { /* Consume tap events */ } },
+                        .pointerInput(Unit) { consumeTapGestures() },
                 ) {
                     SeekButton(Icons.Default.Replay10) {
                         onSeekEnd(maxOf(0, position - 10))
@@ -177,6 +179,7 @@ private fun Controls(
                     duration = duration,
                     onSeekStart = { onSeekStart() },
                     onSeekEnd = { onSeekEnd(it) },
+                    modifier = Modifier.pointerInput(Unit) { consumeTapGestures() },
                 )
             }
         }
@@ -226,4 +229,8 @@ private class OverlayVisibility {
             cancelHide()
         }
     }
+}
+
+private suspend fun PointerInputScope.consumeTapGestures() {
+    detectTapGestures { /* Consume gestures */ }
 }
