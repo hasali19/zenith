@@ -12,6 +12,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.session.MediaSession
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +27,9 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
     private val trackSelector = DefaultTrackSelector(context)
     override val player = ExoPlayer.Builder(context)
         .setTrackSelector(trackSelector)
+        .build()
+
+    private val session = MediaSession.Builder(context, player)
         .build()
 
     private var textRenderer: Int? = null
@@ -192,6 +196,7 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
     }
 
     override fun dispose() {
+        session.release()
         player.removeListener(listener)
         player.release()
     }
