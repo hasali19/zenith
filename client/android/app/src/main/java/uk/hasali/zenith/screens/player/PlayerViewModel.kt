@@ -59,15 +59,19 @@ class PlayerViewModel @Inject constructor(
             duration = videoInfo.duration,
             startPosition = position,
             subtitles = videoInfo.subtitles.orEmpty().map {
-                when (it) {
-                    is SubtitleStreamInfo.Embedded -> SubtitleTrack.Embedded(
-                        index = it.index,
-                        url = mediaUrlProvider.getSubtitleUrl(server, it.id),
+                if (it.streamIndex != null) {
+                    SubtitleTrack.Embedded(
+                        index = it.streamIndex,
+                        url = when (it.path) {
+                            null -> null
+                            else -> mediaUrlProvider.getSubtitleUrl(server, it.id)
+                        },
                         id = it.id,
                         title = it.title,
                         language = it.language,
                     )
-                    is SubtitleStreamInfo.External -> SubtitleTrack.External(
+                } else {
+                    SubtitleTrack.External(
                         url = mediaUrlProvider.getSubtitleUrl(server, it.id),
                         id = it.id,
                         title = it.title,

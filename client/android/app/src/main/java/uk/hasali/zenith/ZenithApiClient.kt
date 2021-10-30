@@ -131,7 +131,7 @@ data class VideoInfo(
     val format: String? = null,
     val video: VideoStreamInfo? = null,
     val audio: List<AudioStreamInfo>? = null,
-    val subtitles: List<SubtitleStreamInfo>? = null,
+    val subtitles: List<SubtitleInfo>? = null,
 )
 
 @Serializable
@@ -171,29 +171,16 @@ data class AudioStreamInfo(
 )
 
 @Serializable
-sealed class SubtitleStreamInfo {
-    abstract val id: Int
-    abstract val title: String?
-    abstract val language: String?
-
-    @Serializable
-    @SerialName("embedded")
-    data class Embedded(
-        override val id: Int,
-        override val title: String?,
-        override val language: String?,
-        val index: Int,
-    ) : SubtitleStreamInfo()
-
-    @Serializable
-    @SerialName("external")
-    data class External(
-        override val id: Int,
-        override val title: String?,
-        override val language: String?,
-        val path: String,
-    ) : SubtitleStreamInfo()
-}
+data class SubtitleInfo(
+    val id: Int,
+    @SerialName("video_id")
+    val videoId: Int,
+    @SerialName("stream_index")
+    val streamIndex: Int?,
+    val path: String?,
+    val title: String?,
+    val language: String?,
+)
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable

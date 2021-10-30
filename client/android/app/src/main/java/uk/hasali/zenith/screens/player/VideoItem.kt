@@ -17,20 +17,20 @@ data class VideoItem(
 
 sealed class SubtitleTrack {
     abstract val id: Int
-    abstract val url: String
+    abstract val url: String?
     abstract val title: String?
     abstract val language: String?
 
     data class Embedded(
         val index: Int,
-        override val url: String,
+        override val url: String?,
         override val id: Int,
         override val title: String?,
         override val language: String?,
     ) : SubtitleTrack()
 
     data class External(
-        override val url: String,
+        override val url: String?,
         override val id: Int,
         override val title: String?,
         override val language: String?,
