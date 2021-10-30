@@ -16,8 +16,19 @@
       playerManager.addEventListener(
         cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
         () => {
+          const textTracksManager = playerManager.getTextTracksManager();
+
+          // Set default subtitle style
+          const style = new cast.framework.messages.TextTrackStyle();
+          style.backgroundColor = "#00000000";
+          style.edgeColor = "#000000ff";
+          style.edgeType = cast.framework.messages.TextTrackEdgeType.OUTLINE;
+          style.fontFamily = "sans-serif";
+          style.fontScale = 0.8;
+          textTracksManager.setTextTrackStyle(style);
+
           // Turn off subtitles by default
-          playerManager.getTextTracksManager().setActiveByIds([]);
+          textTracksManager.setActiveByIds([]);
         }
       );
 
