@@ -1,6 +1,6 @@
 use actix_files::NamedFile;
 use actix_web::web::Path;
-use actix_web::{delete, get, HttpResponse, Responder};
+use actix_web::{delete, route, HttpResponse, Responder};
 
 use crate::api::error::bad_request;
 use crate::api::ApiResult;
@@ -9,7 +9,7 @@ use crate::db::{self, Db};
 use super::error::not_found;
 use super::ext::OptionExt;
 
-#[get("/subtitles/{id}")]
+#[route("/subtitles/{id}", method = "HEAD", method = "GET")]
 async fn get_subtitle(id: Path<i64>, db: Db) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
 

@@ -1,13 +1,13 @@
 use actix_files::NamedFile;
 use actix_web::web::Path;
-use actix_web::{get, Responder};
+use actix_web::{route, Responder};
 
 use crate::api::ApiResult;
 use crate::db::{self, Db};
 
 use super::ext::OptionExt;
 
-#[get("/videos/{id}")]
+#[route("/videos/{id}", method = "HEAD", method = "GET")]
 pub async fn get_video_content(id: Path<i64>, db: Db) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
 
