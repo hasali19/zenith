@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -16,7 +15,7 @@ use crate::api::error::bad_request;
 use crate::api::ext::OptionExt;
 use crate::api::ApiResult;
 use crate::config::Config;
-use crate::db::subtitles::{NewSubtitle, SubtitlePath};
+use crate::db::subtitles::NewSubtitle;
 use crate::db::Db;
 use crate::library::scanner::{self, LibraryScanner, ScanOptions, VideoFileType};
 use crate::{db, subtitles, util, Ext};
@@ -158,9 +157,8 @@ pub async fn import_subtitle(
     let mut transaction = db.begin().await?;
     let subtitles = NewSubtitle {
         video_id: data.video_id,
-        path: SubtitlePath::External {
-            path: Cow::Borrowed(dst_path.to_str().unwrap()),
-        },
+        stream_index: None,
+        path: dst_path.to_str(),
         title: data.title.as_deref(),
         language: data.language.as_deref(),
     };

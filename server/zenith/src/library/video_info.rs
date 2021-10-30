@@ -3,7 +3,7 @@ use sqlx::SqliteConnection;
 
 use crate::db;
 use crate::db::streams::{NewAudioStream, NewVideoStream};
-use crate::db::subtitles::{NewSubtitle, SubtitlePath};
+use crate::db::subtitles::NewSubtitle;
 use crate::db::videos::UpdateVideo;
 use crate::ffprobe::VideoInfo;
 
@@ -68,9 +68,8 @@ pub async fn update_video_info(
 
                 let subtitle = NewSubtitle {
                     video_id: id,
-                    path: SubtitlePath::Embedded {
-                        index: stream.index,
-                    },
+                    stream_index: Some(stream.index),
+                    path: None,
                     title,
                     language,
                 };

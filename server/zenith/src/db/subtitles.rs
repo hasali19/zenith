@@ -1,12 +1,11 @@
-use std::borrow::Cow;
-
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqliteConnection};
 
 pub struct NewSubtitle<'a> {
     pub video_id: i64,
-    pub path: SubtitlePath<'a>,
+    pub stream_index: Option<u32>,
+    pub path: Option<&'a str>,
     pub title: Option<&'a str>,
     pub language: Option<&'a str>,
 }
@@ -15,39 +14,21 @@ pub struct NewSubtitle<'a> {
 pub struct Subtitle {
     pub id: i64,
     pub video_id: i64,
-    #[serde(flatten)]
-    pub path: SubtitlePath<'static>,
+    pub stream_index: Option<u32>,
+    pub path: Option<String>,
     pub title: Option<String>,
     pub language: Option<String>,
 }
 
-#[derive(Serialize)]
-#[serde(tag = "type")]
-#[serde(rename_all = "snake_case")]
-pub enum SubtitlePath<'a> {
-    External { path: Cow<'a, str> },
-    Embedded { index: u32 },
-}
-
 impl<'r> FromRow<'r, SqliteRow> for Subtitle {
     fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
-        let path: &str = row.try_get(2)?;
-        let path = if let Some(index) = path.strip_prefix("embedded://") {
-            SubtitlePath::Embedded {
-                index: index.parse().expect("invalid index for embedded subtitle"),
-            }
-        } else {
-            SubtitlePath::External {
-                path: Cow::Owned(path.to_owned()),
-            }
-        };
-
         Ok(Subtitle {
-            id: row.try_get(0)?,
-            video_id: row.try_get(1)?,
-            path,
-            title: row.try_get(3)?,
-            language: row.try_get(4)?,
+            id: row.try_get("id")?,
+            video_id: row.try_get("video_id")?,
+            stream_index: row.try_get("stream_index")?,
+            path: row.try_get("path")?,
+            title: row.try_get("title")?,
+            language: row.try_get("language")?,
         })
     }
 }
@@ -55,22 +36,19 @@ impl<'r> FromRow<'r, SqliteRow> for Subtitle {
 pub async fn insert(conn: &mut SqliteConnection, subtitle: &NewSubtitle<'_>) -> eyre::Result<i64> {
     let sql = "
         INSERT INTO subtitles
-            (video_id, path, title, language)
+            (video_id, stream_index, path, title, language)
         VALUES
-            (?, ?, ?, ?)
-        ON CONFLICT (video_id, path)
+            (?, ?, ?, ?, ?)
+        ON CONFLICT
         DO UPDATE SET
             title = excluded.title,
             language = excluded.language
     ";
 
-    let query = sqlx::query(sql).bind(subtitle.video_id);
-    let query = match &subtitle.path {
-        SubtitlePath::External { path } => query.bind(path.as_ref()),
-        SubtitlePath::Embedded { index } => query.bind(format!("embedded://{}", index)),
-    };
-
-    let res = query
+    let res = sqlx::query(sql)
+        .bind(subtitle.video_id)
+        .bind(subtitle.stream_index)
+        .bind(subtitle.path)
         .bind(subtitle.title)
         .bind(subtitle.language)
         .execute(conn)
@@ -81,7 +59,7 @@ pub async fn insert(conn: &mut SqliteConnection, subtitle: &NewSubtitle<'_>) -> 
 
 pub async fn get_by_id(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Subtitle>> {
     let sql = "
-        SELECT id, video_id, path, title, language
+        SELECT id, video_id, stream_index, path, title, language
         FROM subtitles
         WHERE id = ?
     ";
@@ -98,7 +76,7 @@ pub async fn get_for_video(
     video_id: i64,
 ) -> eyre::Result<Vec<Subtitle>> {
     let sql = "
-        SELECT id, video_id, path, title, language
+        SELECT id, video_id, stream_index, path, title, language
         FROM subtitles
         WHERE video_id = ?
     ";
@@ -108,6 +86,38 @@ pub async fn get_for_video(
         .fetch_all(conn)
         .await
         .map_err(|e| e.into())
+}
+
+pub struct UpdateSubtitle<'a> {
+    pub path: Option<&'a str>,
+    pub title: Option<&'a str>,
+    pub language: Option<&'a str>,
+}
+
+pub async fn update_embedded(
+    conn: &mut SqliteConnection,
+    video_id: i64,
+    stream_index: u32,
+    data: UpdateSubtitle<'_>,
+) -> eyre::Result<()> {
+    let sql = "
+        UPDATE subtitles
+        SET path = COALESCE(?, path),
+            title = COALESCE(?, title),
+            language = COALESCE(?, language)
+        WHERE video_id = ? AND stream_index = ?
+    ";
+
+    sqlx::query(sql)
+        .bind(data.path)
+        .bind(data.title)
+        .bind(data.language)
+        .bind(video_id)
+        .bind(stream_index)
+        .execute(conn)
+        .await?;
+
+    Ok(())
 }
 
 pub async fn delete(conn: &mut SqliteConnection, id: i64) -> eyre::Result<()> {

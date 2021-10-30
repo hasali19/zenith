@@ -10,6 +10,7 @@ use tokio::process::Command;
 use tokio::sync::{broadcast, RwLock, Semaphore};
 
 use crate::config::Config;
+use crate::db::subtitles::{Subtitle, UpdateSubtitle};
 use crate::db::videos::UpdateVideo;
 use crate::db::{self, Db};
 use crate::ext::CommandExt;
@@ -257,23 +258,26 @@ impl Transcoder {
 
         // Extract subtitles
         let subtitles_dir = self.config.subtitles.path.join(id.to_string());
+        let existing_subtitles = self.get_video_subtitles(id).await?;
         let mut subtitle_tmps = vec![];
         for stream in &info.streams {
             if stream.codec_type.as_str() == "subtitle" {
-                let output = subtitles_dir.join(format!("{}.extracted.vtt.tmp", stream.index));
-
-                if output.with_extension("").exists() {
+                if existing_subtitles.iter().any(|s| {
+                    matches!(s.stream_index, Some(i) if i == stream.index) && s.path.is_some()
+                }) {
                     // Skip if the subtitle has already been extracted
                     // TODO: Option to re-extract subtitles
                     continue;
                 }
+
+                let output = subtitles_dir.join(format!("{}.extracted.vtt.tmp", stream.index));
 
                 cmd.arg_pair("-map", format!("0:{}", stream.index));
                 cmd.arg_pair(format!("-c:{}", stream.index), "copy");
                 cmd.arg_pair("-f", "webvtt");
                 cmd.arg(&output);
 
-                subtitle_tmps.push(output);
+                subtitle_tmps.push((output, stream.index));
             }
         }
 
@@ -334,8 +338,9 @@ impl Transcoder {
                 .await?;
         }
 
-        for path in subtitle_tmps {
+        for (path, stream_index) in subtitle_tmps {
             self.rename_tmp_file(&path).await?;
+            self.update_subtitle_path(id, stream_index, &path).await?;
         }
 
         Ok(())
@@ -364,11 +369,36 @@ impl Transcoder {
         Ok(path)
     }
 
+    async fn get_video_subtitles(&self, id: i64) -> eyre::Result<Vec<Subtitle>> {
+        let mut conn = self.db.acquire().await?;
+        let subtitles = db::subtitles::get_for_video(&mut conn, id).await?;
+        Ok(subtitles)
+    }
+
+    async fn update_subtitle_path(
+        &self,
+        video_id: i64,
+        stream_index: u32,
+        path: &Path,
+    ) -> eyre::Result<()> {
+        let mut conn = self.db.acquire().await?;
+
+        let data = UpdateSubtitle {
+            path: path.to_str(),
+            title: None,
+            language: None,
+        };
+
+        db::subtitles::update_embedded(&mut conn, video_id, stream_index, data).await?;
+
+        Ok(())
+    }
+
     async fn update_video_path(&self, id: i64, path: &Path) -> eyre::Result<()> {
-        let mut conn = self.db.acquire().await.unwrap();
+        let mut conn = self.db.acquire().await?;
 
         let data = UpdateVideo {
-            path: Some(path.to_str().unwrap()),
+            path: path.to_str(),
             duration: None,
             format_name: None,
         };
