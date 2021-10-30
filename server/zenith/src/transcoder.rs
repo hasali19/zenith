@@ -340,7 +340,8 @@ impl Transcoder {
 
         for (path, stream_index) in subtitle_tmps {
             self.rename_tmp_file(&path).await?;
-            self.update_subtitle_path(id, stream_index, &path).await?;
+            self.update_subtitle_path(id, stream_index, &path.with_extension(""))
+                .await?;
         }
 
         Ok(())
