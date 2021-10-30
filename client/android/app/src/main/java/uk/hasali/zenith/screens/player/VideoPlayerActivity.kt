@@ -8,16 +8,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.*
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.cast.framework.CastContext
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.combineTransform
-import kotlinx.coroutines.launch
 import uk.hasali.zenith.ui.AppTheme
 import uk.hasali.zenith.ui.rememberFlowWithLifecycle
 
@@ -93,8 +87,8 @@ class VideoPlayerActivity : ComponentActivity() {
             }
         }
 
-        FullScreen {
-            KeepScreenOn {
+        KeepScreenOn {
+            FullScreen {
                 player?.let {
                     VideoPlayer(player = it)
                 }
