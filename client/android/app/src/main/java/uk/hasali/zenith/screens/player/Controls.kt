@@ -33,8 +33,7 @@ fun Controls(
     onSeekEnd: (Long) -> Unit,
     onTogglePlaying: () -> Unit,
     onSelectSubtitle: (SubtitleTrack?) -> Unit,
-    onLaunchExternal: () -> Unit,
-    onBackPressed: () -> Unit,
+    onClosePressed: () -> Unit,
     visibility: OverlayVisibility = rememberControlsVisibility(),
 ) {
     val scope = rememberCoroutineScope()
@@ -70,9 +69,8 @@ fun Controls(
             onSeekEnd = onSeekEnd,
             onTogglePlaying = onTogglePlaying,
             onShowSubtitlesMenu = { scope.launch { sheetState.show() } },
-            onLaunchExternal = onLaunchExternal,
-            onBackPressed = onBackPressed,
-            modifier = Modifier.pointerInput(Unit) {
+            onClosePressed = onClosePressed,
+            modifier = Modifier.pointerInput(visibility) {
                 forEachGesture {
                     awaitPointerEventScope {
                         // Wait for pointer press
@@ -110,8 +108,7 @@ private fun Controls(
     onSeekEnd: (Long) -> Unit,
     onTogglePlaying: () -> Unit,
     onShowSubtitlesMenu: () -> Unit,
-    onLaunchExternal: () -> Unit,
-    onBackPressed: () -> Unit,
+    onClosePressed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val opacity by animateFloatAsState(if (isVisible) 0.4f else 0f)
@@ -133,9 +130,8 @@ private fun Controls(
             ) {
                 AppBar(
                     title = title,
-                    onBackPressed = onBackPressed,
+                    onClosePressed = onClosePressed,
                     onShowSubtitlesMenu = onShowSubtitlesMenu,
-                    onLaunchExternal = onLaunchExternal,
                     modifier = Modifier.pointerInput(Unit) { consumeTapGestures() }
                 )
             }
@@ -187,14 +183,15 @@ private fun Controls(
 }
 
 @Composable
-fun rememberControlsVisibility() = remember { OverlayVisibility() }
+fun rememberControlsVisibility(permanent: Boolean = false) =
+    remember(permanent) { OverlayVisibility(permanent) }
 
-class OverlayVisibility {
+class OverlayVisibility(private val permanent: Boolean) {
     private var enabled = true
 
     private var _isVisible by mutableStateOf(true)
     val isVisible: Boolean
-        get() = _isVisible
+        get() = _isVisible || permanent
 
     private val scope = CoroutineScope(Dispatchers.Main)
     private var job: Job? = null

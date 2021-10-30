@@ -1,11 +1,13 @@
 package uk.hasali.zenith.screens.player
 
 import androidx.annotation.OptIn
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -13,6 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
+import coil.compose.rememberImagePainter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
@@ -44,32 +47,58 @@ interface VideoPlayer {
 }
 
 @Composable
-fun VideoPlayer(player: VideoPlayer) {
+fun VideoPlayer(
+    player: VideoPlayer,
+    autoHideControls: Boolean,
+    onClosePressed: () -> Unit,
+) {
     Surface(
         color = Color.Black,
         modifier = Modifier.fillMaxSize(),
     ) {
         VideoPlayerView(player = player)
-        VideoPlayerOverlay(player = player)
+        VideoPlayerOverlay(
+            player = player,
+            autoHideControls = autoHideControls,
+            onClosePressed = onClosePressed,
+        )
     }
 }
 
 @OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayerView(player: VideoPlayer) {
+    val item by player.currentItem.collectAsState()
+
     if (player.usePlayerView) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { context -> PlayerView(context).apply { useController = false } },
             update = { playerView -> playerView.player = player.player },
         )
+    } else {
+        item?.let {
+            val painter = rememberImagePainter(it.backdrop) {
+                crossfade(true)
+            }
+
+            Image(
+                painter = painter,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+            )
+        }
     }
 }
 
 @Composable
-fun VideoPlayerOverlay(player: VideoPlayer) {
+fun VideoPlayerOverlay(
+    player: VideoPlayer,
+    autoHideControls: Boolean,
+    onClosePressed: () -> Unit,
+) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val visibility = rememberControlsVisibility()
+    val visibility = rememberControlsVisibility(!autoHideControls)
 
     val item by player.currentItem.collectAsState()
     val subtitleTrack by player.subtitleTrack.collectAsState()
@@ -105,8 +134,7 @@ fun VideoPlayerOverlay(player: VideoPlayer) {
         },
         onTogglePlaying = { player.setPlayWhenReady(!playWhenReady) },
         onSelectSubtitle = { player.setSubtitleTrack(it) },
-        onLaunchExternal = { },
-        onBackPressed = { },
+        onClosePressed = onClosePressed,
         visibility = visibility,
     )
 }

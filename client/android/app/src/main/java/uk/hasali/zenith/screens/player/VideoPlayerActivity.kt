@@ -1,14 +1,15 @@
 package uk.hasali.zenith.screens.player
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.*
 import androidx.core.view.WindowCompat
+import androidx.fragment.app.FragmentActivity
+import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastSession
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
@@ -16,7 +17,7 @@ import uk.hasali.zenith.ui.AppTheme
 import uk.hasali.zenith.ui.rememberFlowWithLifecycle
 
 @AndroidEntryPoint
-class VideoPlayerActivity : ComponentActivity() {
+class VideoPlayerActivity : FragmentActivity() {
 
     private val model: PlayerViewModel by viewModels()
 
@@ -26,56 +27,45 @@ class VideoPlayerActivity : ComponentActivity() {
         // Enable drawing under the status bar
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        // Initialise cast context
-        CastContext.getSharedInstance(this)
-
-        val navigateToExternalPlayer = { url: String ->
-            finish()
-            startActivity(Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(Uri.parse(url), "video/*")
-            })
-        }
+        val castContext = CastContext.getSharedInstance(this)
+        val castSessionManager = castContext.sessionManager
+        val castSession by mutableStateOf(castSessionManager.currentCastSession)
 
         setContent {
             val item by rememberFlowWithLifecycle(model.item)
                 .collectAsState(null)
 
             AppTheme {
-                item?.let {
-                    VideoPlayer(item = it)
+                ProvideWindowInsets {
+                    item?.let {
+                        VideoPlayer(item = it, castSession = castSession)
+                    }
                 }
             }
         }
     }
 
     @Composable
-    private fun VideoPlayer(item: VideoItem) {
+    private fun VideoPlayer(item: VideoItem, castSession: CastSession?) {
         var player by remember { mutableStateOf<VideoPlayer?>(null) }
 
-        DisposableEffect(Unit) {
-            LocalVideoPlayer(this@VideoPlayerActivity).let {
-                player = it
-                onDispose {
-                    it.dispose()
+        DisposableEffect(castSession) {
+            castSession.let { session ->
+                val playerImpl = when (session) {
+                    null -> LocalVideoPlayer(this@VideoPlayerActivity)
+                    else -> RemoteVideoPlayer(this@VideoPlayerActivity, session)
                 }
-            }
-        }
 
-        DisposableEffect(player, item) {
-            player.let {
-                if (it != null) {
-                    it.setItem(item)
-                    onDispose {
-                        it.stop()
-                    }
-                } else {
-                    onDispose { }
+                player = playerImpl
+                onDispose {
+                    playerImpl.dispose()
                 }
             }
         }
 
         LaunchedEffect(player, item) {
             player?.let { player ->
+                player.setItem(item)
                 player.isPlaying.collectLatest { isPlaying ->
                     if (isPlaying) {
                         player.pollPosition(5000)
@@ -87,12 +77,23 @@ class VideoPlayerActivity : ComponentActivity() {
             }
         }
 
-        KeepScreenOn {
-            FullScreen {
-                player?.let {
-                    VideoPlayer(player = it)
-                }
-            }
+        if (castSession == null) {
+            KeepScreenOn()
+            FullScreen()
+        }
+
+        val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current
+            ?.onBackPressedDispatcher
+
+        player?.let {
+            VideoPlayer(
+                player = it,
+                autoHideControls = castSession == null,
+                onClosePressed = {
+                    it.stop()
+                    onBackPressedDispatcher?.onBackPressed()
+                },
+            )
         }
     }
 }

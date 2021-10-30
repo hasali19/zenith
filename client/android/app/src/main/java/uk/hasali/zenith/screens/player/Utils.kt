@@ -14,7 +14,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
 @Composable
-fun KeepScreenOn(content: @Composable () -> Unit) {
+fun KeepScreenOn() {
     val activity = LocalContext.current as? Activity
     val window = activity?.window
 
@@ -27,12 +27,10 @@ fun KeepScreenOn(content: @Composable () -> Unit) {
             }
         }
     }
-
-    content()
 }
 
 @Composable
-fun FullScreen(content: @Composable () -> Unit) {
+fun FullScreen() {
     val activity = LocalContext.current as? Activity
     val window = activity?.window
 
@@ -64,8 +62,6 @@ fun FullScreen(content: @Composable () -> Unit) {
             }
         }
     }
-
-    content()
 }
 
 suspend fun AwaitPointerEventScope.awaitPointerEvent(type: PointerEventType): PointerEvent {

@@ -5,37 +5,26 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ClosedCaption
-import androidx.compose.material.icons.filled.Launch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.insets.statusBarsPadding
-import uk.hasali.zenith.playClick
 
 @Composable
 fun AppBar(
     title: String,
-    onBackPressed: () -> Unit,
+    onClosePressed: () -> Unit,
     onShowSubtitlesMenu: () -> Unit,
-    onLaunchExternal: (() -> Unit)? = null,
-    onClosePlayer: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-
     TopAppBar(
         navigationIcon = {
-            IconButton(onClick = {
-                context.playClick()
-                onBackPressed()
-            }) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            IconButton(onClick = onClosePressed) {
+                Icon(Icons.Default.Close, contentDescription = "Close")
             }
         },
         title = {
@@ -48,31 +37,8 @@ fun AppBar(
         backgroundColor = Color.Transparent,
         elevation = 0.dp,
         actions = {
-            IconButton(
-                onClick = {
-                    context.playClick()
-                    onShowSubtitlesMenu()
-                },
-            ) {
+            IconButton(onClick = onShowSubtitlesMenu) {
                 Icon(Icons.Default.ClosedCaption, contentDescription = "Captions")
-            }
-
-            if (onLaunchExternal != null) {
-                IconButton(onClick = {
-                    context.playClick()
-                    onLaunchExternal()
-                }) {
-                    Icon(Icons.Default.Launch, contentDescription = "Launch external")
-                }
-            }
-
-            if (onClosePlayer != null) {
-                IconButton(onClick = {
-                    context.playClick()
-                    onClosePlayer()
-                }) {
-                    Icon(Icons.Default.Close, contentDescription = "Close")
-                }
             }
         },
         modifier = modifier.statusBarsPadding(),
