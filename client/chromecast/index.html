@@ -1,14 +1,27 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <script type="text/javascript"
-            src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js">
+  <head>
+    <script
+      type="text/javascript"
+      src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"
+    ></script>
+  </head>
+
+  <body>
+    <cast-media-player></cast-media-player>
+    <script>
+      const context = cast.framework.CastReceiverContext.getInstance();
+      const playerManager = context.getPlayerManager();
+
+      playerManager.addEventListener(
+        cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
+        () => {
+          // Turn off subtitles by default
+          playerManager.getTextTracksManager().setActiveByIds([]);
+        }
+      );
+
+      context.start();
     </script>
-</head>
-<body>
-<cast-media-player></cast-media-player>
-<script>
-    cast.framework.CastReceiverContext.getInstance().start();
-</script>
-</body>
+  </body>
 </html>
