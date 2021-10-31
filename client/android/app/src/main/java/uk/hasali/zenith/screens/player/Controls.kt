@@ -193,7 +193,7 @@ private fun Controls(
                 exit = fadeOut(),
                 modifier = Modifier.align(Alignment.Center),
             ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
                     Row(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically,
@@ -222,9 +222,7 @@ private fun Controls(
                         CircularProgressIndicator(
                             color = LocalContentColor.current,
                             strokeWidth = 6.dp,
-                            modifier = Modifier
-                                .size(90.dp)
-                                .align(Alignment.Center),
+                            modifier = Modifier.size(90.dp),
                         )
                     }
                 }
