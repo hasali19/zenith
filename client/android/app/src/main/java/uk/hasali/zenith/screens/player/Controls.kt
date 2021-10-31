@@ -29,6 +29,7 @@ fun Controls(
     title: String,
     position: Long,
     duration: Long,
+    isLoading: Boolean,
     isPlaying: Boolean,
     subtitles: List<SubtitleTrack>,
     selectedSubtitle: SubtitleTrack?,
@@ -45,8 +46,8 @@ fun Controls(
         isSubtitlesMenuVisible = false
     }
 
-    LaunchedEffect(isPlaying, isSubtitlesMenuVisible) {
-        visibility.setAutoHideEnabled(isPlaying && !isSubtitlesMenuVisible)
+    LaunchedEffect(isLoading, isPlaying, isSubtitlesMenuVisible) {
+        visibility.setAutoHideEnabled(!isLoading && isPlaying && !isSubtitlesMenuVisible)
     }
 
     if (!visibility.isVisible) {
@@ -69,6 +70,7 @@ fun Controls(
             title = title,
             position = position,
             duration = duration,
+            isLoading = isLoading,
             isPlaying = isPlaying,
             onSeekStart = onSeekStart,
             onSeekEnd = onSeekEnd,
@@ -150,6 +152,7 @@ private fun Controls(
     title: String,
     position: Long,
     duration: Long,
+    isLoading: Boolean,
     isPlaying: Boolean,
     onSeekStart: () -> Unit,
     onSeekEnd: (Long) -> Unit,
@@ -188,26 +191,41 @@ private fun Controls(
                 visible = isVisible,
                 enter = fadeIn(),
                 exit = fadeOut(),
-                modifier = Modifier.align(Alignment.Center)
+                modifier = Modifier.align(Alignment.Center),
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .widthIn(max = 400.dp)
-                        .fillMaxWidth()
-                        .pointerInput(Unit) { consumeTapGestures() },
-                ) {
-                    SeekButton(Icons.Default.Replay10) {
-                        onSeekEnd(maxOf(0, position - 10))
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .widthIn(max = 400.dp)
+                            .fillMaxWidth()
+                            .pointerInput(Unit) { consumeTapGestures() },
+                    ) {
+                        SeekButton(Icons.Default.Replay10) {
+                            onSeekEnd(maxOf(0, position - 10))
+                        }
+
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(90.dp)) {
+                            PlayPauseButton(
+                                isPlaying = isPlaying,
+                                onClick = onTogglePlaying,
+                            )
+                        }
+
+                        SeekButton(Icons.Default.Forward30) {
+                            onSeekEnd(minOf(duration, position + 30))
+                        }
                     }
 
-                    PlayPauseButton(isPlaying = isPlaying, onClick = {
-                        onTogglePlaying()
-                    })
-
-                    SeekButton(Icons.Default.Forward30) {
-                        onSeekEnd(minOf(duration, position + 30))
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            color = LocalContentColor.current,
+                            strokeWidth = 6.dp,
+                            modifier = Modifier
+                                .size(90.dp)
+                                .align(Alignment.Center),
+                        )
                     }
                 }
             }

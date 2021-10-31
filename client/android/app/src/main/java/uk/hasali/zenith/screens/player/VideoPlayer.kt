@@ -123,6 +123,7 @@ fun VideoPlayerOverlay(
         title = item?.title.orEmpty(),
         position = position,
         duration = item?.duration?.toLong() ?: 0,
+        isLoading = playWhenReady && !isPlaying,
         isPlaying = playWhenReady,
         subtitles = item?.subtitles.orEmpty(),
         selectedSubtitle = subtitleTrack,
