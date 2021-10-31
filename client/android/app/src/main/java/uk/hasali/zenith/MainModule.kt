@@ -5,6 +5,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
 import io.ktor.client.*
+import io.ktor.client.engine.okhttp.*
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.*
 import kotlinx.serialization.json.Json
@@ -13,7 +14,7 @@ import kotlinx.serialization.json.Json
 @InstallIn(ActivityRetainedComponent::class)
 object MainModule {
     @Provides
-    fun provideHttpClient() = HttpClient {
+    fun provideHttpClient() = HttpClient(OkHttp) {
         install(JsonFeature) {
             serializer = KotlinxSerializer(Json {
                 ignoreUnknownKeys = true
