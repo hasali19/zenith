@@ -33,7 +33,7 @@ fun VideoPlayerScreen(model: PlayerViewModel = hiltViewModel()) {
             item = item,
             castSession = castSession,
             onUpdateProgress = {
-                model.updateProgress(it)
+                model.updateProgress(it / 1000)
             }
         )
     }
