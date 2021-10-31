@@ -5,7 +5,10 @@ import android.os.Build
 import android.view.Window
 import android.view.WindowManager
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
@@ -25,13 +28,15 @@ fun VideoPlayerScreen(model: PlayerViewModel = hiltViewModel()) {
     val item by rememberFlowWithLifecycle(model.item)
         .collectAsState(null)
 
-    VideoPlayerScreen(
-        item = item,
-        castSession = castSession,
-        onUpdateProgress = {
-            model.updateProgress(it)
-        }
-    )
+    Box(modifier = Modifier.fillMaxSize()) {
+        VideoPlayerScreen(
+            item = item,
+            castSession = castSession,
+            onUpdateProgress = {
+                model.updateProgress(it)
+            }
+        )
+    }
 }
 
 @Composable
