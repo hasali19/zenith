@@ -1,5 +1,6 @@
 package uk.hasali.zenith.screens.player
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -18,10 +19,8 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.insets.LocalWindowInsets
-import com.google.accompanist.insets.systemBarsPadding
 import kotlinx.coroutines.*
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class)
@@ -40,36 +39,33 @@ fun Controls(
     onClosePressed: () -> Unit,
     visibility: OverlayVisibility = rememberControlsVisibility(),
 ) {
-    val scope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+    var isSubtitlesMenuVisible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(isPlaying) {
-        visibility.setAutoHideEnabled(isPlaying)
+    BackHandler(isSubtitlesMenuVisible) {
+        isSubtitlesMenuVisible = false
     }
 
-    if (!visibility.isVisible && !sheetState.isVisible) {
+    LaunchedEffect(isPlaying, isSubtitlesMenuVisible) {
+        visibility.setAutoHideEnabled(isPlaying && !isSubtitlesMenuVisible)
+    }
+
+    if (!visibility.isVisible) {
         FullScreen()
     }
 
-    ModalBottomSheetLayout(
-        sheetState = sheetState,
-        scrimColor = MaterialTheme.colors.surface.copy(alpha = 0.32f),
-        sheetContent = {
-            SubtitlesMenu(
-                subtitles = subtitles,
-                current = selectedSubtitle,
-                onSelectSubtitle = {
-                    onSelectSubtitle(it)
-                    scope.launch {
-                        sheetState.hide()
-                    }
-                },
-                modifier = Modifier.systemBarsPadding(top = false),
-            )
-        },
-    ) {
+    val insets = LocalWindowInsets.current
+    val insetsPadding = with(LocalDensity.current) {
+        PaddingValues(
+            top = maxOf(insets.systemBars.top, insets.displayCutout.top).toDp(),
+            bottom = maxOf(insets.systemBars.bottom, insets.displayCutout.bottom).toDp(),
+            start = maxOf(insets.systemBars.left, insets.displayCutout.left).toDp(),
+            end = maxOf(insets.systemBars.right, insets.displayCutout.right).toDp(),
+        )
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
         Controls(
-            isVisible = visibility.isVisible || sheetState.isVisible,
+            isVisible = visibility.isVisible,
             title = title,
             position = position,
             duration = duration,
@@ -77,8 +73,9 @@ fun Controls(
             onSeekStart = onSeekStart,
             onSeekEnd = onSeekEnd,
             onTogglePlaying = onTogglePlaying,
-            onShowSubtitlesMenu = { scope.launch { sheetState.show() } },
+            onShowSubtitlesMenu = { isSubtitlesMenuVisible = true },
             onClosePressed = onClosePressed,
+            padding = insetsPadding,
             modifier = Modifier.pointerInput(visibility) {
                 forEachGesture {
                     awaitPointerEventScope {
@@ -102,6 +99,47 @@ fun Controls(
                 }
             },
         )
+
+        if (isSubtitlesMenuVisible) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures {
+                            visibility.hideAfterDelay()
+                            isSubtitlesMenuVisible = false
+                        }
+                    },
+            )
+        }
+
+        AnimatedVisibility(
+            visible = isSubtitlesMenuVisible,
+            enter = slideInVertically { it },
+            exit = slideOutVertically { it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 600.dp)
+                .align(Alignment.BottomCenter)
+                .padding(insetsPadding),
+        ) {
+            Box(modifier = Modifier.fillMaxHeight()) {
+                Surface(
+                    modifier = Modifier
+                        .widthIn(max = 400.dp)
+                        .align(Alignment.BottomCenter),
+                ) {
+                    SubtitlesMenu(
+                        subtitles = subtitles,
+                        current = selectedSubtitle,
+                        onSelectSubtitle = {
+                            onSelectSubtitle(it)
+                            isSubtitlesMenuVisible = false
+                        },
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -118,21 +156,10 @@ private fun Controls(
     onTogglePlaying: () -> Unit,
     onShowSubtitlesMenu: () -> Unit,
     onClosePressed: () -> Unit,
+    padding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
     val opacity by animateFloatAsState(if (isVisible) 0.4f else 0f)
-
-    val topPadding: Dp
-    val bottomPadding: Dp
-    val startPadding: Dp
-    val endPadding: Dp
-    with(LocalDensity.current) {
-        val insets = LocalWindowInsets.current
-        topPadding = maxOf(insets.systemBars.top, insets.displayCutout.top).toDp()
-        bottomPadding = maxOf(insets.systemBars.bottom, insets.displayCutout.bottom).toDp()
-        startPadding = maxOf(insets.systemBars.left, insets.displayCutout.left).toDp()
-        endPadding = maxOf(insets.systemBars.right, insets.displayCutout.right).toDp()
-    }
 
     CompositionLocalProvider(
         LocalContentColor provides Color.White,
@@ -140,19 +167,14 @@ private fun Controls(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = opacity)),
+                .background(Color.Black.copy(alpha = opacity))
+                .padding(padding),
         ) {
             AnimatedVisibility(
                 visible = isVisible,
                 enter = slideInVertically() + fadeIn(),
                 exit = slideOutVertically() + fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(
-                        top = topPadding,
-                        start = startPadding,
-                        end = endPadding,
-                    ),
+                modifier = Modifier.align(Alignment.TopCenter),
             ) {
                 AppBar(
                     title = title,
@@ -194,13 +216,7 @@ private fun Controls(
                 visible = isVisible,
                 enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(
-                        bottom = bottomPadding,
-                        start = startPadding,
-                        end = endPadding,
-                    ),
+                modifier = Modifier.align(Alignment.BottomCenter),
             ) {
                 SeekBar(
                     position = position,
