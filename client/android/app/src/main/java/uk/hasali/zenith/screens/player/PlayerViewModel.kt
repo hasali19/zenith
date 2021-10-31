@@ -1,7 +1,6 @@
 package uk.hasali.zenith.screens.player
 
 import android.util.Log
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -10,18 +9,20 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.*
+import uk.hasali.zenith.navigation.NavScreenProvider
 import javax.inject.Inject
 
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+    screenProvider: NavScreenProvider,
     preferences: Preferences,
     mediaUrlProvider: MediaUrlProvider,
     private val client: ZenithApiClient,
 ) : ViewModel() {
-    private val id: Int = savedStateHandle["id"]!!
-    private val type: VideoItemType = savedStateHandle["type"]!!
-    private val position: Double = savedStateHandle["position"] ?: 0.0
+    private val screen: PrimaryScreen.VideoPlayer by screenProvider
+    private val id: Int = screen.id
+    private val type: VideoItemType = screen.type
+    private val position: Double = screen.position ?: 0.0
 
     private val server = preferences.serverUrl
     private var _item = MutableStateFlow<MediaItem?>(null)

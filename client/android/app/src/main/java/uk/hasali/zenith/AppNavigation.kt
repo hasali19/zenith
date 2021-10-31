@@ -1,6 +1,5 @@
 package uk.hasali.zenith
 
-import android.content.Intent
 import android.os.Parcelable
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -21,7 +20,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.parcelize.Parcelize
 import uk.hasali.zenith.navigation.ContentHost
@@ -39,12 +37,21 @@ import uk.hasali.zenith.screens.management.ImportQueueScreen
 import uk.hasali.zenith.screens.management.ManagementHomeScreen
 import uk.hasali.zenith.screens.management.TranscodeQueueScreen
 import uk.hasali.zenith.screens.player.VideoItemType
-import uk.hasali.zenith.screens.player.VideoPlayerActivity
+import uk.hasali.zenith.screens.player.VideoPlayerScreen
 
 sealed class Screen(val route: String) {
     override fun equals(other: Any?) = other is Screen && other.route == route
     override fun hashCode() = route.hashCode()
     override fun toString() = "Screen=$route"
+}
+
+sealed interface PrimaryScreen : Parcelable {
+    @Parcelize
+    object Main : Screen("main"), PrimaryScreen
+
+    @Parcelize
+    data class VideoPlayer(val id: Int, val type: VideoItemType, val position: Double?) :
+        Screen("video_player"), PrimaryScreen
 }
 
 sealed interface BottomNavigationArea : Parcelable {
@@ -95,24 +102,23 @@ sealed interface ManagementScreen : Parcelable {
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigation() {
-    val context = LocalContext.current
+    val navigator = rememberStackNavigator<PrimaryScreen>(PrimaryScreen.Main)
 
-    val navigateToPlayer = { id: Int, type: VideoItemType, pos: Double? ->
-        val intent = Intent(context, VideoPlayerActivity::class.java).apply {
-            putExtra("id", id)
-            putExtra("type", type)
-            putExtra("position", pos)
+    navigator.ContentHost {
+        when (it) {
+            is PrimaryScreen.Main -> MainNavigation(
+                onNavigateToPlayer = { id, type, position ->
+                    navigator.push(PrimaryScreen.VideoPlayer(id, type, position))
+                },
+            )
+
+            is PrimaryScreen.VideoPlayer -> VideoPlayerScreen()
         }
-        context.startActivity(intent)
     }
-
-    AppNavigation(
-        onNavigateToPlayer = navigateToPlayer,
-    )
 }
 
 @Composable
-private fun AppNavigation(onNavigateToPlayer: (Int, VideoItemType, Double?) -> Unit) {
+private fun MainNavigation(onNavigateToPlayer: (Int, VideoItemType, Double?) -> Unit) {
     val holder = rememberSaveableStateHolder()
     var area by rememberSaveable { mutableStateOf<BottomNavigationArea>(BottomNavigationArea.Library) }
 

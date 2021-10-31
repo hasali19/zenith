@@ -33,18 +33,12 @@
             android:theme="@style/Theme.Zenith">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <activity
             android:name=".SelectServerActivity"
-            android:theme="@style/Theme.Zenith" />
-
-        <activity
-            android:name=".screens.player.VideoPlayerActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
             android:theme="@style/Theme.Zenith" />
 
         <receiver android:name=".InstallReceiver" />

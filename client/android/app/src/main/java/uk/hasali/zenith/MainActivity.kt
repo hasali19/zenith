@@ -22,7 +22,6 @@ import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.navigation.rememberStackNavigator
 import uk.hasali.zenith.ui.AppTheme
 import uk.hasali.zenith.ui.LocalZenithClient
 import javax.inject.Inject
