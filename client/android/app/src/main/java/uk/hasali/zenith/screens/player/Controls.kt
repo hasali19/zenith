@@ -18,6 +18,8 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.insets.cutoutPadding
+import com.google.accompanist.insets.systemBarsPadding
 import kotlinx.coroutines.*
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class)
@@ -43,6 +45,10 @@ fun Controls(
         visibility.setAutoHideEnabled(isPlaying)
     }
 
+    if (!visibility.isVisible && !sheetState.isVisible) {
+        FullScreen()
+    }
+
     ModalBottomSheetLayout(
         sheetState = sheetState,
         scrimColor = MaterialTheme.colors.surface.copy(alpha = 0.32f),
@@ -56,6 +62,7 @@ fun Controls(
                         sheetState.hide()
                     }
                 },
+                modifier = Modifier.systemBarsPadding(top = false),
             )
         },
     ) {
@@ -117,16 +124,18 @@ private fun Controls(
         LocalContentColor provides Color.White,
     ) {
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = opacity))
-                .then(modifier),
+                .background(Color.Black.copy(alpha = opacity)),
         ) {
             AnimatedVisibility(
                 visible = isVisible,
                 enter = slideInVertically() + fadeIn(),
                 exit = slideOutVertically() + fadeOut(),
-                modifier = Modifier.align(Alignment.TopCenter),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .systemBarsPadding(bottom = false)
+                    .cutoutPadding(bottom = false),
             ) {
                 AppBar(
                     title = title,
@@ -168,7 +177,10 @@ private fun Controls(
                 visible = isVisible,
                 enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(),
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .systemBarsPadding(top = false)
+                    .cutoutPadding(top = false),
             ) {
                 SeekBar(
                     position = position,

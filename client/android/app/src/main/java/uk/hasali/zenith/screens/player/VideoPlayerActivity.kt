@@ -1,6 +1,8 @@
 package uk.hasali.zenith.screens.player
 
+import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -34,6 +36,23 @@ class VideoPlayerActivity : FragmentActivity() {
         setContent {
             val item by rememberFlowWithLifecycle(model.item)
                 .collectAsState(null)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                // Allow content to extend into the cutout area
+                DisposableEffect(Unit) {
+                    window.attributes = window.attributes.apply {
+                        layoutInDisplayCutoutMode =
+                            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                    }
+
+                    onDispose {
+                        window.attributes = window.attributes.apply {
+                            layoutInDisplayCutoutMode =
+                                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                        }
+                    }
+                }
+            }
 
             AppTheme {
                 ProvideWindowInsets {
@@ -79,7 +98,7 @@ class VideoPlayerActivity : FragmentActivity() {
 
         if (castSession == null) {
             KeepScreenOn()
-            FullScreen()
+            // FullScreen()
         }
 
         val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current

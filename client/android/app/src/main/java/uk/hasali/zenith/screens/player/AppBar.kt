@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.insets.statusBarsPadding
 
 @Composable
 fun AppBar(
@@ -41,6 +40,6 @@ fun AppBar(
                 Icon(Icons.Default.ClosedCaption, contentDescription = "Captions")
             }
         },
-        modifier = modifier.statusBarsPadding(),
+        modifier = modifier,
     )
 }

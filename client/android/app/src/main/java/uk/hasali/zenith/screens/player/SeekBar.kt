@@ -31,9 +31,7 @@ fun SeekBar(
         onDispose { }
     }
 
-    // TODO: This padding is a temporary hack for rounded corners. Ideally this can be removed
-    //       once we implement showing/hiding system UI along with controls
-    Column(modifier = modifier.padding(bottom = 32.dp)) {
+    Column(modifier = modifier.padding(bottom = 16.dp)) {
         AndroidView(
             modifier = Modifier.fillMaxWidth(),
             factory = {

@@ -31,6 +31,7 @@ fun SubtitlesMenu(
     subtitles: List<SubtitleTrack>,
     current: SubtitleTrack?,
     onSelectSubtitle: (SubtitleTrack?) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val items = remember(subtitles) {
         subtitles
@@ -60,7 +61,7 @@ fun SubtitlesMenu(
             )
     }
 
-    Column {
+    Column(modifier = modifier) {
         Text(
             text = "Subtitles",
             style = MaterialTheme.typography.subtitle2,
