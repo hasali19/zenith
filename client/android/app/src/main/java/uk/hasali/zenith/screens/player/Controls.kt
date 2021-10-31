@@ -17,8 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.insets.cutoutPadding
+import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.systemBarsPadding
 import kotlinx.coroutines.*
 
@@ -120,6 +122,18 @@ private fun Controls(
 ) {
     val opacity by animateFloatAsState(if (isVisible) 0.4f else 0f)
 
+    val topPadding: Dp
+    val bottomPadding: Dp
+    val startPadding: Dp
+    val endPadding: Dp
+    with(LocalDensity.current) {
+        val insets = LocalWindowInsets.current
+        topPadding = maxOf(insets.systemBars.top, insets.displayCutout.top).toDp()
+        bottomPadding = maxOf(insets.systemBars.bottom, insets.displayCutout.bottom).toDp()
+        startPadding = maxOf(insets.systemBars.left, insets.displayCutout.left).toDp()
+        endPadding = maxOf(insets.systemBars.right, insets.displayCutout.right).toDp()
+    }
+
     CompositionLocalProvider(
         LocalContentColor provides Color.White,
     ) {
@@ -134,8 +148,11 @@ private fun Controls(
                 exit = slideOutVertically() + fadeOut(),
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .systemBarsPadding(bottom = false)
-                    .cutoutPadding(bottom = false),
+                    .padding(
+                        top = topPadding,
+                        start = startPadding,
+                        end = endPadding,
+                    ),
             ) {
                 AppBar(
                     title = title,
@@ -179,8 +196,11 @@ private fun Controls(
                 exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(),
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .systemBarsPadding(top = false)
-                    .cutoutPadding(top = false),
+                    .padding(
+                        bottom = bottomPadding,
+                        start = startPadding,
+                        end = endPadding,
+                    ),
             ) {
                 SeekBar(
                     position = position,
