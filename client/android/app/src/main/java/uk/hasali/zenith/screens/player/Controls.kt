@@ -126,7 +126,7 @@ fun Controls(
             Box(modifier = Modifier.fillMaxHeight()) {
                 Surface(
                     modifier = Modifier
-                        .widthIn(max = 400.dp)
+                        .widthIn(max = 480.dp)
                         .align(Alignment.BottomCenter),
                 ) {
                     SubtitlesMenu(
