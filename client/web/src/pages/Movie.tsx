@@ -56,7 +56,7 @@ export default function () {
         <HeaderSection
           movie={movie}
           mobile={mobile}
-          onPlay={(player) => history.push(`/${player}/${movie.id}`)}
+          onPlay={() => history.push(`/player/${movie.id}`)}
         />
         {mobile && (
           <Typography
@@ -86,7 +86,7 @@ const MobileBackdrop: FC<{ src: string }> = ({ src }) => (
 const HeaderSection: FC<{
   movie: Movie;
   mobile: boolean;
-  onPlay: (player: "player" | "cast") => void;
+  onPlay: () => void;
 }> = ({ movie, mobile, onPlay }) => (
   <div
     css={(theme) => css`
@@ -153,9 +153,7 @@ const HeaderSection: FC<{
   </div>
 );
 
-const ActionsRow: FC<{ onPlay: (player: "player" | "cast") => void }> = ({
-  onPlay,
-}) => {
+const ActionsRow: FC<{ onPlay: () => void }> = ({ onPlay }) => {
   return (
     <div
       css={(theme) =>
@@ -167,15 +165,12 @@ const ActionsRow: FC<{ onPlay: (player: "player" | "cast") => void }> = ({
       <Button
         variant="contained"
         startIcon={<Icon>play_arrow</Icon>}
-        onClick={() => onPlay("player")}
+        onClick={onPlay}
         css={(theme) => css`
           margin-right: ${theme.spacing(1)};
         `}
       >
         Play
-      </Button>
-      <Button variant="outlined" onClick={() => onPlay("cast")}>
-        <Icon color="action">cast</Icon>
       </Button>
     </div>
   );

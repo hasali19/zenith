@@ -3,7 +3,6 @@ import ReactDOM from "react-dom";
 import { createMuiTheme, CssBaseline, ThemeProvider } from "@material-ui/core";
 
 import App from "./App";
-import { GCastProvider } from "./gcast";
 
 const theme = createMuiTheme({
   palette: {
@@ -13,12 +12,10 @@ const theme = createMuiTheme({
 
 ReactDOM.render(
   <React.StrictMode>
-    <GCastProvider>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <App />
-      </ThemeProvider>
-    </GCastProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <App />
+    </ThemeProvider>
   </React.StrictMode>,
   document.getElementById("root")
 );

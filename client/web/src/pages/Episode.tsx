@@ -63,7 +63,7 @@ export default function () {
           season={season}
           episode={episode}
           mobile={mobile}
-          onPlay={(player) => history.push(`/${player}/${episode.id}`)}
+          onPlay={() => history.push(`/player/${episode.id}`)}
         />
         {mobile && (
           <Typography
@@ -94,7 +94,7 @@ const HeaderSection: FC<{
   season: Season;
   episode: Episode;
   mobile: boolean;
-  onPlay: (player: "player" | "cast") => void;
+  onPlay: () => void;
 }> = ({ season, episode, mobile, onPlay }) => (
   <div
     css={(theme) => css`
@@ -163,9 +163,7 @@ const HeaderSection: FC<{
   </div>
 );
 
-const ActionsRow: FC<{ onPlay: (player: "player" | "cast") => void }> = ({
-  onPlay,
-}) => {
+const ActionsRow: FC<{ onPlay: () => void }> = ({ onPlay }) => {
   return (
     <div
       css={(theme) =>
@@ -177,15 +175,12 @@ const ActionsRow: FC<{ onPlay: (player: "player" | "cast") => void }> = ({
       <Button
         variant="contained"
         startIcon={<Icon>play_arrow</Icon>}
-        onClick={() => onPlay("player")}
+        onClick={onPlay}
         css={(theme) => css`
           margin-right: ${theme.spacing(1)};
         `}
       >
         Play
-      </Button>
-      <Button variant="outlined" onClick={() => onPlay("cast")}>
-        <Icon color="action">cast</Icon>
       </Button>
     </div>
   );
