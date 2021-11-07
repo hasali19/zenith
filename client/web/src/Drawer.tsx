@@ -77,22 +77,6 @@ export function DrawerContent({ onClose }: { onClose: () => void }) {
             <ListItemText>{link.name}</ListItemText>
           </ListItem>
         ))}
-        <Divider />
-        <ListItem
-          button
-          selected={pathname === "/import"}
-          onClick={() => navigate("/import")}
-          css={(theme) => css`
-            margin: ${theme.spacing(1)};
-            width: calc(100% - ${theme.spacing(2)});
-            border-radius: 4px;
-          `}
-        >
-          <ListItemIcon>
-            <Icon>import_export</Icon>
-          </ListItemIcon>
-          <ListItemText>Import Queue</ListItemText>
-        </ListItem>
       </List>
     </div>
   );

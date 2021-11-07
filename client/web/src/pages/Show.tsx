@@ -9,14 +9,15 @@ import {
   Typography,
 } from "@material-ui/core";
 
-import api, { TvSeason, TvShow } from "../api";
+import api, { Season, Show } from "../api";
 import PosterMediaItem from "../components/PosterMediaItem";
+import { displayYear } from "../utils";
 
 export default function () {
   const params = useParams<any>();
   const history = useHistory();
-  const [show, setShow] = useState<TvShow | null>(null);
-  const [seasons, setSeasons] = useState<TvSeason[]>([]);
+  const [show, setShow] = useState<Show | null>(null);
+  const [seasons, setSeasons] = useState<Season[]>([]);
 
   useEffect(() => {
     api.tv.getShow(params.id).then(setShow);
@@ -58,7 +59,7 @@ export default function () {
   );
 }
 
-const HeaderSection: FC<{ show: TvShow }> = ({ show }) => {
+const HeaderSection: FC<{ show: Show }> = ({ show }) => {
   return (
     <div
       css={css`
@@ -78,10 +79,10 @@ const Poster: FC<{ src: string }> = ({ src }) => (
   </Card>
 );
 
-const HeaderContent: FC<{ show: TvShow }> = ({ show }) => (
+const HeaderContent: FC<{ show: Show }> = ({ show }) => (
   <Box ml={4}>
     <Typography variant="h2">{show.name}</Typography>
-    <Typography variant="h5">{show.startYear()}</Typography>
+    <Typography variant="h5">{displayYear(show.start_date)}</Typography>
     <Typography variant="body2" sx={{ mt: 2 }}>
       {show.overview}
     </Typography>
@@ -89,9 +90,9 @@ const HeaderContent: FC<{ show: TvShow }> = ({ show }) => (
 );
 
 const SeasonsSection: FC<{
-  show: TvShow;
-  seasons: TvSeason[];
-  onItemClick: (item: TvSeason) => void;
+  show: Show;
+  seasons: Season[];
+  onItemClick: (item: Season) => void;
 }> = ({ show, seasons, onItemClick }) => (
   <Box my={2} mt={8}>
     <Typography variant="h6" sx={{ mx: 0.5, fontSize: "1.5em" }}>

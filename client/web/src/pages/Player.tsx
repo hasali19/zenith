@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "react-router";
 import { css } from "@material-ui/styled-engine";
 
-import api, { ItemId, VideoInfo } from "../api";
+import api, { ItemId, MediaItem, Subtitle, VideoInfo } from "../api";
 
 function reportVideoPosition(id: ItemId, video: HTMLVideoElement) {
   if (!video.paused && !video.ended) {
@@ -10,9 +10,13 @@ function reportVideoPosition(id: ItemId, video: HTMLVideoElement) {
   }
 }
 
-function loadVideo(id: ItemId, info: VideoInfo, video: HTMLVideoElement) {
-  video.src = api.videos.getVideoUrl(id);
-  video.currentTime = info.position || 0;
+function loadVideo(
+  id: ItemId,
+  position: number | null,
+  video: HTMLVideoElement
+) {
+  video.src = api.videos.getUrl(id);
+  video.currentTime = position || 0;
   video.play();
 }
 
@@ -20,19 +24,20 @@ export default function Player() {
   const params = useParams<any>();
   const query = new URLSearchParams(useLocation().search);
   const video = useRef<HTMLVideoElement>(null);
-  const [info, setInfo] = useState<VideoInfo | null>(null);
+
+  const [item, setItem] = useState<MediaItem | null>(null);
 
   const requestedSubtitle = parseInt(query.get("subtitle") || "-1");
 
   useEffect(() => {
     if (params.id) {
-      api.videos.getVideoInfo(params.id).then(setInfo);
+      api.items.getItem(params.id).then(setItem);
 
       const interval = setInterval(() => {
         if (video.current) {
           reportVideoPosition(params.id, video.current);
         }
-      }, 2000);
+      }, 5000);
 
       return () => {
         clearInterval(interval);
@@ -41,10 +46,15 @@ export default function Player() {
   }, [params]);
 
   useEffect(() => {
-    if (params.id && info && video.current) {
-      loadVideo(params.id, info, video.current);
+    if (
+      params.id &&
+      item &&
+      (item.type == "movie" || item.type == "episode") &&
+      video.current
+    ) {
+      loadVideo(params.id, item.user_data.position, video.current);
     }
-  }, [params, info]);
+  }, [params, item]);
 
   return (
     <div
@@ -63,18 +73,29 @@ export default function Player() {
         `}
       >
         {params.id &&
-          info &&
-          info.subtitles.map((subtitle) => (
+          item &&
+          (item.type == "movie" || item.type == "episode") &&
+          item.video_info.subtitles.map((subtitle) => (
             <track
-              key={subtitle.index}
-              src={`/api/videos/${params.id}/subtitles/${subtitle.index}`}
+              key={subtitle.id}
+              src={`/api/subtitles/${subtitle.id}`}
               kind="subtitles"
-              label={subtitle.title || subtitle.language || undefined}
-              srcLang={subtitle.language || undefined}
-              default={requestedSubtitle === subtitle.index}
+              label={buildSubtitleLabel(subtitle)}
+              srcLang={subtitle.language ?? undefined}
+              default={requestedSubtitle === subtitle.id}
             />
           ))}
       </video>
     </div>
   );
+}
+
+function buildSubtitleLabel(subtitle: Subtitle): string {
+  const language = subtitle.language ?? "Unknown";
+
+  if (subtitle.title) {
+    return `${language} - ${subtitle.title}`;
+  } else {
+    return language;
+  }
 }

@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useHistory } from "react-router";
 import { css } from "@emotion/react";
 
-import api, { TvShow } from "../api";
+import api, { Show } from "../api";
 import PosterMediaItem from "../components/PosterMediaItem";
 import VirtualItemGrid from "../components/VirtualItemGrid";
+import { displayYear } from "../utils";
 
 export default function () {
   const history = useHistory();
-  const [shows, setShows] = useState<TvShow[]>([]);
+  const [shows, setShows] = useState<Show[]>([]);
 
   useEffect(() => {
     api.tv.getShows().then(setShows);
@@ -36,7 +37,7 @@ export default function () {
                 key={show.id}
                 poster={show.poster || undefined}
                 primary={show.name}
-                secondary={show.startYear()?.toString()}
+                secondary={displayYear(show.start_date)}
                 style={style}
                 onClick={() => history.push(`/shows/${show.id}`)}
               />

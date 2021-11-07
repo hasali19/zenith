@@ -11,37 +11,25 @@ import {
   useMediaQuery,
 } from "@material-ui/core";
 
-import api, { TvEpisode, TvSeason, VideoInfo } from "../api";
-
-function displayDuration(duration: number) {
-  if (duration <= 90 * 60) {
-    return `${Math.floor(duration / 60)}m`;
-  } else {
-    const hours = Math.floor(duration / 3600);
-    const minutes = Math.floor((duration % 3600) / 60);
-    return `${hours}h ${minutes}m`;
-  }
-}
+import api, { Episode, Season } from "../api";
+import { displayDuration } from "../utils";
 
 export default function () {
   const params = useParams<any>();
   const history = useHistory();
   const mobile = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
 
-  const [season, setSeason] = useState<TvSeason | null>(null);
-  const [episode, setEpisode] = useState<TvEpisode | null>(null);
-  const [video, setVideo] = useState<VideoInfo | null>(null);
+  const [season, setSeason] = useState<Season | null>(null);
+  const [episode, setEpisode] = useState<Episode | null>(null);
 
   useEffect(() => {
     api.tv.getEpisode(params.id).then((episode) => {
       setEpisode(episode);
       api.tv.getSeason(episode.season_id).then(setSeason);
     });
-
-    api.videos.getVideoInfo(params.id).then(setVideo);
   }, []);
 
-  if (!season || !episode || !video) {
+  if (!season || !episode) {
     return <LinearProgress variant="indeterminate" />;
   }
 
@@ -103,8 +91,8 @@ const MobileBackdrop: FC<{ src: string }> = ({ src }) => (
 );
 
 const HeaderSection: FC<{
-  season: TvSeason;
-  episode: TvEpisode;
+  season: Season;
+  episode: Episode;
   mobile: boolean;
   onPlay: (player: "player" | "cast") => void;
 }> = ({ season, episode, mobile, onPlay }) => (
@@ -158,7 +146,7 @@ const HeaderSection: FC<{
       <Typography variant={mobile ? "caption" : "h6"} component="div">
         S{season.season_number.toString().padStart(2, "0")}E
         {episode.episode_number.toString().padStart(2, "0")} -{" "}
-        {displayDuration(episode.duration)}
+        {displayDuration(episode.video_info.duration)}
       </Typography>
       <ActionsRow onPlay={onPlay} />
       {!mobile && (

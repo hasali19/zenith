@@ -3,8 +3,9 @@ import { useHistory } from "react-router";
 import { css, Theme } from "@emotion/react";
 import { Typography } from "@material-ui/core";
 
-import api, { Movie, TvShow } from "../api";
+import api, { Movie, Show } from "../api";
 import PosterMediaItem from "../components/PosterMediaItem";
+import { displayYear } from "../utils";
 
 const styles = {
   root: (theme: Theme) => css`
@@ -59,7 +60,7 @@ function FeaturedSection<T>({ title, items, render }: FeaturedSectionProps<T>) {
 export default function () {
   const history = useHistory();
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [shows, setShows] = useState<TvShow[]>([]);
+  const [shows, setShows] = useState<Show[]>([]);
 
   useEffect(() => {
     api.movies.getRecent().then(setMovies);
@@ -76,7 +77,7 @@ export default function () {
             <PosterMediaItem
               poster={movie.poster || undefined}
               primary={movie.title}
-              secondary={movie.releaseYear()?.toString()}
+              secondary={displayYear(movie.release_date)}
               onClick={() => history.push(`/movies/${movie.id}`)}
             />
           </div>
@@ -90,7 +91,7 @@ export default function () {
             <PosterMediaItem
               poster={show.poster || undefined}
               primary={show.name}
-              secondary={show.startYear()?.toString()}
+              secondary={displayYear(show.start_date)}
               onClick={() => history.push(`/shows/${show.id}`)}
             />
           </div>

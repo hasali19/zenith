@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@material-ui/core";
 
-import api, { TvEpisode, TvSeason, TvShow } from "../api";
+import api, { Episode, Season, Show } from "../api";
 
 const styles = {
   root: css`
@@ -65,9 +65,9 @@ function displayDuration(duration: number) {
 export default function () {
   const params = useParams<any>();
   const history = useHistory();
-  const [show, setShow] = useState<TvShow | null>(null);
-  const [season, setSeason] = useState<TvSeason | null>(null);
-  const [episodes, setEpisodes] = useState<TvEpisode[]>([]);
+  const [show, setShow] = useState<Show | null>(null);
+  const [season, setSeason] = useState<Season | null>(null);
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
 
   useEffect(() => {
     api.tv.getSeason(params.id).then((season) => {
@@ -103,7 +103,7 @@ export default function () {
                     aspect-ratio: 16/9;
                   `}
                 />
-                {episode.is_watched && (
+                {episode.user_data.is_watched && (
                   <div
                     css={css`
                       width: 100%;
@@ -144,7 +144,7 @@ export default function () {
                   color: darkgray;
                 `}
               >
-                {displayDuration(episode.duration)}
+                {displayDuration(episode.video_info.duration)}
               </Typography>
               <Typography
                 variant="caption"

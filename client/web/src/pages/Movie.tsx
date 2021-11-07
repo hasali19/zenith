@@ -11,17 +11,8 @@ import {
   useMediaQuery,
 } from "@material-ui/core";
 
-import api, { Movie, VideoInfo } from "../api";
-
-function displayDuration(duration: number) {
-  if (duration <= 90 * 60) {
-    return `${Math.floor(duration / 60)}m`;
-  } else {
-    const hours = Math.floor(duration / 3600);
-    const minutes = Math.floor((duration % 3600) / 60);
-    return `${hours}h ${minutes}m`;
-  }
-}
+import api, { Movie } from "../api";
+import { displayDuration } from "../utils";
 
 export default function () {
   const params = useParams<any>();
@@ -29,14 +20,12 @@ export default function () {
   const mobile = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
 
   const [movie, setMovie] = useState<Movie | null>(null);
-  const [video, setVideo] = useState<VideoInfo | null>(null);
 
   useEffect(() => {
     api.movies.getMovie(params.id).then(setMovie);
-    api.videos.getVideoInfo(params.id).then(setVideo);
   }, []);
 
-  if (!movie || !video) {
+  if (!movie) {
     return <LinearProgress variant="indeterminate" />;
   }
 
@@ -147,7 +136,7 @@ const HeaderSection: FC<{
         {movie.title}
       </Typography>
       <Typography variant={mobile ? "caption" : "h6"} component="div">
-        {displayDuration(movie.duration)}
+        {displayDuration(movie.video_info.duration)}
       </Typography>
       <ActionsRow onPlay={onPlay} />
       {!mobile && (

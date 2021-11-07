@@ -5,6 +5,7 @@ import { useHistory } from "react-router";
 import api, { Movie } from "../api";
 import PosterMediaItem from "../components/PosterMediaItem";
 import VirtualItemGrid from "../components/VirtualItemGrid";
+import { displayYear } from "../utils";
 
 export default function () {
   const history = useHistory();
@@ -36,7 +37,7 @@ export default function () {
                 key={movie.id}
                 poster={movie.poster || undefined}
                 primary={movie.title}
-                secondary={movie.releaseYear()?.toString()}
+                secondary={displayYear(movie.release_date)}
                 style={style}
                 onClick={() => history.push(`/movies/${movie.id}`)}
               />
