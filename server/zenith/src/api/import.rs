@@ -18,6 +18,7 @@ use crate::config::Config;
 use crate::db::subtitles::NewSubtitle;
 use crate::db::Db;
 use crate::library::scanner::{self, LibraryScanner, ScanOptions, VideoFileType};
+use crate::transcoder::{Job, Transcoder};
 use crate::{db, subtitles, util, Ext};
 
 #[get("/import/queue")]
@@ -189,6 +190,7 @@ pub async fn import_movie(
     Json(data): Json<ImportMovieRequest>,
     config: Ext<Arc<Config>>,
     scanner: Ext<Arc<LibraryScanner>>,
+    transcoder: Ext<Arc<Transcoder>>,
 ) -> ApiResult<impl Responder> {
     let src_path = match data.source {
         ImportSource::Local { path, copy: _ } => path,
@@ -213,9 +215,13 @@ pub async fn import_movie(
     std::fs::create_dir(&dst_dir)?;
     std::fs::rename(&src_path, &dst_path)?;
 
-    scanner
+    let id = scanner
         .scan_file(VideoFileType::Movie, &dst_path, ScanOptions::quick())
         .await?;
+
+    if let Some(id) = id {
+        transcoder.enqueue(Job::new(id)).await;
+    }
 
     Ok(HttpResponse::Ok())
 }
@@ -231,6 +237,7 @@ pub async fn import_show(
     Json(data): Json<ImportShowRequest>,
     config: Ext<Arc<Config>>,
     scanner: Ext<Arc<LibraryScanner>>,
+    transcoder: Ext<Arc<Transcoder>>,
 ) -> ApiResult<impl Responder> {
     if data.episodes.is_empty() {
         return Err(bad_request("show must have at least one episode"));
@@ -245,9 +252,13 @@ pub async fn import_show(
 
     for episode in data.episodes {
         let path = inner::import_episode(&show_path, episode).await?;
-        scanner
+        let id = scanner
             .scan_file(VideoFileType::Episode, &path, ScanOptions::quick())
             .await?;
+
+        if let Some(id) = id {
+            transcoder.enqueue(Job::new(id)).await;
+        }
     }
 
     Ok(HttpResponse::Ok())
@@ -266,6 +277,7 @@ pub async fn import_episode(
     Json(data): Json<ImportEpisodeRequest>,
     db: Db,
     scanner: Ext<Arc<LibraryScanner>>,
+    transcoder: Ext<Arc<Transcoder>>,
 ) -> ApiResult<impl Responder> {
     let mut conn = db.acquire().await?;
     let show_path = db::shows::get_path(&mut conn, *show_id)
@@ -274,9 +286,13 @@ pub async fn import_episode(
 
     let path = inner::import_episode(Path::new(&show_path), data).await?;
 
-    scanner
+    let id = scanner
         .scan_file(VideoFileType::Episode, &path, ScanOptions::quick())
         .await?;
+
+    if let Some(id) = id {
+        transcoder.enqueue(Job::new(id)).await;
+    }
 
     Ok(HttpResponse::Ok())
 }

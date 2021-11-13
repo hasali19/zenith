@@ -144,7 +144,7 @@ impl LibraryScanner {
         video_type: VideoFileType,
         path: impl AsRef<Path>,
         options: ScanOptions,
-    ) -> eyre::Result<()> {
+    ) -> eyre::Result<Option<i64>> {
         let path = path.as_ref();
         match video_type {
             VideoFileType::Movie => self.scan_movie_file(path, &options).await,
@@ -152,7 +152,11 @@ impl LibraryScanner {
         }
     }
 
-    async fn scan_movie_file(&self, path: &Path, options: &ScanOptions) -> eyre::Result<()> {
+    async fn scan_movie_file(
+        &self,
+        path: &Path,
+        options: &ScanOptions,
+    ) -> eyre::Result<Option<i64>> {
         let name = path.file_name().and_then(|v| v.to_str()).unwrap();
         let path_str = path.to_str().unwrap();
         let library = self.library.movies();
@@ -161,19 +165,19 @@ impl LibraryScanner {
             // Remove movie from database if file no longer exists
             if !path.is_file() {
                 // TODO: Remove movie from database
-                return Ok(());
+                return Ok(Some(id));
             }
 
             if options.rescan_files {
                 self.rescan_video_file_path(id, path_str).await?;
             }
 
-            return Ok(());
+            return Ok(Some(id));
         }
 
         let (title, release_date) = match parse_movie_filename(name) {
             Some(v) => v,
-            None => return Ok(()),
+            None => return Ok(None),
         };
 
         tracing::info!("adding movie: {}", name);
@@ -187,25 +191,29 @@ impl LibraryScanner {
         let id = library.add_movie(&movie).await?;
         self.metadata.enqueue(RefreshRequest::Movie(id));
 
-        Ok(())
+        Ok(Some(id))
     }
 
-    async fn scan_episode_file(&self, path: &Path, options: &ScanOptions) -> eyre::Result<()> {
+    async fn scan_episode_file(
+        &self,
+        path: &Path,
+        options: &ScanOptions,
+    ) -> eyre::Result<Option<i64>> {
         let library = self.library.shows();
 
         let (show_name, season, episode) = match parse_episode_path(path) {
             Some(v) => v,
-            None => return Ok(()),
+            None => return Ok(None),
         };
 
         let parent_path = match path.parent().and_then(|v| v.to_str()) {
             Some(v) => v,
-            None => return Ok(()),
+            None => return Ok(None),
         };
 
         let path_str = match path.to_str() {
             Some(v) => v,
-            None => return Ok(()),
+            None => return Ok(None),
         };
 
         let show_id = match library.get_show_id_by_path(parent_path).await? {
@@ -245,14 +253,14 @@ impl LibraryScanner {
                 // TODO: Remove episode (and possibly season/show) from database
                 // For now it should be fine since this is only called
                 // in a library scan, after validating
-                return Ok(());
+                return Ok(Some(id));
             }
 
             if options.rescan_files {
                 self.rescan_video_file_path(id, path_str).await?;
             }
 
-            return Ok(());
+            return Ok(Some(id));
         }
 
         tracing::info!("adding episode: {} ({}:{})", show_name, season, episode);
@@ -266,7 +274,7 @@ impl LibraryScanner {
         let id = library.add_episode(episode).await?;
         self.metadata.enqueue(RefreshRequest::TvEpisode(id));
 
-        Ok(())
+        Ok(Some(id))
     }
 
     #[tracing::instrument(skip(self))]
