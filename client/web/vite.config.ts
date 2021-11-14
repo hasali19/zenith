@@ -1,12 +1,12 @@
 import { defineConfig } from "vite";
-import reactRefresh from "@vitejs/plugin-react-refresh";
+import solidPlugin from "vite-plugin-solid";
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [reactRefresh()],
-  esbuild: {
-    jsxFactory: "jsx",
-    jsxInject: `import { jsx } from "@emotion/react"`,
+  plugins: [vanillaExtractPlugin(), solidPlugin()],
+  build: {
+    target: "esnext",
+    polyfillDynamicImport: false,
   },
   server: {
     proxy: {

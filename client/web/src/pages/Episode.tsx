@@ -1,187 +1,80 @@
-import { FC, useEffect, useState } from "react";
-import { useHistory, useParams } from "react-router";
-import { css, Theme } from "@emotion/react";
-import {
-  Button,
-  Card,
-  CardMedia,
-  Icon,
-  LinearProgress,
-  Typography,
-  useMediaQuery,
-} from "@material-ui/core";
+import { useNavigate, useParams } from "solid-app-router";
+import { Component, createEffect, createSignal, Show } from "solid-js";
+import { MediaDetailsScreen } from "../MediaDetailsScreen";
+import preferences from "../preferences";
+import { formatDuration } from "../utils";
 
-import api, { Episode, Season } from "../api";
-import { displayDuration } from "../utils";
-
-export default function () {
-  const params = useParams<any>();
-  const history = useHistory();
-  const mobile = useMediaQuery((theme: Theme) => theme.breakpoints.down("md"));
-
-  const [season, setSeason] = useState<Season | null>(null);
-  const [episode, setEpisode] = useState<Episode | null>(null);
-
-  useEffect(() => {
-    api.tv.getEpisode(params.id).then((episode) => {
-      setEpisode(episode);
-      api.tv.getSeason(episode.season_id).then(setSeason);
-    });
-  }, []);
-
-  if (!season || !episode) {
-    return <LinearProgress variant="indeterminate" />;
-  }
-
-  return (
-    <div
-      css={css`
-        height: 100%;
-        overflow-y: auto;
-        background-size: cover;
-        background-position: center;
-      `}
-      style={{
-        backgroundImage: mobile ? undefined : `url(${episode.thumbnail})`,
-      }}
-    >
-      <div
-        css={(theme) => css`
-          height: 100%;
-          overflow-y: auto;
-
-          ${theme.breakpoints.up("md")} {
-            padding: 5%;
-            background-color: #000a;
-          }
-        `}
-      >
-        {mobile && episode.thumbnail && (
-          <MobileBackdrop src={episode.thumbnail} />
-        )}
-        <HeaderSection
-          season={season}
-          episode={episode}
-          mobile={mobile}
-          onPlay={() => history.push(`/player/${episode.id}`)}
-        />
-        {mobile && (
-          <Typography
-            variant="body2"
-            css={(theme) => css`
-              margin: 0 ${theme.spacing(2)};
-            `}
-          >
-            {episode.overview}
-          </Typography>
-        )}
-      </div>
-    </div>
-  );
+async function fetchShow(id: string) {
+  const url = `${preferences.server}/api/tv/shows/${id}`;
+  const res = await fetch(url);
+  return await res.json();
 }
 
-const MobileBackdrop: FC<{ src: string }> = ({ src }) => (
-  <img
-    src={src}
-    css={css`
-      width: 100%;
-      aspect-ratio: 16 / 9;
-    `}
-  />
-);
+async function fetchSeason(id: string) {
+  const url = `${preferences.server}/api/tv/seasons/${id}`;
+  const res = await fetch(url);
+  return await res.json();
+}
 
-const HeaderSection: FC<{
-  season: Season;
-  episode: Episode;
-  mobile: boolean;
-  onPlay: () => void;
-}> = ({ season, episode, mobile, onPlay }) => (
-  <div
-    css={(theme) => css`
-      display: flex;
-      align-items: center;
+async function fetchEpisode(id: string) {
+  const url = `${preferences.server}/api/tv/episodes/${id}`;
+  const res = await fetch(url);
+  return await res.json();
+}
 
-      ${theme.breakpoints.down("md")} {
-        align-items: flex-end;
-        padding: ${theme.spacing(2)};
-        margin-top: -80px;
-      }
-    `}
-  >
-    <Card
-      css={(theme) => css`
-        min-width: 150px;
+export const EpisodeScreen: Component = () => {
+  const params = useParams();
+  const navigate = useNavigate();
 
-        ${theme.breakpoints.up("md")} {
-          min-width: 240px;
-        }
-      `}
-    >
-      <CardMedia
-        image={season.poster!!}
-        css={css`
-          aspect-ratio: 2/3;
-        `}
-      />
-    </Card>
-    <div
-      css={(theme) => css`
-        margin-left: ${theme.spacing(2)};
+  const [show, setShow] = createSignal<any | null>(null);
+  const [season, setSeason] = createSignal<any | null>(null);
+  const [episode, setEpisode] = createSignal<any | null>(null);
 
-        ${theme.breakpoints.up("md")} {
-          margin-left: ${theme.spacing(4)};
-        }
-      `}
-    >
-      <Typography
-        variant={mobile ? "h5" : "h3"}
-        css={(theme) => css`
-          ${theme.breakpoints.down("md")} {
-            font-size: 1.2rem;
-          }
-        `}
-      >
-        {episode.name}
-      </Typography>
-      <Typography variant={mobile ? "caption" : "h6"} component="div">
-        S{season.season_number.toString().padStart(2, "0")}E
-        {episode.episode_number.toString().padStart(2, "0")} -{" "}
-        {displayDuration(episode.video_info.duration)}
-      </Typography>
-      <ActionsRow onPlay={onPlay} />
-      {!mobile && (
-        <Typography
-          variant="body2"
-          css={(theme) => css`
-            margin-top: ${theme.spacing(2)};
-          `}
-        >
-          {episode.overview}
-        </Typography>
-      )}
-    </div>
-  </div>
-);
+  createEffect(() => {
+    fetchEpisode(params.id).then((episode) => {
+      setEpisode(episode);
+      fetchShow(episode.show_id).then(setShow);
+      fetchSeason(episode.season_id).then(setSeason);
+    });
+  });
 
-const ActionsRow: FC<{ onPlay: () => void }> = ({ onPlay }) => {
+  const data = () =>
+    show() && season() && episode()
+      ? { show: show(), season: season(), episode: episode() }
+      : null;
+
   return (
-    <div
-      css={(theme) =>
-        css`
-          margin: ${theme.spacing(2)} 0;
-        `
-      }
-    >
-      <Button
-        variant="contained"
-        startIcon={<Icon>play_arrow</Icon>}
-        onClick={onPlay}
-        css={(theme) => css`
-          margin-right: ${theme.spacing(1)};
-        `}
-      >
-        Play
-      </Button>
-    </div>
+    <Show when={data()}>
+      {({ show, season, episode }) => (
+        <MediaDetailsScreen
+          name={episode.name}
+          poster={season.poster || show.poster}
+          backdrop={season.backdrop || show.backdrop}
+          subtitle={
+            <span>
+              <span>S{episode.season_number.toString().padStart(2, "0")}</span>
+              <span>E{episode.episode_number.toString().padStart(2, "0")}</span>
+              <span style={{ margin: "0px 16px" }}>·</span>
+              <span>{formatDuration(episode.video_info.duration)}</span>
+            </span>
+          }
+          overview={episode.overview}
+          tmdbLink={`https://www.themoviedb.org/tv/${show.external_ids.tmdb}/season/${episode.season_number}/episode/${episode.episode_number}`}
+          headerActions={
+            <>
+              <button
+                class="button is-primary"
+                onClick={() => navigate(`/player/${params.id}`)}
+              >
+                <span class="icon">
+                  <span class="material-icons">play_arrow</span>
+                </span>
+                <span>Play</span>
+              </button>
+            </>
+          }
+        />
+      )}
+    </Show>
   );
 };

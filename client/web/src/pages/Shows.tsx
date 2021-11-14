@@ -1,50 +1,27 @@
-import { useEffect, useState } from "react";
-import { useHistory } from "react-router";
-import { css } from "@emotion/react";
+import { useNavigate } from "solid-app-router";
+import { Component, createSignal, onMount } from "solid-js";
+import { MediaItemGrid } from "../MediaItemGrid";
+import preferences from "../preferences";
 
-import api, { Show } from "../api";
-import PosterMediaItem from "../components/PosterMediaItem";
-import VirtualItemGrid from "../components/VirtualItemGrid";
-import { displayYear } from "../utils";
+export const ShowsScreen: Component = () => {
+  const navigate = useNavigate();
+  const [shows, setShows] = createSignal<any[]>([]);
 
-export default function () {
-  const history = useHistory();
-  const [shows, setShows] = useState<Show[]>([]);
-
-  useEffect(() => {
-    api.tv.getShows().then(setShows);
-  }, []);
+  onMount(() => {
+    fetch(`${preferences.server}/api/tv/shows`)
+      .then((res) => res.json())
+      .then(setShows);
+  });
 
   return (
-    <div
-      css={css`
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-      `}
-    >
-      <div
-        css={css`
-          min-height: 0;
-          flex: 1;
-        `}
-      >
-        <VirtualItemGrid count={shows.length}>
-          {(i, style) => {
-            const show = shows[i];
-            return (
-              <PosterMediaItem
-                key={show.id}
-                poster={show.poster || undefined}
-                primary={show.name}
-                secondary={displayYear(show.start_date)}
-                style={style}
-                onClick={() => history.push(`/shows/${show.id}`)}
-              />
-            );
-          }}
-        </VirtualItemGrid>
-      </div>
-    </div>
+    <MediaItemGrid
+      items={shows().map((show) => ({
+        id: show.id,
+        name: show.name,
+        date: show.start_date,
+        poster: show.poster,
+      }))}
+      onItemClick={(item) => navigate(`/shows/${item.id}`)}
+    />
   );
-}
+};

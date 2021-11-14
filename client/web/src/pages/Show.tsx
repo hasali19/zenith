@@ -1,121 +1,88 @@
-import { FC, useEffect, useState } from "react";
-import { useHistory, useParams } from "react-router";
-import { css } from "@emotion/react";
-import {
-  Box,
-  Card,
-  CardMedia,
-  LinearProgress,
-  Typography,
-} from "@material-ui/core";
+import { useNavigate, useParams } from "solid-app-router";
+import { Component, createEffect, createSignal, For, Show } from "solid-js";
+import { MediaDetailsScreen } from "../MediaDetailsScreen";
+import { MediaItemWithPoster } from "../MediaItem";
+import preferences from "../preferences";
+import { formatYear } from "../utils";
+import * as styles from "./Show.css";
 
-import api, { Season, Show } from "../api";
-import PosterMediaItem from "../components/PosterMediaItem";
-import { displayYear } from "../utils";
-
-export default function () {
-  const params = useParams<any>();
-  const history = useHistory();
-  const [show, setShow] = useState<Show | null>(null);
-  const [seasons, setSeasons] = useState<Season[]>([]);
-
-  useEffect(() => {
-    api.tv.getShow(params.id).then(setShow);
-    api.tv.getSeasons(params.id).then(setSeasons);
-  }, []);
-
-  if (!show) {
-    return <LinearProgress variant="indeterminate" />;
-  }
-
-  return (
-    <div
-      css={css`
-        height: 100%;
-        overflow-y: auto;
-        background-size: cover;
-        background-position: center;
-      `}
-      style={{
-        backgroundImage: `url(${show.backdrop})`,
-      }}
-    >
-      <div
-        css={css`
-          height: 100%;
-          overflow-y: auto;
-          padding: 5%;
-          background-color: #000a;
-        `}
-      >
-        <HeaderSection show={show} />
-        <SeasonsSection
-          show={show}
-          seasons={seasons}
-          onItemClick={(season) => history.push(`/seasons/${season.id}`)}
-        />
-      </div>
-    </div>
-  );
+async function fetchShow(id: string) {
+  const url = `${preferences.server}/api/tv/shows/${id}`;
+  const res = await fetch(url);
+  return await res.json();
 }
 
-const HeaderSection: FC<{ show: Show }> = ({ show }) => {
+async function fetchSeasons(showId: string) {
+  const url = `${preferences.server}/api/tv/shows/${showId}/seasons`;
+  const res = await fetch(url);
+  const seasons = await res.json();
+
+  for (const season of seasons) {
+    season.episode_count = await fetchEpisodeCount(season.id);
+  }
+
+  return await seasons;
+}
+
+async function fetchEpisodeCount(seasonId: string) {
+  const url = `${preferences.server}/api/tv/seasons/${seasonId}/episodes`;
+  const res = await fetch(url);
+  const episodes = await res.json();
+  return episodes.length;
+}
+
+export const ShowScreen: Component = () => {
+  const params = useParams();
+  const navigate = useNavigate();
+
+  const [show, setShow] = createSignal<any | null>(null);
+  const [seasons, setSeasons] = createSignal<any[]>([]);
+
+  createEffect(() => {
+    fetchShow(params.id).then(setShow);
+    fetchSeasons(params.id).then(setSeasons);
+  });
+
   return (
-    <div
-      css={css`
-        display: flex;
-        align-items: center;
-      `}
-    >
-      <Poster src={show.poster!!} />
-      <HeaderContent show={show} />
-    </div>
+    <Show when={show()}>
+      {(show) => (
+        <MediaDetailsScreen
+          name={show.name}
+          poster={show.poster}
+          backdrop={show.backdrop}
+          subtitle={formatYear(show.start_date)}
+          overview={show.overview}
+          tmdbLink={`https://www.themoviedb.org/tv/${show.external_ids.tmdb}`}
+        >
+          <SeasonsSection
+            seasons={seasons()}
+            onItemClick={(season) => navigate(`/seasons/${season.id}`)}
+          />
+        </MediaDetailsScreen>
+      )}
+    </Show>
   );
 };
 
-const Poster: FC<{ src: string }> = ({ src }) => (
-  <Card sx={{ minWidth: 240 }}>
-    <CardMedia image={src} sx={{ aspectRatio: "2/3" }} />
-  </Card>
-);
-
-const HeaderContent: FC<{ show: Show }> = ({ show }) => (
-  <Box ml={4}>
-    <Typography variant="h2">{show.name}</Typography>
-    <Typography variant="h5">{displayYear(show.start_date)}</Typography>
-    <Typography variant="body2" sx={{ mt: 2 }}>
-      {show.overview}
-    </Typography>
-  </Box>
-);
-
-const SeasonsSection: FC<{
-  show: Show;
-  seasons: Season[];
-  onItemClick: (item: Season) => void;
-}> = ({ show, seasons, onItemClick }) => (
-  <Box my={2} mt={8}>
-    <Typography variant="h6" sx={{ mx: 0.5, fontSize: "1.5em" }}>
-      Seasons
-    </Typography>
-    <Box
-      sx={{
-        mt: 2,
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-        gridGap: (theme) => theme.spacing(2),
-      }}
-    >
-      {seasons.map((season) => (
-        <div key={season.id}>
-          <PosterMediaItem
-            poster={season.poster || undefined}
-            primary={season.name || ""}
-            secondary={show.name}
-            onClick={() => onItemClick(season)}
-          />
-        </div>
-      ))}
-    </Box>
-  </Box>
+const SeasonsSection: Component<{
+  seasons: any[];
+  onItemClick: (item: any) => void;
+}> = (p) => (
+  <div class={styles.seriesSection}>
+    <h3 class={styles.seriesHeading}>Series</h3>
+    <div class={styles.seriesGrid}>
+      <For each={p.seasons}>
+        {(season) => (
+          <div class={styles.seriesItemWrapper}>
+            <MediaItemWithPoster
+              poster={season.poster}
+              name={season.name}
+              secondary={`${season.episode_count} episodes`}
+              onClick={() => p.onItemClick(season)}
+            />
+          </div>
+        )}
+      </For>
+    </div>
+  </div>
 );

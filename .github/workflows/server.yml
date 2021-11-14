@@ -92,10 +92,10 @@ jobs:
           node-version: "14"
 
       - name: Install dependencies
-        run: yarn install
+        run: npm install
 
       - name: Build application
-        run: yarn build
+        run: npm run build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2

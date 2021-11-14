@@ -1,168 +1,97 @@
-import { useEffect, useState } from "react";
-import { useHistory, useParams } from "react-router";
-import { css, Theme } from "@emotion/react";
-import {
-  Card,
-  CardActionArea,
-  CardMedia,
-  Icon,
-  LinearProgress,
-  Typography,
-} from "@material-ui/core";
+import { useNavigate, useParams } from "solid-app-router";
+import { Component, createEffect, createSignal, For, Show } from "solid-js";
+import { MediaDetailsScreen } from "../MediaDetailsScreen";
+import { MediaItemWithThumbnail } from "../MediaItem";
+import preferences from "../preferences";
+import * as styles from "./Season.css";
 
-import api, { Episode, Season, Show } from "../api";
+async function fetchShow(id: string) {
+  const url = `${preferences.server}/api/tv/shows/${id}`;
+  const res = await fetch(url);
+  return await res.json();
+}
 
-const styles = {
-  root: css`
-    height: 100%;
-    overflow-y: auto;
-  `,
+async function fetchSeason(id: string) {
+  const url = `${preferences.server}/api/tv/seasons/${id}`;
+  const res = await fetch(url);
+  return await res.json();
+}
 
-  backdrop: css`
-    width: 100%;
-    aspect-ratio: 16 / 9;
-  `,
+async function fetchEpisodes(seasonId: string) {
+  const url = `${preferences.server}/api/tv/seasons/${seasonId}/episodes`;
+  const res = await fetch(url);
+  return await res.json();
+}
 
-  title: (theme: Theme) => css`
-    margin: 0 ${theme.spacing(2)};
-    margin-top: ${theme.spacing(3)};
-  `,
-
-  subtitle: (theme: Theme) => css`
-    margin: 0 ${theme.spacing(2)};
-  `,
-
-  overview: (theme: Theme) =>
-    css`
-      margin: ${theme.spacing(2)};
-    `,
-
-  episodes: (theme: Theme) => css`
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    padding: ${theme.spacing(1.5)};
-
-    @media (min-width: 768px) {
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+function formatSeasonTitle(season: any) {
+  if (season.name) {
+    if (/(?:Season|Series) +\d+/.test(season.name)) {
+      return season.name;
+    } else {
+      return `Season ${season.season_number} - ${season.name}`;
     }
-  `,
-
-  episode: (theme: Theme) => css`
-    padding: ${theme.spacing(0.5)};
-  `,
-};
-
-function displayDuration(duration: number) {
-  if (duration <= 90 * 60) {
-    return `${Math.floor(duration / 60)}m`;
   } else {
-    const hours = Math.floor(duration / 3600);
-    const minutes = Math.floor((duration % 3600) / 60);
-    return `${hours}h ${minutes}m`;
+    return season.name;
   }
 }
 
-export default function () {
-  const params = useParams<any>();
-  const history = useHistory();
-  const [show, setShow] = useState<Show | null>(null);
-  const [season, setSeason] = useState<Season | null>(null);
-  const [episodes, setEpisodes] = useState<Episode[]>([]);
+export const SeasonScreen: Component = () => {
+  const params = useParams();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    api.tv.getSeason(params.id).then((season) => {
+  const [show, setShow] = createSignal<any | null>(null);
+  const [season, setSeason] = createSignal<any | null>(null);
+  const [episodes, setEpisodes] = createSignal<any[]>([]);
+
+  createEffect(() => {
+    fetchSeason(params.id).then((season) => {
       setSeason(season);
-      api.tv.getShow(season.show_id).then(setShow);
+      fetchShow(season.show_id).then(setShow);
     });
+    fetchEpisodes(params.id).then(setEpisodes);
+  });
 
-    api.tv.getEpisodes(params.id).then(setEpisodes);
-  }, []);
-
-  if (!show || !season) {
-    return <LinearProgress variant="indeterminate" />;
-  }
+  const data = () =>
+    show() && season() ? { show: show(), season: season() } : null;
 
   return (
-    <div css={styles.root}>
-      <Typography variant="h4" css={styles.title}>
-        {season.name}
-      </Typography>
-      <Typography variant="body2" css={styles.overview}>
-        {season.overview || show.overview}
-      </Typography>
-      <div css={styles.episodes}>
-        {episodes.map((episode) => (
-          <div key={episode.id} css={styles.episode}>
-            <Card>
-              <CardActionArea
-                onClick={() => history.push(`/episodes/${episode.id}`)}
-              >
-                <CardMedia
-                  image={episode.thumbnail || undefined}
-                  css={css`
-                    aspect-ratio: 16/9;
-                  `}
-                />
-                {episode.user_data.is_watched && (
-                  <div
-                    css={css`
-                      width: 100%;
-                      height: 100%;
-                      position: absolute;
-                      top: 0;
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      background-color: rgba(0, 0, 0, 0.5);
-                    `}
-                  >
-                    <Icon>check</Icon>
-                  </div>
-                )}
-              </CardActionArea>
-            </Card>
-            <div
-              css={(theme) => css`
-                padding: ${theme.spacing(2)} 0;
-              `}
-            >
-              <Typography
-                variant="subtitle2"
-                css={css`
-                  text-overflow: ellipsis;
-                  overflow: hidden;
-                  white-space: nowrap;
-                  line-height: 1em;
-                `}
-              >
-                {episode.episode_number} - {episode.name}
-              </Typography>
-              <Typography
-                variant="caption"
-                component="div"
-                css={css`
-                  color: darkgray;
-                `}
-              >
-                {displayDuration(episode.video_info.duration)}
-              </Typography>
-              <Typography
-                variant="caption"
-                component="div"
-                css={css`
-                  line-height: 1.2em;
-                  display: -webkit-box;
-                  -webkit-line-clamp: 3;
-                  -webkit-box-orient: vertical;
-                  overflow: hidden;
-                `}
-              >
-                {episode.overview}
-              </Typography>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+    <Show when={data()}>
+      {({ show, season }) => (
+        <MediaDetailsScreen
+          name={show.name}
+          poster={season.poster || show.poster}
+          backdrop={season.backdrop || show.backdrop}
+          subtitle={formatSeasonTitle(season)}
+          overview={season.overview || show.overview}
+          tmdbLink={`https://www.themoviedb.org/tv/${show.external_ids.tmdb}/season/${season.season_number}`}
+        >
+          <EpisodesSection
+            episodes={episodes()}
+            onItemClick={(item) => navigate(`/episodes/${item.id}`)}
+          />
+        </MediaDetailsScreen>
+      )}
+    </Show>
   );
-}
+};
+
+const EpisodesSection: Component<{
+  episodes: any[];
+  onItemClick: (item: any) => void;
+}> = (p) => (
+  <div class={styles.seriesSection}>
+    <h3 class={styles.seriesHeading}>Episodes</h3>
+    <div class={styles.seriesGrid}>
+      <For each={p.episodes}>
+        {(episode) => (
+          <MediaItemWithThumbnail
+            thumbnail={episode.thumbnail}
+            name={episode.name}
+            secondary={`Episode ${episode.episode_number}`}
+            onClick={[p.onItemClick, episode]}
+          />
+        )}
+      </For>
+    </div>
+  </div>
+);

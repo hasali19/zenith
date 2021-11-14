@@ -1,82 +1,45 @@
-import React, { createContext, useContext } from "react";
-import { BrowserRouter, Route } from "react-router-dom";
-import { Box, Paper } from "@material-ui/core";
+import { Component, Show } from "solid-js";
+import { Route, Router, Routes } from "solid-app-router";
 
-import { DrawerContent } from "./Drawer";
-import Home from "./pages/Home";
-import Movies from "./pages/Movies";
-import Shows from "./pages/Shows";
-import Movie from "./pages/Movie";
-import Show from "./pages/Show";
-import Season from "./pages/Season";
-import Episode from "./pages/Episode";
-import Player from "./pages/Player";
+import * as styles from "./App.css";
+import preferences from "./preferences";
+import { SideBar } from "./SideBar";
 
-function AnimatedScreen({
-  path,
-  children,
-}: {
-  path: string;
-  children: React.ReactNode;
-}) {
+import { SelectServerScreen } from "./pages/SelectServer";
+import { HomeScreen } from "./pages/Home";
+import { MovieScreen } from "./pages/Movie";
+import { MoviesScreen } from "./pages/Movies";
+import { ShowScreen } from "./pages/Show";
+import { ShowsScreen } from "./pages/Shows";
+import { SeasonScreen } from "./pages/Season";
+import { EpisodeScreen } from "./pages/Episode";
+import { PlayerScreen } from "./pages/Player";
+import { NotFoundScreen } from "./pages/NotFound";
+
+export const App: Component = () => {
   return (
-    <Route path={path} exact>
-      {children}
-    </Route>
-  );
-}
-
-interface AppContext {
-  openDrawer(): void;
-}
-
-const AppContext = createContext<AppContext>({} as AppContext);
-
-export function useAppContext() {
-  return useContext(AppContext);
-}
-
-export default function App() {
-  return (
-    <BrowserRouter>
-      <Box height="100vh" display="flex">
-        <Box>
-          <DrawerContent onClose={() => {}} />
-        </Box>
-        <Box
-          component={Paper}
-          square
-          elevation={4}
-          flex={1}
-          position="relative"
-          overflow="hidden"
+    <Router>
+      <div class={styles.app}>
+        <Show
+          when={preferences.server != null}
+          fallback={<SelectServerScreen />}
         >
-          <AnimatedScreen path="/player/:id">
-            <Player />
-          </AnimatedScreen>
-          <AnimatedScreen path="/movies/:id">
-            <Movie />
-          </AnimatedScreen>
-          <AnimatedScreen path="/shows/:id">
-            <Show />
-          </AnimatedScreen>
-          <AnimatedScreen path="/seasons/:id">
-            <Season />
-          </AnimatedScreen>
-          <AnimatedScreen path="/episodes/:id">
-            <Episode />
-          </AnimatedScreen>
-          <AnimatedScreen path="/movies">
-            <Movies />
-          </AnimatedScreen>
-          <AnimatedScreen path="/shows">
-            <Shows />
-          </AnimatedScreen>
-          <AnimatedScreen path="/">
-            <Home />
-          </AnimatedScreen>
-        </Box>
-      </Box>
-    </BrowserRouter>
+          <SideBar />
+          <div class={styles.mainContent}>
+            <Routes>
+              <Route path="/" element={<HomeScreen />} />
+              <Route path="/movies" element={<MoviesScreen />} />
+              <Route path="/movies/:id" element={<MovieScreen />} />
+              <Route path="/shows" element={<ShowsScreen />} />
+              <Route path="/shows/:id" element={<ShowScreen />} />
+              <Route path="/seasons/:id" element={<SeasonScreen />} />
+              <Route path="/episodes/:id" element={<EpisodeScreen />} />
+              <Route path="/player/:id" element={<PlayerScreen />} />
+              <Route path="/*all" element={<NotFoundScreen />} />
+            </Routes>
+          </div>
+        </Show>
+      </div>
+    </Router>
   );
-}
+};

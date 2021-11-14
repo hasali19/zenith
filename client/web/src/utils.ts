@@ -1,9 +1,9 @@
-export function displayYear(timestamp: number | null): string | undefined {
+export function formatYear(timestamp: number) {
   if (!timestamp) return;
-  return new Date(timestamp * 1000).getUTCFullYear().toString();
+  return new Date(timestamp * 1000).getFullYear();
 }
 
-export function displayDuration(duration: number): string {
+export function formatDuration(duration: number): string {
   if (duration <= 90 * 60) {
     return `${Math.floor(duration / 60)}m`;
   } else {
