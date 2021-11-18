@@ -4,17 +4,18 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Forward30
-import androidx.compose.material.icons.filled.Replay10
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
@@ -22,6 +23,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.insets.LocalWindowInsets
 import kotlinx.coroutines.*
+
+enum class MenuType {
+    Subtitle,
+    ScaleMode,
+}
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class)
 @Composable
@@ -33,21 +39,23 @@ fun Controls(
     isPlaying: Boolean,
     subtitles: List<SubtitleTrack>,
     selectedSubtitle: SubtitleTrack?,
+    scaleMode: ScaleMode,
     onSeekStart: () -> Unit,
     onSeekEnd: (Long) -> Unit,
     onTogglePlaying: () -> Unit,
     onSelectSubtitle: (SubtitleTrack?) -> Unit,
+    onSetScaleMode: (ScaleMode) -> Unit,
     onClosePressed: () -> Unit,
     visibility: OverlayVisibility = rememberControlsVisibility(),
 ) {
-    var isSubtitlesMenuVisible by remember { mutableStateOf(false) }
+    var bottomMenu by remember { mutableStateOf<MenuType?>(null) }
 
-    BackHandler(isSubtitlesMenuVisible) {
-        isSubtitlesMenuVisible = false
+    BackHandler(bottomMenu != null) {
+        bottomMenu = null
     }
 
-    LaunchedEffect(isLoading, isPlaying, isSubtitlesMenuVisible) {
-        visibility.setAutoHideEnabled(!isLoading && isPlaying && !isSubtitlesMenuVisible)
+    LaunchedEffect(isLoading, isPlaying, bottomMenu) {
+        visibility.setAutoHideEnabled(!isLoading && isPlaying && bottomMenu == null)
     }
 
     if (!visibility.isVisible) {
@@ -75,7 +83,7 @@ fun Controls(
             onSeekStart = onSeekStart,
             onSeekEnd = onSeekEnd,
             onTogglePlaying = onTogglePlaying,
-            onShowSubtitlesMenu = { isSubtitlesMenuVisible = true },
+            onShowMenu = { bottomMenu = it },
             onClosePressed = onClosePressed,
             padding = insetsPadding,
             modifier = Modifier.pointerInput(visibility) {
@@ -102,46 +110,118 @@ fun Controls(
             },
         )
 
-        if (isSubtitlesMenuVisible) {
+        if (bottomMenu != null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .pointerInput(Unit) {
                         detectTapGestures {
                             visibility.hideAfterDelay()
-                            isSubtitlesMenuVisible = false
+                            bottomMenu = null
                         }
                     },
             )
         }
 
-        AnimatedVisibility(
-            visible = isSubtitlesMenuVisible,
-            enter = slideInVertically { it },
-            exit = slideOutVertically { it },
+        BottomSheetMenu(
+            visible = bottomMenu == MenuType.Subtitle,
+            padding = insetsPadding,
+        ) {
+            SubtitlesMenu(
+                subtitles = subtitles,
+                current = selectedSubtitle,
+                onSelectSubtitle = {
+                    onSelectSubtitle(it)
+                    bottomMenu = null
+                },
+            )
+        }
+
+        BottomSheetMenu(
+            visible = bottomMenu == MenuType.ScaleMode,
+            padding = insetsPadding,
+        ) {
+            ScaleModeMenu(
+                scaleMode = scaleMode,
+                onSetScaleMode = onSetScaleMode,
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun ScaleModeMenu(scaleMode: ScaleMode, onSetScaleMode: (ScaleMode) -> Unit) {
+    Column {
+        Text(
+            text = "Scale mode",
+            style = MaterialTheme.typography.subtitle2,
+            modifier = Modifier.padding(16.dp),
+        )
+        Divider()
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 600.dp)
-                .align(Alignment.BottomCenter)
-                .padding(insetsPadding),
+                .heightIn(max = 400.dp),
         ) {
-            Box(modifier = Modifier.fillMaxHeight()) {
-                Surface(
-                    modifier = Modifier
-                        .widthIn(max = 480.dp)
-                        .align(Alignment.BottomCenter),
-                ) {
-                    SubtitlesMenu(
-                        subtitles = subtitles,
-                        current = selectedSubtitle,
-                        onSelectSubtitle = {
-                            onSelectSubtitle(it)
-                            isSubtitlesMenuVisible = false
-                        },
-                    )
-                }
+            ScaleModeMenuItem(
+                icon = Icons.Default.FitScreen,
+                label = "Fit",
+                selected = scaleMode == ScaleMode.Fit,
+            ) {
+                onSetScaleMode(ScaleMode.Fit)
+            }
+
+            ScaleModeMenuItem(
+                icon = Icons.Default.CropFree,
+                label = "Zoom",
+                selected = scaleMode == ScaleMode.Zoom,
+            ) {
+                onSetScaleMode(ScaleMode.Zoom)
             }
         }
+    }
+}
+
+@ExperimentalMaterialApi
+@Composable
+private fun ScaleModeMenuItem(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    ListItem(
+        icon = { Icon(icon, null) },
+        trailing = { if (selected) Icon(Icons.Default.Check, null) },
+        modifier = Modifier.clickable(onClick = onClick),
+    ) {
+        Text(label)
+    }
+}
+
+@Composable
+private fun BoxScope.BottomSheetMenu(
+    visible: Boolean,
+    padding: PaddingValues,
+    content: @Composable () -> Unit
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInVertically { it },
+        exit = slideOutVertically { it },
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 600.dp)
+            .align(Alignment.BottomCenter)
+            .padding(padding),
+    ) {
+        Surface(
+            content = content,
+            modifier = Modifier
+                .widthIn(max = 480.dp)
+                .align(Alignment.BottomCenter),
+        )
     }
 }
 
@@ -157,7 +237,7 @@ private fun Controls(
     onSeekStart: () -> Unit,
     onSeekEnd: (Long) -> Unit,
     onTogglePlaying: () -> Unit,
-    onShowSubtitlesMenu: () -> Unit,
+    onShowMenu: (MenuType) -> Unit,
     onClosePressed: () -> Unit,
     padding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -182,8 +262,18 @@ private fun Controls(
                 AppBar(
                     title = title,
                     onClosePressed = onClosePressed,
-                    onShowSubtitlesMenu = onShowSubtitlesMenu,
-                    modifier = Modifier.pointerInput(Unit) { consumeTapGestures() }
+                    actions = {
+                        IconButton(onClick = { onShowMenu(MenuType.ScaleMode) }) {
+                            Icon(Icons.Default.AspectRatio, null)
+                        }
+
+                        IconButton(onClick = { onShowMenu(MenuType.Subtitle) }) {
+                            Icon(Icons.Default.ClosedCaption, contentDescription = "Captions")
+                        }
+                    },
+                    modifier = Modifier.pointerInput(Unit) {
+                        consumeTapGestures()
+                    },
                 )
             }
 

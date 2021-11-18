@@ -14,6 +14,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.rememberImagePainter
 import kotlinx.coroutines.flow.Flow
@@ -56,25 +57,46 @@ fun VideoPlayer(
         color = Color.Black,
         modifier = Modifier.fillMaxSize(),
     ) {
-        VideoPlayerView(player = player)
+        var scaleMode by remember { mutableStateOf(ScaleMode.Fit) }
+
+        VideoPlayerView(
+            player = player,
+            scaleMode = scaleMode,
+        )
+
         VideoPlayerOverlay(
             player = player,
             autoHideControls = autoHideControls,
+            scaleMode = scaleMode,
+            onSetScaleMode = { scaleMode = it },
             onClosePressed = onClosePressed,
         )
     }
 }
 
+enum class ScaleMode {
+    Fit,
+    Zoom,
+}
+
+private fun ScaleMode.toResizeMode() = when (this) {
+    ScaleMode.Fit -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+    ScaleMode.Zoom -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+}
+
 @OptIn(UnstableApi::class)
 @Composable
-fun VideoPlayerView(player: VideoPlayer) {
+fun VideoPlayerView(player: VideoPlayer, scaleMode: ScaleMode) {
     val item by player.currentItem.collectAsState()
 
     if (player.usePlayerView) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { context -> PlayerView(context).apply { useController = false } },
-            update = { playerView -> playerView.player = player.player },
+            update = { playerView ->
+                playerView.player = player.player
+                playerView.resizeMode = scaleMode.toResizeMode()
+            },
         )
     } else {
         item?.let {
@@ -95,6 +117,8 @@ fun VideoPlayerView(player: VideoPlayer) {
 fun VideoPlayerOverlay(
     player: VideoPlayer,
     autoHideControls: Boolean,
+    scaleMode: ScaleMode,
+    onSetScaleMode: (ScaleMode) -> Unit,
     onClosePressed: () -> Unit,
 ) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -127,6 +151,7 @@ fun VideoPlayerOverlay(
         isPlaying = playWhenReady,
         subtitles = item?.subtitles.orEmpty(),
         selectedSubtitle = subtitleTrack,
+        scaleMode = scaleMode,
         onSeekStart = { isSeeking = true },
         onSeekEnd = {
             player.seekTo(it * 1000)
@@ -135,6 +160,7 @@ fun VideoPlayerOverlay(
         },
         onTogglePlaying = { player.setPlayWhenReady(!playWhenReady) },
         onSelectSubtitle = { player.setSubtitleTrack(it) },
+        onSetScaleMode = onSetScaleMode,
         onClosePressed = onClosePressed,
         visibility = visibility,
     )
