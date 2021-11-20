@@ -20,6 +20,7 @@ import coil.compose.rememberImagePainter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
+import uk.hasali.zenith.LocalPictureInPictureController
 
 interface VideoPlayer {
     val usePlayerView: Boolean
@@ -53,6 +54,18 @@ fun VideoPlayer(
     autoHideControls: Boolean,
     onClosePressed: () -> Unit,
 ) {
+    val pictureInPictureController = LocalPictureInPictureController.current
+
+    val isPlaying by player.playWhenReady.collectAsState()
+    val isInPictureInPictureMode by pictureInPictureController.isInPictureInPictureMode.collectAsState()
+
+    DisposableEffect(pictureInPictureController, isPlaying) {
+        pictureInPictureController.setEnterOnUserLeaveHint(isPlaying)
+        onDispose {
+            pictureInPictureController.setEnterOnUserLeaveHint(false)
+        }
+    }
+
     Surface(
         color = Color.Black,
         modifier = Modifier.fillMaxSize(),
@@ -64,13 +77,15 @@ fun VideoPlayer(
             scaleMode = scaleMode,
         )
 
-        VideoPlayerOverlay(
-            player = player,
-            autoHideControls = autoHideControls,
-            scaleMode = scaleMode,
-            onSetScaleMode = { scaleMode = it },
-            onClosePressed = onClosePressed,
-        )
+        if (!isInPictureInPictureMode) {
+            VideoPlayerOverlay(
+                player = player,
+                autoHideControls = autoHideControls,
+                scaleMode = scaleMode,
+                onSetScaleMode = { scaleMode = it },
+                onClosePressed = onClosePressed,
+            )
+        }
     }
 }
 

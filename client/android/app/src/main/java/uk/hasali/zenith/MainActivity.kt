@@ -1,6 +1,8 @@
 package uk.hasali.zenith
 
 import android.content.Intent
+import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -20,6 +22,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.ktor.client.*
 import io.ktor.client.features.json.*
 import io.ktor.client.features.json.serializer.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.ui.AppTheme
@@ -38,6 +41,18 @@ class MainActivity : FragmentActivity() {
     lateinit var zenithApiClient: ZenithApiClient
 
     private var availableUpdate by mutableStateOf<AvailableUpdate?>(null)
+
+    private val pictureInPictureController = object : PictureInPictureController {
+        var shouldEnterOnUserLeaveHint = false
+
+        override val isInPictureInPictureMode = MutableStateFlow(
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && this@MainActivity.isInPictureInPictureMode
+        )
+
+        override fun setEnterOnUserLeaveHint(value: Boolean) {
+            shouldEnterOnUserLeaveHint = value
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +73,22 @@ class MainActivity : FragmentActivity() {
 
         lifecycleScope.launch {
             availableUpdate = checkForUpdates()
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: Configuration?
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        pictureInPictureController.isInPictureInPictureMode.value = isInPictureInPictureMode
+    }
+
+    override fun onUserLeaveHint() {
+        if (pictureInPictureController.shouldEnterOnUserLeaveHint) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                enterPictureInPictureMode()
+            }
         }
     }
 
@@ -99,6 +130,7 @@ class MainActivity : FragmentActivity() {
                         }
 
                         CompositionLocalProvider(
+                            LocalPictureInPictureController provides pictureInPictureController,
                             LocalZenithClient provides zenithApiClient,
                         ) {
                             AppNavigation()
