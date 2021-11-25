@@ -15,9 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import uk.hasali.zenith.playClick
 
 @Composable
 fun PlayPauseButton(
@@ -25,18 +23,14 @@ fun PlayPauseButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-
     Box(
         modifier = modifier
             .size(72.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = rememberRipple(bounded = false, radius = 40.dp),
-            ) {
-                context.playClick()
-                onClick()
-            },
+                onClick = onClick,
+            ),
     ) {
         Icon(
             if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,

@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import uk.hasali.zenith.LanguageCodes
-import uk.hasali.zenith.playClick
 import java.util.*
 
 private data class SubtitleItem(
@@ -104,15 +103,10 @@ private fun SubtitleListItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val context = LocalContext.current
-
     ListItem(
         secondaryText = if (secondary != null) ({ Text(secondary) }) else null,
         trailing = { if (selected) Icon(Icons.Default.Check, null) },
-        modifier = Modifier.clickable {
-            context.playClick()
-            onClick()
-        },
+        modifier = Modifier.clickable(onClick = onClick),
     ) {
         Text(primary)
     }

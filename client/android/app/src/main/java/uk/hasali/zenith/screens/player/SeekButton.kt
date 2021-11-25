@@ -13,24 +13,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import uk.hasali.zenith.playClick
 
 @Composable
 fun SeekButton(imageVector: ImageVector, onClick: () -> Unit) {
-    val context = LocalContext.current
-
     Box(
         modifier = Modifier
             .size(56.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = rememberRipple(bounded = false, radius = 40.dp),
-            ) {
-                context.playClick()
-                onClick()
-            },
+                onClick = onClick,
+            ),
     ) {
         Icon(
             imageVector = imageVector,

@@ -12,14 +12,15 @@ import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.ImportQueueItem
 import uk.hasali.zenith.ImportQueueItemInfo
-import uk.hasali.zenith.playClick
-import uk.hasali.zenith.ui.*
+import uk.hasali.zenith.ui.AppBar
+import uk.hasali.zenith.ui.LocalZenithClient
+import uk.hasali.zenith.ui.SwipeRefreshLazyColumn
+import uk.hasali.zenith.ui.twoDigitNumber
 
 @Composable
 fun ImportQueueScreen(onNavigateUp: () -> Unit) {
@@ -95,8 +96,6 @@ private fun BoxScope.ImportQueueEmpty() {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun ImportQueueListItem(item: ImportQueueItem, onClick: () -> Unit) {
-    val context = LocalContext.current
-
     val icon = when (item.info) {
         is ImportQueueItemInfo.Movie -> Icons.Default.Movie
         is ImportQueueItemInfo.Episode -> Icons.Default.Tv
@@ -124,10 +123,7 @@ private fun ImportQueueListItem(item: ImportQueueItem, onClick: () -> Unit) {
                 modifier = Modifier.padding(bottom = 12.dp),
             )
         },
-        modifier = Modifier.clickable {
-            context.playClick()
-            onClick()
-        },
+        modifier = Modifier.clickable(onClick = onClick),
     ) {
         Text(text = primary)
     }

@@ -187,7 +187,6 @@ class MainActivity : FragmentActivity() {
                 TextButton(
                     enabled = !isDownloading,
                     onClick = {
-                        playClick()
                         isDownloading = true
                         scope.launch {
                             AppUpdater(application, client)

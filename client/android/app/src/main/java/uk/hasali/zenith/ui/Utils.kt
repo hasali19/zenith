@@ -11,22 +11,6 @@ import androidx.lifecycle.flowWithLifecycle
 import kotlinx.coroutines.flow.Flow
 
 @Composable
-fun LifecycleObserver(onEvent: (owner: LifecycleOwner, event: Lifecycle.Event) -> Unit) {
-    val owner = LocalLifecycleOwner.current
-    val observer = remember(onEvent) {
-        LifecycleEventObserver(onEvent)
-    }
-
-    DisposableEffect(owner, observer) {
-        val lifecycle = owner.lifecycle
-        lifecycle.addObserver(observer)
-        onDispose {
-            lifecycle.removeObserver(observer)
-        }
-    }
-}
-
-@Composable
 fun <T> rememberFlowWithLifecycle(
     flow: Flow<T>,
     lifecycle: Lifecycle = LocalLifecycleOwner.current.lifecycle,

@@ -9,10 +9,8 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import coil.compose.rememberImagePainter
-import uk.hasali.zenith.playClick
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -22,8 +20,6 @@ fun Poster(
     overlay: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
-    val context = LocalContext.current
-
     BoxWithConstraints(modifier = modifier) {
         val width = with(LocalDensity.current) {
             constraints.maxWidth.toDp()
@@ -32,10 +28,7 @@ fun Poster(
         Card(
             enabled = onClick != null,
             modifier = Modifier.size(width, width * (3f / 2f)),
-            onClick = {
-                context.playClick()
-                onClick?.invoke()
-            }
+            onClick = { onClick?.invoke() },
         ) {
             if (url != null)
                 Image(

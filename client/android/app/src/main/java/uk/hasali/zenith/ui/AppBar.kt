@@ -13,11 +13,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.insets.statusBarsHeight
 import com.google.accompanist.insets.statusBarsPadding
-import uk.hasali.zenith.playClick
 
 @Composable
 fun AppBar(
@@ -52,10 +50,7 @@ class AppBarOverflowMenuItemScope(private val onDismissMenu: () -> Unit) {
 
     fun item(text: String, onClick: () -> Unit) {
         items.add {
-            val context = LocalContext.current
-
             DropdownMenuItem(onClick = {
-                context.playClick()
                 onDismissMenu()
                 onClick()
             }) {
@@ -74,14 +69,10 @@ class AppBarOverflowMenuItemScope(private val onDismissMenu: () -> Unit) {
 
 @Composable
 fun AppBarOverflowMenu(items: AppBarOverflowMenuItemScope.() -> Unit) {
-    val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
 
     Box {
-        IconButton(onClick = {
-            context.playClick()
-            expanded = true
-        }) {
+        IconButton(onClick = { expanded = true }) {
             Icon(Icons.Default.MoreVert, contentDescription = "More")
         }
 

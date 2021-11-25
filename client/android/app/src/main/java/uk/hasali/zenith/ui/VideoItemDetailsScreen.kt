@@ -12,13 +12,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.VideoUserData
-import uk.hasali.zenith.playClick
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -126,8 +124,6 @@ private fun ActionsSection(
     onPlay: (position: Double?) -> Unit,
     onActionInvoked: (Action) -> Unit
 ) {
-    val context = LocalContext.current
-
     @Composable
     fun PlayButton(resume: Boolean, onClick: () -> Unit) {
         Button(onClick = onClick, modifier = Modifier.width(150.dp)) {
@@ -145,57 +141,45 @@ private fun ActionsSection(
         }
     }
 
-    Column {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val resume = position != null && position > 0 && position < 0.9 * duration
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        val resume = position != null && position > 0 && position < 0.9 * duration
 
-            PlayButton(
-                resume = resume,
-                onClick = {
-                    context.playClick()
-                    onPlay(if (resume) position else null)
-                },
-            )
+        PlayButton(
+            resume = resume,
+            onClick = { onPlay(if (resume) position else null) },
+        )
 
-            Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(8.dp))
 
-            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
-                IconToggleButton(checked = isWatched, onCheckedChange = onSetWatched) {
-                    val tint by animateColorAsState(
-                        if (isWatched) {
-                            MaterialTheme.colors.secondary
-                        } else {
-                            LocalContentColor.current
-                        }
-                    )
+        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
+            IconToggleButton(checked = isWatched, onCheckedChange = onSetWatched) {
+                val tint by animateColorAsState(
+                    if (isWatched) {
+                        MaterialTheme.colors.secondary
+                    } else {
+                        LocalContentColor.current
+                    }
+                )
 
-                    Icon(Icons.Default.CheckCircleOutline, null, tint = tint)
-                }
-
-                IconButton(
-                    onClick = {
-                        context.playClick()
-                        onActionInvoked(Action.MediaInfo)
-                    },
-                ) {
-                    Icon(Icons.Default.Info, contentDescription = "Media info")
-                }
-
-                ActionsMenu(onActionInvoked = onActionInvoked)
+                Icon(Icons.Default.CheckCircleOutline, null, tint = tint)
             }
+
+            IconButton(onClick = { onActionInvoked(Action.MediaInfo) }) {
+                Icon(Icons.Default.Info, contentDescription = "Media info")
+            }
+
+            ActionsMenu(onActionInvoked = onActionInvoked)
         }
     }
 }
 
 @Composable
 private fun ActionsMenu(onActionInvoked: (Action) -> Unit) {
-    val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
 
     @Composable
     fun MenuItem(action: Action, label: String) {
         DropdownMenuItem(onClick = {
-            context.playClick()
             expanded = false
             onActionInvoked(action)
         }) {
@@ -204,12 +188,7 @@ private fun ActionsMenu(onActionInvoked: (Action) -> Unit) {
     }
 
     Box {
-        IconButton(
-            onClick = {
-                context.playClick()
-                expanded = true
-            },
-        ) {
+        IconButton(onClick = { expanded = true }) {
             Icon(Icons.Default.MoreVert, contentDescription = "More")
         }
 

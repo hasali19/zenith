@@ -95,7 +95,7 @@ fun ImportItemDialog(
         }
     }
 
-    fun onImportClick() {
+    val onImportClick: () -> Unit = {
         scope.launch {
             try {
                 val source = ImportSource.LocalImportSource(path = item.path)
@@ -161,18 +161,12 @@ fun ImportItemDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                context.playClick()
-                onImportClick()
-            }) {
+            TextButton(onClick = onImportClick) {
                 Text("Import")
             }
         },
         dismissButton = {
-            TextButton(onClick = {
-                context.playClick()
-                onDismiss()
-            }) {
+            TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
         },
@@ -183,15 +177,10 @@ fun ImportItemDialog(
 
 @Composable
 private fun RowScope.ItemTypeRadioOption(label: String, selected: Boolean, onClick: () -> Unit) {
-    val context = LocalContext.current
-
     Row(modifier = Modifier.weight(1f)) {
         RadioButton(
             selected = selected,
-            onClick = {
-                context.playClick()
-                onClick()
-            },
+            onClick = onClick,
         )
         Text(
             text = label,
@@ -283,7 +272,6 @@ private fun <T> ShowSelectMenu(
     text: (T) -> String,
     onChange: (T) -> Unit,
 ) {
-    val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
 
     Box {
@@ -293,10 +281,7 @@ private fun <T> ShowSelectMenu(
             Column {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable {
-                        context.playClick()
-                        expanded = true
-                    },
+                    modifier = Modifier.clickable { expanded = true },
                 ) {
                     Text(
                         text = text(selected),
@@ -315,7 +300,6 @@ private fun <T> ShowSelectMenu(
                 ) {
                     for (value in values) {
                         DropdownMenuItem(onClick = {
-                            context.playClick()
                             expanded = false
                             onChange(value)
                         }) {
