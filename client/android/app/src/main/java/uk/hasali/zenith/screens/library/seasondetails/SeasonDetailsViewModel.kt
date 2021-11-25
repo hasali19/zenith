@@ -8,10 +8,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.Episode
-import uk.hasali.zenith.LibraryScreen
-import uk.hasali.zenith.Season
-import uk.hasali.zenith.ZenithApiClient
+import uk.hasali.zenith.*
 import uk.hasali.zenith.navigation.NavScreenProvider
 import javax.inject.Inject
 
@@ -22,11 +19,13 @@ class SeasonDetailsViewModel @Inject constructor(
 ) : ViewModel() {
     val screen: LibraryScreen.SeasonDetails by screenProvider
 
+    private val _show = MutableStateFlow<Show?>(null)
     private val _season = MutableStateFlow<Season?>(null)
     private val _episodes = MutableStateFlow<List<Episode>?>(null)
 
-    val state = combine(_season, _episodes) { season, episodes ->
+    val state = combine(_show, _season, _episodes) { show, season, episodes ->
         SeasonDetailsViewState(
+            show = show,
             season = season,
             episodes = episodes,
         )
@@ -35,7 +34,11 @@ class SeasonDetailsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             awaitAll(
-                async { _season.value = client.getSeason(screen.id) },
+                async {
+                    _season.value = client.getSeason(screen.id).also {
+                        _show.value = client.getShow(it.showId)
+                    }
+                },
                 async { _episodes.value = client.getEpisodes(screen.id) },
             )
         }

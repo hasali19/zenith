@@ -54,11 +54,13 @@ private fun ShowDetailsScreen(
             onNavigateUp = onNavigateUp,
         ) {
             if (seasons.isNotEmpty()) {
-                SeasonsSection(
-                    show = show,
-                    seasons = seasons,
-                    onItemClick = onNavigateToSeason,
-                )
+                item {
+                    SeasonsSection(
+                        show = show,
+                        seasons = seasons,
+                        onItemClick = onNavigateToSeason,
+                    )
+                }
             }
         }
     }
@@ -86,9 +88,8 @@ private fun SeasonsSection(show: Show, seasons: List<Season>, onItemClick: (Seas
         text = "Seasons",
         style = MaterialTheme.typography.subtitle2,
         color = if (MaterialTheme.colors.isLight) Color.Black else Color.White,
-        modifier = Modifier.padding(horizontal = 16.dp),
+        modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
     )
-    Spacer(modifier = Modifier.height(8.dp))
     SeasonsList(
         show = show,
         seasons = seasons,

@@ -7,8 +7,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -21,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
 
@@ -34,63 +37,76 @@ fun ItemDetailsScreen(
     overview: String? = null,
     isWatched: Boolean = false,
     onNavigateUp: () -> Unit,
-    content: @Composable () -> Unit = {},
+    content: LazyListScope.(width: Dp) -> Unit = {},
 ) {
     val scrollState = rememberScrollState()
 
     Surface(modifier = Modifier.fillMaxSize()) {
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState),
-        ) {
-            Box(modifier = Modifier.aspectRatio(16f / 9f)) {
-                Image(
-                    painter = rememberImagePainter(backdrop, builder = { crossfade(true) }),
-                    contentDescription = "Backdrop",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
+                item {
+                    val backdropHeight = with(LocalDensity.current) {
+                        (constraints.maxWidth * 9f / 16f).toDp()
+                    }
 
-                AnimatedVisibility(visible = isWatched, enter = fadeIn(), exit = fadeOut()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.4f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "Watched",
-                            modifier = Modifier
-                                .size(32.dp)
-                                .align(Alignment.Center),
-                            tint = Color.White,
-                        )
+                    Box {
+                        Box(modifier = Modifier.aspectRatio(16f / 9f)) {
+                            Image(
+                                painter = rememberImagePainter(
+                                    data = backdrop,
+                                    builder = { crossfade(true) },
+                                ),
+                                contentDescription = "Backdrop",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+
+                            AnimatedVisibility(
+                                visible = isWatched,
+                                enter = fadeIn(),
+                                exit = fadeOut()
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Black.copy(alpha = 0.4f))
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Watched",
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .align(Alignment.Center),
+                                        tint = Color.White,
+                                    )
+                                }
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier.padding(
+                                top = backdropHeight - 48.dp,
+                                start = 16.dp,
+                                end = 16.dp,
+                            )
+                        ) {
+                            HeaderSection(poster = poster, content = headerContent)
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            if (actionsRow != null) {
+                                actionsRow()
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+
+                            if (!overview.isNullOrBlank()) {
+                                Text(text = overview, style = MaterialTheme.typography.body2)
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                        }
                     }
                 }
-            }
 
-            val backdropHeight = with(LocalDensity.current) {
-                (constraints.maxWidth * 9f / 16f).toDp()
-            }
-
-            Column(modifier = Modifier.padding(top = backdropHeight - 48.dp, bottom = 16.dp)) {
-                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    HeaderSection(poster = poster, content = headerContent)
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    if (actionsRow != null) {
-                        actionsRow()
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-
-                    if (overview != null) {
-                        OverviewSection(content = overview)
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-                }
-
-                content()
+                content(this, maxWidth)
             }
         }
     }
@@ -112,15 +128,4 @@ private fun HeaderSection(
             content()
         }
     }
-}
-
-@Composable
-private fun OverviewSection(content: String) {
-    Text(
-        text = "Overview",
-        style = MaterialTheme.typography.subtitle2,
-        color = if (MaterialTheme.colors.isLight) Color.Black else Color.White,
-    )
-    Spacer(modifier = Modifier.height(8.dp))
-    Text(text = content, style = MaterialTheme.typography.body2)
 }
