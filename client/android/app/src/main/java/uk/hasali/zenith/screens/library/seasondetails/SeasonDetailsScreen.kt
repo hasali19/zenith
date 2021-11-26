@@ -124,8 +124,8 @@ private fun WatchedOverlay(visible: Boolean) {
 private fun EpisodeItem(episode: Episode, onClick: () -> Unit) {
     Row(
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
     ) {
         Thumbnail(
             url = episode.thumbnail,
