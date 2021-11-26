@@ -2,6 +2,7 @@ package uk.hasali.zenith.screens.library.seasondetails
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Icon
@@ -15,7 +16,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import uk.hasali.zenith.Episode
@@ -65,42 +65,24 @@ private fun SeasonDetailsScreen(
             overview = season.overview,
             isWatched = false,
             onNavigateUp = onNavigateUp,
-        ) { width ->
+        ) {
             item {
                 Text(
                     text = "Episodes",
                     style = MaterialTheme.typography.subtitle2,
                     color = if (MaterialTheme.colors.isLight) Color.Black else Color.White,
-                    modifier = Modifier.padding(top = 8.dp, bottom = 8.dp, start = 16.dp, end = 16.dp),
+                    modifier = Modifier.padding(
+                        top = 8.dp,
+                        bottom = 8.dp,
+                        start = 16.dp,
+                        end = 16.dp
+                    ),
                 )
             }
 
-            val nColumns = maxOf((width / 200.dp).toInt(), 1)
-
-            items(episodes.windowed(nColumns, nColumns, true)) {
-                Layout(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    content = {
-                        for (episode in it) {
-                            EpisodeItem(episode = episode) {
-                                onNavigateToEpisode(episode)
-                            }
-                        }
-                    },
-                ) { measurables, constraints ->
-                    val placeables = measurables.map {
-                        it.measure(constraints.copy(maxWidth = constraints.maxWidth / nColumns))
-                    }
-
-                    val height = placeables.maxByOrNull { it.height }?.height ?: 0
-
-                    layout(constraints.maxWidth, height) {
-                        var x = 0
-                        for (placeable in placeables) {
-                            placeable.place(x, 0)
-                            x += placeable.width
-                        }
-                    }
+            items(episodes) {
+                EpisodeItem(it) {
+                    onNavigateToEpisode(it)
                 }
             }
         }
@@ -140,15 +122,23 @@ private fun WatchedOverlay(visible: Boolean) {
 
 @Composable
 private fun EpisodeItem(episode: Episode, onClick: () -> Unit) {
-    Column(modifier = Modifier.padding(8.dp)) {
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clickable(onClick = onClick),
+    ) {
         Thumbnail(
             url = episode.thumbnail,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.width(160.dp),
             overlay = { WatchedOverlay(visible = episode.userData.isWatched) },
-            onClick = onClick,
         )
 
-        Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Spacer(modifier = Modifier.width(4.dp))
+
+        Column(modifier = Modifier
+            .weight(1f)
+            .padding(4.dp),
+        ) {
             Text(
                 text = "${episode.episodeNumber} - ${episode.name}",
                 maxLines = 1,
