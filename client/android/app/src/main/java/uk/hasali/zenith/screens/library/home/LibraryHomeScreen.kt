@@ -1,19 +1,17 @@
 package uk.hasali.zenith.screens.library.home
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,7 +23,10 @@ import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.Movie
 import uk.hasali.zenith.Show
 import uk.hasali.zenith.navigation.hiltViewModel
-import uk.hasali.zenith.ui.*
+import uk.hasali.zenith.ui.AppBar
+import uk.hasali.zenith.ui.CastButton
+import uk.hasali.zenith.ui.MediaItemWithPoster
+import uk.hasali.zenith.ui.rememberFlowWithLifecycle
 
 @Composable
 fun LibraryHomeScreen(
@@ -75,6 +76,18 @@ private fun LibraryHomeScreen(
                 .fillMaxSize()
                 .verticalScroll(state = rememberScrollState()),
         ) {
+            Row(modifier = Modifier.padding(top = 12.dp, start = 12.dp, end = 12.dp)) {
+                OutlinedButton(modifier = Modifier.weight(1f), onClick = onNavigateToMovies) {
+                    Text("Movies")
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                OutlinedButton(modifier = Modifier.weight(1f), onClick = onNavigateToShows) {
+                    Text("Shows")
+                }
+            }
+
             if (movies.isNotEmpty()) {
                 Section(
                     title = "Recently Added Movies",
@@ -83,7 +96,6 @@ private fun LibraryHomeScreen(
                     name = { it.title },
                     date = { it.releaseDate },
                     isWatched = { it.userData.isWatched },
-                    onHeadingClick = onNavigateToMovies,
                     onItemClick = onNavigateToMovie,
                 )
             }
@@ -96,7 +108,6 @@ private fun LibraryHomeScreen(
                     name = { it.name },
                     date = { it.startDate },
                     isWatched = { it.userData.unwatched == 0 },
-                    onHeadingClick = onNavigateToShows,
                     onItemClick = onNavigateToShow,
                 )
             }
@@ -112,27 +123,18 @@ private fun <T> Section(
     name: (T) -> String,
     date: (T) -> Long?,
     isWatched: (T) -> Boolean = { false },
-    onHeadingClick: () -> Unit,
     onItemClick: (T) -> Unit,
 ) {
     Column {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+        Text(
+            text = title,
+            style = MaterialTheme.typography.subtitle1,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp, bottom = 4.dp)
-                .clickable(onClick = onHeadingClick)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.subtitle1,
-                fontWeight = FontWeight.Bold,
-            )
-
-            Icon(Icons.Default.ChevronRight, null)
-        }
+        )
 
         LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
             items(items) { item ->
