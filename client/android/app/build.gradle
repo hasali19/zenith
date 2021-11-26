@@ -37,8 +37,8 @@ def getGitHash = { ->
     return "\"" + stdout.toString().trim() + "\""
 }
 
-def accompanist_version = '0.21.3-beta'
-def compose_version = '1.1.0-beta03'
+def accompanist_version = '0.21.2-beta'
+def compose_version = '1.1.0-beta02'
 def ktor_version = '1.6.5'
 
 android {
