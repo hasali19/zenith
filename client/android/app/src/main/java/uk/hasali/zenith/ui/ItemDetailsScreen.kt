@@ -9,7 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
@@ -33,17 +32,18 @@ fun ItemDetailsScreen(
     backdrop: String?,
     poster: @Composable BoxScope.() -> Unit,
     headerContent: @Composable () -> Unit,
+    appBarActions: @Composable RowScope.() -> Unit = {},
     actionsRow: (@Composable () -> Unit)? = null,
     overview: String? = null,
     isWatched: Boolean = false,
     onNavigateUp: () -> Unit,
     content: LazyListScope.(width: Dp) -> Unit = {},
 ) {
-    val scrollState = rememberScrollState()
+    val listState = rememberLazyListState()
 
     Surface(modifier = Modifier.fillMaxSize()) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-            LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
+            LazyColumn(state = listState, contentPadding = PaddingValues(bottom = 16.dp)) {
                 item {
                     val backdropHeight = with(LocalDensity.current) {
                         (constraints.maxWidth * 9f / 16f).toDp()
@@ -111,7 +111,15 @@ fun ItemDetailsScreen(
         }
     }
 
-    FadingAppBar(alpha = scrollState.value / 400f, onBackPressed = onNavigateUp)
+    val alpha = if (listState.firstVisibleItemIndex > 0) 1f else {
+        listState.firstVisibleItemScrollOffset.toFloat() / 300f
+    }
+
+    FadingAppBar(
+        alpha = alpha,
+        onBackPressed = onNavigateUp,
+        actions = appBarActions,
+    )
 }
 
 @Composable

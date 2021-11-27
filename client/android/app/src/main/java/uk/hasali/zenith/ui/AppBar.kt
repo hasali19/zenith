@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,47 +44,12 @@ fun AppBar(
     }
 }
 
-class AppBarOverflowMenuItemScope(private val onDismissMenu: () -> Unit) {
-    private val items: MutableList<@Composable () -> Unit> = mutableListOf()
-
-    fun item(text: String, onClick: () -> Unit) {
-        items.add {
-            DropdownMenuItem(onClick = {
-                onDismissMenu()
-                onClick()
-            }) {
-                Text(text)
-            }
-        }
-    }
-
-    @Composable
-    fun Composable() {
-        for (item in items) {
-            item()
-        }
-    }
-}
-
 @Composable
-fun AppBarOverflowMenu(items: AppBarOverflowMenuItemScope.() -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box {
-        IconButton(onClick = { expanded = true }) {
-            Icon(Icons.Default.MoreVert, contentDescription = "More")
-        }
-
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            AppBarOverflowMenuItemScope { expanded = false }
-                .also(items)
-                .Composable()
-        }
-    }
-}
-
-@Composable
-fun FadingAppBar(alpha: Float, onBackPressed: () -> Unit) {
+fun FadingAppBar(
+    alpha: Float,
+    onBackPressed: () -> Unit,
+    actions: @Composable RowScope.() -> Unit = {},
+) {
     Box {
         // Apply the alpha to a surface below the actual appbar
         Surface(
@@ -105,16 +69,21 @@ fun FadingAppBar(alpha: Float, onBackPressed: () -> Unit) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
-                        tint = if (isSystemInDarkTheme()) {
-                            MaterialTheme.colors.onSurface
-                        } else {
-                            MaterialTheme.colors.onPrimary
-                        },
                     )
                 }
             },
             backgroundColor = Color.Transparent,
+            contentColor = if (isSystemInDarkTheme()) {
+                MaterialTheme.colors.onSurface
+            } else {
+                MaterialTheme.colors.onPrimary
+            },
             elevation = 0.dp,
+            actions = {
+                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.high) {
+                    actions()
+                }
+            },
             modifier = Modifier.statusBarsPadding(),
         )
     }

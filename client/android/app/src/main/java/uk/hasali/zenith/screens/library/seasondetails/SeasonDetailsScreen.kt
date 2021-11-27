@@ -5,19 +5,20 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import uk.hasali.zenith.Episode
 import uk.hasali.zenith.Season
 import uk.hasali.zenith.Show
@@ -27,6 +28,7 @@ import uk.hasali.zenith.ui.*
 @Composable
 fun SeasonDetailsScreen(
     model: SeasonDetailsViewModel = hiltViewModel(),
+    bottomSheetController: BottomSheetController,
     onNavigateToEpisode: (Episode) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
@@ -37,6 +39,8 @@ fun SeasonDetailsScreen(
         show = state.show,
         season = state.season,
         episodes = state.episodes,
+        onRefreshMetadata = { model.refreshMetadata() },
+        bottomSheetController = bottomSheetController,
         onNavigateToEpisode = onNavigateToEpisode,
         onNavigateUp = onNavigateUp,
     )
@@ -48,14 +52,32 @@ private fun SeasonDetailsScreen(
     show: Show?,
     season: Season?,
     episodes: List<Episode>?,
+    bottomSheetController: BottomSheetController,
+    onRefreshMetadata: () -> Unit,
     onNavigateToEpisode: (Episode) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
+
     when {
         show == null || season == null || episodes == null -> CenteredLoadingIndicator()
         else -> ItemDetailsScreen(
             backdrop = season.backdrop,
             poster = { Poster(url = season.poster) },
+            appBarActions = {
+                IconButton(onClick = {
+                    scope.launch {
+                        bottomSheetController.show(
+                            ActionsSheetContent(
+                                title = season.title(),
+                                onRefreshMetadata = onRefreshMetadata,
+                            )
+                        )
+                    }
+                }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "More")
+                }
+            },
             headerContent = {
                 Column {
                     Text(show.name, style = MaterialTheme.typography.h6)
@@ -135,9 +157,10 @@ private fun EpisodeItem(episode: Episode, onClick: () -> Unit) {
 
         Spacer(modifier = Modifier.width(4.dp))
 
-        Column(modifier = Modifier
-            .weight(1f)
-            .padding(4.dp),
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(4.dp),
         ) {
             Text(
                 text = "${episode.episodeNumber} - ${episode.name}",
@@ -160,6 +183,29 @@ private fun EpisodeItem(episode: Episode, onClick: () -> Unit) {
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.caption
             )
+        }
+    }
+}
+
+private data class ActionsSheetContent(
+    val title: String,
+    val onRefreshMetadata: () -> Unit,
+) : BottomSheetContent {
+    @OptIn(ExperimentalMaterialApi::class)
+    @Composable
+    override fun ColumnScope.Content() {
+        Text(
+            text = title,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.subtitle2,
+            modifier = Modifier.padding(16.dp),
+        )
+
+        Divider()
+
+        ListItem(modifier = Modifier.clickable(onClick = onRefreshMetadata)) {
+            Text("Refresh metadata")
         }
     }
 }

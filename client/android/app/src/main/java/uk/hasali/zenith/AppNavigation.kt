@@ -217,11 +217,13 @@ private fun LibraryArea(
             )
 
             is LibraryScreen.ShowDetails -> ShowDetailsScreen(
+                bottomSheetController = bottomSheetController,
                 onNavigateToSeason = { navigator.push(LibraryScreen.SeasonDetails(it.id)) },
                 onNavigateUp = { navigator.pop() },
             )
 
             is LibraryScreen.SeasonDetails -> SeasonDetailsScreen(
+                bottomSheetController = bottomSheetController,
                 onNavigateToEpisode = { navigator.push(LibraryScreen.EpisodeDetails(it.id)) },
                 onNavigateUp = { navigator.pop() },
             )

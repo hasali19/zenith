@@ -43,4 +43,10 @@ class SeasonDetailsViewModel @Inject constructor(
             )
         }
     }
+
+    fun refreshMetadata() {
+        viewModelScope.launch {
+            client.refreshMetadata(screen.id)
+        }
+    }
 }
