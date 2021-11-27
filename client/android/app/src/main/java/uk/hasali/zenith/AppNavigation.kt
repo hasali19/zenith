@@ -5,10 +5,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material.BottomNavigation
-import androidx.compose.material.BottomNavigationItem
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Info
@@ -38,6 +35,8 @@ import uk.hasali.zenith.screens.management.ManagementHomeScreen
 import uk.hasali.zenith.screens.management.TranscodeQueueScreen
 import uk.hasali.zenith.screens.player.VideoItemType
 import uk.hasali.zenith.screens.player.VideoPlayerScreen
+import uk.hasali.zenith.ui.BottomSheetController
+import uk.hasali.zenith.ui.rememberBottomSheetController
 
 sealed class Screen(val route: String) {
     override fun equals(other: Any?) = other is Screen && other.route == route
@@ -117,6 +116,7 @@ fun AppNavigation() {
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun MainNavigation(onNavigateToPlayer: (Int, VideoItemType, Double?) -> Unit) {
     val holder = rememberSaveableStateHolder()
@@ -125,52 +125,62 @@ private fun MainNavigation(onNavigateToPlayer: (Int, VideoItemType, Double?) -> 
     val libraryNavigator = rememberStackNavigator<LibraryScreen>(LibraryScreen.Home)
     val managementNavigator = rememberStackNavigator<ManagementScreen>(ManagementScreen.Home)
 
-    // TODO: Implement a proper tab navigator
-    Column(modifier = Modifier.navigationBarsPadding()) {
-        Box(modifier = Modifier.weight(1f)) {
-            Crossfade(area) { area ->
-                holder.SaveableStateProvider(area) {
-                    when (area) {
-                        is BottomNavigationArea.Library -> LibraryArea(
-                            libraryNavigator,
-                            onNavigateToPlayer
-                        )
-                        is BottomNavigationArea.Management -> ManagementArea(managementNavigator)
-                        is BottomNavigationArea.About -> AboutScreen()
+    val bottomSheetController = rememberBottomSheetController()
+
+    ModalBottomSheetLayout(
+        sheetState = bottomSheetController.state,
+        sheetContent = { bottomSheetController.Content(this) },
+        modifier = Modifier.navigationBarsPadding(),
+    ) {
+        Column {
+            Box(modifier = Modifier.weight(1f)) {
+                Crossfade(area) { area ->
+                    holder.SaveableStateProvider(area) {
+                        when (area) {
+                            is BottomNavigationArea.Library -> LibraryArea(
+                                navigator = libraryNavigator,
+                                bottomSheetController = bottomSheetController,
+                                onNavigateToPlayer = onNavigateToPlayer,
+                            )
+                            is BottomNavigationArea.Management -> ManagementArea(
+                                navigator = managementNavigator,
+                            )
+                            is BottomNavigationArea.About -> AboutScreen()
+                        }
                     }
                 }
             }
-        }
 
-        BottomNavigation {
-            BottomNavigationItem(
-                selected = area == BottomNavigationArea.Library,
-                onClick = {
-                    if (area != BottomNavigationArea.Library)
-                        area = BottomNavigationArea.Library
-                    else
-                        libraryNavigator.popAll()
-                },
-                icon = { Icon(Icons.Default.VideoLibrary, null) },
-                label = { Text("Library") },
-            )
-            BottomNavigationItem(
-                selected = area == BottomNavigationArea.Management,
-                onClick = {
-                    if (area != BottomNavigationArea.Management)
-                        area = BottomNavigationArea.Management
-                    else
-                        managementNavigator.popAll()
-                },
-                icon = { Icon(Icons.Default.Dns, null) },
-                label = { Text("Manage") },
-            )
-            BottomNavigationItem(
-                selected = area == BottomNavigationArea.About,
-                onClick = { area = BottomNavigationArea.About },
-                icon = { Icon(Icons.Default.Info, null) },
-                label = { Text("About") },
-            )
+            BottomNavigation {
+                BottomNavigationItem(
+                    selected = area == BottomNavigationArea.Library,
+                    onClick = {
+                        if (area != BottomNavigationArea.Library)
+                            area = BottomNavigationArea.Library
+                        else
+                            libraryNavigator.popAll()
+                    },
+                    icon = { Icon(Icons.Default.VideoLibrary, null) },
+                    label = { Text("Library") },
+                )
+                BottomNavigationItem(
+                    selected = area == BottomNavigationArea.Management,
+                    onClick = {
+                        if (area != BottomNavigationArea.Management)
+                            area = BottomNavigationArea.Management
+                        else
+                            managementNavigator.popAll()
+                    },
+                    icon = { Icon(Icons.Default.Dns, null) },
+                    label = { Text("Manage") },
+                )
+                BottomNavigationItem(
+                    selected = area == BottomNavigationArea.About,
+                    onClick = { area = BottomNavigationArea.About },
+                    icon = { Icon(Icons.Default.Info, null) },
+                    label = { Text("About") },
+                )
+            }
         }
     }
 }
@@ -178,6 +188,7 @@ private fun MainNavigation(onNavigateToPlayer: (Int, VideoItemType, Double?) -> 
 @Composable
 private fun LibraryArea(
     navigator: StackNavigator<LibraryScreen>,
+    bottomSheetController: BottomSheetController,
     onNavigateToPlayer: (Int, VideoItemType, Double?) -> Unit,
 ) {
     navigator.ContentHost { screen ->
@@ -200,6 +211,7 @@ private fun LibraryArea(
             )
 
             is LibraryScreen.MovieDetails -> MovieDetailsScreen(
+                bottomSheetController = bottomSheetController,
                 onPlay = { onNavigateToPlayer(screen.id, VideoItemType.Movie, it) },
                 onNavigateUp = { navigator.pop() },
             )
@@ -215,6 +227,7 @@ private fun LibraryArea(
             )
 
             is LibraryScreen.EpisodeDetails -> EpisodeDetailsScreen(
+                bottomSheetController = bottomSheetController,
                 onPlay = { onNavigateToPlayer(screen.id, VideoItemType.TvShow, it) },
                 onNavigateUp = { navigator.pop() },
             )

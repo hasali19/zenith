@@ -14,6 +14,7 @@ import uk.hasali.zenith.ui.*
 @Composable
 fun MovieDetailsScreen(
     model: MovieDetailsViewModel = hiltViewModel(),
+    bottomSheetController: BottomSheetController,
     onPlay: (position: Double?) -> Unit,
     onNavigateUp: () -> Unit
 ) {
@@ -22,6 +23,7 @@ fun MovieDetailsScreen(
 
     MovieDetailsScreen(
         movie = movie,
+        bottomSheetController = bottomSheetController,
         onSetWatched = model::setWatched,
         onPlay = onPlay,
         onTranscode = model::startTranscode,
@@ -33,6 +35,7 @@ fun MovieDetailsScreen(
 @Composable
 private fun MovieDetailsScreen(
     movie: Movie?,
+    bottomSheetController: BottomSheetController,
     onSetWatched: (Boolean) -> Unit,
     onPlay: (Double?) -> Unit,
     onTranscode: () -> Unit,
@@ -42,15 +45,17 @@ private fun MovieDetailsScreen(
     when (movie) {
         null -> CenteredLoadingIndicator()
         else -> VideoItemDetailsScreen(
+            name = movie.title,
             backdrop = movie.backdrop,
             poster = movie.poster,
             overview = movie.overview,
             headerContent = { HeaderContent(movie = movie) },
             info = movie.videoInfo,
             userData = movie.userData,
+            bottomSheetController = bottomSheetController,
             onSetWatched = onSetWatched,
             onPlay = onPlay,
-            onTranscode = onTranscode,
+            onConvertVideo = onTranscode,
             onRefreshMetadata = onRefreshMetadata,
             onNavigateUp = onNavigateUp,
         )

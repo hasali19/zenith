@@ -18,6 +18,7 @@ import uk.hasali.zenith.ui.*
 fun EpisodeDetailsScreen(
     model: EpisodeDetailsViewModel = hiltViewModel(),
     onPlay: (position: Double?) -> Unit,
+    bottomSheetController: BottomSheetController,
     onNavigateUp: () -> Unit,
 ) {
     val state by rememberFlowWithLifecycle(model.state)
@@ -28,6 +29,7 @@ fun EpisodeDetailsScreen(
         season = state.season,
         episode = state.episode,
         onSetWatched = model::setWatched,
+        bottomSheetController = bottomSheetController,
         onPlay = onPlay,
         onTranscode = model::startTranscode,
         onRefreshMetadata = model::refreshMetadata,
@@ -41,6 +43,7 @@ private fun EpisodeDetailsScreen(
     season: Season?,
     episode: Episode?,
     onSetWatched: (Boolean) -> Unit,
+    bottomSheetController: BottomSheetController,
     onPlay: (Double?) -> Unit,
     onTranscode: () -> Unit,
     onRefreshMetadata: () -> Unit,
@@ -49,15 +52,17 @@ private fun EpisodeDetailsScreen(
     when {
         show == null || season == null || episode == null -> CenteredLoadingIndicator()
         else -> VideoItemDetailsScreen(
+            name = episode.name ?: "Episode ${episode.episodeNumber}",
             backdrop = episode.thumbnail,
             poster = season.poster,
             overview = episode.overview,
             headerContent = { HeaderContent(show = show, episode = episode) },
             info = episode.videoInfo,
             userData = episode.userData,
+            bottomSheetController = bottomSheetController,
             onSetWatched = onSetWatched,
             onPlay = onPlay,
-            onTranscode = onTranscode,
+            onConvertVideo = onTranscode,
             onRefreshMetadata = onRefreshMetadata,
             onNavigateUp = onNavigateUp,
         )
