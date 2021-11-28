@@ -11,21 +11,20 @@ pub mod streams;
 pub mod subtitles;
 pub mod videos;
 
-use std::convert::Infallible;
-use std::future::{ready, Ready};
-
 use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteConnectOptions;
-use sqlx::{Sqlite, SqlitePool, Transaction};
+use sqlx::{ConnectOptions, Sqlite, SqlitePool, Transaction};
 
 #[derive(Clone, Debug)]
 pub struct Db(SqlitePool);
 
 impl Db {
     pub async fn init(path: &str) -> sqlx::Result<Self> {
-        let options = SqliteConnectOptions::new()
+        let mut options = SqliteConnectOptions::new()
             .filename(path)
             .create_if_missing(true);
+
+        options.disable_statement_logging();
 
         let pool = SqlitePool::connect_with(options).await?;
 
@@ -46,14 +45,5 @@ impl Db {
 
     pub async fn close(&self) {
         self.0.close().await
-    }
-}
-
-impl actix_web::FromRequest for Db {
-    type Error = Infallible;
-    type Future = Ready<Result<Self, Self::Error>>;
-
-    fn from_request(req: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
-        ready(Ok(req.app_data().cloned().unwrap()))
     }
 }

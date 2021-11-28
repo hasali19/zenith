@@ -1,11 +1,13 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use actix_multipart::Multipart;
-use actix_web::web::{self, Json};
-use actix_web::{get, post, HttpResponse, Responder};
+use axum::extract::{self, Extension, Multipart};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
+use axum::Json;
+use axum_codegen::{get, post};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::json;
 use tokio::fs::File;
 use tokio::io::BufWriter;
 use tokio_stream::StreamExt;
@@ -19,10 +21,10 @@ use crate::db::subtitles::NewSubtitle;
 use crate::db::Db;
 use crate::library::scanner::{self, LibraryScanner, ScanOptions, VideoFileType};
 use crate::transcoder::{Job, Transcoder};
-use crate::{db, subtitles, util, Ext};
+use crate::{db, subtitles, util};
 
 #[get("/import/queue")]
-async fn get_import_queue(config: Ext<Arc<Config>>) -> ApiResult<Json<Vec<Value>>> {
+async fn get_import_queue(config: Extension<Arc<Config>>) -> ApiResult<impl IntoResponse> {
     let import_path = match config.import.path.as_deref() {
         Some(path) => path,
         None => return Ok(Json(vec![])),
@@ -69,21 +71,17 @@ pub struct ImportSubtitleRequestData {
 #[post("/import/subtitle")]
 pub async fn import_subtitle(
     mut multipart: Multipart,
-    config: Ext<Arc<Config>>,
-    db: Db,
-) -> ApiResult<impl Responder> {
+    config: Extension<Arc<Config>>,
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
     let ImportSubtitleRequest { source, data } = {
         let mut field = multipart
-            .next()
+            .next_field()
             .await
-            .or_bad_request("missing data field in mutipart body")?
-            .map_err(bad_request)?;
+            .map_err(bad_request)?
+            .or_bad_request("missing data field in mutipart body")?;
 
-        let content_disposition = field
-            .content_disposition()
-            .or_bad_request("missing content-disposition")?;
-
-        if !matches!(content_disposition.get_name(), Some("data")) {
+        if !matches!(field.name(), Some("data")) {
             return Err(bad_request("first field in multipart body must be 'data'"));
         }
 
@@ -125,10 +123,15 @@ pub async fn import_subtitle(
         }
         ImportSource::Upload => {
             let field = multipart
-                .next()
+                .next_field()
                 .await
-                .or_bad_request("upload import source specified but no file found in request")?
-                .map_err(bad_request)?;
+                .map_err(bad_request)?
+                .or_bad_request("upload import source specified but no file found in request")?;
+
+            let content_type = field
+                .content_type()
+                .or_bad_request("missing content type for file upload")?
+                .essence_str();
 
             if !Path::new("data/tmp").exists() {
                 std::fs::create_dir_all("data/tmp")?;
@@ -137,7 +140,7 @@ pub async fn import_subtitle(
             let src_path = format!("data/tmp/{}.vtt", Uuid::new_v4());
             let file = BufWriter::new(File::create(&src_path).await?);
 
-            match field.content_type().essence_str() {
+            match content_type {
                 // vtt subtitles can be directly written to the file
                 "text/vtt" => util::copy_stream(field, file).await?,
                 // srt subtitles need to be converted first
@@ -175,7 +178,7 @@ pub async fn import_subtitle(
 
     transaction.commit().await?;
 
-    Ok(HttpResponse::Ok())
+    Ok(StatusCode::OK)
 }
 
 #[derive(Deserialize)]
@@ -188,10 +191,10 @@ pub struct ImportMovieRequest {
 #[post("/movies")]
 pub async fn import_movie(
     Json(data): Json<ImportMovieRequest>,
-    config: Ext<Arc<Config>>,
-    scanner: Ext<Arc<LibraryScanner>>,
-    transcoder: Ext<Arc<Transcoder>>,
-) -> ApiResult<impl Responder> {
+    config: Extension<Arc<Config>>,
+    scanner: Extension<Arc<LibraryScanner>>,
+    transcoder: Extension<Arc<Transcoder>>,
+) -> ApiResult<impl IntoResponse> {
     let src_path = match data.source {
         ImportSource::Local { path, copy: _ } => path,
         _ => return Err(bad_request("unsupported import source")),
@@ -223,7 +226,7 @@ pub async fn import_movie(
         transcoder.enqueue(Job::new(id)).await;
     }
 
-    Ok(HttpResponse::Ok())
+    Ok(StatusCode::OK)
 }
 
 #[derive(Deserialize)]
@@ -235,10 +238,10 @@ pub struct ImportShowRequest {
 #[post("/tv/shows")]
 pub async fn import_show(
     Json(data): Json<ImportShowRequest>,
-    config: Ext<Arc<Config>>,
-    scanner: Ext<Arc<LibraryScanner>>,
-    transcoder: Ext<Arc<Transcoder>>,
-) -> ApiResult<impl Responder> {
+    config: Extension<Arc<Config>>,
+    scanner: Extension<Arc<LibraryScanner>>,
+    transcoder: Extension<Arc<Transcoder>>,
+) -> ApiResult<impl IntoResponse> {
     if data.episodes.is_empty() {
         return Err(bad_request("show must have at least one episode"));
     }
@@ -261,7 +264,7 @@ pub async fn import_show(
         }
     }
 
-    Ok(HttpResponse::Ok())
+    Ok(StatusCode::OK)
 }
 
 #[derive(Deserialize)]
@@ -271,14 +274,14 @@ pub struct ImportEpisodeRequest {
     episode_number: u32,
 }
 
-#[post("/tv/shows/{id}/episodes")]
+#[post("/tv/shows/:id/episodes")]
 pub async fn import_episode(
-    show_id: web::Path<i64>,
+    show_id: extract::Path<i64>,
     Json(data): Json<ImportEpisodeRequest>,
-    db: Db,
-    scanner: Ext<Arc<LibraryScanner>>,
-    transcoder: Ext<Arc<Transcoder>>,
-) -> ApiResult<impl Responder> {
+    db: Extension<Db>,
+    scanner: Extension<Arc<LibraryScanner>>,
+    transcoder: Extension<Arc<Transcoder>>,
+) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let show_path = db::shows::get_path(&mut conn, *show_id)
         .await?
@@ -294,7 +297,7 @@ pub async fn import_episode(
         transcoder.enqueue(Job::new(id)).await;
     }
 
-    Ok(HttpResponse::Ok())
+    Ok(StatusCode::OK)
 }
 
 mod inner {

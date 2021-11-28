@@ -1,5 +1,7 @@
-use actix_web::web::{Path, Query};
-use actix_web::{post, HttpResponse, Responder};
+use axum::extract::{Extension, Path, Query};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
+use axum_codegen::post;
 use serde::Deserialize;
 
 use crate::api::ApiResult;
@@ -13,12 +15,12 @@ struct ProgressUpdate {
     position: f64,
 }
 
-#[post("/progress/{id}")]
+#[post("/progress/:id")]
 async fn update_progress(
     id: Path<i64>,
     query: Query<ProgressUpdate>,
-    db: Db,
-) -> ApiResult<impl Responder> {
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
     let duration = db::videos::get_basic_info(&mut conn, *id)
@@ -33,5 +35,5 @@ async fn update_progress(
 
     db::videos::update_user_data(&mut conn, *id, data).await?;
 
-    Ok(HttpResponse::Ok())
+    Ok(StatusCode::OK)
 }

@@ -1,21 +1,21 @@
-use actix_web::web::Path;
-use actix_web::{post, HttpResponse, Responder};
+use axum::extract::{Extension, Path};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
+use axum_codegen::post;
 
 use crate::api::ApiResult;
 use crate::db::media::MediaItemType;
 use crate::db::{self, Db};
 use crate::metadata::{MetadataManager, RefreshRequest};
-use crate::Ext;
 
 use super::ext::OptionExt;
 
-#[post("/metadata/{id}/refresh")]
+#[post("/metadata/:id/refresh")]
 async fn refresh_metadata(
-    id: Path<i64>,
-    metadata: Ext<MetadataManager>,
-    db: Db,
-) -> ApiResult<impl Responder> {
-    let id = id.into_inner();
+    Path(id): Path<i64>,
+    metadata: Extension<MetadataManager>,
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
     let item_type = db::media::get_item_type(&mut conn, id)
@@ -31,5 +31,5 @@ async fn refresh_metadata(
 
     metadata.enqueue(refresh_req);
 
-    Ok(HttpResponse::Ok())
+    Ok(StatusCode::OK)
 }

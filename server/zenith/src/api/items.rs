@@ -1,5 +1,8 @@
-use actix_web::web::{Json, Path, Query};
-use actix_web::{get, patch, HttpResponse, Responder};
+use axum::extract::{Extension, Path, Query};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
+use axum::Json;
+use axum_codegen::{get, patch};
 use serde::Deserialize;
 
 use crate::api::ApiResult;
@@ -16,14 +19,17 @@ struct GetItemsQuery {
 }
 
 #[get("/items")]
-async fn get_items(Query(query): Query<GetItemsQuery>, db: Db) -> ApiResult<impl Responder> {
+async fn get_items(
+    Query(query): Query<GetItemsQuery>,
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let items = db::items::get_multiple(&mut conn, query.ids).await?;
     Ok(Json(items))
 }
 
-#[get("/items/{id}")]
-pub async fn get_item(id: Path<i64>, db: Db) -> ApiResult<impl Responder> {
+#[get("/items/:id")]
+pub async fn get_item(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
     let item = db::items::get(&mut conn, *id)
@@ -41,12 +47,12 @@ struct VideoUserDataPatch {
     position: Option<f64>,
 }
 
-#[patch("/items/{id}/user_data")]
+#[patch("/items/:id/user_data")]
 async fn update_user_data(
     id: Path<i64>,
     data: Json<VideoUserDataPatch>,
-    db: Db,
-) -> ApiResult<impl Responder> {
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
     let item_type = db::media::get_item_type(&mut conn, *id)
@@ -80,5 +86,5 @@ async fn update_user_data(
         db::videos::update_user_data(&mut conn, id, data).await?;
     }
 
-    Ok(HttpResponse::Ok())
+    Ok(StatusCode::OK)
 }

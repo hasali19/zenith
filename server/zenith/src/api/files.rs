@@ -1,13 +1,14 @@
 use std::sync::Arc;
 
-use actix_web::web::{Json, Query};
-use actix_web::{get, Responder};
+use axum::extract::{Extension, Query};
+use axum::response::IntoResponse;
+use axum::Json;
+use axum_codegen::get;
 use serde::Deserialize;
 use serde_json::json;
 
 use crate::api::ApiResult;
 use crate::config::Config;
-use crate::Ext;
 
 use super::error::bad_request;
 
@@ -19,8 +20,8 @@ struct GetFilesQuery {
 #[get("/files")]
 async fn get_files(
     query: Query<GetFilesQuery>,
-    config: Ext<Arc<Config>>,
-) -> ApiResult<impl Responder> {
+    config: Extension<Arc<Config>>,
+) -> ApiResult<impl IntoResponse> {
     let path = query
         .path
         .as_deref()
