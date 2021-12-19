@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.flowWithLifecycle
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import uk.hasali.zenith.*
@@ -60,6 +61,10 @@ fun TranscodeQueueScreen(onNavigateUp: () -> Unit) {
                         }
                     }
             } catch (t: Throwable) {
+                if (t is CancellationException) {
+                    throw t
+                }
+
                 showError(t.message ?: "Disconnected from server")
                 delay(1000)
             }
