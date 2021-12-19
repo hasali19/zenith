@@ -1,28 +1,57 @@
 package uk.hasali.zenith.ui
 
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
 import android.text.format.DateUtils
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircleOutline
-import androidx.compose.material.icons.filled.HourglassBottom
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import uk.hasali.zenith.LanguageCodes
+import uk.hasali.zenith.SubtitleInfo
 import uk.hasali.zenith.VideoInfo
 import uk.hasali.zenith.VideoUserData
+import kotlin.io.path.Path
+import kotlin.io.path.extension
+
+private fun Context.getFileName(uri: Uri): String? {
+    if (!uri.scheme.equals("content")) {
+        return null
+    }
+
+    return contentResolver
+        .query(uri, null, null, null, null)
+        .use { cursor ->
+            var result: String? = null
+            if (cursor != null && cursor.moveToFirst()) {
+                val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (index > -1) {
+                    result = cursor.getString(index)
+                }
+            }
+            result
+        }
+}
 
 @Composable
 fun VideoItemDetailsScreen(
@@ -38,11 +67,39 @@ fun VideoItemDetailsScreen(
     onPlay: (position: Double?) -> Unit,
     onConvertVideo: () -> Unit,
     onRefreshMetadata: () -> Unit,
+    onImportSubtitle: (String, ByteArray) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val position = userData.position ?: 0.0
     var isWatched by remember(userData) { mutableStateOf(userData.isWatched) }
+
+    val subtitlePickerLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
+            if (it != null) {
+                val filename = context.getFileName(it)
+                if (filename != null) {
+                    val extension = Path(filename).extension
+                    if (extension != "srt" && extension != "vtt") {
+                        Toast.makeText(
+                            context,
+                            "Unsupported subtitle extension: $extension",
+                            Toast.LENGTH_SHORT
+                        )
+                            .show()
+                    } else {
+                        val content = context.contentResolver.openInputStream(it).use { stream ->
+                            stream?.readBytes()
+                        }
+
+                        if (content != null) {
+                            onImportSubtitle(filename, content)
+                        }
+                    }
+                }
+            }
+        }
 
     ItemDetailsScreen(
         backdrop = backdrop,
@@ -73,8 +130,12 @@ fun VideoItemDetailsScreen(
                         bottomSheetController.show(
                             ActionsSheetContent(
                                 title = name,
+                                subtitles = info.subtitles.orEmpty(),
                                 onConvertVideo = onConvertVideo,
                                 onRefreshMetadata = onRefreshMetadata,
+                                onImportSubtitle = {
+                                    subtitlePickerLauncher.launch("*/*")
+                                },
                             )
                         )
                     }
@@ -197,36 +258,118 @@ private data class MediaInfoSheetContent(val info: VideoInfo) : BottomSheetConte
     }
 }
 
+enum class ActionsSheetView {
+    Main,
+    Subtitles,
+}
+
 private data class ActionsSheetContent(
     val title: String,
+    val subtitles: List<SubtitleInfo>,
     val onConvertVideo: () -> Unit,
     val onRefreshMetadata: () -> Unit,
+    val onImportSubtitle: () -> Unit,
 ) : BottomSheetContent {
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
     override fun BottomSheetContentScope.Content() {
-        Text(
-            text = title,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.subtitle2,
-            modifier = Modifier.padding(16.dp),
-        )
+        var view by remember { mutableStateOf(ActionsSheetView.Main) }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (view == ActionsSheetView.Subtitles) {
+                IconButton(onClick = { view = ActionsSheetView.Main }) {
+                    Icon(Icons.Default.ArrowBack, null)
+                }
+            }
+
+            Text(
+                text = title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.subtitle2,
+                modifier = Modifier.padding(16.dp),
+            )
+        }
 
         Divider()
 
-        ListItem(modifier = Modifier.clickable {
-            hide()
-            onConvertVideo()
-        }) {
-            Text("Convert video")
+        when (view) {
+            ActionsSheetView.Main -> {
+                ListItem(modifier = Modifier.clickable {
+                    hide()
+                    onConvertVideo()
+                }) {
+                    Text("Convert video")
+                }
+
+                ListItem(modifier = Modifier.clickable {
+                    hide()
+                    onRefreshMetadata()
+                }) {
+                    Text("Refresh metadata")
+                }
+
+                ListItem(modifier = Modifier.clickable {
+                    view = ActionsSheetView.Subtitles
+                }) {
+                    Text("Subtitles")
+                }
+            }
+
+            ActionsSheetView.Subtitles -> {
+                SubtitlesList(
+                    subtitles = subtitles,
+                    onImportClick = {
+                        hide()
+                        onImportSubtitle()
+                    },
+                )
+            }
+        }
+    }
+}
+
+private data class SubtitleItem(
+    val language: String,
+    val title: String?,
+    val info: SubtitleInfo,
+)
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun SubtitlesList(
+    subtitles: List<SubtitleInfo>,
+    onImportClick: () -> Unit,
+) {
+    val items = remember(subtitles) {
+        subtitles
+            .map {
+                SubtitleItem(
+                    language = LanguageCodes.getDisplayNameForCode(it.language, "Unknown"),
+                    title = it.title,
+                    info = it,
+                )
+            }
+            .sortedWith(
+                compareBy(
+                    { it.language },
+                    { it.title },
+                    { it.info.id },
+                ),
+            )
+    }
+
+    LazyColumn {
+        items(items) {
+            ListItem(secondaryText = if (it.title != null) ({ Text(it.title) }) else null) {
+                Text(it.language)
+            }
         }
 
-        ListItem(modifier = Modifier.clickable {
-            hide()
-            onConvertVideo()
-        }) {
-            Text("Refresh metadata")
+        item {
+            ListItem(modifier = Modifier.clickable(onClick = onImportClick)) {
+                Text("Import File")
+            }
         }
     }
 }

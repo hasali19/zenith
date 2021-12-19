@@ -6,6 +6,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
+import java.util.*
 
 object LanguageCodes {
     @Serializable
@@ -28,5 +29,14 @@ object LanguageCodes {
 
     fun getAlpha3(alpha2: String): String? {
         return entries[alpha2]
+    }
+
+    fun getDisplayNameForCode(code: String?, default: String = ""): String {
+        if (code == null) return default
+        // Locale requires alpha2 code for languages that have both
+        // so we need to convert it first if possible
+        val tag = getAlpha3(code) ?: code
+        val locale = Locale.forLanguageTag(tag)
+        return locale.displayName
     }
 }

@@ -13,10 +13,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import uk.hasali.zenith.LanguageCodes
-import java.util.*
 
 private data class SubtitleItem(
     val language: String,
@@ -35,18 +33,8 @@ fun SubtitlesMenu(
     val items = remember(subtitles) {
         subtitles
             .map {
-                var language = "Unknown"
-
-                it.language?.let { code ->
-                    // Locale requires alpha2 code for languages that have both
-                    // so we need to convert it first if possible
-                    val tag = LanguageCodes.getAlpha3(code) ?: code
-                    val locale = Locale.forLanguageTag(tag)
-                    language = locale.displayName
-                }
-
                 SubtitleItem(
-                    language = language,
+                    language = LanguageCodes.getDisplayNameForCode(it.language, "Unknown"),
                     title = it.title,
                     track = it,
                 )

@@ -2,7 +2,10 @@ package uk.hasali.zenith
 
 import io.ktor.client.*
 import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.utils.io.core.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.awaitClose
@@ -396,6 +399,27 @@ class ZenithApiClient @Inject constructor(
     suspend fun importMovie(movie: ImportMovieRequest): Unit = client.post(url("movies")) {
         contentType(ContentType.Application.Json)
         body = movie
+    }
+
+    suspend fun importSubtitle(videoId: Int, filename: String, content: ByteArray) {
+        val mime = when {
+            filename.endsWith(".srt") -> "application/x-subrip"
+            filename.endsWith(".vtt") -> "text/vtt"
+            else -> throw IllegalArgumentException("unsupported subtitle extension: $filename")
+        }
+
+        client.post<HttpResponse>(url("import/subtitle")) {
+            body = MultiPartFormDataContent(
+                formData {
+                    // Ktor doesn't seem to quote the field name which is required by the server, so
+                    // we hack it here
+                    append("\"data\"", """{"source": {"type": "Upload"}, "video_id": $videoId, "title": "$filename", "language": null}""")
+                    append("\"file\"", filename, ContentType.parse(mime)) {
+                        writeFully(content)
+                    }
+                }
+            )
+        }
     }
 
     suspend fun refreshMetadata(id: Int): Unit = client.post(url("metadata/$id/refresh"))

@@ -38,6 +38,7 @@ fun EpisodeDetailsScreen(
         onPlay = onPlay,
         onTranscode = model::startTranscode,
         onRefreshMetadata = model::refreshMetadata,
+        onImportSubtitle = model::importSubtitle,
         onNavigateUp = onNavigateUp,
     )
 }
@@ -52,6 +53,7 @@ private fun EpisodeDetailsScreen(
     onPlay: (Double?) -> Unit,
     onTranscode: () -> Unit,
     onRefreshMetadata: () -> Unit,
+    onImportSubtitle: (String, ByteArray) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
     when {
@@ -69,6 +71,7 @@ private fun EpisodeDetailsScreen(
             onPlay = onPlay,
             onConvertVideo = onTranscode,
             onRefreshMetadata = onRefreshMetadata,
+            onImportSubtitle = onImportSubtitle,
             onNavigateUp = onNavigateUp,
         )
     }

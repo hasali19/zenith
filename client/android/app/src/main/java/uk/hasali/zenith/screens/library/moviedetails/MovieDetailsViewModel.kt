@@ -46,4 +46,11 @@ class MovieDetailsViewModel @Inject constructor(
             client.refreshMetadata(screen.id)
         }
     }
+
+    fun importSubtitle(filename: String, content: ByteArray) {
+        viewModelScope.launch {
+            client.importSubtitle(screen.id, filename, content)
+            refresh()
+        }
+    }
 }
