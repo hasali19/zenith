@@ -32,7 +32,7 @@ class ShowDetailsViewModel @Inject constructor(
         )
     }
 
-    init {
+    fun refresh() {
         viewModelScope.launch {
             awaitAll(
                 async { _show.value = client.getShow(screen.id) },

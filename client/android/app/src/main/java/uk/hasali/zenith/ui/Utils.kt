@@ -1,13 +1,11 @@
 package uk.hasali.zenith.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 
 @Composable
@@ -20,6 +18,14 @@ fun <T> rememberFlowWithLifecycle(
         lifecycle = lifecycle,
         minActiveState = minActiveState
     )
+}
+
+@Composable
+fun LifecycleEffect(state: Lifecycle.State, block: suspend CoroutineScope.() -> Unit) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(Unit) {
+        lifecycle.repeatOnLifecycle(state, block)
+    }
 }
 
 fun twoDigitNumber(number: Int) = "$number".padStart(2, '0')

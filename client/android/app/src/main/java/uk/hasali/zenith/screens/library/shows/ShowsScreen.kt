@@ -4,12 +4,10 @@ import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.Lifecycle
 import uk.hasali.zenith.Show
 import uk.hasali.zenith.navigation.hiltViewModel
-import uk.hasali.zenith.ui.AppBar
-import uk.hasali.zenith.ui.CastButton
-import uk.hasali.zenith.ui.PosterGridListScreen
-import uk.hasali.zenith.ui.rememberFlowWithLifecycle
+import uk.hasali.zenith.ui.*
 
 @Composable
 fun ShowsScreen(
@@ -19,6 +17,10 @@ fun ShowsScreen(
 ) {
     val shows by rememberFlowWithLifecycle(model.shows)
         .collectAsState(null)
+
+    LifecycleEffect(Lifecycle.State.RESUMED) {
+        model.refresh()
+    }
 
     Scaffold(
         topBar = {

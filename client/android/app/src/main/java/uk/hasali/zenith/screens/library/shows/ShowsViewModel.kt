@@ -17,7 +17,7 @@ class ShowsViewModel @Inject constructor(
     private val _shows = MutableStateFlow<List<Show>?>(null)
     val shows get() = _shows.asStateFlow()
 
-    init {
+    fun refresh() {
         viewModelScope.launch {
             _shows.value = client.getShows()
         }

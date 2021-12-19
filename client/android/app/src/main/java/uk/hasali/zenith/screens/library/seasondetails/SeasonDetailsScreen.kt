@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.Episode
 import uk.hasali.zenith.Season
@@ -34,6 +35,10 @@ fun SeasonDetailsScreen(
 ) {
     val state by rememberFlowWithLifecycle(model.state)
         .collectAsState(SeasonDetailsViewState())
+
+    LifecycleEffect(Lifecycle.State.RESUMED) {
+        model.refresh()
+    }
 
     SeasonDetailsScreen(
         show = state.show,

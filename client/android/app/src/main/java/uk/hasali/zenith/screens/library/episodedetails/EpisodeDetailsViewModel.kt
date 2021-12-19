@@ -31,7 +31,7 @@ class EpisodeDetailsViewModel @Inject constructor(
         )
     }
 
-    init {
+    fun refresh() {
         viewModelScope.launch {
             val episode = client.getEpisode(screen.id)
                 .also { _episode.value = it }

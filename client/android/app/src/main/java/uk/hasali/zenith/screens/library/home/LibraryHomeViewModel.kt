@@ -29,16 +29,16 @@ class LibraryHomeViewModel @Inject constructor(
         )
     }
 
-    init {
-        refresh()
-    }
-
     fun refresh() {
         viewModelScope.launch {
+            _isRefreshing.value = true
+
             awaitAll(
                 async { _movies.value = client.getRecentMovies() },
                 async { _shows.value = client.getRecentShows() },
             )
+
+            _isRefreshing.value = false
         }
     }
 }

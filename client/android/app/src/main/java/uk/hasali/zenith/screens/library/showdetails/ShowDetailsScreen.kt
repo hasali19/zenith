@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -33,6 +34,10 @@ fun ShowDetailsScreen(
 ) {
     val state by rememberFlowWithLifecycle(model.state)
         .collectAsState(ShowDetailsViewState())
+
+    LifecycleEffect(Lifecycle.State.RESUMED) {
+        model.refresh()
+    }
 
     ShowDetailsScreen(
         show = state.show,

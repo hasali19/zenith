@@ -23,7 +23,7 @@ class MovieDetailsViewModel @Inject constructor(
     private val _movie = MutableStateFlow<Movie?>(null)
     val movie get() = _movie.asStateFlow()
 
-    init {
+    fun refresh() {
         viewModelScope.launch {
             _movie.value = client.getMovie(screen.id)
         }

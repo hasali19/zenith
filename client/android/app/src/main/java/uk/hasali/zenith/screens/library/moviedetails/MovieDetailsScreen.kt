@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.lifecycle.Lifecycle
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -20,6 +21,10 @@ fun MovieDetailsScreen(
 ) {
     val movie by rememberFlowWithLifecycle(model.movie)
         .collectAsState(null)
+
+    LifecycleEffect(Lifecycle.State.RESUMED) {
+        model.refresh()
+    }
 
     MovieDetailsScreen(
         movie = movie,

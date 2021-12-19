@@ -14,13 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.ImportQueueItem
 import uk.hasali.zenith.ImportQueueItemInfo
-import uk.hasali.zenith.ui.AppBar
-import uk.hasali.zenith.ui.LocalZenithClient
-import uk.hasali.zenith.ui.SwipeRefreshLazyColumn
-import uk.hasali.zenith.ui.twoDigitNumber
+import uk.hasali.zenith.ui.*
 
 @Composable
 fun ImportQueueScreen(onNavigateUp: () -> Unit) {
@@ -36,7 +34,7 @@ fun ImportQueueScreen(onNavigateUp: () -> Unit) {
         isRefreshing = false
     }
 
-    LaunchedEffect(Unit) {
+    LifecycleEffect(Lifecycle.State.RESUMED) {
         refresh()
     }
 

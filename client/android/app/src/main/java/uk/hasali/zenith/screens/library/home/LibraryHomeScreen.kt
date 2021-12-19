@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.datetime.Instant
@@ -23,10 +24,7 @@ import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.Movie
 import uk.hasali.zenith.Show
 import uk.hasali.zenith.navigation.hiltViewModel
-import uk.hasali.zenith.ui.AppBar
-import uk.hasali.zenith.ui.CastButton
-import uk.hasali.zenith.ui.MediaItemWithPoster
-import uk.hasali.zenith.ui.rememberFlowWithLifecycle
+import uk.hasali.zenith.ui.*
 
 @Composable
 fun LibraryHomeScreen(
@@ -38,6 +36,10 @@ fun LibraryHomeScreen(
 ) {
     val state by rememberFlowWithLifecycle(model.state)
         .collectAsState(LibraryHomeViewState())
+
+    LifecycleEffect(Lifecycle.State.RESUMED) {
+        model.refresh()
+    }
 
     Scaffold(
         topBar = {

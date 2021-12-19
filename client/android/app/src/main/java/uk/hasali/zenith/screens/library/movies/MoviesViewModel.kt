@@ -17,7 +17,7 @@ class MoviesViewModel @Inject constructor(
     private val _movies = MutableStateFlow<List<Movie>?>(null)
     val movies get() = _movies.asStateFlow()
 
-    init {
+    fun refresh() {
         viewModelScope.launch {
             _movies.value = client.getMovies()
         }

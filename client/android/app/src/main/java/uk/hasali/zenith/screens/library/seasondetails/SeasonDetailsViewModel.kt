@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -31,7 +32,7 @@ class SeasonDetailsViewModel @Inject constructor(
         )
     }
 
-    init {
+    fun refresh() {
         viewModelScope.launch {
             awaitAll(
                 async {

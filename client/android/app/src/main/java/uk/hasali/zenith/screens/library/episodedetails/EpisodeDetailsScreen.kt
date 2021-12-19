@@ -10,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import uk.hasali.zenith.*
 import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.*
@@ -23,6 +24,10 @@ fun EpisodeDetailsScreen(
 ) {
     val state by rememberFlowWithLifecycle(model.state)
         .collectAsState(EpisodeDetailsViewState())
+
+    LifecycleEffect(Lifecycle.State.RESUMED) {
+        model.refresh()
+    }
 
     EpisodeDetailsScreen(
         show = state.show,
