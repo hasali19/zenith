@@ -156,7 +156,7 @@ private fun ActionsSection(
 
 private data class MediaInfoSheetContent(val info: VideoInfo) : BottomSheetContent {
     @Composable
-    override fun ColumnScope.Content() {
+    override fun BottomSheetContentScope.Content() {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(16.dp),
@@ -204,7 +204,7 @@ private data class ActionsSheetContent(
 ) : BottomSheetContent {
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
-    override fun ColumnScope.Content() {
+    override fun BottomSheetContentScope.Content() {
         Text(
             text = title,
             maxLines = 1,
@@ -215,11 +215,17 @@ private data class ActionsSheetContent(
 
         Divider()
 
-        ListItem(modifier = Modifier.clickable(onClick = onConvertVideo)) {
+        ListItem(modifier = Modifier.clickable {
+            hide()
+            onConvertVideo()
+        }) {
             Text("Convert video")
         }
 
-        ListItem(modifier = Modifier.clickable(onClick = onRefreshMetadata)) {
+        ListItem(modifier = Modifier.clickable {
+            hide()
+            onConvertVideo()
+        }) {
             Text("Refresh metadata")
         }
     }
