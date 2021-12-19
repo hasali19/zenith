@@ -26,22 +26,7 @@ impl MetadataManager {
         tokio::spawn(async move {
             while let Some(req) = receiver.recv().await {
                 let mut conn = db.acquire().await.unwrap();
-                let res = match req {
-                    RefreshRequest::Movie(id) => refresh_movie_metadata(&mut conn, &tmdb, id).await,
-
-                    RefreshRequest::TvShow(id) => {
-                        refresh_tv_show_metadata(&mut conn, &tmdb, id).await
-                    }
-
-                    RefreshRequest::TvSeason(id) => {
-                        refresh_tv_season_metadata(&mut conn, &tmdb, id).await
-                    }
-
-                    RefreshRequest::TvEpisode(id) => {
-                        refresh_tv_episode_metadata(&mut conn, &tmdb, id).await
-                    }
-                };
-
+                let res = refresh(&mut conn, &tmdb, req).await;
                 if let Err(e) = res {
                     tracing::error!("{}", e);
                 }
@@ -55,6 +40,19 @@ impl MetadataManager {
         self.0
             .send(req)
             .expect("failed to send metadata refresh request");
+    }
+}
+
+pub async fn refresh(
+    conn: &mut SqliteConnection,
+    tmdb: &TmdbClient,
+    req: RefreshRequest,
+) -> eyre::Result<()> {
+    match req {
+        RefreshRequest::Movie(id) => refresh_movie_metadata(conn, tmdb, id).await,
+        RefreshRequest::TvShow(id) => refresh_tv_show_metadata(conn, tmdb, id).await,
+        RefreshRequest::TvSeason(id) => refresh_tv_season_metadata(conn, tmdb, id).await,
+        RefreshRequest::TvEpisode(id) => refresh_tv_episode_metadata(conn, tmdb, id).await,
     }
 }
 

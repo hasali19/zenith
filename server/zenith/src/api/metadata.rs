@@ -2,18 +2,19 @@ use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum_codegen::post;
+use tmdb::TmdbClient;
 
 use crate::api::ApiResult;
 use crate::db::media::MediaItemType;
 use crate::db::{self, Db};
-use crate::metadata::{MetadataManager, RefreshRequest};
+use crate::metadata::{self, RefreshRequest};
 
 use super::ext::OptionExt;
 
 #[post("/metadata/:id/refresh")]
 async fn refresh_metadata(
     Path(id): Path<i64>,
-    metadata: Extension<MetadataManager>,
+    tmdb: Extension<TmdbClient>,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
@@ -29,7 +30,7 @@ async fn refresh_metadata(
         MediaItemType::TvEpisode => RefreshRequest::TvEpisode(id),
     };
 
-    metadata.enqueue(refresh_req);
+    metadata::refresh(&mut conn, &*tmdb, refresh_req).await?;
 
     Ok(StatusCode::OK)
 }

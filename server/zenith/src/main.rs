@@ -35,7 +35,7 @@ async fn main() -> eyre::Result<()> {
     let config = Arc::new(Config::load("config.yml")?);
     let db = Db::init(&config.database.path).await?;
     let tmdb = TmdbClient::new(&config.tmdb.access_token);
-    let metadata = MetadataManager::new(db.clone(), tmdb);
+    let metadata = MetadataManager::new(db.clone(), tmdb.clone());
     let video_info_provider = Arc::new(Ffprobe::new(&config.transcoding.ffprobe_path));
     let library = Arc::new(MediaLibrary::new(db.clone(), video_info_provider.clone()));
     let transcoder = Transcoder::new(db.clone(), config.clone());
@@ -60,7 +60,8 @@ async fn main() -> eyre::Result<()> {
         .layer(AddExtensionLayer::new(db.clone()))
         .layer(AddExtensionLayer::new(metadata))
         .layer(AddExtensionLayer::new(transcoder))
-        .layer(AddExtensionLayer::new(scanner));
+        .layer(AddExtensionLayer::new(scanner))
+        .layer(AddExtensionLayer::new(tmdb));
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

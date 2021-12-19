@@ -3,6 +3,7 @@ use reqwest::Client as HttpClient;
 use serde::de::DeserializeOwned;
 use url::Url;
 
+#[derive(Clone)]
 pub struct TmdbClient {
     client: HttpClient,
 }
