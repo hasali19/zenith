@@ -5,6 +5,7 @@ import uk.hasali.zenith.api.Show
 
 data class LibraryHomeViewState(
     val isRefreshing: Boolean = false,
+    val isError: Boolean = false,
     val movies: List<Movie> = emptyList(),
     val shows: List<Show> = emptyList(),
 )
