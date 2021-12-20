@@ -19,8 +19,16 @@ class RemoteVideoPlayer(private val context: Context, session: CastSession) : Vi
     private val callback = object : RemoteMediaClient.Callback() {
         override fun onStatusUpdated() {
             _isPlaying.value = mediaClient.isPlaying
+
+            if (mediaClient.playerState == MediaStatus.PLAYER_STATE_IDLE &&
+                mediaClient.mediaStatus?.idleReason == MediaStatus.IDLE_REASON_FINISHED
+            ) {
+                _videoEndedCallback?.invoke()
+            }
         }
     }
+
+    private var _videoEndedCallback: (() -> Unit)? = null
 
     private var _currentItem = MutableStateFlow<VideoItem?>(null)
     override val currentItem: StateFlow<VideoItem?>
@@ -37,6 +45,16 @@ class RemoteVideoPlayer(private val context: Context, session: CastSession) : Vi
     private var _playWhenReady = MutableStateFlow(true)
     override val playWhenReady: StateFlow<Boolean>
         get() = _playWhenReady
+
+    override fun setVideoEndedCallback(callback: () -> Unit) {
+        _videoEndedCallback = callback
+    }
+
+    override fun removeVideoEndedCallback(callback: () -> Unit) {
+        if (_videoEndedCallback == callback) {
+            _videoEndedCallback = null
+        }
+    }
 
     override fun pollPosition(resolution: Int): Flow<Long> {
         return flow {

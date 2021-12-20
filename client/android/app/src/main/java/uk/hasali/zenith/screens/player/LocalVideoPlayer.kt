@@ -34,6 +34,8 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
 
     private var textRenderer: Int? = null
 
+    private var _videoEndedCallback: (() -> Unit)? = null
+
     private var _currentItem = MutableStateFlow<VideoItem?>(null)
     override val currentItem: StateFlow<VideoItem?>
         get() = _currentItem
@@ -58,6 +60,12 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
             _playWhenReady.value = playWhenReady
         }
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            if (playbackState == ExoPlayer.STATE_ENDED) {
+                _videoEndedCallback?.invoke()
+            }
+        }
     }
 
     init {
@@ -80,6 +88,16 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
                     .setRendererDisabled(textRenderer, true)
                     .build()
             }
+        }
+    }
+
+    override fun setVideoEndedCallback(callback: () -> Unit) {
+        _videoEndedCallback = callback
+    }
+
+    override fun removeVideoEndedCallback(callback: () -> Unit) {
+        if (_videoEndedCallback == callback) {
+            _videoEndedCallback = null
         }
     }
 

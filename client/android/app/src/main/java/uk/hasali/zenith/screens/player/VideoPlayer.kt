@@ -35,6 +35,9 @@ interface VideoPlayer {
     val isPlaying: StateFlow<Boolean>
     val playWhenReady: StateFlow<Boolean>
 
+    fun setVideoEndedCallback(callback: () -> Unit)
+    fun removeVideoEndedCallback(callback: () -> Unit)
+
     fun pollPosition(resolution: Int = 500): Flow<Long>
 
     fun setItem(item: VideoItem)

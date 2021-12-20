@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.rememberFlowWithLifecycle
@@ -96,6 +95,25 @@ private fun VideoPlayer(
         }
     }
 
+    val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current
+        ?.onBackPressedDispatcher
+
+    DisposableEffect(player) {
+        player.let {
+            if (it != null) {
+                val callback: () -> Unit = {
+                    onBackPressedDispatcher?.onBackPressed()
+                }
+                it.setVideoEndedCallback(callback)
+                onDispose {
+                    it.removeVideoEndedCallback(callback)
+                }
+            } else {
+                onDispose { }
+            }
+        }
+    }
+
     LaunchedEffect(player, item) {
         player?.let { player ->
             player.setItem(item)
@@ -117,9 +135,6 @@ private fun VideoPlayer(
     if (castSession == null) {
         KeepScreenOn()
     }
-
-    val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current
-        ?.onBackPressedDispatcher
 
     player?.let {
         VideoPlayer(
