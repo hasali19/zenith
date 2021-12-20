@@ -18,8 +18,10 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.android.gms.cast.framework.CastContext
+import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import uk.hasali.zenith.api.ZenithMediaService
@@ -36,7 +38,10 @@ class MainActivity : FragmentActivity() {
     lateinit var github: GitHubService
 
     @Inject
-    lateinit var zenith: ZenithMediaService
+    lateinit var serverUrlProvider: ServerUrlProvider
+
+    @Inject
+    lateinit var zenith: Lazy<ZenithMediaService>
 
     private val httpClient = OkHttpClient()
 
@@ -63,9 +68,26 @@ class MainActivity : FragmentActivity() {
         // Initialise cast context
         CastContext.getSharedInstance(this)
 
-        setContent {
-            App()
+        lifecycleScope.launch {
+            val server = preferences.serverUrl.first()
+            if (server == null) {
+                launchSelectServerActivity()
+            } else {
+                serverUrlProvider.url = server
+                setContent {
+                    App()
+                }
+            }
         }
+    }
+
+    private fun launchSelectServerActivity() {
+        val intent = Intent(
+            this@MainActivity,
+            SelectServerActivity::class.java,
+        )
+        startActivity(intent)
+        finish()
     }
 
     override fun onResume() {
@@ -94,48 +116,17 @@ class MainActivity : FragmentActivity() {
 
     @Composable
     private fun App() {
-        var loading by remember { mutableStateOf(true) }
-        var serverUrl by remember { mutableStateOf<String?>(null) }
-
-        LaunchedEffect(preferences) {
-            preferences.serverUrl
-                .collect {
-                    loading = false
-                    serverUrl = it
+        AppTheme {
+            ProvideWindowInsets {
+                availableUpdate?.let {
+                    UpdateDialog(availableUpdate = it)
                 }
-        }
 
-        if (!loading) {
-            App(serverUrl)
-        }
-    }
-
-    @Composable
-    private fun App(serverUrl: String?) {
-        when (serverUrl) {
-            null -> LaunchedEffect(Unit) {
-                val intent = Intent(
-                    this@MainActivity,
-                    SelectServerActivity::class.java,
-                )
-                startActivity(intent)
-                finish()
-            }
-
-            else -> {
-                AppTheme {
-                    ProvideWindowInsets {
-                        availableUpdate?.let {
-                            UpdateDialog(availableUpdate = it)
-                        }
-
-                        CompositionLocalProvider(
-                            LocalPictureInPictureController provides pictureInPictureController,
-                            LocalZenithClient provides zenith,
-                        ) {
-                            AppNavigation()
-                        }
-                    }
+                CompositionLocalProvider(
+                    LocalPictureInPictureController provides pictureInPictureController,
+                    LocalZenithClient provides zenith.get(),
+                ) {
+                    AppNavigation()
                 }
             }
         }
