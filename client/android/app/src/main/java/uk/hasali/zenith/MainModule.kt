@@ -5,6 +5,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
+import dagger.hilt.android.scopes.ActivityRetainedScoped
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -17,6 +18,7 @@ import uk.hasali.zenith.api.ZenithMediaService
 object MainModule {
     @OptIn(ExperimentalSerializationApi::class)
     @Provides
+    @ActivityRetainedScoped
     fun provideGitHubService(): GitHubService {
         val mediaType = "application/json".toMediaType()
         val format = Json {
@@ -32,6 +34,7 @@ object MainModule {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Provides
+    @ActivityRetainedScoped
     fun provideZenithMediaService(serverUrlProvider: ServerUrlProvider): ZenithMediaService {
         val mediaType = "application/json".toMediaType()
         val format = Json {
