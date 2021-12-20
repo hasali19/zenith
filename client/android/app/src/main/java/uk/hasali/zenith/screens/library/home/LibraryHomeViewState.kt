@@ -1,7 +1,7 @@
 package uk.hasali.zenith.screens.library.home
 
-import uk.hasali.zenith.Movie
-import uk.hasali.zenith.Show
+import uk.hasali.zenith.api.Movie
+import uk.hasali.zenith.api.Show
 
 data class LibraryHomeViewState(
     val isRefreshing: Boolean = false,

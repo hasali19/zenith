@@ -5,18 +5,21 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.*
+import uk.hasali.zenith.LibraryScreen
+import uk.hasali.zenith.api.Episode
+import uk.hasali.zenith.api.Season
+import uk.hasali.zenith.api.Show
+import uk.hasali.zenith.api.ZenithMediaService
 import uk.hasali.zenith.navigation.NavScreenProvider
 import javax.inject.Inject
 
 @HiltViewModel
 class SeasonDetailsViewModel @Inject constructor(
     screenProvider: NavScreenProvider,
-    private val client: ZenithApiClient,
+    private val client: ZenithMediaService,
 ) : ViewModel() {
     val screen: LibraryScreen.SeasonDetails by screenProvider
 

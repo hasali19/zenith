@@ -8,17 +8,17 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.LibraryScreen
-import uk.hasali.zenith.Season
-import uk.hasali.zenith.Show
-import uk.hasali.zenith.ZenithApiClient
+import uk.hasali.zenith.*
+import uk.hasali.zenith.api.Season
+import uk.hasali.zenith.api.Show
+import uk.hasali.zenith.api.ZenithMediaService
 import uk.hasali.zenith.navigation.NavScreenProvider
 import javax.inject.Inject
 
 @HiltViewModel
 class ShowDetailsViewModel @Inject constructor(
     screenProvider: NavScreenProvider,
-    private val client: ZenithApiClient,
+    private val client: ZenithMediaService,
 ) : ViewModel() {
     val screen: LibraryScreen.ShowDetails by screenProvider
 

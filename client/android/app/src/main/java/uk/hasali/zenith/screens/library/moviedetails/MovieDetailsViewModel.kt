@@ -6,17 +6,18 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import uk.hasali.zenith.LibraryScreen
-import uk.hasali.zenith.Movie
-import uk.hasali.zenith.VideoUserDataPatch
-import uk.hasali.zenith.ZenithApiClient
+import uk.hasali.zenith.api.*
 import uk.hasali.zenith.navigation.NavScreenProvider
 import javax.inject.Inject
 
 @HiltViewModel
 class MovieDetailsViewModel @Inject constructor(
     screenProvider: NavScreenProvider,
-    private val client: ZenithApiClient,
+    private val client: ZenithMediaService,
 ) : ViewModel() {
     private val screen: LibraryScreen.MovieDetails by screenProvider
 
@@ -50,7 +51,28 @@ class MovieDetailsViewModel @Inject constructor(
 
     fun importSubtitle(filename: String, content: ByteArray) {
         viewModelScope.launch {
-            client.importSubtitle(screen.id, filename, content)
+            val dataPart = ImportSubtitleRequest(
+                source = ImportSource.Upload,
+                videoId = screen.id,
+                title = filename,
+                language = null
+            )
+
+            val mime = when {
+                filename.endsWith(".srt") -> "application/x-subrip"
+                filename.endsWith(".vtt") -> "text/vtt"
+                else -> throw IllegalArgumentException("Unsupported subtitle extension: $filename")
+            }
+
+            val contentType = mime.toMediaType()
+            val fileBody = content.toRequestBody(contentType)
+
+            client.importSubtitle(
+                data = dataPart,
+                file = MultipartBody.Part
+                    .createFormData("file", filename, fileBody),
+            )
+
             refresh()
         }
     }

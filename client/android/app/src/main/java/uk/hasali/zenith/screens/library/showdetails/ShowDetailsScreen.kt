@@ -1,7 +1,10 @@
 package uk.hasali.zenith.screens.library.showdetails
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
@@ -20,8 +23,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import uk.hasali.zenith.Season
-import uk.hasali.zenith.Show
+import uk.hasali.zenith.api.Season
+import uk.hasali.zenith.api.Show
 import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.*
 

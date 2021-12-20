@@ -21,8 +21,8 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import uk.hasali.zenith.Movie
-import uk.hasali.zenith.Show
+import uk.hasali.zenith.api.Movie
+import uk.hasali.zenith.api.Show
 import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.*
 

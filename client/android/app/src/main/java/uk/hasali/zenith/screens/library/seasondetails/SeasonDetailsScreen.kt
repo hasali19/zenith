@@ -20,9 +20,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.Episode
-import uk.hasali.zenith.Season
-import uk.hasali.zenith.Show
+import uk.hasali.zenith.api.Episode
+import uk.hasali.zenith.api.Season
+import uk.hasali.zenith.api.Show
 import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.*
 

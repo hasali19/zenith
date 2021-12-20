@@ -4,11 +4,11 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.ktor.client.features.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.*
+import uk.hasali.zenith.api.*
 import uk.hasali.zenith.navigation.NavScreenProvider
 import javax.inject.Inject
 
@@ -17,7 +17,7 @@ class PlayerViewModel @Inject constructor(
     screenProvider: NavScreenProvider,
     preferences: Preferences,
     mediaUrlProvider: MediaUrlProvider,
-    private val client: ZenithApiClient,
+    private val client: ZenithMediaService,
 ) : ViewModel() {
     private val screen: PrimaryScreen.VideoPlayer by screenProvider
     private val id: Int = screen.id
@@ -93,7 +93,7 @@ class PlayerViewModel @Inject constructor(
         if (!BuildConfig.DEBUG) viewModelScope.launch {
             try {
                 client.updateProgress(id, position)
-            } catch (e: ServerResponseException) {
+            } catch (e: Throwable) {
                 Log.w(
                     "PlayerScreen",
                     "Failed to update progress on server: ${e.message}",

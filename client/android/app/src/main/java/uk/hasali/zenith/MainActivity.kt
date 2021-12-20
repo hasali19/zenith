@@ -19,12 +19,10 @@ import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.android.gms.cast.framework.CastContext
 import dagger.hilt.android.AndroidEntryPoint
-import io.ktor.client.*
-import io.ktor.client.features.json.*
-import io.ktor.client.features.json.serializer.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import uk.hasali.zenith.api.ZenithMediaService
 import uk.hasali.zenith.ui.AppTheme
 import uk.hasali.zenith.ui.LocalZenithClient
 import javax.inject.Inject
@@ -35,10 +33,12 @@ class MainActivity : FragmentActivity() {
     lateinit var preferences: Preferences
 
     @Inject
-    lateinit var client: HttpClient
+    lateinit var github: GitHubService
 
     @Inject
-    lateinit var zenithApiClient: ZenithApiClient
+    lateinit var zenith: ZenithMediaService
+
+    private val httpClient = OkHttpClient()
 
     private var availableUpdate by mutableStateOf<AvailableUpdate?>(null)
 
@@ -131,7 +131,7 @@ class MainActivity : FragmentActivity() {
 
                         CompositionLocalProvider(
                             LocalPictureInPictureController provides pictureInPictureController,
-                            LocalZenithClient provides zenithApiClient,
+                            LocalZenithClient provides zenith,
                         ) {
                             AppNavigation()
                         }
@@ -189,7 +189,7 @@ class MainActivity : FragmentActivity() {
                     onClick = {
                         isDownloading = true
                         scope.launch {
-                            AppUpdater(application, client)
+                            AppUpdater(application, httpClient)
                                 .downloadAndInstall { progress = it }
                         }
                     },
@@ -210,7 +210,6 @@ class MainActivity : FragmentActivity() {
             return null
         }
 
-        val github = GitHubApiClient(client)
         val res = github.getActionsWorkflowRuns(5604606)
         val run = res.workflowRuns.firstOrNull {
             it.status == "completed" && it.conclusion == "success"

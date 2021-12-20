@@ -12,17 +12,30 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.flowWithLifecycle
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
-import uk.hasali.zenith.*
+import uk.hasali.zenith.api.*
+import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.AppBar
 import uk.hasali.zenith.ui.LocalZenithClient
+import javax.inject.Inject
+
+@HiltViewModel
+class TranscodeQueueViewModel @Inject constructor(
+    private val events: ZenithEventsService,
+) : ViewModel() {
+    suspend fun getEvents() = events.getTranscoderEvents()
+}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun TranscodeQueueScreen(onNavigateUp: () -> Unit) {
+fun TranscodeQueueScreen(
+    model: TranscodeQueueViewModel = hiltViewModel(),
+    onNavigateUp: () -> Unit,
+) {
     val context = LocalContext.current
     val client = LocalZenithClient.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -37,7 +50,7 @@ fun TranscodeQueueScreen(onNavigateUp: () -> Unit) {
     LaunchedEffect(Unit) {
         while (true) {
             try {
-                client.getTranscoderEvents()
+                model.getEvents()
                     .flowWithLifecycle(lifecycleOwner.lifecycle)
                     .collect {
                         when (it) {
@@ -81,7 +94,7 @@ fun TranscodeQueueScreen(onNavigateUp: () -> Unit) {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun TranscodeQueueScreen(
-    client: ZenithApiClient,
+    client: ZenithMediaService,
     queue: List<TranscoderJob>,
     onNavigateUp: () -> Unit,
 ) {
@@ -119,7 +132,7 @@ private fun TranscodeQueueScreen(
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun TranscodeQueueListItem(client: ZenithApiClient, id: Int, progress: Double? = null) {
+private fun TranscodeQueueListItem(client: ZenithMediaService, id: Int, progress: Double? = null) {
     val item by produceState<MediaItem?>(initialValue = null, id) {
         value = client.getItem(id)
     }

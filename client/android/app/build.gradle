@@ -138,12 +138,10 @@ dependencies {
 
     implementation 'io.coil-kt:coil-compose:1.4.0'
 
-    implementation "io.ktor:ktor-client-core:$ktor_version"
-    implementation "io.ktor:ktor-client-okhttp:$ktor_version"
-    implementation "io.ktor:ktor-client-serialization:$ktor_version"
-
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
     implementation 'com.squareup.okhttp3:okhttp-sse:4.9.3'
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:0.8.0'
 
     implementation 'com.google.android.gms:play-services-cast-framework:21.0.0'
 }

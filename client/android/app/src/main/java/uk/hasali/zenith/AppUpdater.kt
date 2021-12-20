@@ -4,19 +4,19 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.features.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.*
+import java.io.BufferedInputStream
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.zip.ZipInputStream
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
-class AppUpdater(private val context: Context, private val client: HttpClient) {
+class AppUpdater(private val context: Context, private val client: OkHttpClient) {
     suspend fun downloadAndInstall(onProgress: (Float) -> Unit = {}) {
         downloadAndInstall(
             url = "https://nightly.link/hasali19/zenith/workflows/android/master/zenith-apk.zip",
@@ -25,14 +25,39 @@ class AppUpdater(private val context: Context, private val client: HttpClient) {
     }
 
     private suspend fun downloadAndInstall(url: String, onProgress: (Float) -> Unit) {
-        val response: HttpResponse = client.get(url) {
-            onDownload { bytesSentTotal, _ ->
-                // Report progress in MiB
-                onProgress(bytesSentTotal.toFloat() / 1024f / 1024f)
+        val req = Request.Builder()
+            .url(url)
+            .build()
+
+        val res = suspendCoroutine<Response> {
+            client.newCall(req).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    it.resumeWithException(e)
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    it.resume(response)
+                }
+            })
+        }
+
+        val result = ByteArrayOutputStream()
+
+        @Suppress("BlockingMethodInNonBlockingContext")
+        withContext(Dispatchers.IO) {
+            val stream = BufferedInputStream(res.body!!.byteStream())
+            val buffer = ByteArray(8192)
+            var total = 0f
+            while (true) {
+                val read = stream.read(buffer)
+                if (read == -1) break
+                result.write(buffer, 0, read)
+                total += read.toFloat()
+                onProgress(total / 1024f / 1024f)
             }
         }
 
-        val zip = ZipInputStream(ByteArrayInputStream(response.receive()))
+        val zip = ZipInputStream(ByteArrayInputStream(result.toByteArray()))
         val content = ByteArrayOutputStream()
 
         zip.nextEntry
@@ -44,6 +69,7 @@ class AppUpdater(private val context: Context, private val client: HttpClient) {
             val params =
                 PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
 
+            @Suppress("BlockingMethodInNonBlockingContext")
             withContext(Dispatchers.IO) {
                 val sessionId = installer.createSession(params)
 

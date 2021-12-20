@@ -3,12 +3,14 @@ package uk.hasali.zenith.screens.library.moviedetails
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.Lifecycle
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import uk.hasali.zenith.Movie
+import uk.hasali.zenith.api.Movie
 import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.*
 

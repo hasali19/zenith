@@ -28,9 +28,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.LanguageCodes
-import uk.hasali.zenith.SubtitleInfo
-import uk.hasali.zenith.VideoInfo
-import uk.hasali.zenith.VideoUserData
+import uk.hasali.zenith.api.SubtitleInfo
+import uk.hasali.zenith.api.VideoInfo
+import uk.hasali.zenith.api.VideoUserData
 import kotlin.io.path.Path
 import kotlin.io.path.extension
 

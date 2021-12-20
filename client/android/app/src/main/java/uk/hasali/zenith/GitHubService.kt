@@ -1,9 +1,9 @@
 package uk.hasali.zenith
 
-import io.ktor.client.*
-import io.ktor.client.request.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import retrofit2.http.GET
+import retrofit2.http.Path
 
 @Serializable
 data class GetActionsWorkflowRunsResponse(
@@ -21,8 +21,7 @@ data class ActionsWorkflowRun(
     val headBranch: String,
 )
 
-class GitHubApiClient(private val client: HttpClient) {
-    suspend fun getActionsWorkflowRuns(workflowId: Int): GetActionsWorkflowRunsResponse {
-        return client.get("https://api.github.com/repos/hasali19/zenith/actions/workflows/$workflowId/runs")
-    }
+interface GitHubService {
+    @GET("repos/hasali19/zenith/actions/workflows/{id}/runs")
+    suspend fun getActionsWorkflowRuns(@Path("id") workflowId: Int): GetActionsWorkflowRunsResponse
 }

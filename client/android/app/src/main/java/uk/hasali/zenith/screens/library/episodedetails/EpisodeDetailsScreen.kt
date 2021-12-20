@@ -11,7 +11,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
-import uk.hasali.zenith.*
+import uk.hasali.zenith.api.Episode
+import uk.hasali.zenith.api.Season
+import uk.hasali.zenith.api.Show
 import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.*
 

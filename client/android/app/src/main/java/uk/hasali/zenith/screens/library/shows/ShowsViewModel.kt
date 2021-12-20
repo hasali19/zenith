@@ -6,13 +6,13 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.Show
-import uk.hasali.zenith.ZenithApiClient
+import uk.hasali.zenith.api.Show
+import uk.hasali.zenith.api.ZenithMediaService
 import javax.inject.Inject
 
 @HiltViewModel
 class ShowsViewModel @Inject constructor(
-    private val client: ZenithApiClient,
+    private val client: ZenithMediaService,
 ) : ViewModel() {
     private val _shows = MutableStateFlow<List<Show>?>(null)
     val shows get() = _shows.asStateFlow()

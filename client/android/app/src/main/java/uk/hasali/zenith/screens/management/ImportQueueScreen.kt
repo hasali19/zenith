@@ -16,8 +16,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.ImportQueueItem
-import uk.hasali.zenith.ImportQueueItemInfo
+import uk.hasali.zenith.api.ImportQueueItem
+import uk.hasali.zenith.api.ImportQueueItemInfo
 import uk.hasali.zenith.ui.*
 
 @Composable

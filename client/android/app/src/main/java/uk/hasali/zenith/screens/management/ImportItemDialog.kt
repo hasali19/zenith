@@ -17,7 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.*
+import uk.hasali.zenith.api.*
 import uk.hasali.zenith.ui.LocalZenithClient
 
 private class EpisodeData(
@@ -98,7 +98,7 @@ fun ImportItemDialog(
     val onImportClick: () -> Unit = {
         scope.launch {
             try {
-                val source = ImportSource.LocalImportSource(path = item.path)
+                val source = ImportSource.Local(path = item.path)
                 when (type) {
                     ItemType.Movie -> client.importMovie(source, movie.title.value, movie.year.value)
                     ItemType.Episode -> client.importEpisode(
@@ -317,7 +317,7 @@ private enum class ItemType {
     Episode,
 }
 
-private suspend fun ZenithApiClient.importMovie(source: ImportSource, title: String, year: String) {
+private suspend fun ZenithMediaService.importMovie(source: ImportSource, title: String, year: String) {
     importMovie(
         ImportMovieRequest(
             source = source,
@@ -327,7 +327,7 @@ private suspend fun ZenithApiClient.importMovie(source: ImportSource, title: Str
     )
 }
 
-private suspend fun ZenithApiClient.importEpisode(
+private suspend fun ZenithMediaService.importEpisode(
     source: ImportSource,
     show: Show?,
     showName: String,
@@ -341,7 +341,7 @@ private suspend fun ZenithApiClient.importEpisode(
     )
 
     if (show != null) {
-        importEpisode(showId = show.id, episode = data)
+        importEpisode(showId = show.id, data = data)
     } else {
         importShow(
             ImportShowRequest(
