@@ -5,6 +5,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -32,14 +34,17 @@ object MainModule {
 
     @OptIn(ExperimentalSerializationApi::class)
     @Provides
-    fun provideZenithMediaService(): ZenithMediaService {
+    fun provideZenithMediaService(preferences: Preferences): ZenithMediaService {
         val mediaType = "application/json".toMediaType()
         val format = Json {
             ignoreUnknownKeys = true
         }
 
+        // TODO: Temporary hack
+        val server = runBlocking { preferences.serverUrl.first() }
+
         return Retrofit.Builder()
-            .baseUrl("http://athena:4000/api/")
+            .baseUrl("$server/api/")
             .addConverterFactory(format.asConverterFactory(mediaType))
             .build()
             .create()
