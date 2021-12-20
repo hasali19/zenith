@@ -126,7 +126,7 @@ class MainActivity : FragmentActivity() {
                     LocalPictureInPictureController provides pictureInPictureController,
                     LocalZenithClient provides zenith.get(),
                 ) {
-                    AppNavigation()
+                    AppNavigation(onLaunchSelectServer = this::launchSelectServerActivity)
                 }
             }
         }

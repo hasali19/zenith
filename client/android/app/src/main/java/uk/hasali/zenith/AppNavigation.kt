@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,7 +22,7 @@ import kotlinx.parcelize.Parcelize
 import uk.hasali.zenith.navigation.ContentHost
 import uk.hasali.zenith.navigation.StackNavigator
 import uk.hasali.zenith.navigation.rememberStackNavigator
-import uk.hasali.zenith.screens.AboutScreen
+import uk.hasali.zenith.screens.SettingsScreen
 import uk.hasali.zenith.screens.library.episodedetails.EpisodeDetailsScreen
 import uk.hasali.zenith.screens.library.home.LibraryHomeScreen
 import uk.hasali.zenith.screens.library.moviedetails.MovieDetailsScreen
@@ -61,7 +61,7 @@ sealed interface BottomNavigationArea : Parcelable {
     object Management : Screen("main/management"), BottomNavigationArea
 
     @Parcelize
-    object About : Screen("main/about"), BottomNavigationArea
+    object Settings : Screen("main/about"), BottomNavigationArea
 }
 
 sealed interface LibraryScreen : Parcelable {
@@ -100,7 +100,7 @@ sealed interface ManagementScreen : Parcelable {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun AppNavigation() {
+fun AppNavigation(onLaunchSelectServer: () -> Unit) {
     val navigator = rememberStackNavigator<PrimaryScreen>(PrimaryScreen.Main)
 
     navigator.ContentHost {
@@ -109,6 +109,7 @@ fun AppNavigation() {
                 onNavigateToPlayer = { id, type, position ->
                     navigator.push(PrimaryScreen.VideoPlayer(id, type, position))
                 },
+                onLaunchSelectServer = onLaunchSelectServer,
             )
 
             is PrimaryScreen.VideoPlayer -> VideoPlayerScreen()
@@ -118,7 +119,10 @@ fun AppNavigation() {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun MainNavigation(onNavigateToPlayer: (Int, VideoItemType, Double?) -> Unit) {
+private fun MainNavigation(
+    onNavigateToPlayer: (Int, VideoItemType, Double?) -> Unit,
+    onLaunchSelectServer: () -> Unit,
+) {
     val holder = rememberSaveableStateHolder()
     var area by rememberSaveable { mutableStateOf<BottomNavigationArea>(BottomNavigationArea.Library) }
 
@@ -145,7 +149,9 @@ private fun MainNavigation(onNavigateToPlayer: (Int, VideoItemType, Double?) -> 
                             is BottomNavigationArea.Management -> ManagementArea(
                                 navigator = managementNavigator,
                             )
-                            is BottomNavigationArea.About -> AboutScreen()
+                            is BottomNavigationArea.Settings -> SettingsScreen(
+                                onLaunchSelectServer = onLaunchSelectServer,
+                            )
                         }
                     }
                 }
@@ -175,10 +181,10 @@ private fun MainNavigation(onNavigateToPlayer: (Int, VideoItemType, Double?) -> 
                     label = { Text("Manage") },
                 )
                 BottomNavigationItem(
-                    selected = area == BottomNavigationArea.About,
-                    onClick = { area = BottomNavigationArea.About },
-                    icon = { Icon(Icons.Default.Info, null) },
-                    label = { Text("About") },
+                    selected = area == BottomNavigationArea.Settings,
+                    onClick = { area = BottomNavigationArea.Settings },
+                    icon = { Icon(Icons.Default.Settings, null) },
+                    label = { Text("Settings") },
                 )
             }
         }
