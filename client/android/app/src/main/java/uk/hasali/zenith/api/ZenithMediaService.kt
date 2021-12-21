@@ -62,7 +62,7 @@ interface ZenithMediaService {
         @Part file: MultipartBody.Part,
     )
 
-    @GET("progress/{id}")
+    @POST("progress/{id}")
     suspend fun updateProgress(@Path("id") videoId: Int, @Query("position") position: Long)
 
     @GET("import/queue")
