@@ -1,11 +1,17 @@
 package uk.hasali.zenith.screens.library.itemdetails
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastState
+import com.google.android.gms.cast.framework.CastStateListener
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -30,12 +36,28 @@ data class EpisodeDetails(val show: Show, val season: Season, val episode: Episo
 class ItemDetailsViewModel @Inject constructor(
     screenProvider: NavScreenProvider,
     private val zenith: ZenithMediaService,
-) : ViewModel() {
+) : ViewModel(), CastStateListener {
     private val screen: LibraryScreen.ItemDetails by screenProvider
 
     private val _item = MutableStateFlow<MediaItemDetails?>(null)
     val item
         get() = _item.asStateFlow()
+
+    private val castContext = CastContext.getSharedInstance()
+
+    fun enableCastNotifier() {
+        castContext?.addCastStateListener(this)
+    }
+
+    fun disableCastNotifier() {
+        castContext?.removeCastStateListener(this)
+    }
+
+    override fun onCastStateChanged(state: Int) {
+        if (state == CastState.CONNECTED) {
+            notifyCastSession()
+        }
+    }
 
     fun refresh() {
         viewModelScope.launch {
@@ -90,6 +112,21 @@ class ItemDetailsViewModel @Inject constructor(
         }
     }
 
+    private fun notifyCastSession() {
+        val session = CastContext.getSharedInstance()
+            ?.sessionManager
+            ?.currentCastSession
+
+        if (session != null) {
+            _item.value?.let { item ->
+                val namespace = "urn:x-cast:uk.hasali.zenith.cast"
+                val message = Json.encodeToString(CastMediaItem(item))
+                Log.i("ItemDetails", "Sending current item to cast session: $message")
+                session.sendMessage(namespace, message)
+            }
+        }
+    }
+
     private suspend fun refreshData() {
         _item.value = when (val item = zenith.getItem(screen.id)) {
             is Movie -> {
@@ -114,5 +151,6 @@ class ItemDetailsViewModel @Inject constructor(
                 episode = item,
             )
         }
+        notifyCastSession()
     }
 }

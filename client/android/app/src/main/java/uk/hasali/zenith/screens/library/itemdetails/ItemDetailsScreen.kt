@@ -17,6 +17,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -41,6 +42,13 @@ fun ItemDetailsScreen(
 ) {
     val data by rememberFlowWithLifecycle(model.item)
         .collectAsState(null)
+
+    DisposableEffect(Unit) {
+        model.enableCastNotifier()
+        onDispose {
+            model.disableCastNotifier()
+        }
+    }
 
     LifecycleEffect(Lifecycle.State.RESUMED) {
         model.refresh()
