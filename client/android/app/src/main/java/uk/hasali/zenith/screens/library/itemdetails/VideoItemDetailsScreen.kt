@@ -110,6 +110,9 @@ fun VideoItemDetailsScreen(
                 overlay = { if (position > 0) VideoPositionOverlay(position) },
             )
         },
+        appBarActions = {
+            CastButton()
+        },
         headerContent = headerContent,
         actionsRow = {
             ActionsSection(

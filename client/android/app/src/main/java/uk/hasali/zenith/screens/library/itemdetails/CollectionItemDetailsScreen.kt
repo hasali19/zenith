@@ -11,6 +11,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.ui.BottomSheetController
+import uk.hasali.zenith.ui.CastButton
 import uk.hasali.zenith.ui.Poster
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -33,6 +34,7 @@ fun CollectionItemDetailsScreen(
         backdrop = backdrop,
         poster = { Poster(url = poster) },
         appBarActions = {
+            CastButton()
             IconButton(onClick = {
                 scope.launch {
                     bottomSheetController.show(
