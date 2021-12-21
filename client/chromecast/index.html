@@ -1,38 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8" />
+    <title>Zenith</title>
     <script
       type="text/javascript"
       src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"
     ></script>
   </head>
-
   <body>
-    <cast-media-player></cast-media-player>
-    <script>
-      const context = cast.framework.CastReceiverContext.getInstance();
-      const playerManager = context.getPlayerManager();
-
-      playerManager.addEventListener(
-        cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
-        () => {
-          const textTracksManager = playerManager.getTextTracksManager();
-
-          // Set default subtitle style
-          const style = new cast.framework.messages.TextTrackStyle();
-          style.backgroundColor = "#00000000";
-          style.edgeColor = "#000000ff";
-          style.edgeType = cast.framework.messages.TextTrackEdgeType.OUTLINE;
-          style.fontFamily = "sans-serif";
-          style.fontScale = 0.8;
-          textTracksManager.setTextTrackStyle(style);
-
-          // Turn off subtitles by default
-          textTracksManager.setActiveByIds([]);
-        }
-      );
-
-      context.start();
-    </script>
+    <div id="root"></div>
+    <script src="/src/index.tsx" type="module"></script>
   </body>
 </html>
