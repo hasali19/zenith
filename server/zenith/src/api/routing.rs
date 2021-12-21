@@ -1,7 +1,9 @@
-use axum::http::Method;
+use axum::http::header::ACCESS_CONTROL_ALLOW_ORIGIN;
+use axum::http::{HeaderValue, Method};
 use axum::routing::MethodRouter;
 use axum::Router;
 use axum_codegen::RequestHandler;
+use tower_http::set_header::SetResponseHeaderLayer;
 
 axum_codegen::routes!();
 
@@ -11,6 +13,10 @@ pub fn router() -> axum::Router {
         .fold(Router::new(), |router, (path, method, handler)| {
             router.route(path, method_service(method.clone(), *handler))
         })
+        .layer(SetResponseHeaderLayer::<_, ()>::overriding(
+            ACCESS_CONTROL_ALLOW_ORIGIN,
+            HeaderValue::from_static("*"),
+        ))
 }
 
 fn method_service(method: Method, handler: RequestHandler) -> MethodRouter {
