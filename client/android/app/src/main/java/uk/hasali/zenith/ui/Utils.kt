@@ -30,7 +30,7 @@ fun LifecycleEffect(state: Lifecycle.State, block: suspend CoroutineScope.() -> 
 
 fun twoDigitNumber(number: Int) = "$number".padStart(2, '0')
 
-fun displayDuration(duration: Double) =
+fun formatDuration(duration: Double) =
     if (duration <= 90 * 60) {
         "${(duration / 60).toInt()}m"
     } else {

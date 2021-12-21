@@ -1,4 +1,4 @@
-package uk.hasali.zenith.ui
+package uk.hasali.zenith.screens.library.itemdetails
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -17,6 +17,8 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,7 +26,71 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import coil.compose.rememberImagePainter
+import uk.hasali.zenith.navigation.hiltViewModel
+import uk.hasali.zenith.ui.*
+
+@Composable
+fun ItemDetailsScreen(
+    model: ItemDetailsViewModel = hiltViewModel(),
+    bottomSheetController: BottomSheetController,
+    onPlay: (position: Double?) -> Unit,
+    onNavigateToItem: (id: Int) -> Unit,
+    onNavigateUp: () -> Unit,
+) {
+    val data by rememberFlowWithLifecycle(model.item)
+        .collectAsState(null)
+
+    LifecycleEffect(Lifecycle.State.RESUMED) {
+        model.refresh()
+    }
+
+    data.let { data ->
+        when (data) {
+            null -> CenteredLoadingIndicator()
+            is MovieDetails -> MovieDetailsScreen(
+                movie = data.movie,
+                bottomSheetController = bottomSheetController,
+                onSetWatched = model::setWatched,
+                onPlay = onPlay,
+                onTranscode = model::startTranscode,
+                onRefreshMetadata = model::refreshMetadata,
+                onImportSubtitle = model::importSubtitle,
+                onNavigateUp = onNavigateUp,
+            )
+            is ShowDetails -> ShowDetailsScreen(
+                show = data.show,
+                seasons = data.seasons,
+                bottomSheetController = bottomSheetController,
+                onRefreshMetadata = model::refreshMetadata,
+                onNavigateToSeason = { onNavigateToItem(it.id) },
+                onNavigateUp = onNavigateUp,
+            )
+            is SeasonDetails -> SeasonDetailsScreen(
+                show = data.show,
+                season = data.season,
+                episodes = data.episodes,
+                bottomSheetController = bottomSheetController,
+                onRefreshMetadata = model::refreshMetadata,
+                onNavigateToEpisode = { onNavigateToItem(it.id) },
+                onNavigateUp = onNavigateUp,
+            )
+            is EpisodeDetails -> EpisodeDetailsScreen(
+                show = data.show,
+                season = data.season,
+                episode = data.episode,
+                bottomSheetController = bottomSheetController,
+                onSetWatched = model::setWatched,
+                onPlay = onPlay,
+                onTranscode = model::startTranscode,
+                onRefreshMetadata = model::refreshMetadata,
+                onImportSubtitle = model::importSubtitle,
+                onNavigateUp = onNavigateUp,
+            )
+        }
+    }
+}
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable

@@ -23,12 +23,9 @@ import uk.hasali.zenith.navigation.ContentHost
 import uk.hasali.zenith.navigation.StackNavigator
 import uk.hasali.zenith.navigation.rememberStackNavigator
 import uk.hasali.zenith.screens.SettingsScreen
-import uk.hasali.zenith.screens.library.episodedetails.EpisodeDetailsScreen
 import uk.hasali.zenith.screens.library.home.LibraryHomeScreen
-import uk.hasali.zenith.screens.library.moviedetails.MovieDetailsScreen
+import uk.hasali.zenith.screens.library.itemdetails.ItemDetailsScreen
 import uk.hasali.zenith.screens.library.movies.MoviesScreen
-import uk.hasali.zenith.screens.library.seasondetails.SeasonDetailsScreen
-import uk.hasali.zenith.screens.library.showdetails.ShowDetailsScreen
 import uk.hasali.zenith.screens.library.shows.ShowsScreen
 import uk.hasali.zenith.screens.management.ImportQueueScreen
 import uk.hasali.zenith.screens.management.ManagementHomeScreen
@@ -75,16 +72,7 @@ sealed interface LibraryScreen : Parcelable {
     object Shows : Screen("main/library/shows"), LibraryScreen
 
     @Parcelize
-    class MovieDetails(val id: Int) : Screen("main/library/movies/$id"), LibraryScreen
-
-    @Parcelize
-    class ShowDetails(val id: Int) : Screen("main/library/shows/$id"), LibraryScreen
-
-    @Parcelize
-    class SeasonDetails(val id: Int) : Screen("main/library/seasons/$id"), LibraryScreen
-
-    @Parcelize
-    class EpisodeDetails(val id: Int) : Screen("main/library/episodes/$id"), LibraryScreen
+    class ItemDetails(val id: Int) : Screen("main/library/items/$id"), LibraryScreen
 }
 
 sealed interface ManagementScreen : Parcelable {
@@ -202,41 +190,23 @@ private fun LibraryArea(
             is LibraryScreen.Home -> LibraryHomeScreen(
                 onNavigateToMovies = { navigator.push(LibraryScreen.Movies) },
                 onNavigateToShows = { navigator.push(LibraryScreen.Shows) },
-                onNavigateToMovie = { navigator.push(LibraryScreen.MovieDetails(it.id)) },
-                onNavigateToShow = { navigator.push(LibraryScreen.ShowDetails(it.id)) },
+                onNavigateToItem = { navigator.push(LibraryScreen.ItemDetails(it)) },
             )
 
             is LibraryScreen.Movies -> MoviesScreen(
-                onNavigateToMovie = { navigator.push(LibraryScreen.MovieDetails(it.id)) },
+                onNavigateToItem = { navigator.push(LibraryScreen.ItemDetails(it)) },
                 onNavigateUp = { navigator.pop() },
             )
 
             is LibraryScreen.Shows -> ShowsScreen(
-                onNavigateToShow = { navigator.push(LibraryScreen.ShowDetails(it.id)) },
+                onNavigateToItem = { navigator.push(LibraryScreen.ItemDetails(it)) },
                 onNavigateUp = { navigator.pop() },
             )
 
-            is LibraryScreen.MovieDetails -> MovieDetailsScreen(
-                bottomSheetController = bottomSheetController,
-                onPlay = { onNavigateToPlayer(screen.id, VideoItemType.Movie, it) },
-                onNavigateUp = { navigator.pop() },
-            )
-
-            is LibraryScreen.ShowDetails -> ShowDetailsScreen(
-                bottomSheetController = bottomSheetController,
-                onNavigateToSeason = { navigator.push(LibraryScreen.SeasonDetails(it.id)) },
-                onNavigateUp = { navigator.pop() },
-            )
-
-            is LibraryScreen.SeasonDetails -> SeasonDetailsScreen(
-                bottomSheetController = bottomSheetController,
-                onNavigateToEpisode = { navigator.push(LibraryScreen.EpisodeDetails(it.id)) },
-                onNavigateUp = { navigator.pop() },
-            )
-
-            is LibraryScreen.EpisodeDetails -> EpisodeDetailsScreen(
+            is LibraryScreen.ItemDetails -> ItemDetailsScreen(
                 bottomSheetController = bottomSheetController,
                 onPlay = { onNavigateToPlayer(screen.id, VideoItemType.TvShow, it) },
+                onNavigateToItem = { navigator.push(LibraryScreen.ItemDetails(it)) },
                 onNavigateUp = { navigator.pop() },
             )
         }

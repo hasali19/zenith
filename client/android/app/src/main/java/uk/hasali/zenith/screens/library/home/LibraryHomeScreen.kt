@@ -29,8 +29,7 @@ fun LibraryHomeScreen(
     model: LibraryHomeViewModel = hiltViewModel(),
     onNavigateToMovies: () -> Unit,
     onNavigateToShows: () -> Unit,
-    onNavigateToMovie: (Movie) -> Unit,
-    onNavigateToShow: (Show) -> Unit,
+    onNavigateToItem: (id: Int) -> Unit,
 ) {
     val state by rememberFlowWithLifecycle(model.state)
         .collectAsState(LibraryHomeViewState())
@@ -66,8 +65,7 @@ fun LibraryHomeScreen(
                 onRefresh = model::refresh,
                 onNavigateToMovies = onNavigateToMovies,
                 onNavigateToShows = onNavigateToShows,
-                onNavigateToMovie = onNavigateToMovie,
-                onNavigateToShow = onNavigateToShow,
+                onNavigateToItem = onNavigateToItem,
             )
         }
     }
@@ -81,8 +79,7 @@ private fun LibraryHomeScreen(
     onRefresh: () -> Unit,
     onNavigateToMovies: () -> Unit,
     onNavigateToShows: () -> Unit,
-    onNavigateToMovie: (Movie) -> Unit,
-    onNavigateToShow: (Show) -> Unit,
+    onNavigateToItem: (id: Int) -> Unit,
 ) {
     SwipeRefresh(state = rememberSwipeRefreshState(isRefreshing), onRefresh = onRefresh) {
         Column(
@@ -110,7 +107,7 @@ private fun LibraryHomeScreen(
                     name = { it.title },
                     date = { it.releaseDate },
                     isWatched = { it.userData.isWatched },
-                    onItemClick = onNavigateToMovie,
+                    onItemClick = { onNavigateToItem(it.id) },
                 )
             }
 
@@ -122,7 +119,7 @@ private fun LibraryHomeScreen(
                     name = { it.name },
                     date = { it.startDate },
                     isWatched = { it.userData.unwatched == 0 },
-                    onItemClick = onNavigateToShow,
+                    onItemClick = { onNavigateToItem(it.id) },
                 )
             }
         }

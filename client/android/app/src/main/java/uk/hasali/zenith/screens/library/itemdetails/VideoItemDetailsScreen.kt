@@ -1,4 +1,4 @@
-package uk.hasali.zenith.ui
+package uk.hasali.zenith.screens.library.itemdetails
 
 import android.content.Context
 import android.net.Uri
@@ -31,6 +31,7 @@ import uk.hasali.zenith.LanguageCodes
 import uk.hasali.zenith.api.SubtitleInfo
 import uk.hasali.zenith.api.VideoInfo
 import uk.hasali.zenith.api.VideoUserData
+import uk.hasali.zenith.ui.*
 import kotlin.io.path.Path
 import kotlin.io.path.extension
 

@@ -12,7 +12,7 @@ import uk.hasali.zenith.ui.*
 @Composable
 fun ShowsScreen(
     model: ShowsViewModel = hiltViewModel(),
-    onNavigateToShow: (Show) -> Unit,
+    onNavigateToItem: (id: Int) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
     val shows by rememberFlowWithLifecycle(model.shows)
@@ -35,7 +35,7 @@ fun ShowsScreen(
             name = { it.name },
             date = { it.startDate },
             isWatched = { it.userData.unwatched == 0 },
-            onClick = onNavigateToShow,
+            onClick = { onNavigateToItem(it.id) },
         )
     }
 }
