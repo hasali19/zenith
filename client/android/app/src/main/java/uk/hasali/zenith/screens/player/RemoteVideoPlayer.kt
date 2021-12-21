@@ -66,10 +66,6 @@ class RemoteVideoPlayer(private val context: Context, session: CastSession) : Vi
     }
 
     override fun setItem(item: VideoItem) {
-        val metadata = MediaMetadata(item.type.toCastMediaType()).apply {
-            putString(MediaMetadata.KEY_TITLE, item.title)
-        }
-
         // Embedded subtitles that haven't been extracted are not supported when casting
         val supportedSubtitles = item.subtitles.filter { it.url != null }
         val subtitleTracks = supportedSubtitles
@@ -83,20 +79,30 @@ class RemoteVideoPlayer(private val context: Context, session: CastSession) : Vi
                     .build()
             }
 
-        val mediaInfo = MediaInfo.Builder(item.url)
-            .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
-            .setContentType("video/mp4")
-            .setMetadata(metadata)
-            .setMediaTracks(subtitleTracks)
-            .build()
+        val currentMediaInfo = mediaClient.mediaInfo
+        if (currentMediaInfo == null || currentMediaInfo.contentId != item.url) {
+            val metadata = MediaMetadata(item.type.toCastMediaType()).apply {
+                putString(MediaMetadata.KEY_TITLE, item.title)
+            }
 
-        val request = MediaLoadRequestData.Builder()
-            .setMediaInfo(mediaInfo)
-            .setAutoplay(true)
-            .build()
+            val mediaInfo = MediaInfo.Builder(item.url)
+                .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
+                .setContentType("video/mp4")
+                .setMetadata(metadata)
+                .setMediaTracks(subtitleTracks)
+                .build()
+
+            val request = MediaLoadRequestData.Builder()
+                .setMediaInfo(mediaInfo)
+                .setAutoplay(true)
+                .build()
+
+            mediaClient.load(request)
+        } else {
+            _isPlaying.value = mediaClient.isPlaying
+        }
 
         mediaClient.registerCallback(callback)
-        mediaClient.load(request)
 
         _currentItem.value = item.copy(subtitles = supportedSubtitles)
         _subtitleTrack.value = null
