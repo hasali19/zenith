@@ -40,7 +40,7 @@ interface ZenithMediaService {
     @PATCH("items/{id}/user_data")
     suspend fun updateUserData(@Path("id") id: Int, @Body data: VideoUserDataPatch)
 
-    @POST("metadata/refresh/{id}")
+    @POST("metadata/{id}/refresh")
     suspend fun refreshMetadata(@Path("id") id: Int)
 
     @POST("transcoder")
