@@ -1,10 +1,10 @@
-use reqwest::header::{self, HeaderMap};
 use reqwest::Client as HttpClient;
 use serde::de::DeserializeOwned;
 use url::Url;
 
 #[derive(Clone)]
 pub struct TmdbClient {
+    api_key: String,
     client: HttpClient,
 }
 
@@ -94,19 +94,10 @@ pub struct Image {
 }
 
 impl TmdbClient {
-    pub fn new(access_token: &str) -> Self {
-        let mut headers = HeaderMap::new();
-
-        headers.insert(
-            header::AUTHORIZATION,
-            format!("Bearer {}", access_token).parse().unwrap(),
-        );
-
+    pub fn new(api_key: &str) -> Self {
         TmdbClient {
-            client: HttpClient::builder()
-                .default_headers(headers)
-                .build()
-                .unwrap(),
+            api_key: api_key.to_owned(),
+            client: HttpClient::new(),
         }
     }
 
@@ -114,9 +105,7 @@ impl TmdbClient {
         &self,
         query: &MovieSearchQuery<'_>,
     ) -> eyre::Result<MovieSearchResponse> {
-        let url = "https://api.themoviedb.org/3/search/movie";
-
-        let mut url = Url::parse(url).unwrap();
+        let mut url = self.url("search/movie");
         {
             let mut params = url.query_pairs_mut();
 
@@ -131,16 +120,14 @@ impl TmdbClient {
             }
         }
 
-        self.get_json(url.as_str()).await
+        self.get_json(url).await
     }
 
     pub async fn search_tv_shows(
         &self,
         query: &TvShowSearchQuery<'_>,
     ) -> eyre::Result<TvShowSearchResponse> {
-        let url = "https://api.themoviedb.org/3/search/tv";
-
-        let mut url = Url::parse(url).unwrap();
+        let mut url = self.url("search/tv");
         {
             let mut params = url.query_pairs_mut();
 
@@ -155,21 +142,17 @@ impl TmdbClient {
             }
         }
 
-        self.get_json(url.as_str()).await
+        self.get_json(url).await
     }
 
     pub async fn get_tv_show(&self, id: i32) -> eyre::Result<TvShowResponse> {
-        let url = format!("https://api.themoviedb.org/3/tv/{}", id);
-        self.get_json(&url).await
+        let url = self.url(&format!("tv/{}", id));
+        self.get_json(url).await
     }
 
     pub async fn get_tv_season(&self, tv_id: i32, season: i32) -> eyre::Result<TvSeasonResponse> {
-        let url = format!(
-            "https://api.themoviedb.org/3/tv/{}/season/{}",
-            tv_id, season
-        );
-
-        self.get_json(&url).await
+        let url = self.url(&format!("tv/{}/season/{}", tv_id, season));
+        self.get_json(url).await
     }
 
     pub async fn get_tv_episode(
@@ -178,12 +161,9 @@ impl TmdbClient {
         season: i32,
         episode: i32,
     ) -> eyre::Result<TvEpisodeResponse> {
-        let url = format!(
-            "https://api.themoviedb.org/3/tv/{}/season/{}/episode/{}",
-            tv_id, season, episode
-        );
-
-        self.get_json(&url).await
+        let path = format!("tv/{}/season/{}/episode/{}", tv_id, season, episode);
+        let url = self.url(&path);
+        self.get_json(url).await
     }
 
     pub async fn get_tv_episode_images(
@@ -192,15 +172,19 @@ impl TmdbClient {
         season: i32,
         episode: i32,
     ) -> eyre::Result<TvEpisodeImagesResponse> {
-        let url = format!(
-            "https://api.themoviedb.org/3/tv/{}/season/{}/episode/{}/images",
-            tv_id, season, episode
-        );
-
-        self.get_json(&url).await
+        let path = format!("tv/{}/season/{}/episode/{}/images", tv_id, season, episode);
+        let url = self.url(&path);
+        self.get_json(url).await
     }
 
-    async fn get_json<T: DeserializeOwned>(&self, url: &str) -> eyre::Result<T> {
+    fn url(&self, path: &str) -> Url {
+        let mut url = Url::parse("https://api.themoviedb.org/3").unwrap();
+        url.path_segments_mut().unwrap().extend(path.split('/'));
+        url.query_pairs_mut().append_pair("api_key", &self.api_key);
+        url
+    }
+
+    async fn get_json<T: DeserializeOwned>(&self, url: Url) -> eyre::Result<T> {
         Ok(self.client.get(url).send().await?.json().await?)
     }
 }

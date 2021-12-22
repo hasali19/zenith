@@ -38,7 +38,7 @@ pub struct Libraries {
 
 #[derive(Deserialize)]
 pub struct Tmdb {
-    pub access_token: String,
+    pub api_key: String,
 }
 
 #[derive(Deserialize)]

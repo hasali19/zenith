@@ -34,7 +34,7 @@ async fn main() -> eyre::Result<()> {
 
     let config = Arc::new(Config::load("config.yml")?);
     let db = Db::init(&config.database.path).await?;
-    let tmdb = TmdbClient::new(&config.tmdb.access_token);
+    let tmdb = TmdbClient::new(&config.tmdb.api_key);
     let metadata = MetadataManager::new(db.clone(), tmdb.clone());
     let video_info_provider = Arc::new(Ffprobe::new(&config.transcoding.ffprobe_path));
     let library = Arc::new(MediaLibrary::new(db.clone(), video_info_provider.clone()));
