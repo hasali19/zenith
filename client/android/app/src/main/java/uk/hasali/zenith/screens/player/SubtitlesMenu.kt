@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import uk.hasali.zenith.LanguageCodes
+import uk.hasali.zenith.media.SubtitleTrack
 
 private data class SubtitleItem(
     val language: String,

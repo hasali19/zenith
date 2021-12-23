@@ -10,6 +10,9 @@ import kotlinx.coroutines.launch
 import uk.hasali.zenith.*
 import uk.hasali.zenith.api.*
 import uk.hasali.zenith.navigation.NavScreenProvider
+import uk.hasali.zenith.media.SubtitleTrack
+import uk.hasali.zenith.media.VideoItem
+import uk.hasali.zenith.media.VideoItemType
 import javax.inject.Inject
 
 @HiltViewModel
@@ -21,7 +24,6 @@ class PlayerViewModel @Inject constructor(
 ) : ViewModel() {
     private val screen: PrimaryScreen.VideoPlayer by screenProvider
     private val id: Int = screen.id
-    private val type: VideoItemType = screen.type
     private val position: Double = screen.position ?: 0.0
 
     private val server = preferences.serverUrl
@@ -32,18 +34,21 @@ class PlayerViewModel @Inject constructor(
             return@combine null
         }
 
+        val type: VideoItemType
         val title: String?
         val backdrop: String?
         val videoInfo: VideoInfo?
 
         when (item) {
             is Movie -> {
+                type = VideoItemType.Movie
                 title = item.title
                 backdrop = item.backdrop
                 videoInfo = item.videoInfo
             }
 
             is Episode -> {
+                type = VideoItemType.TvShow
                 title = item.name
                 backdrop = item.thumbnail
                 videoInfo = item.videoInfo

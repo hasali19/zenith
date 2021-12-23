@@ -1,4 +1,4 @@
-package uk.hasali.zenith.screens.player
+package uk.hasali.zenith.media
 
 import android.content.Context
 import android.net.Uri

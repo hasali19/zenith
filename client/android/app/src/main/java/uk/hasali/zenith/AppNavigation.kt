@@ -30,7 +30,6 @@ import uk.hasali.zenith.screens.library.shows.ShowsScreen
 import uk.hasali.zenith.screens.management.ImportQueueScreen
 import uk.hasali.zenith.screens.management.ManagementHomeScreen
 import uk.hasali.zenith.screens.management.TranscodeQueueScreen
-import uk.hasali.zenith.screens.player.VideoItemType
 import uk.hasali.zenith.screens.player.VideoPlayerScreen
 import uk.hasali.zenith.ui.BottomSheetController
 import uk.hasali.zenith.ui.rememberBottomSheetController
@@ -46,7 +45,7 @@ sealed interface PrimaryScreen : Parcelable {
     object Main : Screen("main"), PrimaryScreen
 
     @Parcelize
-    data class VideoPlayer(val id: Int, val type: VideoItemType, val position: Double?) :
+    data class VideoPlayer(val id: Int, val position: Double?) :
         Screen("video_player"), PrimaryScreen
 }
 
@@ -94,8 +93,8 @@ fun AppNavigation(onLaunchSelectServer: () -> Unit) {
     navigator.ContentHost {
         when (it) {
             is PrimaryScreen.Main -> MainNavigation(
-                onNavigateToPlayer = { id, type, position ->
-                    navigator.push(PrimaryScreen.VideoPlayer(id, type, position))
+                onNavigateToPlayer = { id, position ->
+                    navigator.push(PrimaryScreen.VideoPlayer(id, position))
                 },
                 onLaunchSelectServer = onLaunchSelectServer,
             )
@@ -108,7 +107,7 @@ fun AppNavigation(onLaunchSelectServer: () -> Unit) {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun MainNavigation(
-    onNavigateToPlayer: (Int, VideoItemType, Double?) -> Unit,
+    onNavigateToPlayer: (Int, Double?) -> Unit,
     onLaunchSelectServer: () -> Unit,
 ) {
     val holder = rememberSaveableStateHolder()
@@ -183,7 +182,7 @@ private fun MainNavigation(
 private fun LibraryArea(
     navigator: StackNavigator<LibraryScreen>,
     bottomSheetController: BottomSheetController,
-    onNavigateToPlayer: (Int, VideoItemType, Double?) -> Unit,
+    onNavigateToPlayer: (Int, Double?) -> Unit,
 ) {
     navigator.ContentHost { screen ->
         when (screen) {
@@ -205,7 +204,7 @@ private fun LibraryArea(
 
             is LibraryScreen.ItemDetails -> ItemDetailsScreen(
                 bottomSheetController = bottomSheetController,
-                onPlay = { onNavigateToPlayer(screen.id, VideoItemType.TvShow, it) },
+                onPlay = { onNavigateToPlayer(screen.id, it) },
                 onNavigateToItem = { navigator.push(LibraryScreen.ItemDetails(it)) },
                 onNavigateUp = { navigator.pop() },
             )

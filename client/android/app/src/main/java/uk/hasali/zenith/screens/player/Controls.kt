@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.insets.LocalWindowInsets
 import kotlinx.coroutines.*
+import uk.hasali.zenith.media.SubtitleTrack
 
 enum class MenuType {
     Subtitle,

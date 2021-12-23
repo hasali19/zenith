@@ -16,13 +16,13 @@ config.yml
 *.log
 
 # Cache directory
-cache/
+/cache
 
 # Data directory
-data/
+/data
 
 # Media directory
-media/
+/media
 
 # Import directory
-import/
+/import
