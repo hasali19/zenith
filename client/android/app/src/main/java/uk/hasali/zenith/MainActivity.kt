@@ -127,6 +127,21 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // Dispose current session if it is local
+        mediaSessionManager.current.value?.let { session ->
+            session.player.value.let { player ->
+                if (player.isLocal) {
+                    mediaSessionManager.stop()
+                }
+            }
+        }
+
+        mediaSessionManager.dispose()
+    }
+
     override fun onResume() {
         super.onResume()
 
