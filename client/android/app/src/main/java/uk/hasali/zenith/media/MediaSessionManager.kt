@@ -2,12 +2,10 @@ package uk.hasali.zenith.media
 
 import android.content.Context
 import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastState
+import com.google.android.gms.cast.framework.CastStateListener
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ActivityRetainedScoped
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
 @ActivityRetainedScoped
@@ -15,58 +13,88 @@ class MediaSessionManager @Inject constructor(
     @ApplicationContext
     private val context: Context,
 ) {
-    private val scope = MainScope()
+    interface Listener {
+        fun onPlayerChanged() {}
+    }
 
-    private val _current = MutableStateFlow<MediaSession?>(null)
-    val current: StateFlow<MediaSession?>
-        get() = _current
+    private val castContext = CastContext.getSharedInstance(context)
+    private val castStateListener = CastStateListener { state ->
+        val currentPlayer = player
 
-    fun play(item: VideoItem, startAt: Long) {
-        // If there is an existing session, end it
-        _current.value?.dispose()
+        fun switchToPlayer(player: VideoPlayer) {
+            val currentItem = currentPlayer?.currentItem?.value
+            if (currentItem != null) {
+                player.setItem(currentItem, startAt = currentPlayer.position)
+            }
+            setPlayer(player)
+        }
 
-        // Create a new session
-        _current.value = createSession().also { session ->
-            session.player.value.setItem(item, startAt)
+        if (state == CastState.CONNECTED) {
+            if (currentPlayer !is RemoteVideoPlayer) {
+                val session = castContext.sessionManager.currentCastSession!!
+                val remotePlayer = RemoteVideoPlayer(context, session)
+                switchToPlayer(remotePlayer)
+            }
+        } else {
+            if (currentPlayer is RemoteVideoPlayer) {
+                val localPlayer = LocalVideoPlayer(context)
+                switchToPlayer(localPlayer)
+            }
         }
     }
 
-    fun stop() {
-        _current.value?.dispose()
-        _current.value = null
+    private val listeners = mutableListOf<Listener>()
+    private var player: VideoPlayer? = null
+
+    fun init() {
+        castContext.addCastStateListener(castStateListener)
+        castStateListener.onCastStateChanged(castContext.castState)
+    }
+
+    fun addListener(listener: Listener) {
+        listeners.add(listener)
+    }
+
+    fun removeListener(listener: Listener) {
+        listeners.remove(listener)
+    }
+
+    fun getCurrentPlayer(): VideoPlayer? {
+        return player
+    }
+
+    fun getOrCreatePlayer(): VideoPlayer {
+        player?.let {
+            return it
+        }
+
+        return createPlayer().also { player ->
+            setPlayer(player)
+        }
+    }
+
+    fun endCurrentSession() {
+        setPlayer(null)
     }
 
     fun dispose() {
-        scope.cancel()
+        castContext.removeCastStateListener(castStateListener)
     }
 
-    private fun createSession(): MediaSession {
-        return MediaSessionImpl()
-    }
-
-    private fun createPlayer(): VideoPlayer {
-        val castContext = CastContext.getSharedInstance(context)
-        val castSessionManager = castContext.sessionManager
-        val castSession = castSessionManager.currentCastSession
-        return if (castSession == null) {
-            LocalVideoPlayer(context)
-        } else {
-            RemoteVideoPlayer(context, castSession)
+    private fun setPlayer(value: VideoPlayer?) {
+        player?.dispose()
+        player = value
+        listeners.forEach {
+            it.onPlayerChanged()
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private inner class MediaSessionImpl : MediaSession {
-        private val _player = MutableStateFlow(createPlayer())
-        override val player: StateFlow<VideoPlayer>
-            get() = _player
-
-        override val state = _player
-            .transform { emitAll(it.state) }
-            .stateIn(scope, SharingStarted.Eagerly, VideoPlayer.State.Active)
-
-        override fun dispose() {
-            _player.value.dispose()
+    private fun createPlayer(): VideoPlayer {
+        val currentCastSession = castContext.sessionManager.currentCastSession
+        return if (currentCastSession == null) {
+            LocalVideoPlayer(context)
+        } else {
+            RemoteVideoPlayer(context, currentCastSession)
         }
     }
 }

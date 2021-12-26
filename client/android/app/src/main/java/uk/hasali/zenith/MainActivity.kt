@@ -50,6 +50,9 @@ class MainActivity : FragmentActivity() {
     @Inject
     lateinit var mediaSessionManager: MediaSessionManager
 
+    @Inject
+    lateinit var mediaProgressReporter: Lazy<MediaProgressReporter>
+
     private val httpClient = OkHttpClient()
 
     private var availableUpdate by mutableStateOf<AvailableUpdate?>(null)
@@ -83,10 +86,12 @@ class MainActivity : FragmentActivity() {
                     .build(),
             )
 
+        mediaSessionManager.init()
+
         lifecycleScope.launch {
             val server = preferences.serverUrl.first()
             if (server == null) {
-                launchSelectServerActivity()
+                startSelectServerActivity()
             } else {
                 serverUrlProvider.url = server
                 startMediaProgressReporter()
@@ -97,32 +102,17 @@ class MainActivity : FragmentActivity() {
         }
     }
 
-    private fun launchSelectServerActivity() {
+    private fun startSelectServerActivity() {
         val intent = Intent(this, SelectServerActivity::class.java)
         startActivity(intent)
         finish()
     }
 
     private fun startMediaProgressReporter() {
-        if (!BuildConfig.DEBUG) lifecycleScope.launch {
-            val client = zenith.get()
-
-            // Report local media playback progress to server
+        val reporter = mediaProgressReporter.get()
+        lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                mediaSessionManager.current.collectLatest { session ->
-                    session?.player?.collectLatest { player ->
-                        if (player.isLocal) {
-                            player.currentItem.collectLatest { item ->
-                                if (item != null) {
-                                    player.pollPosition(delayMs = 5000)
-                                        .collect { position ->
-                                            client.updateProgress(item.id, position / 1000)
-                                        }
-                                }
-                            }
-                        }
-                    }
-                }
+                reporter.run()
             }
         }
     }
@@ -131,12 +121,9 @@ class MainActivity : FragmentActivity() {
         super.onDestroy()
 
         // Dispose current session if it is local
-        mediaSessionManager.current.value?.let { session ->
-            session.player.value.let { player ->
-                if (player.isLocal) {
-                    mediaSessionManager.stop()
-                }
-            }
+        val player = mediaSessionManager.getCurrentPlayer()
+        if (player?.isLocal == true) {
+            mediaSessionManager.endCurrentSession()
         }
 
         mediaSessionManager.dispose()
@@ -155,12 +142,9 @@ class MainActivity : FragmentActivity() {
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N || !isInPictureInPictureMode) {
             // Pause local playback
-            mediaSessionManager.current.value?.let { session ->
-                session.player.value.let { player ->
-                    if (player.isLocal) {
-                        player.setPlayWhenReady(false)
-                    }
-                }
+            val player = mediaSessionManager.getCurrentPlayer()
+            if (player != null && player.isLocal) {
+                player.setPlayWhenReady(false)
             }
         }
     }
@@ -169,12 +153,9 @@ class MainActivity : FragmentActivity() {
         super.onStop()
 
         // Pause local playback
-        mediaSessionManager.current.value?.let { session ->
-            session.player.value.let { player ->
-                if (player.isLocal) {
-                    player.setPlayWhenReady(false)
-                }
-            }
+        val player = mediaSessionManager.getCurrentPlayer()
+        if (player != null && player.isLocal) {
+            player.setPlayWhenReady(false)
         }
     }
 
@@ -208,7 +189,7 @@ class MainActivity : FragmentActivity() {
                 ) {
                     AppNavigation(
                         mediaSessionManager = mediaSessionManager,
-                        onLaunchSelectServer = this::launchSelectServerActivity,
+                        onLaunchSelectServer = this::startSelectServerActivity,
                     )
                 }
             }

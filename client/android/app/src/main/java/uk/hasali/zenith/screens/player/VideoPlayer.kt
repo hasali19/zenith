@@ -18,6 +18,7 @@ import androidx.media3.ui.PlayerView
 import coil.compose.rememberImagePainter
 import uk.hasali.zenith.LocalPictureInPictureController
 import uk.hasali.zenith.media.VideoPlayer
+import uk.hasali.zenith.media.pollPosition
 
 @Composable
 fun VideoPlayer(

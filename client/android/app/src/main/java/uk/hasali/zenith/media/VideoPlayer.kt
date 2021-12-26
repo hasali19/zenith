@@ -1,8 +1,10 @@
 package uk.hasali.zenith.media
 
 import androidx.media3.common.Player
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
 
 interface VideoPlayer {
     val isLocal: Boolean
@@ -23,7 +25,7 @@ interface VideoPlayer {
     val isPlaying: StateFlow<Boolean>
     val playWhenReady: StateFlow<Boolean>
 
-    fun pollPosition(delayMs: Int = 500): Flow<Long>
+    val position: Long
 
     fun setItem(item: VideoItem, startAt: Long)
     fun setSubtitleTrack(subtitle: SubtitleTrack?)
@@ -31,10 +33,14 @@ interface VideoPlayer {
 
     fun seekTo(position: Long)
 
-    /**
-     * Stops playback and releases all resources.
-     *
-     * This may be called multiple times so implementations should be idempotent.
-     */
     fun dispose()
+}
+
+fun VideoPlayer.pollPosition(delayMs: Int = 500): Flow<Long> {
+    return flow {
+        while (true) {
+            emit(position)
+            delay(delayMs.toLong())
+        }
+    }
 }

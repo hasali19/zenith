@@ -3,17 +3,18 @@ package uk.hasali.zenith.screens.player
 import android.app.Activity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Surface
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import kotlinx.coroutines.flow.collect
-import uk.hasali.zenith.media.MediaSession
+import uk.hasali.zenith.media.VideoPlayer
 import uk.hasali.zenith.navigation.hiltViewModel
 
 @Composable
 fun VideoPlayerScreen(model: VideoPlayerViewModel = hiltViewModel(), onNavigateUp: () -> Unit) {
-    val session by model.session.collectAsState()
+    val player = model.player
 
     val stopAndExit = {
         model.stop()
@@ -25,7 +26,7 @@ fun VideoPlayerScreen(model: VideoPlayerViewModel = hiltViewModel(), onNavigateU
         modifier = Modifier.fillMaxSize(),
     ) {
         VideoPlayerScreen(
-            session = session,
+            player = player,
             onClosePressed = stopAndExit,
             onNavigateUp = onNavigateUp,
         )
@@ -34,24 +35,22 @@ fun VideoPlayerScreen(model: VideoPlayerViewModel = hiltViewModel(), onNavigateU
 
 @Composable
 fun VideoPlayerScreen(
-    session: MediaSession?,
+    player: VideoPlayer?,
     onClosePressed: () -> Unit,
     onNavigateUp: () -> Unit,
 ) {
     val context = LocalContext.current
 
     SideEffect {
-        if (session == null) {
+        if (player == null) {
             onNavigateUp()
         }
     }
 
-    if (session != null) {
-        val player by session.player.collectAsState()
-
-        LaunchedEffect(session) {
-            session.state.collect {
-                if (it == uk.hasali.zenith.media.VideoPlayer.State.Ended) {
+    if (player != null) {
+        LaunchedEffect(player) {
+            player.state.collect {
+                if (it == VideoPlayer.State.Ended) {
                     onNavigateUp()
                 }
             }

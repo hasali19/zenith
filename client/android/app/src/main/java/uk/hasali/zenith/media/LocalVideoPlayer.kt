@@ -59,6 +59,9 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
     override val playWhenReady: StateFlow<Boolean>
         get() = _playWhenReady
 
+    override val position: Long
+        get() = player.currentPosition
+
     private val listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             _isPlaying.value = isPlaying
@@ -71,6 +74,8 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
         override fun onPlaybackStateChanged(playbackState: Int) {
             if (playbackState == ExoPlayer.STATE_ENDED) {
                 _state.value = VideoPlayer.State.Ended
+            } else {
+                _state.value = VideoPlayer.State.Active
             }
         }
     }
@@ -99,15 +104,6 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
 
         notificationManager.setPlayer(player)
         notificationManager.setMediaSessionToken(session.sessionCompatToken as MediaSessionCompat.Token)
-    }
-
-    override fun pollPosition(delayMs: Int): Flow<Long> {
-        return flow {
-            while (true) {
-                emit(player.currentPosition)
-                delay(delayMs.toLong())
-            }
-        }
     }
 
     override fun setItem(item: VideoItem, startAt: Long) {

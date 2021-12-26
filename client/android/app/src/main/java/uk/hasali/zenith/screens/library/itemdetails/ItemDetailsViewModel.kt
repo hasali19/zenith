@@ -124,10 +124,11 @@ class ItemDetailsViewModel @Inject constructor(
     }
 
     fun play(position: Double?) {
-        mediaSessionManager.play(
-            item = _item.value!!.toVideoItem(),
-            startAt = (position ?: 0.0).toLong() * 1000,
-        )
+        mediaSessionManager.getOrCreatePlayer()
+            .setItem(
+                item = _item.value!!.toVideoItem(),
+                startAt = (position ?: 0.0).toLong() * 1000,
+            )
     }
 
     private fun MediaItemDetails.toVideoItem(): VideoItem {
