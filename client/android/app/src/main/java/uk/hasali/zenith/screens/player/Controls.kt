@@ -1,6 +1,7 @@
 package uk.hasali.zenith.screens.player
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -244,6 +245,7 @@ private fun Controls(
     modifier: Modifier = Modifier,
 ) {
     val opacity by animateFloatAsState(if (isVisible) 0.4f else 0f)
+    val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
     CompositionLocalProvider(
         LocalContentColor provides Color.White,
@@ -262,14 +264,18 @@ private fun Controls(
             ) {
                 AppBar(
                     title = title,
-                    onClosePressed = onClosePressed,
+                    onNavigateUp = { onBackPressedDispatcher?.onBackPressed() },
                     actions = {
                         IconButton(onClick = { onShowMenu(MenuType.ScaleMode) }) {
-                            Icon(Icons.Default.AspectRatio, null)
+                            Icon(Icons.Default.AspectRatio, "Aspect ratio")
                         }
 
                         IconButton(onClick = { onShowMenu(MenuType.Subtitle) }) {
-                            Icon(Icons.Default.ClosedCaption, contentDescription = "Captions")
+                            Icon(Icons.Default.ClosedCaption, "Captions")
+                        }
+
+                        IconButton(onClick = onClosePressed) {
+                            Icon(Icons.Default.Close, "Close")
                         }
                     },
                     modifier = Modifier.pointerInput(Unit) {
