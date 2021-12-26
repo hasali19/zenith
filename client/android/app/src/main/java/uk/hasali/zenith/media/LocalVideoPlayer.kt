@@ -2,6 +2,7 @@ package uk.hasali.zenith.media
 
 import android.content.Context
 import android.net.Uri
+import android.support.v4.media.session.MediaSessionCompat
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.media3.common.*
@@ -13,6 +14,7 @@ import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
+import androidx.media3.session.PlayerNotificationManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +32,9 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
         .build()
 
     private val session = MediaSession.Builder(context, player)
+        .build()
+
+    private val notificationManager = PlayerNotificationManager.Builder(context, 1, "media")
         .build()
 
     private var textRenderer: Int? = null
@@ -89,6 +94,9 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
                     .build()
             }
         }
+
+        notificationManager.setPlayer(player)
+        notificationManager.setMediaSessionToken(session.sessionCompatToken as MediaSessionCompat.Token)
     }
 
     override fun setVideoEndedCallback(callback: () -> Unit) {
@@ -111,7 +119,14 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
     }
 
     override fun setItem(item: VideoItem) {
-        val mediaItem = MediaItem.fromUri(item.url)
+        val metadata = MediaMetadata.Builder()
+            .setTitle(item.title)
+            .build()
+
+        val mediaItem = MediaItem.Builder()
+            .setUri(item.url)
+            .setMediaMetadata(metadata)
+            .build()
 
         val dataSourceFactory = DefaultHttpDataSource.Factory()
         val sources = mutableListOf(

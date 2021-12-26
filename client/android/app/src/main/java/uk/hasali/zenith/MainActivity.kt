@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationChannelCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
@@ -67,6 +69,14 @@ class MainActivity : FragmentActivity() {
 
         // Initialise cast context
         CastContext.getSharedInstance(this)
+
+        // Create notification channel for media notifications
+        NotificationManagerCompat.from(this)
+            .createNotificationChannel(
+                NotificationChannelCompat.Builder("media", NotificationManagerCompat.IMPORTANCE_LOW)
+                    .setName("Media")
+                    .build(),
+            )
 
         lifecycleScope.launch {
             val server = preferences.serverUrl.first()
