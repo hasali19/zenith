@@ -20,12 +20,6 @@ fun VideoPlayerScreen(model: VideoPlayerViewModel = hiltViewModel(), onNavigateU
         onNavigateUp()
     }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            stopAndExit()
-        }
-    }
-
     Surface(
         color = Color.Black,
         modifier = Modifier.fillMaxSize(),

@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.google.accompanist.insets.navigationBarsPadding
 import kotlinx.parcelize.Parcelize
+import uk.hasali.zenith.media.MediaSessionManager
 import uk.hasali.zenith.navigation.ContentHost
 import uk.hasali.zenith.navigation.StackNavigator
 import uk.hasali.zenith.navigation.rememberStackNavigator
@@ -30,6 +31,7 @@ import uk.hasali.zenith.screens.library.shows.ShowsScreen
 import uk.hasali.zenith.screens.management.ImportQueueScreen
 import uk.hasali.zenith.screens.management.ManagementHomeScreen
 import uk.hasali.zenith.screens.management.TranscodeQueueScreen
+import uk.hasali.zenith.screens.player.CompactVideoPlayer
 import uk.hasali.zenith.screens.player.VideoPlayerScreen
 import uk.hasali.zenith.ui.BottomSheetController
 import uk.hasali.zenith.ui.rememberBottomSheetController
@@ -86,12 +88,17 @@ sealed interface ManagementScreen : Parcelable {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun AppNavigation(onLaunchSelectServer: () -> Unit) {
+fun AppNavigation(
+    mediaSessionManager: MediaSessionManager,
+    onLaunchSelectServer: () -> Unit,
+) {
     val navigator = rememberStackNavigator<PrimaryScreen>(PrimaryScreen.Main)
 
     navigator.ContentHost {
         when (it) {
             is PrimaryScreen.Main -> MainNavigation(
+                isPlayerOpen = navigator.stack.last().screen == PrimaryScreen.VideoPlayer,
+                mediaSessionManager = mediaSessionManager,
                 onNavigateToPlayer = { navigator.push(PrimaryScreen.VideoPlayer) },
                 onLaunchSelectServer = onLaunchSelectServer,
             )
@@ -106,6 +113,8 @@ fun AppNavigation(onLaunchSelectServer: () -> Unit) {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun MainNavigation(
+    isPlayerOpen: Boolean,
+    mediaSessionManager: MediaSessionManager,
     onNavigateToPlayer: () -> Unit,
     onLaunchSelectServer: () -> Unit,
 ) {
@@ -141,6 +150,13 @@ private fun MainNavigation(
                         }
                     }
                 }
+            }
+
+            if (!isPlayerOpen) {
+                CompactVideoPlayer(
+                    mediaSessionManager = mediaSessionManager,
+                    onNavigateToPlayer = onNavigateToPlayer,
+                )
             }
 
             BottomNavigation {

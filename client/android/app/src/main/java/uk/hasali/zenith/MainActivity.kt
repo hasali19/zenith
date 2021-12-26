@@ -98,10 +98,7 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun launchSelectServerActivity() {
-        val intent = Intent(
-            this@MainActivity,
-            SelectServerActivity::class.java,
-        )
+        val intent = Intent(this, SelectServerActivity::class.java)
         startActivity(intent)
         finish()
     }
@@ -171,7 +168,10 @@ class MainActivity : FragmentActivity() {
                     LocalPictureInPictureController provides pictureInPictureController,
                     LocalZenithClient provides zenith.get(),
                 ) {
-                    AppNavigation(onLaunchSelectServer = this::launchSelectServerActivity)
+                    AppNavigation(
+                        mediaSessionManager = mediaSessionManager,
+                        onLaunchSelectServer = this::launchSelectServerActivity,
+                    )
                 }
             }
         }

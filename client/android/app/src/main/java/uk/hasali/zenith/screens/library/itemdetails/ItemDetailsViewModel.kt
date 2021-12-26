@@ -10,6 +10,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -23,6 +26,7 @@ import uk.hasali.zenith.media.SubtitleTrack
 import uk.hasali.zenith.media.VideoItem
 import uk.hasali.zenith.media.VideoItemType
 import uk.hasali.zenith.navigation.NavScreenProvider
+import uk.hasali.zenith.ui.twoDigitNumber
 import javax.inject.Inject
 
 sealed interface MediaItemDetails
@@ -120,37 +124,43 @@ class ItemDetailsViewModel @Inject constructor(
     }
 
     fun play(position: Double?) {
-        val item = when (val item = requireNotNull(_item.value)) {
-            is MovieDetails -> item.movie
-            is EpisodeDetails -> item.episode
-            else -> throw IllegalArgumentException("MediaItem is not a video")
-        }
-
         mediaSessionManager.play(
-            item = item.toVideoItem(),
+            item = _item.value!!.toVideoItem(),
             startAt = (position ?: 0.0).toLong() * 1000,
         )
     }
 
-    private fun MediaItem.toVideoItem(): VideoItem {
+    private fun MediaItemDetails.toVideoItem(): VideoItem {
+        val id: Int
         val type: VideoItemType
         val title: String?
+        val subtitle: String?
         val backdrop: String?
         val videoInfo: VideoInfo?
 
         when (this) {
-            is Movie -> {
+            is MovieDetails -> {
+                id = movie.id
                 type = VideoItemType.Movie
-                title = this.title
-                backdrop = this.backdrop
-                videoInfo = this.videoInfo
+                title = movie.title
+                subtitle = movie.releaseDate?.let {
+                    Instant.fromEpochSeconds(it)
+                        .toLocalDateTime(TimeZone.UTC)
+                        .year
+                        .toString()
+                }
+                backdrop = movie.backdrop
+                videoInfo = movie.videoInfo
             }
 
-            is Episode -> {
+            is EpisodeDetails -> {
+                id = episode.id
                 type = VideoItemType.TvShow
-                title = this.name
-                backdrop = this.thumbnail
-                videoInfo = this.videoInfo
+                title = episode.name
+                subtitle =
+                    "${show.name}: S${twoDigitNumber(episode.seasonNumber)}E${twoDigitNumber(episode.episodeNumber)}"
+                backdrop = episode.thumbnail
+                videoInfo = episode.videoInfo
             }
 
             else -> throw IllegalArgumentException("MediaItem must be a video")
@@ -161,6 +171,7 @@ class ItemDetailsViewModel @Inject constructor(
             type = type,
             url = mediaUrlProvider.getVideoUrl(id),
             title = title ?: "Untitled",
+            subtitle = subtitle,
             backdrop = backdrop,
             duration = videoInfo.duration,
             subtitles = videoInfo.subtitles.orEmpty().map {
