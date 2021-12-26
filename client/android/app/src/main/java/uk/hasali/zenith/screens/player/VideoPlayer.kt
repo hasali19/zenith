@@ -22,7 +22,6 @@ import uk.hasali.zenith.media.VideoPlayer
 @Composable
 fun VideoPlayer(
     player: VideoPlayer,
-    autoHideControls: Boolean,
     onClosePressed: () -> Unit,
 ) {
     val pictureInPictureController = LocalPictureInPictureController.current
@@ -37,26 +36,20 @@ fun VideoPlayer(
         }
     }
 
-    Surface(
-        color = Color.Black,
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        var scaleMode by remember { mutableStateOf(ScaleMode.Fit) }
+    var scaleMode by remember { mutableStateOf(ScaleMode.Fit) }
 
-        VideoPlayerView(
+    VideoPlayerView(
+        player = player,
+        scaleMode = scaleMode,
+    )
+
+    if (!isInPictureInPictureMode) {
+        VideoPlayerOverlay(
             player = player,
             scaleMode = scaleMode,
+            onSetScaleMode = { scaleMode = it },
+            onClosePressed = onClosePressed,
         )
-
-        if (!isInPictureInPictureMode) {
-            VideoPlayerOverlay(
-                player = player,
-                autoHideControls = autoHideControls,
-                scaleMode = scaleMode,
-                onSetScaleMode = { scaleMode = it },
-                onClosePressed = onClosePressed,
-            )
-        }
     }
 }
 
@@ -75,7 +68,7 @@ private fun ScaleMode.toResizeMode() = when (this) {
 fun VideoPlayerView(player: VideoPlayer, scaleMode: ScaleMode) {
     val item by player.currentItem.collectAsState()
 
-    if (player.usePlayerView) {
+    if (player.isLocal) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { context -> PlayerView(context).apply { useController = false } },
@@ -102,13 +95,12 @@ fun VideoPlayerView(player: VideoPlayer, scaleMode: ScaleMode) {
 @Composable
 fun VideoPlayerOverlay(
     player: VideoPlayer,
-    autoHideControls: Boolean,
     scaleMode: ScaleMode,
     onSetScaleMode: (ScaleMode) -> Unit,
     onClosePressed: () -> Unit,
 ) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val visibility = rememberControlsVisibility(!autoHideControls)
+    val visibility = rememberControlsVisibility(!player.isLocal)
 
     val item by player.currentItem.collectAsState()
     val subtitleTrack by player.subtitleTrack.collectAsState()

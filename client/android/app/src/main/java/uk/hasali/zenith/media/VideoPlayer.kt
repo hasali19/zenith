@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 interface VideoPlayer {
-    val usePlayerView: Boolean
+    val isLocal: Boolean
         get() = false
 
     val player: Player?
@@ -14,21 +14,27 @@ interface VideoPlayer {
     val currentItem: StateFlow<VideoItem?>
     val subtitleTrack: StateFlow<SubtitleTrack?>
 
+    enum class State {
+        Active,
+        Ended,
+    }
+
+    val state: StateFlow<State>
     val isPlaying: StateFlow<Boolean>
     val playWhenReady: StateFlow<Boolean>
 
-    fun setVideoEndedCallback(callback: () -> Unit)
-    fun removeVideoEndedCallback(callback: () -> Unit)
+    fun pollPosition(delayMs: Int = 500): Flow<Long>
 
-    fun pollPosition(resolution: Int = 500): Flow<Long>
-
-    fun setItem(item: VideoItem)
+    fun setItem(item: VideoItem, startAt: Long)
     fun setSubtitleTrack(subtitle: SubtitleTrack?)
     fun setPlayWhenReady(playWhenReady: Boolean)
 
-    fun stop()
-
     fun seekTo(position: Long)
 
+    /**
+     * Stops playback and releases all resources.
+     *
+     * This may be called multiple times so implementations should be idempotent.
+     */
     fun dispose()
 }

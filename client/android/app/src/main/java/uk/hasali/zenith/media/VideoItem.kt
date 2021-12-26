@@ -6,12 +6,12 @@ enum class VideoItemType {
 }
 
 data class VideoItem(
+    val id: Int,
     val type: VideoItemType,
     val url: String,
     val title: String,
     val backdrop: String?,
     val duration: Double,
-    val startPosition: Double,
     val subtitles: List<SubtitleTrack>,
 )
 

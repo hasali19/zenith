@@ -1,153 +1,79 @@
 package uk.hasali.zenith.screens.player
 
 import android.app.Activity
-import android.os.Build
-import android.view.Window
-import android.view.WindowManager
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import com.google.android.gms.cast.framework.CastContext
-import com.google.android.gms.cast.framework.CastSession
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.collect
+import uk.hasali.zenith.media.MediaSession
 import uk.hasali.zenith.navigation.hiltViewModel
-import uk.hasali.zenith.media.LocalVideoPlayer
-import uk.hasali.zenith.media.RemoteVideoPlayer
-import uk.hasali.zenith.media.VideoItem
-import uk.hasali.zenith.media.VideoPlayer
-import uk.hasali.zenith.ui.rememberFlowWithLifecycle
 
 @Composable
-fun VideoPlayerScreen(model: PlayerViewModel = hiltViewModel()) {
-    val context = LocalContext.current
+fun VideoPlayerScreen(model: VideoPlayerViewModel = hiltViewModel(), onNavigateUp: () -> Unit) {
+    val session by model.session.collectAsState()
 
-    val castContext = remember(context) { CastContext.getSharedInstance(context) }
-    val castSessionManager = remember(castContext) { castContext.sessionManager }
-    val castSession by remember { mutableStateOf(castSessionManager.currentCastSession) }
+    val stopAndExit = {
+        model.stop()
+        onNavigateUp()
+    }
 
-    val item by rememberFlowWithLifecycle(model.item)
-        .collectAsState(null)
+    DisposableEffect(Unit) {
+        onDispose {
+            stopAndExit()
+        }
+    }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Surface(
+        color = Color.Black,
+        modifier = Modifier.fillMaxSize(),
+    ) {
         VideoPlayerScreen(
-            item = item,
-            castSession = castSession,
-            onUpdateProgress = {
-                model.updateProgress(it / 1000)
-            }
+            session = session,
+            onClosePressed = stopAndExit,
+            onNavigateUp = onNavigateUp,
         )
     }
 }
 
 @Composable
-private fun VideoPlayerScreen(
-    item: VideoItem?,
-    castSession: CastSession?,
-    onUpdateProgress: (Long) -> Unit,
-) {
-    if (item != null) {
-        VideoPlayer(
-            item = item,
-            castSession = castSession,
-            onUpdateProgress = onUpdateProgress,
-        )
-    }
-}
-
-@Composable
-private fun ExtendContentIntoDisplayCutout(window: Window) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-        DisposableEffect(Unit) {
-            window.attributes = window.attributes.apply {
-                layoutInDisplayCutoutMode =
-                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            }
-
-            onDispose {
-                window.attributes = window.attributes.apply {
-                    layoutInDisplayCutoutMode =
-                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun VideoPlayer(
-    item: VideoItem,
-    castSession: CastSession?,
-    onUpdateProgress: (Long) -> Unit
+fun VideoPlayerScreen(
+    session: MediaSession?,
+    onClosePressed: () -> Unit,
+    onNavigateUp: () -> Unit,
 ) {
     val context = LocalContext.current
-    var player by remember { mutableStateOf<VideoPlayer?>(null) }
 
-    DisposableEffect(castSession) {
-        castSession.let { session ->
-            val playerImpl = when (session) {
-                null -> LocalVideoPlayer(context)
-                else -> RemoteVideoPlayer(context, session)
-            }
-
-            player = playerImpl
-            onDispose {
-                playerImpl.dispose()
-            }
+    SideEffect {
+        if (session == null) {
+            onNavigateUp()
         }
     }
 
-    val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current
-        ?.onBackPressedDispatcher
+    if (session != null) {
+        val player by session.player.collectAsState()
 
-    DisposableEffect(player) {
-        player.let {
-            if (it != null) {
-                val callback: () -> Unit = {
-                    onBackPressedDispatcher?.onBackPressed()
-                }
-                it.setVideoEndedCallback(callback)
-                onDispose {
-                    it.removeVideoEndedCallback(callback)
-                }
-            } else {
-                onDispose { }
-            }
-        }
-    }
-
-    LaunchedEffect(player, item) {
-        player?.let { player ->
-            player.setItem(item)
-            player.isPlaying.collectLatest { isPlaying ->
-                if (isPlaying) {
-                    player.pollPosition(5000)
-                        .collect {
-                            onUpdateProgress(it)
-                        }
+        LaunchedEffect(session) {
+            session.state.collect {
+                if (it == uk.hasali.zenith.media.VideoPlayer.State.Ended) {
+                    onNavigateUp()
                 }
             }
         }
-    }
 
-    if (context is Activity) {
-        ExtendContentIntoDisplayCutout(context.window)
-    }
+        if (context is Activity) {
+            ExtendContentIntoDisplayCutout(context.window)
+        }
 
-    if (castSession == null) {
-        KeepScreenOn()
-    }
+        if (player.isLocal) {
+            KeepScreenOn()
+        }
 
-    player?.let {
         VideoPlayer(
-            player = it,
-            autoHideControls = castSession == null,
-            onClosePressed = {
-                it.stop()
-                onBackPressedDispatcher?.onBackPressed()
-            },
+            player = player,
+            onClosePressed = onClosePressed,
         )
     }
 }

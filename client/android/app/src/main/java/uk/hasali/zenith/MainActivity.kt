@@ -17,16 +17,18 @@ import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.android.gms.cast.framework.CastContext
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import uk.hasali.zenith.api.ZenithMediaService
+import uk.hasali.zenith.media.MediaSessionManager
 import uk.hasali.zenith.ui.AppTheme
 import uk.hasali.zenith.ui.LocalZenithClient
 import javax.inject.Inject
@@ -44,6 +46,9 @@ class MainActivity : FragmentActivity() {
 
     @Inject
     lateinit var zenith: Lazy<ZenithMediaService>
+
+    @Inject
+    lateinit var mediaSessionManager: MediaSessionManager
 
     private val httpClient = OkHttpClient()
 
@@ -84,6 +89,30 @@ class MainActivity : FragmentActivity() {
                 launchSelectServerActivity()
             } else {
                 serverUrlProvider.url = server
+
+                if (BuildConfig.DEBUG) launch {
+                    val client = zenith.get()
+
+                    // Report local media playback progress to server
+                    repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                        mediaSessionManager.current.collectLatest { session ->
+                            session?.player?.collectLatest { player ->
+                                if (player.isLocal) {
+                                    player.currentItem.collectLatest { item ->
+                                        if (item != null) {
+                                            player.pollPosition(delayMs = 5000)
+                                                .collect { position ->
+                                                    println("Updating progress: $position")
+                                                    client.updateProgress(item.id, position / 1000)
+                                                }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 setContent {
                     App()
                 }
@@ -106,6 +135,11 @@ class MainActivity : FragmentActivity() {
         lifecycleScope.launch {
             availableUpdate = checkForUpdates()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaSessionManager.dispose()
     }
 
     override fun onPictureInPictureModeChanged(

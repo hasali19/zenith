@@ -16,7 +16,12 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import uk.hasali.zenith.LibraryScreen
+import uk.hasali.zenith.MediaUrlProvider
 import uk.hasali.zenith.api.*
+import uk.hasali.zenith.media.MediaSessionManager
+import uk.hasali.zenith.media.SubtitleTrack
+import uk.hasali.zenith.media.VideoItem
+import uk.hasali.zenith.media.VideoItemType
 import uk.hasali.zenith.navigation.NavScreenProvider
 import javax.inject.Inject
 
@@ -36,6 +41,8 @@ data class EpisodeDetails(val show: Show, val season: Season, val episode: Episo
 class ItemDetailsViewModel @Inject constructor(
     screenProvider: NavScreenProvider,
     private val zenith: ZenithMediaService,
+    private val mediaUrlProvider: MediaUrlProvider,
+    private val mediaSessionManager: MediaSessionManager,
 ) : ViewModel(), CastStateListener {
     private val screen: LibraryScreen.ItemDetails by screenProvider
 
@@ -110,6 +117,74 @@ class ItemDetailsViewModel @Inject constructor(
 
             refreshData()
         }
+    }
+
+    fun play(position: Double?) {
+        val item = when (val item = requireNotNull(_item.value)) {
+            is MovieDetails -> item.movie
+            is EpisodeDetails -> item.episode
+            else -> throw IllegalArgumentException("MediaItem is not a video")
+        }
+
+        mediaSessionManager.play(
+            item = item.toVideoItem(),
+            startAt = (position ?: 0.0).toLong() * 1000,
+        )
+    }
+
+    private fun MediaItem.toVideoItem(): VideoItem {
+        val type: VideoItemType
+        val title: String?
+        val backdrop: String?
+        val videoInfo: VideoInfo?
+
+        when (this) {
+            is Movie -> {
+                type = VideoItemType.Movie
+                title = this.title
+                backdrop = this.backdrop
+                videoInfo = this.videoInfo
+            }
+
+            is Episode -> {
+                type = VideoItemType.TvShow
+                title = this.name
+                backdrop = this.thumbnail
+                videoInfo = this.videoInfo
+            }
+
+            else -> throw IllegalArgumentException("MediaItem must be a video")
+        }
+
+        return VideoItem(
+            id = id,
+            type = type,
+            url = mediaUrlProvider.getVideoUrl(id),
+            title = title ?: "Untitled",
+            backdrop = backdrop,
+            duration = videoInfo.duration,
+            subtitles = videoInfo.subtitles.orEmpty().map {
+                if (it.streamIndex != null) {
+                    SubtitleTrack.Embedded(
+                        index = it.streamIndex,
+                        url = when (it.path) {
+                            null -> null
+                            else -> mediaUrlProvider.getSubtitleUrl(it.id)
+                        },
+                        id = it.id,
+                        title = it.title,
+                        language = it.language,
+                    )
+                } else {
+                    SubtitleTrack.External(
+                        url = mediaUrlProvider.getSubtitleUrl(it.id),
+                        id = it.id,
+                        title = it.title,
+                        language = it.language,
+                    )
+                }
+            }
+        )
     }
 
     private fun notifyCastSession() {

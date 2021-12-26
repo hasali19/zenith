@@ -45,8 +45,7 @@ sealed interface PrimaryScreen : Parcelable {
     object Main : Screen("main"), PrimaryScreen
 
     @Parcelize
-    data class VideoPlayer(val id: Int, val position: Double?) :
-        Screen("video_player"), PrimaryScreen
+    object VideoPlayer : Screen("video_player"), PrimaryScreen
 }
 
 sealed interface BottomNavigationArea : Parcelable {
@@ -93,13 +92,13 @@ fun AppNavigation(onLaunchSelectServer: () -> Unit) {
     navigator.ContentHost {
         when (it) {
             is PrimaryScreen.Main -> MainNavigation(
-                onNavigateToPlayer = { id, position ->
-                    navigator.push(PrimaryScreen.VideoPlayer(id, position))
-                },
+                onNavigateToPlayer = { navigator.push(PrimaryScreen.VideoPlayer) },
                 onLaunchSelectServer = onLaunchSelectServer,
             )
 
-            is PrimaryScreen.VideoPlayer -> VideoPlayerScreen()
+            is PrimaryScreen.VideoPlayer -> VideoPlayerScreen(
+                onNavigateUp = navigator::pop,
+            )
         }
     }
 }
@@ -107,7 +106,7 @@ fun AppNavigation(onLaunchSelectServer: () -> Unit) {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun MainNavigation(
-    onNavigateToPlayer: (Int, Double?) -> Unit,
+    onNavigateToPlayer: () -> Unit,
     onLaunchSelectServer: () -> Unit,
 ) {
     val holder = rememberSaveableStateHolder()
@@ -182,7 +181,7 @@ private fun MainNavigation(
 private fun LibraryArea(
     navigator: StackNavigator<LibraryScreen>,
     bottomSheetController: BottomSheetController,
-    onNavigateToPlayer: (Int, Double?) -> Unit,
+    onNavigateToPlayer: () -> Unit,
 ) {
     navigator.ContentHost { screen ->
         when (screen) {
@@ -204,7 +203,7 @@ private fun LibraryArea(
 
             is LibraryScreen.ItemDetails -> ItemDetailsScreen(
                 bottomSheetController = bottomSheetController,
-                onPlay = { onNavigateToPlayer(screen.id, it) },
+                onNavigateToPlayer = onNavigateToPlayer,
                 onNavigateToItem = { navigator.push(LibraryScreen.ItemDetails(it)) },
                 onNavigateUp = { navigator.pop() },
             )

@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.flow
 
 @OptIn(UnstableApi::class)
 class LocalVideoPlayer(private val context: Context) : VideoPlayer {
-    override val usePlayerView: Boolean
+    override val isLocal: Boolean
         get() = true
 
     private val trackSelector = DefaultTrackSelector(context)
@@ -39,8 +39,6 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
 
     private var textRenderer: Int? = null
 
-    private var _videoEndedCallback: (() -> Unit)? = null
-
     private var _currentItem = MutableStateFlow<VideoItem?>(null)
     override val currentItem: StateFlow<VideoItem?>
         get() = _currentItem
@@ -48,6 +46,10 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
     private var _subtitleTrack = MutableStateFlow<SubtitleTrack?>(null)
     override val subtitleTrack: StateFlow<SubtitleTrack?>
         get() = _subtitleTrack
+
+    private val _state = MutableStateFlow(VideoPlayer.State.Active)
+    override val state: StateFlow<VideoPlayer.State>
+        get() = _state
 
     private var _isPlaying = MutableStateFlow(false)
     override val isPlaying: StateFlow<Boolean>
@@ -68,7 +70,7 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
 
         override fun onPlaybackStateChanged(playbackState: Int) {
             if (playbackState == ExoPlayer.STATE_ENDED) {
-                _videoEndedCallback?.invoke()
+                _state.value = VideoPlayer.State.Ended
             }
         }
     }
@@ -99,26 +101,16 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
         notificationManager.setMediaSessionToken(session.sessionCompatToken as MediaSessionCompat.Token)
     }
 
-    override fun setVideoEndedCallback(callback: () -> Unit) {
-        _videoEndedCallback = callback
-    }
-
-    override fun removeVideoEndedCallback(callback: () -> Unit) {
-        if (_videoEndedCallback == callback) {
-            _videoEndedCallback = null
-        }
-    }
-
-    override fun pollPosition(resolution: Int): Flow<Long> {
+    override fun pollPosition(delayMs: Int): Flow<Long> {
         return flow {
             while (true) {
                 emit(player.currentPosition)
-                delay(resolution.toLong())
+                delay(delayMs.toLong())
             }
         }
     }
 
-    override fun setItem(item: VideoItem) {
+    override fun setItem(item: VideoItem, startAt: Long) {
         val metadata = MediaMetadata.Builder()
             .setTitle(item.title)
             .build()
@@ -153,7 +145,7 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
 
         val mergedSource = MergingMediaSource(*sources.toTypedArray())
 
-        player.setMediaSource(mergedSource, item.startPosition.toLong() * 1000)
+        player.setMediaSource(mergedSource, startAt)
         player.prepare()
         player.play()
 
@@ -220,15 +212,12 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
         player.playWhenReady = playWhenReady
     }
 
-    override fun stop() {
-        player.stop()
-    }
-
     override fun seekTo(position: Long) {
         player.seekTo(position)
     }
 
     override fun dispose() {
+        notificationManager.setPlayer(null)
         session.release()
         player.removeListener(listener)
         player.release()

@@ -1,6 +1,8 @@
 package uk.hasali.zenith.screens.player
 
 import android.app.Activity
+import android.os.Build
+import android.view.Window
 import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -45,6 +47,25 @@ fun FullScreen() {
 
             onDispose {
                 controller?.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+            }
+        }
+    }
+}
+
+@Composable
+fun ExtendContentIntoDisplayCutout(window: Window) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        DisposableEffect(Unit) {
+            window.attributes = window.attributes.apply {
+                layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+
+            onDispose {
+                window.attributes = window.attributes.apply {
+                    layoutInDisplayCutoutMode =
+                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                }
             }
         }
     }

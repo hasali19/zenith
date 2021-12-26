@@ -36,7 +36,7 @@ import uk.hasali.zenith.ui.*
 fun ItemDetailsScreen(
     model: ItemDetailsViewModel = hiltViewModel(),
     bottomSheetController: BottomSheetController,
-    onPlay: (position: Double?) -> Unit,
+    onNavigateToPlayer: () -> Unit,
     onNavigateToItem: (id: Int) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
@@ -52,6 +52,11 @@ fun ItemDetailsScreen(
 
     LifecycleEffect(Lifecycle.State.RESUMED) {
         model.refresh()
+    }
+
+    val onPlay: (Double?) -> Unit = {
+        model.play(it)
+        onNavigateToPlayer()
     }
 
     data.let { data ->

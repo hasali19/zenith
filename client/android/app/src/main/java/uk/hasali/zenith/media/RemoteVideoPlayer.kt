@@ -23,12 +23,10 @@ class RemoteVideoPlayer(private val context: Context, session: CastSession) : Vi
             if (mediaClient.playerState == MediaStatus.PLAYER_STATE_IDLE &&
                 mediaClient.mediaStatus?.idleReason == MediaStatus.IDLE_REASON_FINISHED
             ) {
-                _videoEndedCallback?.invoke()
+                _state.value = VideoPlayer.State.Ended
             }
         }
     }
-
-    private var _videoEndedCallback: (() -> Unit)? = null
 
     private var _currentItem = MutableStateFlow<VideoItem?>(null)
     override val currentItem: StateFlow<VideoItem?>
@@ -38,34 +36,28 @@ class RemoteVideoPlayer(private val context: Context, session: CastSession) : Vi
     override val subtitleTrack: StateFlow<SubtitleTrack?>
         get() = _subtitleTrack
 
-    private var _isPlaying = MutableStateFlow(false)
+    private val _state = MutableStateFlow(VideoPlayer.State.Active)
+    override val state: StateFlow<VideoPlayer.State>
+        get() = _state
+
+    private var _isPlaying = MutableStateFlow(mediaClient.isPlaying)
     override val isPlaying: StateFlow<Boolean>
         get() = _isPlaying
 
-    private var _playWhenReady = MutableStateFlow(true)
+    private var _playWhenReady = MutableStateFlow(!mediaClient.isPaused)
     override val playWhenReady: StateFlow<Boolean>
         get() = _playWhenReady
 
-    override fun setVideoEndedCallback(callback: () -> Unit) {
-        _videoEndedCallback = callback
-    }
-
-    override fun removeVideoEndedCallback(callback: () -> Unit) {
-        if (_videoEndedCallback == callback) {
-            _videoEndedCallback = null
-        }
-    }
-
-    override fun pollPosition(resolution: Int): Flow<Long> {
+    override fun pollPosition(delayMs: Int): Flow<Long> {
         return flow {
             while (true) {
                 emit(mediaClient.approximateStreamPosition)
-                delay(resolution.toLong())
+                delay(delayMs.toLong())
             }
         }
     }
 
-    override fun setItem(item: VideoItem) {
+    override fun setItem(item: VideoItem, startAt: Long) {
         // Embedded subtitles that haven't been extracted are not supported when casting
         val supportedSubtitles = item.subtitles.filter { it.url != null }
         val subtitleTracks = supportedSubtitles
@@ -136,10 +128,6 @@ class RemoteVideoPlayer(private val context: Context, session: CastSession) : Vi
         }
     }
 
-    override fun stop() {
-        mediaClient.stop()
-    }
-
     override fun seekTo(position: Long) {
         mediaClient.seek(
             MediaSeekOptions.Builder()
@@ -150,6 +138,7 @@ class RemoteVideoPlayer(private val context: Context, session: CastSession) : Vi
     }
 
     override fun dispose() {
+        mediaClient.stop()
         mediaClient.unregisterCallback(callback)
     }
 
