@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Icon
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -134,7 +135,7 @@ private fun EpisodeItem(episode: Episode, onClick: () -> Unit) {
                 text = formatDuration(episode.videoInfo.duration),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = Color.LightGray.copy(alpha = 0.8f),
+                color = LocalContentColor.current.copy(alpha = 0.5f),
                 style = MaterialTheme.typography.caption
             )
 
