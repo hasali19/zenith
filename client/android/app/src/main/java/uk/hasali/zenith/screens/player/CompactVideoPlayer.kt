@@ -41,7 +41,6 @@ fun CompactVideoPlayer(
                 }
             }
             .collect {
-                println(it)
                 player = it
             }
     }
