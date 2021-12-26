@@ -29,8 +29,8 @@ fun VideoPlayer(
     val isPlaying by player.playWhenReady.collectAsState()
     val isInPictureInPictureMode by pictureInPictureController.isInPictureInPictureMode.collectAsState()
 
-    DisposableEffect(pictureInPictureController, isPlaying) {
-        pictureInPictureController.setEnterOnUserLeaveHint(isPlaying)
+    DisposableEffect(player, pictureInPictureController, isPlaying) {
+        pictureInPictureController.setEnterOnUserLeaveHint(player.isLocal && isPlaying)
         onDispose {
             pictureInPictureController.setEnterOnUserLeaveHint(false)
         }
