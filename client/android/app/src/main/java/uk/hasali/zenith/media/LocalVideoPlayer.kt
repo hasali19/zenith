@@ -1,6 +1,8 @@
 package uk.hasali.zenith.media
 
+import android.app.PendingIntent
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import android.support.v4.media.session.MediaSessionCompat
 import android.widget.Toast
@@ -35,6 +37,27 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
         .build()
 
     private val notificationManager = PlayerNotificationManager.Builder(context, 1, "media")
+        .setMediaDescriptionAdapter(object : PlayerNotificationManager.MediaDescriptionAdapter {
+            override fun getCurrentContentTitle(player: Player): CharSequence {
+                return player.currentMediaItem?.mediaMetadata?.title ?: "Unknown"
+            }
+
+            override fun createCurrentContentIntent(player: Player): PendingIntent? {
+                return null
+            }
+
+            override fun getCurrentContentText(player: Player): CharSequence? {
+                return player.currentMediaItem?.mediaMetadata?.subtitle
+            }
+
+            override fun getCurrentLargeIcon(
+                player: Player,
+                callback: PlayerNotificationManager.BitmapCallback
+            ): Bitmap? {
+                // TODO: Implement artwork loading
+                return null
+            }
+        })
         .build()
 
     private var textRenderer: Int? = null
@@ -109,6 +132,7 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
     override fun setItem(item: VideoItem, startAt: Long) {
         val metadata = MediaMetadata.Builder()
             .setTitle(item.title)
+            .setSubtitle(item.subtitle)
             .build()
 
         val mediaItem = MediaItem.Builder()
