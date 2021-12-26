@@ -150,9 +150,32 @@ class MainActivity : FragmentActivity() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        mediaSessionManager.dispose()
+    override fun onPause() {
+        super.onPause()
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N || !isInPictureInPictureMode) {
+            // Pause local playback
+            mediaSessionManager.current.value?.let { session ->
+                session.player.value.let { player ->
+                    if (player.isLocal) {
+                        player.setPlayWhenReady(false)
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+
+        // Pause local playback
+        mediaSessionManager.current.value?.let { session ->
+            session.player.value.let { player ->
+                if (player.isLocal) {
+                    player.setPlayWhenReady(false)
+                }
+            }
+        }
     }
 
     override fun onPictureInPictureModeChanged(
