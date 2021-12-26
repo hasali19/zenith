@@ -89,30 +89,7 @@ class MainActivity : FragmentActivity() {
                 launchSelectServerActivity()
             } else {
                 serverUrlProvider.url = server
-
-                if (BuildConfig.DEBUG) launch {
-                    val client = zenith.get()
-
-                    // Report local media playback progress to server
-                    repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                        mediaSessionManager.current.collectLatest { session ->
-                            session?.player?.collectLatest { player ->
-                                if (player.isLocal) {
-                                    player.currentItem.collectLatest { item ->
-                                        if (item != null) {
-                                            player.pollPosition(delayMs = 5000)
-                                                .collect { position ->
-                                                    println("Updating progress: $position")
-                                                    client.updateProgress(item.id, position / 1000)
-                                                }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
+                startMediaProgressReporter()
                 setContent {
                     App()
                 }
@@ -127,6 +104,30 @@ class MainActivity : FragmentActivity() {
         )
         startActivity(intent)
         finish()
+    }
+
+    private fun startMediaProgressReporter() {
+        if (!BuildConfig.DEBUG) lifecycleScope.launch {
+            val client = zenith.get()
+
+            // Report local media playback progress to server
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                mediaSessionManager.current.collectLatest { session ->
+                    session?.player?.collectLatest { player ->
+                        if (player.isLocal) {
+                            player.currentItem.collectLatest { item ->
+                                if (item != null) {
+                                    player.pollPosition(delayMs = 5000)
+                                        .collect { position ->
+                                            client.updateProgress(item.id, position / 1000)
+                                        }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     override fun onResume() {
