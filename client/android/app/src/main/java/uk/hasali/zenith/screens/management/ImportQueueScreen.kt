@@ -106,7 +106,7 @@ private fun ImportQueueListItem(item: ImportQueueItem, onClick: () -> Unit) {
             val name = item.info.name
             val season = twoDigitNumber(item.info.season)
             val episode = twoDigitNumber(item.info.episode)
-            "$name S${season}E${episode}"
+            "$name: S${season}E${episode}"
         }
         else -> item.name
     }
