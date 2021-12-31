@@ -79,8 +79,10 @@ fun ImportItemDialog(
 
     val episode = remember(item, shows) {
         if (item.info is ImportQueueItemInfo.Episode) {
+            val ignore = Regex("\\W")
+            val showName = item.info.name.replace(ignore, "")
             EpisodeData(
-                show = shows.find { it.name.equals(item.info.name, ignoreCase = true) },
+                show = shows.find { it.name.replace(ignore, "").equals(showName, ignoreCase = true) },
                 showName = item.info.name,
                 season = item.info.season.toString(),
                 episode = item.info.episode.toString(),
