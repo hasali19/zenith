@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
+import android.os.Build
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
@@ -82,13 +83,13 @@ class AppUpdater(private val context: Context, private val client: OkHttpClient)
                 }
             }
 
+            var flags = PendingIntent.FLAG_UPDATE_CURRENT
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                flags = flags or PendingIntent.FLAG_MUTABLE
+            }
+
             val intent = Intent(context, InstallReceiver::class.java)
-            val pendingIntent = PendingIntent.getBroadcast(
-                context,
-                3439,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT
-            )
+            val pendingIntent = PendingIntent.getBroadcast(context, 3439, intent, flags,)
             val receiver = pendingIntent.intentSender
 
             session?.commit(receiver)

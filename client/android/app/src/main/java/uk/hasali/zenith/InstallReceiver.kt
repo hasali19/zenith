@@ -11,9 +11,10 @@ class InstallReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1)) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
-                val activityIntent =
-                    intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
-                context.startActivity(activityIntent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                val activityIntent = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
+                if (activityIntent != null) {
+                    context.startActivity(activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                }
             }
         }
     }
