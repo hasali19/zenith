@@ -7,6 +7,7 @@ import android.net.Uri
 import android.support.v4.media.session.MediaSessionCompat
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.core.graphics.drawable.toBitmap
 import androidx.media3.common.*
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
@@ -17,14 +18,18 @@ import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import androidx.media3.session.PlayerNotificationManager
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flow
+import coil.Coil
+import coil.request.ImageRequest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 @OptIn(UnstableApi::class)
 class LocalVideoPlayer(private val context: Context) : VideoPlayer {
+    private val scope = MainScope()
+
     override val isLocal: Boolean
         get() = true
 
@@ -54,8 +59,13 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
                 player: Player,
                 callback: PlayerNotificationManager.BitmapCallback
             ): Bitmap? {
-                // TODO: Implement artwork loading
-                return null
+                val artwork = artwork.value
+                if (artwork == null) {
+                    scope.launch {
+                        callback.onBitmap(this@LocalVideoPlayer.artwork.filterNotNull().first())
+                    }
+                }
+                return artwork
             }
         })
         .build()
@@ -102,6 +112,20 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
             }
         }
     }
+
+    @kotlin.OptIn(ExperimentalCoroutinesApi::class)
+    private val artwork = currentItem
+        .filterNotNull()
+        .mapLatest {
+            val result = Coil.execute(
+                ImageRequest.Builder(context)
+                    .data(it.backdrop)
+                    .build()
+            )
+
+            result.drawable?.toBitmap()
+        }
+        .stateIn(scope, SharingStarted.Eagerly, null)
 
     init {
         player.addListener(listener)
@@ -237,6 +261,7 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
     }
 
     override fun dispose() {
+        scope.cancel()
         notificationManager.setPlayer(null)
         session.release()
         player.removeListener(listener)
