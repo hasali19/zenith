@@ -201,7 +201,7 @@ impl LibraryScanner {
     ) -> eyre::Result<Option<i64>> {
         let library = self.library.shows();
 
-        let (show_name, season, episode) = match parse_episode_path(path) {
+        let (show_name, season, episode, name) = match parse_episode_path(self.matchers(), path) {
             Some(v) => v,
             None => return Ok(None),
         };
@@ -268,6 +268,7 @@ impl LibraryScanner {
         let episode = NewEpisode {
             season_id,
             episode_number: episode,
+            name: name.as_deref(),
             path: path_str,
         };
 
@@ -304,6 +305,10 @@ impl LibraryScanner {
         transaction.commit().await?;
 
         Ok(())
+    }
+
+    fn matchers(&self) -> &[ImportMatcher] {
+        &self.config.import.matchers
     }
 }
 
@@ -344,19 +349,24 @@ pub fn get_video_files(path: impl AsRef<Path>) -> impl Iterator<Item = DirEntry>
 ///
 /// Supported formats:
 /// - `Show Name/S01E02.mp4`
-pub fn parse_episode_path(path: &Path) -> Option<(String, u32, u32)> {
-    static REGEX: OnceCell<Regex> = OnceCell::new();
-
+pub fn parse_episode_path(
+    matchers: &[ImportMatcher],
+    path: &Path,
+) -> Option<(String, u32, u32, Option<String>)> {
     let file_name = path.file_name()?.to_str()?;
     let folder_name = path.parent()?.file_name()?.to_str()?;
-    let captures = REGEX
-        .get_or_init(|| Regex::new(r"^S(\d\d)E(\d\d)\.\S+$").unwrap())
-        .captures(file_name)?;
 
-    let season = captures.get(1)?.as_str().parse().ok()?;
-    let episode = captures.get(2)?.as_str().parse().ok()?;
+    let meta = parse_video_filename(matchers, file_name)?;
+    let (season, episode, name) = match meta {
+        VideoFilenameMeta::Movie { .. } => return None,
+        VideoFilenameMeta::Episode {
+            name,
+            season,
+            episode,
+        } => (season, episode, name),
+    };
 
-    Some((folder_name.to_owned(), season, episode))
+    Some((folder_name.to_owned(), season, episode, name))
 }
 
 #[derive(serde::Serialize)]
@@ -367,7 +377,7 @@ pub enum VideoFilenameMeta {
         year: Option<u32>,
     },
     Episode {
-        name: String,
+        name: Option<String>,
         season: u32,
         episode: u32,
     },
@@ -388,7 +398,7 @@ pub fn parse_video_filename(
                 VideoFilenameMeta::Movie { title, year }
             }
             ImportMatcherTarget::Episode => {
-                let name = captures.name("name")?.as_str().replace('.', " ");
+                let name = captures.name("name").map(|s| s.as_str().replace('.', " "));
                 let season = captures.name("season")?.as_str().parse().ok()?;
                 let episode = captures.name("episode")?.as_str().parse().ok()?;
 

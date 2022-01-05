@@ -27,6 +27,7 @@ pub struct NewSeason {
 pub struct NewEpisode<'a> {
     pub season_id: i64,
     pub episode_number: u32,
+    pub name: Option<&'a str>,
     pub path: &'a str,
 }
 
@@ -213,14 +214,15 @@ impl ShowLibrary {
             .last_insert_rowid();
 
         let sql = "
-            INSERT INTO tv_episodes (item_id, season_id, episode_number)
-            VALUES (?, ?, ?)
+            INSERT INTO tv_episodes (item_id, season_id, episode_number, name)
+            VALUES (?, ?, ?, ?)
         ";
 
         sqlx::query(sql)
             .bind(id)
             .bind(episode.season_id)
             .bind(episode.episode_number)
+            .bind(episode.name)
             .execute(&mut *transaction)
             .await?;
 
