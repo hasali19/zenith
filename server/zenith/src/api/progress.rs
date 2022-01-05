@@ -8,6 +8,7 @@ use crate::api::ApiResult;
 use crate::db::videos::UpdateVideoUserData;
 use crate::db::{self, Db};
 
+use super::error::bad_request;
 use super::ext::OptionExt;
 
 #[derive(Deserialize)]
@@ -23,14 +24,23 @@ async fn update_progress(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
-    let duration = db::videos::get_basic_info(&mut conn, *id)
+    let item = db::items::get(&mut conn, *id)
         .await?
-        .or_not_found("video not found")?
-        .duration;
+        .or_not_found("item not found")?;
+
+    let (video_info, user_data) = match item {
+        db::items::MediaItem::Movie(m) => (m.video_info, m.user_data),
+        db::items::MediaItem::Episode(e) => (e.video_info, e.user_data),
+        _ => return Err(bad_request("item id must refer to a movie or tv episode")),
+    };
 
     let data = UpdateVideoUserData {
         position: Some(query.position),
-        is_watched: Some((query.position / duration) >= 0.9),
+        is_watched: if user_data.is_watched {
+            None
+        } else {
+            Some((query.position / video_info.duration) >= 0.9)
+        },
     };
 
     db::videos::update_user_data(&mut conn, *id, data).await?;
