@@ -15,6 +15,8 @@ class MediaProgressReporter @Inject constructor(
     private val mediaSessionManager: MediaSessionManager,
 ) {
     private val playerFlow = callbackFlow {
+        send(mediaSessionManager.getCurrentPlayer())
+
         val listener = object : MediaSessionManager.Listener {
             override fun onPlayerChanged() {
                 trySendBlocking(mediaSessionManager.getCurrentPlayer())
@@ -33,10 +35,14 @@ class MediaProgressReporter @Inject constructor(
                 if (player != null && player.isLocal) {
                     player.currentItem.collectLatest { item ->
                         if (item != null) {
-                            player.pollPosition(delayMs = 5000)
-                                .collectLatest { position ->
-                                    reportPosition(item.id, position)
+                            player.playWhenReady.collectLatest { playWhenReady ->
+                                reportPosition(item.id, player.position)
+                                if (playWhenReady) {
+                                    player.pollPosition(delayMs = 5000).collectLatest { position ->
+                                        reportPosition(item.id, position)
+                                    }
                                 }
+                            }
                         }
                     }
                 }
