@@ -1,13 +1,11 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use axum::extract::{self, Extension, Multipart};
+use axum::extract::{Extension, Multipart};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::Json;
-use axum_codegen::{get, post};
+use axum_codegen::post;
 use serde::Deserialize;
-use serde_json::json;
 use tokio::fs::File;
 use tokio::io::BufWriter;
 use tokio_stream::StreamExt;
@@ -19,44 +17,16 @@ use crate::api::ApiResult;
 use crate::config::Config;
 use crate::db::subtitles::NewSubtitle;
 use crate::db::Db;
-use crate::library::scanner::{self, LibraryScanner, ScanOptions, VideoFileType};
-use crate::transcoder::{Job, Transcoder};
 use crate::{db, subtitles, util};
-
-#[get("/import/queue")]
-async fn get_import_queue(config: Extension<Arc<Config>>) -> ApiResult<impl IntoResponse> {
-    let import_path = match config.import.path.as_deref() {
-        Some(path) => path,
-        None => return Ok(Json(vec![])),
-    };
-
-    let mut entries = vec![];
-
-    for entry in scanner::get_video_files(import_path) {
-        let name = entry.file_name().to_str().unwrap();
-        let path = entry.path().to_str().unwrap();
-        let info = scanner::parse_video_filename(&config.import.matchers, name);
-
-        entries.push(json!({
-            "name": name,
-            "path": path,
-            "info": info,
-        }));
-    }
-
-    Ok(Json(entries))
-}
 
 #[derive(Deserialize)]
 #[serde(tag = "type")]
 pub enum ImportSource {
-    Local { path: String, copy: Option<bool> },
     Upload,
 }
 
 #[derive(Deserialize)]
 pub struct ImportSubtitleRequest {
-    source: ImportSource,
     #[serde(flatten)]
     data: ImportSubtitleRequestData,
 }
@@ -74,7 +44,7 @@ pub async fn import_subtitle(
     config: Extension<Arc<Config>>,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
-    let ImportSubtitleRequest { source, data } = {
+    let ImportSubtitleRequest { data } = {
         let mut field = multipart
             .next_field()
             .await
@@ -94,62 +64,34 @@ pub async fn import_subtitle(
     };
 
     let subtitles_dir = config.subtitles.path.join(data.video_id.to_string());
-    let src_path = match source {
-        ImportSource::Local { path, copy: _ } => {
-            let src_path = PathBuf::from(path);
-            let src_ext = src_path
-                .extension()
-                .and_then(|ext| ext.to_str())
-                .or_bad_request("source file has no extension")?;
+    let src_path = {
+        let field = multipart
+            .next_field()
+            .await
+            .map_err(bad_request)?
+            .or_bad_request("upload import source specified but no file found in request")?;
 
-            match src_ext {
-                // vtt subtitles can be directly written to the file
-                "vtt" => src_path,
-                // srt subtitles need to be converted first
-                "srt" => {
-                    // TODO: Consider writing ffmpeg output directly to destination file to avoid
-                    // the extra temporary file
+        let content_type = field
+            .content_type()
+            .or_bad_request("missing content type for file upload")?
+            .essence_str();
 
-                    let input_file = util::to_byte_stream(File::open(src_path).await?);
-                    let output_path = PathBuf::from(format!("data/tmp/{}.vtt", Uuid::new_v4()));
-                    let output_file = BufWriter::new(File::create(&output_path).await?);
-
-                    subtitles::convert(&config, input_file, output_file).await?;
-
-                    output_path
-                }
-                _ => return Err(bad_request("unsupported subtitle file extension")),
-            }
+        if !Path::new("data/tmp").exists() {
+            std::fs::create_dir_all("data/tmp")?;
         }
-        ImportSource::Upload => {
-            let field = multipart
-                .next_field()
-                .await
-                .map_err(bad_request)?
-                .or_bad_request("upload import source specified but no file found in request")?;
 
-            let content_type = field
-                .content_type()
-                .or_bad_request("missing content type for file upload")?
-                .essence_str();
+        let src_path = format!("data/tmp/{}.vtt", Uuid::new_v4());
+        let file = BufWriter::new(File::create(&src_path).await?);
 
-            if !Path::new("data/tmp").exists() {
-                std::fs::create_dir_all("data/tmp")?;
-            }
-
-            let src_path = format!("data/tmp/{}.vtt", Uuid::new_v4());
-            let file = BufWriter::new(File::create(&src_path).await?);
-
-            match content_type {
-                // vtt subtitles can be directly written to the file
-                "text/vtt" => util::copy_stream(field, file).await?,
-                // srt subtitles need to be converted first
-                "application/x-subrip" => subtitles::convert(&config, field, file).await?,
-                _ => return Err(bad_request("unsupported subtitle content-type")),
-            }
-
-            PathBuf::from(src_path)
+        match content_type {
+            // vtt subtitles can be directly written to the file
+            "text/vtt" => util::copy_stream(field, file).await?,
+            // srt subtitles need to be converted first
+            "application/x-subrip" => subtitles::convert(&config, field, file).await?,
+            _ => return Err(bad_request("unsupported subtitle content-type")),
         }
+
+        PathBuf::from(src_path)
     };
 
     let dst_name = Uuid::new_v4().to_string();
@@ -179,147 +121,4 @@ pub async fn import_subtitle(
     transaction.commit().await?;
 
     Ok(StatusCode::OK)
-}
-
-#[derive(Deserialize)]
-pub struct ImportMovieRequest {
-    source: ImportSource,
-    title: String,
-    year: u32,
-}
-
-#[post("/movies")]
-pub async fn import_movie(
-    Json(data): Json<ImportMovieRequest>,
-    config: Extension<Arc<Config>>,
-    scanner: Extension<Arc<LibraryScanner>>,
-    transcoder: Extension<Arc<Transcoder>>,
-) -> ApiResult<impl IntoResponse> {
-    let src_path = match data.source {
-        ImportSource::Local { path, copy: _ } => path,
-        _ => return Err(bad_request("unsupported import source")),
-    };
-
-    let src_path = PathBuf::from(src_path);
-    let src_ext = src_path
-        .extension()
-        .or_bad_request("source file has no extension")?;
-
-    let dst_name = format!("{} ({})", data.title, data.year);
-    let dst_dir = Path::new(&config.libraries.movies).join(&dst_name);
-
-    if dst_dir.exists() {
-        return Err(bad_request(format!("{:?} already exists", dst_dir)));
-    }
-
-    let dst_path = dst_dir.join(dst_name).with_extension(src_ext);
-
-    tracing::info!("moving {:?} to {:?}", src_path, dst_path);
-    std::fs::create_dir(&dst_dir)?;
-    std::fs::rename(&src_path, &dst_path)?;
-
-    let id = scanner
-        .scan_file(VideoFileType::Movie, &dst_path, ScanOptions::quick())
-        .await?;
-
-    if let Some(id) = id {
-        transcoder.enqueue(Job::new(id)).await;
-    }
-
-    Ok(StatusCode::OK)
-}
-
-#[derive(Deserialize)]
-pub struct ImportShowRequest {
-    name: String,
-    episodes: Vec<ImportEpisodeRequest>,
-}
-
-#[post("/tv/shows")]
-pub async fn import_show(
-    Json(data): Json<ImportShowRequest>,
-    config: Extension<Arc<Config>>,
-    scanner: Extension<Arc<LibraryScanner>>,
-    transcoder: Extension<Arc<Transcoder>>,
-) -> ApiResult<impl IntoResponse> {
-    if data.episodes.is_empty() {
-        return Err(bad_request("show must have at least one episode"));
-    }
-
-    let show_path = Path::new(&config.libraries.tv_shows).join(&data.name);
-    if show_path.exists() {
-        return Err(bad_request(format!("{:?} already exists", show_path)));
-    }
-
-    std::fs::create_dir(&show_path)?;
-
-    for episode in data.episodes {
-        let path = inner::import_episode(&show_path, episode).await?;
-        let id = scanner
-            .scan_file(VideoFileType::Episode, &path, ScanOptions::quick())
-            .await?;
-
-        if let Some(id) = id {
-            transcoder.enqueue(Job::new(id)).await;
-        }
-    }
-
-    Ok(StatusCode::OK)
-}
-
-#[derive(Deserialize)]
-pub struct ImportEpisodeRequest {
-    source: ImportSource,
-    season_number: u32,
-    episode_number: u32,
-}
-
-#[post("/tv/shows/:id/episodes")]
-pub async fn import_episode(
-    show_id: extract::Path<i64>,
-    Json(data): Json<ImportEpisodeRequest>,
-    db: Extension<Db>,
-    scanner: Extension<Arc<LibraryScanner>>,
-    transcoder: Extension<Arc<Transcoder>>,
-) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
-    let show_path = db::shows::get_path(&mut conn, *show_id)
-        .await?
-        .or_not_found("show not found")?;
-
-    let path = inner::import_episode(Path::new(&show_path), data).await?;
-
-    let id = scanner
-        .scan_file(VideoFileType::Episode, &path, ScanOptions::quick())
-        .await?;
-
-    if let Some(id) = id {
-        transcoder.enqueue(Job::new(id)).await;
-    }
-
-    Ok(StatusCode::OK)
-}
-
-mod inner {
-    use super::*;
-
-    pub async fn import_episode(show_path: &Path, req: ImportEpisodeRequest) -> ApiResult<PathBuf> {
-        let src_path = match req.source {
-            ImportSource::Local { path, copy: _ } => path,
-            _ => return Err(bad_request("unsupported import source")),
-        };
-
-        let src_path = PathBuf::from(src_path);
-        let src_ext = src_path
-            .extension()
-            .or_bad_request("source file has no extension")?;
-
-        let dst_name = format!("S{:02}E{:02}", req.season_number, req.episode_number);
-        let dst_path = Path::new(&show_path).join(dst_name).with_extension(src_ext);
-
-        tracing::info!("moving {:?} to {:?}", src_path, dst_path);
-        std::fs::rename(&src_path, &dst_path)?;
-
-        Ok(dst_path)
-    }
 }
