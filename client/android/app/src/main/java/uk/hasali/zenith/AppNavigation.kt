@@ -28,7 +28,6 @@ import uk.hasali.zenith.screens.library.home.LibraryHomeScreen
 import uk.hasali.zenith.screens.library.itemdetails.ItemDetailsScreen
 import uk.hasali.zenith.screens.library.movies.MoviesScreen
 import uk.hasali.zenith.screens.library.shows.ShowsScreen
-import uk.hasali.zenith.screens.management.ImportQueueScreen
 import uk.hasali.zenith.screens.management.ManagementHomeScreen
 import uk.hasali.zenith.screens.management.TranscodeQueueScreen
 import uk.hasali.zenith.screens.player.CompactVideoPlayer
@@ -78,9 +77,6 @@ sealed interface LibraryScreen : Parcelable {
 sealed interface ManagementScreen : Parcelable {
     @Parcelize
     object Home : Screen("main/management/home"), ManagementScreen
-
-    @Parcelize
-    object ImportQueue : Screen("main/management/import"), ManagementScreen
 
     @Parcelize
     object TranscodeQueue : Screen("main/management/transcode"), ManagementScreen
@@ -232,12 +228,7 @@ private fun ManagementArea(navigator: StackNavigator<ManagementScreen>) {
     navigator.ContentHost { screen ->
         when (screen) {
             is ManagementScreen.Home -> ManagementHomeScreen(
-                onNavigateToImportQueue = { navigator.push(ManagementScreen.ImportQueue) },
                 onNavigateToTranscodeQueue = { navigator.push(ManagementScreen.TranscodeQueue) },
-            )
-
-            is ManagementScreen.ImportQueue -> ImportQueueScreen(
-                onNavigateUp = { navigator.pop() },
             )
 
             is ManagementScreen.TranscodeQueue -> TranscodeQueueScreen(
