@@ -14,6 +14,7 @@ use crate::library::movies::NewMovie;
 use crate::library::shows::{NewEpisode, NewSeason, NewShow};
 use crate::library::{video_info, MediaLibrary};
 use crate::metadata::{MetadataManager, RefreshRequest};
+use crate::transcoder::{self, Transcoder};
 
 pub struct LibraryScanner {
     db: Db,
@@ -21,6 +22,7 @@ pub struct LibraryScanner {
     metadata: MetadataManager,
     config: Arc<Config>,
     video_info: Arc<dyn VideoInfoProvider>,
+    transcoder: Arc<Transcoder>,
     is_running: Arc<AtomicBool>,
 }
 
@@ -51,6 +53,7 @@ impl LibraryScanner {
         metadata: MetadataManager,
         config: Arc<Config>,
         video_info: Arc<dyn VideoInfoProvider>,
+        transcoder: Arc<Transcoder>,
     ) -> LibraryScanner {
         LibraryScanner {
             db,
@@ -58,6 +61,7 @@ impl LibraryScanner {
             metadata,
             config,
             video_info,
+            transcoder,
             is_running: Arc::new(AtomicBool::new(false)),
         }
     }
@@ -181,6 +185,7 @@ impl LibraryScanner {
 
         let id = library.add_movie(&movie).await?;
         self.metadata.enqueue(RefreshRequest::Movie(id));
+        self.transcoder.enqueue(transcoder::Job::new(id)).await;
 
         Ok(Some(id))
     }
@@ -265,6 +270,7 @@ impl LibraryScanner {
 
         let id = library.add_episode(episode).await?;
         self.metadata.enqueue(RefreshRequest::TvEpisode(id));
+        self.transcoder.enqueue(transcoder::Job::new(id)).await;
 
         Ok(Some(id))
     }

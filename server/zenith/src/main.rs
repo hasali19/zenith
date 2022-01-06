@@ -45,6 +45,7 @@ async fn main() -> eyre::Result<()> {
         metadata.clone(),
         config.clone(),
         video_info_provider,
+        transcoder.clone(),
     ));
 
     scanner.clone().start_scan(ScanOptions::default());
