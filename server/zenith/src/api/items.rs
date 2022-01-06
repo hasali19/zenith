@@ -1,14 +1,19 @@
+use std::sync::Arc;
+
 use axum::extract::{Extension, Path, Query};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
-use axum_codegen::{get, patch};
+use axum_codegen::{delete, get, patch};
 use serde::Deserialize;
 
 use crate::api::ApiResult;
+use crate::db::items::MediaItem;
 use crate::db::media::MediaItemType;
 use crate::db::videos::UpdateVideoUserData;
 use crate::db::{self, Db};
+use crate::library::scanner::ScanOptions;
+use crate::library::LibraryScanner;
 
 use super::ext::OptionExt;
 
@@ -37,6 +42,45 @@ pub async fn get_item(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoRe
         .or_not_found("media item not found")?;
 
     Ok(Json(item))
+}
+
+#[delete("/items/:id")]
+async fn delete_item(
+    Path(id): Path<i64>,
+    Extension(db): Extension<Db>,
+    Extension(scanner): Extension<Arc<LibraryScanner>>,
+) -> ApiResult<impl IntoResponse> {
+    let mut conn = db.acquire().await?;
+
+    let item = db::items::get(&mut conn, id)
+        .await?
+        .or_not_found("media item not found")?;
+
+    let mut paths = vec![];
+    match item {
+        MediaItem::Movie(movie) => paths.push(movie.video_info.path),
+        MediaItem::Episode(episode) => paths.push(episode.video_info.path),
+        MediaItem::Show(show) => {
+            for episode in db::episodes::get_for_show(&mut conn, show.id).await? {
+                paths.push(episode.video_info.path);
+            }
+        }
+        MediaItem::Season(season) => {
+            for episode in db::episodes::get_for_season(&mut conn, season.id).await? {
+                paths.push(episode.video_info.path);
+            }
+        }
+    }
+
+    for path in paths {
+        tokio::fs::remove_file(path).await?;
+    }
+
+    // The filesystem watcher should pick up the removals, but we run a quick scan
+    // after just to be sure
+    scanner.run_scan(ScanOptions::quick()).await;
+
+    Ok(StatusCode::OK)
 }
 
 #[derive(Deserialize)]
