@@ -2,6 +2,7 @@ pub mod movies;
 pub mod scanner;
 pub mod shows;
 pub mod video_info;
+pub mod watcher;
 
 pub use scanner::LibraryScanner;
 

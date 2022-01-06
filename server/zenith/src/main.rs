@@ -50,6 +50,8 @@ async fn main() -> eyre::Result<()> {
     scanner.clone().start_scan(ScanOptions::default());
     transcoder.clone().start();
 
+    zenith::library::watcher::start(config.clone(), scanner.clone());
+
     let addr = SocketAddr::from_str(&format!("{}:{}", config.http.host, config.http.port))?;
 
     let app = axum::Router::new()
