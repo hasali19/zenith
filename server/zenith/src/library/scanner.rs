@@ -29,19 +29,10 @@ pub enum VideoFileType {
     Episode,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ScanOptions {
     pub rescan_files: bool,
     pub refresh_metadata: bool,
-}
-
-impl Default for ScanOptions {
-    fn default() -> Self {
-        ScanOptions {
-            rescan_files: false,
-            refresh_metadata: false,
-        }
-    }
 }
 
 impl ScanOptions {

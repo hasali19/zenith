@@ -1,8 +1,6 @@
-use axum::body::{Full, HttpBody};
-use axum::http::{Response, StatusCode};
-use axum::response::IntoResponse;
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use axum::Json;
-use bytes::Bytes;
 use eyre::eyre;
 use serde_json::json;
 
@@ -53,11 +51,8 @@ pub fn not_found(msg: impl ToString) -> ApiError {
 }
 
 impl IntoResponse for ApiError {
-    type Body = Full<Bytes>;
-    type BodyError = <Self::Body as HttpBody>::Error;
-
-    fn into_response(self) -> Response<Self::Body> {
-        let mut res = IntoResponse::into_response(Json(json!({"message": self.inner.to_string()})));
+    fn into_response(self) -> Response {
+        let mut res = Json(json!({"message": self.inner.to_string()})).into_response();
         *res.status_mut() = self.status;
         res
     }

@@ -13,7 +13,7 @@ pub fn router() -> axum::Router {
         .fold(Router::new(), |router, (path, method, handler)| {
             router.route(path, method_service(method.clone(), *handler))
         })
-        .layer(SetResponseHeaderLayer::<_, ()>::overriding(
+        .layer(SetResponseHeaderLayer::overriding(
             ACCESS_CONTROL_ALLOW_ORIGIN,
             HeaderValue::from_static("*"),
         ))

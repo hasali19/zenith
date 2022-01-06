@@ -66,7 +66,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
         syn::parse_str(&mod_path).unwrap_or_else(|_| panic!("invalid module path: {}", mod_path));
 
     TokenStream::from(quote! {
-        #vis fn #name(req: axum::http::request::Parts, body: axum::body::Body) -> futures::future::BoxFuture<'static, axum::http::Response<axum::body::BoxBody>> {
+        #vis fn #name(req: axum::http::request::Parts, axum::extract::RawBody(body): axum::extract::RawBody) -> futures::future::BoxFuture<'static, axum::http::Response<axum::body::BoxBody>> {
             #input
             #[linkme::distributed_slice(#mod_path::AXUM_ROUTES)]
             static _handler: (&'static str, axum::http::Method, axum_codegen::RequestHandler) = (#path, #method, self::#name);

@@ -3,11 +3,11 @@ use std::ops::Bound;
 use std::path::Path;
 
 use axum::async_trait;
-use axum::body::{Body, HttpBody};
+use axum::body::Body;
 use axum::extract::rejection::{TypedHeaderRejection, TypedHeaderRejectionReason};
 use axum::extract::{FromRequest, RequestParts, TypedHeader};
-use axum::http::{Response, StatusCode};
-use axum::response::IntoResponse;
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use headers::{AcceptRanges, ContentLength, ContentRange, ContentType, HeaderMapExt, Range};
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio_util::codec::{BytesCodec, FramedRead};
@@ -95,10 +95,7 @@ impl FileResponse {
 }
 
 impl IntoResponse for FileResponse {
-    type Body = Body;
-    type BodyError = <Body as HttpBody>::Error;
-
-    fn into_response(self) -> Response<Self::Body> {
-        self.res
+    fn into_response(self) -> Response {
+        self.res.into_response()
     }
 }

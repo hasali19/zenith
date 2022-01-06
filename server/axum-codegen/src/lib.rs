@@ -1,11 +1,11 @@
 use std::future::Future;
 use std::pin::Pin;
 
-use axum::body::{Body, BoxBody};
+use axum::extract::RawBody;
 use axum::http::request::Parts;
-use axum::http::Response;
+use axum::response::Response;
 
 pub use axum_codegen_macros::*;
 
 pub type RequestHandler =
-    fn(Parts, Body) -> Pin<Box<dyn Future<Output = Response<BoxBody>> + Send + 'static>>;
+    fn(Parts, RawBody) -> Pin<Box<dyn Future<Output = Response> + Send + 'static>>;
