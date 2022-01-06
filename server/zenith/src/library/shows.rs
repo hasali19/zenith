@@ -337,6 +337,14 @@ impl ShowLibrary {
             }
         }
 
+        drop(conn);
+
+        self.remove_empty_collections().await
+    }
+
+    pub async fn remove_empty_collections(&self) -> eyre::Result<()> {
+        let mut conn = self.db.acquire().await?;
+
         let sql = "
             SELECT item_id AS season FROM tv_seasons
             WHERE NOT EXISTS (

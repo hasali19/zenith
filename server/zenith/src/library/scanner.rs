@@ -26,6 +26,7 @@ pub struct LibraryScanner {
     is_running: Arc<AtomicBool>,
 }
 
+#[derive(Debug)]
 pub enum VideoFileType {
     Movie,
     Episode,
@@ -41,6 +42,13 @@ impl ScanOptions {
     pub fn quick() -> Self {
         ScanOptions {
             rescan_files: false,
+            refresh_metadata: false,
+        }
+    }
+
+    pub fn rescan_files() -> Self {
+        ScanOptions {
+            rescan_files: true,
             refresh_metadata: false,
         }
     }
@@ -134,6 +142,7 @@ impl LibraryScanner {
     }
 
     /// Scans a single video file
+    #[tracing::instrument(skip(self, path), fields(path = ?path.as_ref()))]
     pub async fn scan_file(
         &self,
         video_type: VideoFileType,
@@ -141,6 +150,14 @@ impl LibraryScanner {
         options: ScanOptions,
     ) -> eyre::Result<Option<i64>> {
         let path = path.as_ref();
+
+        // Bail if path is not a video file
+        if (path.exists() && !path.is_file()) || !is_video_file_path(path) {
+            return Ok(None);
+        }
+
+        tracing::info!("scanning file");
+
         match video_type {
             VideoFileType::Movie => self.scan_movie_file(path, &options).await,
             VideoFileType::Episode => self.scan_episode_file(path, &options).await,
@@ -157,9 +174,9 @@ impl LibraryScanner {
         let library = self.library.movies();
 
         if let Some(id) = library.get_id_by_path(path_str).await? {
-            // Remove movie from database if file no longer exists
             if !path.is_file() {
-                // TODO: Remove movie from database
+                // Remove movie from database if file no longer exists
+                self.library.movies().remove_movie(id).await?;
                 return Ok(Some(id));
             }
 
@@ -246,9 +263,10 @@ impl LibraryScanner {
 
         if let Some(id) = library.get_episode_id(season_id, episode).await? {
             if !path.is_file() {
-                // TODO: Remove episode (and possibly season/show) from database
-                // For now it should be fine since this is only called
-                // in a library scan, after validating
+                // Remove episode from database if file no longer exists
+                library.remove_episode(id).await?;
+                // Cleanup any empty shows/seasons after episode removed
+                library.remove_empty_collections().await?;
                 return Ok(Some(id));
             }
 
@@ -339,7 +357,7 @@ pub fn get_video_files(path: impl AsRef<Path>) -> impl Iterator<Item = DirEntry>
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_file())
-        .filter(is_video_file)
+        .filter(|e| is_video_file_path(e.path()))
 }
 
 /// Extracts a show name, season and episode number from an episode path.
@@ -411,10 +429,10 @@ pub fn parse_video_filename(
     })
 }
 
-fn is_video_file(entry: &DirEntry) -> bool {
+fn is_video_file_path(path: &Path) -> bool {
     const VIDEO_EXTENSIONS: &[&str] = &["mp4", "mkv"];
 
-    let ext = match entry.path().extension().and_then(|v| v.to_str()) {
+    let ext = match path.extension().and_then(|v| v.to_str()) {
         Some(ext) => ext,
         None => return false,
     };

@@ -8,6 +8,7 @@ use notify::{Event, EventKind, RecursiveMode, Watcher};
 use crate::config::Config;
 use crate::library::scanner::ScanOptions;
 
+use super::scanner::VideoFileType;
 use super::LibraryScanner;
 
 pub fn start(config: Arc<Config>, scanner: Arc<LibraryScanner>) {
@@ -30,8 +31,11 @@ async fn run(config: Arc<Config>, scanner: Arc<LibraryScanner>) -> eyre::Result<
             }
         })?;
 
-    for path in [&config.libraries.movies, &config.libraries.tv_shows] {
-        watcher.watch(Path::new(path), RecursiveMode::Recursive)?;
+    let movies_lib = Path::new(&config.libraries.movies).canonicalize()?;
+    let shows_lib = Path::new(&config.libraries.tv_shows).canonicalize()?;
+
+    for path in [&movies_lib, &shows_lib] {
+        watcher.watch(path, RecursiveMode::Recursive)?;
     }
 
     while let Some(event) = rx.recv().await {
@@ -40,7 +44,27 @@ async fn run(config: Arc<Config>, scanner: Arc<LibraryScanner>) -> eyre::Result<
         match event.kind {
             | EventKind::Access(AccessKind::Close(AccessMode::Write))
             | EventKind::Create(_)
-            | EventKind::Remove(_) => scanner.clone().start_scan(ScanOptions::quick()),
+            | EventKind::Remove(_) => {
+                // Rescan all files associated with the event
+                for path in event.paths {
+                    let path = match path.canonicalize() {
+                        Ok(path) => path,
+                        Err(_) => continue,
+                    };
+
+                    let file_type = if path.starts_with(&movies_lib) {
+                        VideoFileType::Movie
+                    } else if path.starts_with(&shows_lib) {
+                        VideoFileType::Episode
+                    } else {
+                        continue;
+                    };
+
+                    scanner
+                        .scan_file(file_type, path, ScanOptions::rescan_files())
+                        .await?;
+                }
+            }
             _ => {}
         }
     }
