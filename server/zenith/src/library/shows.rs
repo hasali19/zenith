@@ -5,13 +5,13 @@ use sqlx::Connection;
 
 use crate::db::media::MediaItemType;
 use crate::db::Db;
-use crate::ffprobe::VideoInfoProvider;
+use crate::video_prober::VideoProber;
 
 use super::video_info;
 
 pub struct ShowLibrary {
     db: Db,
-    video_info: Arc<dyn VideoInfoProvider>,
+    video_info: Arc<dyn VideoProber>,
 }
 
 pub struct NewShow<'a> {
@@ -32,7 +32,7 @@ pub struct NewEpisode<'a> {
 }
 
 impl ShowLibrary {
-    pub fn new(db: Db, video_info: Arc<dyn VideoInfoProvider>) -> ShowLibrary {
+    pub fn new(db: Db, video_info: Arc<dyn VideoProber>) -> ShowLibrary {
         ShowLibrary { db, video_info }
     }
 
@@ -198,7 +198,7 @@ impl ShowLibrary {
 
     /// Adds a new episode
     pub async fn add_episode(&self, episode: NewEpisode<'_>) -> eyre::Result<i64> {
-        let info = self.video_info.get_video_info(episode.path).await?;
+        let info = self.video_info.probe(episode.path).await?;
         let duration: f64 = info.format.duration.parse()?;
         let mut transaction = self.db.begin().await?;
 

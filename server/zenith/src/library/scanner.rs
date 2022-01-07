@@ -11,12 +11,12 @@ use walkdir::{DirEntry, WalkDir};
 use crate::config::{Config, ImportMatcher, ImportMatcherTarget};
 use crate::db::media::MediaItemType;
 use crate::db::{self, Db};
-use crate::ffprobe::VideoInfoProvider;
 use crate::library::movies::NewMovie;
 use crate::library::shows::{NewEpisode, NewSeason, NewShow};
 use crate::library::{video_info, MediaLibrary};
 use crate::metadata::{MetadataManager, RefreshRequest};
 use crate::transcoder::{self, Transcoder};
+use crate::video_prober::VideoProber;
 
 pub struct LibraryScanner {
     db: Db,
@@ -28,7 +28,7 @@ struct LibraryScannerImpl {
     library: Arc<MediaLibrary>,
     metadata: MetadataManager,
     config: Arc<Config>,
-    video_info: Arc<dyn VideoInfoProvider>,
+    video_prober: Arc<dyn VideoProber>,
     transcoder: Arc<Transcoder>,
 }
 
@@ -78,7 +78,7 @@ impl LibraryScanner {
         library: Arc<MediaLibrary>,
         metadata: MetadataManager,
         config: Arc<Config>,
-        video_info: Arc<dyn VideoInfoProvider>,
+        video_prober: Arc<dyn VideoProber>,
         transcoder: Arc<Transcoder>,
     ) -> LibraryScanner {
         LibraryScanner {
@@ -88,7 +88,7 @@ impl LibraryScanner {
                 library,
                 metadata,
                 config,
-                video_info,
+                video_prober,
                 transcoder,
             }),
         }
@@ -371,7 +371,7 @@ impl LibraryScannerImpl {
         tracing::debug!(id, path, "rescanning video file");
 
         let mut transaction = self.db.begin().await?;
-        let info = self.video_info.get_video_info(path).await?;
+        let info = self.video_prober.probe(path).await?;
 
         video_info::update_video_info(&mut transaction, id, &info).await?;
 

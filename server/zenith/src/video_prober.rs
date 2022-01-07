@@ -41,7 +41,7 @@ impl Ffprobe {
         Ffprobe { path: path.into() }
     }
 
-    pub async fn probe(&self, path: &str) -> eyre::Result<VideoInfo> {
+    async fn probe(&self, path: &str) -> eyre::Result<VideoInfo> {
         let output = Command::new(&self.path)
             .arg_pair("-loglevel", "error")
             .arg_pair("-print_format", "json")
@@ -62,13 +62,13 @@ impl Ffprobe {
 }
 
 #[async_trait]
-pub trait VideoInfoProvider: Send + Sync {
-    async fn get_video_info(&self, path: &str) -> eyre::Result<VideoInfo>;
+pub trait VideoProber: Send + Sync {
+    async fn probe(&self, path: &str) -> eyre::Result<VideoInfo>;
 }
 
 #[async_trait::async_trait]
-impl VideoInfoProvider for Ffprobe {
-    async fn get_video_info(&self, path: &str) -> eyre::Result<VideoInfo> {
-        self.probe(path).await
+impl VideoProber for Ffprobe {
+    async fn probe(&self, path: &str) -> eyre::Result<VideoInfo> {
+        Ffprobe::probe(self, path).await
     }
 }

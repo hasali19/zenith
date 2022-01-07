@@ -3,13 +3,13 @@ use std::sync::Arc;
 
 use crate::db::media::MediaItemType;
 use crate::db::Db;
-use crate::ffprobe::VideoInfoProvider;
+use crate::video_prober::VideoProber;
 
 use super::video_info;
 
 pub struct MovieLibrary {
     db: Db,
-    video_info: Arc<dyn VideoInfoProvider>,
+    video_prober: Arc<dyn VideoProber>,
 }
 
 pub struct NewMovie<'a> {
@@ -19,13 +19,13 @@ pub struct NewMovie<'a> {
 }
 
 impl MovieLibrary {
-    pub fn new(db: Db, video_info: Arc<dyn VideoInfoProvider>) -> MovieLibrary {
-        MovieLibrary { db, video_info }
+    pub fn new(db: Db, video_prober: Arc<dyn VideoProber>) -> MovieLibrary {
+        MovieLibrary { db, video_prober }
     }
 
     /// Adds a new movie
     pub async fn add_movie(&self, movie: &NewMovie<'_>) -> eyre::Result<i64> {
-        let info = self.video_info.get_video_info(movie.path).await?;
+        let info = self.video_prober.probe(movie.path).await?;
         let duration: f64 = info.format.duration.parse()?;
         let mut transaction = self.db.begin().await?;
 

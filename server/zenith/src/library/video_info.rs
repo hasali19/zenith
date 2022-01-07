@@ -5,7 +5,7 @@ use crate::db;
 use crate::db::streams::{NewAudioStream, NewVideoStream};
 use crate::db::subtitles::NewSubtitle;
 use crate::db::videos::UpdateVideo;
-use crate::ffprobe::VideoInfo;
+use crate::video_prober::VideoInfo;
 
 pub async fn update_video_info(
     conn: &mut SqliteConnection,

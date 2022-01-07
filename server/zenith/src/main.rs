@@ -12,11 +12,11 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::EnvFilter;
 use zenith::config::Config;
 use zenith::db::Db;
-use zenith::ffprobe::Ffprobe;
 use zenith::library::scanner::{LibraryScanner, ScanOptions};
 use zenith::library::MediaLibrary;
 use zenith::metadata::MetadataManager;
 use zenith::transcoder::Transcoder;
+use zenith::video_prober::Ffprobe;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
@@ -36,15 +36,15 @@ async fn main() -> eyre::Result<()> {
     let db = Db::init(&config.database.path).await?;
     let tmdb = TmdbClient::new(&config.tmdb.api_key);
     let metadata = MetadataManager::new(db.clone(), tmdb.clone());
-    let video_info_provider = Arc::new(Ffprobe::new(&config.transcoding.ffprobe_path));
-    let library = Arc::new(MediaLibrary::new(db.clone(), video_info_provider.clone()));
-    let transcoder = Transcoder::new(db.clone(), config.clone());
+    let video_prober = Arc::new(Ffprobe::new(&config.transcoding.ffprobe_path));
+    let library = Arc::new(MediaLibrary::new(db.clone(), video_prober.clone()));
+    let transcoder = Transcoder::new(db.clone(), config.clone(), video_prober.clone());
     let scanner = Arc::new(LibraryScanner::new(
         db.clone(),
         library.clone(),
         metadata.clone(),
         config.clone(),
-        video_info_provider,
+        video_prober,
         transcoder.clone(),
     ));
 

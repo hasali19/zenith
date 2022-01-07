@@ -14,8 +14,8 @@ use crate::db::subtitles::{Subtitle, UpdateSubtitle};
 use crate::db::videos::UpdateVideo;
 use crate::db::{self, Db};
 use crate::ext::CommandExt;
-use crate::ffprobe::{Ffprobe, VideoInfo};
 use crate::library::video_info;
+use crate::video_prober::{VideoInfo, VideoProber};
 
 #[derive(Clone, Serialize)]
 pub struct Job {
@@ -51,6 +51,7 @@ impl Job {
 pub struct Transcoder {
     db: Db,
     config: Arc<Config>,
+    video_prober: Arc<dyn VideoProber>,
     sema: Semaphore,
     queue: RwLock<VecDeque<Job>>,
     current: RwLock<Option<Job>>,
@@ -67,12 +68,13 @@ pub enum Event {
 }
 
 impl Transcoder {
-    pub fn new(db: Db, config: Arc<Config>) -> Arc<Transcoder> {
+    pub fn new(db: Db, config: Arc<Config>, video_prober: Arc<dyn VideoProber>) -> Arc<Transcoder> {
         let (sender, _) = broadcast::channel(8);
 
         Arc::new(Transcoder {
             db,
             config,
+            video_prober,
             sema: Semaphore::new(0),
             queue: RwLock::new(VecDeque::new()),
             current: RwLock::new(None),
@@ -187,17 +189,19 @@ impl Transcoder {
             .wrap_err("failed to get video path")?
             .ok_or_else(|| eyre!("no video found with id: {}", id))?;
 
-        let info = Ffprobe::new(&self.config.transcoding.ffprobe_path)
+        let info = self
+            .video_prober
             .probe(&path)
             .await
-            .wrap_err("ffprobe failed to get video info")?;
+            .wrap_err("failed to probe video info")?;
 
         self.convert_video(&job, &path, &info).await?;
 
-        let info = Ffprobe::new(&self.config.transcoding.ffprobe_path)
+        let info = self
+            .video_prober
             .probe(&path)
             .await
-            .wrap_err("ffprobe failed to get video info")?;
+            .wrap_err("failed to probe video info")?;
 
         video_info::update_video_info(&mut *self.db.acquire().await?, id, &info).await?;
 

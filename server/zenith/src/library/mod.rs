@@ -9,7 +9,7 @@ pub use scanner::LibraryScanner;
 use std::sync::Arc;
 
 use crate::db::Db;
-use crate::ffprobe::VideoInfoProvider;
+use crate::video_prober::VideoProber;
 
 use self::movies::MovieLibrary;
 use self::shows::ShowLibrary;
@@ -20,10 +20,10 @@ pub struct MediaLibrary {
 }
 
 impl MediaLibrary {
-    pub fn new(db: Db, video_info: Arc<dyn VideoInfoProvider>) -> MediaLibrary {
+    pub fn new(db: Db, video_prober: Arc<dyn VideoProber>) -> MediaLibrary {
         MediaLibrary {
-            movies: MovieLibrary::new(db.clone(), video_info.clone()),
-            shows: ShowLibrary::new(db, video_info),
+            movies: MovieLibrary::new(db.clone(), video_prober.clone()),
+            shows: ShowLibrary::new(db, video_prober),
         }
     }
 
