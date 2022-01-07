@@ -70,7 +70,7 @@ pub struct ImportMatcher {
     pub regex: Regex,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ImportMatcherTarget {
     Movie,

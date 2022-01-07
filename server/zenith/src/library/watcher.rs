@@ -2,7 +2,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use eyre::eyre;
-use notify::event::{AccessKind, AccessMode};
+use notify::event::{AccessKind, AccessMode, ModifyKind, RenameMode};
 use notify::{Event, EventKind, RecursiveMode, Watcher};
 
 use crate::config::Config;
@@ -41,32 +41,40 @@ async fn run(config: Arc<Config>, scanner: Arc<LibraryScanner>) -> eyre::Result<
     while let Some(event) = rx.recv().await {
         tracing::debug!(?event);
 
-        match event.kind {
+        // TODO: Event debouncing
+        let scan_options = match event.kind {
+            // Quick scan events
             | EventKind::Access(AccessKind::Close(AccessMode::Write))
             | EventKind::Create(_)
-            | EventKind::Remove(_) => {
-                // Rescan all files associated with the event
-                for path in event.paths {
-                    // Attempt to canonicalize but fallback to original path if it fails
-                    let path = match path.canonicalize() {
-                        Ok(path) => path,
-                        Err(_) => path,
-                    };
-
-                    let file_type = if path.starts_with(&movies_lib) {
-                        VideoFileType::Movie
-                    } else if path.starts_with(&shows_lib) {
-                        VideoFileType::Episode
-                    } else {
-                        continue;
-                    };
-
-                    scanner
-                        .scan_file(file_type, path, ScanOptions::rescan_files())
-                        .await?;
-                }
+            | EventKind::Modify(ModifyKind::Name(RenameMode::Both))
+            | EventKind::Remove(_) => ScanOptions::quick(),
+            // Deep scan events
+            | EventKind::Modify(ModifyKind::Data(_) | ModifyKind::Metadata(_)) => {
+                ScanOptions::rescan_files()
             }
-            _ => {}
+            // Ignore unknown events
+            _ => continue,
+        };
+
+        // Rescan all files associated with the event
+        for path in event.paths {
+            // Attempt to canonicalize but fallback to original path if it fails
+            let path = match path.canonicalize() {
+                Ok(path) => path,
+                Err(_) => path,
+            };
+
+            let file_type = if path.starts_with(&movies_lib) {
+                VideoFileType::Movie
+            } else if path.starts_with(&shows_lib) {
+                VideoFileType::Episode
+            } else {
+                continue;
+            };
+
+            scanner
+                .scan_file_path(file_type, path, &scan_options)
+                .await?;
         }
     }
 

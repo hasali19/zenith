@@ -12,7 +12,7 @@ use crate::db::items::MediaItem;
 use crate::db::media::MediaItemType;
 use crate::db::videos::UpdateVideoUserData;
 use crate::db::{self, Db};
-use crate::library::scanner::ScanOptions;
+use crate::library::scanner::{ScanOptions, VideoFileType};
 use crate::library::LibraryScanner;
 
 use super::ext::OptionExt;
@@ -56,29 +56,34 @@ async fn delete_item(
         .await?
         .or_not_found("media item not found")?;
 
-    let mut paths = vec![];
+    let mut files = vec![];
     match item {
-        MediaItem::Movie(movie) => paths.push(movie.video_info.path),
-        MediaItem::Episode(episode) => paths.push(episode.video_info.path),
+        MediaItem::Movie(movie) => files.push((movie.video_info.path, VideoFileType::Movie)),
+        MediaItem::Episode(episode) => {
+            files.push((episode.video_info.path, VideoFileType::Episode))
+        }
         MediaItem::Show(show) => {
             for episode in db::episodes::get_for_show(&mut conn, show.id).await? {
-                paths.push(episode.video_info.path);
+                files.push((episode.video_info.path, VideoFileType::Episode));
             }
         }
         MediaItem::Season(season) => {
             for episode in db::episodes::get_for_season(&mut conn, season.id).await? {
-                paths.push(episode.video_info.path);
+                files.push((episode.video_info.path, VideoFileType::Episode));
             }
         }
     }
 
-    for path in paths {
-        tokio::fs::remove_file(path).await?;
+    for (path, video_type) in files {
+        tokio::fs::remove_file(&path).await?;
+        scanner
+            .scan_file_path(video_type, &path, &ScanOptions::quick())
+            .await?;
     }
 
     // The filesystem watcher should pick up the removals, but we run a quick scan
     // after just to be sure
-    scanner.run_scan(ScanOptions::quick()).await;
+    scanner.run_scan(&ScanOptions::quick()).await;
 
     Ok(StatusCode::OK)
 }
