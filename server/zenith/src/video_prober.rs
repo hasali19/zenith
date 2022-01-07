@@ -49,6 +49,7 @@ impl Ffprobe {
             .arg("-show_streams")
             .arg(path)
             .stdout(Stdio::piped())
+            .stderr(Stdio::null())
             .spawn()?
             .wait_with_output()
             .await?;
