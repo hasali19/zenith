@@ -1,4 +1,3 @@
-use std::path::Path;
 use std::sync::Arc;
 
 use eyre::eyre;
@@ -31,8 +30,8 @@ async fn run(config: Arc<Config>, scanner: Arc<LibraryScanner>) -> eyre::Result<
             }
         })?;
 
-    let movies_lib = Path::new(&config.libraries.movies).canonicalize()?;
-    let shows_lib = Path::new(&config.libraries.tv_shows).canonicalize()?;
+    let movies_lib = &config.libraries.movies;
+    let shows_lib = &config.libraries.tv_shows;
 
     for path in [&movies_lib, &shows_lib] {
         watcher.watch(path, RecursiveMode::Recursive)?;
@@ -46,7 +45,7 @@ async fn run(config: Arc<Config>, scanner: Arc<LibraryScanner>) -> eyre::Result<
             // Quick scan events
             | EventKind::Access(AccessKind::Close(AccessMode::Write))
             | EventKind::Create(_)
-            | EventKind::Modify(ModifyKind::Name(RenameMode::Both))
+            | EventKind::Modify(ModifyKind::Name(RenameMode::From | RenameMode::To))
             | EventKind::Remove(_) => ScanOptions::quick(),
             // Deep scan events
             | EventKind::Modify(ModifyKind::Data(_) | ModifyKind::Metadata(_)) => {

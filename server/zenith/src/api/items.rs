@@ -75,6 +75,7 @@ async fn delete_item(
     }
 
     for (path, video_type) in files {
+        tracing::info!("removing file: {}", path);
         tokio::fs::remove_file(&path).await?;
         scanner
             .scan_file_path(video_type, &path, &ScanOptions::quick())

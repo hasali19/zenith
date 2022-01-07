@@ -261,6 +261,10 @@ impl LibraryScannerImpl {
             return Ok(FileScanResult::Updated(id));
         }
 
+        if !path.is_file() {
+            return Ok(FileScanResult::Ignored);
+        }
+
         let (title, release_date) = match parse_movie_filename(name) {
             Some(v) => v,
             None => return Ok(FileScanResult::Ignored),
@@ -303,7 +307,35 @@ impl LibraryScannerImpl {
             None => return Ok(FileScanResult::Ignored),
         };
 
-        let show_id = match library.get_show_id_by_path(parent_path).await? {
+        let show_id = library.get_show_id_by_path(parent_path).await?;
+        let season_id = match show_id {
+            None => None,
+            Some(show_id) => library.get_season_id(show_id, season).await?,
+        };
+
+        if let Some(season_id) = season_id {
+            if let Some(id) = library.get_episode_id(season_id, episode).await? {
+                if !path.is_file() {
+                    // Remove episode from database if file no longer exists
+                    library.remove_episode(id).await?;
+                    // Cleanup any empty shows/seasons after episode removed
+                    library.remove_empty_collections().await?;
+                    return Ok(FileScanResult::Removed);
+                }
+
+                if options.rescan_files {
+                    self.rescan_video_file_path(id, path_str).await?;
+                }
+
+                return Ok(FileScanResult::Updated(id));
+            }
+        }
+
+        if !path.is_file() {
+            return Ok(FileScanResult::Ignored);
+        }
+
+        let show_id = match show_id {
             Some(id) => id,
             None => {
                 tracing::info!("adding show: {}", show_name);
@@ -319,7 +351,7 @@ impl LibraryScannerImpl {
             }
         };
 
-        let season_id = match library.get_season_id(show_id, season).await? {
+        let season_id = match season_id {
             Some(id) => id,
             None => {
                 tracing::info!("adding season: {} ({})", show_name, season);
@@ -334,22 +366,6 @@ impl LibraryScannerImpl {
                 id
             }
         };
-
-        if let Some(id) = library.get_episode_id(season_id, episode).await? {
-            if !path.is_file() {
-                // Remove episode from database if file no longer exists
-                library.remove_episode(id).await?;
-                // Cleanup any empty shows/seasons after episode removed
-                library.remove_empty_collections().await?;
-                return Ok(FileScanResult::Removed);
-            }
-
-            if options.rescan_files {
-                self.rescan_video_file_path(id, path_str).await?;
-            }
-
-            return Ok(FileScanResult::Updated(id));
-        }
 
         tracing::info!("adding episode: {} ({}:{})", show_name, season, episode);
 
