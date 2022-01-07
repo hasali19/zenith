@@ -81,10 +81,6 @@ async fn delete_item(
             .await?;
     }
 
-    // The filesystem watcher should pick up the removals, but we run a quick scan
-    // after just to be sure
-    scanner.run_scan(&ScanOptions::quick()).await;
-
     Ok(StatusCode::OK)
 }
 
