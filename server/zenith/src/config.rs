@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::io::BufReader;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use regex::Regex;
 use serde::de::Visitor;
@@ -32,8 +32,10 @@ pub struct Http {
 
 #[derive(Deserialize)]
 pub struct Libraries {
-    pub movies: String,
-    pub tv_shows: String,
+    #[serde(deserialize_with = "deserialize_lib_path")]
+    pub movies: PathBuf,
+    #[serde(deserialize_with = "deserialize_lib_path")]
+    pub tv_shows: PathBuf,
 }
 
 #[derive(Deserialize)]
@@ -176,4 +178,25 @@ fn deserialize_regex<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Regex
     }
 
     deserializer.deserialize_str(RegexVisitor)
+}
+
+fn deserialize_lib_path<'de, D: Deserializer<'de>>(deserializer: D) -> Result<PathBuf, D::Error> {
+    struct PathBufVisitor;
+
+    impl<'de> Visitor<'de> for PathBufVisitor {
+        type Value = PathBuf;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("a valid path")
+        }
+
+        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        where
+            E: serde::de::Error,
+        {
+            Path::new(v).canonicalize().map_err(E::custom)
+        }
+    }
+
+    deserializer.deserialize_str(PathBufVisitor)
 }
