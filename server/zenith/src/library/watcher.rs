@@ -47,9 +47,10 @@ async fn run(config: Arc<Config>, scanner: Arc<LibraryScanner>) -> eyre::Result<
             | EventKind::Remove(_) => {
                 // Rescan all files associated with the event
                 for path in event.paths {
+                    // Attempt to canonicalize but fallback to original path if it fails
                     let path = match path.canonicalize() {
                         Ok(path) => path,
-                        Err(_) => continue,
+                        Err(_) => path,
                     };
 
                     let file_type = if path.starts_with(&movies_lib) {
