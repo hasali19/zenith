@@ -298,6 +298,7 @@ impl Transcoder {
         cmd.arg_pair("-progress", "-");
         cmd.arg("-y");
         cmd.stdout(Stdio::piped());
+        cmd.stderr(Stdio::null());
 
         cmd.env("FFREPORT", "file=data/reports/%p-%t.log:level=32");
 
