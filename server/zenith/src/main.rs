@@ -68,6 +68,11 @@ async fn main() -> eyre::Result<()> {
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
+        .with_graceful_shutdown(async {
+            tokio::signal::ctrl_c()
+                .await
+                .expect("failed to install ctrl+c signal handler")
+        })
         .await?;
 
     db.close().await;

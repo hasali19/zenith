@@ -46,7 +46,7 @@ features = ["parsing"]
 
 [dependencies.tokio]
 version = "1.15"
-features = ["macros", "fs", "io-util", "process"]
+features = ["macros", "fs", "io-util", "process", "signal"]
 
 [dependencies.tokio-stream]
 version = "0.1"
