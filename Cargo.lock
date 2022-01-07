@@ -1446,8 +1446,7 @@ dependencies = [
 [[package]]
 name = "sqlx"
 version = "0.5.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "692749de69603d81e016212199d73a2e14ee20e2def7d7914919e8db5d4d48b9"
+source = "git+https://github.com/launchbadge/sqlx#d901694ec6d09c29ec03b698aa00ee6824ef666b"
 dependencies = [
  "sqlx-core",
  "sqlx-macros",
@@ -1456,8 +1455,7 @@ dependencies = [
 [[package]]
 name = "sqlx-core"
 version = "0.5.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "518be6f6fff5ca76f985d434f9c37f3662af279642acf730388f271dff7b9016"
+source = "git+https://github.com/launchbadge/sqlx#d901694ec6d09c29ec03b698aa00ee6824ef666b"
 dependencies = [
  "ahash",
  "atoi",
@@ -1465,9 +1463,7 @@ dependencies = [
  "byteorder",
  "bytes",
  "crc",
- "crossbeam-channel",
  "crossbeam-queue",
- "crossbeam-utils",
  "either",
  "flume",
  "futures-channel",
@@ -1484,7 +1480,6 @@ dependencies = [
  "log",
  "memchr",
  "once_cell",
- "parking_lot",
  "percent-encoding",
  "rustls 0.19.1",
  "sha2",
@@ -1502,8 +1497,7 @@ dependencies = [
 [[package]]
 name = "sqlx-macros"
 version = "0.5.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38e45140529cf1f90a5e1c2e561500ca345821a1c513652c8f486bbf07407cc8"
+source = "git+https://github.com/launchbadge/sqlx#d901694ec6d09c29ec03b698aa00ee6824ef666b"
 dependencies = [
  "dotenv",
  "either",
@@ -1521,8 +1515,7 @@ dependencies = [
 [[package]]
 name = "sqlx-rt"
 version = "0.5.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8061cbaa91ee75041514f67a09398c65a64efed72c90151ecd47593bad53da99"
+source = "git+https://github.com/launchbadge/sqlx#d901694ec6d09c29ec03b698aa00ee6824ef666b"
 dependencies = [
  "once_cell",
  "tokio",
