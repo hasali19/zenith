@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.Lifecycle
-import uk.hasali.zenith.api.Show
 import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.*
 
@@ -33,7 +32,7 @@ fun ShowsScreen(
             items = shows,
             poster = { it.poster },
             name = { it.name },
-            date = { it.startDate },
+            year = { it.startYear() },
             isWatched = { it.userData.unwatched == 0 },
             onClick = { onNavigateToItem(it.id) },
         )

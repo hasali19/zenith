@@ -32,7 +32,7 @@ fun MoviesScreen(
             items = movies,
             poster = { it.poster },
             name = { it.title },
-            date = { it.releaseDate },
+            year = { it.releaseYear() },
             isWatched = { it.userData.isWatched },
             onClick = { onNavigateToItem(it.id) },
         )

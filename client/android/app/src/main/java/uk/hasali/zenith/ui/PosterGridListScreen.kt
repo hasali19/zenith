@@ -9,9 +9,6 @@ import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -19,7 +16,7 @@ fun <T> PosterGridListScreen(
     items: List<T>?,
     poster: (T) -> String?,
     name: (T) -> String,
-    date: (T) -> Long?,
+    year: (T) -> Int?,
     isWatched: (T) -> Boolean = { false },
     onClick: (T) -> Unit,
 ) {
@@ -31,16 +28,11 @@ fun <T> PosterGridListScreen(
         ) {
             items(items.size) { i ->
                 val item = items[i]
-                val dateVal = date(item)
-                val year = if (dateVal == null) null else
-                    Instant.fromEpochSeconds(dateVal)
-                        .toLocalDateTime(TimeZone.UTC)
-                        .year
 
                 MediaItemWithPoster(
                     poster = poster(item),
                     primary = name(item),
-                    secondary = year?.toString() ?: "",
+                    secondary = year(item)?.toString() ?: "",
                     isWatched = isWatched(item),
                     onClick = { onClick(item) },
                     modifier = Modifier

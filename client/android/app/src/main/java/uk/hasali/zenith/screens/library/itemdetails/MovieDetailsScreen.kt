@@ -43,11 +43,7 @@ fun MovieDetailsScreen(
 @Composable
 private fun HeaderContent(movie: Movie) {
     val duration = formatDuration(movie.videoInfo.duration)
-    val year = movie.releaseDate?.let {
-        Instant.fromEpochSeconds(it)
-            .toLocalDateTime(TimeZone.UTC)
-            .year
-    }
+    val year = movie.releaseYear()
 
     val secondary = if (year != null) {
         "$year - $duration"

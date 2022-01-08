@@ -10,9 +10,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -144,12 +141,7 @@ class ItemDetailsViewModel @Inject constructor(
                 id = movie.id
                 type = VideoItemType.Movie
                 title = movie.title
-                subtitle = movie.releaseDate?.let {
-                    Instant.fromEpochSeconds(it)
-                        .toLocalDateTime(TimeZone.UTC)
-                        .year
-                        .toString()
-                }
+                subtitle = movie.releaseYear()?.toString()
                 poster = movie.poster
                 backdrop = movie.backdrop
                 videoInfo = movie.videoInfo

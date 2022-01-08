@@ -24,9 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.api.*
 import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.*
@@ -124,7 +121,7 @@ private fun LibraryHomeScreen(
                     items = movies,
                     poster = { it.poster },
                     name = { it.title },
-                    date = { it.releaseDate },
+                    year = { it.releaseYear() },
                     isWatched = { it.userData.isWatched },
                     onItemClick = { onNavigateToItem(it.id) },
                 )
@@ -136,7 +133,7 @@ private fun LibraryHomeScreen(
                     items = shows,
                     poster = { it.poster },
                     name = { it.name },
-                    date = { it.startDate },
+                    year = { it.startYear() },
                     isWatched = { it.userData.unwatched == 0 },
                     onItemClick = { onNavigateToItem(it.id) },
                 )
@@ -166,20 +163,23 @@ private fun Section(title: String, content: @Composable () -> Unit) {
 private fun ContinueWatchingList(items: List<MediaItem>, onItemClick: (MediaItem) -> Unit) {
     LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
         items(items) { item ->
-            val name: String
+            val title: String
+            val subtitle: String?
             val image: String?
             val userData: VideoUserData
             val videoInfo: VideoInfo
 
             when (item) {
                 is Movie -> {
-                    name = item.title
+                    title = item.title
+                    subtitle = item.releaseYear()?.toString()
                     image = item.backdrop
                     userData = item.userData
                     videoInfo = item.videoInfo
                 }
                 is Episode -> {
-                    name = item.name ?: item.seasonEpisodeString()
+                    title = item.name ?: "Untitled"
+                    subtitle = item.seasonEpisodeString()
                     image = item.thumbnail
                     userData = item.userData
                     videoInfo = item.videoInfo
@@ -194,20 +194,29 @@ private fun ContinueWatchingList(items: List<MediaItem>, onItemClick: (MediaItem
                 url = image,
                 overlay = {
                     Column(modifier = Modifier.fillMaxSize()) {
-                        Box(
+                        Column(
+                            verticalArrangement = Arrangement.Bottom,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
                         ) {
                             Text(
-                                text = name,
+                                text = title,
                                 style = MaterialTheme.typography.subtitle2,
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
-                                modifier = Modifier
-                                    .align(Alignment.BottomStart)
-                                    .padding(horizontal = 8.dp),
+                                modifier = Modifier.padding(horizontal = 8.dp),
                             )
+
+                            if (subtitle != null) {
+                                Text(
+                                    text = subtitle,
+                                    style = MaterialTheme.typography.caption,
+                                    overflow = TextOverflow.Ellipsis,
+                                    maxLines = 1,
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                )
+                            }
                         }
 
                         Box(
@@ -242,23 +251,17 @@ private fun <T> Section(
     items: List<T>,
     poster: (T) -> String?,
     name: (T) -> String,
-    date: (T) -> Long?,
+    year: (T) -> Int?,
     isWatched: (T) -> Boolean = { false },
     onItemClick: (T) -> Unit,
 ) {
     Section(title = title) {
         LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
             items(items) { item ->
-                val dateVal = date(item)
-                val year = if (dateVal == null) null else
-                    Instant.fromEpochSeconds(dateVal)
-                        .toLocalDateTime(TimeZone.UTC)
-                        .year
-
                 MediaItemWithPoster(
                     poster = poster(item),
                     primary = name(item),
-                    secondary = year?.toString() ?: "",
+                    secondary = year(item)?.toString() ?: "",
                     isWatched = isWatched(item),
                     onClick = { onItemClick(item) },
                     modifier = Modifier

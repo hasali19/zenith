@@ -1,5 +1,8 @@
 package uk.hasali.zenith.api
 
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -44,6 +47,12 @@ data class Movie(
 ) : MediaItem() {
     override val type: MediaItemType
         get() = MediaItemType.Movie
+
+    fun releaseYear() = releaseDate?.let {
+        Instant.fromEpochSeconds(it)
+            .toLocalDateTime(TimeZone.UTC)
+            .year
+    }
 }
 
 @Serializable
@@ -63,6 +72,12 @@ data class Show(
 ) : MediaItem() {
     override val type: MediaItemType
         get() = MediaItemType.Show
+
+    fun startYear() = startDate?.let {
+        Instant.fromEpochSeconds(it)
+            .toLocalDateTime(TimeZone.UTC)
+            .year
+    }
 }
 
 @Serializable
