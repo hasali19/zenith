@@ -136,6 +136,7 @@ class ItemDetailsViewModel @Inject constructor(
         val type: VideoItemType
         val title: String?
         val subtitle: String?
+        val poster: String?
         val backdrop: String?
         val videoInfo: VideoInfo?
 
@@ -150,6 +151,7 @@ class ItemDetailsViewModel @Inject constructor(
                         .year
                         .toString()
                 }
+                poster = movie.poster
                 backdrop = movie.backdrop
                 videoInfo = movie.videoInfo
             }
@@ -160,6 +162,7 @@ class ItemDetailsViewModel @Inject constructor(
                 title = episode.name
                 subtitle =
                     "${show.name}: S${twoDigitNumber(episode.seasonNumber)}E${twoDigitNumber(episode.episodeNumber)}"
+                poster = season.poster ?: show.poster
                 backdrop = episode.thumbnail
                 videoInfo = episode.videoInfo
             }
@@ -173,6 +176,7 @@ class ItemDetailsViewModel @Inject constructor(
             url = mediaUrlProvider.getVideoUrl(id),
             title = title ?: "Untitled",
             subtitle = subtitle,
+            poster = poster,
             backdrop = backdrop,
             duration = videoInfo.duration,
             subtitles = videoInfo.subtitles.orEmpty().map {

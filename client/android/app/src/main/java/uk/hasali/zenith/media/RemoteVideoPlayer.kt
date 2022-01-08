@@ -82,6 +82,7 @@ class RemoteVideoPlayer(private val context: Context, session: CastSession) : Vi
             url = currentItem.media!!.contentId,
             title = data.getString("title"),
             subtitle = data.optString("subtitle"),
+            poster = data.optString("poster"),
             backdrop = data.optString("backdrop"),
             duration = currentItem.media!!.streamDuration.toDouble() / 1000,
             subtitles = currentItem.media!!.mediaTracks!!
@@ -151,6 +152,10 @@ class RemoteVideoPlayer(private val context: Context, session: CastSession) : Vi
                 putString(MediaMetadata.KEY_SUBTITLE, item.subtitle)
             }
 
+            if (item.poster != null) {
+                addImage(WebImage(Uri.parse(item.poster)))
+            }
+
             if (item.backdrop != null) {
                 addImage(WebImage(Uri.parse(item.backdrop)))
             }
@@ -164,6 +169,7 @@ class RemoteVideoPlayer(private val context: Context, session: CastSession) : Vi
             .setCustomData(JSONObject().apply {
                 put("title", item.title)
                 put("subtitle", item.subtitle)
+                put("poster", item.poster)
                 put("backdrop", item.backdrop)
             })
             .build()

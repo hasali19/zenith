@@ -11,6 +11,7 @@ data class VideoItem(
     val url: String,
     val title: String,
     val subtitle: String?,
+    val poster: String?,
     val backdrop: String?,
     val duration: Double,
     val subtitles: List<SubtitleTrack>,

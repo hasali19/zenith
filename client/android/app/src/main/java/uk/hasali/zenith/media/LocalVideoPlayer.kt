@@ -119,7 +119,7 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
         .mapLatest {
             val result = Coil.execute(
                 ImageRequest.Builder(context)
-                    .data(it.backdrop)
+                    .data(it.poster)
                     .build()
             )
 
