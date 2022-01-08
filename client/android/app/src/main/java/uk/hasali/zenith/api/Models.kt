@@ -215,29 +215,7 @@ sealed class TranscoderEvent {
 }
 
 @Serializable
-data class ImportQueueItem(
-    val name: String,
-    val path: String,
-    val info: ImportQueueItemInfo?,
-)
-
-@Serializable
-sealed class ImportQueueItemInfo {
-    @Serializable
-    @SerialName("movie")
-    data class Movie(val title: String, val year: Int?) : ImportQueueItemInfo()
-
-    @Serializable
-    @SerialName("episode")
-    data class Episode(val name: String, val season: Int, val episode: Int) : ImportQueueItemInfo()
-}
-
-@Serializable
 sealed class ImportSource {
-    @Serializable
-    @SerialName("Local")
-    data class Local(val path: String) : ImportSource()
-
     @Serializable
     @SerialName("Upload")
     object Upload : ImportSource()
@@ -250,26 +228,4 @@ data class ImportSubtitleRequest(
     val videoId: Int,
     val title: String?,
     val language: String?,
-)
-
-@Serializable
-data class ImportShowRequest(
-    val name: String,
-    val episodes: List<ImportEpisodeRequest>,
-)
-
-@Serializable
-data class ImportEpisodeRequest(
-    val source: ImportSource,
-    @SerialName("season_number")
-    val seasonNumber: Int,
-    @SerialName("episode_number")
-    val episodeNumber: Int,
-)
-
-@Serializable
-data class ImportMovieRequest(
-    val source: ImportSource,
-    val title: String,
-    val year: Int,
 )

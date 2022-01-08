@@ -46,15 +46,6 @@ interface ZenithMediaService {
     @POST("transcoder")
     suspend fun startTranscode(@Query("video_id") videoId: Int)
 
-    @POST("movies")
-    suspend fun importMovie(@Body data: ImportMovieRequest)
-
-    @POST("tv/shows")
-    suspend fun importShow(@Body data: ImportShowRequest)
-
-    @POST("tv/shows/{id}/episodes")
-    suspend fun importEpisode(@Path("id") showId: Int, @Body data: ImportEpisodeRequest)
-
     @Multipart
     @POST("import/subtitle")
     suspend fun importSubtitle(
@@ -64,7 +55,4 @@ interface ZenithMediaService {
 
     @POST("progress/{id}")
     suspend fun updateProgress(@Path("id") videoId: Int, @Query("position") position: Long)
-
-    @GET("import/queue")
-    suspend fun getImportQueue(): List<ImportQueueItem>
 }
