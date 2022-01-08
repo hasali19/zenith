@@ -33,6 +33,22 @@ async fn get_items(
     Ok(Json(items))
 }
 
+#[derive(Deserialize)]
+struct ContinueWatchingQuery {
+    limit: Option<u32>,
+}
+
+#[get("/items/continue_watching")]
+async fn get_continue_watching(
+    Query(query): Query<ContinueWatchingQuery>,
+    Extension(db): Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
+    let mut conn = db.acquire().await?;
+    let limit = query.limit.unwrap_or(10);
+    let items = db::items::get_continue_watching(&mut conn, Some(limit)).await?;
+    Ok(Json(items))
+}
+
 #[get("/items/:id")]
 pub async fn get_item(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
@@ -127,6 +143,7 @@ async fn update_user_data(
         let data = UpdateVideoUserData {
             is_watched: data.is_watched,
             position: data.position,
+            set_watched_at: false,
         };
 
         db::videos::update_user_data(&mut conn, id, data).await?;

@@ -41,6 +41,7 @@ async fn update_progress(
         } else {
             Some((query.position / video_info.duration) >= 0.9)
         },
+        set_watched_at: true,
     };
 
     db::videos::update_user_data(&mut conn, *id, data).await?;

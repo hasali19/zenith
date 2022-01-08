@@ -47,6 +47,7 @@ impl<'r> FromRow<'r, SqliteRow> for Movie {
             user_data: VideoUserData {
                 is_watched: row.try_get("is_watched")?,
                 position: row.try_get("position")?,
+                last_watched_at: row.try_get("last_watched_at")?,
             },
         })
     }
@@ -65,6 +66,7 @@ pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Mo
             path,
             duration,
             COALESCE(is_watched, 0) AS is_watched,
+            last_watched_at,
             position,
             format_name
         FROM movies AS movie
@@ -103,6 +105,7 @@ pub async fn get_all(conn: &mut SqliteConnection) -> eyre::Result<Vec<Movie>> {
             path,
             duration,
             COALESCE(is_watched, 0) AS is_watched,
+            last_watched_at,
             position,
             format_name
         FROM movies AS movie
@@ -127,6 +130,7 @@ pub async fn get_recently_added(conn: &mut SqliteConnection) -> eyre::Result<Vec
             path,
             duration,
             COALESCE(is_watched, 0) AS is_watched,
+            last_watched_at,
             position,
             format_name
         FROM movies AS movie

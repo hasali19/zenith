@@ -52,6 +52,7 @@ impl<'r> FromRow<'r, SqliteRow> for Episode {
             user_data: VideoUserData {
                 is_watched: row.try_get("is_watched")?,
                 position: row.try_get("position")?,
+                last_watched_at: row.try_get("last_watched_at")?,
             },
         })
     }
@@ -73,6 +74,7 @@ pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Ep
             video.path,
             duration,
             COALESCE(is_watched, 0) AS is_watched,
+            last_watched_at,
             position,
             format_name
         FROM tv_episodes AS episode
@@ -119,6 +121,7 @@ pub async fn get_for_season(
             video.path,
             duration,
             COALESCE(is_watched, 0) AS is_watched,
+            last_watched_at,
             position,
             format_name
         FROM tv_episodes AS episode
@@ -149,6 +152,7 @@ pub async fn get_for_show(conn: &mut SqliteConnection, show_id: i64) -> eyre::Re
             video.path,
             duration,
             COALESCE(is_watched, 0) AS is_watched,
+            last_watched_at,
             position,
             format_name
         FROM tv_episodes AS episode

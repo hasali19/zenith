@@ -10,3 +10,5 @@ pub mod transcoder;
 pub mod util;
 pub mod utils;
 pub mod video_prober;
+
+mod sql;
