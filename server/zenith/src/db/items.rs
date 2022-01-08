@@ -83,7 +83,8 @@ pub async fn get_continue_watching(
                     JOIN tv_seasons AS season1 ON season1.item_id = e1.season_id
                     JOIN tv_shows AS show1 ON show1.item_id = season1.show_id
                     WHERE show1.item_id = show.item_id
-                        AND (season1.season_number > season.season_number OR e1.episode_number > e.episode_number)
+                        AND (season1.season_number > season.season_number
+                            OR (season1.season_number = season.season_number AND e1.episode_number > e.episode_number))
                     ORDER BY season1.season_number, e1.episode_number
                     LIMIT 1
                 )
