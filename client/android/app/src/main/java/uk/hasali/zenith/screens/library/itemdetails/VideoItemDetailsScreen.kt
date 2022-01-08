@@ -107,7 +107,10 @@ fun VideoItemDetailsScreen(
         poster = {
             Poster(
                 url = poster,
-                overlay = { if (position > 0.05 * info.duration) VideoPositionOverlay(position) },
+                overlay = {
+                    if (position > 0.05 * info.duration && position < 0.9 * info.duration)
+                        VideoPositionOverlay(position)
+                },
             )
         },
         appBarActions = {
