@@ -40,6 +40,16 @@ pub async fn get_seasons(show_id: Path<i64>, db: Extension<Db>) -> ApiResult<imp
     Ok(Json(seasons))
 }
 
+#[get("/tv/shows/:id/episodes")]
+pub async fn get_show_episodes(
+    show_id: Path<i64>,
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
+    let mut conn = db.acquire().await?;
+    let episodes = db::episodes::get_for_show(&mut conn, *show_id).await?;
+    Ok(Json(episodes))
+}
+
 #[get("/tv/seasons/:id")]
 pub async fn get_season(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
