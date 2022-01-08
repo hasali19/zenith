@@ -107,7 +107,7 @@ fun VideoItemDetailsScreen(
         poster = {
             Poster(
                 url = poster,
-                overlay = { if (position > 0) VideoPositionOverlay(position) },
+                overlay = { if (position > 0.05 * info.duration) VideoPositionOverlay(position) },
             )
         },
         appBarActions = {
@@ -186,7 +186,7 @@ private fun ActionsSection(
     onShowMoreActions: () -> Unit,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        val resume = position != null && position > 0 && position < 0.9 * duration
+        val resume = position != null && position > 0.05 * duration && position < 0.9 * duration
 
         PlayButton(
             resume = resume,
