@@ -69,7 +69,7 @@ pub async fn get_continue_watching(
             SELECT m.item_id FROM movies AS m
             JOIN video_files AS v ON v.item_id = m.item_id
             LEFT JOIN user_item_data AS u ON m.item_id = u.item_id
-            WHERE u.position > 0 AND u.position < (0.9 * v.duration)
+            WHERE u.position > 0 AND u.position < (0.9 * v.duration) AND u.last_watched_at IS NOT NULL
             ORDER BY u.last_watched_at DESC
         )
         UNION
@@ -93,7 +93,7 @@ pub async fn get_continue_watching(
             JOIN tv_shows AS show ON show.item_id = season.show_id
             JOIN video_files AS v ON v.item_id = e.item_id
             LEFT JOIN user_item_data AS u ON e.item_id = u.item_id
-            WHERE u.position > 0
+            WHERE u.position > 0 AND u.last_watched_at IS NOT NULL
             GROUP BY show.item_id
         )
     ".to_owned();
