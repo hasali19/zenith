@@ -7,7 +7,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.*
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedButton
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,7 +30,6 @@ import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.api.*
 import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.*
-import java.lang.IllegalArgumentException
 
 @Composable
 fun LibraryHomeScreen(
@@ -92,7 +94,8 @@ private fun LibraryHomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(state = rememberScrollState()),
+                .verticalScroll(state = rememberScrollState())
+                .padding(bottom = 8.dp),
         ) {
             Row(modifier = Modifier.padding(top = 12.dp, start = 12.dp, end = 12.dp)) {
                 OutlinedButton(modifier = Modifier.weight(1f), onClick = onNavigateToMovies) {
