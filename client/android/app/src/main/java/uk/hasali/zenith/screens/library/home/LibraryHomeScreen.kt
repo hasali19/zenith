@@ -1,9 +1,11 @@
 package uk.hasali.zenith.screens.library.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -11,7 +13,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -19,10 +24,10 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import uk.hasali.zenith.api.Movie
-import uk.hasali.zenith.api.Show
+import uk.hasali.zenith.api.*
 import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.*
+import java.lang.IllegalArgumentException
 
 @Composable
 fun LibraryHomeScreen(
@@ -59,8 +64,9 @@ fun LibraryHomeScreen(
             }
         } else {
             LibraryHomeScreen(
-                movies = state.movies,
-                shows = state.shows,
+                continueWatching = state.continueWatching,
+                movies = state.recentMovies,
+                shows = state.recentShows,
                 isRefreshing = state.isRefreshing,
                 onRefresh = model::refresh,
                 onNavigateToMovies = onNavigateToMovies,
@@ -73,6 +79,7 @@ fun LibraryHomeScreen(
 
 @Composable
 private fun LibraryHomeScreen(
+    continueWatching: List<MediaItem>,
     movies: List<Movie>,
     shows: List<Show>,
     isRefreshing: Boolean,
@@ -96,6 +103,15 @@ private fun LibraryHomeScreen(
 
                 OutlinedButton(modifier = Modifier.weight(1f), onClick = onNavigateToShows) {
                     Text("Shows")
+                }
+            }
+
+            if (continueWatching.isNotEmpty()) {
+                Section(title = "Continue Watching") {
+                    ContinueWatchingList(
+                        items = continueWatching,
+                        onItemClick = { onNavigateToItem(it.id) },
+                    )
                 }
             }
 
@@ -127,15 +143,7 @@ private fun LibraryHomeScreen(
 }
 
 @Composable
-private fun <T> Section(
-    title: String,
-    items: List<T>,
-    poster: (T) -> String?,
-    name: (T) -> String,
-    date: (T) -> Long?,
-    isWatched: (T) -> Boolean = { false },
-    onItemClick: (T) -> Unit,
-) {
+private fun Section(title: String, content: @Composable () -> Unit) {
     Column {
         Text(
             text = title,
@@ -147,6 +155,95 @@ private fun <T> Section(
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         )
 
+        content()
+    }
+}
+
+@Composable
+private fun ContinueWatchingList(items: List<MediaItem>, onItemClick: (MediaItem) -> Unit) {
+    LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
+        items(items) { item ->
+            val name: String
+            val image: String?
+            val userData: VideoUserData
+            val videoInfo: VideoInfo
+
+            when (item) {
+                is Movie -> {
+                    name = item.title
+                    image = item.backdrop
+                    userData = item.userData
+                    videoInfo = item.videoInfo
+                }
+                is Episode -> {
+                    name = item.name ?: item.seasonEpisodeString()
+                    image = item.thumbnail
+                    userData = item.userData
+                    videoInfo = item.videoInfo
+                }
+                else -> throw IllegalArgumentException("Invalid item type")
+            }
+
+            val progress =
+                ((userData.position ?: 0.0) / videoInfo.duration).toFloat()
+
+            Thumbnail(
+                url = image,
+                overlay = {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) {
+                            Text(
+                                text = name,
+                                style = MaterialTheme.typography.subtitle2,
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(horizontal = 8.dp),
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .fillMaxWidth()
+                                .height(2.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(Color.White)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(progress)
+                                    .fillMaxHeight()
+                                    .background(MaterialTheme.colors.primary)
+                            )
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .width(280.dp)
+                    .padding(4.dp),
+                onClick = { onItemClick(item) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun <T> Section(
+    title: String,
+    items: List<T>,
+    poster: (T) -> String?,
+    name: (T) -> String,
+    date: (T) -> Long?,
+    isWatched: (T) -> Boolean = { false },
+    onItemClick: (T) -> Unit,
+) {
+    Section(title = title) {
         LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
             items(items) { item ->
                 val dateVal = date(item)

@@ -26,7 +26,6 @@ import uk.hasali.zenith.media.SubtitleTrack
 import uk.hasali.zenith.media.VideoItem
 import uk.hasali.zenith.media.VideoItemType
 import uk.hasali.zenith.navigation.NavScreenProvider
-import uk.hasali.zenith.ui.twoDigitNumber
 import javax.inject.Inject
 
 sealed interface MediaItemDetails
@@ -160,8 +159,7 @@ class ItemDetailsViewModel @Inject constructor(
                 id = episode.id
                 type = VideoItemType.TvShow
                 title = episode.name
-                subtitle =
-                    "${show.name}: S${twoDigitNumber(episode.seasonNumber)}E${twoDigitNumber(episode.episodeNumber)}"
+                subtitle = "${show.name}: ${episode.seasonEpisodeString()}"
                 poster = season.poster ?: show.poster
                 backdrop = episode.thumbnail
                 videoInfo = episode.videoInfo

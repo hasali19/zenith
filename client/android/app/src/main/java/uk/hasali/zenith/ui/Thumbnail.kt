@@ -18,22 +18,38 @@ fun Thumbnail(
     url: String?,
     modifier: Modifier = Modifier,
     overlay: (@Composable () -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
 ) {
+    val content: @Composable () -> Unit = {
+        if (url != null)
+            Image(
+                painter = rememberImagePainter(url, builder = { crossfade(true) }),
+                contentDescription = "Thumbnail",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+
+        overlay?.invoke()
+    }
+
     BoxWithConstraints(modifier = modifier) {
         val width = with(LocalDensity.current) {
             constraints.maxWidth.toDp()
         }
 
-        Card(modifier = Modifier.size(width, width * (9f / 16f))) {
-            if (url != null)
-                Image(
-                    painter = rememberImagePainter(url, builder = { crossfade(true) }),
-                    contentDescription = "Thumbnail",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
+        val cardModifier = Modifier.size(width, width * (9f / 16f))
 
-            overlay?.invoke()
+        if (onClick != null) {
+            Card(
+                onClick = onClick,
+                modifier = cardModifier,
+                content = content,
+            )
+        } else {
+            Card(
+                modifier = cardModifier,
+                content = content,
+            )
         }
     }
 }

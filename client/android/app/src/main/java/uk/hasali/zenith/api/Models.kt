@@ -4,6 +4,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
+import uk.hasali.zenith.ui.twoDigitNumber
 
 @Serializable
 enum class MediaItemType {
@@ -105,6 +106,8 @@ data class Episode(
 ) : MediaItem() {
     override val type: MediaItemType
         get() = MediaItemType.Episode
+
+    fun seasonEpisodeString() = "S${twoDigitNumber(seasonNumber)}E${twoDigitNumber(episodeNumber)}"
 }
 
 @Serializable

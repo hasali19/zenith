@@ -48,8 +48,6 @@ fun EpisodeDetailsScreen(
 
 @Composable
 private fun HeaderContent(show: Show, episode: Episode) {
-    val seasonNumber = twoDigitNumber(episode.seasonNumber)
-    val episodeNumber = twoDigitNumber(episode.episodeNumber)
     val duration = formatDuration(episode.videoInfo.duration)
     val name = episode.name ?: "Episode ${episode.episodeNumber}"
 
@@ -58,7 +56,7 @@ private fun HeaderContent(show: Show, episode: Episode) {
         Text(text = name, style = MaterialTheme.typography.h6)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "S${seasonNumber}E${episodeNumber} - $duration",
+            text = "${episode.seasonEpisodeString()} - $duration",
             style = MaterialTheme.typography.caption,
         )
     }
