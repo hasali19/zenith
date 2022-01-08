@@ -65,15 +65,14 @@ pub async fn get_continue_watching(
     // - for each show, we grab the last episode that was watched; if that episode was finished, then we instead
     //   get the next episode if it exists
     let mut sql = "
-        SELECT * FROM (
-            SELECT m.item_id FROM movies AS m
+        SELECT id, last_watched_at FROM (
+            SELECT m.item_id AS id, u.last_watched_at AS last_watched_at FROM movies AS m
             JOIN video_files AS v ON v.item_id = m.item_id
             LEFT JOIN user_item_data AS u ON m.item_id = u.item_id
             WHERE u.position > (0.05 * v.duration) AND u.position < (0.9 * v.duration) AND u.last_watched_at IS NOT NULL
-            ORDER BY u.last_watched_at DESC
         )
         UNION
-        SELECT id FROM (
+        SELECT id, last_watched_at FROM (
             SELECT IIF(
                 u.position < (0.9 * v.duration),
                 -- return current episode if the position is below 'completed' threshold
@@ -88,7 +87,7 @@ pub async fn get_continue_watching(
                     ORDER BY season1.season_number, e1.episode_number
                     LIMIT 1
                 )
-            ) AS id, MAX(last_watched_at, 0) FROM tv_episodes AS e
+            ) AS id, MAX(last_watched_at) AS last_watched_at FROM tv_episodes AS e
             JOIN tv_seasons AS season ON season.item_id = e.season_id
             JOIN tv_shows AS show ON show.item_id = season.show_id
             JOIN video_files AS v ON v.item_id = e.item_id
@@ -96,6 +95,7 @@ pub async fn get_continue_watching(
             WHERE u.position > (0.05 * v.duration) AND u.last_watched_at IS NOT NULL
             GROUP BY show.item_id
         )
+        ORDER BY last_watched_at DESC
     ".to_owned();
 
     if let Some(limit) = limit {
@@ -103,15 +103,6 @@ pub async fn get_continue_watching(
     }
 
     let ids: Vec<i64> = sqlx::query_scalar(&sql).fetch_all(&mut *conn).await?;
-    let mut items = get_multiple(conn, ids).await?;
 
-    items.sort_by_key(|item| {
-        std::cmp::Reverse(match item {
-            MediaItem::Movie(m) => m.user_data.last_watched_at,
-            MediaItem::Episode(e) => e.user_data.last_watched_at,
-            _ => unreachable!(),
-        })
-    });
-
-    Ok(items)
+    get_multiple(conn, ids).await
 }
