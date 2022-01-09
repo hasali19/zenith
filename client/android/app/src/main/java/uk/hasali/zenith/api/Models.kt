@@ -89,6 +89,8 @@ data class Season(
     @SerialName("season_number")
     val seasonNumber: Int,
     val name: String?,
+    @SerialName("show_name")
+    val showName: String,
     val overview: String?,
     val poster: String?,
     val backdrop: String?,
@@ -112,7 +114,11 @@ data class Episode(
     @SerialName("episode_number")
     val episodeNumber: Int,
     val name: String?,
+    @SerialName("show_name")
+    val showName: String,
     val overview: String?,
+    val poster: String?,
+    val backdrop: String?,
     val thumbnail: String?,
     @SerialName("video_info")
     val videoInfo: VideoInfo,

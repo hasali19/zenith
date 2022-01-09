@@ -19,7 +19,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import uk.hasali.zenith.api.Episode
 import uk.hasali.zenith.api.Season
-import uk.hasali.zenith.api.Show
 import uk.hasali.zenith.ui.BottomSheetController
 import uk.hasali.zenith.ui.Thumbnail
 import uk.hasali.zenith.ui.formatDuration
@@ -27,7 +26,6 @@ import uk.hasali.zenith.ui.formatDuration
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SeasonDetailsScreen(
-    show: Show,
     season: Season,
     episodes: List<Episode>,
     bottomSheetController: BottomSheetController,
@@ -41,7 +39,7 @@ fun SeasonDetailsScreen(
         poster = season.poster,
         headerContent = {
             Column {
-                Text(show.name, style = MaterialTheme.typography.h6)
+                Text(season.showName, style = MaterialTheme.typography.h6)
                 Text(season.title(), style = MaterialTheme.typography.caption)
             }
         },

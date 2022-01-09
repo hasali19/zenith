@@ -81,7 +81,6 @@ fun ItemDetailsScreen(
                 onNavigateUp = onNavigateUp,
             )
             is SeasonDetails -> SeasonDetailsScreen(
-                show = data.show,
                 season = data.season,
                 episodes = data.episodes,
                 bottomSheetController = bottomSheetController,
@@ -90,8 +89,6 @@ fun ItemDetailsScreen(
                 onNavigateUp = onNavigateUp,
             )
             is EpisodeDetails -> EpisodeDetailsScreen(
-                show = data.show,
-                season = data.season,
                 episode = data.episode,
                 bottomSheetController = bottomSheetController,
                 onSetWatched = model::setWatched,

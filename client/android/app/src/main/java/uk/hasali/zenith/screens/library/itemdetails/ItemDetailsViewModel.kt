@@ -31,11 +31,9 @@ data class MovieDetails(val movie: Movie) : MediaItemDetails
 
 data class ShowDetails(val show: Show, val seasons: List<Season>) : MediaItemDetails
 
-data class SeasonDetails(val show: Show, val season: Season, val episodes: List<Episode>) :
-    MediaItemDetails
+data class SeasonDetails(val season: Season, val episodes: List<Episode>) : MediaItemDetails
 
-data class EpisodeDetails(val show: Show, val season: Season, val episode: Episode) :
-    MediaItemDetails
+data class EpisodeDetails(val episode: Episode) : MediaItemDetails
 
 @HiltViewModel
 class ItemDetailsViewModel @Inject constructor(
@@ -151,9 +149,9 @@ class ItemDetailsViewModel @Inject constructor(
                 id = episode.id
                 type = VideoItemType.TvShow
                 title = episode.name
-                subtitle = "${show.name}: ${episode.seasonEpisodeString()}"
-                poster = season.poster ?: show.poster
-                backdrop = episode.thumbnail
+                subtitle = "${episode.showName}: ${episode.seasonEpisodeString()}"
+                poster = episode.poster
+                backdrop = episode.thumbnail ?: episode.backdrop
                 videoInfo = episode.videoInfo
             }
 
@@ -201,7 +199,13 @@ class ItemDetailsViewModel @Inject constructor(
         if (session != null) {
             _item.value?.let { item ->
                 val namespace = "urn:x-cast:uk.hasali.zenith.cast"
-                val message = Json.encodeToString(CastMediaItem(item))
+                val mediaItem = when (item) {
+                    is MovieDetails -> item.movie
+                    is ShowDetails -> item.show
+                    is SeasonDetails -> item.season
+                    is EpisodeDetails -> item.episode
+                }
+                val message = Json.encodeToString(mediaItem)
                 Log.i("ItemDetails", "Sending current item to cast session: $message")
                 session.sendMessage(namespace, message)
             }
@@ -222,13 +226,10 @@ class ItemDetailsViewModel @Inject constructor(
                 )
             }
             is Season -> SeasonDetails(
-                show = zenith.getShow(item.showId),
                 season = item,
                 episodes = zenith.getEpisodes(item.id),
             )
             is Episode -> EpisodeDetails(
-                show = zenith.getShow(item.showId),
-                season = zenith.getSeason(item.seasonId),
                 episode = item,
             )
         }

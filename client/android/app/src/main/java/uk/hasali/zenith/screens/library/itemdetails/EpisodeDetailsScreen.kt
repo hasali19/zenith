@@ -9,16 +9,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import uk.hasali.zenith.api.Episode
-import uk.hasali.zenith.api.Season
-import uk.hasali.zenith.api.Show
 import uk.hasali.zenith.ui.BottomSheetController
 import uk.hasali.zenith.ui.formatDuration
-import uk.hasali.zenith.ui.twoDigitNumber
 
 @Composable
 fun EpisodeDetailsScreen(
-    show: Show,
-    season: Season,
     episode: Episode,
     bottomSheetController: BottomSheetController,
     onSetWatched: (Boolean) -> Unit,
@@ -30,10 +25,10 @@ fun EpisodeDetailsScreen(
 ) {
     VideoItemDetailsScreen(
         name = episode.name ?: "Episode ${episode.episodeNumber}",
-        backdrop = episode.thumbnail,
-        poster = season.poster,
+        backdrop = episode.thumbnail ?: episode.backdrop,
+        poster = episode.poster,
         overview = episode.overview,
-        headerContent = { HeaderContent(show = show, episode = episode) },
+        headerContent = { HeaderContent(episode = episode) },
         info = episode.videoInfo,
         userData = episode.userData,
         bottomSheetController = bottomSheetController,
@@ -47,12 +42,12 @@ fun EpisodeDetailsScreen(
 }
 
 @Composable
-private fun HeaderContent(show: Show, episode: Episode) {
+private fun HeaderContent(episode: Episode) {
     val duration = formatDuration(episode.videoInfo.duration)
     val name = episode.name ?: "Episode ${episode.episodeNumber}"
 
     Column {
-        Text(text = show.name, style = MaterialTheme.typography.caption)
+        Text(text = episode.showName, style = MaterialTheme.typography.caption)
         Text(text = name, style = MaterialTheme.typography.h6)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
