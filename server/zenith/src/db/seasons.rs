@@ -30,7 +30,7 @@ const SEASON_COLUMNS: &[&str] = &[
     "se.name",
     "sh.name AS show_name",
     "se.overview",
-    "se.poster",
+    "COALESCE(se.poster, sh.poster) AS poster",
     "sh.backdrop",
     "se.tmdb_id",
     "(
