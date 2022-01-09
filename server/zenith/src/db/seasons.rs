@@ -2,7 +2,8 @@ use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqliteConnection};
 
-use crate::utils;
+use crate::sql::Join;
+use crate::{sql, utils};
 
 use super::collections::CollectionUserData;
 use super::items::ExternalIds;
@@ -20,6 +21,23 @@ pub struct Season {
     pub external_ids: ExternalIds,
     pub user_data: CollectionUserData,
 }
+
+const SEASON_COLUMNS: &[&str] = &[
+    "se.item_id AS id",
+    "show_id",
+    "season_number",
+    "se.name",
+    "se.overview",
+    "se.poster",
+    "sh.backdrop",
+    "se.tmdb_id",
+    "(
+        SELECT COUNT(*)
+        FROM tv_episodes AS episode
+        LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
+        WHERE episode.season_id = se.item_id AND COALESCE(u.is_watched, 0) = 0
+    ) AS unwatched",
+];
 
 impl<'r> FromRow<'r, SqliteRow> for Season {
     fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
@@ -45,54 +63,24 @@ impl<'r> FromRow<'r, SqliteRow> for Season {
 }
 
 pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Season>> {
-    let sql = "
-        SELECT
-            season.item_id AS id,
-            show_id,
-            season_number,
-            season.name,
-            season.overview,
-            season.poster,
-            show.backdrop,
-            season.tmdb_id,
-            (
-                SELECT COUNT(*)
-                FROM tv_episodes AS episode
-                LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
-                WHERE episode.season_id = season.item_id AND COALESCE(u.is_watched, 0) = 0
-            ) AS unwatched
-        FROM tv_seasons AS season
-        JOIN tv_shows AS show ON show.item_id = season.show_id
-        WHERE season.item_id = ?
-    ";
+    let sql = sql::select("tv_seasons AS se")
+        .columns(SEASON_COLUMNS)
+        .joins(&[Join::inner("tv_shows AS sh").on("sh.item_id = se.show_id")])
+        .condition("se.item_id = ?1")
+        .to_sql();
 
-    Ok(sqlx::query_as(sql).bind(id).fetch_optional(conn).await?)
+    Ok(sqlx::query_as(&sql).bind(id).fetch_optional(conn).await?)
 }
 
 pub async fn get_for_show(conn: &mut SqliteConnection, show_id: i64) -> eyre::Result<Vec<Season>> {
-    let sql = "
-        SELECT
-            season.item_id AS id,
-            show_id,
-            season_number,
-            season.name,
-            season.overview,
-            season.poster,
-            show.backdrop,
-            season.tmdb_id,
-            (
-                SELECT COUNT(*)
-                FROM tv_episodes AS episode
-                LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
-                WHERE episode.season_id = season.item_id AND COALESCE(u.is_watched, 0) = 0
-            ) AS unwatched
-        FROM tv_seasons AS season
-        JOIN tv_shows AS show ON show.item_id = season.show_id
-        WHERE season.show_id = ?
-        ORDER BY season_number
-    ";
+    let sql = sql::select("tv_seasons AS se")
+        .columns(SEASON_COLUMNS)
+        .joins(&[Join::inner("tv_shows AS sh").on("sh.item_id = se.show_id")])
+        .condition("se.show_id = ?1")
+        .order_by(&["season_number"])
+        .to_sql();
 
-    Ok(sqlx::query_as(sql).bind(show_id).fetch_all(conn).await?)
+    Ok(sqlx::query_as(&sql).bind(show_id).fetch_all(conn).await?)
 }
 
 pub struct UpdateMetadata<'a> {

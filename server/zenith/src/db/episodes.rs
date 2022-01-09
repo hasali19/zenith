@@ -2,7 +2,8 @@ use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqliteConnection};
 
-use crate::utils;
+use crate::sql::Join;
+use crate::{sql, utils};
 
 use super::items::ExternalIds;
 use super::media::MediaImage;
@@ -23,6 +24,32 @@ pub struct Episode {
     pub video_info: VideoInfo,
     pub user_data: VideoUserData,
 }
+
+const EPISODE_COLUMNS: &[&str] = &[
+    "e.item_id AS id",
+    "show_id",
+    "season_id",
+    "season_number",
+    "episode_number",
+    "e.name",
+    "e.air_date",
+    "e.overview",
+    "e.thumbnail",
+    "e.tmdb_id",
+    "v.path",
+    "duration",
+    "COALESCE(is_watched, 0) AS is_watched",
+    "last_watched_at",
+    "position",
+    "format_name",
+];
+
+const EPISODE_JOINS: &[Join] = &[
+    Join::inner("tv_seasons AS se").on("se.item_id = e.season_id"),
+    Join::inner("tv_shows AS sh").on("sh.item_id = se.show_id"),
+    Join::inner("video_files AS v").on("v.item_id = e.item_id"),
+    Join::left("user_item_data AS u").on("u.item_id = e.item_id"),
+];
 
 impl<'r> FromRow<'r, SqliteRow> for Episode {
     fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
@@ -59,33 +86,13 @@ impl<'r> FromRow<'r, SqliteRow> for Episode {
 }
 
 pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Episode>> {
-    let sql = "
-        SELECT
-            episode.item_id AS id,
-            show_id,
-            season_id,
-            season_number,
-            episode_number,
-            episode.name,
-            episode.air_date,
-            episode.overview,
-            episode.thumbnail,
-            episode.tmdb_id,
-            video.path,
-            duration,
-            COALESCE(is_watched, 0) AS is_watched,
-            last_watched_at,
-            position,
-            format_name
-        FROM tv_episodes AS episode
-        JOIN tv_seasons AS season ON season.item_id = episode.season_id
-        JOIN tv_shows AS show ON show.item_id = season.show_id
-        JOIN video_files AS video ON video.item_id = episode.item_id
-        LEFT JOIN user_item_data AS user_data ON user_data.item_id = episode.item_id
-        WHERE episode.item_id = ?
-    ";
+    let sql = sql::select("tv_episodes AS e")
+        .columns(EPISODE_COLUMNS)
+        .joins(EPISODE_JOINS)
+        .condition("e.item_id = ?1")
+        .to_sql();
 
-    let mut episode: Episode = match sqlx::query_as(sql)
+    let mut episode: Episode = match sqlx::query_as(&sql)
         .bind(id)
         .fetch_optional(&mut *conn)
         .await?
@@ -106,65 +113,25 @@ pub async fn get_for_season(
     conn: &mut SqliteConnection,
     season_id: i64,
 ) -> eyre::Result<Vec<Episode>> {
-    let sql = "
-        SELECT
-            episode.item_id AS id,
-            show_id,
-            season_id,
-            season_number,
-            episode_number,
-            episode.name,
-            episode.air_date,
-            episode.overview,
-            episode.thumbnail,
-            episode.tmdb_id,
-            video.path,
-            duration,
-            COALESCE(is_watched, 0) AS is_watched,
-            last_watched_at,
-            position,
-            format_name
-        FROM tv_episodes AS episode
-        JOIN tv_seasons AS season ON season.item_id = episode.season_id
-        JOIN tv_shows AS show ON show.item_id = season.show_id
-        JOIN video_files AS video ON video.item_id = episode.item_id
-        LEFT JOIN user_item_data AS user ON user.item_id = episode.item_id
-        WHERE episode.season_id = ?
-        ORDER BY episode_number
-    ";
+    let sql = sql::select("tv_episodes AS e")
+        .columns(EPISODE_COLUMNS)
+        .joins(EPISODE_JOINS)
+        .condition("season_id = ?1")
+        .order_by(&["episode_number"])
+        .to_sql();
 
-    Ok(sqlx::query_as(sql).bind(season_id).fetch_all(conn).await?)
+    Ok(sqlx::query_as(&sql).bind(season_id).fetch_all(conn).await?)
 }
 
 pub async fn get_for_show(conn: &mut SqliteConnection, show_id: i64) -> eyre::Result<Vec<Episode>> {
-    let sql = "
-        SELECT
-            episode.item_id AS id,
-            show_id,
-            season_id,
-            season_number,
-            episode_number,
-            episode.name,
-            episode.air_date,
-            episode.overview,
-            episode.thumbnail,
-            episode.tmdb_id,
-            video.path,
-            duration,
-            COALESCE(is_watched, 0) AS is_watched,
-            last_watched_at,
-            position,
-            format_name
-        FROM tv_episodes AS episode
-        JOIN tv_seasons AS season ON season.item_id = episode.season_id
-        JOIN tv_shows AS show ON show.item_id = season.show_id
-        JOIN video_files AS video ON video.item_id = episode.item_id
-        LEFT JOIN user_item_data AS user ON user.item_id = episode.item_id
-        WHERE season.show_id = ?
-        ORDER BY episode_number
-    ";
+    let sql = sql::select("tv_episodes AS e")
+        .columns(EPISODE_COLUMNS)
+        .joins(EPISODE_JOINS)
+        .condition("show_id = ?1")
+        .order_by(&["season_number", "episode_number"])
+        .to_sql();
 
-    Ok(sqlx::query_as(sql).bind(show_id).fetch_all(conn).await?)
+    Ok(sqlx::query_as(&sql).bind(show_id).fetch_all(conn).await?)
 }
 
 pub struct UpdateMetadata<'a> {

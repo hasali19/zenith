@@ -2,7 +2,9 @@ use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqliteConnection};
 
-use crate::utils;
+use crate::sql::Join;
+use crate::util::VecExt;
+use crate::{sql, utils};
 
 use super::items::ExternalIds;
 use super::media::MediaImage;
@@ -20,6 +22,27 @@ pub struct Movie {
     pub video_info: VideoInfo,
     pub user_data: VideoUserData,
 }
+
+const MOVIE_COLUMNS: &[&str] = &[
+    "m.item_id AS id",
+    "title",
+    "release_date",
+    "overview",
+    "poster",
+    "backdrop",
+    "tmdb_id",
+    "path",
+    "duration",
+    "COALESCE(is_watched, 0) AS is_watched",
+    "last_watched_at",
+    "position",
+    "format_name",
+];
+
+const MOVIE_JOINS: &[Join] = &[
+    Join::inner("video_files AS v").on("m.item_id = v.item_id"),
+    Join::left("user_item_data AS u").on("m.item_id = u.item_id"),
+];
 
 impl<'r> FromRow<'r, SqliteRow> for Movie {
     fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
@@ -54,28 +77,13 @@ impl<'r> FromRow<'r, SqliteRow> for Movie {
 }
 
 pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Movie>> {
-    let sql = "
-        SELECT
-            movie.item_id AS id,
-            title,
-            release_date,
-            overview,
-            poster,
-            backdrop,
-            tmdb_id,
-            path,
-            duration,
-            COALESCE(is_watched, 0) AS is_watched,
-            last_watched_at,
-            position,
-            format_name
-        FROM movies AS movie
-        JOIN video_files AS video ON movie.item_id = video.item_id
-        LEFT JOIN user_item_data AS user_data ON movie.item_id = user_data.item_id
-        WHERE movie.item_id = ?
-    ";
+    let sql = sql::select("movies AS m")
+        .columns(MOVIE_COLUMNS)
+        .joins(MOVIE_JOINS)
+        .condition("m.item_id = ?1")
+        .to_sql();
 
-    let mut movie: Movie = match sqlx::query_as(sql)
+    let mut movie: Movie = match sqlx::query_as(&sql)
         .bind(id)
         .fetch_optional(&mut *conn)
         .await?
@@ -93,56 +101,29 @@ pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Mo
 }
 
 pub async fn get_all(conn: &mut SqliteConnection) -> eyre::Result<Vec<Movie>> {
-    let sql = "
-        SELECT
-            movie.item_id AS id,
-            title,
-            release_date,
-            overview,
-            poster,
-            backdrop,
-            tmdb_id,
-            path,
-            duration,
-            COALESCE(is_watched, 0) AS is_watched,
-            last_watched_at,
-            position,
-            format_name
-        FROM movies AS movie
-        JOIN video_files AS video ON movie.item_id = video.item_id
-        LEFT JOIN user_item_data AS user_data ON movie.item_id = user_data.item_id
-        ORDER BY title
-    ";
+    let sql = sql::select("movies AS m")
+        .columns(MOVIE_COLUMNS)
+        .joins(MOVIE_JOINS)
+        .order_by(&["title"])
+        .to_sql();
 
-    Ok(sqlx::query_as(sql).fetch_all(conn).await?)
+    Ok(sqlx::query_as(&sql).fetch_all(conn).await?)
 }
 
 pub async fn get_recently_added(conn: &mut SqliteConnection) -> eyre::Result<Vec<Movie>> {
-    let sql = "
-        SELECT
-            movie.item_id AS id,
-            title,
-            release_date,
-            overview,
-            poster,
-            backdrop,
-            tmdb_id,
-            path,
-            duration,
-            COALESCE(is_watched, 0) AS is_watched,
-            last_watched_at,
-            position,
-            format_name
-        FROM movies AS movie
-        JOIN media_items AS item ON item.id = movie.item_id
-        JOIN video_files AS video ON video.item_id = movie.item_id
-        LEFT JOIN user_item_data AS user_data ON user_data.item_id = movie.item_id
-        WHERE COALESCE(user_data.is_watched, 0) = 0
-        ORDER BY added_at DESC, title
-        LIMIT 30
-    ";
+    let sql = sql::select("movies AS m")
+        .columns(MOVIE_COLUMNS)
+        .joins(
+            MOVIE_JOINS
+                .to_vec()
+                .with_push(Join::inner("media_items AS i").on("m.item_id = i.id")),
+        )
+        .condition("COALESCE(u.is_watched, 0) = 0")
+        .order_by(&["added_at DESC", "title"])
+        .limit(30)
+        .to_sql();
 
-    Ok(sqlx::query_as(sql).fetch_all(conn).await?)
+    Ok(sqlx::query_as(&sql).fetch_all(conn).await?)
 }
 
 pub struct UpdateMetadata<'a> {

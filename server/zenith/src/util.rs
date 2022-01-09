@@ -24,3 +24,15 @@ pub fn to_byte_stream(
 ) -> impl Stream<Item = Result<bytes::Bytes, std::io::Error>> {
     FramedRead::new(input, BytesCodec::new()).map(|res| res.map(|bytes| bytes.freeze()))
 }
+
+pub trait VecExt<T> {
+    #[must_use]
+    fn with_push(self, item: T) -> Self;
+}
+
+impl<T> VecExt<T> for &mut Vec<T> {
+    fn with_push(self, item: T) -> Self {
+        self.push(item);
+        self
+    }
+}

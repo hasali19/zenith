@@ -5,7 +5,7 @@ use sqlx::sqlite::{SqliteArguments, SqliteRow};
 use sqlx::Type;
 use sqlx::{Arguments, FromRow, Row, SqliteConnection};
 
-use crate::db::utils::SqlPlaceholders;
+use crate::sql;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Type, Serialize)]
 pub enum StreamType {
@@ -196,7 +196,7 @@ pub async fn remove_except(
     let sql = format!(
         "DELETE FROM video_file_streams
         WHERE video_id = ? AND stream_index NOT IN ({})",
-        SqlPlaceholders(count)
+        sql::Placeholders(count)
     );
 
     sqlx::query_with(&sql, args).execute(conn).await?;

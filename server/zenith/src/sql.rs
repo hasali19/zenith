@@ -1,3 +1,159 @@
+use std::fmt::Write;
+
+pub struct SelectStatement<'a> {
+    table: &'a str,
+    columns: &'a [&'a str],
+    joins: &'a [Join<'a>],
+    condition: Option<Condition<'a>>,
+    group_by: Option<&'a str>,
+    order_by: Option<&'a [&'a str]>,
+    limit: Option<u32>,
+}
+
+pub fn select(table: &str) -> SelectStatement {
+    SelectStatement {
+        table,
+        columns: &[],
+        joins: &[],
+        condition: None,
+        group_by: None,
+        order_by: None,
+        limit: None,
+    }
+}
+
+impl<'a> SelectStatement<'a> {
+    pub fn columns(mut self, columns: &'a [&'a str]) -> Self {
+        self.columns = columns;
+        self
+    }
+
+    pub fn joins(mut self, joins: &'a [Join<'a>]) -> Self {
+        self.joins = joins;
+        self
+    }
+
+    pub fn condition(mut self, condition: impl Into<Condition<'a>>) -> Self {
+        self.condition = Some(condition.into());
+        self
+    }
+
+    pub fn group_by(mut self, group_by: &'a str) -> Self {
+        self.group_by = Some(group_by);
+        self
+    }
+
+    pub fn order_by(mut self, order_by: &'a [&'a str]) -> Self {
+        self.order_by = Some(order_by);
+        self
+    }
+
+    pub fn limit(mut self, limit: u32) -> Self {
+        self.limit = Some(limit);
+        self
+    }
+
+    pub fn to_sql(&self) -> String {
+        let mut sql = String::new();
+
+        sql.push_str("SELECT ");
+        sql.push_list(self.columns, |sql, col| sql.push_str(col));
+        sql.push_str(" FROM ");
+        sql.push_str(self.table);
+
+        for join in self.joins {
+            sql.push(' ');
+
+            let name = match join.join_type {
+                JoinType::Inner => "JOIN",
+                JoinType::Left => "LEFT JOIN",
+            };
+
+            sql.push_str(name);
+            sql.push(' ');
+            sql.push_str(join.table);
+
+            if let Some(on) = join.on {
+                sql.push_str(" ON ");
+                sql.push_str(on);
+            }
+        }
+
+        fn write_cond(sql: &mut String, cond: &Condition<'_>) {
+            match cond {
+                Condition::Atom(str) => sql.push_str(str),
+            }
+        }
+
+        if let Some(condition) = &self.condition {
+            sql.push_str(" WHERE ");
+            write_cond(&mut sql, condition);
+        }
+
+        if let Some(group_by) = self.group_by {
+            sql.push_str(" GROUP BY ");
+            sql.push_str(group_by);
+        }
+
+        if let Some(order_by) = self.order_by {
+            sql.push_str(" ORDER BY ");
+            sql.push_list(order_by, |sql, col| sql.push_str(col));
+        }
+
+        if let Some(limit) = self.limit {
+            write!(sql, " LIMIT {}", limit).unwrap();
+        }
+
+        sql
+    }
+}
+
+pub enum Condition<'a> {
+    Atom(&'a str),
+}
+
+impl<'a> From<&'a str> for Condition<'a> {
+    fn from(str: &'a str) -> Self {
+        Condition::Atom(str)
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum JoinType {
+    Inner,
+    Left,
+}
+
+#[derive(Clone)]
+pub struct Join<'a> {
+    join_type: JoinType,
+    table: &'a str,
+    on: Option<&'a str>,
+}
+
+impl<'a> Join<'a> {
+    pub const fn new(join_type: JoinType, table: &'a str) -> Self {
+        Join {
+            join_type,
+            table,
+            on: None,
+        }
+    }
+
+    pub const fn inner(table: &'a str) -> Self {
+        Join::new(JoinType::Inner, table)
+    }
+
+    pub const fn left(table: &'a str) -> Self {
+        Join::new(JoinType::Left, table)
+    }
+
+    pub const fn on(mut self, on: &'a str) -> Self {
+        self.on = Some(on);
+        self
+    }
+}
+
 pub struct InsertStatement<'a> {
     table: &'a str,
     columns: &'a [&'a str],
@@ -124,5 +280,21 @@ impl StringExt for String {
                 push_item(self, value);
             }
         }
+    }
+}
+
+pub struct Placeholders(pub usize);
+
+impl std::fmt::Display for Placeholders {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.0 > 0 {
+            f.write_char('?')?;
+
+            for _ in 1..self.0 {
+                f.write_str(",?")?;
+            }
+        }
+
+        Ok(())
     }
 }
