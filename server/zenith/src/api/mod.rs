@@ -1,6 +1,5 @@
 mod error;
 mod ext;
-mod files;
 mod import;
 mod items;
 mod metadata;
