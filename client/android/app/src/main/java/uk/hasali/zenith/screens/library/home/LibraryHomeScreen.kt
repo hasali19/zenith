@@ -178,7 +178,7 @@ private fun ContinueWatchingList(items: List<MediaItem>, onItemClick: (MediaItem
                     videoInfo = item.videoInfo
                 }
                 is Episode -> {
-                    title = item.name ?: "Untitled"
+                    title = item.showName
                     subtitle = item.seasonEpisodeString()
                     image = item.thumbnail
                     userData = item.userData
