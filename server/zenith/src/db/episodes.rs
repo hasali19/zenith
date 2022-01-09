@@ -20,6 +20,8 @@ pub struct Episode {
     pub show_name: String,
     pub air_date: Option<i64>,
     pub overview: Option<String>,
+    pub poster: Option<String>,
+    pub backdrop: Option<String>,
     pub thumbnail: Option<String>,
     pub external_ids: ExternalIds,
     pub video_info: VideoInfo,
@@ -36,6 +38,8 @@ const EPISODE_COLUMNS: &[&str] = &[
     "sh.name AS show_name",
     "e.air_date",
     "e.overview",
+    "COALESCE(se.poster, sh.poster) AS poster",
+    "COALESCE(sh.backdrop, e.thumbnail) AS backdrop",
     "e.thumbnail",
     "e.tmdb_id",
     "v.path",
@@ -55,6 +59,8 @@ const EPISODE_JOINS: &[Join] = &[
 
 impl<'r> FromRow<'r, SqliteRow> for Episode {
     fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
+        let poster: Option<&str> = row.try_get("poster")?;
+        let backdrop: Option<&str> = row.try_get("backdrop")?;
         let thumbnail: Option<&str> = row.try_get("thumbnail")?;
 
         Ok(Episode {
@@ -67,6 +73,8 @@ impl<'r> FromRow<'r, SqliteRow> for Episode {
             show_name: row.try_get("show_name")?,
             air_date: row.try_get("air_date")?,
             overview: row.try_get("overview")?,
+            poster: poster.map(utils::get_image_url),
+            backdrop: backdrop.map(utils::get_image_url),
             thumbnail: thumbnail.map(utils::get_image_url),
             external_ids: ExternalIds {
                 tmdb: row.try_get("tmdb_id")?,
