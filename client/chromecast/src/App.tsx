@@ -4,36 +4,56 @@ import { CastMediaPlayer } from "./CastMediaPlayer";
 import * as styles from "./App.css";
 import splash from "./assets/zenith_full.png";
 
-interface MovieDetails {
-  movie: any;
+interface Movie {
+  type: "movie";
+  title: string;
+  release_date: number | null;
+  overview: string | null;
+  poster: string | null;
+  backdrop: string | null;
+  video_info: VideoInfo;
 }
 
-interface ShowDetails {
-  show: any;
+interface Show {
+  type: "show";
+  name: string;
+  start_date: number | null;
+  overview: string | null;
+  poster: string | null;
+  backdrop: string | null;
 }
 
-interface SeasonDetails {
-  show: any;
-  season: any;
+interface Season {
+  type: "season";
+  name: string | null;
+  show_name: string;
+  season_number: number;
+  overview: string | null;
+  poster: string | null;
+  backdrop: string | null;
 }
 
-interface EpisodeDetails {
-  show: any;
-  season: any;
-  episode: any;
+interface Episode {
+  type: "episode";
+  name: string | null;
+  show_name: string;
+  season_number: number;
+  episode_number: number;
+  overview: string | null;
+  backdrop: string | null;
+  thumbnail: string | null;
+  video_info: VideoInfo;
 }
 
-type MediaItemDetails =
-  | MovieDetails
-  | ShowDetails
-  | SeasonDetails
-  | EpisodeDetails;
+interface VideoInfo {
+  duration: number;
+}
+
+type MediaItem = Movie | Show | Season | Episode;
 
 const App: Component = () => {
   const [state, setState] = createSignal(cast.framework.ui.State.LAUNCHING);
-  const [activeItem, setActiveItem] = createSignal<MediaItemDetails | null>(
-    null
-  );
+  const [activeItem, setActiveItem] = createSignal<MediaItem | null>(null);
 
   onMount(() => {
     const options = new cast.framework.CastReceiverOptions();
@@ -117,7 +137,7 @@ const SplashScreen: Component = () => {
   );
 };
 
-function renderItemDetails(item: MediaItemDetails) {
+function renderItemDetails(item: MediaItem) {
   let image!: { type: "poster" | "still"; src: string | null };
   let backdrop!: string | null;
   let pretitle!: string | undefined;
@@ -125,44 +145,52 @@ function renderItemDetails(item: MediaItemDetails) {
   let subtitle: any | undefined;
   let overview!: string | null;
 
-  if ("movie" in item) {
-    image = { type: "poster", src: item.movie.poster };
-    backdrop = item.movie.backdrop;
-    title = item.movie.title;
+  if (item.type === "movie") {
+    image = { type: "poster", src: item.poster };
+    backdrop = item.backdrop;
+    title = item.title;
     subtitle = (
       <>
-        <span>{formatYear(item.movie.release_date)}</span>
-        <span style={{ margin: "0px 8px" }}>·</span>
-        <span>{formatDuration(item.movie.video_info.duration)}</span>
+        <Show when={item.release_date}>
+          {(releaseDate) => (
+            <>
+              <span>{formatYear(releaseDate)}</span>
+              <span style={{ margin: "0px 8px" }}>·</span>
+            </>
+          )}
+        </Show>
+        <span>{formatDuration(item.video_info.duration)}</span>
       </>
     );
-    overview = item.movie.overview;
-  } else if ("episode" in item) {
-    image = { type: "still", src: item.episode.thumbnail };
-    backdrop = item.season.backdrop;
-    pretitle = item.show.name;
-    title = item.episode.name;
+    overview = item.overview;
+  } else if (item.type === "episode") {
+    image = { type: "still", src: item.thumbnail };
+    backdrop = item.backdrop;
+    pretitle = item.show_name;
+    title = item.name || `Episode ${item.episode_number}`;
     subtitle = (
       <>
-        <span>S{item.episode.season_number.toString().padStart(2, "0")}</span>
-        <span>E{item.episode.episode_number.toString().padStart(2, "0")}</span>
+        <span>S{item.season_number.toString().padStart(2, "0")}</span>
+        <span>E{item.episode_number.toString().padStart(2, "0")}</span>
         <span style={{ margin: "0px 16px" }}>·</span>
-        <span>{formatDuration(item.episode.video_info.duration)}</span>
+        <span>{formatDuration(item.video_info.duration)}</span>
       </>
     );
-    overview = item.episode.overview;
-  } else if ("season" in item) {
-    image = { type: "poster", src: item.season.poster };
-    backdrop = item.season.backdrop;
-    pretitle = item.show.name;
-    title = item.season.name ?? `Season ${item.season.season_number}`;
-    overview = item.season.overview;
-  } else if ("show" in item) {
-    image = { type: "poster", src: item.show.poster };
-    backdrop = item.show.backdrop;
-    title = item.show.name;
-    subtitle = formatYear(item.show.start_date);
-    overview = item.show.overview;
+    overview = item.overview;
+  } else if (item.type === "season") {
+    image = { type: "poster", src: item.poster };
+    backdrop = item.backdrop;
+    pretitle = item.show_name;
+    title = item.name ?? `Season ${item.season_number}`;
+    overview = item.overview;
+  } else if (item.type === "show") {
+    image = { type: "poster", src: item.poster };
+    backdrop = item.backdrop;
+    title = item.name;
+    if (item.start_date) {
+      subtitle = formatYear(item.start_date);
+    }
+    overview = item.overview;
   }
 
   return (
