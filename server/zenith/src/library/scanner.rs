@@ -416,8 +416,7 @@ pub fn parse_movie_filename(name: &str) -> Option<(String, Option<OffsetDateTime
     let name = captures.get(1)?.as_str().to_owned();
     let year = captures
         .get(2)
-        .map(|m| m.as_str().parse::<i32>().ok())
-        .flatten()
+        .and_then(|m| m.as_str().parse::<i32>().ok())
         .and_then(|year| Date::from_ordinal_date(year, 1).ok())
         .and_then(|date| date.with_hms(0, 0, 0).ok())
         .map(|dt| dt.assume_utc());
