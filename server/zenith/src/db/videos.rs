@@ -161,9 +161,15 @@ pub async fn update_user_data(
         "COALESCE(?3, 0)",
     ];
 
+    let mut update_values = vec![
+        "MAX(0, MIN(COALESCE(?2, position), (SELECT duration FROM video_files WHERE item_id = ?1)))",
+        "COALESCE(?3, is_watched)",
+    ];
+
     if data.set_watched_at {
         columns.push("last_watched_at");
         values.push("strftime('%s', 'now')");
+        update_values.push("strftime('%s', 'now')");
     }
 
     let sql = sql::insert("user_item_data")
@@ -172,7 +178,7 @@ pub async fn update_user_data(
         .on_conflict(OnConflict::Update(
             UpdateList::new()
                 .columns(&columns[1..])
-                .values(&values[1..]),
+                .values(&update_values),
         ))
         .returning(&["CAST(position AS REAL)", "is_watched", "last_watched_at"])
         .to_sql();
