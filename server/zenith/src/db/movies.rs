@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqliteConnection};
@@ -10,7 +11,7 @@ use super::items::ExternalIds;
 use super::media::MediaImage;
 use super::videos::{self, VideoInfo, VideoUserData};
 
-#[derive(Serialize)]
+#[derive(Serialize, JsonSchema)]
 pub struct Movie {
     pub id: i64,
     pub title: String,

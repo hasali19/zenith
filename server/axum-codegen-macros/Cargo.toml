@@ -9,5 +9,7 @@ edition = "2021"
 proc-macro = true
 
 [dependencies]
+proc-macro2 = "1"
 quote = "1"
+structmeta = "0.1"
 syn = "1"

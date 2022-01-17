@@ -5,6 +5,7 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use axum_codegen::{delete, get, patch};
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::api::ApiResult;
@@ -24,6 +25,8 @@ struct GetItemsQuery {
 }
 
 #[get("/items")]
+#[query(name = "ids", model = Vec<i64>)]
+#[response(model = Vec<MediaItem>)]
 async fn get_items(
     Query(query): Query<GetItemsQuery>,
     db: Extension<Db>,
@@ -39,6 +42,8 @@ struct ContinueWatchingQuery {
 }
 
 #[get("/items/continue_watching")]
+#[query(name = "limit", model = Option<u32>)]
+#[response(model = Vec<MediaItem>)]
 async fn get_continue_watching(
     Query(query): Query<ContinueWatchingQuery>,
     Extension(db): Extension<Db>,
@@ -50,6 +55,8 @@ async fn get_continue_watching(
 }
 
 #[get("/items/:id")]
+#[path(name = "id", model = i64)]
+#[response(model = MediaItem)]
 pub async fn get_item(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
@@ -61,6 +68,8 @@ pub async fn get_item(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoRe
 }
 
 #[delete("/items/:id")]
+#[path(name = "id", model = i64)]
+#[response(status = 200)]
 async fn delete_item(
     Path(id): Path<i64>,
     Extension(db): Extension<Db>,
@@ -101,7 +110,7 @@ async fn delete_item(
     Ok(StatusCode::OK)
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, JsonSchema)]
 struct VideoUserDataPatch {
     #[serde(default)]
     is_watched: Option<bool>,
@@ -110,6 +119,9 @@ struct VideoUserDataPatch {
 }
 
 #[patch("/items/:id/user_data")]
+#[path(name = "id", model = i64)]
+#[request(model = VideoUserDataPatch)]
+#[response(status = 200)]
 async fn update_user_data(
     id: Path<i64>,
     data: Json<VideoUserDataPatch>,

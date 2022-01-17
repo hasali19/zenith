@@ -5,6 +5,7 @@ use axum::http::StatusCode;
 use axum::response::{sse, IntoResponse};
 use axum::Json;
 use axum_codegen::{get, post};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
@@ -13,14 +14,15 @@ use crate::api::error::bad_request;
 use crate::api::ApiResult;
 use crate::transcoder::{self, Job, Transcoder};
 
-#[derive(Serialize)]
-struct State {
+#[derive(Serialize, JsonSchema)]
+struct TranscoderState {
     queue: Vec<Job>,
 }
 
 #[get("/transcoder")]
+#[response(model = TranscoderState)]
 pub async fn get_state(transcoder: Extension<Arc<Transcoder>>) -> ApiResult<impl IntoResponse> {
-    Ok(Json(State {
+    Ok(Json(TranscoderState {
         queue: transcoder.queue().await,
     }))
 }
@@ -74,6 +76,9 @@ pub struct TranscodeParams {
 }
 
 #[post("/transcoder")]
+#[query(name = "video_id", model = Option<i64>)]
+#[query(name = "all", model = bool)]
+#[response(status = 200)]
 pub async fn transcode(
     query: Query<TranscodeParams>,
     transcoder: Extension<Arc<Transcoder>>,

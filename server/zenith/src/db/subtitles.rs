@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqliteConnection};
@@ -10,7 +11,7 @@ pub struct NewSubtitle<'a> {
     pub language: Option<&'a str>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, JsonSchema)]
 pub struct Subtitle {
     pub id: i64,
     pub video_id: i64,

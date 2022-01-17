@@ -1,6 +1,9 @@
+use std::fmt::Write;
+
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::AttributeArgs;
+use structmeta::StructMeta;
+use syn::{AttributeArgs, Lit, LitInt, LitStr, Meta};
 
 enum Method {
     Get,
@@ -14,8 +17,32 @@ enum Method {
     Trace,
 }
 
+#[derive(StructMeta)]
+struct PathArgs {
+    name: LitStr,
+    model: syn::Path,
+}
+
+#[derive(StructMeta)]
+struct QueryArgs {
+    name: LitStr,
+    model: syn::Path,
+}
+
+#[derive(StructMeta)]
+struct RequestArgs {
+    model: Option<syn::Path>,
+}
+
+#[derive(StructMeta)]
+struct ResponseArgs {
+    status: Option<LitInt>,
+    description: Option<LitStr>,
+    model: Option<syn::Path>,
+}
+
 fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStream {
-    let input: syn::ItemFn = match syn::parse(item.clone()) {
+    let mut input: syn::ItemFn = match syn::parse(item.clone()) {
         Ok(input) => input,
         Err(e) => {
             item.extend(TokenStream::from(e.into_compile_error()));
@@ -65,11 +92,151 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
     let mod_path: syn::Path =
         syn::parse_str(&mod_path).unwrap_or_else(|_| panic!("invalid module path: {}", mod_path));
 
+    let mut doc = String::new();
+    let mut params = vec![];
+    let mut request = quote! { None };
+    let mut responses = vec![];
+
+    for attr in &input.attrs {
+        if attr.path.is_ident("doc") {
+            let meta = attr.parse_meta().unwrap();
+            let meta = match meta {
+                Meta::NameValue(val) => val,
+                _ => unreachable!(),
+            };
+
+            let val = match meta.lit {
+                Lit::Str(str) => str.value(),
+                _ => unreachable!(),
+            };
+
+            writeln!(doc, "{}", val).unwrap();
+        } else if attr.path.is_ident("path") {
+            let args = attr.parse_args::<PathArgs>().unwrap();
+            let name = args.name;
+            let model = args.model;
+
+            let param_spec = quote! {
+                axum_codegen::ParamSpec {
+                    location: axum_codegen::ParamLocation::Path,
+                    name: #name.to_owned(),
+                    schema: schema_gen.subschema_for::<#model>(),
+                }
+            };
+
+            params.push(param_spec);
+        } else if attr.path.is_ident("query") {
+            let args = attr.parse_args::<QueryArgs>().unwrap();
+            let name = args.name;
+            let model = args.model;
+
+            let param_spec = quote! {
+                axum_codegen::ParamSpec {
+                    location: axum_codegen::ParamLocation::Query,
+                    name: #name.to_owned(),
+                    schema: schema_gen.subschema_for::<#model>(),
+                }
+            };
+
+            params.push(param_spec);
+        } else if attr.path.is_ident("request") {
+            let args = attr.parse_args::<RequestArgs>().unwrap();
+            let model = args.model;
+
+            request = quote! {
+                Some(
+                    axum_codegen::RequestSpec {
+                        schema: schema_gen.subschema_for::<#model>(),
+                    }
+                )
+            };
+        } else if attr.path.is_ident("response") {
+            let args = attr.parse_args::<ResponseArgs>().unwrap();
+            let status = args
+                .status
+                .map(|v| v.base10_parse().unwrap())
+                .unwrap_or(200u16);
+
+            let description = match args.description {
+                None => quote! { None },
+                Some(description) => {
+                    quote! { Some(#description.to_owned()) }
+                }
+            };
+
+            let schema = match args.model {
+                None => {
+                    quote! { None }
+                }
+                Some(model) => {
+                    quote! { Some(schema_gen.subschema_for::<#model>()) }
+                }
+            };
+
+            let response_spec = quote! {
+                axum_codegen::ResponseSpec {
+                    status: axum::http::StatusCode::from_u16(#status).unwrap(),
+                    description: #description,
+                    schema: #schema,
+                }
+            };
+
+            responses.push(response_spec);
+        }
+    }
+
+    input.attrs.retain(|attr| {
+        ["path", "query", "request", "response"]
+            .iter()
+            .all(|ident| !attr.path.is_ident(ident))
+    });
+
+    let route_impl = quote! {
+        struct Route;
+
+        impl axum_codegen::Route for Route {
+            fn path(&self) -> &'static str {
+                #path
+            }
+
+            fn method(&self) -> axum::http::Method {
+                #method
+            }
+
+            fn src_file(&self) -> &'static str {
+                file!()
+            }
+
+            fn handle(&self, req: axum::http::request::Parts, body: axum::extract::RawBody) -> futures::future::BoxFuture<'static, axum::http::Response<axum::body::BoxBody>> {
+                self::#name(req, body)
+            }
+
+            fn doc(&self) -> Option<&'static str> {
+                Some(#doc)
+            }
+
+            fn params(&self, schema_gen: &mut okapi::schemars::gen::SchemaGenerator) -> Vec<axum_codegen::ParamSpec> {
+                vec![#(#params),*]
+            }
+
+            fn request(&self, schema_gen: &mut okapi::schemars::gen::SchemaGenerator) -> Option<axum_codegen::RequestSpec> {
+                #request
+            }
+
+            fn responses(&self, schema_gen: &mut okapi::schemars::gen::SchemaGenerator) -> Vec<axum_codegen::ResponseSpec> {
+                vec![#(#responses),*]
+            }
+        }
+    };
+
     TokenStream::from(quote! {
         #vis fn #name(req: axum::http::request::Parts, axum::extract::RawBody(body): axum::extract::RawBody) -> futures::future::BoxFuture<'static, axum::http::Response<axum::body::BoxBody>> {
             #input
+            #route_impl
+
             #[linkme::distributed_slice(#mod_path::AXUM_ROUTES)]
-            static _handler: (&'static str, axum::http::Method, axum_codegen::RequestHandler) = (#path, #method, self::#name);
+            static _route: &dyn axum_codegen::Route = &Route;
+
             Box::pin(async move {
                 let req = axum::http::Request::from_parts(req, body);
                 let mut parts = axum::extract::RequestParts::new(req);
@@ -103,9 +270,9 @@ method_attr!(trace, Trace);
 pub fn routes(_: TokenStream) -> TokenStream {
     TokenStream::from(quote! {
         #[linkme::distributed_slice]
-        pub static AXUM_ROUTES: [(&'static str, axum::http::Method, axum_codegen::RequestHandler)] = [..];
+        pub static AXUM_ROUTES: [&'static dyn axum_codegen::Route] = [..];
 
-        pub fn axum_routes() -> &'static [(&'static str, axum::http::Method, axum_codegen::RequestHandler)] {
+        pub fn axum_routes() -> &'static [&'static dyn axum_codegen::Route] {
             &AXUM_ROUTES
         }
     })

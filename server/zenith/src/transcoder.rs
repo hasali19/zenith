@@ -4,6 +4,7 @@ use std::process::Stdio;
 use std::sync::Arc;
 
 use eyre::{eyre, Context};
+use schemars::JsonSchema;
 use serde::Serialize;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
@@ -17,14 +18,14 @@ use crate::ext::CommandExt;
 use crate::library::video_info;
 use crate::video_prober::{VideoInfo, VideoProber};
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, JsonSchema)]
 pub struct Job {
     pub video_id: i64,
     #[serde(flatten)]
     pub state: JobState,
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, JsonSchema)]
 #[serde(tag = "state")]
 #[serde(rename_all = "snake_case")]
 pub enum JobState {

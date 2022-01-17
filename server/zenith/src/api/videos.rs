@@ -9,6 +9,8 @@ use crate::db::{self, Db};
 use super::ext::OptionExt;
 
 #[get("/videos/:id")]
+#[path(name = "id", model = i64)]
+#[response(status = 200)]
 pub async fn get_video_content(
     id: Path<i64>,
     file: FileRequest,

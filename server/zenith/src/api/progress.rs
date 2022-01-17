@@ -17,6 +17,9 @@ struct ProgressUpdate {
 }
 
 #[post("/progress/:id")]
+#[path(name = "id", model = i64)]
+#[query(name = "position", model = f64)]
+#[response(status = 200)]
 async fn update_progress(
     id: Path<i64>,
     query: Query<ProgressUpdate>,

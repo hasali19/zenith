@@ -4,6 +4,7 @@ use axum::extract::{Extension, Path, Query};
 use axum::response::IntoResponse;
 use axum::Json;
 use axum_codegen::post;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::api::error::not_found;
@@ -29,6 +30,9 @@ impl From<ScanOptionsQuery> for ScanOptions {
 }
 
 #[post("/scanner/start")]
+#[query(name = "rescan_files", model = bool)]
+#[query(name = "refresh_metadata", model = bool)]
+#[response(status = 200)]
 async fn start_scan(
     Query(query): Query<ScanOptionsQuery>,
     Extension(scanner): Extension<Arc<LibraryScanner>>,
@@ -36,7 +40,7 @@ async fn start_scan(
     scanner.start_scan(query.into());
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, JsonSchema)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum ItemScanResult {
     Added { id: i64 },
@@ -46,6 +50,10 @@ enum ItemScanResult {
 }
 
 #[post("/scanner/run/:id")]
+#[path(name = "id", model = i64)]
+#[query(name = "rescan_files", model = bool)]
+#[query(name = "refresh_metadata", model = bool)]
+#[response(model = ItemScanResult)]
 async fn scan_item(
     Path(id): Path<i64>,
     Query(query): Query<ScanOptionsQuery>,

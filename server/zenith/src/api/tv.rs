@@ -4,11 +4,15 @@ use axum::Json;
 use axum_codegen::get;
 
 use crate::api::ApiResult;
+use crate::db::episodes::Episode;
+use crate::db::seasons::Season;
+use crate::db::shows::Show;
 use crate::db::{self, Db};
 
 use super::ext::OptionExt;
 
 #[get("/tv/shows")]
+#[response(model = Vec<Show>)]
 pub async fn get_shows(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let shows = db::shows::get_all(&mut conn).await?;
@@ -16,6 +20,8 @@ pub async fn get_shows(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
 }
 
 #[get("/tv/shows/:id")]
+#[path(name = "id", model = i64)]
+#[response(model = Show)]
 pub async fn get_show(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
@@ -27,6 +33,7 @@ pub async fn get_show(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoRe
 }
 
 #[get("/tv/shows/recent")]
+#[response(model = Vec<Show>)]
 pub async fn get_recently_updated_shows(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let shows = db::shows::get_recently_updated(&mut conn).await?;
@@ -34,6 +41,8 @@ pub async fn get_recently_updated_shows(db: Extension<Db>) -> ApiResult<impl Int
 }
 
 #[get("/tv/shows/:id/seasons")]
+#[path(name = "id", model = i64)]
+#[response(model = Vec<Season>)]
 pub async fn get_seasons(show_id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let seasons = db::seasons::get_for_show(&mut conn, *show_id).await?;
@@ -41,6 +50,8 @@ pub async fn get_seasons(show_id: Path<i64>, db: Extension<Db>) -> ApiResult<imp
 }
 
 #[get("/tv/shows/:id/episodes")]
+#[path(name = "id", model = i64)]
+#[response(model = Vec<Episode>)]
 pub async fn get_show_episodes(
     show_id: Path<i64>,
     db: Extension<Db>,
@@ -51,6 +62,8 @@ pub async fn get_show_episodes(
 }
 
 #[get("/tv/seasons/:id")]
+#[path(name = "id", model = i64)]
+#[response(model = Season)]
 pub async fn get_season(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
@@ -62,6 +75,8 @@ pub async fn get_season(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl Into
 }
 
 #[get("/tv/seasons/:id/episodes")]
+#[path(name = "id", model = i64)]
+#[response(model = Vec<Episode>)]
 pub async fn get_episodes(season_id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let episodes = db::episodes::get_for_season(&mut conn, *season_id).await?;
@@ -69,6 +84,8 @@ pub async fn get_episodes(season_id: Path<i64>, db: Extension<Db>) -> ApiResult<
 }
 
 #[get("/tv/episodes/:id")]
+#[path(name = "id", model = i64)]
+#[response(model = Episode)]
 pub async fn get_episode(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 

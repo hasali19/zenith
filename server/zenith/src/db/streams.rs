@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use schemars::JsonSchema;
 use serde::Serialize;
 use sqlx::sqlite::{SqliteArguments, SqliteRow};
 use sqlx::Type;
@@ -25,7 +26,7 @@ impl TryFrom<&'_ str> for StreamType {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, JsonSchema)]
 pub struct Stream {
     pub id: i64,
     pub index: u32,
@@ -34,7 +35,7 @@ pub struct Stream {
     pub props: StreamProps,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, JsonSchema)]
 #[serde(tag = "type")]
 #[serde(rename_all = "snake_case")]
 pub enum StreamProps {
@@ -193,10 +194,10 @@ pub async fn remove_except(
         count += 1;
     }
 
+    let placeholders = sql::Placeholders(count);
     let sql = format!(
         "DELETE FROM video_file_streams
-        WHERE video_id = ? AND stream_index NOT IN ({})",
-        sql::Placeholders(count)
+        WHERE video_id = ? AND stream_index NOT IN ({placeholders})"
     );
 
     sqlx::query_with(&sql, args).execute(conn).await?;

@@ -12,6 +12,8 @@ use super::error::not_found;
 use super::ext::OptionExt;
 
 #[get("/subtitles/:id")]
+#[path(name = "id", model = i64)]
+#[response(status = 200)]
 async fn get_subtitle(
     id: Path<i64>,
     file: FileRequest,
@@ -32,6 +34,8 @@ async fn get_subtitle(
 }
 
 #[delete("/subtitles/:id")]
+#[path(name = "id", model = i64)]
+#[response(status = 200)]
 pub async fn delete_subtitle(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 

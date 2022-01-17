@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqliteConnection};
@@ -9,7 +10,7 @@ use super::collections::CollectionUserData;
 use super::items::ExternalIds;
 use super::media::MediaImage;
 
-#[derive(Serialize)]
+#[derive(Serialize, JsonSchema)]
 pub struct Season {
     pub id: i64,
     pub show_id: i64,

@@ -38,7 +38,9 @@ pub struct ImportSubtitleRequestData {
     language: Option<String>,
 }
 
+// TODO: Support specifying multipart requests
 #[post("/import/subtitle")]
+#[response(status = 200)]
 pub async fn import_subtitle(
     mut multipart: Multipart,
     config: Extension<Arc<Config>>,

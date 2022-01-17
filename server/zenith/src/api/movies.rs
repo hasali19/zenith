@@ -9,6 +9,7 @@ use super::ext::OptionExt;
 use super::ApiResult;
 
 #[get("/movies")]
+#[response(model = Vec<Movie>)]
 pub async fn get_movies(db: Extension<Db>) -> ApiResult<Json<Vec<Movie>>> {
     let mut conn = db.acquire().await?;
     let movies = db::movies::get_all(&mut conn).await?;
@@ -16,6 +17,8 @@ pub async fn get_movies(db: Extension<Db>) -> ApiResult<Json<Vec<Movie>>> {
 }
 
 #[get("/movies/:id")]
+#[path(name = "id", model = i64)]
+#[response(model = Movie)]
 pub async fn get_movie(id: Path<i64>, db: Extension<Db>) -> ApiResult<Json<Movie>> {
     let mut conn = db.acquire().await?;
 
@@ -27,6 +30,7 @@ pub async fn get_movie(id: Path<i64>, db: Extension<Db>) -> ApiResult<Json<Movie
 }
 
 #[get("/movies/recent")]
+#[response(model = Vec<Movie>)]
 pub async fn get_recent_movies(db: Extension<Db>) -> ApiResult<Json<Vec<Movie>>> {
     let mut conn = db.acquire().await?;
     let movies = db::movies::get_recently_added(&mut conn).await?;

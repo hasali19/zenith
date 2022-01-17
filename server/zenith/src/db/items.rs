@@ -1,5 +1,6 @@
 use std::fmt::Write;
 
+use schemars::JsonSchema;
 use serde::Serialize;
 use sqlx::SqliteConnection;
 
@@ -9,12 +10,12 @@ use super::movies::{self, Movie};
 use super::seasons::{self, Season};
 use super::shows::{self, Show};
 
-#[derive(Serialize)]
+#[derive(Serialize, JsonSchema)]
 pub struct ExternalIds {
     pub tmdb: Option<i32>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, JsonSchema)]
 #[serde(tag = "type")]
 #[serde(rename_all = "snake_case")]
 pub enum MediaItem {
