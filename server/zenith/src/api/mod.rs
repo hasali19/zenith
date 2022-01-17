@@ -14,6 +14,6 @@ mod videos;
 
 use self::error::ApiError;
 
-pub use self::routing::router;
+pub use self::routing::{openapi_spec, router};
 
 pub type ApiResult<T> = Result<T, ApiError>;

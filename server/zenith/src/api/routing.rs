@@ -18,7 +18,7 @@ axum_codegen::routes!();
 const REDOC_INDEX: &str = include_str!("redoc.html");
 
 pub fn router() -> axum::Router {
-    let spec = build_openapi_spec(&mut SchemaSettings::openapi3().into_generator());
+    let spec = openapi_spec();
 
     axum_routes()
         .iter()
@@ -31,6 +31,10 @@ pub fn router() -> axum::Router {
             ACCESS_CONTROL_ALLOW_ORIGIN,
             HeaderValue::from_static("*"),
         ))
+}
+
+pub fn openapi_spec() -> OpenApi {
+    build_openapi_spec(&mut SchemaSettings::openapi3().into_generator())
 }
 
 fn build_openapi_spec(schema_gen: &mut SchemaGenerator) -> OpenApi {

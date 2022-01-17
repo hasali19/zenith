@@ -32,6 +32,23 @@ async fn main() -> eyre::Result<()> {
         .with_target(true)
         .init();
 
+    match std::env::args().nth(1).as_deref() {
+        Some("openapi") => {
+            let spec = zenith::api::openapi_spec();
+            println!("{}", serde_json::to_string_pretty(&spec)?);
+        }
+        Some(cmd) if cmd != "serve" => {
+            eprintln!("unrecognised command: {}", cmd);
+        }
+        _ => {
+            run_server().await?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn run_server() -> eyre::Result<()> {
     let config = Arc::new(Config::load("config.yml")?);
     let db = Db::init(&config.database.path).await?;
     let tmdb = TmdbClient::new(&config.tmdb.api_key);
