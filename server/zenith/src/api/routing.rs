@@ -25,8 +25,8 @@ pub fn router() -> axum::Router {
         .fold(Router::new(), |router, route| {
             router.route(route.path(), method_service(*route))
         })
-        .route("/api", get(|| async move { Html(REDOC_INDEX) }))
-        .route("/api/openapi.json", get(|| async move { Json(spec) }))
+        .route("/", get(|| async move { Html(REDOC_INDEX) }))
+        .route("/openapi.json", get(|| async move { Json(spec) }))
         .layer(SetResponseHeaderLayer::overriding(
             ACCESS_CONTROL_ALLOW_ORIGIN,
             HeaderValue::from_static("*"),
