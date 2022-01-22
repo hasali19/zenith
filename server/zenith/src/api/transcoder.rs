@@ -46,6 +46,7 @@ enum Event {
 }
 
 #[get("/transcoder/events")]
+#[response(status = 200)]
 pub async fn get_events(transcoder: Extension<Arc<Transcoder>>) -> ApiResult<impl IntoResponse> {
     let queue = transcoder.queue().await;
 
