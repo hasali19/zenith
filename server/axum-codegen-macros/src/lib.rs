@@ -42,7 +42,7 @@ struct ResponseArgs {
 }
 
 fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStream {
-    let mut input: syn::ItemFn = match syn::parse(item.clone()) {
+    let mut input: syn_mid::ItemFn = match syn::parse(item.clone()) {
         Ok(input) => input,
         Err(e) => {
             item.extend(TokenStream::from(e.into_compile_error()));
