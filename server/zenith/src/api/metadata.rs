@@ -27,9 +27,9 @@ async fn refresh_metadata(
 
     let refresh_req = match item_type {
         MediaItemType::Movie => RefreshRequest::Movie(id),
-        MediaItemType::TvShow => RefreshRequest::TvShow(id),
-        MediaItemType::TvSeason => RefreshRequest::TvSeason(id),
-        MediaItemType::TvEpisode => RefreshRequest::TvEpisode(id),
+        MediaItemType::Show => RefreshRequest::TvShow(id),
+        MediaItemType::Season => RefreshRequest::TvSeason(id),
+        MediaItemType::Episode => RefreshRequest::TvEpisode(id),
     };
 
     metadata::refresh(&mut conn, &*tmdb, refresh_req).await?;

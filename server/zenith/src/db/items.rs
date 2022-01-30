@@ -33,9 +33,9 @@ pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Me
 
     let item = match item_type {
         MediaItemType::Movie => movies::get(&mut *conn, id).await?.map(MediaItem::Movie),
-        MediaItemType::TvShow => shows::get(&mut *conn, id).await?.map(MediaItem::Show),
-        MediaItemType::TvSeason => seasons::get(&mut *conn, id).await?.map(MediaItem::Season),
-        MediaItemType::TvEpisode => episodes::get(&mut *conn, id).await?.map(MediaItem::Episode),
+        MediaItemType::Show => shows::get(&mut *conn, id).await?.map(MediaItem::Show),
+        MediaItemType::Season => seasons::get(&mut *conn, id).await?.map(MediaItem::Season),
+        MediaItemType::Episode => episodes::get(&mut *conn, id).await?.map(MediaItem::Episode),
     };
 
     Ok(item)

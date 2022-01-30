@@ -157,7 +157,7 @@ impl LibraryScanner {
 
         let video_type = match item_type {
             MediaItemType::Movie => VideoFileType::Movie,
-            MediaItemType::TvEpisode => VideoFileType::Episode,
+            MediaItemType::Episode => VideoFileType::Episode,
             _ => return Ok(None),
         };
 

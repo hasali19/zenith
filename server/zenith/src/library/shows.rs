@@ -46,7 +46,7 @@ impl ShowLibrary {
         ";
 
         let id: i64 = sqlx::query(sql)
-            .bind(MediaItemType::TvShow)
+            .bind(MediaItemType::Show)
             .execute(&mut transaction)
             .await?
             .last_insert_rowid();
@@ -121,7 +121,7 @@ impl ShowLibrary {
         ";
 
         let id: i64 = sqlx::query(sql)
-            .bind(MediaItemType::TvSeason)
+            .bind(MediaItemType::Season)
             .execute(&mut *transaction)
             .await?
             .last_insert_rowid();
@@ -208,7 +208,7 @@ impl ShowLibrary {
         ";
 
         let id: i64 = sqlx::query(sql)
-            .bind(MediaItemType::TvEpisode)
+            .bind(MediaItemType::Episode)
             .execute(&mut *transaction)
             .await?
             .last_insert_rowid();

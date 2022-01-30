@@ -136,14 +136,14 @@ async fn update_user_data(
     let mut ids = vec![];
 
     match item_type {
-        MediaItemType::Movie | MediaItemType::TvEpisode => ids.push(*id),
-        MediaItemType::TvShow => ids.extend(
+        MediaItemType::Movie | MediaItemType::Episode => ids.push(*id),
+        MediaItemType::Show => ids.extend(
             db::episodes::get_for_show(&mut conn, *id)
                 .await?
                 .iter()
                 .map(|e| e.id),
         ),
-        MediaItemType::TvSeason => ids.extend(
+        MediaItemType::Season => ids.extend(
             db::episodes::get_for_season(&mut conn, *id)
                 .await?
                 .iter()
