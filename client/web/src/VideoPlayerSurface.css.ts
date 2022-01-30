@@ -1,7 +1,8 @@
 import { style } from "@vanilla-extract/css";
 
 export const root = style({
-  flex: 1,
+  position: "absolute",
+  inset: 0,
 });
 
 export const video = style({

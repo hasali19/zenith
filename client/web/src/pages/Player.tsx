@@ -1,18 +1,17 @@
 import { useParams } from "solid-app-router";
-import { Component } from "solid-js";
+import { Component, onCleanup, onMount } from "solid-js";
 import preferences from "../preferences";
-import * as styles from "./Player.css";
+import { setPlayerSrc } from "../VideoPlayerSurface";
 
 export const PlayerScreen: Component = () => {
   const params = useParams();
-  return (
-    <div class={styles.root}>
-      <video
-        autoplay
-        controls
-        src={`${preferences.server}/api/videos/${params.id}`}
-        class={styles.video}
-      />
-    </div>
-  );
+
+  onMount(() => {
+    setPlayerSrc(`${preferences.server}/api/videos/${params.id}`);
+    onCleanup(() => {
+      setPlayerSrc(null);
+    });
+  });
+
+  return null;
 };
