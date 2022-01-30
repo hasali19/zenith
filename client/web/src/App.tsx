@@ -1,5 +1,5 @@
 import { Component, Show } from "solid-js";
-import { Route, Router, Routes } from "solid-app-router";
+import { Outlet, Route, Router, Routes } from "solid-app-router";
 
 import * as styles from "./App.css";
 import preferences from "./preferences";
@@ -24,9 +24,9 @@ export const App: Component = () => {
           when={preferences.server != null}
           fallback={<SelectServerScreen />}
         >
-          <SideBar />
-          <div class={styles.mainContent}>
-            <Routes>
+          <Routes>
+            <Route path="/player/:id" element={<PlayerScreen />} />
+            <Route path="/*all" element={<MainScreen />}>
               <Route path="/" element={<HomeScreen />} />
               <Route path="/movies" element={<MoviesScreen />} />
               <Route path="/movies/:id" element={<MovieScreen />} />
@@ -34,12 +34,20 @@ export const App: Component = () => {
               <Route path="/shows/:id" element={<ShowScreen />} />
               <Route path="/seasons/:id" element={<SeasonScreen />} />
               <Route path="/episodes/:id" element={<EpisodeScreen />} />
-              <Route path="/player/:id" element={<PlayerScreen />} />
               <Route path="/*all" element={<NotFoundScreen />} />
-            </Routes>
-          </div>
+            </Route>
+          </Routes>
         </Show>
       </div>
     </Router>
+  );
+};
+
+const MainScreen: Component = () => {
+  return (
+    <>
+      <SideBar />
+      <div class={styles.mainContent}>{<Outlet />}</div>
+    </>
   );
 };
