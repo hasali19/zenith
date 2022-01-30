@@ -8,4 +8,5 @@ edition = "2021"
 [dependencies]
 axum = "0.4"
 axum-codegen-macros = { path = "../axum-codegen-macros" }
+inventory = "0.2"
 okapi = "0.7.0-rc.1"

@@ -1,2 +1,0 @@
-[env]
-AXUM_CODEGEN_MODULE = "crate::api::routing"

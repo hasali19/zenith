@@ -88,10 +88,6 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
         Method::Trace => quote! { axum::http::Method::TRACE },
     };
 
-    let mod_path = std::env::var("AXUM_CODEGEN_MODULE").unwrap_or_else(|_| "crate".to_owned());
-    let mod_path: syn::Path =
-        syn::parse_str(&mod_path).unwrap_or_else(|_| panic!("invalid module path: {}", mod_path));
-
     let mut doc = String::new();
     let mut params = vec![];
     let mut request = quote! { None };
@@ -234,8 +230,9 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
             #input
             #route_impl
 
-            #[linkme::distributed_slice(#mod_path::AXUM_ROUTES)]
-            static _route: &dyn axum_codegen::Route = &Route;
+            inventory::submit! {
+                &Route as &'static dyn axum_codegen::Route
+            }
 
             Box::pin(async move {
                 let req = axum::http::Request::from_parts(req, body);
@@ -265,15 +262,3 @@ method_attr!(options, Options);
 method_attr!(connect, Connect);
 method_attr!(patch, Patch);
 method_attr!(trace, Trace);
-
-#[proc_macro]
-pub fn routes(_: TokenStream) -> TokenStream {
-    TokenStream::from(quote! {
-        #[linkme::distributed_slice]
-        pub static AXUM_ROUTES: [&'static dyn axum_codegen::Route] = [..];
-
-        pub fn axum_routes() -> &'static [&'static dyn axum_codegen::Route] {
-            &AXUM_ROUTES
-        }
-    })
-}

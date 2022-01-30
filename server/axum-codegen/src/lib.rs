@@ -52,3 +52,9 @@ pub trait Route: Send + Sync {
     fn request(&self, schema_gen: &mut SchemaGenerator) -> Option<RequestSpec>;
     fn responses(&self, schema_gen: &mut SchemaGenerator) -> Vec<ResponseSpec>;
 }
+
+inventory::collect!(&'static dyn Route);
+
+pub fn routes() -> impl Iterator<Item = &'static dyn Route> {
+    inventory::iter::<&'static dyn Route>.into_iter().copied()
+}

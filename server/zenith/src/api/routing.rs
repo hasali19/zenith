@@ -13,17 +13,14 @@ use okapi::openapi3::{
 use schemars::gen::{SchemaGenerator, SchemaSettings};
 use tower_http::set_header::SetResponseHeaderLayer;
 
-axum_codegen::routes!();
-
 const REDOC_INDEX: &str = include_str!("redoc.html");
 
 pub fn router() -> axum::Router {
     let spec = openapi_spec();
 
-    axum_routes()
-        .iter()
+    axum_codegen::routes()
         .fold(Router::new(), |router, route| {
-            router.route(route.path(), method_service(*route))
+            router.route(route.path(), method_service(route))
         })
         .route("/", get(|| async move { Html(REDOC_INDEX) }))
         .route("/openapi.json", get(|| async move { Json(spec) }))
@@ -48,48 +45,46 @@ fn build_openapi_spec(schema_gen: &mut SchemaGenerator) -> OpenApi {
         ..Default::default()
     };
 
-    spec.paths = axum_routes()
-        .iter()
-        .fold(Default::default(), |mut paths, &route| {
-            let method = route.method();
-            let path = route
-                .path()
-                .trim_start_matches('/')
-                .split('/')
-                .map(|segment| {
-                    if segment.starts_with(':') {
-                        format!("{{{}}}", segment.trim_start_matches(':'))
-                    } else {
-                        segment.to_owned()
-                    }
-                })
-                .collect::<Vec<_>>()
-                .join("/");
-
-            let item = paths.entry(format!("/api/{path}")).or_default();
-            let operation_ref = match method {
-                Method::GET => &mut item.get,
-                Method::POST => &mut item.post,
-                Method::PUT => &mut item.put,
-                Method::PATCH => &mut item.patch,
-                Method::DELETE => &mut item.delete,
-                _ => panic!("invalid method: {}", method),
-            };
-
-            *operation_ref = build_route_spec(route, schema_gen).map(|mut op| {
-                for param in &mut op.parameters {
-                    if let RefOr::Object(param) = param {
-                        param.extensions.clear();
-                    }
+    spec.paths = axum_codegen::routes().fold(Default::default(), |mut paths, route| {
+        let method = route.method();
+        let path = route
+            .path()
+            .trim_start_matches('/')
+            .split('/')
+            .map(|segment| {
+                if segment.starts_with(':') {
+                    format!("{{{}}}", segment.trim_start_matches(':'))
+                } else {
+                    segment.to_owned()
                 }
+            })
+            .collect::<Vec<_>>()
+            .join("/");
 
-                op.responses.extensions.clear();
+        let item = paths.entry(format!("/api/{path}")).or_default();
+        let operation_ref = match method {
+            Method::GET => &mut item.get,
+            Method::POST => &mut item.post,
+            Method::PUT => &mut item.put,
+            Method::PATCH => &mut item.patch,
+            Method::DELETE => &mut item.delete,
+            _ => panic!("invalid method: {}", method),
+        };
 
-                op
-            });
+        *operation_ref = build_route_spec(route, schema_gen).map(|mut op| {
+            for param in &mut op.parameters {
+                if let RefOr::Object(param) = param {
+                    param.extensions.clear();
+                }
+            }
 
-            paths
+            op.responses.extensions.clear();
+
+            op
         });
+
+        paths
+    });
 
     let mut components = spec.components.unwrap_or_default();
 
