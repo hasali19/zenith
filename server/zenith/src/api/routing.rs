@@ -68,7 +68,7 @@ fn build_openapi_spec(schema_gen: &mut SchemaGenerator) -> OpenApi {
             Method::PUT => &mut item.put,
             Method::PATCH => &mut item.patch,
             Method::DELETE => &mut item.delete,
-            _ => panic!("invalid method: {}", method),
+            _ => panic!("invalid method: {method}"),
         };
 
         *operation_ref = build_route_spec(route, schema_gen).map(|mut op| {
@@ -222,6 +222,6 @@ fn method_service(route: &'static dyn Route) -> MethodRouter {
         Method::OPTIONS => axum::routing::options(handler),
         Method::PATCH => axum::routing::patch(handler),
         Method::TRACE => axum::routing::trace(handler),
-        _ => panic!("Unsupported method: {}", method),
+        _ => panic!("Unsupported method: {method}"),
     }
 }

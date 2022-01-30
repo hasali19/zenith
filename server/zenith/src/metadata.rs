@@ -28,7 +28,7 @@ impl MetadataManager {
                 let mut conn = db.acquire().await.unwrap();
                 let res = refresh(&mut conn, &tmdb, req).await;
                 if let Err(e) = res {
-                    tracing::error!("{}", e);
+                    tracing::error!("{e}");
                 }
             }
         });
@@ -61,20 +61,20 @@ async fn refresh_movie_metadata(
     tmdb: &TmdbClient,
     id: i64,
 ) -> eyre::Result<()> {
-    tracing::info!("updating metadata for movie (id: {})", id);
+    tracing::info!("updating metadata for movie (id: {id})");
 
     let movie = db::movies::get(&mut *db, id)
         .await?
-        .ok_or_else(|| eyre!("movie not found: {}", id))?;
+        .ok_or_else(|| eyre!("movie not found: {id}"))?;
 
     let path = std::path::Path::new(&movie.video_info.path);
     let name = path
         .file_name()
         .and_then(|v| v.to_str())
-        .ok_or_else(|| eyre!("invalid movie path: {:?}", path))?;
+        .ok_or_else(|| eyre!("invalid movie path: {path:?}"))?;
 
     let (title, year) = scanner::parse_movie_filename(name)
-        .ok_or_else(|| eyre!("failed to parse movie name: {}", name))?;
+        .ok_or_else(|| eyre!("failed to parse movie name: {name}"))?;
 
     let query = MovieSearchQuery {
         title: &title,
@@ -86,11 +86,8 @@ async fn refresh_movie_metadata(
     let result = match metadata.results.into_iter().next() {
         Some(result) => result,
         None => {
-            return Err(eyre!(
-                "no match found for '{} ({})'",
-                title,
-                year.map(|dt| dt.year()).unwrap_or(-1)
-            ))
+            let year = year.map(|dt| dt.year()).unwrap_or(-1);
+            return Err(eyre!("no match found for '{title} ({year})'"));
         }
     };
 
@@ -126,11 +123,11 @@ async fn refresh_tv_show_metadata(
     tmdb: &TmdbClient,
     id: i64,
 ) -> eyre::Result<()> {
-    tracing::info!("updating metadata for tv show (id: {})", id);
+    tracing::info!("updating metadata for tv show (id: {id})");
 
     let path = db::shows::get_path(&mut *db, id)
         .await?
-        .ok_or_else(|| eyre!("show not found: {}", id))?;
+        .ok_or_else(|| eyre!("show not found: {id}"))?;
 
     let path = std::path::Path::new(&path);
     let name = path
@@ -198,15 +195,15 @@ async fn refresh_tv_season_metadata(
     tmdb: &TmdbClient,
     id: i64,
 ) -> eyre::Result<()> {
-    tracing::info!("updating metadata for tv season (id: {})", id);
+    tracing::info!("updating metadata for tv season (id: {id})");
 
     let season = db::seasons::get(&mut *db, id)
         .await?
-        .ok_or_else(|| eyre!("season not found: {}", id))?;
+        .ok_or_else(|| eyre!("season not found: {id}"))?;
 
     let show = db::shows::get(&mut *db, season.show_id)
         .await?
-        .ok_or_else(|| eyre!("show not found for season: {}", id))?;
+        .ok_or_else(|| eyre!("show not found for season: {id}"))?;
 
     let show_tmdb_id = show
         .external_ids
@@ -245,7 +242,7 @@ async fn refresh_tv_episode_metadata(
     tmdb: &TmdbClient,
     id: i64,
 ) -> eyre::Result<()> {
-    tracing::info!("updating metadata for tv episode (id: {})", id);
+    tracing::info!("updating metadata for tv episode (id: {id})");
 
     let episode = db::episodes::get(&mut *db, id)
         .await?

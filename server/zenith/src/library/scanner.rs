@@ -117,7 +117,7 @@ impl LibraryScanner {
 
             async fn log_error(fut: impl std::future::Future<Output = eyre::Result<()>>) {
                 if let Err(e) = fut.await {
-                    tracing::error!("{:?}", e);
+                    tracing::error!("{e:?}");
                 }
             }
 
@@ -130,7 +130,7 @@ impl LibraryScanner {
             let duration = Instant::now() - start_time;
             let seconds = duration.as_seconds_f32();
 
-            tracing::info!("completed scan in {:.3}s", seconds);
+            tracing::info!("completed scan in {seconds:.3}s");
         } else {
             tracing::info!("scan is already in progress");
         }
@@ -270,7 +270,7 @@ impl LibraryScannerImpl {
             None => return Ok(FileScanResult::Ignored),
         };
 
-        tracing::info!("adding movie: {}", name);
+        tracing::info!("adding movie: {name}");
 
         let movie = NewMovie {
             path: path_str,
@@ -338,7 +338,7 @@ impl LibraryScannerImpl {
         let show_id = match show_id {
             Some(id) => id,
             None => {
-                tracing::info!("adding show: {}", show_name);
+                tracing::info!("adding show: {show_name}");
 
                 let show = NewShow {
                     path: parent_path,
@@ -354,7 +354,7 @@ impl LibraryScannerImpl {
         let season_id = match season_id {
             Some(id) => id,
             None => {
-                tracing::info!("adding season: {} ({})", show_name, season);
+                tracing::info!("adding season: {show_name} ({season})");
 
                 let season = NewSeason {
                     show_id,
@@ -367,7 +367,7 @@ impl LibraryScannerImpl {
             }
         };
 
-        tracing::info!("adding episode: {} ({}:{})", show_name, season, episode);
+        tracing::info!("adding episode: {show_name} ({season}:{episode})");
 
         let episode = NewEpisode {
             season_id,

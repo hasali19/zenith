@@ -48,7 +48,7 @@ where
 pub async fn extract_embedded(config: &Config, path: &str, index: u32) -> std::io::Result<Vec<u8>> {
     Command::new(&config.transcoding.ffmpeg_path)
         .arg_pair("-i", &path)
-        .arg_pair("-map", format!("0:{}", index))
+        .arg_pair("-map", format!("0:{index}"))
         .arg_pair("-c:s", "webvtt")
         .arg_pair("-f", "webvtt")
         .arg("pipe:1")

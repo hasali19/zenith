@@ -157,7 +157,7 @@ impl MovieLibrary {
         for (id, path) in movies {
             // Check if file exists
             if !Path::new(&path).is_file() {
-                tracing::info!("{} does not exist, removing movie", path);
+                tracing::info!("{path} does not exist, removing movie");
                 self.remove_movie(id).await?;
             }
         }

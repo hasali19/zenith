@@ -13,7 +13,7 @@ use super::LibraryScanner;
 pub fn start(config: Arc<Config>, scanner: Arc<LibraryScanner>) {
     tokio::spawn(async move {
         if let Err(e) = run(config, scanner).await {
-            tracing::error!("{:?}", e);
+            tracing::error!("{e:?}");
         }
     });
 }
@@ -26,7 +26,7 @@ async fn run(config: Arc<Config>, scanner: Arc<LibraryScanner>) -> eyre::Result<
         notify::recommended_watcher(move |res: Result<Event, notify::Error>| {
             match res.map_err(|e| eyre!(e)) {
                 Ok(e) => tx.blocking_send(e).unwrap(),
-                Err(e) => tracing::error!("{:?}", e),
+                Err(e) => tracing::error!("{e:?}"),
             }
         })?;
 

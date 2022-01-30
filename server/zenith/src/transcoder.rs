@@ -170,7 +170,7 @@ impl Transcoder {
                     self.sender.send(Event::Success(id)).ok();
                 }
                 Err(e) => {
-                    tracing::error!("{:?}", e);
+                    tracing::error!("{e:?}");
                     self.set_current(None).await;
                     self.sender.send(Event::Error(id)).ok();
                 }
@@ -182,13 +182,13 @@ impl Transcoder {
     async fn process_job(&self, job: Job) -> eyre::Result<()> {
         let id = job.video_id;
 
-        tracing::info!("starting transcode for video (id: {})", id);
+        tracing::info!("starting transcode for video (id: {id})");
 
         let path = self
             .get_video_path(id)
             .await
             .wrap_err("failed to get video path")?
-            .ok_or_else(|| eyre!("no video found with id: {}", id))?;
+            .ok_or_else(|| eyre!("no video found with id: {id}"))?;
 
         let info = self
             .video_prober
@@ -246,13 +246,13 @@ impl Transcoder {
             for mapping in mappings {
                 match mapping {
                     StreamMapping::Copy(index) => {
-                        cmd.arg_pair("-map", format!("0:{}", index));
-                        cmd.arg_pair(format!("-c:{}", index), "copy");
+                        cmd.arg_pair("-map", format!("0:{index}"));
+                        cmd.arg_pair(format!("-c:{index}"), "copy");
                     }
                     StreamMapping::ConvertAudio(index) => {
-                        cmd.arg_pair("-map", format!("0:{}", index));
-                        cmd.arg_pair(format!("-c:{}", index), "aac");
-                        cmd.arg_pair(format!("-ac:{}", index), "2");
+                        cmd.arg_pair("-map", format!("0:{index}"));
+                        cmd.arg_pair(format!("-c:{index}"), "aac");
+                        cmd.arg_pair(format!("-ac:{index}"), "2");
                     }
                 }
             }
@@ -275,10 +275,11 @@ impl Transcoder {
                     continue;
                 }
 
-                let output = subtitles_dir.join(format!("{}.extracted.vtt.tmp", stream.index));
+                let index = stream.index;
+                let output = subtitles_dir.join(format!("{index}.extracted.vtt.tmp"));
 
-                cmd.arg_pair("-map", format!("0:{}", stream.index));
-                cmd.arg_pair(format!("-c:{}", stream.index), "copy");
+                cmd.arg_pair("-map", format!("0:{index}"));
+                cmd.arg_pair(format!("-c:{index}"), "copy");
                 cmd.arg_pair("-f", "webvtt");
                 cmd.arg(&output);
 

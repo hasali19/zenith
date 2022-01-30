@@ -82,7 +82,8 @@ pub async fn import_subtitle(
             std::fs::create_dir_all("data/tmp")?;
         }
 
-        let src_path = format!("data/tmp/{}.vtt", Uuid::new_v4());
+        let id = Uuid::new_v4();
+        let src_path = format!("data/tmp/{id}.vtt");
         let file = BufWriter::new(File::create(&src_path).await?);
 
         match content_type {
@@ -99,7 +100,7 @@ pub async fn import_subtitle(
     let dst_name = Uuid::new_v4().to_string();
     let dst_path = subtitles_dir.join(dst_name).with_extension("vtt");
     if dst_path.exists() {
-        return Err(bad_request(format!("{:?} already exists", dst_path)));
+        return Err(bad_request(format!("{dst_path:?} already exists")));
     }
 
     let mut transaction = db.begin().await?;
@@ -117,7 +118,7 @@ pub async fn import_subtitle(
         std::fs::create_dir_all(&subtitles_dir)?;
     }
 
-    tracing::info!("copying {:?} to {:?}", src_path, dst_path);
+    tracing::info!("copying {src_path:?} to {dst_path:?}");
     std::fs::copy(&src_path, &dst_path)?;
 
     transaction.commit().await?;

@@ -332,7 +332,7 @@ impl ShowLibrary {
         for (id, path) in episodes {
             // Check if file exists
             if !Path::new(&path).is_file() {
-                tracing::info!("{} does not exist, removing episode (id: {})", path, id);
+                tracing::info!("{path} does not exist, removing episode (id: {id})");
                 self.remove_episode(id).await?;
             }
         }
@@ -356,7 +356,7 @@ impl ShowLibrary {
         let seasons: Vec<i64> = sqlx::query_scalar(sql).fetch_all(&mut conn).await?;
 
         for id in seasons {
-            tracing::info!("season (id: {}) has no episodes, removing", id);
+            tracing::info!("season (id: {id}) has no episodes, removing");
             self.remove_season(id).await?;
         }
 
@@ -371,7 +371,7 @@ impl ShowLibrary {
         let shows: Vec<i64> = sqlx::query_scalar(sql).fetch_all(&mut conn).await?;
 
         for id in shows {
-            tracing::info!("show (id: {}) has no seasons, removing", id);
+            tracing::info!("show (id: {id}) has no seasons, removing");
             self.remove_show(id).await?;
         }
 

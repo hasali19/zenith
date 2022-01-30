@@ -146,12 +146,12 @@ impl TmdbClient {
     }
 
     pub async fn get_tv_show(&self, id: i32) -> eyre::Result<TvShowResponse> {
-        let url = self.url(&format!("tv/{}", id));
+        let url = self.url(&format!("tv/{id}"));
         self.get_json(url).await
     }
 
     pub async fn get_tv_season(&self, tv_id: i32, season: i32) -> eyre::Result<TvSeasonResponse> {
-        let url = self.url(&format!("tv/{}/season/{}", tv_id, season));
+        let url = self.url(&format!("tv/{tv_id}/season/{season}"));
         self.get_json(url).await
     }
 
@@ -161,7 +161,7 @@ impl TmdbClient {
         season: i32,
         episode: i32,
     ) -> eyre::Result<TvEpisodeResponse> {
-        let path = format!("tv/{}/season/{}/episode/{}", tv_id, season, episode);
+        let path = format!("tv/{tv_id}/season/{season}/episode/{episode}");
         let url = self.url(&path);
         self.get_json(url).await
     }
@@ -172,7 +172,7 @@ impl TmdbClient {
         season: i32,
         episode: i32,
     ) -> eyre::Result<TvEpisodeImagesResponse> {
-        let path = format!("tv/{}/season/{}/episode/{}/images", tv_id, season, episode);
+        let path = format!("tv/{tv_id}/season/{season}/episode/{episode}/images");
         let url = self.url(&path);
         self.get_json(url).await
     }
