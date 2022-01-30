@@ -10,7 +10,7 @@
 .env
 
 # App config
-config.yml
+/config.yml
 
 # Log files
 *.log
