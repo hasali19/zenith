@@ -10,6 +10,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@mdi/js": "^6.5.95",
     "@minht11/solid-virtual-container": "^0.2.1",
     "@vanilla-extract/css": "^1.6.3",
     "solid-app-router": "^0.1.11",

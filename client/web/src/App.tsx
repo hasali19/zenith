@@ -5,7 +5,6 @@ import * as styles from "./App.css";
 import preferences from "./preferences";
 
 import { SideBar } from "./SideBar";
-import { VideoPlayerSurface } from "./VideoPlayerSurface";
 
 import { SelectServerScreen } from "./pages/SelectServer";
 import { HomeScreen } from "./pages/Home";
@@ -26,7 +25,6 @@ export const App: Component = () => {
           when={preferences.server != null}
           fallback={<SelectServerScreen />}
         >
-          <VideoPlayerSurface />
           <Routes>
             <Route path="/player/:id" element={<PlayerScreen />} />
             <Route path="/*all" element={<MainScreen />}>
