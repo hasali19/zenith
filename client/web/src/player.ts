@@ -40,6 +40,7 @@ class Html5Player implements Player {
     video.style.height = "100%";
     video.style.background = "black";
     video.src = src;
+    video.autoplay = true;
 
     video.addEventListener("durationchange", () => {
       for (const listener of this.durationChangeListeners) {
@@ -58,19 +59,6 @@ class Html5Player implements Player {
         listener(false);
       }
     });
-
-    (async () => {
-      try {
-        await video.play();
-        for (const listener of this.isPlayingChangeListeners) {
-          listener(true);
-        }
-      } catch {
-        for (const listener of this.isPlayingChangeListeners) {
-          listener(false);
-        }
-      }
-    })();
 
     container.appendChild(video);
   }

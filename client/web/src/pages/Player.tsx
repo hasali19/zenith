@@ -21,7 +21,7 @@ export const PlayerScreen: Component = () => {
 
   const [isVisible, setVisible] = createSignal(true);
   const [isSeeking, setSeeking] = createSignal(false);
-  const [isPlaying, setPlaying] = createSignal(true);
+  const [isPlaying, setPlaying] = createSignal(false);
   const [duration, setDuration] = createSignal(0);
   const [position, setPosition] = createSignal(0);
   const [isFullscreen, setFullscreen] = createSignal(
