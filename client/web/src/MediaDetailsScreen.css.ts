@@ -1,4 +1,5 @@
 import { style } from "@vanilla-extract/css";
+import { scrollbar } from "./scrollbar.css";
 
 export const root = style({
   width: "100%",
@@ -20,14 +21,17 @@ export const backdropOverlay = style({
   backgroundColor: "rgba(0, 0, 0, 0.7)",
 });
 
-export const content = style({
-  width: "100%",
-  height: "100%",
-  position: "relative",
-  overflow: "auto",
-  padding: "5%",
-  boxSizing: "border-box",
-});
+export const content = style([
+  scrollbar,
+  {
+    width: "100%",
+    height: "100%",
+    position: "relative",
+    overflow: "auto",
+    padding: "5%",
+    boxSizing: "border-box",
+  },
+]);
 
 export const headerSection = style({
   display: "flex",
