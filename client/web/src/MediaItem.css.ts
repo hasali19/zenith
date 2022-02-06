@@ -6,6 +6,7 @@ export const item = style([
     userSelect: "none",
     borderRadius: 8,
     transition: "all 100ms",
+    background: "rgba(255,255,255,0.2)",
     ":hover": {
       transform: "scale(0.98)",
     },
@@ -26,7 +27,7 @@ const imageWrapper = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  backgroundColor: "#1e2b3b",
+  backgroundColor: "rgba(255,255,255,0.1)",
   borderTopLeftRadius: 8,
   borderTopRightRadius: 8,
 });

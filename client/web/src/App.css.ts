@@ -5,7 +5,6 @@ export const app = style({
   display: "flex",
   position: "relative",
   minWidth: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.3)",
 });
 
 export const mainContent = style({
