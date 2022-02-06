@@ -7,7 +7,6 @@ export const sideBar = style({
   flexDirection: "column",
   padding: 4,
   boxSizing: "border-box",
-  backgroundColor: "rgba(255, 255, 255, 0.03)",
 });
 
 export const sideBarItemIndicator = style({

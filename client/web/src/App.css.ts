@@ -18,5 +18,8 @@ export const mainContent = style([
     height: "100vh",
     overflow: "auto",
     boxSizing: "border-box",
+    borderTopLeftRadius: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.03)",
+    boxShadow: "-5px -5px 5px rgba(0, 0, 0, 0.05)",
   },
 ]);
