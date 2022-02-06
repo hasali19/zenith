@@ -7,9 +7,6 @@ export default defineConfig({
   build: {
     target: "esnext",
     polyfillDynamicImport: false,
-    rollupOptions: {
-      external: ["/desktop.css"],
-    },
   },
   server: {
     proxy: {
