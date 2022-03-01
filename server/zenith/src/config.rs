@@ -20,6 +20,8 @@ pub struct Config {
     pub import: Import,
     #[serde(default)]
     pub subtitles: Subtitles,
+    #[serde(default)]
+    pub watcher: Watcher,
 }
 
 #[derive(Deserialize)]
@@ -83,6 +85,12 @@ pub enum ImportMatcherTarget {
 pub struct Subtitles {
     #[serde(default = "Subtitles::default_path")]
     pub path: PathBuf,
+}
+
+#[derive(Deserialize)]
+pub struct Watcher {
+    #[serde(default = "Watcher::default_enabled")]
+    pub enabled: bool,
 }
 
 impl Config {
@@ -155,6 +163,20 @@ impl Default for Subtitles {
     fn default() -> Self {
         Subtitles {
             path: Subtitles::default_path(),
+        }
+    }
+}
+
+impl Watcher {
+    fn default_enabled() -> bool {
+        true
+    }
+}
+
+impl Default for Watcher {
+    fn default() -> Self {
+        Watcher {
+            enabled: Watcher::default_enabled(),
         }
     }
 }
