@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -5,6 +6,8 @@ use eyre::eyre;
 use once_cell::sync::OnceCell;
 use regex::Regex;
 use time::{Date, Instant, OffsetDateTime};
+use tokio::fs::File;
+use tokio::io::AsyncBufReadExt;
 use tokio::sync::Mutex;
 use walkdir::{DirEntry, WalkDir};
 
@@ -70,6 +73,15 @@ pub enum FileScanResult {
     Updated(i64),
     Removed,
     Ignored,
+}
+
+impl FileScanResult {
+    pub fn id(&self) -> Option<i64> {
+        match self {
+            FileScanResult::Added(id) | FileScanResult::Updated(id) => Some(*id),
+            FileScanResult::Removed | FileScanResult::Ignored => None,
+        }
+    }
 }
 
 impl LibraryScanner {
@@ -217,9 +229,124 @@ impl LibraryScannerImpl {
             return Err(eyre!("directory {} does not exist", path.display()));
         }
 
+        for entry in std::fs::read_dir(path)
+            .into_iter()
+            .flatten()
+            .filter_map(Result::ok)
+        {
+            let path = entry.path();
+            if !path.is_dir() {
+                continue;
+            }
+
+            match video_type {
+                VideoFileType::Movie => self.scan_movie_dir(&path, options).await?,
+                VideoFileType::Episode => self.scan_show_dir(&path, options).await?,
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Scans a movie directory for video and subtitle files
+    async fn scan_movie_dir(&self, path: &Path, options: &ScanOptions) -> eyre::Result<()> {
+        let name = path.file_name().unwrap();
+
+        let video_file = path.join(name);
+        let video_file = ["mkv", "mp4"]
+            .iter()
+            .map(|ext| video_file.with_extension(ext))
+            .find(|it| it.is_file());
+
+        if let Some(video_path) = video_file {
+            let res = self.scan_movie_file(&video_path, options).await?;
+            if let Some(video_id) = res.id() {
+                self.scan_subs_dir(&path.join("Subs"), video_id).await?;
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn scan_show_dir(&self, path: &Path, options: &ScanOptions) -> eyre::Result<()> {
         for entry in get_video_files(path) {
-            self.scan_video_file(video_type, entry.path(), options)
+            let video_path = entry.path();
+            let res = self.scan_episode_file(video_path, options).await?;
+            if let Some(video_id) = res.id() {
+                let (_, season, episode, _) = match parse_episode_path(self.matchers(), video_path)
+                {
+                    Some(v) => v,
+                    None => continue,
+                };
+
+                let subs_dir = path.join("Subs").join(format!("S{season:02}E{episode:02}"));
+                self.scan_subs_dir(&subs_dir, video_id).await?;
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn scan_subs_dir(&self, path: &Path, video_id: i64) -> eyre::Result<()> {
+        let mut conn = self.db.acquire().await?;
+        let subs = db::subtitles::get_for_video(&mut conn, video_id)
+            .await?
+            .into_iter()
+            .filter_map(|it| it.path)
+            .collect::<HashSet<_>>();
+
+        for entry in std::fs::read_dir(path)
+            .into_iter()
+            .flatten()
+            .filter_map(Result::ok)
+        {
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+
+            let ext = path.extension().and_then(|it| it.to_str());
+            if !matches!(ext, Some("vtt")) {
+                continue;
+            }
+
+            let file_name = match path.file_name().and_then(|it| it.to_str()) {
+                Some(v) => v,
+                None => continue,
+            };
+
+            let language = file_name.split('.').next();
+
+            let path = match path.to_str() {
+                Some(path) => path,
+                None => continue,
+            };
+
+            if subs.contains(path) {
+                continue;
+            }
+
+            let line = tokio::io::BufReader::new(File::open(path).await?)
+                .lines()
+                .next_line()
                 .await?;
+
+            let title = line
+                .as_deref()
+                .and_then(|it| it.split_once(' '))
+                .filter(|(webvtt, _)| *webvtt == "WEBVTT")
+                .map(|(_, title)| title);
+
+            let subtitle = db::subtitles::NewSubtitle {
+                video_id,
+                stream_index: None,
+                path: Some(path),
+                title,
+                language,
+            };
+
+            tracing::info!(%video_id, "adding subtitle: {file_name}");
+            db::subtitles::insert(&mut conn, &subtitle).await?;
         }
 
         Ok(())
@@ -427,6 +554,7 @@ pub fn parse_movie_filename(name: &str) -> Option<(String, Option<OffsetDateTime
 /// Recursively searches a directory for video files
 pub fn get_video_files(path: impl AsRef<Path>) -> impl Iterator<Item = DirEntry> {
     WalkDir::new(path)
+        .max_depth(1)
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_file())

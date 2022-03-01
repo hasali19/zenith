@@ -32,17 +32,17 @@ async fn main() -> eyre::Result<()> {
         .with_target(true)
         .init();
 
-    match std::env::args().nth(1).as_deref() {
-        Some("openapi") => {
+    match std::env::args().nth(1).as_deref().unwrap_or("serve") {
+        "openapi" => {
             let spec = zenith::api::openapi_spec();
             let json = serde_json::to_string_pretty(&spec)?;
             println!("{json}");
         }
-        Some(cmd) if cmd != "serve" => {
-            eprintln!("unrecognised command: {cmd}");
-        }
-        _ => {
+        "serve" => {
             run_server().await?;
+        }
+        cmd => {
+            eprintln!("unrecognised command: {cmd}");
         }
     }
 
