@@ -43,6 +43,12 @@
             android:theme="@style/Theme.Zenith" />
 
         <receiver android:name=".InstallReceiver" />
+        
+        <receiver android:name=".PackageInstalledReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <meta-data
             android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
