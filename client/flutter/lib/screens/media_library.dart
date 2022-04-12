@@ -41,37 +41,48 @@ class _MediaLibraryScreenState extends State<MediaLibraryScreen> {
 
 class MediaItemGrid extends StatelessWidget {
   final List<MediaItem> items;
+  final ScrollController _scrollController = ScrollController();
 
-  const MediaItemGrid({
+  MediaItemGrid({
     Key? key,
     required this.items,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final desktop = MediaQuery.of(context).size.width > 960;
     return LayoutBuilder(builder: ((context, constraints) {
-      const maxColWidth = 180.0;
-      const padding = 8.0;
+      final maxColWidth = desktop ? 180.0 : 120.0;
+      final padding = desktop ? 32.0 : 0.0;
+      final spacing = desktop ? 32.0 : 8.0;
+      final borderRadius = desktop ? 16.0 : 8.0;
 
-      final maxGridWidth = constraints.maxWidth - padding;
-      final cols = (maxGridWidth / maxColWidth).ceil();
-      final width = maxGridWidth / cols;
-      final height = (3 / 2) * (width - padding) + 64;
+      final maxGridWidth = constraints.maxWidth - spacing - padding * 2;
+      final cols = (maxGridWidth / (maxColWidth + spacing)).floor();
+      final width = maxGridWidth / cols - spacing;
+      final height = (3 / 2) * width + (desktop ? 64 : 50);
 
-      return GridView.extent(
-        padding: const EdgeInsets.all(padding),
-        mainAxisSpacing: padding,
-        crossAxisSpacing: padding,
-        maxCrossAxisExtent: maxColWidth,
+      final theme = Theme.of(context).textTheme;
+      final titleStyle = desktop
+          ? theme.subtitle1!.copyWith(fontWeight: FontWeight.bold)
+          : theme.subtitle2;
+      final subtitleStyle = desktop
+          ? theme.bodyMedium!.copyWith(color: theme.caption!.color)
+          : theme.caption;
+
+      return GridView.count(
+        controller: _scrollController,
+        crossAxisCount: cols,
         childAspectRatio: width / height,
+        padding: EdgeInsets.all(spacing + padding),
+        mainAxisSpacing: spacing,
+        crossAxisSpacing: spacing,
         children: items.map((item) {
-          final theme = Theme.of(context).textTheme;
-
           final poster = Material(
             elevation: 2.0,
             type: MaterialType.card,
             clipBehavior: Clip.hardEdge,
-            borderRadius: const BorderRadius.all(Radius.circular(4)),
+            borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
             child: Ink.image(
               fit: BoxFit.cover,
               image: NetworkImage(item.getPoster()!),
@@ -83,19 +94,19 @@ class MediaItemGrid extends StatelessWidget {
           );
 
           final info = Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 8),
+            padding: EdgeInsets.only(top: desktop ? 16 : 8, bottom: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextOneLine(
                   item.getTitle(),
-                  style: theme.subtitle2,
+                  style: titleStyle,
                 ),
                 const SizedBox(height: 2),
                 if (item.getYear() != null)
                   TextOneLine(
                     item.getYear().toString(),
-                    style: theme.caption,
+                    style: subtitleStyle,
                   ),
               ],
             ),
