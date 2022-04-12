@@ -52,40 +52,40 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final desktop = constraints.maxWidth > 960;
+    final desktop = MediaQuery.of(context).size.width > 960;
 
-      // Use a permanent navigation drawer on larger screens
+    // Use a permanent navigation drawer on larger screens
 
-      final drawer = NavigationDrawer(
-        current: _screen,
-        onTap: (screen) {
-          if (!desktop) {
-            Navigator.pop(context);
-          }
-          setState(() => _screen = screen);
-        },
+    final drawer = NavigationDrawer(
+      current: _screen,
+      onTap: (screen) {
+        if (!desktop) {
+          Navigator.pop(context);
+        }
+        setState(() => _screen = screen);
+      },
+    );
+
+    if (desktop) {
+      return Row(
+        children: [
+          drawer,
+          Expanded(
+            child: Scaffold(
+              body: _buildScreen(_screen),
+            ),
+          ),
+        ],
       );
-
-      final main = Scaffold(
+    } else {
+      return Scaffold(
         appBar: AppBar(
           title: Text(_title(_screen)),
         ),
         drawer: desktop ? null : drawer,
         body: _buildScreen(_screen),
       );
-
-      if (desktop) {
-        return Row(
-          children: [
-            drawer,
-            Expanded(child: main),
-          ],
-        );
-      } else {
-        return main;
-      }
-    });
+    }
   }
 
   String _title(Screen screen) {
