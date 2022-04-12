@@ -23,7 +23,6 @@ class ZenithApp extends StatelessWidget {
         pageTransitionsTheme: pageTransitionsTheme,
       ),
       darkTheme: ThemeData.dark().copyWith(
-        // scaffoldBackgroundColor: const Color(0xFF121212),
         scaffoldBackgroundColor: const Color.fromARGB(255, 36, 36, 36),
         pageTransitionsTheme: pageTransitionsTheme,
       ),
@@ -53,21 +52,40 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_title(_screen)),
-      ),
-      drawer: NavigationDrawer(
+    return LayoutBuilder(builder: (context, constraints) {
+      final desktop = constraints.maxWidth > 960;
+
+      // Use a permanent navigation drawer on larger screens
+
+      final drawer = NavigationDrawer(
         current: _screen,
         onTap: (screen) {
-          Navigator.pop(context);
-          setState(() {
-            _screen = screen;
-          });
+          if (!desktop) {
+            Navigator.pop(context);
+          }
+          setState(() => _screen = screen);
         },
-      ),
-      body: _buildScreen(_screen),
-    );
+      );
+
+      final main = Scaffold(
+        appBar: AppBar(
+          title: Text(_title(_screen)),
+        ),
+        drawer: desktop ? null : drawer,
+        body: _buildScreen(_screen),
+      );
+
+      if (desktop) {
+        return Row(
+          children: [
+            drawer,
+            Expanded(child: main),
+          ],
+        );
+      } else {
+        return main;
+      }
+    });
   }
 
   String _title(Screen screen) {
