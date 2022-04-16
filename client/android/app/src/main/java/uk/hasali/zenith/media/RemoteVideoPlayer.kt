@@ -11,11 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONObject
 
-class RemoteVideoPlayer(private val context: Context, session: CastSession) : VideoPlayer {
-    private val mediaClient = requireNotNull(session.remoteMediaClient) {
-        "Remote media client is null"
-    }
-
+class RemoteVideoPlayer(private val context: Context, private val mediaClient: RemoteMediaClient) : VideoPlayer {
     private val callback = object : RemoteMediaClient.Callback() {
         override fun onStatusUpdated() {
             _isPlaying.value = mediaClient.isPlaying

@@ -2,8 +2,8 @@ package uk.hasali.zenith.media
 
 import android.content.Context
 import com.google.android.gms.cast.framework.CastContext
-import com.google.android.gms.cast.framework.CastState
-import com.google.android.gms.cast.framework.CastStateListener
+import com.google.android.gms.cast.framework.CastSession
+import com.google.android.gms.cast.framework.SessionManagerListener
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ActivityRetainedScoped
 import javax.inject.Inject
@@ -18,37 +18,41 @@ class MediaSessionManager @Inject constructor(
     }
 
     private val castContext = CastContext.getSharedInstance(context)
-    private val castStateListener = CastStateListener { state ->
-        val currentPlayer = player
+    private val castSessionManagerListener = object : SessionManagerListener<CastSession> {
+        override fun onSessionEnded(p0: CastSession, p1: Int) {}
 
-        fun switchToPlayer(player: VideoPlayer) {
-            val currentItem = currentPlayer?.currentItem?.value
-            if (currentItem != null) {
-                player.setItem(currentItem, startAt = currentPlayer.position)
+        override fun onSessionEnding(p0: CastSession) {}
+
+        override fun onSessionResumeFailed(p0: CastSession, p1: Int) {}
+
+        override fun onSessionResumed(p0: CastSession, p1: Boolean) {
+            val session = castContext.sessionManager.currentCastSession!!
+            val client = session.remoteMediaClient!!
+            if (player == null) {
+                val remotePlayer = RemoteVideoPlayer(context, client)
+                setPlayer(remotePlayer)
             }
-            setPlayer(player)
         }
 
-        if (state == CastState.CONNECTED) {
-            if (currentPlayer !is RemoteVideoPlayer) {
-                val session = castContext.sessionManager.currentCastSession!!
-                val remotePlayer = RemoteVideoPlayer(context, session)
-                switchToPlayer(remotePlayer)
-            }
-        } else {
-            if (currentPlayer is RemoteVideoPlayer) {
-                val localPlayer = LocalVideoPlayer(context)
-                switchToPlayer(localPlayer)
-            }
-        }
+        override fun onSessionResuming(p0: CastSession, p1: String) {}
+
+        override fun onSessionStartFailed(p0: CastSession, p1: Int) {}
+
+        override fun onSessionStarted(p0: CastSession, p1: String) {}
+
+        override fun onSessionStarting(p0: CastSession) {}
+
+        override fun onSessionSuspended(p0: CastSession, p1: Int) {}
     }
 
     private val listeners = mutableListOf<Listener>()
     private var player: VideoPlayer? = null
 
     fun init() {
-        castContext.addCastStateListener(castStateListener)
-        castStateListener.onCastStateChanged(castContext.castState)
+        castContext.sessionManager.addSessionManagerListener(
+            castSessionManagerListener,
+            CastSession::class.java
+        )
     }
 
     fun addListener(listener: Listener) {
@@ -78,7 +82,10 @@ class MediaSessionManager @Inject constructor(
     }
 
     fun dispose() {
-        castContext.removeCastStateListener(castStateListener)
+        castContext.sessionManager.removeSessionManagerListener(
+            castSessionManagerListener,
+            CastSession::class.java
+        )
     }
 
     private fun setPlayer(value: VideoPlayer?) {
@@ -91,10 +98,11 @@ class MediaSessionManager @Inject constructor(
 
     private fun createPlayer(): VideoPlayer {
         val currentCastSession = castContext.sessionManager.currentCastSession
-        return if (currentCastSession == null) {
+        val mediaClient = currentCastSession?.remoteMediaClient
+        return if (mediaClient == null) {
             LocalVideoPlayer(context)
         } else {
-            RemoteVideoPlayer(context, currentCastSession)
+            RemoteVideoPlayer(context, mediaClient)
         }
     }
 }
