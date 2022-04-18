@@ -18,14 +18,7 @@ import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 class AppUpdater(private val context: Context, private val client: OkHttpClient) {
-    suspend fun downloadAndInstall(onProgress: (Float) -> Unit = {}) {
-        downloadAndInstall(
-            url = "https://nightly.link/hasali19/zenith/workflows/android/master/zenith-apk.zip",
-            onProgress = onProgress,
-        )
-    }
-
-    private suspend fun downloadAndInstall(url: String, onProgress: (Float) -> Unit) {
+    suspend fun downloadAndInstall(url: String, onProgress: (Float) -> Unit) {
         val req = Request.Builder()
             .url(url)
             .build()

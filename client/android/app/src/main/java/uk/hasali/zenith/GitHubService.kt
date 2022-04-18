@@ -13,6 +13,7 @@ data class GetActionsWorkflowRunsResponse(
 
 @Serializable
 data class ActionsWorkflowRun(
+    val id: Long,
     val status: String,
     val conclusion: String?,
     @SerialName("head_sha")
@@ -21,7 +22,22 @@ data class ActionsWorkflowRun(
     val headBranch: String,
 )
 
+@Serializable
+data class GetActionsWorkflowRunArtifactsResponse(
+    val artifacts: List<ActionsWorkflowRunArtifact>,
+)
+
+@Serializable
+data class ActionsWorkflowRunArtifact(
+    val id: Long,
+    val name: String,
+    val expired: Boolean,
+)
+
 interface GitHubService {
     @GET("repos/hasali19/zenith/actions/workflows/{id}/runs")
-    suspend fun getActionsWorkflowRuns(@Path("id") workflowId: Int): GetActionsWorkflowRunsResponse
+    suspend fun getActionsWorkflowRuns(@Path("id") workflowId: Long): GetActionsWorkflowRunsResponse
+
+    @GET("repos/hasali19/zenith/actions/runs/{id}/artifacts")
+    suspend fun getActionsWorkflowRunArtifacts(@Path("id") runId: Long): GetActionsWorkflowRunArtifactsResponse
 }

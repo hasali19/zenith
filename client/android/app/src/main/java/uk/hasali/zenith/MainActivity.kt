@@ -245,7 +245,9 @@ class MainActivity : FragmentActivity() {
                         isDownloading = true
                         scope.launch {
                             AppUpdater(application, httpClient)
-                                .downloadAndInstall { progress = it }
+                                .downloadAndInstall("https://nightly.link/hasali19/zenith/actions/artifacts/${availableUpdate.artifactId}.zip") {
+                                    progress = it
+                                }
                         }
                     },
                 ) {
@@ -258,15 +260,15 @@ class MainActivity : FragmentActivity() {
         )
     }
 
-    data class AvailableUpdate(val installed: String, val latest: String)
+    data class AvailableUpdate(val installed: String, val latest: String, val artifactId: Long)
 
     private suspend fun checkForUpdates(): AvailableUpdate? {
         if (BuildConfig.DEBUG) {
             return null
         }
 
-        val res = github.getActionsWorkflowRuns(5604606)
-        val run = res.workflowRuns.firstOrNull {
+        val runs = github.getActionsWorkflowRuns(5604606).workflowRuns
+        val run = runs.firstOrNull {
             it.status == "completed" && it.conclusion == "success"
         }
 
@@ -275,9 +277,14 @@ class MainActivity : FragmentActivity() {
             return null
         }
 
+        val artifact = github.getActionsWorkflowRunArtifacts(run.id)
+            .artifacts
+            .firstOrNull { it.name == "zenith-apk" && !it.expired } ?: return null
+
         return AvailableUpdate(
             installed = installedCommit,
             latest = run.headSha,
+            artifactId = artifact.id,
         )
     }
 }
