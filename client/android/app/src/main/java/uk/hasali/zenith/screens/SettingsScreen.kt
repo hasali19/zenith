@@ -9,10 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import uk.hasali.zenith.BuildConfig
 import uk.hasali.zenith.Preferences
+import uk.hasali.zenith.R
 import uk.hasali.zenith.navigation.hiltViewModel
 import uk.hasali.zenith.ui.AppBar
 import javax.inject.Inject
@@ -50,7 +52,7 @@ fun SettingsScreen(model: SettingsViewModel = hiltViewModel(), onLaunchSelectSer
                 Text("Version")
             }
 
-            ListItem(secondaryText = { Text(BuildConfig.GIT_COMMIT_HASH) }) {
+            ListItem(secondaryText = { Text(stringResource(R.string.GIT_COMMIT_HASH)) }) {
                 Text("Revision")
             }
         }

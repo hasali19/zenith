@@ -9,7 +9,8 @@ private const val TAG = "AppInstaller"
 
 class InstallReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        when (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -123 /* -1 is used by STATUS_PENDING_USER_ACTION */)) {
+        val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -123 /* -1 is used by STATUS_PENDING_USER_ACTION */)
+        when (status) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 val activityIntent = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
                 if (activityIntent != null) {

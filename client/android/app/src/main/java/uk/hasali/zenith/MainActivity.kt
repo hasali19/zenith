@@ -270,12 +270,13 @@ class MainActivity : FragmentActivity() {
             it.status == "completed" && it.conclusion == "success"
         }
 
-        if (run == null || run.headBranch != "master" || run.headSha == BuildConfig.GIT_COMMIT_HASH) {
+        val installedCommit = getString(R.string.GIT_COMMIT_HASH)
+        if (run == null || run.headBranch != "master" || run.headSha == installedCommit) {
             return null
         }
 
         return AvailableUpdate(
-            installed = BuildConfig.GIT_COMMIT_HASH,
+            installed = installedCommit,
             latest = run.headSha,
         )
     }
