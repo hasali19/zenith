@@ -105,6 +105,7 @@ fun VideoPlayerOverlay(
 
     val item by player.currentItem.collectAsState()
     val subtitleTrack by player.subtitleTrack.collectAsState()
+    val state by player.state.collectAsState()
     val isPlaying by player.isPlaying.collectAsState()
     val playWhenReady by player.playWhenReady.collectAsState()
 
@@ -126,7 +127,8 @@ fun VideoPlayerOverlay(
         title = item?.title.orEmpty(),
         position = position,
         duration = item?.duration?.toLong() ?: 0,
-        isLoading = playWhenReady && !isPlaying,
+        state = state,
+        isLoading = playWhenReady && !isPlaying && state == VideoPlayer.State.Active,
         isPlaying = playWhenReady,
         subtitles = item?.subtitles.orEmpty(),
         selectedSubtitle = subtitleTrack,
@@ -138,6 +140,7 @@ fun VideoPlayerOverlay(
             isSeeking = false
         },
         onTogglePlaying = { player.setPlayWhenReady(!playWhenReady) },
+        onReplay = { player.restart() },
         onSelectSubtitle = { player.setSubtitleTrack(it) },
         onSetScaleMode = onSetScaleMode,
         onClosePressed = onClosePressed,

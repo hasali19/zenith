@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.insets.LocalWindowInsets
 import kotlinx.coroutines.*
 import uk.hasali.zenith.media.SubtitleTrack
+import uk.hasali.zenith.media.VideoPlayer
 
 enum class MenuType {
     Subtitle,
@@ -37,6 +38,7 @@ fun Controls(
     title: String,
     position: Long,
     duration: Long,
+    state: VideoPlayer.State,
     isLoading: Boolean,
     isPlaying: Boolean,
     subtitles: List<SubtitleTrack>,
@@ -45,6 +47,7 @@ fun Controls(
     onSeekStart: () -> Unit,
     onSeekEnd: (Long) -> Unit,
     onTogglePlaying: () -> Unit,
+    onReplay: () -> Unit,
     onSelectSubtitle: (SubtitleTrack?) -> Unit,
     onSetScaleMode: (ScaleMode) -> Unit,
     onClosePressed: () -> Unit,
@@ -56,8 +59,13 @@ fun Controls(
         bottomMenu = null
     }
 
-    LaunchedEffect(isLoading, isPlaying, bottomMenu) {
-        visibility.setAutoHideEnabled(!isLoading && isPlaying && bottomMenu == null)
+    LaunchedEffect(state, isLoading, isPlaying, bottomMenu) {
+        visibility.setAutoHideEnabled(
+            state == VideoPlayer.State.Active &&
+                    !isLoading &&
+                    isPlaying &&
+                    bottomMenu == null
+        )
     }
 
     if (!visibility.isVisible) {
@@ -80,11 +88,13 @@ fun Controls(
             title = title,
             position = position,
             duration = duration,
+            state = state,
             isLoading = isLoading,
             isPlaying = isPlaying,
             onSeekStart = onSeekStart,
             onSeekEnd = onSeekEnd,
             onTogglePlaying = onTogglePlaying,
+            onReplay = onReplay,
             onShowMenu = { bottomMenu = it },
             onClosePressed = onClosePressed,
             padding = insetsPadding,
@@ -234,11 +244,13 @@ private fun Controls(
     title: String,
     position: Long,
     duration: Long,
+    state: VideoPlayer.State,
     isLoading: Boolean,
     isPlaying: Boolean,
     onSeekStart: () -> Unit,
     onSeekEnd: (Long) -> Unit,
     onTogglePlaying: () -> Unit,
+    onReplay: () -> Unit,
     onShowMenu: (MenuType) -> Unit,
     onClosePressed: () -> Unit,
     padding: PaddingValues,
@@ -304,10 +316,20 @@ private fun Controls(
                         }
 
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(90.dp)) {
-                            PlayPauseButton(
-                                isPlaying = isPlaying,
-                                onClick = onTogglePlaying,
-                            )
+                            when (state) {
+                                VideoPlayer.State.Active -> {
+                                    PrimaryControlsButton(
+                                        icon = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                        onClick = onTogglePlaying,
+                                    )
+                                }
+                                VideoPlayer.State.Ended -> {
+                                    PrimaryControlsButton(
+                                        icon = Icons.Default.Replay,
+                                        onClick = onReplay,
+                                    )
+                                }
+                            }
                         }
 
                         SeekButton(Icons.Default.Forward30) {

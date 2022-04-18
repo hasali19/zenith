@@ -260,6 +260,11 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
         player.seekTo(position)
     }
 
+    override fun restart() {
+        player.seekTo(0)
+        player.play()
+    }
+
     override fun dispose() {
         scope.cancel()
         notificationManager.setPlayer(null)

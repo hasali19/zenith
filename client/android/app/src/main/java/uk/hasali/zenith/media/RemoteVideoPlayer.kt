@@ -222,6 +222,10 @@ class RemoteVideoPlayer(private val context: Context, private val mediaClient: R
         )
     }
 
+    override fun restart() {
+        TODO("Not yet implemented")
+    }
+
     override fun dispose() {
         mediaClient.stop()
         mediaClient.unregisterCallback(callback)

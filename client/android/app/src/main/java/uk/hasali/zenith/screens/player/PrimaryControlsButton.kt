@@ -7,21 +7,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun PlayPauseButton(
-    isPlaying: Boolean,
+fun PrimaryControlsButton(
+    icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    contentDescription: String? = null,
 ) {
     Box(
         modifier = modifier
@@ -33,8 +32,8 @@ fun PlayPauseButton(
             ),
     ) {
         Icon(
-            if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-            contentDescription = if (isPlaying) "Pause" else "Play",
+            imageVector = icon,
+            contentDescription = contentDescription,
             modifier = Modifier
                 .align(Alignment.Center)
                 .padding(8.dp)

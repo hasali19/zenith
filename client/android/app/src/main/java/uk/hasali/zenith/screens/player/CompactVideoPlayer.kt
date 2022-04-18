@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,6 +84,7 @@ private fun CompactVideoPlayer(
                 .fillMaxWidth()
                 .height(64.dp),
         ) {
+            val state by player.state.collectAsState()
             val isPlaying by player.isPlaying.collectAsState()
             val playWhenReady by player.playWhenReady.collectAsState()
             var position by remember { mutableStateOf(0L) }
@@ -138,11 +140,20 @@ private fun CompactVideoPlayer(
                         }
                     }
 
-                    IconButton(onClick = { player.setPlayWhenReady(!playWhenReady) }) {
-                        Icon(
-                            if (playWhenReady) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            null
-                        )
+                    when (state) {
+                        VideoPlayer.State.Active -> {
+                            IconButton(onClick = { player.setPlayWhenReady(!playWhenReady) }) {
+                                Icon(
+                                    if (playWhenReady) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                    null
+                                )
+                            }
+                        }
+                        VideoPlayer.State.Ended -> {
+                            IconButton(onClick = { player.restart() }) {
+                                Icon(Icons.Default.Replay, "replay")
+                            }
+                        }
                     }
 
                     IconButton(onClick = onEndSession) {

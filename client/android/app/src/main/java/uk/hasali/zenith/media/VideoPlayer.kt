@@ -32,6 +32,7 @@ interface VideoPlayer {
     fun setPlayWhenReady(playWhenReady: Boolean)
 
     fun seekTo(position: Long)
+    fun restart()
 
     fun dispose()
 }
