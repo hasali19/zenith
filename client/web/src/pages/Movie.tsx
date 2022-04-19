@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "solid-app-router";
 import { Component, createEffect, createSignal, Show } from "solid-js";
 import { MediaDetailsScreen } from "../MediaDetailsScreen";
+import { PlayButton } from "../PlayButton";
 import preferences from "../preferences";
 import { formatYear } from "../utils";
 
@@ -27,15 +28,7 @@ export const MovieScreen: Component = () => {
           tmdbLink={`https://www.themoviedb.org/movie/${movie.external_ids.tmdb}`}
           headerActions={
             <>
-              <button
-                class="button is-primary"
-                onClick={() => navigate(`/player/${params.id}`)}
-              >
-                <span class="icon">
-                  <span class="material-icons">play_arrow</span>
-                </span>
-                <span>Play</span>
-              </button>
+              <PlayButton onClick={() => navigate(`/player/${params.id}`)} />
             </>
           }
         />

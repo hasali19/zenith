@@ -2,20 +2,27 @@ import { style } from "@vanilla-extract/css";
 
 export const overlay = style({
   position: "relative",
-  width: "100%",
-  height: "100%",
+  width: "100vw",
+  height: "100vh",
 });
 
-export const controls = style({
+export const controlsContainer = style({
   position: "absolute",
   bottom: 0,
   left: 0,
   right: 0,
   display: "flex",
-  flexDirection: "column",
+  justifyContent: "center",
   padding: 32,
   transition: "all 200ms",
-  background: "rgba(0,0,0,0.4)",
+  background: "linear-gradient(transparent, black)",
+});
+
+export const controls = style({
+  flex: 1,
+  maxWidth: 1200,
+  display: "flex",
+  flexDirection: "column",
 });
 
 export const timeBar = style({
@@ -26,9 +33,10 @@ export const timeBar = style({
 export const timeText = style({
   lineHeight: "32px",
   fontSize: "0.78em",
-  fontFamily: "sans-serif",
+  fontFamily: "Exo 2",
   color: "rgb(210,210,210)",
   padding: "0px 8px",
+  userSelect: "none",
 });
 
 export const seekbarContainer = style({
@@ -41,6 +49,7 @@ export const actionsRow = style({
   gridTemplateColumns: "[start] 1fr [mid] auto [end] 1fr",
   justifyContent: "center",
   paddingTop: 16,
+  color: "white",
 });
 
 export const mainActions = style({
@@ -56,42 +65,9 @@ export const secondaryActions = style({
   justifyContent: "flex-end",
 });
 
-export const playPauseButton = style({
-  width: "64px",
-  height: "64px",
-  padding: "0px",
-  background: "rgb(20,20,20)",
-  borderWidth: "4px",
-  borderColor: "orange",
-  borderStyle: "inset",
-  borderRadius: "50%",
-  transition: "all 50ms",
-  cursor: "pointer",
-  fill: "white",
-
+export const button = style({
   ":hover": {
-    background: "rgb(30,30,30)",
-  },
-
-  ":active": {
-    borderWidth: "6px",
-  },
-});
-
-export const seekButton = style({
-  width: "48px",
-  height: "48px",
-  padding: "0px",
-  background: "transparent",
-  border: "none",
-  borderRadius: 8,
-  transition: "all 50ms",
-  cursor: "pointer",
-  margin: "0px 16px",
-  fill: "white",
-
-  ":hover": {
-    background: "rgba(255,255,255,0.1)",
+    fill: "orange",
   },
 
   ":active": {
@@ -99,36 +75,58 @@ export const seekButton = style({
   },
 });
 
-export const skipButton = style({
-  width: "48px",
-  height: "48px",
-  padding: "0px",
-  background: "transparent",
-  border: "none",
-  borderRadius: 8,
-  transition: "all 50ms",
-  cursor: "pointer",
+export const playPauseButton = style([
+  button,
+  {
+    width: 64,
+    height: 64,
+    padding: 0,
+    background: "rgb(20,20,20)",
+    border: "none",
+    borderRadius: 8,
+    transition: "all 50ms",
+    cursor: "pointer",
+    color: "white",
+  },
+]);
 
-  selectors: {
-    "&:disabled": {
-      cursor: "default",
-      fill: "rgb(100,100,100)",
-    },
+export const seekButton = style([
+  button,
+  {
+    width: "48px",
+    height: "48px",
+    padding: "0px",
+    background: "transparent",
+    border: "none",
+    borderRadius: 8,
+    transition: "all 50ms",
+    cursor: "pointer",
+    margin: "0px 16px",
+    color: "white",
+  },
+]);
 
-    "&:hover": {
-      background: "rgba(255,255,255,0.1)",
-    },
+export const skipButton = style([
+  button,
+  {
+    width: "48px",
+    height: "48px",
+    padding: "0px",
+    background: "transparent",
+    border: "none",
+    borderRadius: 8,
+    transition: "all 50ms",
+    cursor: "pointer",
 
-    "&:hover:disabled": {
-      background: "transparent",
-    },
+    selectors: {
+      "&:disabled": {
+        cursor: "default",
+        color: "rgb(100,100,100)",
+      },
 
-    "&:active": {
-      background: "rgba(255,255,255,0.15)",
-    },
-
-    "&:active:disabled": {
-      background: "transparent",
+      "&:active:disabled": {
+        background: "transparent",
+      },
     },
   },
-});
+]);

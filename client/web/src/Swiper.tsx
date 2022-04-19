@@ -16,7 +16,7 @@ export const Swiper: Component = (p) => {
         480: { slidesPerView: 3, slidesPerGroup: 3 },
         640: { slidesPerView: 5, slidesPerGroup: 5 },
         1024: { slidesPerView: 6, slidesPerGroup: 6 },
-        1280: { slidesPerView: 8, slidesPerGroup: 8 },
+        1400: { slidesPerView: 8, slidesPerGroup: 8 },
       },
     });
   });

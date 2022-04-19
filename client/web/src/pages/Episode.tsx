@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "solid-app-router";
 import { Component, createEffect, createSignal, Show } from "solid-js";
 import { MediaDetailsScreen } from "../MediaDetailsScreen";
+import { PlayButton } from "../PlayButton";
 import preferences from "../preferences";
 import { formatDuration } from "../utils";
 
@@ -62,15 +63,7 @@ export const EpisodeScreen: Component = () => {
           tmdbLink={`https://www.themoviedb.org/tv/${show.external_ids.tmdb}/season/${episode.season_number}/episode/${episode.episode_number}`}
           headerActions={
             <>
-              <button
-                class="button is-primary"
-                onClick={() => navigate(`/player/${params.id}`)}
-              >
-                <span class="icon">
-                  <span class="material-icons">play_arrow</span>
-                </span>
-                <span>Play</span>
-              </button>
+              <PlayButton onClick={() => navigate(`/player/${params.id}`)} />
             </>
           }
         />

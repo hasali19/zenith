@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 
+const apiServer = process.env.API_SERVER || "http://localhost:8000";
+
 export default defineConfig({
   plugins: [vanillaExtractPlugin(), solidPlugin()],
   build: {
@@ -10,7 +12,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/api": "http://localhost:8000",
+      "/api": apiServer,
     },
   },
 });

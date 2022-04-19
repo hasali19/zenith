@@ -1,20 +1,19 @@
 import { useParams } from "solid-app-router";
 import { Component, createEffect, createSignal, on, onCleanup } from "solid-js";
-import {
-  mdiFastForward30,
-  mdiFullscreen,
-  mdiFullscreenExit,
-  mdiPause,
-  mdiPlay,
-  mdiRewind10,
-  mdiSkipNext,
-  mdiSkipPrevious,
-} from "@mdi/js";
 import preferences from "../preferences";
 import { Seekbar } from "../Seekbar";
 import player from "../player";
 import * as styles from "./Player.css";
-import { SvgIcon } from "../SvgIcon";
+import {
+  BackwardIcon,
+  BackwardStepIcon,
+  CompressIcon,
+  ExpandIcon,
+  ForwardIcon,
+  ForwardStepIcon,
+  PauseIcon,
+  PlayIcon,
+} from "../icons";
 
 export const PlayerScreen: Component = () => {
   const params = useParams();
@@ -27,6 +26,18 @@ export const PlayerScreen: Component = () => {
   const [isFullscreen, setFullscreen] = createSignal(
     !!document.fullscreenElement
   );
+
+  createEffect(() => {
+    if (isVisible()) {
+      document.body.style.removeProperty("cursor");
+    } else {
+      document.body.style.cursor = "none";
+    }
+
+    onCleanup(() => {
+      document.body.style.removeProperty("cursor");
+    });
+  });
 
   let timeout: number | undefined;
 
@@ -103,67 +114,81 @@ export const PlayerScreen: Component = () => {
           player.init(elem, `${preferences.server}/api/videos/${params.id}`)
         }
         style={{
-          position: "absolute",
           width: "100%",
           height: "100%",
+          position: "absolute",
+          display: "flex",
         }}
       />
-      <div class={styles.controls} style={{ opacity: isVisible() ? 1 : 0 }}>
-        <div class={styles.timeBar}>
-          <span class={styles.timeText}>
-            {formatPosition(position(), duration())}
-          </span>
-          <div class={styles.seekbarContainer}>
-            <Seekbar
-              duration={duration()}
-              position={position()}
-              onSeekStart={onSeekStart}
-              onSeekEnd={onSeekEnd}
-            />
+      <div
+        class={styles.controlsContainer}
+        style={{ opacity: isVisible() ? 1 : 0 }}
+      >
+        <div class={styles.controls}>
+          <div class={styles.timeBar}>
+            <span class={styles.timeText}>
+              {formatPosition(position(), duration())}
+            </span>
+            <span
+              class={styles.timeText}
+              style={{ padding: 0, "font-size": "1em", color: "darkgrey" }}
+            >
+              /
+            </span>
+            <span class={styles.timeText} style={{ color: "darkgrey" }}>
+              {formatPosition(duration() - position(), duration())}
+            </span>
           </div>
-          <span class={styles.timeText}>
-            {formatPosition(duration() - position(), duration())}
-          </span>
-        </div>
-        <div class={styles.actionsRow}>
-          <div class={styles.mainActions}>
-            <button class={styles.skipButton} disabled>
-              <SvgIcon path={mdiSkipPrevious} />
-            </button>
-            <button
-              class={styles.seekButton}
-              onClick={() => seekTo(position() - 10)}
-            >
-              <SvgIcon path={mdiRewind10} />
-            </button>
-            <button
-              class={styles.playPauseButton}
-              onClick={() =>
-                isPlaying() ? player.setPlaying(false) : player.setPlaying(true)
-              }
-            >
-              <SvgIcon path={isPlaying() ? mdiPause : mdiPlay} size={40} />
-            </button>
-            <button
-              class={styles.seekButton}
-              onClick={() => seekTo(position() + 30)}
-            >
-              <SvgIcon path={mdiFastForward30} />
-            </button>
-            <button class={styles.skipButton} disabled>
-              <SvgIcon path={mdiSkipNext} />
-            </button>
-          </div>
-          <div class={styles.secondaryActions}>
-            <button
-              disabled={!document.fullscreenEnabled}
-              class={styles.seekButton}
-              onClick={toggleFullscreen}
-            >
-              <SvgIcon
-                path={isFullscreen() ? mdiFullscreenExit : mdiFullscreen}
+          <div class={styles.timeBar}>
+            <div class={styles.seekbarContainer}>
+              <Seekbar
+                duration={duration()}
+                position={position()}
+                onSeekStart={onSeekStart}
+                onSeekEnd={onSeekEnd}
               />
-            </button>
+            </div>
+          </div>
+          <div class={styles.actionsRow}>
+            <div class={styles.mainActions}>
+              <button class={styles.skipButton} disabled>
+                <BackwardStepIcon />
+              </button>
+              <button
+                class={styles.seekButton}
+                onClick={() => seekTo(position() - 10)}
+              >
+                <BackwardIcon />
+              </button>
+              <button
+                class={styles.playPauseButton}
+                onClick={() =>
+                  isPlaying()
+                    ? player.setPlaying(false)
+                    : player.setPlaying(true)
+                }
+              >
+                {isPlaying() ? <PauseIcon size={32} /> : <PlayIcon size={32} />}
+              </button>
+              <button
+                class={styles.seekButton}
+                onClick={() => seekTo(position() + 30)}
+              >
+                <ForwardIcon />
+              </button>
+              <button class={styles.skipButton} disabled>
+                <ForwardStepIcon />
+              </button>
+            </div>
+            <div class={styles.secondaryActions}>
+              <button
+                disabled={!document.fullscreenEnabled}
+                class={styles.seekButton}
+                onClick={toggleFullscreen}
+              >
+                {isFullscreen() ? <CompressIcon /> : <ExpandIcon />}
+              </button>
+            </div>
           </div>
         </div>
       </div>
