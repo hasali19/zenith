@@ -86,6 +86,15 @@ export const PlayerScreen: Component = () => {
     setPosition(position);
   }
 
+  async function updateServerPosition(position: number) {
+    await fetch(
+      `${preferences.server}/api/progress/${params.id}?position=${position}`,
+      {
+        method: "POST",
+      }
+    );
+  }
+
   function onIsPlayingChange(isPlaying: boolean) {
     setPlaying(isPlaying);
   }
@@ -96,12 +105,14 @@ export const PlayerScreen: Component = () => {
 
   player.addDurationChangeListener(onDurationChange);
   player.addPositionChangeListener(500, onPositionChange);
+  player.addPositionChangeListener(5000, updateServerPosition);
   player.addIsPlayingChangeListener(onIsPlayingChange);
   document.addEventListener("fullscreenchange", onFullscreenChange);
 
   onCleanup(() => {
     player.removeDurationChangeListener(onDurationChange);
     player.removePositionChangeListener(onPositionChange);
+    player.removePositionChangeListener(updateServerPosition);
     player.removeIsPlayingChangeListener(onIsPlayingChange);
     document.removeEventListener("fullscreenchange", onFullscreenChange);
     player.stop();
