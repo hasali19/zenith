@@ -33,6 +33,7 @@ export const HomeScreen: Component = () => {
             poster={item.poster}
             name={item.title}
             secondary={formatYear(item.release_date)}
+            watched={item.user_data.is_watched}
             onClick={() => navigate(`/movies/${item.id}`)}
           />
         )}
@@ -44,6 +45,7 @@ export const HomeScreen: Component = () => {
             poster={item.poster}
             name={item.name}
             secondary={formatYear(item.start_date)}
+            watched={item.user_data.unwatched === 0}
             onClick={() => navigate(`/shows/${item.id}`)}
           />
         )}

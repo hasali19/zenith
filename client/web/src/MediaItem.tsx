@@ -1,22 +1,22 @@
 import { Component, JSX, Show } from "solid-js";
-import { FileVideoIcon } from "./icons";
+import { CircleCheckIcon, FileVideoIcon } from "./icons";
 import { Image } from "./Image";
 
 import * as styles from "./MediaItem.css";
+import { Poster } from "./Poster";
 
-export const MediaItemWithPoster: Component<{
+export interface MediaItemWithPosterProps {
   poster: string;
   name: string;
   secondary: any;
+  watched: boolean;
   style?: JSX.CSSProperties;
   onClick: JSX.EventHandlerUnion<HTMLDivElement, MouseEvent>;
-}> = (p) => (
+}
+
+export const MediaItemWithPoster: Component<MediaItemWithPosterProps> = (p) => (
   <div className={styles.item} style={p.style} onClick={p.onClick}>
-    <div class={styles.poster}>
-      <Show when={p.poster} fallback={<ImageFallback />}>
-        {(src) => <Image class={styles.image} src={src} />}
-      </Show>
-    </div>
+    <Poster src={p.poster} watched={p.watched} clickable />
     <div className={styles.details}>
       <p className={styles.name}>{p.name}</p>
       <p className={styles.secondary}>{p.secondary}</p>
@@ -24,17 +24,27 @@ export const MediaItemWithPoster: Component<{
   </div>
 );
 
-export const MediaItemWithThumbnail: Component<{
+export interface MediaItemWithThumbnailProps {
   thumbnail: string;
   name: string;
   secondary: any;
+  watched: boolean;
   style?: JSX.CSSProperties;
   onClick: JSX.EventHandlerUnion<HTMLDivElement, MouseEvent>;
-}> = (p) => (
+}
+
+export const MediaItemWithThumbnail: Component<MediaItemWithThumbnailProps> = (
+  p
+) => (
   <div className={styles.item} style={p.style} onClick={p.onClick}>
     <div class={styles.thumbnail}>
       <Show when={p.thumbnail} fallback={<ImageFallback />}>
         {(src) => <Image class={styles.image} src={src} />}
+      </Show>
+      <Show when={p.watched}>
+        <div class={styles.overlay}>
+          <CircleCheckIcon class={styles.posterCheck} />
+        </div>
       </Show>
     </div>
     <div className={styles.details}>

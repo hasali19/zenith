@@ -42,10 +42,7 @@ export const headerSection = style({
 });
 
 export const poster = style({
-  width: "280px",
-  aspectRatio: "2/3",
-  objectFit: "cover",
-  borderRadius: 8,
+  width: 280,
 });
 
 export const headerContentContainer = style({

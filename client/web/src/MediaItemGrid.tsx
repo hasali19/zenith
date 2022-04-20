@@ -9,6 +9,7 @@ export interface MediaItem {
   name: string;
   date: any;
   poster: string;
+  watched: boolean;
 }
 
 export const MediaItemGrid: Component<{
@@ -46,6 +47,7 @@ export const MediaItemGrid: Component<{
                 poster={q.item.poster}
                 name={q.item.name}
                 secondary={formatYear(q.item.date)}
+                watched={q.item.watched}
                 onClick={() => p.onItemClick(q.item)}
               />
             </div>

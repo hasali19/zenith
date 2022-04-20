@@ -26,6 +26,7 @@ export const MovieScreen: Component = () => {
           subtitle={formatYear(movie.release_date)}
           overview={movie.overview}
           tmdbLink={`https://www.themoviedb.org/movie/${movie.external_ids.tmdb}`}
+          watched={movie.user_data.is_watched}
           headerActions={
             <>
               <PlayButton onClick={() => navigate(`/player/${params.id}`)} />

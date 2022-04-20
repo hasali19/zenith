@@ -61,6 +61,7 @@ export const EpisodeScreen: Component = () => {
           }
           overview={episode.overview}
           tmdbLink={`https://www.themoviedb.org/tv/${show.external_ids.tmdb}/season/${episode.season_number}/episode/${episode.episode_number}`}
+          watched={episode.user_data.is_watched}
           headerActions={
             <>
               <PlayButton onClick={() => navigate(`/player/${params.id}`)} />

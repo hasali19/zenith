@@ -20,6 +20,7 @@ export const MoviesScreen: Component = () => {
         name: movie.title,
         date: movie.release_date,
         poster: movie.poster,
+        watched: movie.user_data.is_watched,
       }))}
       onItemClick={(item) => navigate(`/movies/${item.id}`)}
     />

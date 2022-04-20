@@ -1,6 +1,7 @@
 import { Component, JSX, Show } from "solid-js";
 import { Image } from "./Image";
 import * as styles from "./MediaDetailsScreen.css";
+import { Poster } from "./Poster";
 
 export const MediaDetailsScreen: Component<{
   backdrop: string;
@@ -9,6 +10,7 @@ export const MediaDetailsScreen: Component<{
   subtitle: any;
   overview: string;
   tmdbLink: any;
+  watched: boolean;
   headerActions?: JSX.Element;
 }> = (p) => {
   return (
@@ -22,6 +24,7 @@ export const MediaDetailsScreen: Component<{
           subtitle={p.subtitle}
           overview={p.overview}
           tmdbLink={p.tmdbLink}
+          watched={p.watched}
           actions={p.headerActions}
         />
         {p.children}
@@ -36,10 +39,11 @@ const HeaderSection: Component<{
   subtitle: any;
   overview: string;
   tmdbLink: any;
+  watched: boolean;
   actions?: JSX.Element;
 }> = (p) => (
   <div class={styles.headerSection}>
-    <Image src={p.poster} class={styles.poster} />
+    <Poster src={p.poster} watched={p.watched} class={styles.poster} />
     <div class={styles.headerContentContainer}>
       <h1 class={styles.headerSectionTitle}>{p.name}</h1>
       <h2 class={styles.headerSectionSubtitle}>{p.subtitle}</h2>

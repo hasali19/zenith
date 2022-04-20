@@ -20,6 +20,7 @@ export const ShowsScreen: Component = () => {
         name: show.name,
         date: show.start_date,
         poster: show.poster,
+        watched: show.user_data.unwatched === 0,
       }))}
       onItemClick={(item) => navigate(`/shows/${item.id}`)}
     />

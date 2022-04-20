@@ -63,6 +63,7 @@ export const SeasonScreen: Component = () => {
           backdrop={season.backdrop || show.backdrop}
           subtitle={formatSeasonTitle(season)}
           overview={season.overview || show.overview}
+          watched={season.user_data.unwatched === 0}
           tmdbLink={`https://www.themoviedb.org/tv/${show.external_ids.tmdb}/season/${season.season_number}`}
         >
           <EpisodesSection
@@ -88,6 +89,7 @@ const EpisodesSection: Component<{
             thumbnail={episode.thumbnail}
             name={episode.name}
             secondary={`Episode ${episode.episode_number}`}
+            watched={episode.user_data.is_watched}
             onClick={[p.onItemClick, episode]}
           />
         )}
