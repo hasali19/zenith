@@ -243,11 +243,6 @@ impl WebView {
                 .unwrap()
                 .NavigateToString(html)
                 .unwrap();
-            self.controller
-                .CoreWebView2()
-                .unwrap()
-                .OpenDevToolsWindow()
-                .unwrap();
         }
     }
 
