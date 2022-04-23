@@ -7,6 +7,7 @@ use windows::Win32::System::WinRT::Composition::ICompositorDesktopInterop;
 use windows::Win32::System::WinRT::{
     CreateDispatcherQueueController, DispatcherQueueOptions, DQTAT_COM_NONE, DQTYPE_THREAD_CURRENT,
 };
+use windows::UI::Color;
 use windows::UI::Composition::Desktop::DesktopWindowTarget;
 use windows::UI::Composition::{Compositor, ContainerVisual};
 
@@ -48,10 +49,21 @@ impl Composition {
 
         target.SetRoot(&root).unwrap();
 
-        let brush = compositor.TryCreateBlurredWallpaperBackdropBrush().unwrap();
         let background = compositor.CreateSpriteVisual().unwrap();
+        let background_brush = compositor
+            .CreateColorBrushWithColor(Color {
+                R: 51,
+                G: 51,
+                B: 51,
+                A: 255,
+            })
+            .unwrap();
 
-        background.SetBrush(brush).unwrap();
+        background.SetBrush(background_brush).unwrap();
+        background
+            .SetRelativeSizeAdjustment(Vector2 { X: 1.0, Y: 1.0 })
+            .unwrap();
+
         root.Children().unwrap().InsertAtTop(background).unwrap();
 
         Composition { controller, target }
