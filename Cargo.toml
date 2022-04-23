@@ -1,2 +1,2 @@
 [workspace]
-members = ["client/desktop", "server/*"]
+members = ["client/windows", "server/*"]
