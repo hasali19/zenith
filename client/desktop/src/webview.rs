@@ -1,5 +1,5 @@
 use webview2_com::Microsoft::Web::WebView2::Win32::{
-    CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2CompositionController,
+    CreateCoreWebView2EnvironmentWithOptions, ICoreWebView2, ICoreWebView2CompositionController,
     ICoreWebView2Controller2, ICoreWebView2Environment, ICoreWebView2Environment3,
     ICoreWebView2EnvironmentOptions, COREWEBVIEW2_COLOR,
     COREWEBVIEW2_MOUSE_EVENT_KIND_HORIZONTAL_WHEEL,
@@ -18,9 +18,11 @@ use webview2_com::{
     CoreWebView2EnvironmentOptions, CreateCoreWebView2CompositionControllerCompletedHandler,
     CreateCoreWebView2EnvironmentCompletedHandler, CursorChangedEventHandler,
 };
+use widestring::U16CStr;
 use windows::core::Interface;
-use windows::Win32::Foundation::{HWND, LPARAM, POINT, RECT, WPARAM};
+use windows::Win32::Foundation::{LPARAM, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Gdi::MapWindowPoints;
+use windows::Win32::System::WinRT::EventRegistrationToken;
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetCapture, ReleaseCapture, SetCapture};
 use windows::Win32::UI::Input::Pointer::{
     GetPointerInfo, GetPointerPenInfo, GetPointerTouchInfo, POINTER_INFO, POINTER_PEN_INFO,
@@ -33,6 +35,7 @@ use crate::window::{
     self, ButtonAction, MouseButtonEvent, MouseMoveEvent, MouseWheelEvent, PointerEvent, Window,
 };
 
+#[derive(Clone)]
 pub struct WebView {
     environment: ICoreWebView2Environment3,
     controller: ICoreWebView2Controller2,
@@ -40,7 +43,8 @@ pub struct WebView {
 }
 
 impl WebView {
-    pub fn new(hwnd: HWND, (width, height): (u32, u32)) -> WebView {
+    pub fn new(window: &Window) -> WebView {
+        let hwnd = window.hwnd();
         let environment: ICoreWebView2Environment = {
             let (tx, rx) = std::sync::mpsc::channel();
 
@@ -137,11 +141,13 @@ impl WebView {
                 .unwrap();
         }
 
-        let mut webview = WebView {
+        let webview = WebView {
             environment,
             controller,
             composition_controller,
         };
+
+        let (width, height) = window.inner_size();
 
         webview.set_size(width, height);
         webview.set_visible(true);
@@ -152,7 +158,7 @@ impl WebView {
         webview
     }
 
-    pub fn set_size(&mut self, width: u32, height: u32) {
+    pub fn set_size(&self, width: u32, height: u32) {
         unsafe {
             self.controller
                 .SetBounds(windows::Win32::Foundation::RECT {
@@ -165,13 +171,13 @@ impl WebView {
         }
     }
 
-    pub fn set_visible(&mut self, visible: bool) {
+    pub fn set_visible(&self, visible: bool) {
         unsafe {
             self.controller.SetIsVisible(visible).unwrap();
         }
     }
 
-    pub fn set_visual_target(&mut self, visual: &ContainerVisual) {
+    pub fn set_visual_target(&self, visual: &ContainerVisual) {
         unsafe {
             self.composition_controller
                 .SetRootVisualTarget(visual)
@@ -179,7 +185,47 @@ impl WebView {
         }
     }
 
-    pub fn navigate_to_url(&mut self, url: &str) {
+    pub fn set_message_handler(
+        &self,
+        mut message_handler: impl FnMut(&WebView, String) + 'static,
+    ) -> impl Drop {
+        struct Registration(ICoreWebView2, EventRegistrationToken);
+
+        impl Drop for Registration {
+            fn drop(&mut self) {
+                unsafe {
+                    self.0.RemoveWebMessageReceived(self.1).unwrap();
+                }
+            }
+        }
+
+        let mut token = Default::default();
+        unsafe {
+            let webview = self.controller.CoreWebView2().unwrap();
+            let this = self.clone();
+            self.controller
+                .CoreWebView2()
+                .unwrap()
+                .WebMessageReceived(
+                    webview2_com::WebMessageReceivedEventHandler::create(Box::new(
+                        move |_, args| {
+                            let args = args.unwrap();
+                            let mut message = Default::default();
+                            args.TryGetWebMessageAsString(&mut message)?;
+                            let message = U16CStr::from_ptr_str(message.0).to_string().unwrap();
+                            message_handler(&this, message);
+                            Ok(())
+                        },
+                    )),
+                    &mut token,
+                )
+                .unwrap();
+
+            Registration(webview, token)
+        }
+    }
+
+    pub fn navigate_to_url(&self, url: &str) {
         unsafe {
             self.controller
                 .CoreWebView2()
@@ -190,12 +236,17 @@ impl WebView {
     }
 
     #[allow(unused)]
-    pub fn navigate_to_string(&mut self, html: &str) {
+    pub fn navigate_to_string(&self, html: &str) {
         unsafe {
             self.controller
                 .CoreWebView2()
                 .unwrap()
                 .NavigateToString(html)
+                .unwrap();
+            self.controller
+                .CoreWebView2()
+                .unwrap()
+                .OpenDevToolsWindow()
                 .unwrap();
         }
     }

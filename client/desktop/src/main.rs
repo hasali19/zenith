@@ -15,14 +15,22 @@ fn main() {
     unsafe { HiDpi::SetProcessDpiAwareness(HiDpi::PROCESS_PER_MONITOR_DPI_AWARE).unwrap() };
 
     let window = Window::new("Zenith");
-    let hwnd = window.hwnd();
-
     let compositor = Composition::new(&window);
-    let mut webview = WebView::new(hwnd, window.inner_size());
+
+    let webview = WebView::new(&window);
+
+    let registration = webview.set_message_handler(|webview, message| {
+        if message.starts_with("server:") {
+            webview.navigate_to_url(message.strip_prefix("server:").unwrap());
+        }
+    });
+
     webview.set_visual_target(&compositor.root_visual());
-    webview.navigate_to_url("https://zenith.hasali.uk");
+    webview.navigate_to_string(include_str!("index.html"));
 
     window::run(&window, Handler { webview });
+
+    drop(registration);
 }
 
 struct Handler {
