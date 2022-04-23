@@ -1,6 +1,9 @@
 # Build output
 /target
 
+# VSCode config
+/.vscode
+
 # SQLite database
 *.db
 *.db-shm
