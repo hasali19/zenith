@@ -26,7 +26,12 @@ fn main() {
     });
 
     webview.set_visual_target(&compositor.root_visual());
-    webview.navigate_to_string(include_str!("index.html"));
+
+    if let Ok(server) = std::env::var("ZENITH_SERVER") {
+        webview.navigate_to_url(&server);
+    } else {
+        webview.navigate_to_string(include_str!("index.html"));
+    }
 
     window::run(&window, Handler { webview });
 
