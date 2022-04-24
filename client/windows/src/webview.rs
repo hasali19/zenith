@@ -189,10 +189,8 @@ impl WebView {
         }
     }
 
-    pub fn set_message_handler(
-        &self,
-        mut message_handler: impl FnMut(&WebView, String) + 'static,
-    ) -> impl Drop {
+    #[must_use]
+    pub fn set_message_handler(&self, mut message_handler: impl Handler + 'static) -> impl Drop {
         struct Registration(ICoreWebView2, EventRegistrationToken);
 
         impl Drop for Registration {
@@ -217,7 +215,7 @@ impl WebView {
                             let mut message = Default::default();
                             args.TryGetWebMessageAsString(&mut message)?;
                             let message = U16CStr::from_ptr_str(message.0).to_string().unwrap();
-                            message_handler(&this, message);
+                            message_handler.on_message_received(&this, message);
                             Ok(())
                         },
                     )),
@@ -434,6 +432,10 @@ impl WebView {
 
         true
     }
+}
+
+pub trait Handler {
+    fn on_message_received(&mut self, webview: &WebView, message: String);
 }
 
 trait WPARAMExt {

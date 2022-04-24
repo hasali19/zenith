@@ -18,12 +18,7 @@ fn main() {
     let compositor = Composition::new(&window);
 
     let webview = WebView::new(&window);
-
-    let registration = webview.set_message_handler(|webview, message| {
-        if message.starts_with("server:") {
-            webview.navigate_to_url(message.strip_prefix("server:").unwrap());
-        }
-    });
+    let registration = webview.set_message_handler(WebViewHandler);
 
     webview.set_visual_target(&compositor.root_visual());
 
@@ -33,7 +28,7 @@ fn main() {
         webview.navigate_to_string(include_str!("index.html"));
     }
 
-    let handler = Handler {
+    let handler = WindowHandler {
         compositor,
         webview,
     };
@@ -43,12 +38,12 @@ fn main() {
     drop(registration);
 }
 
-struct Handler {
+struct WindowHandler {
     compositor: Composition,
     webview: WebView,
 }
 
-impl window::Handler for Handler {
+impl window::Handler for WindowHandler {
     fn on_resize(&mut self, window: &Window) -> bool {
         let (width, height) = window.inner_size();
         self.compositor.set_size(width, height);
@@ -73,5 +68,15 @@ impl window::Handler for Handler {
 
     fn on_pointer(&mut self, window: &Window, event: window::PointerEvent) -> bool {
         self.webview.send_pointer_event(window, event)
+    }
+}
+
+struct WebViewHandler;
+
+impl webview::Handler for WebViewHandler {
+    fn on_message_received(&mut self, webview: &WebView, message: String) {
+        if message.starts_with("server:") {
+            webview.navigate_to_url(message.strip_prefix("server:").unwrap());
+        }
     }
 }
