@@ -89,7 +89,12 @@
     <script type="text/javascript">
         function onSubmit(e) {
             e.preventDefault();
-            chrome.webview.postMessage(`server:${e.target.elements['server'].value}`);
+            chrome.webview.postMessage(
+                JSON.stringify({
+                    type: "core.set_server",
+                    address: e.target.elements['server'].value,
+                })
+            );
         }
     </script>
 </body>
