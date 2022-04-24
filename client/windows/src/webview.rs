@@ -18,9 +18,9 @@ use webview2_com::{
     CoreWebView2EnvironmentOptions, CreateCoreWebView2CompositionControllerCompletedHandler,
     CreateCoreWebView2EnvironmentCompletedHandler, CursorChangedEventHandler,
 };
-use widestring::U16CStr;
+use widestring::{U16CStr, U16CString};
 use windows::core::Interface;
-use windows::Win32::Foundation::{LPARAM, POINT, RECT, WPARAM};
+use windows::Win32::Foundation::{LPARAM, POINT, PWSTR, RECT, WPARAM};
 use windows::Win32::Graphics::Gdi::MapWindowPoints;
 use windows::Win32::System::WinRT::EventRegistrationToken;
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetCapture, ReleaseCapture, SetCapture};
@@ -56,11 +56,15 @@ impl WebView {
                 options.SetAdditionalBrowserArguments("--flag-switches-begin --enable-features=msOverlayScrollbarWinStyleMasterFlag,msVisualRejuvMaterialsTitleBar --flag-switches-end").unwrap();
             }
 
+            let mut user_data_dir = std::env::var("ZENITH_USER_DATA")
+                .ok()
+                .map(|it| U16CString::from_str(it).unwrap());
+
             CreateCoreWebView2EnvironmentCompletedHandler::wait_for_async_operation(
-                Box::new(|environmentcreatedhandler| unsafe {
+                Box::new(move |environmentcreatedhandler| unsafe {
                     CreateCoreWebView2EnvironmentWithOptions(
                         None,
-                        None,
+                        user_data_dir.as_mut().map(|it| PWSTR(it.as_mut_ptr())),
                         options,
                         environmentcreatedhandler,
                     )
