@@ -72,4 +72,13 @@ impl Composition {
     pub fn root_visual(&self) -> ContainerVisual {
         self.target.Root().unwrap().cast().unwrap()
     }
+
+    pub fn set_size(&self, width: u32, height: u32) {
+        self.root_visual()
+            .SetSize(Vector2 {
+                X: width as f32,
+                Y: height as f32,
+            })
+            .unwrap();
+    }
 }

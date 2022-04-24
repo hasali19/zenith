@@ -33,18 +33,25 @@ fn main() {
         webview.navigate_to_string(include_str!("index.html"));
     }
 
-    window::run(&window, Handler { webview });
+    let handler = Handler {
+        compositor,
+        webview,
+    };
+
+    window::run(&window, handler);
 
     drop(registration);
 }
 
 struct Handler {
+    compositor: Composition,
     webview: WebView,
 }
 
 impl window::Handler for Handler {
     fn on_resize(&mut self, window: &Window) -> bool {
         let (width, height) = window.inner_size();
+        self.compositor.set_size(width, height);
         self.webview.set_size(width, height);
         true
     }
