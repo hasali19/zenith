@@ -1,1 +1,5 @@
+# Build output
 /target
+
+# Cargo config
+/.cargo/config.toml
