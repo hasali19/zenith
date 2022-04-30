@@ -2,12 +2,13 @@ use std::rc::Rc;
 
 use webview2_com::Microsoft::Web::WebView2::Win32::*;
 use webview2_com::{
-    CoreWebView2EnvironmentOptions, CreateCoreWebView2CompositionControllerCompletedHandler,
+    ContainsFullScreenElementChangedEventHandler, CoreWebView2EnvironmentOptions,
+    CreateCoreWebView2CompositionControllerCompletedHandler,
     CreateCoreWebView2EnvironmentCompletedHandler, CursorChangedEventHandler,
 };
 use widestring::{U16CStr, U16CString};
-use windows::core::{Error, IUnknown, Interface, Result};
-use windows::Win32::Foundation::{E_POINTER, HWND, LPARAM, LRESULT, POINT, PWSTR, WPARAM};
+use windows::core::{Error, Interface, Result};
+use windows::Win32::Foundation::{BOOL, E_POINTER, HWND, LPARAM, LRESULT, POINT, PWSTR, WPARAM};
 use windows::Win32::Graphics::Gdi::MapWindowPoints;
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetCapture, ReleaseCapture, SetCapture};
 use windows::Win32::UI::Input::Pointer::*;
@@ -16,7 +17,7 @@ use windows::Win32::UI::Shell::{
 };
 use windows::Win32::UI::WindowsAndMessaging::*;
 use windows::UI::Composition::ContainerVisual;
-use winit::window::{CursorIcon, Window};
+use winit::window::{CursorIcon, Fullscreen, Window};
 
 use crate::ext::WindowExt;
 
@@ -52,10 +53,21 @@ impl WebView {
         };
 
         // Update window cursor icon on webview cursor change
-        webview.add_cursor_changed_handler(move |controller, _| {
-            let mut cursor = 0;
-            unsafe { controller.unwrap().SystemCursorId(&mut cursor) }?;
-            window.set_cursor_icon(to_winit_cursor(cursor));
+        webview.add_cursor_changed_handler({
+            let window = window.clone();
+            move |_, cursor| {
+                window.set_cursor_icon(to_winit_cursor(cursor));
+                Ok(())
+            }
+        })?;
+
+        // Toggle window fullscreen on webview fullscreen change
+        webview.add_fullscreen_changed_handler(move |_, fullscreen| {
+            if fullscreen {
+                window.set_fullscreen(Some(Fullscreen::Borderless(None)));
+            } else {
+                window.set_fullscreen(None);
+            }
             Ok(())
         })?;
 
@@ -77,19 +89,48 @@ impl WebView {
         Ok(webview)
     }
 
-    fn add_cursor_changed_handler<F>(&self, handler: F) -> Result<()>
+    fn add_cursor_changed_handler<F>(&self, mut handler: F) -> Result<()>
     where
-        F: FnMut(Option<ICoreWebView2CompositionController>, Option<IUnknown>) -> Result<()>
-            + 'static,
+        F: FnMut(ICoreWebView2CompositionController, u32) -> Result<()> + 'static,
     {
         let mut token = Default::default();
-        let eventhandler = CursorChangedEventHandler::create(Box::new(handler));
+        let eventhandler = CursorChangedEventHandler::create(Box::new(move |controller, _| {
+            let controller = controller.unwrap();
+            let mut cursor = 0;
+            unsafe { controller.SystemCursorId(&mut cursor) }?;
+            handler(controller, cursor)
+        }));
 
         // Register cursor icon change handler
         unsafe {
             self.inner
                 .composition_controller
                 .CursorChanged(eventhandler, &mut token)?;
+        }
+
+        Ok(())
+    }
+
+    fn add_fullscreen_changed_handler<F>(&self, mut handler: F) -> Result<()>
+    where
+        F: FnMut(ICoreWebView2, bool) -> Result<()> + 'static,
+    {
+        let mut token = Default::default();
+        let eventhandler = ContainsFullScreenElementChangedEventHandler::create(Box::new(
+            move |webview: Option<ICoreWebView2>, _| {
+                let webview = webview.unwrap();
+                let mut fullscreen = BOOL(0);
+                unsafe { webview.ContainsFullScreenElement(&mut fullscreen)? };
+                handler(webview, fullscreen.as_bool())
+            },
+        ));
+
+        // Register cursor icon change handler
+        unsafe {
+            self.inner
+                .controller
+                .CoreWebView2()?
+                .ContainsFullScreenElementChanged(eventhandler, &mut token)?;
         }
 
         Ok(())
