@@ -165,14 +165,12 @@ impl WebView {
         }
     }
 
-    pub fn send_json_message(&self, message: &str) {
+    pub fn send_json_message(&self, message: &str) -> Result<()> {
         unsafe {
             self.inner
                 .controller
-                .CoreWebView2()
-                .unwrap()
+                .CoreWebView2()?
                 .PostWebMessageAsJson(message)
-                .unwrap();
         }
     }
 
