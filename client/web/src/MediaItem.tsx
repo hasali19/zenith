@@ -29,6 +29,7 @@ export interface MediaItemWithThumbnailProps {
   name: string;
   secondary: any;
   watched: boolean;
+  progress?: number;
   style?: JSX.CSSProperties;
   onClick: JSX.EventHandlerUnion<HTMLDivElement, MouseEvent>;
 }
@@ -44,6 +45,28 @@ export const MediaItemWithThumbnail: Component<MediaItemWithThumbnailProps> = (
       <Show when={p.watched}>
         <div class={styles.overlay}>
           <CircleCheckIcon class={styles.posterCheck} />
+        </div>
+      </Show>
+      <Show when={p.progress !== undefined}>
+        <div
+          style={{
+            position: "absolute",
+            bottom: "0",
+            left: "0",
+            right: "0",
+            margin: "12px",
+            background: "white",
+            "border-radius": "2px",
+          }}
+        >
+          <div
+            style={{
+              width: `calc(${p.progress} * 100%)`,
+              height: "4px",
+              background: "orange",
+              "border-radius": "2px",
+            }}
+          ></div>
         </div>
       </Show>
     </div>
