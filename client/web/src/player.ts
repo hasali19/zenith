@@ -5,7 +5,7 @@ type PositionChangeListener = (position: number) => void;
 type IsPlayingChangeListener = (isPlaying: boolean) => void;
 
 export interface Player {
-  init(container: HTMLDivElement, src: string): void;
+  init(container: HTMLDivElement, src: string, start: number): void;
   stop(): void;
 
   setPlaying(isPlaying: boolean): void;
@@ -33,7 +33,7 @@ class Html5Player implements Player {
   private positionChangeListeners: PositionChangeListener[] = [];
   private positionChangeIntervals: number[] = [];
 
-  init(container: HTMLDivElement, src: string): void {
+  init(container: HTMLDivElement, src: string, start: number): void {
     const video = (this.video = document.createElement("video"));
 
     video.style.width = "100%";
@@ -59,6 +59,8 @@ class Html5Player implements Player {
         listener(false);
       }
     });
+
+    video.currentTime = start;
 
     container.appendChild(video);
   }

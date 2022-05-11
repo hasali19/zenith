@@ -1,4 +1,4 @@
-import { useParams } from "solid-app-router";
+import { useLocation, useParams } from "solid-app-router";
 import { Component, createEffect, createSignal, on, onCleanup } from "solid-js";
 import preferences from "../preferences";
 import { Seekbar } from "../Seekbar";
@@ -14,9 +14,11 @@ import {
   PauseIcon,
   PlayIcon,
 } from "../icons";
+import { formatPosition } from "../utils";
 
 export const PlayerScreen: Component = () => {
   const params = useParams();
+  const location = useLocation();
 
   const [isVisible, setVisible] = createSignal(true);
   const [isSeeking, setSeeking] = createSignal(false);
@@ -121,9 +123,14 @@ export const PlayerScreen: Component = () => {
   return (
     <div class={styles.overlay} onMouseMove={onMouseMove}>
       <div
-        ref={(elem) =>
-          player.init(elem, `${preferences.server}/api/videos/${params.id}`)
-        }
+        ref={(elem) => {
+          let start = parseFloat(location.query.start) ?? 0;
+          return player.init(
+            elem,
+            `${preferences.server}/api/videos/${params.id}`,
+            start
+          );
+        }}
         style={{
           width: "100%",
           height: "100%",
@@ -206,15 +213,3 @@ export const PlayerScreen: Component = () => {
     </div>
   );
 };
-
-function formatPosition(position: number, duration: number) {
-  const hours = Math.floor(position / 3600);
-  const minutes = Math.floor((position % 3600) / 60);
-  const seconds = Math.floor(position % 60);
-  const fmt = (v: number) => v.toString().padStart(2, "0");
-  if (duration > 3600) {
-    return `${fmt(hours)}:${fmt(minutes)}:${fmt(seconds)}`;
-  } else {
-    return `${fmt(minutes)}:${fmt(seconds)}`;
-  }
-}
