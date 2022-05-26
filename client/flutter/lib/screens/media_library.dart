@@ -4,10 +4,12 @@ import 'package:zenith_flutter/api.dart';
 
 class MediaLibraryScreen extends StatefulWidget {
   final Future<List<MediaItem>> Function() provider;
+  final void Function(MediaItem) onItemTap;
 
   const MediaLibraryScreen({
     Key? key,
     required this.provider,
+    required this.onItemTap,
   }) : super(key: key);
 
   @override
@@ -29,7 +31,10 @@ class _MediaLibraryScreenState extends State<MediaLibraryScreen> {
       future: _items,
       builder: ((context, snapshot) {
         if (snapshot.hasData) {
-          return MediaItemGrid(items: snapshot.data!);
+          return MediaItemGrid(
+            items: snapshot.data!,
+            onItemTap: widget.onItemTap,
+          );
         } else if (snapshot.hasError) {
           return Text("${snapshot.error}");
         }
@@ -41,11 +46,14 @@ class _MediaLibraryScreenState extends State<MediaLibraryScreen> {
 
 class MediaItemGrid extends StatelessWidget {
   final List<MediaItem> items;
+  final void Function(MediaItem) onItemTap;
+
   final ScrollController _scrollController = ScrollController();
 
   MediaItemGrid({
     Key? key,
     required this.items,
+    required this.onItemTap,
   }) : super(key: key);
 
   @override
@@ -87,7 +95,7 @@ class MediaItemGrid extends StatelessWidget {
               fit: BoxFit.cover,
               image: NetworkImage(item.getPoster()!),
               child: InkWell(
-                onTap: () {},
+                onTap: () => onItemTap(item),
                 child: const AspectRatio(aspectRatio: 2 / 3),
               ),
             ),

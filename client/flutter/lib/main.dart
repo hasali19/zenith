@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/drawer.dart';
 import 'package:zenith_flutter/screens/media_library.dart';
+import 'package:zenith_flutter/screens/show_details.dart';
 
 void main() {
   runApp(const ZenithApp());
@@ -25,9 +26,7 @@ class ZenithApp extends StatelessWidget {
       darkTheme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color.fromARGB(255, 36, 36, 36),
         pageTransitionsTheme: pageTransitionsTheme,
-      ),
-      scrollBehavior: const ScrollBehavior(
-        androidOverscrollIndicator: AndroidOverscrollIndicator.stretch,
+        useMaterial3: true,
       ),
       home: const MainScreen(),
     );
@@ -112,15 +111,26 @@ class _MainScreenState extends State<MainScreen> {
         );
 
       case Screen.movies:
-        return const MediaLibraryScreen(
-          key: ValueKey(Screen.movies),
+        return MediaLibraryScreen(
+          key: const ValueKey(Screen.movies),
           provider: fetchMovies,
+          onItemTap: (item) {},
         );
 
       case Screen.shows:
-        return const MediaLibraryScreen(
-          key: ValueKey(Screen.shows),
+        return MediaLibraryScreen(
+          key: const ValueKey(Screen.shows),
           provider: fetchShows,
+          onItemTap: (item) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ShowDetailsScreen(
+                  show: item as Show,
+                ),
+              ),
+            );
+          },
         );
 
       case Screen.settings:
