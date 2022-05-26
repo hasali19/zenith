@@ -93,7 +93,7 @@ class MediaItemGrid extends StatelessWidget {
             borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
             child: Ink.image(
               fit: BoxFit.cover,
-              image: NetworkImage(item.getPoster()!),
+              image: NetworkImage(item.poster!),
               child: InkWell(
                 onTap: () => onItemTap(item),
                 child: const AspectRatio(aspectRatio: 2 / 3),
@@ -107,13 +107,13 @@ class MediaItemGrid extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextOneLine(
-                  item.getTitle(),
+                  item.title,
                   style: titleStyle,
                 ),
                 const SizedBox(height: 2),
-                if (item.getYear() != null)
+                if (item.year != null)
                   TextOneLine(
-                    item.getYear().toString(),
+                    item.year.toString(),
                     style: subtitleStyle,
                   ),
               ],

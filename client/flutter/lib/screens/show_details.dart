@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:zenith_flutter/screens/video_player.dart';
 
 import '../api.dart' as api;
 
@@ -277,7 +278,12 @@ class EpisodeListItem extends StatelessWidget {
             child: EpisodeThumbnail(
               url: episode.thumbnail,
               onTap: () {
-                // TODO: Navigate to player
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => VideoPlayerScreen(id: episode.id),
+                  ),
+                );
               },
             ),
           ),

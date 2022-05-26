@@ -3,6 +3,7 @@ import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/drawer.dart';
 import 'package:zenith_flutter/screens/media_library.dart';
 import 'package:zenith_flutter/screens/show_details.dart';
+import 'package:zenith_flutter/screens/video_player.dart';
 
 void main() {
   runApp(const ZenithApp());
@@ -114,7 +115,14 @@ class _MainScreenState extends State<MainScreen> {
         return MediaLibraryScreen(
           key: const ValueKey(Screen.movies),
           provider: fetchMovies,
-          onItemTap: (item) {},
+          onItemTap: (item) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => VideoPlayerScreen(id: item.id),
+              ),
+            );
+          },
         );
 
       case Screen.shows:
@@ -125,9 +133,7 @@ class _MainScreenState extends State<MainScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ShowDetailsScreen(
-                  show: item as Show,
-                ),
+                builder: (context) => ShowDetailsScreen(show: item as Show),
               ),
             );
           },
