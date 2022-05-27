@@ -61,10 +61,16 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _continueWatching = api.fetchContinueWatching().then((value) =>
-        value.map((e) => ContinueWatchingItem.fromMediaItem(e)).toList());
-    _recentMovies = api.fetchMovies();
-    _recentShows = api.fetchRecentShows();
+    _refresh();
+  }
+
+  void _refresh() {
+    setState(() {
+      _continueWatching = api.fetchContinueWatching().then((value) =>
+          value.map((e) => ContinueWatchingItem.fromMediaItem(e)).toList());
+      _recentMovies = api.fetchMovies();
+      _recentShows = api.fetchRecentShows();
+    });
   }
 
   @override
@@ -82,13 +88,14 @@ class _HomeScreenState extends State<HomeScreen> {
             title: item.title,
             subtitle: item.subtitle,
             progress: item.progress,
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => VideoPlayerScreen(id: item.id),
                 ),
               );
+              _refresh();
             },
           ),
         ),
@@ -100,13 +107,14 @@ class _HomeScreenState extends State<HomeScreen> {
               poster: item.poster,
               title: item.title,
               subtitle: item.subtitle,
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => VideoPlayerScreen(id: item.id),
                   ),
                 );
+                _refresh();
               }),
         ),
         Section<api.Show>(
@@ -117,13 +125,14 @@ class _HomeScreenState extends State<HomeScreen> {
               poster: item.poster,
               title: item.title,
               subtitle: item.subtitle,
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => ShowDetailsScreen(show: item),
                   ),
                 );
+                _refresh();
               }),
         ),
       ],
