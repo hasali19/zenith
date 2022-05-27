@@ -31,9 +31,13 @@ class SubtitleTrack {
 }
 
 class VideoInfo {
+  final double duration;
   final List<SubtitleTrack> subtitles;
 
-  const VideoInfo({required this.subtitles});
+  const VideoInfo({
+    required this.duration,
+    required this.subtitles,
+  });
 
   factory VideoInfo.fromJson(Map<String, dynamic> json) {
     final List<dynamic>? subtitlesJson = json['subtitles'];
@@ -45,13 +49,25 @@ class VideoInfo {
       subtitles = [];
     }
     return VideoInfo(
+      duration: json['duration'],
       subtitles: subtitles,
     );
   }
 }
 
+class VideoUserData {
+  final double position;
+
+  VideoUserData({required this.position});
+
+  factory VideoUserData.fromJson(Map<String, dynamic> json) {
+    return VideoUserData(position: json['position'] ?? 0);
+  }
+}
+
 abstract class VideoItem extends MediaItem {
   VideoInfo? get videoInfo;
+  VideoUserData? get userData;
 }
 
 class Movie extends VideoItem {
@@ -65,6 +81,8 @@ class Movie extends VideoItem {
   final int? releaseYear;
   @override
   final VideoInfo? videoInfo;
+  @override
+  final VideoUserData? userData;
 
   Movie({
     required this.id,
@@ -73,6 +91,7 @@ class Movie extends VideoItem {
     required this.backdrop,
     required this.releaseYear,
     required this.videoInfo,
+    required this.userData,
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
@@ -87,6 +106,9 @@ class Movie extends VideoItem {
           : null,
       videoInfo: json['video_info'] != null
           ? VideoInfo.fromJson(json['video_info'])
+          : null,
+      userData: json['user_data'] != null
+          ? VideoUserData.fromJson(json['user_data'])
           : null,
     );
   }
@@ -202,6 +224,8 @@ class Episode extends VideoItem {
   final int episodeNumber;
   @override
   final VideoInfo? videoInfo;
+  @override
+  final VideoUserData? userData;
 
   Episode({
     required this.id,
@@ -214,6 +238,7 @@ class Episode extends VideoItem {
     required this.seasonNumber,
     required this.episodeNumber,
     required this.videoInfo,
+    required this.userData,
   });
 
   factory Episode.fromJson(Map<String, dynamic> json) {
@@ -229,6 +254,9 @@ class Episode extends VideoItem {
       episodeNumber: json['episode_number'],
       videoInfo: json['video_info'] != null
           ? VideoInfo.fromJson(json['video_info'])
+          : null,
+      userData: json['user_data'] != null
+          ? VideoUserData.fromJson(json['user_data'])
           : null,
     );
   }
@@ -335,7 +363,7 @@ Future<MediaItem> fetchMediaItem(int id) async {
   }
 }
 
-Future<List<MediaItem>> fetchContinueWatching() async {
+Future<List<VideoItem>> fetchContinueWatching() async {
   final res = await http
       .get(Uri.parse('https://zenith.hasali.uk/api/items/continue_watching'));
   if (res.statusCode == 200) {

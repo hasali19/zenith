@@ -17,15 +17,17 @@ class ContinueWatchingItem {
   final String? thumbnail;
   final String title;
   final String subtitle;
+  final double progress;
 
   ContinueWatchingItem({
     required this.id,
     required this.thumbnail,
     required this.title,
     required this.subtitle,
+    required this.progress,
   });
 
-  factory ContinueWatchingItem.fromMediaItem(api.MediaItem item) {
+  factory ContinueWatchingItem.fromMediaItem(api.VideoItem item) {
     final String title;
     final String subtitle;
     if (item is api.Movie) {
@@ -37,11 +39,14 @@ class ContinueWatchingItem {
     } else {
       throw Exception("invalid media item: $item");
     }
+
     return ContinueWatchingItem(
       id: item.id,
       thumbnail: item.thumbnail,
       title: title,
       subtitle: subtitle,
+      progress:
+          (item.userData?.position ?? 0) / (item.videoInfo?.duration ?? 1),
     );
   }
 }
@@ -76,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
             thumbnail: item.thumbnail!,
             title: item.title,
             subtitle: item.subtitle,
+            progress: item.progress,
             onTap: () {
               Navigator.push(
                 context,
@@ -191,6 +197,7 @@ class ThumbnailItem extends StatelessWidget {
   final String thumbnail;
   final String title;
   final String subtitle;
+  final double progress;
   final void Function() onTap;
 
   const ThumbnailItem({
@@ -198,6 +205,7 @@ class ThumbnailItem extends StatelessWidget {
     required this.thumbnail,
     required this.title,
     required this.subtitle,
+    required this.progress,
     required this.onTap,
   }) : super(key: key);
 
@@ -211,19 +219,38 @@ class ThumbnailItem extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            height: height,
-            child: Material(
-              elevation: 2.0,
-              type: MaterialType.card,
-              clipBehavior: Clip.hardEdge,
-              borderRadius: const BorderRadius.all(Radius.circular(16)),
-              child: Ink.image(
-                fit: BoxFit.cover,
-                image: NetworkImage(thumbnail),
-                child: InkWell(onTap: onTap),
+          Stack(
+            children: [
+              SizedBox(
+                height: height,
+                child: Material(
+                  elevation: 2.0,
+                  type: MaterialType.card,
+                  clipBehavior: Clip.hardEdge,
+                  borderRadius: const BorderRadius.all(Radius.circular(16)),
+                  child: Ink.image(
+                    fit: BoxFit.cover,
+                    image: NetworkImage(thumbnail),
+                    child: InkWell(onTap: onTap),
+                  ),
+                ),
               ),
-            ),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           TextOneLine(
