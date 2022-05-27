@@ -170,8 +170,30 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   VideoController? _controller;
   bool _showControls = true;
 
+  late Timer _timer;
+
   List<api.SubtitleTrack> get subtitles =>
       widget.item.videoInfo?.subtitles ?? [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      final position = (_controller?.position ?? 0).toInt();
+      if (_controller?.state == VideoState.active &&
+          _controller?.paused == false &&
+          position > 0) {
+        api.updateProgress(widget.item.id, position);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _timer.cancel();
+  }
 
   void _toggleControls() {
     setState(() {

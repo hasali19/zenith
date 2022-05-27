@@ -277,3 +277,8 @@ String getVideoUrl(int id) {
 String getSubtitleUrl(int id) {
   return "https://zenith.hasali.uk/api/subtitles/$id";
 }
+
+Future updateProgress(int id, int position) async {
+  await http.post(Uri.parse(
+      "https://zenith.hasali.uk/api/progress/$id?position=$position"));
+}
