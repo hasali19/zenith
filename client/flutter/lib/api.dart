@@ -5,7 +5,10 @@ import 'package:http/http.dart' as http;
 abstract class MediaItem {
   int get id;
   String? get poster;
+  String? get thumbnail;
   String get title;
+  String get fullTitle;
+  String get subtitle;
   int? get year;
 }
 
@@ -58,6 +61,7 @@ class Movie extends VideoItem {
   final String title;
   @override
   final String poster;
+  final String backdrop;
   final int? releaseYear;
   @override
   final VideoInfo? videoInfo;
@@ -66,6 +70,7 @@ class Movie extends VideoItem {
     required this.id,
     required this.title,
     required this.poster,
+    required this.backdrop,
     required this.releaseYear,
     required this.videoInfo,
   });
@@ -75,6 +80,7 @@ class Movie extends VideoItem {
       id: json['id'],
       title: json['title'],
       poster: json['poster'],
+      backdrop: json['backdrop'],
       releaseYear: json['release_date'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['release_date'] * 1000)
               .year
@@ -86,9 +92,18 @@ class Movie extends VideoItem {
   }
 
   @override
+  String get fullTitle => title;
+
+  @override
+  String get subtitle => year.toString();
+
+  @override
   int? get year {
     return releaseYear;
   }
+
+  @override
+  String? get thumbnail => backdrop;
 }
 
 class Show implements MediaItem {
@@ -129,9 +144,18 @@ class Show implements MediaItem {
   }
 
   @override
+  String get fullTitle => title;
+
+  @override
+  String get subtitle => year.toString();
+
+  @override
   int? get year {
     return startYear;
   }
+
+  @override
+  String? get thumbnail => backdrop;
 }
 
 class Season {
@@ -167,11 +191,14 @@ class Episode extends VideoItem {
   @override
   final int id;
   final String name;
+  final String showName;
   @override
   final String poster;
   final String backdrop;
+  @override
   final String thumbnail;
   final String overview;
+  final int seasonNumber;
   final int episodeNumber;
   @override
   final VideoInfo? videoInfo;
@@ -179,10 +206,12 @@ class Episode extends VideoItem {
   Episode({
     required this.id,
     required this.name,
+    required this.showName,
     required this.poster,
     required this.backdrop,
     required this.thumbnail,
     required this.overview,
+    required this.seasonNumber,
     required this.episodeNumber,
     required this.videoInfo,
   });
@@ -191,10 +220,12 @@ class Episode extends VideoItem {
     return Episode(
       id: json['id'],
       name: json['name'],
+      showName: json['show_name'],
       poster: json['poster'],
       backdrop: json['backdrop'],
       thumbnail: json['thumbnail'],
       overview: json['overview'],
+      seasonNumber: json['season_number'],
       episodeNumber: json['episode_number'],
       videoInfo: json['video_info'] != null
           ? VideoInfo.fromJson(json['video_info'])
@@ -206,8 +237,20 @@ class Episode extends VideoItem {
   String get title => name;
 
   @override
+  String get fullTitle => "$episodeNumber - $name";
+
+  @override
+  String get subtitle => showName;
+
+  @override
   // TODO: implement year
   int? get year => throw UnimplementedError();
+
+  String formatSeasonEpisode() {
+    final season = this.seasonNumber.toString().padLeft(2, '0');
+    final episode = this.episodeNumber.toString().padLeft(2, '0');
+    return "S${season}E$episode";
+  }
 }
 
 Future<List<Movie>> fetchMovies() async {
@@ -220,9 +263,31 @@ Future<List<Movie>> fetchMovies() async {
   }
 }
 
+Future<List<Movie>> fetchRecentMovies() async {
+  final res =
+      await http.get(Uri.parse('https://zenith.hasali.uk/api/movies/recent'));
+  if (res.statusCode == 200) {
+    final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
+    return json.map((e) => Movie.fromJson(e)).toList();
+  } else {
+    throw Exception('Failed to fetch movies');
+  }
+}
+
 Future<List<Show>> fetchShows() async {
   final res =
       await http.get(Uri.parse('https://zenith.hasali.uk/api/tv/shows'));
+  if (res.statusCode == 200) {
+    final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
+    return json.map((e) => Show.fromJson(e)).toList();
+  } else {
+    throw Exception('Failed to fetch shows');
+  }
+}
+
+Future<List<Show>> fetchRecentShows() async {
+  final res =
+      await http.get(Uri.parse('https://zenith.hasali.uk/api/tv/shows/recent'));
   if (res.statusCode == 200) {
     final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
     return json.map((e) => Show.fromJson(e)).toList();
@@ -265,6 +330,25 @@ Future<MediaItem> fetchMediaItem(int id) async {
     } else {
       throw Exception("Unsupported media item type");
     }
+  } else {
+    throw Exception('Failed to fetch shows');
+  }
+}
+
+Future<List<MediaItem>> fetchContinueWatching() async {
+  final res = await http
+      .get(Uri.parse('https://zenith.hasali.uk/api/items/continue_watching'));
+  if (res.statusCode == 200) {
+    final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
+    return json.map((json) {
+      if (json["type"] == "movie") {
+        return Movie.fromJson(json);
+      } else if (json['type'] == "episode") {
+        return Episode.fromJson(json);
+      } else {
+        throw Exception("Unsupported media item type");
+      }
+    }).toList();
   } else {
     throw Exception('Failed to fetch shows');
   }

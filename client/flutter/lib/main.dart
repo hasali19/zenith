@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/drawer.dart';
+import 'package:zenith_flutter/screens/home.dart';
 import 'package:zenith_flutter/screens/media_library.dart';
 import 'package:zenith_flutter/screens/show_details.dart';
 import 'package:zenith_flutter/screens/video_player.dart';
@@ -107,9 +108,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildScreen(Screen screen) {
     switch (screen) {
       case Screen.home:
-        return const Center(
-          child: Icon(Icons.home),
-        );
+        return const HomeScreen();
 
       case Screen.movies:
         return MediaLibraryScreen(
