@@ -168,9 +168,10 @@ class _VideoPlayer extends StatefulWidget {
 
 class _VideoPlayerState extends State<_VideoPlayer> {
   VideoController? _controller;
-  bool _showControls = true;
+  bool _shouldShowControls = true;
 
-  late Timer _timer;
+  late Timer _progressTimer;
+  Timer? _controlsTimer;
 
   List<api.SubtitleTrack> get subtitles =>
       widget.item.videoInfo?.subtitles ?? [];
@@ -179,58 +180,83 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   void initState() {
     super.initState();
 
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _progressTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       final position = (_controller?.position ?? 0).toInt();
       if (_controller?.state == VideoState.active &&
           _controller?.paused == false &&
           position > 0) {
-        // api.updateProgress(widget.item.id, position);
+        api.updateProgress(widget.item.id, position);
       }
     });
+
+    _showControls();
   }
 
   @override
   void dispose() {
     super.dispose();
-    _timer.cancel();
+    _progressTimer.cancel();
   }
 
   void _toggleControls() {
+    if (!_shouldShowControls) {
+      _showControls();
+    } else {
+      _hideControls();
+    }
+  }
+
+  void _hideControls() {
+    _controlsTimer?.cancel();
     setState(() {
-      _showControls = !_showControls;
+      _shouldShowControls = false;
     });
+  }
+
+  void _showControls() {
+    setState(() {
+      _shouldShowControls = true;
+    });
+
+    _controlsTimer?.cancel();
+    _controlsTimer = Timer(const Duration(seconds: 5), _hideControls);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Center(
-            child: VideoView(
-              onReady: (controller) => setState(() {
-                _controller = controller..load(api.getVideoUrl(widget.item.id));
-              }),
-            ),
-          ),
-          if (_controller != null)
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _toggleControls,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, animation) =>
-                    FadeTransition(opacity: animation, child: child),
-                child: ControlsContainer(
-                  key: ValueKey<bool>(_showControls),
-                  controller: _controller!,
-                  item: widget.item,
-                  visible: _showControls,
-                ),
+      body: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerHover: (e) => _showControls(),
+        child: Stack(
+          children: [
+            Center(
+              child: VideoView(
+                onReady: (controller) => setState(() {
+                  _controller = controller
+                    ..load(api.getVideoUrl(widget.item.id));
+                }),
               ),
-            )
-        ],
+            ),
+            if (_controller != null)
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _toggleControls,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder: (child, animation) =>
+                      FadeTransition(opacity: animation, child: child),
+                  child: ControlsContainer(
+                    key: ValueKey<bool>(_shouldShowControls),
+                    controller: _controller!,
+                    item: widget.item,
+                    visible: _shouldShowControls,
+                  ),
+                ),
+              )
+          ],
+        ),
       ),
     );
   }
