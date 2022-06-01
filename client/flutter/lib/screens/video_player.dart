@@ -184,7 +184,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
       if (_controller?.state == VideoState.active &&
           _controller?.paused == false &&
           position > 0) {
-        api.updateProgress(widget.item.id, position);
+        // api.updateProgress(widget.item.id, position);
       }
     });
   }
@@ -321,10 +321,28 @@ class _ControlsState extends State<_Controls> {
         ),
         Align(
           alignment: Alignment.center,
-          child: _PlayPauseButton(
-            isPlaying: !_controller.paused,
-            onPause: _controller.pause,
-            onPlay: _controller.play,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  onPressed: () => _controller.position -= 10,
+                  icon: const Icon(Icons.replay_10),
+                  iconSize: 64,
+                ),
+                _PlayPauseButton(
+                  isPlaying: !_controller.paused,
+                  onPause: _controller.pause,
+                  onPlay: _controller.play,
+                ),
+                IconButton(
+                  onPressed: () => _controller.position += 30,
+                  icon: const Icon(Icons.forward_30),
+                  iconSize: 64,
+                ),
+              ],
+            ),
           ),
         ),
         Positioned(
@@ -401,6 +419,8 @@ class _PlayPauseButtonState extends State<_PlayPauseButton>
           icon: AnimatedIcon(
               icon: AnimatedIcons.play_pause, progress: _controller),
           iconSize: 128,
+          hoverColor: Colors.transparent,
+          highlightColor: Colors.transparent,
           onPressed: () =>
               widget.isPlaying ? widget.onPause() : widget.onPlay(),
         ),
