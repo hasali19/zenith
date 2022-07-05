@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _continueWatching = api.fetchContinueWatching().then((value) =>
           value.map((e) => ContinueWatchingItem.fromMediaItem(e)).toList());
-      _recentMovies = api.fetchMovies();
+      _recentMovies = api.fetchRecentMovies();
       _recentShows = api.fetchRecentShows();
     });
   }
