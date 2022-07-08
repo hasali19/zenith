@@ -51,6 +51,8 @@ class VideoController {
   final VideoElement _element;
   final List<void Function()> _listeners = [];
 
+  TextTrack? _activeTextTrack;
+
   VideoController(this._element) {
     _element.addEventListener("durationchange", (event) => _notifyListeners());
     _element.addEventListener("pause", (event) => _notifyListeners());
@@ -75,9 +77,24 @@ class VideoController {
 
   bool get paused => _element.paused;
 
-  void load(String url) {
+  void load(String url, List<api.SubtitleTrack> subtitles) {
     _element.src = url;
+    _element.crossOrigin = "anonymous";
+    _element.children.clear();
+
+    for (final subtitle in subtitles) {
+      _element.children.add(
+        TrackElement()
+          ..id = "subtitle-track-${subtitle.id}"
+          ..kind = "subtitles"
+          ..src = api.getSubtitleUrl(subtitle.id)
+          ..srclang = subtitle.language
+          ..label = subtitle.title,
+      );
+    }
+
     _state = VideoState.active;
+    _activeTextTrack = null;
   }
 
   void play() {
@@ -86,6 +103,19 @@ class VideoController {
 
   void pause() {
     _element.pause();
+  }
+
+  void setTextTrack(api.SubtitleTrack? track) {
+    if (track == null) {
+      _activeTextTrack?.mode = 'hidden';
+      _activeTextTrack = null;
+    } else {
+      final trackElement = _element
+          .querySelector("#subtitle-track-${track.id}")! as TrackElement;
+      final textTrack = trackElement.track!;
+      textTrack.mode = 'showing';
+      _activeTextTrack = textTrack;
+    }
   }
 
   void addListener(void Function() listener) {
@@ -235,7 +265,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
               child: VideoView(
                 onReady: (controller) => setState(() {
                   _controller = controller
-                    ..load(api.getVideoUrl(widget.item.id));
+                    ..load(api.getVideoUrl(widget.item.id), subtitles);
                 }),
               ),
             ),
@@ -383,6 +413,7 @@ class _ControlsState extends State<_Controls> {
             onPlay: _controller.play,
             onSeek: (position) =>
                 _controller.position = position.inSeconds.toDouble(),
+            onSelectSubtitle: (track) => _controller.setTextTrack(track),
           ),
         ),
       ],
@@ -463,6 +494,7 @@ class _BottomControls extends StatelessWidget {
   final void Function() onPause;
   final void Function() onPlay;
   final void Function(Duration position) onSeek;
+  final void Function(api.SubtitleTrack?) onSelectSubtitle;
 
   const _BottomControls({
     required this.duration,
@@ -471,6 +503,7 @@ class _BottomControls extends StatelessWidget {
     required this.onPause,
     required this.onPlay,
     required this.onSeek,
+    required this.onSelectSubtitle,
   });
 
   @override
@@ -502,6 +535,35 @@ class _BottomControls extends StatelessWidget {
               value: duration - position,
             ),
             const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.closed_caption),
+              splashRadius: 20,
+              onPressed: () {
+                final width = MediaQuery.of(context).size.width;
+                showModalBottomSheet<void>(
+                  context: context,
+                  constraints: width > 600
+                      ? const BoxConstraints.expand(width: 600)
+                      : null,
+                  builder: (context) {
+                    return ListView(
+                      children: subtitles
+                          .map(
+                            (track) => ListTile(
+                              title: Text(track.language ?? "Unknown"),
+                              subtitle: Text(track.title ?? ""),
+                              onTap: () {
+                                onSelectSubtitle(track);
+                                Navigator.pop(context);
+                              },
+                            ),
+                          )
+                          .toList(),
+                    );
+                  },
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.fullscreen),
               splashRadius: 20,
