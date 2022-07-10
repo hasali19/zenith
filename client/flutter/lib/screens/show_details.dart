@@ -281,7 +281,10 @@ class EpisodeListItem extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => VideoPlayerScreen(id: episode.id),
+                    builder: (context) => VideoPlayerScreen(
+                      id: episode.id,
+                      startPosition: episode.userData?.position ?? 0,
+                    ),
                   ),
                 );
               },

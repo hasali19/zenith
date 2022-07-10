@@ -18,6 +18,7 @@ class ContinueWatchingItem {
   final String title;
   final String subtitle;
   final double progress;
+  final double startPosition;
 
   ContinueWatchingItem({
     required this.id,
@@ -25,6 +26,7 @@ class ContinueWatchingItem {
     required this.title,
     required this.subtitle,
     required this.progress,
+    required this.startPosition,
   });
 
   factory ContinueWatchingItem.fromMediaItem(api.VideoItem item) {
@@ -47,6 +49,7 @@ class ContinueWatchingItem {
       subtitle: subtitle,
       progress:
           (item.userData?.position ?? 0) / (item.videoInfo?.duration ?? 1),
+      startPosition: item.userData?.position ?? 0,
     );
   }
 }
@@ -92,7 +95,10 @@ class _HomeScreenState extends State<HomeScreen> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => VideoPlayerScreen(id: item.id),
+                  builder: (context) => VideoPlayerScreen(
+                    id: item.id,
+                    startPosition: item.startPosition,
+                  ),
                 ),
               );
               _refresh();
@@ -111,7 +117,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => VideoPlayerScreen(id: item.id),
+                    builder: (context) => VideoPlayerScreen(
+                      id: item.id,
+                      startPosition: item.userData?.position ?? 0,
+                    ),
                   ),
                 );
                 _refresh();

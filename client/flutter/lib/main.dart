@@ -118,7 +118,10 @@ class _MainScreenState extends State<MainScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => VideoPlayerScreen(id: item.id),
+                builder: (context) => VideoPlayerScreen(
+                  id: item.id,
+                  startPosition: 0,
+                ),
               ),
             );
           },

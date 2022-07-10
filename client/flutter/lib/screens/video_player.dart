@@ -9,10 +9,12 @@ import "../shims/dart_ui.dart" as ui;
 
 class VideoPlayerScreen extends StatefulWidget {
   final int id;
+  final double startPosition;
 
   const VideoPlayerScreen({
     Key? key,
     required this.id,
+    required this.startPosition,
   }) : super(key: key);
 
   @override
@@ -34,7 +36,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       future: _item,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return _VideoPlayer(item: snapshot.data! as api.VideoItem);
+          return _VideoPlayer(
+            item: snapshot.data! as api.VideoItem,
+            startPosition: widget.startPosition,
+          );
         } else {
           return const Center(child: CircularProgressIndicator());
         }
@@ -77,9 +82,14 @@ class VideoController {
 
   bool get paused => _element.paused;
 
-  void load(String url, List<api.SubtitleTrack> subtitles) {
+  void load(
+    String url,
+    List<api.SubtitleTrack> subtitles,
+    double startPosition,
+  ) {
     _element.src = url;
     _element.crossOrigin = "anonymous";
+    _element.currentTime = startPosition;
     _element.children.clear();
 
     for (final subtitle in subtitles) {
@@ -187,8 +197,13 @@ class _VideoViewState extends State<VideoView> {
 
 class _VideoPlayer extends StatefulWidget {
   final api.VideoItem item;
+  final double startPosition;
 
-  const _VideoPlayer({Key? key, required this.item}) : super(key: key);
+  const _VideoPlayer({
+    Key? key,
+    required this.item,
+    required this.startPosition,
+  }) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -265,7 +280,11 @@ class _VideoPlayerState extends State<_VideoPlayer> {
               child: VideoView(
                 onReady: (controller) => setState(() {
                   _controller = controller
-                    ..load(api.getVideoUrl(widget.item.id), subtitles);
+                    ..load(
+                      api.getVideoUrl(widget.item.id),
+                      subtitles,
+                      widget.startPosition,
+                    );
                 }),
               ),
             ),
