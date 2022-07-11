@@ -1,0 +1,53 @@
+import 'package:flutter/widgets.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+
+abstract class VideoPlayerPlatform extends PlatformInterface {
+  VideoPlayerPlatform() : super(token: _token);
+
+  static VideoPlayerPlatform? _instance;
+
+  static final Object _token = Object();
+
+  static VideoPlayerPlatform get instance => _instance!;
+
+  static set instance(VideoPlayerPlatform instance) {
+    PlatformInterface.verify(instance, _token);
+    _instance = instance;
+  }
+
+  VideoController createController();
+  Widget createView(VideoController controller);
+  void toggleFullscreen();
+}
+
+enum VideoState { idle, active, ended }
+
+class SubtitleTrack {
+  String id;
+  String src;
+  String? title;
+  String? language;
+
+  SubtitleTrack({
+    required this.id,
+    required this.src,
+    this.title,
+    this.language,
+  });
+}
+
+abstract class VideoController {
+  VideoState get state;
+  double get position;
+  set position(double value);
+  double get duration;
+  bool get paused;
+
+  void load(String url, List<SubtitleTrack> subtitles, double startPosition);
+  void play();
+  void pause();
+  void setTextTrack(SubtitleTrack? track);
+  void addListener(void Function() listener);
+  void removeListener(void Function() listener);
+  void dispose();
+}

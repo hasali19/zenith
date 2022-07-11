@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:html';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 import '../api.dart' as api;
-import "../shims/dart_ui.dart" as ui;
 
 class VideoPlayerScreen extends StatefulWidget {
   final int id;
@@ -48,153 +47,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 }
 
-enum VideoState { idle, active, ended }
-
-class VideoController {
-  VideoState _state = VideoState.idle;
-
-  final VideoElement _element;
-  final List<void Function()> _listeners = [];
-
-  TextTrack? _activeTextTrack;
-
-  VideoController(this._element) {
-    _element.addEventListener("durationchange", (event) => _notifyListeners());
-    _element.addEventListener("pause", (event) => _notifyListeners());
-    _element.addEventListener("play", (event) => _notifyListeners());
-    _element.addEventListener("ended", (event) {
-      _state = VideoState.ended;
-      _notifyListeners();
-    });
-  }
-
-  VideoState get state => _state;
-
-  double get position => _element.currentTime.toDouble();
-  set position(double value) {
-    _element.currentTime = value;
-  }
-
-  double get duration {
-    final value = _element.duration.toDouble();
-    return value.isNaN ? 0 : value;
-  }
-
-  bool get paused => _element.paused;
-
-  void load(
-    String url,
-    List<api.SubtitleTrack> subtitles,
-    double startPosition,
-  ) {
-    _element.src = url;
-    _element.crossOrigin = "anonymous";
-    _element.currentTime = startPosition;
-    _element.children.clear();
-
-    for (final subtitle in subtitles) {
-      _element.children.add(
-        TrackElement()
-          ..id = "subtitle-track-${subtitle.id}"
-          ..kind = "subtitles"
-          ..src = api.getSubtitleUrl(subtitle.id)
-          ..srclang = subtitle.language
-          ..label = subtitle.title,
-      );
-    }
-
-    _state = VideoState.active;
-    _activeTextTrack = null;
-  }
-
-  void play() {
-    _element.play();
-  }
-
-  void pause() {
-    _element.pause();
-  }
-
-  void setTextTrack(api.SubtitleTrack? track) {
-    if (track == null) {
-      _activeTextTrack?.mode = 'hidden';
-      _activeTextTrack = null;
-    } else {
-      final trackElement = _element
-          .querySelector("#subtitle-track-${track.id}")! as TrackElement;
-      final textTrack = trackElement.track!;
-      textTrack.mode = 'showing';
-      _activeTextTrack = textTrack;
-    }
-  }
-
-  void addListener(void Function() listener) {
-    _listeners.add(listener);
-  }
-
-  void removeListener(void Function() listener) {
-    _listeners.remove(listener);
-  }
-
-  void dispose() {
-    _listeners.clear();
-  }
-
-  void _notifyListeners() {
-    for (final listener in _listeners) {
-      listener();
-    }
-  }
-}
-
-class VideoView extends StatefulWidget {
-  final void Function(VideoController controller) onReady;
-
-  const VideoView({Key? key, required this.onReady}) : super(key: key);
-
-  @override
-  State<VideoView> createState() => _VideoViewState();
-}
-
-class _VideoViewState extends State<VideoView> {
-  static final Map<int, VideoElement> _views = {};
-
-  late int _id;
-  late VideoController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    ui.platformViewRegistry.registerViewFactory("video-player", (viewId) {
-      final view = VideoElement()
-        ..autoplay = true
-        ..disableRemotePlayback = true
-        ..style.background = "black";
-      _views[viewId] = view;
-      return view;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return HtmlElementView(
-      viewType: "video-player",
-      onPlatformViewCreated: (id) => setState(() {
-        _id = id;
-        _controller = VideoController(_views[id]!);
-        widget.onReady(_controller);
-      }),
-    );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _controller.dispose();
-    _views.remove(_id);
-  }
-}
-
 class _VideoPlayer extends StatefulWidget {
   final api.VideoItem item;
   final double startPosition;
@@ -211,8 +63,17 @@ class _VideoPlayer extends StatefulWidget {
   }
 }
 
+SubtitleTrack subtitleFromApi(api.SubtitleTrack subtitle) {
+  return SubtitleTrack(
+    id: subtitle.id.toString(),
+    src: api.getSubtitleUrl(subtitle.id),
+    title: subtitle.title,
+    language: subtitle.language,
+  );
+}
+
 class _VideoPlayerState extends State<_VideoPlayer> {
-  VideoController? _controller;
+  late VideoController _controller;
   bool _shouldShowControls = true;
 
   late Timer _progressTimer;
@@ -225,12 +86,16 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   void initState() {
     super.initState();
 
+    _controller = VideoPlayerPlatform.instance.createController()
+      ..load(api.getVideoUrl(widget.item.id),
+          subtitles.map(subtitleFromApi).toList(), widget.startPosition);
+
     _progressTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      final position = (_controller?.position ?? 0).toInt();
-      if (_controller?.state == VideoState.active &&
-          _controller?.paused == false &&
+      final position = _controller.position.toInt();
+      if (_controller.state == VideoState.active &&
+          _controller.paused == false &&
           position > 0) {
-        api.updateProgress(widget.item.id, position);
+        // api.updateProgress(widget.item.id, position);
       }
     });
 
@@ -240,7 +105,9 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   @override
   void dispose() {
     super.dispose();
+    _controlsTimer?.cancel();
     _progressTimer.cancel();
+    _controller.dispose();
   }
 
   void _toggleControls() {
@@ -276,34 +143,22 @@ class _VideoPlayerState extends State<_VideoPlayer> {
         onPointerHover: (e) => _showControls(),
         child: Stack(
           children: [
-            Center(
-              child: VideoView(
-                onReady: (controller) => setState(() {
-                  _controller = controller
-                    ..load(
-                      api.getVideoUrl(widget.item.id),
-                      subtitles,
-                      widget.startPosition,
-                    );
-                }),
-              ),
-            ),
-            if (_controller != null)
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: _toggleControls,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  transitionBuilder: (child, animation) =>
-                      FadeTransition(opacity: animation, child: child),
-                  child: ControlsContainer(
-                    key: ValueKey<bool>(_shouldShowControls),
-                    controller: _controller!,
-                    item: widget.item,
-                    visible: _shouldShowControls,
-                  ),
+            Center(child: VideoPlayerPlatform.instance.createView(_controller)),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _toggleControls,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder: (child, animation) =>
+                    FadeTransition(opacity: animation, child: child),
+                child: ControlsContainer(
+                  key: ValueKey<bool>(_shouldShowControls),
+                  controller: _controller,
+                  item: widget.item,
+                  visible: _shouldShowControls,
                 ),
-              )
+              ),
+            )
           ],
         ),
       ),
@@ -359,9 +214,8 @@ class _ControlsState extends State<_Controls> {
     _controller.addListener(_listener);
 
     // Controller doesn't notify position changes, so update periodically too.
-    _timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
-      setState(() {});
-    });
+    _timer = Timer.periodic(
+        const Duration(milliseconds: 500), (timer) => setState(() {}));
   }
 
   void _listener() {
@@ -432,7 +286,8 @@ class _ControlsState extends State<_Controls> {
             onPlay: _controller.play,
             onSeek: (position) =>
                 _controller.position = position.inSeconds.toDouble(),
-            onSelectSubtitle: (track) => _controller.setTextTrack(track),
+            onSelectSubtitle: (track) => _controller
+                .setTextTrack(track != null ? subtitleFromApi(track) : null),
           ),
         ),
       ],
@@ -586,13 +441,7 @@ class _BottomControls extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.fullscreen),
               splashRadius: 20,
-              onPressed: () {
-                if (document.fullscreenElement == null) {
-                  document.documentElement?.requestFullscreen();
-                } else {
-                  document.exitFullscreen();
-                }
-              },
+              onPressed: VideoPlayerPlatform.instance.toggleFullscreen,
             )
           ],
         ),
