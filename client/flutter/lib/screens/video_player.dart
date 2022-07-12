@@ -95,7 +95,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
       if (_controller.state == VideoState.active &&
           _controller.paused == false &&
           position > 0) {
-        // api.updateProgress(widget.item.id, position);
+        api.updateProgress(widget.item.id, position);
       }
     });
 
