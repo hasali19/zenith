@@ -224,6 +224,13 @@ packages:
       relative: true
     source: path
     version: "0.0.1"
+  video_player_ffi:
+    dependency: transitive
+    description:
+      path: "video_player/video_player_ffi"
+      relative: true
+    source: path
+    version: "0.0.1"
   video_player_platform_interface:
     dependency: transitive
     description:

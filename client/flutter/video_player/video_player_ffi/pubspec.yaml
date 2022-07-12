@@ -1,4 +1,4 @@
-name: video_player
+name: video_player_ffi
 description: A new Flutter plugin project.
 version: 0.0.1
 homepage:
@@ -11,12 +11,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  plugin_platform_interface: ^2.0.2
   video_player_platform_interface:
     path: ../video_player_platform_interface
-  video_player_ffi:
-    path: ../video_player_ffi
-  video_player_web:
-    path: ../video_player_web
 
 dev_dependencies:
   flutter_test:
@@ -25,8 +22,8 @@ dev_dependencies:
 
 flutter:
   plugin:
+    implements: video_player
     platforms:
-      web:
-        default_package: video_player_web
       windows:
-        default_package: video_player_ffi
+        pluginClass: VideoPlayerFfiPluginCApi
+        dartPluginClass: VideoPlayerPlugin
