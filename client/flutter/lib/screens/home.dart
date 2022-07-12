@@ -1,7 +1,7 @@
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/screens/show_details.dart';
 import 'package:zenith_flutter/screens/video_player.dart';
+import 'package:zenith_flutter/text_one_line.dart';
 
 import '../api.dart' as api;
 

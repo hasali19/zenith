@@ -1,6 +1,6 @@
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
+import 'package:zenith_flutter/text_one_line.dart';
 
 class MediaLibraryScreen extends StatefulWidget {
   final Future<List<MediaItem>> Function() provider;

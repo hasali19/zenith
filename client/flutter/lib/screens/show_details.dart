@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/screens/video_player.dart';
+import 'package:zenith_flutter/text_one_line.dart';
 
 import '../api.dart' as api;
 
