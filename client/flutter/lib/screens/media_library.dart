@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/text_one_line.dart';
@@ -61,14 +63,14 @@ class MediaItemGrid extends StatelessWidget {
     final desktop = MediaQuery.of(context).size.width > 960;
     return LayoutBuilder(builder: ((context, constraints) {
       final maxColWidth = desktop ? 180.0 : 120.0;
-      final padding = desktop ? 32.0 : 0.0;
-      final spacing = desktop ? 32.0 : 8.0;
+      final gridPadding = desktop ? 64.0 : 0.0;
+      final itemSpacing = desktop ? 32.0 : 8.0;
       final borderRadius = desktop ? 16.0 : 8.0;
 
-      final maxGridWidth = constraints.maxWidth - spacing - padding * 2;
-      final cols = (maxGridWidth / (maxColWidth + spacing)).floor();
-      final width = maxGridWidth / cols - spacing;
-      final height = (3 / 2) * width + (desktop ? 64 : 50);
+      final gridWidth = constraints.maxWidth - gridPadding * 2;
+      final cols = (gridWidth / (maxColWidth + itemSpacing * 2)).ceil();
+      final colWidth = gridWidth / cols;
+      final infoTopPadding = desktop ? 16.0 : 8.0;
 
       final theme = Theme.of(context).textTheme;
       final titleStyle = desktop
@@ -78,53 +80,63 @@ class MediaItemGrid extends StatelessWidget {
           ? theme.bodyMedium!.copyWith(color: theme.caption!.color)
           : theme.caption;
 
-      return GridView.count(
+      return ListView.builder(
         controller: _scrollController,
-        crossAxisCount: cols,
-        childAspectRatio: width / height,
-        padding: EdgeInsets.all(spacing + padding),
-        mainAxisSpacing: spacing,
-        crossAxisSpacing: spacing,
-        children: items.map((item) {
-          final poster = Material(
-            elevation: 2.0,
-            type: MaterialType.card,
-            clipBehavior: Clip.hardEdge,
-            borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
-            child: Ink.image(
-              fit: BoxFit.cover,
-              image: NetworkImage(item.poster!),
-              child: InkWell(
-                onTap: () => onItemTap(item),
-                child: const AspectRatio(aspectRatio: 2 / 3),
-              ),
-            ),
-          );
+        padding: EdgeInsets.all(gridPadding),
+        itemCount: (items.length / cols).ceil(),
+        itemBuilder: (context, rowIndex) {
+          final columns = <Widget>[];
+          final maxItemIndex = math.min((rowIndex + 1) * cols, items.length);
 
-          final info = Padding(
-            padding: EdgeInsets.only(top: desktop ? 16 : 8, bottom: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextOneLine(
-                  item.title,
-                  style: titleStyle,
+          for (var i = rowIndex * cols; i < maxItemIndex; i++) {
+            final item = items[i];
+
+            final poster = Material(
+              elevation: 2.0,
+              type: MaterialType.card,
+              clipBehavior: Clip.hardEdge,
+              borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+              child: Ink.image(
+                fit: BoxFit.cover,
+                image: NetworkImage(item.poster!),
+                child: InkWell(
+                  onTap: () => onItemTap(item),
+                  child: const AspectRatio(aspectRatio: 2 / 3),
                 ),
-                const SizedBox(height: 2),
-                if (item.year != null)
-                  TextOneLine(
-                    item.year.toString(),
-                    style: subtitleStyle,
-                  ),
-              ],
-            ),
-          );
+              ),
+            );
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [poster, info],
-          );
-        }).toList(),
+            final info = Padding(
+              padding: EdgeInsets.only(top: infoTopPadding, bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextOneLine(
+                    item.title,
+                    style: titleStyle,
+                  ),
+                  const SizedBox(height: 2),
+                  if (item.year != null)
+                    TextOneLine(
+                      item.year.toString(),
+                      style: subtitleStyle,
+                    ),
+                ],
+              ),
+            );
+
+            columns.add(Container(
+              width: colWidth,
+              padding: EdgeInsets.all(itemSpacing / 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [poster, info],
+              ),
+            ));
+          }
+
+          return Row(children: columns);
+        },
       );
     }));
   }
