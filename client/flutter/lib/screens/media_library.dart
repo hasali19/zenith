@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
+import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/text_one_line.dart';
 
 class MediaLibraryScreen extends StatefulWidget {
@@ -60,10 +61,10 @@ class MediaItemGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final desktop = MediaQuery.of(context).size.width > 960;
+    final desktop = MediaQuery.of(context).isDesktop;
     return LayoutBuilder(builder: ((context, constraints) {
       final maxColWidth = desktop ? 180.0 : 120.0;
-      final gridPadding = desktop ? 64.0 : 0.0;
+      final gridPadding = desktop ? 64.0 : 4.0;
       final itemSpacing = desktop ? 32.0 : 8.0;
       final borderRadius = desktop ? 16.0 : 8.0;
 

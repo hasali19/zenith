@@ -78,13 +78,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const sectionTitlePadding = EdgeInsets.fromLTRB(32, 32, 32, 16);
+    const sectionListPadding = EdgeInsets.symmetric(horizontal: 32);
+    const sectionListSpacing = 16.0;
+
+    const thumbnailItemWidth = 350.0;
+    const thumbnailItemHeight = thumbnailItemWidth / (16 / 9);
+
+    const posterItemWidth = 180.0;
+    const posterItemHeight = posterItemWidth / (2 / 3) + 64;
+
     return ListView(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(vertical: 16),
       children: [
         Section<ContinueWatchingItem>(
           title: "Continue Watching",
-          height: 300,
+          titlePadding: sectionTitlePadding,
+          listPadding: sectionListPadding,
+          listSpacing: sectionListSpacing,
+          listItemWidth: thumbnailItemWidth,
+          listItemHeight: thumbnailItemHeight,
           future: _continueWatching,
           itemBuilder: (context, item) => ThumbnailItem(
             thumbnail: item.thumbnail!,
@@ -107,7 +121,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Section<api.Movie>(
           title: "Recent Movies",
-          height: 340,
+          titlePadding: sectionTitlePadding,
+          listPadding: sectionListPadding,
+          listSpacing: sectionListSpacing,
+          listItemWidth: posterItemWidth,
+          listItemHeight: posterItemHeight,
           future: _recentMovies,
           itemBuilder: (context, item) => PosterItem(
               poster: item.poster,
@@ -128,7 +146,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Section<api.Show>(
           title: "Recent Shows",
-          height: 340,
+          titlePadding: sectionTitlePadding,
+          listPadding: sectionListPadding,
+          listSpacing: sectionListSpacing,
+          listItemWidth: posterItemWidth,
+          listItemHeight: posterItemHeight,
           future: _recentShows,
           itemBuilder: (context, item) => PosterItem(
               poster: item.poster,
@@ -152,15 +174,23 @@ class _HomeScreenState extends State<HomeScreen> {
 class Section<T> extends StatefulWidget {
   final String title;
   final Future<List<T>> future;
-  final double height;
+  final EdgeInsets titlePadding;
+  final EdgeInsets listPadding;
+  final double listSpacing;
+  final double listItemWidth;
+  final double listItemHeight;
   final Widget Function(BuildContext context, T item) itemBuilder;
 
   const Section({
     Key? key,
     required this.title,
     required this.future,
-    required this.height,
     required this.itemBuilder,
+    required this.titlePadding,
+    required this.listPadding,
+    required this.listSpacing,
+    required this.listItemWidth,
+    required this.listItemHeight,
   }) : super(key: key);
 
   @override
@@ -178,7 +208,7 @@ class _SectionState<T> extends State<Section<T>> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(32, 32, 32, 16),
+          padding: widget.titlePadding,
           child: Text(widget.title, style: textTheme.headline5),
         ),
         FutureBuilder<List<T>>(
@@ -187,16 +217,18 @@ class _SectionState<T> extends State<Section<T>> {
             if (snapshot.hasData) {
               final data = snapshot.data!;
               return SizedBox(
-                height: widget.height,
+                height: widget.listItemHeight,
                 child: ListView.separated(
                   controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  padding: widget.listPadding,
                   separatorBuilder: (context, index) =>
-                      const SizedBox(width: 16),
+                      SizedBox(width: widget.listSpacing),
                   scrollDirection: Axis.horizontal,
                   itemCount: data.length,
-                  itemBuilder: (context, index) =>
-                      widget.itemBuilder(context, data[index]),
+                  itemBuilder: (context, index) => SizedBox(
+                    width: widget.listItemWidth,
+                    child: widget.itemBuilder(context, data[index]),
+                  ),
                 ),
               );
             } else {
@@ -217,6 +249,7 @@ class ThumbnailItem extends StatelessWidget {
   final String subtitle;
   final double progress;
   final void Function() onTap;
+  final double borderRadius;
 
   const ThumbnailItem({
     Key? key,
@@ -225,61 +258,56 @@ class ThumbnailItem extends StatelessWidget {
     required this.subtitle,
     required this.progress,
     required this.onTap,
+    this.borderRadius = 16,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    const width = 350.0;
-    const height = width * (9.0 / 16.0);
     final textTheme = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Stack(
         children: [
-          Stack(
-            children: [
-              SizedBox(
-                height: height,
-                child: Material(
-                  elevation: 2.0,
-                  type: MaterialType.card,
-                  clipBehavior: Clip.hardEdge,
-                  borderRadius: const BorderRadius.all(Radius.circular(16)),
-                  child: Ink.image(
-                    fit: BoxFit.cover,
-                    image: NetworkImage(thumbnail),
-                    child: InkWell(onTap: onTap),
+          Material(
+            elevation: 2.0,
+            type: MaterialType.card,
+            clipBehavior: Clip.hardEdge,
+            borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+            child: Ink.image(
+              fit: BoxFit.cover,
+              image: NetworkImage(thumbnail),
+              child: InkWell(onTap: onTap),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextOneLine(
+                    title,
+                    style: textTheme.titleMedium,
                   ),
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: ClipRRect(
+                  TextOneLine(
+                    subtitle,
+                    style: textTheme.titleSmall!.copyWith(
+                        color: textTheme.titleSmall!.color!.withAlpha(150)),
+                  ),
+                  const SizedBox(height: 8),
+                  ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                       value: progress,
                       backgroundColor: Colors.white,
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextOneLine(
-            title,
-            style: textTheme.titleMedium,
-          ),
-          const SizedBox(height: 4),
-          TextOneLine(
-            subtitle,
-            style: textTheme.titleSmall!
-                .copyWith(color: textTheme.titleSmall!.color!.withAlpha(150)),
+            ),
           ),
         ],
       ),
@@ -303,38 +331,32 @@ class PosterItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const height = 250.0;
-    const width = height * 2.0 / 3.0;
     final textTheme = Theme.of(context).textTheme;
-    return SizedBox(
-      width: width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            height: height,
-            child: Material(
-              elevation: 2.0,
-              type: MaterialType.card,
-              clipBehavior: Clip.hardEdge,
-              borderRadius: const BorderRadius.all(Radius.circular(16)),
-              child: Ink.image(
-                fit: BoxFit.cover,
-                image: NetworkImage(poster),
-                child: InkWell(onTap: onTap),
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AspectRatio(
+          aspectRatio: 2 / 3,
+          child: Material(
+            elevation: 2.0,
+            type: MaterialType.card,
+            clipBehavior: Clip.hardEdge,
+            borderRadius: const BorderRadius.all(Radius.circular(16)),
+            child: Ink.image(
+              fit: BoxFit.cover,
+              image: NetworkImage(poster),
+              child: InkWell(onTap: onTap),
             ),
           ),
-          const SizedBox(height: 16),
-          TextOneLine(title, style: textTheme.titleMedium),
-          const SizedBox(height: 4),
-          TextOneLine(
-            subtitle,
-            style: textTheme.titleSmall!
-                .copyWith(color: textTheme.titleSmall!.color!.withAlpha(150)),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        TextOneLine(title, style: textTheme.titleMedium),
+        TextOneLine(
+          subtitle,
+          style: textTheme.titleSmall!
+              .copyWith(color: textTheme.titleSmall!.color!.withAlpha(150)),
+        ),
+      ],
     );
   }
 }
