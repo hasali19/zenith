@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/drawer.dart';
 import 'package:zenith_flutter/screens/home.dart';
@@ -15,23 +16,34 @@ class ZenithApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const pageTransitionsTheme = PageTransitionsTheme(builders: {
-      TargetPlatform.android: ZoomPageTransitionsBuilder(),
-    });
-
     return MaterialApp(
       title: 'Zenith',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        pageTransitionsTheme: pageTransitionsTheme,
-      ),
-      darkTheme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color.fromARGB(255, 36, 36, 36),
-        pageTransitionsTheme: pageTransitionsTheme,
-        useMaterial3: true,
-      ),
+      theme: _buildTheme(Brightness.light),
+      darkTheme: _buildTheme(Brightness.dark),
       home: const MainScreen(),
     );
+  }
+
+  ThemeData _buildTheme(Brightness brightness) {
+    final baseTheme = ThemeData(
+      brightness: brightness,
+      primarySwatch: brightness == Brightness.light ? Colors.blue : null,
+      useMaterial3: true,
+    );
+
+    final theme = baseTheme.copyWith(
+      textTheme: GoogleFonts.exo2TextTheme(baseTheme.textTheme),
+    );
+
+    switch (brightness) {
+      case Brightness.dark:
+        return theme.copyWith(
+          scaffoldBackgroundColor: const Color.fromARGB(255, 36, 36, 36),
+        );
+
+      case Brightness.light:
+        return theme;
+    }
   }
 }
 
