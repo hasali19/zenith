@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/screens/show_details.dart';
 import 'package:zenith_flutter/screens/video_player.dart';
 import 'package:zenith_flutter/text_one_line.dart';
@@ -78,15 +79,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const sectionTitlePadding = EdgeInsets.fromLTRB(32, 32, 32, 16);
-    const sectionListPadding = EdgeInsets.symmetric(horizontal: 32);
-    const sectionListSpacing = 16.0;
+    final desktop = MediaQuery.of(context).isDesktop;
+    final theme = Theme.of(context);
 
-    const thumbnailItemWidth = 350.0;
-    const thumbnailItemHeight = thumbnailItemWidth / (16 / 9);
+    final sectionTitlePadding = desktop
+        ? const EdgeInsets.fromLTRB(32, 16, 32, 16)
+        : const EdgeInsets.fromLTRB(16, 8, 16, 8);
+    final sectionTitleStyle = desktop
+        ? theme.textTheme.headline5
+        : theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold);
+    final sectionListPadding = desktop
+        ? const EdgeInsets.symmetric(horizontal: 32)
+        : const EdgeInsets.symmetric(horizontal: 16);
+    final sectionListSpacing = desktop ? 16.0 : 8.0;
 
-    const posterItemWidth = 180.0;
-    const posterItemHeight = posterItemWidth / (2 / 3) + 64;
+    final cardBorderRadius = desktop ? 16.0 : 8.0;
+
+    final thumbnailItemWidth = desktop ? 350.0 : 240.0;
+    final thumbnailItemHeight = thumbnailItemWidth / (16 / 9);
+
+    final posterItemWidth = desktop ? 180.0 : 120.0;
+    final posterItemHeight = posterItemWidth / (2 / 3) + (desktop ? 64 : 40);
+    final posterItemInfoSeparator = desktop ? 16.0 : 4.0;
+    final primaryTextStyle =
+        desktop ? theme.textTheme.titleMedium : theme.textTheme.bodyText2;
+    final secondaryTextStyle = desktop
+        ? theme.textTheme.titleSmall!
+            .copyWith(color: theme.textTheme.titleSmall!.color!.withAlpha(150))
+        : theme.textTheme.caption;
 
     return ListView(
       controller: _scrollController,
@@ -95,6 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Section<ContinueWatchingItem>(
           title: "Continue Watching",
           titlePadding: sectionTitlePadding,
+          titleStyle: sectionTitleStyle,
           listPadding: sectionListPadding,
           listSpacing: sectionListSpacing,
           listItemWidth: thumbnailItemWidth,
@@ -105,6 +126,9 @@ class _HomeScreenState extends State<HomeScreen> {
             title: item.title,
             subtitle: item.subtitle,
             progress: item.progress,
+            borderRadius: cardBorderRadius,
+            primaryTextStyle: primaryTextStyle,
+            secondaryTextStyle: secondaryTextStyle,
             onTap: () async {
               await Navigator.push(
                 context,
@@ -122,6 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Section<api.Movie>(
           title: "Recent Movies",
           titlePadding: sectionTitlePadding,
+          titleStyle: sectionTitleStyle,
           listPadding: sectionListPadding,
           listSpacing: sectionListSpacing,
           listItemWidth: posterItemWidth,
@@ -131,6 +156,10 @@ class _HomeScreenState extends State<HomeScreen> {
               poster: item.poster,
               title: item.title,
               subtitle: item.subtitle,
+              borderRadius: cardBorderRadius,
+              infoSeparator: posterItemInfoSeparator,
+              primaryTextStyle: primaryTextStyle,
+              secondaryTextStyle: secondaryTextStyle,
               onTap: () async {
                 await Navigator.push(
                   context,
@@ -147,6 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Section<api.Show>(
           title: "Recent Shows",
           titlePadding: sectionTitlePadding,
+          titleStyle: sectionTitleStyle,
           listPadding: sectionListPadding,
           listSpacing: sectionListSpacing,
           listItemWidth: posterItemWidth,
@@ -156,6 +186,10 @@ class _HomeScreenState extends State<HomeScreen> {
               poster: item.poster,
               title: item.title,
               subtitle: item.subtitle,
+              borderRadius: cardBorderRadius,
+              infoSeparator: posterItemInfoSeparator,
+              primaryTextStyle: primaryTextStyle,
+              secondaryTextStyle: secondaryTextStyle,
               onTap: () async {
                 await Navigator.push(
                   context,
@@ -175,6 +209,7 @@ class Section<T> extends StatefulWidget {
   final String title;
   final Future<List<T>> future;
   final EdgeInsets titlePadding;
+  final TextStyle? titleStyle;
   final EdgeInsets listPadding;
   final double listSpacing;
   final double listItemWidth;
@@ -187,6 +222,7 @@ class Section<T> extends StatefulWidget {
     required this.future,
     required this.itemBuilder,
     required this.titlePadding,
+    required this.titleStyle,
     required this.listPadding,
     required this.listSpacing,
     required this.listItemWidth,
@@ -202,14 +238,12 @@ class _SectionState<T> extends State<Section<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: widget.titlePadding,
-          child: Text(widget.title, style: textTheme.headline5),
+          child: Text(widget.title, style: widget.titleStyle),
         ),
         FutureBuilder<List<T>>(
           future: widget.future,
@@ -238,6 +272,7 @@ class _SectionState<T> extends State<Section<T>> {
             }
           }),
         ),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -248,8 +283,10 @@ class ThumbnailItem extends StatelessWidget {
   final String title;
   final String subtitle;
   final double progress;
-  final void Function() onTap;
   final double borderRadius;
+  final TextStyle? primaryTextStyle;
+  final TextStyle? secondaryTextStyle;
+  final void Function() onTap;
 
   const ThumbnailItem({
     Key? key,
@@ -257,13 +294,14 @@ class ThumbnailItem extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.progress,
+    required this.borderRadius,
+    required this.primaryTextStyle,
+    required this.secondaryTextStyle,
     required this.onTap,
-    this.borderRadius = 16,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: Stack(
@@ -288,15 +326,8 @@ class ThumbnailItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextOneLine(
-                    title,
-                    style: textTheme.titleMedium,
-                  ),
-                  TextOneLine(
-                    subtitle,
-                    style: textTheme.titleSmall!.copyWith(
-                        color: textTheme.titleSmall!.color!.withAlpha(150)),
-                  ),
+                  TextOneLine(title, style: primaryTextStyle),
+                  TextOneLine(subtitle, style: secondaryTextStyle),
                   const SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
@@ -319,6 +350,10 @@ class PosterItem extends StatelessWidget {
   final String poster;
   final String title;
   final String subtitle;
+  final double borderRadius;
+  final double infoSeparator;
+  final TextStyle? primaryTextStyle;
+  final TextStyle? secondaryTextStyle;
   final void Function() onTap;
 
   const PosterItem({
@@ -326,12 +361,15 @@ class PosterItem extends StatelessWidget {
     required this.poster,
     required this.title,
     required this.subtitle,
+    required this.infoSeparator,
+    required this.borderRadius,
+    required this.primaryTextStyle,
+    required this.secondaryTextStyle,
     required this.onTap,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -341,7 +379,7 @@ class PosterItem extends StatelessWidget {
             elevation: 2.0,
             type: MaterialType.card,
             clipBehavior: Clip.hardEdge,
-            borderRadius: const BorderRadius.all(Radius.circular(16)),
+            borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
             child: Ink.image(
               fit: BoxFit.cover,
               image: NetworkImage(poster),
@@ -349,13 +387,9 @@ class PosterItem extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        TextOneLine(title, style: textTheme.titleMedium),
-        TextOneLine(
-          subtitle,
-          style: textTheme.titleSmall!
-              .copyWith(color: textTheme.titleSmall!.color!.withAlpha(150)),
-        ),
+        SizedBox(height: infoSeparator),
+        TextOneLine(title, style: primaryTextStyle),
+        TextOneLine(subtitle, style: secondaryTextStyle),
       ],
     );
   }
