@@ -1,6 +1,6 @@
 {
-    "name": "zenith_flutter",
-    "short_name": "zenith_flutter",
+    "name": "zenith",
+    "short_name": "zenith",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
