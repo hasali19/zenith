@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/drawer.dart';
 import 'package:zenith_flutter/screens/home.dart';
@@ -25,14 +24,11 @@ class ZenithApp extends StatelessWidget {
   }
 
   ThemeData _buildTheme(Brightness brightness) {
-    final baseTheme = ThemeData(
+    final theme = ThemeData(
       brightness: brightness,
       primarySwatch: brightness == Brightness.light ? Colors.blue : null,
       useMaterial3: true,
-    );
-
-    final theme = baseTheme.copyWith(
-      textTheme: GoogleFonts.exo2TextTheme(baseTheme.textTheme),
+      fontFamily: "Exo2",
     );
 
     switch (brightness) {
