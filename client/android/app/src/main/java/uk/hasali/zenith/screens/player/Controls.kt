@@ -110,7 +110,7 @@ fun Controls(
                         // Wait for pointer release
                         val up = awaitPointerEvent(PointerEventType.Release)
                         val change = up.changes[0]
-                        if (change.consumed.downChange) {
+                        if (change.isConsumed) {
                             // User interacted with something -> hide after a delay
                             visibility.hideAfterDelay()
                         } else {

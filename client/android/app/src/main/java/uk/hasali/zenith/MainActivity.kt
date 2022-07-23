@@ -161,7 +161,7 @@ class MainActivity : FragmentActivity() {
 
     override fun onPictureInPictureModeChanged(
         isInPictureInPictureMode: Boolean,
-        newConfig: Configuration?
+        newConfig: Configuration,
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         pictureInPictureController.isInPictureInPictureMode.value = isInPictureInPictureMode

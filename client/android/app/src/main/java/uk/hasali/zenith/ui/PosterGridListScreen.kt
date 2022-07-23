@@ -1,16 +1,14 @@
 package uk.hasali.zenith.ui
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <T> PosterGridListScreen(
     items: List<T>?,
@@ -23,7 +21,7 @@ fun <T> PosterGridListScreen(
     when (items) {
         null -> CenteredLoadingIndicator()
         else -> LazyVerticalGrid(
-            cells = GridCells.Adaptive(120.dp),
+            columns = GridCells.Adaptive(120.dp),
             contentPadding = PaddingValues(4.dp),
         ) {
             items(items.size) { i ->

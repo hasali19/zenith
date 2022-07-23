@@ -1,13 +1,11 @@
 package uk.hasali.zenith.screens.player
 
 import androidx.annotation.OptIn
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -15,7 +13,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import coil.compose.rememberImagePainter
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import uk.hasali.zenith.LocalPictureInPictureController
 import uk.hasali.zenith.media.VideoPlayer
 import uk.hasali.zenith.media.pollPosition
@@ -80,12 +79,11 @@ fun VideoPlayerView(player: VideoPlayer, scaleMode: ScaleMode) {
         )
     } else {
         item?.let {
-            val painter = rememberImagePainter(it.backdrop) {
-                crossfade(true)
-            }
-
-            Image(
-                painter = painter,
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(it.backdrop)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
             )

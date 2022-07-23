@@ -17,8 +17,8 @@ import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
-import androidx.media3.session.PlayerNotificationManager
-import coil.Coil
+import androidx.media3.ui.PlayerNotificationManager
+import coil.imageLoader
 import coil.request.ImageRequest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
@@ -117,7 +117,7 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
     private val artwork = currentItem
         .filterNotNull()
         .mapLatest {
-            val result = Coil.execute(
+            val result = context.imageLoader.execute(
                 ImageRequest.Builder(context)
                     .data(it.poster)
                     .build()
@@ -175,13 +175,13 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
                 val uri = Uri.parse(it.url)
 
                 val subtitle = MediaItem.SubtitleConfiguration.Builder(uri)
+                    .setId("external:${it.id}")
                     .setMimeType(MimeTypes.TEXT_VTT)
                     .setLanguage(it.language)
                     .setLabel(it.title)
                     .build()
 
                 val source = SingleSampleMediaSource.Factory(dataSourceFactory)
-                    .setTrackId("external:${it.id}")
                     .createMediaSource(subtitle, C.TIME_UNSET)
 
                 sources.add(source)
@@ -234,18 +234,9 @@ class LocalVideoPlayer(private val context: Context) : VideoPlayer {
                 return toast.show()
             }
 
-            val overrides = TrackSelectionOverrides.Builder()
-                .setOverrideForType(
-                    TrackSelectionOverrides.TrackSelectionOverride(
-                        group,
-                        listOf(track)
-                    )
-                )
-                .build()
-
             trackSelector.parameters = trackSelector.buildUponParameters()
                 .setRendererDisabled(renderer, false)
-                .setTrackSelectionOverrides(overrides)
+                .addOverride(TrackSelectionOverride(group, track))
                 .build()
         }
 

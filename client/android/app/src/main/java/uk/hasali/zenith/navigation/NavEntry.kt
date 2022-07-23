@@ -31,6 +31,9 @@ class DefaultNavEntry<T : Parcelable>(
     private val savedStateRegistryController = SavedStateRegistryController.create(this)
         .apply { performRestore(savedState) }
 
+    override val savedStateRegistry: SavedStateRegistry
+        get() = savedStateRegistryController.savedStateRegistry
+
     override fun setLifecycleState(state: Lifecycle.State) {
         lifecycleState = state
         updateLifecycle()
@@ -51,10 +54,6 @@ class DefaultNavEntry<T : Parcelable>(
 
     override fun getLifecycle(): Lifecycle {
         return lifecycle
-    }
-
-    override fun getSavedStateRegistry(): SavedStateRegistry {
-        return savedStateRegistryController.savedStateRegistry
     }
 
     override fun getViewModelStore(): ViewModelStore {
