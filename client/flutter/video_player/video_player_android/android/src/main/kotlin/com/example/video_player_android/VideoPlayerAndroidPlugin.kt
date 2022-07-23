@@ -136,7 +136,7 @@ class VideoPlayerAndroidPlugin : FlutterPlugin {
             result.success(texture.id())
         }
 
-        fun load(id: Long, url: String, startPosition: Double) {
+        fun load(id: Long, url: String, startPosition: Long) {
             players[id]!!.load(url, startPosition)
             result.success(null)
         }
@@ -241,8 +241,8 @@ private class PlayerInstance(
         onEvent = callback
     }
 
-    fun load(url: String, startPosition: Double) {
-        player.setMediaItem(MediaItem.fromUri(Uri.parse(url)), startPosition.toLong())
+    fun load(url: String, startPosition: Long) {
+        player.setMediaItem(MediaItem.fromUri(Uri.parse(url)), startPosition)
         player.prepare()
         player.play()
     }

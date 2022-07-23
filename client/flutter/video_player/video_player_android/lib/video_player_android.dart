@@ -115,7 +115,7 @@ class _VideoController extends VideoController {
     await _methodChannel.invokeMethod("load", {
       "id": id,
       "url": url,
-      "startPosition": startPosition,
+      "startPosition": (startPosition * 1000).toInt(),
     });
   }
 
