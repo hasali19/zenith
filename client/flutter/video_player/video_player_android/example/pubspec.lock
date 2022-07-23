@@ -170,6 +170,13 @@ packages:
       relative: true
     source: path
     version: "0.0.1"
+  video_player_platform_interface:
+    dependency: transitive
+    description:
+      path: "../../video_player_platform_interface"
+      relative: true
+    source: path
+    version: "0.0.1"
 sdks:
   dart: ">=2.19.0-24.0.dev <3.0.0"
   flutter: ">=2.5.0"

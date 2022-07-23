@@ -11,6 +11,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  video_player_android:
+    path: ../video_player_android
   video_player_platform_interface:
     path: ../video_player_platform_interface
   video_player_ffi:
@@ -26,6 +28,8 @@ dev_dependencies:
 flutter:
   plugin:
     platforms:
+      android:
+        default_package: video_player_android
       web:
         default_package: video_player_web
       windows:

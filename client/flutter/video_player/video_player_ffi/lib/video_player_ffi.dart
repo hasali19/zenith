@@ -1,13 +1,13 @@
 import 'package:flutter/widgets.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
-class VideoPlayerPlugin extends VideoPlayerPlatform {
+class VideoPlayerFfi extends VideoPlayerPlatform {
   static registerWith() {
-    VideoPlayerPlatform.instance = VideoPlayerPlugin();
+    VideoPlayerPlatform.instance = VideoPlayerFfi();
   }
 
   @override
-  VideoController createController() {
+  Future<VideoController> createController() {
     // TODO: implement createController
     throw UnimplementedError();
   }

@@ -15,7 +15,7 @@ abstract class VideoPlayerPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  VideoController createController();
+  Future<VideoController> createController();
   Widget createView(VideoController controller);
   void toggleFullscreen();
 }

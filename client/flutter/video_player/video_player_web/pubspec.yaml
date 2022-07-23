@@ -26,5 +26,5 @@ flutter:
     implements: video_player
     platforms:
       web:
-        pluginClass: VideoPlayerPlugin
+        pluginClass: VideoPlayerWeb
         fileName: video_player_web.dart

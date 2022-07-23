@@ -6,15 +6,15 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 import "shims/dart_ui.dart" as ui;
 
-class VideoPlayerPlugin extends VideoPlayerPlatform {
+class VideoPlayerWeb extends VideoPlayerPlatform {
   static void registerWith(Registrar registrar) {
-    VideoPlayerPlatform.instance = VideoPlayerPlugin();
+    VideoPlayerPlatform.instance = VideoPlayerWeb();
   }
 
   int nextId = 1;
 
   @override
-  VideoController createController() {
+  Future<VideoController> createController() async {
     final id = nextId++;
     final element = VideoElement()
       ..autoplay = true

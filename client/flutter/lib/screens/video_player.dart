@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -73,7 +74,7 @@ SubtitleTrack subtitleFromApi(api.SubtitleTrack subtitle) {
 }
 
 class _VideoPlayerState extends State<_VideoPlayer> {
-  late VideoController _controller;
+  VideoController? _controller;
   bool _shouldShowControls = true;
 
   late Timer _progressTimer;
@@ -86,16 +87,26 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   void initState() {
     super.initState();
 
-    _controller = VideoPlayerPlatform.instance.createController()
-      ..load(api.getVideoUrl(widget.item.id),
-          subtitles.map(subtitleFromApi).toList(), widget.startPosition);
+    VideoPlayerPlatform.instance.createController().then((controller) {
+      setState(() {
+        _controller = controller
+          ..load(
+            api.getVideoUrl(widget.item.id),
+            subtitles.map(subtitleFromApi).toList(),
+            widget.startPosition,
+          );
+      });
+    });
 
     _progressTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      final position = _controller.position.toInt();
-      if (_controller.state == VideoState.active &&
-          _controller.paused == false &&
+      final controller = _controller;
+      if (controller == null) return;
+
+      final position = controller.position.toInt();
+      if (controller.state == VideoState.active &&
+          controller.paused == false &&
           position > 0) {
-        // api.updateProgress(widget.item.id, position);
+        api.updateProgress(widget.item.id, position);
       }
     });
 
@@ -107,7 +118,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
     super.dispose();
     _controlsTimer?.cancel();
     _progressTimer.cancel();
-    _controller.dispose();
+    _controller?.dispose();
   }
 
   void _toggleControls() {
@@ -138,30 +149,39 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Listener(
-        behavior: HitTestBehavior.opaque,
-        onPointerHover: (e) => _showControls(),
-        child: Stack(
-          children: [
-            Center(child: VideoPlayerPlatform.instance.createView(_controller)),
-            GestureDetector(
+      body: _controller == null
+          ? const Center(child: CircularProgressIndicator())
+          : Listener(
               behavior: HitTestBehavior.opaque,
-              onTap: _toggleControls,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, animation) =>
-                    FadeTransition(opacity: animation, child: child),
-                child: ControlsContainer(
-                  key: ValueKey<bool>(_shouldShowControls),
-                  controller: _controller,
-                  item: widget.item,
-                  visible: _shouldShowControls,
-                ),
+              onPointerHover: (e) {
+                if (e.kind == PointerDeviceKind.mouse) {
+                  _showControls();
+                }
+              },
+              child: Stack(
+                children: [
+                  Center(
+                    child:
+                        VideoPlayerPlatform.instance.createView(_controller!),
+                  ),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _toggleControls,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      transitionBuilder: (child, animation) =>
+                          FadeTransition(opacity: animation, child: child),
+                      child: ControlsContainer(
+                        key: ValueKey<bool>(_shouldShowControls),
+                        controller: _controller!,
+                        item: widget.item,
+                        visible: _shouldShowControls,
+                      ),
+                    ),
+                  )
+                ],
               ),
-            )
-          ],
-        ),
-      ),
+            ),
     );
   }
 }
