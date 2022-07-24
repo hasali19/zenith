@@ -1,0 +1,29 @@
+name: Flutter
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/flutter.yml
+      - client/flutter/**
+
+defaults:
+  run:
+    working-directory: client/flutter
+
+jobs:
+  build_web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: master
+
+      - run: flutter build web --web-renderer canvaskit
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: zenith-flutter-web
+          path: build/web
