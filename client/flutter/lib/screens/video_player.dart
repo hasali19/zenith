@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -103,9 +104,13 @@ class _VideoPlayerState extends State<_VideoPlayer> {
       if (controller == null) return;
 
       final position = controller.position.toInt();
-      if (controller.state == VideoState.active &&
+      if (kReleaseMode &&
+          controller.state == VideoState.active &&
           controller.paused == false &&
           position > 0) {
+        // TODO: Be smarter about progress reporting
+        // - report when playback state changes, after seeking, etc
+        // - maybe disable timer altogether when video is paused?
         api.updateProgress(widget.item.id, position);
       }
     });
