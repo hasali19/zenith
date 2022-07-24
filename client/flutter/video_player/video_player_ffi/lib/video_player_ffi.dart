@@ -19,7 +19,24 @@ class VideoPlayerFfi extends VideoPlayerPlatform {
   }
 
   @override
-  void toggleFullscreen() {
+  // TODO: implement isWindowed
+  bool get isWindowed => throw UnimplementedError();
+
+  @override
+  Future<void> enterFullscreen() {
+    // TODO: implement enterFullscreen
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> exitFullscreen() {
+    // TODO: implement exitFullscreen
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> toggleFullscreen() {
     // TODO: implement toggleFullscreen
+    throw UnimplementedError();
   }
 }

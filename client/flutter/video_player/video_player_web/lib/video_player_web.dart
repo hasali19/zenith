@@ -40,11 +40,24 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
   }
 
   @override
-  void toggleFullscreen() {
+  bool get isWindowed => true;
+
+  @override
+  Future<void> enterFullscreen() async {
+    await document.documentElement?.requestFullscreen();
+  }
+
+  @override
+  Future<void> exitFullscreen() async {
+    document.exitFullscreen();
+  }
+
+  @override
+  Future<void> toggleFullscreen() async {
     if (document.fullscreenElement == null) {
-      document.documentElement?.requestFullscreen();
+      await enterFullscreen();
     } else {
-      document.exitFullscreen();
+      await exitFullscreen();
     }
   }
 }

@@ -116,6 +116,10 @@ class _VideoPlayerState extends State<_VideoPlayer> {
       }
     });
 
+    if (!VideoPlayerPlatform.instance.isWindowed) {
+      VideoPlayerPlatform.instance.enterFullscreen();
+    }
+
     _showControls();
   }
 
@@ -153,7 +157,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final content = Scaffold(
       backgroundColor: Colors.black,
       body: _controller == null
           ? const Center(child: CircularProgressIndicator())
@@ -198,6 +202,18 @@ class _VideoPlayerState extends State<_VideoPlayer> {
               ),
             ),
     );
+
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: content,
+    );
+  }
+
+  Future<bool> _onWillPop() async {
+    if (!VideoPlayerPlatform.instance.isWindowed) {
+      await VideoPlayerPlatform.instance.exitFullscreen();
+    }
+    return true;
   }
 }
 

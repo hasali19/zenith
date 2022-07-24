@@ -1,8 +1,11 @@
 package com.example.video_player_android
 
+import android.app.Activity
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.view.Surface
+import android.view.WindowManager
 import androidx.annotation.NonNull
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -11,18 +14,21 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.view.TextureRegistry
 
 /** VideoPlayerAndroidPlugin */
-class VideoPlayerAndroidPlugin : FlutterPlugin {
+class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
     private lateinit var applicationContext: Context
     private lateinit var textureRegistry: TextureRegistry
     private lateinit var methodChannel: MethodChannel
     private lateinit var eventChannel: EventChannel
 
+    private var activity: Activity? = null
     private val players = mutableMapOf<Long, PlayerInstance>()
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -47,6 +53,8 @@ class VideoPlayerAndroidPlugin : FlutterPlugin {
                             position = call.argument("position")!!,
                         )
                         "dispose" -> responder.dispose(id = call.argument("id")!!)
+                        "extendIntoCutout" -> responder.extendIntoCutout()
+                        "unsetExtendIntoCutout" -> responder.unsetExtendIntoCutout()
                     }
                 }
             }
@@ -128,6 +136,32 @@ class VideoPlayerAndroidPlugin : FlutterPlugin {
         players.clear()
     }
 
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        activity = binding.activity
+    }
+
+    override fun onDetachedFromActivityForConfigChanges() {
+        activity = null
+    }
+
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+        activity = binding.activity
+    }
+
+    override fun onDetachedFromActivity() {
+        activity = null
+    }
+
+    private fun setWindowLayoutInDisplayCutoutMode(getter: () -> Int) {
+        activity?.window?.let { window ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                window.attributes = window.attributes.apply {
+                    layoutInDisplayCutoutMode = getter()
+                }
+            }
+        }
+    }
+
     private inner class Responder(private val result: Result) {
         fun create() {
             val texture = textureRegistry.createSurfaceTexture()
@@ -151,13 +185,23 @@ class VideoPlayerAndroidPlugin : FlutterPlugin {
             result.success(null)
         }
 
-        fun seekTo(id:Long, position: Long) {
+        fun seekTo(id: Long, position: Long) {
             players[id]!!.seekTo(position)
             result.success(null)
         }
 
         fun dispose(id: Long) {
             players.remove(id)!!.release()
+            result.success(null)
+        }
+
+        fun extendIntoCutout() {
+            setWindowLayoutInDisplayCutoutMode { WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES }
+            result.success(null)
+        }
+
+        fun unsetExtendIntoCutout() {
+            setWindowLayoutInDisplayCutoutMode { WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT }
             result.success(null)
         }
     }

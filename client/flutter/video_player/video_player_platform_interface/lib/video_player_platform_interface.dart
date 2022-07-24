@@ -17,7 +17,11 @@ abstract class VideoPlayerPlatform extends PlatformInterface {
 
   Future<VideoController> createController();
   Widget buildView(VideoController controller);
-  void toggleFullscreen();
+
+  bool get isWindowed;
+  Future<void> enterFullscreen();
+  Future<void> exitFullscreen();
+  Future<void> toggleFullscreen();
 }
 
 enum VideoState { idle, active, ended }
