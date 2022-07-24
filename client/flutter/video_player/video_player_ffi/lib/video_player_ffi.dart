@@ -13,7 +13,7 @@ class VideoPlayerFfi extends VideoPlayerPlatform {
   }
 
   @override
-  Widget createView(VideoController controller) {
+  Widget buildView(VideoController controller) {
     // TODO: implement createView
     throw UnimplementedError();
   }

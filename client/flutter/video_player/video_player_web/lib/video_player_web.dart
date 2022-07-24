@@ -30,7 +30,7 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
   }
 
   @override
-  Widget createView(VideoController controller) {
+  Widget buildView(VideoController controller) {
     if (controller is VideoControllerWeb) {
       return HtmlElementView(viewType: "videoplayer-${controller.id}");
     } else {

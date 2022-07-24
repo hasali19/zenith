@@ -179,8 +179,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
               child: Stack(
                 children: [
                   Center(
-                    child:
-                        VideoPlayerPlatform.instance.createView(_controller!),
+                    child: VideoPlayerPlatform.instance.buildView(_controller!),
                   ),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
