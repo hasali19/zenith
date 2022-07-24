@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:zenith_flutter/responsive.dart';
 
 import '../api.dart' as api;
 
@@ -275,6 +276,13 @@ class _ControlsState extends State<_Controls> {
 
   @override
   Widget build(BuildContext context) {
+    final desktop = MediaQuery.of(context).isDesktop;
+    final appBarPadding = desktop ? 32.0 : 0.0;
+    final playPauseIconSize = desktop ? 128.0 : 96.0;
+    final seekIconSize = desktop ? 64.0 : 56.0;
+    final bottomControlsPadding = desktop
+        ? const EdgeInsets.all(48)
+        : const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
     return Stack(
       children: [
         Positioned(
@@ -290,7 +298,7 @@ class _ControlsState extends State<_Controls> {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(32),
+              padding: EdgeInsets.all(appBarPadding),
               child: AppBar(
                 title: Text(widget.item.title),
                 backgroundColor: Colors.transparent,
@@ -301,27 +309,31 @@ class _ControlsState extends State<_Controls> {
         ),
         Align(
           alignment: Alignment.center,
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: () => _controller.position -= 10,
-                  icon: const Icon(Icons.replay_10),
-                  iconSize: 64,
-                ),
-                _PlayPauseButton(
-                  isPlaying: !_controller.paused,
-                  onPause: _controller.pause,
-                  onPlay: _controller.play,
-                ),
-                IconButton(
-                  onPressed: () => _controller.position += 30,
-                  icon: const Icon(Icons.forward_30),
-                  iconSize: 64,
-                ),
-              ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    onPressed: () => _controller.position -= 10,
+                    icon: const Icon(Icons.replay_10),
+                    iconSize: seekIconSize,
+                  ),
+                  _PlayPauseButton(
+                    isPlaying: !_controller.paused,
+                    size: playPauseIconSize,
+                    onPause: _controller.pause,
+                    onPlay: _controller.play,
+                  ),
+                  IconButton(
+                    onPressed: () => _controller.position += 30,
+                    icon: const Icon(Icons.forward_30),
+                    iconSize: seekIconSize,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -333,6 +345,7 @@ class _ControlsState extends State<_Controls> {
             duration: Duration(seconds: _controller.duration.toInt()),
             position: Duration(seconds: _controller.position.toInt()),
             subtitles: widget.item.videoInfo?.subtitles ?? [],
+            padding: bottomControlsPadding,
             onPause: _controller.pause,
             onPlay: _controller.play,
             onSeek: (position) =>
@@ -355,12 +368,14 @@ class _ControlsState extends State<_Controls> {
 
 class _PlayPauseButton extends StatefulWidget {
   final bool isPlaying;
+  final double size;
 
   final void Function() onPause;
   final void Function() onPlay;
 
   const _PlayPauseButton({
     required this.isPlaying,
+    required this.size,
     required this.onPause,
     required this.onPlay,
   });
@@ -400,7 +415,7 @@ class _PlayPauseButtonState extends State<_PlayPauseButton>
         child: IconButton(
           icon: AnimatedIcon(
               icon: AnimatedIcons.play_pause, progress: _controller),
-          iconSize: 128,
+          iconSize: widget.size,
           hoverColor: Colors.transparent,
           highlightColor: Colors.transparent,
           onPressed: () =>
@@ -415,6 +430,7 @@ class _BottomControls extends StatelessWidget {
   final Duration duration;
   final Duration position;
   final List<api.SubtitleTrack> subtitles;
+  final EdgeInsets padding;
 
   final void Function() onPause;
   final void Function() onPlay;
@@ -425,6 +441,7 @@ class _BottomControls extends StatelessWidget {
     required this.duration,
     required this.position,
     required this.subtitles,
+    required this.padding,
     required this.onPause,
     required this.onPlay,
     required this.onSeek,
@@ -442,7 +459,7 @@ class _BottomControls extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(48),
+        padding: padding,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
