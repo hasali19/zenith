@@ -304,27 +304,26 @@ class ThumbnailItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: 16 / 9,
-      child: Stack(
-        children: [
-          Material(
-            elevation: 2.0,
-            type: MaterialType.card,
-            clipBehavior: Clip.hardEdge,
-            borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
-            child: Ink.image(
-              fit: BoxFit.cover,
+      child: Material(
+        elevation: 2.0,
+        type: MaterialType.card,
+        clipBehavior: Clip.hardEdge,
+        borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+        child: Ink(
+          decoration: BoxDecoration(
+            image: DecorationImage(
               image: NetworkImage(thumbnail),
-              child: InkWell(onTap: onTap),
+              fit: BoxFit.cover,
             ),
           ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+          child: InkWell(
+            onTap: onTap,
+            child: Container(
+              alignment: Alignment.bottomCenter,
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   TextOneLine(title, style: primaryTextStyle),
                   TextOneLine(subtitle, style: secondaryTextStyle),
@@ -340,7 +339,7 @@ class ThumbnailItem extends StatelessWidget {
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
