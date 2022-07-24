@@ -77,6 +77,7 @@ SubtitleTrack subtitleFromApi(api.SubtitleTrack subtitle) {
 class _VideoPlayerState extends State<_VideoPlayer> {
   VideoController? _controller;
   bool _shouldShowControls = true;
+  bool _isTap = false;
 
   late Timer _progressTimer;
   Timer? _controlsTimer;
@@ -158,6 +159,18 @@ class _VideoPlayerState extends State<_VideoPlayer> {
           ? const Center(child: CircularProgressIndicator())
           : Listener(
               behavior: HitTestBehavior.opaque,
+              onPointerDown: (event) => _isTap = true,
+              onPointerMove: (event) {
+                _showControls();
+                _isTap = false;
+              },
+              onPointerUp: (event) {
+                if (_isTap) {
+                  _toggleControls();
+                } else {
+                  _showControls();
+                }
+              },
               onPointerHover: (e) {
                 if (e.kind == PointerDeviceKind.mouse) {
                   _showControls();
@@ -169,21 +182,19 @@ class _VideoPlayerState extends State<_VideoPlayer> {
                     child:
                         VideoPlayerPlatform.instance.createView(_controller!),
                   ),
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _toggleControls,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      transitionBuilder: (child, animation) =>
-                          FadeTransition(opacity: animation, child: child),
-                      child: ControlsContainer(
-                        key: ValueKey<bool>(_shouldShowControls),
-                        controller: _controller!,
-                        item: widget.item,
-                        visible: _shouldShowControls,
-                      ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: child,
                     ),
-                  )
+                    child: ControlsContainer(
+                      key: ValueKey<bool>(_shouldShowControls),
+                      controller: _controller!,
+                      item: widget.item,
+                      visible: _shouldShowControls,
+                    ),
+                  ),
                 ],
               ),
             ),
