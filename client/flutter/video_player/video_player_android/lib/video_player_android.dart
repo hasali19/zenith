@@ -58,7 +58,7 @@ class _VideoController extends VideoController {
   late StreamSubscription<dynamic> _subscription;
 
   @override
-  VideoState get state => VideoState.idle;
+  VideoState state = VideoState.idle;
 
   @override
   bool paused = false;
@@ -98,11 +98,11 @@ class _VideoController extends VideoController {
       } else if (type == "playbackStateChanged") {
         final int state = event["value"];
         if (state == 0) {
-          this.state == VideoState.idle;
+          this.state = VideoState.idle;
         } else if (state == 1) {
-          this.state == VideoState.active;
+          this.state = VideoState.active;
         } else if (state == 2) {
-          this.state == VideoState.ended;
+          this.state = VideoState.ended;
         } else {
           throw ArgumentError.value(state, "value");
         }
