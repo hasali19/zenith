@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:wakelock/wakelock.dart';
 import 'package:zenith_flutter/responsive.dart';
 
 import '../api.dart' as api;
@@ -89,6 +90,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   @override
   void initState() {
     super.initState();
+    Wakelock.enable();
 
     VideoPlayerPlatform.instance.createController().then((controller) {
       setState(() {
@@ -127,6 +129,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   @override
   void dispose() {
     super.dispose();
+    Wakelock.disable();
     _controlsTimer?.cancel();
     _progressTimer.cancel();
     _controller?.dispose();

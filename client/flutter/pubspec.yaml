@@ -38,6 +38,7 @@ dependencies:
   http: ^0.13.4
   video_player:
     path: video_player/video_player
+  wakelock: ^0.6.2
 
 dev_dependencies:
   flutter_test:
