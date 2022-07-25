@@ -145,16 +145,26 @@ class _VideoPlayerState extends State<_VideoPlayer> {
 
   void _hideControls() {
     _controlsTimer?.cancel();
-    setState(() {
-      _shouldShowControls = false;
-    });
+    if (_shouldShowControls) {
+      setState(() => _shouldShowControls = false);
+    }
   }
 
   void _showControls() {
-    setState(() {
-      _shouldShowControls = true;
-    });
+    if (!_shouldShowControls) {
+      setState(() => _shouldShowControls = true);
+    }
+    _resetControlsTimer();
+  }
 
+  void _disableAutoHideControls() {
+    _controlsTimer?.cancel();
+    if (!_shouldShowControls) {
+      setState(() => _shouldShowControls = true);
+    }
+  }
+
+  void _resetControlsTimer() {
     _controlsTimer?.cancel();
     _controlsTimer = Timer(const Duration(seconds: 5), _hideControls);
   }
@@ -167,28 +177,13 @@ class _VideoPlayerState extends State<_VideoPlayer> {
           ? const Center(child: CircularProgressIndicator())
           : Listener(
               behavior: HitTestBehavior.opaque,
-              onPointerDown: (event) => _isTap = true,
-              onPointerMove: (event) {
-                _showControls();
-                _isTap = false;
-              },
-              onPointerUp: (event) {
-                if (_isTap) {
-                  _toggleControls();
-                } else {
-                  _showControls();
-                }
-              },
-              onPointerHover: (e) {
-                if (e.kind == PointerDeviceKind.mouse) {
-                  _showControls();
-                }
-              },
+              onPointerHover: (e) => _showControls(),
               child: Stack(
                 children: [
                   Center(
                     child: VideoPlayerPlatform.instance.buildView(_controller!),
                   ),
+                  GestureDetector(onTap: _toggleControls),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     transitionBuilder: (child, animation) => FadeTransition(
@@ -200,6 +195,9 @@ class _VideoPlayerState extends State<_VideoPlayer> {
                       controller: _controller!,
                       item: widget.item,
                       visible: _shouldShowControls,
+                      onButtonTap: _resetControlsTimer,
+                      onSeekStart: _disableAutoHideControls,
+                      onSeekEnd: _resetControlsTimer,
                     ),
                   ),
                 ],
@@ -226,17 +224,30 @@ class ControlsContainer extends StatelessWidget {
   final api.VideoItem item;
   final bool visible;
 
+  final void Function() onButtonTap;
+  final void Function() onSeekStart;
+  final void Function() onSeekEnd;
+
   const ControlsContainer({
     Key? key,
     required this.controller,
     required this.item,
     required this.visible,
+    required this.onButtonTap,
+    required this.onSeekStart,
+    required this.onSeekEnd,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     if (visible) {
-      return _Controls(controller: controller, item: item);
+      return _Controls(
+        controller: controller,
+        item: item,
+        onButtonTap: onButtonTap,
+        onSeekStart: onSeekStart,
+        onSeekEnd: onSeekEnd,
+      );
     } else {
       return Container();
     }
@@ -247,9 +258,16 @@ class _Controls extends StatefulWidget {
   final VideoController controller;
   final api.VideoItem item;
 
+  final void Function() onButtonTap;
+  final void Function() onSeekStart;
+  final void Function() onSeekEnd;
+
   const _Controls({
     required this.controller,
     required this.item,
+    required this.onButtonTap,
+    required this.onSeekStart,
+    required this.onSeekEnd,
   });
 
   @override
@@ -286,78 +304,90 @@ class _ControlsState extends State<_Controls> {
     final bottomControlsPadding = desktop
         ? const EdgeInsets.all(48)
         : const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
-    return Stack(
-      children: [
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.black, Colors.transparent],
-                begin: FractionalOffset(0, 0),
-                end: FractionalOffset(0, 1),
-              ),
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(appBarPadding),
-              child: AppBar(
-                title: Text(widget.item.title),
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-              ),
-            ),
-          ),
-        ),
-        Align(
-          alignment: Alignment.center,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
+    return GestureDetector(
+      child: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    onPressed: () => _controller.position -= 10,
-                    icon: const Icon(Icons.replay_10),
-                    iconSize: seekIconSize,
-                  ),
-                  _PlayPauseButton(
-                    isPlaying: !_controller.paused,
-                    size: playPauseIconSize,
-                    onPause: _controller.pause,
-                    onPlay: _controller.play,
-                  ),
-                  IconButton(
-                    onPressed: () => _controller.position += 30,
-                    icon: const Icon(Icons.forward_30),
-                    iconSize: seekIconSize,
-                  ),
-                ],
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.black, Colors.transparent],
+                  begin: FractionalOffset(0, 0),
+                  end: FractionalOffset(0, 1),
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(appBarPadding),
+                child: AppBar(
+                  title: Text(widget.item.title),
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                ),
               ),
             ),
           ),
-        ),
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: _BottomControls(
-            duration: Duration(seconds: _controller.duration.toInt()),
-            position: Duration(seconds: _controller.position.toInt()),
-            subtitles: widget.item.videoInfo?.subtitles ?? [],
-            padding: bottomControlsPadding,
-            onPause: _controller.pause,
-            onPlay: _controller.play,
-            onSeek: (position) =>
-                _controller.position = position.inSeconds.toDouble(),
-            onSelectSubtitle: (track) => _controller
-                .setTextTrack(track != null ? subtitleFromApi(track) : null),
+          Align(
+            alignment: Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.replay_10),
+                      iconSize: seekIconSize,
+                      onPressed: () {
+                        _controller.position -= 10;
+                        widget.onButtonTap();
+                      },
+                    ),
+                    _PlayPauseButton(
+                      isPlaying: !_controller.paused,
+                      size: playPauseIconSize,
+                      onSetPlaying: (playing) {
+                        playing ? _controller.play() : _controller.pause();
+                        widget.onButtonTap();
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.forward_30),
+                      iconSize: seekIconSize,
+                      onPressed: () {
+                        _controller.position += 30;
+                        widget.onButtonTap();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      ],
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _BottomControls(
+              duration: Duration(seconds: _controller.duration.toInt()),
+              position: Duration(seconds: _controller.position.toInt()),
+              subtitles: widget.item.videoInfo?.subtitles ?? [],
+              padding: bottomControlsPadding,
+              onPause: _controller.pause,
+              onPlay: _controller.play,
+              onSeek: (position) =>
+                  _controller.position = position.inSeconds.toDouble(),
+              onSeekStart: widget.onSeekStart,
+              onSeekEnd: widget.onSeekEnd,
+              onSelectSubtitle: (track) => _controller
+                  .setTextTrack(track != null ? subtitleFromApi(track) : null),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -373,14 +403,12 @@ class _PlayPauseButton extends StatefulWidget {
   final bool isPlaying;
   final double size;
 
-  final void Function() onPause;
-  final void Function() onPlay;
+  final void Function(bool playing) onSetPlaying;
 
   const _PlayPauseButton({
     required this.isPlaying,
     required this.size,
-    required this.onPause,
-    required this.onPlay,
+    required this.onSetPlaying,
   });
 
   @override
@@ -421,8 +449,9 @@ class _PlayPauseButtonState extends State<_PlayPauseButton>
           iconSize: widget.size,
           hoverColor: Colors.transparent,
           highlightColor: Colors.transparent,
-          onPressed: () =>
-              widget.isPlaying ? widget.onPause() : widget.onPlay(),
+          onPressed: () => widget.isPlaying
+              ? widget.onSetPlaying(false)
+              : widget.onSetPlaying(true),
         ),
       ),
     );
@@ -438,6 +467,8 @@ class _BottomControls extends StatelessWidget {
   final void Function() onPause;
   final void Function() onPlay;
   final void Function(Duration position) onSeek;
+  final void Function() onSeekStart;
+  final void Function() onSeekEnd;
   final void Function(api.SubtitleTrack?) onSelectSubtitle;
 
   const _BottomControls({
@@ -448,6 +479,8 @@ class _BottomControls extends StatelessWidget {
     required this.onPause,
     required this.onPlay,
     required this.onSeek,
+    required this.onSeekStart,
+    required this.onSeekEnd,
     required this.onSelectSubtitle,
   });
 
@@ -474,6 +507,8 @@ class _BottomControls extends StatelessWidget {
                 max: duration,
                 value: position,
                 onSeek: onSeek,
+                onSeekStart: onSeekStart,
+                onSeekEnd: onSeekEnd,
               ),
             ),
             _TimeText(
@@ -556,11 +591,15 @@ class _SeekBar extends StatelessWidget {
   final Duration value;
 
   final void Function(Duration) onSeek;
+  final void Function() onSeekStart;
+  final void Function() onSeekEnd;
 
   const _SeekBar({
     required this.max,
     required this.value,
     required this.onSeek,
+    required this.onSeekStart,
+    required this.onSeekEnd,
   });
 
   @override
@@ -571,8 +610,12 @@ class _SeekBar extends StatelessWidget {
       min: 0,
       max: max,
       value: min(value, max),
+      onChangeStart: (_) => onSeekStart(),
       onChanged: (value) => onSeek(Duration(seconds: value.toInt())),
-      onChangeEnd: (value) => onSeek(Duration(seconds: value.toInt())),
+      onChangeEnd: (value) {
+        onSeek(Duration(seconds: value.toInt()));
+        onSeekEnd();
+      },
     );
   }
 }
