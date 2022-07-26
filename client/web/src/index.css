@@ -9,6 +9,7 @@ body {
   body {
     background: #fff;
     color: #333;
+    color-scheme: light;
   }
 }
 
@@ -16,5 +17,6 @@ body {
   body {
     background: #333;
     color: #fff;
+    color-scheme: dark;
   }
 }
