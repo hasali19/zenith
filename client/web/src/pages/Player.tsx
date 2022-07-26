@@ -124,7 +124,9 @@ export const PlayerScreen: Component = () => {
     <div class={styles.overlay} onMouseMove={onMouseMove}>
       <div
         ref={(elem) => {
-          let start = parseFloat(location.query.start) ?? 0;
+          let start = location.query.start
+            ? parseFloat(location.query.start) ?? 0
+            : 0;
           return player.init(
             elem,
             `${preferences.server}/api/videos/${params.id}`,
