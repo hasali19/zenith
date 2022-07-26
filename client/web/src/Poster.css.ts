@@ -6,18 +6,6 @@ export const root = style({
   transition: "transform 100ms",
 });
 
-export const clickable = style({
-  cursor: "pointer",
-
-  ":hover": {
-    transform: "scale(0.98)",
-  },
-
-  ":active": {
-    transform: "scale(0.95)",
-  },
-});
-
 export const image = style({
   width: "100%",
   height: "100%",

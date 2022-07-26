@@ -16,7 +16,7 @@ export interface MediaItemWithPosterProps {
 
 export const MediaItemWithPoster: Component<MediaItemWithPosterProps> = (p) => (
   <div className={styles.item} style={p.style} onClick={p.onClick}>
-    <Poster src={p.poster} watched={p.watched} clickable />
+    <Poster src={p.poster} watched={p.watched} />
     <div className={styles.details}>
       <p className={styles.name}>{p.name}</p>
       <p className={styles.secondary}>{p.secondary}</p>

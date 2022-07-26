@@ -6,11 +6,10 @@ import * as styles from "./Poster.css";
 export interface PosterProps extends JSX.HTMLAttributes<HTMLDivElement> {
   src: string;
   watched?: boolean;
-  clickable?: boolean;
 }
 
 export const Poster: Component<PosterProps> = (p) => {
-  const [props, rootProps] = splitProps(p, ["src", "watched", "clickable"]);
+  const [props, rootProps] = splitProps(p, ["src", "watched"]);
 
   const className = () => {
     let className = styles.root;
@@ -20,16 +19,8 @@ export const Poster: Component<PosterProps> = (p) => {
     return className;
   };
 
-  const classList = () => {
-    let classList = { [styles.clickable]: props.clickable };
-    if (p.classList) {
-      classList = { ...classList, ...p.classList };
-    }
-    return classList;
-  };
-
   return (
-    <div class={className()} classList={classList()} {...rootProps}>
+    <div class={className()} {...rootProps}>
       <Show
         when={props.src}
         fallback={<FileVideoIcon size={56} style={{ color: "white" }} />}
