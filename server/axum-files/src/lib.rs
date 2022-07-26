@@ -26,7 +26,7 @@ impl<B: Send> FromRequest<B> for FileRequest {
             Ok(TypedHeader(range)) => Some(range),
             Err(e) => match e.reason() {
                 TypedHeaderRejectionReason::Missing => None,
-                TypedHeaderRejectionReason::Error(_) => return Err(e),
+                _ => return Err(e),
             },
         };
 

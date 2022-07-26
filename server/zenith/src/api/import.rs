@@ -75,8 +75,7 @@ pub async fn import_subtitle(
 
         let content_type = field
             .content_type()
-            .or_bad_request("missing content type for file upload")?
-            .essence_str();
+            .or_bad_request("missing content type for file upload")?;
 
         if !Path::new("data/tmp").exists() {
             std::fs::create_dir_all("data/tmp")?;

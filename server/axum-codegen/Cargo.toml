@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = "0.4"
+axum = "0.5"
 axum-codegen-macros = { path = "../axum-codegen-macros" }
-inventory = "0.2"
+inventory = "0.3"
 okapi = "0.7.0-rc.1"

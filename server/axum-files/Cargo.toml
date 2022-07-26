@@ -10,7 +10,7 @@ headers = "0.3"
 mime_guess = "2.0"
 
 [dependencies.axum]
-version = "0.4"
+version = "0.5"
 features = ["headers"]
 
 [dependencies.tokio]
@@ -18,5 +18,5 @@ version = "1"
 features = ["fs", "io-util"]
 
 [dependencies.tokio-util]
-version = "0.6"
+version = "0.7"
 features = ["codec"]

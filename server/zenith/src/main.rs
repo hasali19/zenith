@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use axum::extract::OriginalUri;
 use axum::http::StatusCode;
-use axum::AddExtensionLayer;
+use axum::Extension;
 use axum_files::{FileRequest, FileResponse};
 use tmdb::TmdbClient;
 use tower_http::trace::TraceLayer;
@@ -79,12 +79,12 @@ async fn run_server() -> eyre::Result<()> {
         .nest("/api", zenith::api::router())
         .fallback(axum::routing::get(spa))
         .layer(TraceLayer::new_for_http())
-        .layer(AddExtensionLayer::new(config))
-        .layer(AddExtensionLayer::new(db.clone()))
-        .layer(AddExtensionLayer::new(metadata))
-        .layer(AddExtensionLayer::new(transcoder))
-        .layer(AddExtensionLayer::new(scanner))
-        .layer(AddExtensionLayer::new(tmdb));
+        .layer(Extension(config))
+        .layer(Extension(db.clone()))
+        .layer(Extension(metadata))
+        .layer(Extension(transcoder))
+        .layer(Extension(scanner))
+        .layer(Extension(tmdb));
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

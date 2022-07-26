@@ -8,6 +8,6 @@ edition = "2021"
 [dependencies]
 
 [dependencies.sqlx]
-git = "https://github.com/launchbadge/sqlx"
+version = "0.6"
 default-features = false
 features = ["macros", "migrate", "runtime-tokio-rustls", "sqlite"]
