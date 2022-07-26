@@ -7,7 +7,7 @@ export const root = style({
   justifyContent: "center",
   userSelect: "none",
   transition: "transform 100ms",
-  background: "rgba(100,100,100)",
+  background: "rgb(100,100,100)",
   borderRadius: 8,
   aspectRatio: "2/3",
 });
