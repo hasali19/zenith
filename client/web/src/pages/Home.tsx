@@ -70,7 +70,21 @@ export const HomeScreen: Component = () => {
             }
             watched={false}
             progress={item.user_data.position / item.video_info.duration}
-            onClick={() => navigate(`/movies/${item.id}`)}
+            onClick={() => {
+              let type;
+              switch (item.type) {
+                case "movie":
+                  type = "movies";
+                  break;
+                case "episode":
+                  type = "episodes";
+                  break;
+                default:
+                  console.error(`invalid video item type: ${type}`);
+                  return;
+              }
+              return navigate(`/${type}/${item.id}`);
+            }}
           />
         )}
       </FeaturedSection>
