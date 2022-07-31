@@ -1,10 +1,4 @@
-use std::future::Future;
-use std::pin::Pin;
-
-use axum::extract::RawBody;
-use axum::http::request::Parts;
 use axum::http::{Method, StatusCode};
-use axum::response::Response;
 use okapi::schemars::gen::SchemaGenerator;
 use okapi::schemars::schema::Schema;
 
@@ -38,12 +32,6 @@ pub trait Route: Send + Sync {
 
     fn src_file(&self) -> &'static str;
 
-    fn handle(
-        &self,
-        parts: Parts,
-        body: RawBody,
-    ) -> Pin<Box<dyn Future<Output = Response> + Send + 'static>>;
-
     fn doc(&self) -> Option<&'static str> {
         None
     }
@@ -51,6 +39,8 @@ pub trait Route: Send + Sync {
     fn params(&self, schema_gen: &mut SchemaGenerator) -> Vec<ParamSpec>;
     fn request(&self, schema_gen: &mut SchemaGenerator) -> Option<RequestSpec>;
     fn responses(&self, schema_gen: &mut SchemaGenerator) -> Vec<ResponseSpec>;
+
+    fn register(&self, router: axum::Router) -> axum::Router;
 }
 
 inventory::collect!(&'static dyn Route);

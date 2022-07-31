@@ -64,17 +64,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
         },
     };
 
-    let vis = input.vis.clone();
     let name = input.sig.ident.clone();
-
-    let args = input.sig.inputs.iter().map(|_| {
-        quote! {
-            match axum::extract::FromRequest::from_request(&mut parts).await {
-                Ok(v) => v,
-                Err(e) => return axum::response::IntoResponse::into_response(e).map(axum::body::boxed),
-            }
-        }
-    });
 
     let method = match method {
         Method::Get => quote! { axum::http::Method::GET },
@@ -187,60 +177,60 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
             .all(|ident| !attr.path.is_ident(ident))
     });
 
-    let route_impl = quote! {
-        struct Route;
-
-        impl axum_codegen::Route for Route {
-            fn path(&self) -> &'static str {
-                #path
-            }
-
-            fn method(&self) -> axum::http::Method {
-                #method
-            }
-
-            fn src_file(&self) -> &'static str {
-                file!()
-            }
-
-            fn handle(&self, req: axum::http::request::Parts, body: axum::extract::RawBody) -> futures::future::BoxFuture<'static, axum::http::Response<axum::body::BoxBody>> {
-                self::#name(req, body)
-            }
-
-            fn doc(&self) -> Option<&'static str> {
-                Some(#doc)
-            }
-
-            fn params(&self, schema_gen: &mut okapi::schemars::gen::SchemaGenerator) -> Vec<axum_codegen::ParamSpec> {
-                vec![#(#params),*]
-            }
-
-            fn request(&self, schema_gen: &mut okapi::schemars::gen::SchemaGenerator) -> Option<axum_codegen::RequestSpec> {
-                #request
-            }
-
-            fn responses(&self, schema_gen: &mut okapi::schemars::gen::SchemaGenerator) -> Vec<axum_codegen::ResponseSpec> {
-                vec![#(#responses),*]
-            }
-        }
-    };
-
     TokenStream::from(quote! {
-        #vis fn #name(req: axum::http::request::Parts, axum::extract::RawBody(body): axum::extract::RawBody) -> futures::future::BoxFuture<'static, axum::http::Response<axum::body::BoxBody>> {
-            #input
-            #route_impl
+        #input
+
+        const _: () = {
+            struct Route;
+
+            impl axum_codegen::Route for Route {
+                fn path(&self) -> &'static str {
+                    #path
+                }
+
+                fn method(&self) -> axum::http::Method {
+                    #method
+                }
+
+                fn src_file(&self) -> &'static str {
+                    file!()
+                }
+
+                fn doc(&self) -> Option<&'static str> {
+                    Some(#doc)
+                }
+
+                fn params(&self, schema_gen: &mut okapi::schemars::gen::SchemaGenerator) -> Vec<axum_codegen::ParamSpec> {
+                    vec![#(#params),*]
+                }
+
+                fn request(&self, schema_gen: &mut okapi::schemars::gen::SchemaGenerator) -> Option<axum_codegen::RequestSpec> {
+                    #request
+                }
+
+                fn responses(&self, schema_gen: &mut okapi::schemars::gen::SchemaGenerator) -> Vec<axum_codegen::ResponseSpec> {
+                    vec![#(#responses),*]
+                }
+
+                fn register(&self, router: axum::Router) -> axum::Router {
+                    router.route(self.path(), match self.method() {
+                        axum::http::Method::GET => axum::routing::get(#name),
+                        axum::http::Method::POST => axum::routing::post(#name),
+                        axum::http::Method::PUT => axum::routing::put(#name),
+                        axum::http::Method::DELETE => axum::routing::delete(#name),
+                        axum::http::Method::HEAD => axum::routing::head(#name),
+                        axum::http::Method::OPTIONS => axum::routing::options(#name),
+                        axum::http::Method::PATCH => axum::routing::patch(#name),
+                        axum::http::Method::TRACE => axum::routing::trace(#name),
+                        method => panic!("Unsupported method: {}", method),
+                    })
+                }
+            }
 
             inventory::submit! {
                 &Route as &'static dyn axum_codegen::Route
             }
-
-            Box::pin(async move {
-                let req = axum::http::Request::from_parts(req, body);
-                let mut parts = axum::extract::RequestParts::new(req);
-                let res = #name(#(#args),*).await;
-                axum::response::IntoResponse::into_response(res).map(axum::body::boxed)
-            })
-        }
+        };
     })
 }
 

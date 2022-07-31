@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use axum::http::header::ACCESS_CONTROL_ALLOW_ORIGIN;
 use axum::http::{HeaderValue, Method};
 use axum::response::Html;
-use axum::routing::{get, MethodRouter};
+use axum::routing::get;
 use axum::{Json, Router};
 use axum_codegen::{ParamLocation, Route};
 use markdown::{Block, Span};
@@ -19,9 +19,7 @@ pub fn router() -> axum::Router {
     let spec = openapi_spec();
 
     axum_codegen::routes()
-        .fold(Router::new(), |router, route| {
-            router.route(route.path(), method_service(route))
-        })
+        .fold(Router::new(), |router, route| route.register(router))
         .route("/", get(|| async move { Html(REDOC_INDEX) }))
         .route("/openapi.json", get(|| async move { Json(spec) }))
         .layer(SetResponseHeaderLayer::overriding(
@@ -208,20 +206,4 @@ fn build_route_spec(
     operation.responses.extensions.clear();
 
     Some(operation)
-}
-
-fn method_service(route: &'static dyn Route) -> MethodRouter {
-    let method = route.method();
-    let handler = |parts, body| route.handle(parts, body);
-    match method {
-        Method::GET => axum::routing::get(handler),
-        Method::POST => axum::routing::post(handler),
-        Method::PUT => axum::routing::put(handler),
-        Method::DELETE => axum::routing::delete(handler),
-        Method::HEAD => axum::routing::head(handler),
-        Method::OPTIONS => axum::routing::options(handler),
-        Method::PATCH => axum::routing::patch(handler),
-        Method::TRACE => axum::routing::trace(handler),
-        _ => panic!("Unsupported method: {method}"),
-    }
 }
