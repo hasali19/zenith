@@ -114,7 +114,7 @@ async fn spa(OriginalUri(uri): OriginalUri, file: FileRequest) -> Result<FileRes
         Path::new("client/web/dist/index.html")
     };
 
-    Ok(FileResponse::from_request(file, path)
+    FileResponse::from_request(file, path)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
