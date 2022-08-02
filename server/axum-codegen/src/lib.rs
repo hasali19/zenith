@@ -1,8 +1,9 @@
-use axum::http::{Method, StatusCode};
-use okapi::schemars::gen::SchemaGenerator;
-use okapi::schemars::schema::Schema;
+pub mod reflection;
 
+use axum::http::{Method, StatusCode};
 pub use axum_codegen_macros::*;
+
+use reflection::{Type, TypeContext};
 
 pub enum ParamLocation {
     Path,
@@ -12,18 +13,18 @@ pub enum ParamLocation {
 pub struct ParamSpec {
     pub location: ParamLocation,
     pub name: String,
-    pub schema: Schema,
+    pub type_desc: Type,
 }
 
 pub struct RequestSpec {
-    pub schema: Schema,
+    pub type_desc: Type,
 }
 
 #[derive(Debug)]
 pub struct ResponseSpec {
     pub status: StatusCode,
     pub description: Option<String>,
-    pub schema: Option<Schema>,
+    pub type_desc: Option<Type>,
 }
 
 pub trait Route: Send + Sync {
@@ -36,15 +37,28 @@ pub trait Route: Send + Sync {
         None
     }
 
-    fn params(&self, schema_gen: &mut SchemaGenerator) -> Vec<ParamSpec>;
-    fn request(&self, schema_gen: &mut SchemaGenerator) -> Option<RequestSpec>;
-    fn responses(&self, schema_gen: &mut SchemaGenerator) -> Vec<ResponseSpec>;
+    fn params(&self, cx: &mut TypeContext) -> Vec<ParamSpec>;
+    fn request(&self, cx: &mut TypeContext) -> Option<RequestSpec>;
+    fn responses(&self, cx: &mut TypeContext) -> Vec<ResponseSpec>;
 
     fn register(&self, router: axum::Router) -> axum::Router;
 }
 
-inventory::collect!(&'static dyn Route);
+pub mod inventory {
+    pub use inventory::submit;
+}
+
+#[macro_export]
+macro_rules! submit {
+    ($e:expr) => {
+        axum_codegen::inventory::submit! {
+            $e as &'static dyn axum_codegen::Route
+        }
+    };
+}
+
+::inventory::collect!(&'static dyn Route);
 
 pub fn routes() -> impl Iterator<Item = &'static dyn Route> {
-    inventory::iter::<&'static dyn Route>.into_iter().copied()
+    ::inventory::iter::<&'static dyn Route>.into_iter().copied()
 }

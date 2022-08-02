@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use schemars::JsonSchema;
+use axum_codegen::Reflect;
 use serde::Serialize;
 use sqlx::sqlite::{SqliteArguments, SqliteRow};
 use sqlx::Type;
@@ -26,7 +26,7 @@ impl TryFrom<&'_ str> for StreamType {
     }
 }
 
-#[derive(Serialize, JsonSchema)]
+#[derive(Serialize, Reflect)]
 pub struct Stream {
     pub id: i64,
     pub index: u32,
@@ -35,7 +35,7 @@ pub struct Stream {
     pub props: StreamProps,
 }
 
-#[derive(Serialize, JsonSchema)]
+#[derive(Serialize, Reflect)]
 #[serde(tag = "type")]
 #[serde(rename_all = "snake_case")]
 pub enum StreamProps {

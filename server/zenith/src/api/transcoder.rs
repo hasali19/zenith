@@ -4,8 +4,7 @@ use axum::extract::{Extension, Query};
 use axum::http::StatusCode;
 use axum::response::{sse, IntoResponse};
 use axum::Json;
-use axum_codegen::{get, post};
-use schemars::JsonSchema;
+use axum_codegen::{get, post, Reflect};
 use serde::{Deserialize, Serialize};
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
@@ -14,7 +13,7 @@ use crate::api::error::bad_request;
 use crate::api::ApiResult;
 use crate::transcoder::{self, Job, Transcoder};
 
-#[derive(Serialize, JsonSchema)]
+#[derive(Serialize, Reflect)]
 struct TranscoderState {
     queue: Vec<Job>,
 }

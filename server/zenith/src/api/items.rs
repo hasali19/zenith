@@ -4,8 +4,7 @@ use axum::extract::{Extension, Path, Query};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
-use axum_codegen::{delete, get, patch};
-use schemars::JsonSchema;
+use axum_codegen::{delete, get, patch, Reflect};
 use serde::Deserialize;
 
 use crate::api::ApiResult;
@@ -110,7 +109,7 @@ async fn delete_item(
     Ok(StatusCode::OK)
 }
 
-#[derive(Deserialize, JsonSchema)]
+#[derive(Deserialize, Reflect)]
 struct VideoUserDataPatch {
     #[serde(default)]
     is_watched: Option<bool>,

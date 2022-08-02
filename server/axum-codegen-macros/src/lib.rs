@@ -3,7 +3,7 @@ use std::fmt::Write;
 use proc_macro::TokenStream;
 use quote::quote;
 use structmeta::StructMeta;
-use syn::{AttributeArgs, Lit, LitInt, LitStr, Meta};
+use syn::{AttributeArgs, DeriveInput, Lit, LitInt, LitStr, Meta};
 
 enum Method {
     Get,
@@ -106,7 +106,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
                 axum_codegen::ParamSpec {
                     location: axum_codegen::ParamLocation::Path,
                     name: #name.to_owned(),
-                    schema: schema_gen.subschema_for::<#model>(),
+                    type_desc: cx.type_or_id_for::<#model>(),
                 }
             };
 
@@ -120,7 +120,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
                 axum_codegen::ParamSpec {
                     location: axum_codegen::ParamLocation::Query,
                     name: #name.to_owned(),
-                    schema: schema_gen.subschema_for::<#model>(),
+                    type_desc: cx.type_or_id_for::<#model>(),
                 }
             };
 
@@ -132,7 +132,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
             request = quote! {
                 Some(
                     axum_codegen::RequestSpec {
-                        schema: schema_gen.subschema_for::<#model>(),
+                        type_desc: cx.type_or_id_for::<#model>(),
                     }
                 )
             };
@@ -150,12 +150,12 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
                 }
             };
 
-            let schema = match args.model {
+            let type_desc = match args.model {
                 None => {
                     quote! { None }
                 }
                 Some(model) => {
-                    quote! { Some(schema_gen.subschema_for::<#model>()) }
+                    quote! { Some(cx.type_or_id_for::<#model>()) }
                 }
             };
 
@@ -163,7 +163,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
                 axum_codegen::ResponseSpec {
                     status: axum::http::StatusCode::from_u16(#status).unwrap(),
                     description: #description,
-                    schema: #schema,
+                    type_desc: #type_desc,
                 }
             };
 
@@ -200,15 +200,15 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
                     Some(#doc)
                 }
 
-                fn params(&self, schema_gen: &mut okapi::schemars::gen::SchemaGenerator) -> Vec<axum_codegen::ParamSpec> {
+                fn params(&self, cx: &mut axum_codegen::reflection::TypeContext) -> Vec<axum_codegen::ParamSpec> {
                     vec![#(#params),*]
                 }
 
-                fn request(&self, schema_gen: &mut okapi::schemars::gen::SchemaGenerator) -> Option<axum_codegen::RequestSpec> {
+                fn request(&self, cx: &mut axum_codegen::reflection::TypeContext) -> Option<axum_codegen::RequestSpec> {
                     #request
                 }
 
-                fn responses(&self, schema_gen: &mut okapi::schemars::gen::SchemaGenerator) -> Vec<axum_codegen::ResponseSpec> {
+                fn responses(&self, cx: &mut axum_codegen::reflection::TypeContext) -> Vec<axum_codegen::ResponseSpec> {
                     vec![#(#responses),*]
                 }
 
@@ -227,9 +227,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
                 }
             }
 
-            inventory::submit! {
-                &Route as &'static dyn axum_codegen::Route
-            }
+            axum_codegen::submit!(&Route);
         };
     })
 }
@@ -252,3 +250,102 @@ method_attr!(options, Options);
 method_attr!(connect, Connect);
 method_attr!(patch, Patch);
 method_attr!(trace, Trace);
+
+#[proc_macro_derive(Reflect, attributes(serde))]
+pub fn derive_reflect(input: TokenStream) -> TokenStream {
+    use serde_derive_internals::{ast as serde_ast, Derive};
+    let input = syn::parse_macro_input!(input as DeriveInput);
+    let cx = serde_derive_internals::Ctxt::new();
+    let container = serde_ast::Container::from_ast(&cx, &input, Derive::Serialize).unwrap();
+    cx.check().unwrap();
+
+    let ident = container.ident;
+    let expr = match container.data {
+        serde_ast::Data::Enum(variants) => {
+            let tag = match container.attrs.tag() {
+                serde_derive_internals::attr::TagType::External => todo!("external tag"),
+                serde_derive_internals::attr::TagType::Internal { tag } => tag,
+                serde_derive_internals::attr::TagType::Adjacent { .. } => todo!("adjacent tag"),
+                serde_derive_internals::attr::TagType::None => todo!("untagged"),
+            };
+
+            let variants = variants.into_iter().map(|variant| {
+                let name = variant.ident.to_string();
+                let serialize_name = variant.attrs.name().serialize_name();
+                let kind = match variant.style {
+                    serde_ast::Style::Struct => {
+                        let fields = variant.fields.into_iter().map(build_field);
+                        quote! {
+                            EnumVariantKind::Struct(vec![#(#fields),*])
+                        }
+                    }
+                    serde_ast::Style::Tuple => todo!("tuple enum"),
+                    serde_ast::Style::Newtype => {
+                        let ty = variant.fields[0].ty;
+                        quote! {
+                            EnumVariantKind::NewType(cx.type_or_id_for::<#ty>())
+                        }
+                    }
+                    serde_ast::Style::Unit => quote! {
+                        EnumVariantKind::Unit
+                    },
+                };
+                quote! {
+                    EnumVariant {
+                        name: #name.to_owned(),
+                        tag_value: #serialize_name.to_owned(),
+                        kind: #kind,
+                    }
+                }
+            });
+
+            quote! {
+                Type::Enum(EnumType {
+                    name: stringify!(#ident).to_string(),
+                    tag: Some(EnumTag::Internal(#tag.to_owned())),
+                    variants: vec![#(#variants),*],
+                })
+            }
+        }
+        serde_ast::Data::Struct(style, fields) => match style {
+            serde_ast::Style::Struct => {
+                let fields = fields.into_iter().map(build_field);
+                quote! {
+                    Type::Struct(StructType {
+                        name: stringify!(#ident).to_string(),
+                        fields: vec![#(#fields),*],
+                    })
+                }
+            }
+            serde_ast::Style::Tuple => todo!(),
+            serde_ast::Style::Newtype => todo!(),
+            serde_ast::Style::Unit => todo!(),
+        },
+    };
+
+    TokenStream::from(quote! {
+        impl axum_codegen::reflection::Reflect for #ident {
+            fn type_id() -> String {
+                concat!(module_path!(), "::", stringify!(#ident)).to_owned()
+            }
+
+            fn type_description(cx: &mut axum_codegen::reflection::TypeContext) -> axum_codegen::reflection::Type {
+                use axum_codegen::reflection::*;
+                #expr
+            }
+        }
+    })
+}
+
+fn build_field(field: serde_derive_internals::ast::Field) -> proc_macro2::TokenStream {
+    let name = field.attrs.name().serialize_name();
+    let ty = field.ty;
+    let flatten = field.attrs.flatten();
+    quote! {
+        Field {
+            name: #name.to_owned(),
+            flatten: #flatten,
+            type_desc: cx.type_or_id_for::<#ty>(),
+        }
+    }
+}

@@ -1,14 +1,17 @@
 use axum::http::Method;
-use axum_codegen::openapiv3::*;
-use axum_codegen::SchemaGenerator;
-use axum_codegen::{indexmap, openapiv3, ParamLocation, Route};
+use axum_codegen::reflection::{
+    BasicType, EnumTag, EnumVariantKind, Field, FloatWidth, PrimitiveType, Type, TypeContext,
+};
+use axum_codegen::{ParamLocation, Route};
+use indexmap::indexmap;
 use markdown::{Block, Span};
+use openapiv3::*;
 
 pub fn openapi_spec() -> OpenAPI {
-    build_openapi_spec(SchemaGenerator::new())
+    build_openapi_spec(TypeContext::new())
 }
 
-fn build_openapi_spec(mut schema_gen: SchemaGenerator) -> OpenAPI {
+fn build_openapi_spec(mut cx: TypeContext) -> OpenAPI {
     let mut spec = OpenAPI {
         openapi: "3.0.0".to_owned(),
         info: Info {
@@ -20,7 +23,6 @@ fn build_openapi_spec(mut schema_gen: SchemaGenerator) -> OpenAPI {
     };
 
     spec.paths = axum_codegen::routes().fold(Default::default(), |mut paths, route| {
-        let method = route.method();
         let path = route
             .path()
             .trim_start_matches('/')
@@ -44,26 +46,26 @@ fn build_openapi_spec(mut schema_gen: SchemaGenerator) -> OpenAPI {
             ReferenceOr::Item(item) => item,
         };
 
-        let operation_ref = match method {
+        let operation_ref = match route.method() {
             Method::GET => &mut item.get,
             Method::POST => &mut item.post,
             Method::PUT => &mut item.put,
             Method::PATCH => &mut item.patch,
             Method::DELETE => &mut item.delete,
-            _ => panic!("invalid method: {method}"),
+            method => panic!("invalid method: {method}"),
         };
 
-        *operation_ref = build_route_spec(route, &mut schema_gen);
+        *operation_ref = build_route_spec(route, &mut cx);
 
         paths
     });
 
     let mut components = spec.components.unwrap_or_default();
 
-    for (name, schema) in schema_gen.into_schemas() {
+    for (name, schema) in cx.into_types() {
         components
             .schemas
-            .insert(name.clone(), ReferenceOr::Item(schema));
+            .insert(name.clone(), type_to_schema(schema));
     }
 
     components.schemas.sort_keys();
@@ -73,10 +75,7 @@ fn build_openapi_spec(mut schema_gen: SchemaGenerator) -> OpenAPI {
     spec
 }
 
-fn build_route_spec(
-    route: &'static dyn Route,
-    schema_gen: &mut SchemaGenerator,
-) -> Option<Operation> {
+fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<Operation> {
     let doc = route.doc()?;
     let md = markdown::tokenize(doc);
     let mut blocks = md.into_iter();
@@ -108,9 +107,9 @@ fn build_route_spec(
         }
     }
 
-    for param in route.params(schema_gen) {
+    for param in route.params(cx) {
         let parameter_data = ParameterData {
-            name: param.name,
+            name: param.name.clone(),
             required: matches!(param.location, ParamLocation::Path),
             deprecated: None,
             description: None,
@@ -118,7 +117,7 @@ fn build_route_spec(
             examples: Default::default(),
             explode: None,
             extensions: Default::default(),
-            format: ParameterSchemaOrContent::Schema(param.schema),
+            format: ParameterSchemaOrContent::Schema(type_to_schema(param.type_desc)),
         };
 
         let param = match param.location {
@@ -137,10 +136,10 @@ fn build_route_spec(
         operation.parameters.push(ReferenceOr::Item(param));
     }
 
-    operation.request_body = route.request(schema_gen).map(|req| {
+    operation.request_body = route.request(cx).map(|req| {
         let content = indexmap! {
             "application/json".to_owned() => MediaType {
-                schema: Some(req.schema),
+                schema: Some(type_to_schema(req.type_desc)),
                 ..Default::default()
             },
         };
@@ -151,15 +150,15 @@ fn build_route_spec(
         })
     });
 
-    for res in route.responses(schema_gen) {
+    for res in route.responses(cx) {
         let status = res.status;
         let mut content = indexmap! {};
 
-        if let Some(schema) = res.schema {
+        if let Some(schema) = res.type_desc {
             content.insert(
                 "application/json".to_owned(),
                 MediaType {
-                    schema: Some(schema),
+                    schema: Some(type_to_schema(schema)),
                     ..Default::default()
                 },
             );
@@ -169,6 +168,7 @@ fn build_route_spec(
             content,
             description: res
                 .description
+                .to_owned()
                 .or_else(|| status.canonical_reason().map(|reason| reason.to_owned()))
                 .unwrap_or_else(|| res.status.to_string()),
             ..Default::default()
@@ -183,4 +183,176 @@ fn build_route_spec(
     operation.responses.extensions.clear();
 
     Some(operation)
+}
+
+fn type_to_schema(type_desc: Type) -> ReferenceOr<Schema> {
+    use openapiv3::Type as SchemaType;
+    let schema = match type_desc {
+        Type::Basic(ty) => match ty {
+            BasicType::Primitive(ty) => match ty {
+                PrimitiveType::Bool => type_schema(SchemaType::Boolean {}),
+                PrimitiveType::Int(width) => type_schema(SchemaType::Integer(IntegerType {
+                    format: VariantOrUnknownOrEmpty::Unknown(format!("int{}", width.as_u8())),
+                    ..Default::default()
+                })),
+                PrimitiveType::UInt(width) => type_schema(SchemaType::Integer(IntegerType {
+                    format: VariantOrUnknownOrEmpty::Unknown(format!("uint{}", width.as_u8())),
+                    minimum: Some(0),
+                    ..Default::default()
+                })),
+                PrimitiveType::Float(width) => type_schema(SchemaType::Number(NumberType {
+                    format: VariantOrUnknownOrEmpty::Item(match width {
+                        FloatWidth::F32 => NumberFormat::Float,
+                        FloatWidth::F64 => NumberFormat::Double,
+                    }),
+                    ..Default::default()
+                })),
+                PrimitiveType::String => type_schema(SchemaType::String(StringType {
+                    ..Default::default()
+                })),
+            },
+            BasicType::Option(inner) => {
+                let schema = type_to_schema(*inner);
+                if let ReferenceOr::Item(mut schema) = schema {
+                    schema.schema_data.nullable = true;
+                    schema
+                } else {
+                    Schema {
+                        schema_kind: SchemaKind::AllOf {
+                            all_of: vec![schema],
+                        },
+                        schema_data: SchemaData {
+                            nullable: true,
+                            ..Default::default()
+                        },
+                    }
+                }
+            }
+            BasicType::Array(inner) => type_schema(SchemaType::Array(ArrayType {
+                items: Some(box_schema(type_to_schema(*inner))),
+                min_items: None,
+                max_items: None,
+                unique_items: false,
+            })),
+            BasicType::Map(_) => todo!(),
+        },
+        Type::Struct(ty) => {
+            let mut schema = schema_for_fields(ty.fields);
+            schema.schema_data.title = Some(ty.name);
+            schema
+        }
+        Type::Enum(ty) => match ty.tag {
+            None => todo!(),
+            Some(EnumTag::Internal(tag_name)) => {
+                let mut one_of = vec![];
+
+                for variant in ty.variants {
+                    let schema_data = SchemaData {
+                        title: Some(variant.name.to_owned()),
+                        ..Default::default()
+                    };
+
+                    let tag_schema = Schema {
+                        schema_kind: SchemaKind::Type(SchemaType::Object(ObjectType {
+                            properties: indexmap! {
+                                tag_name.to_owned() => ReferenceOr::Item(Box::new(Schema {
+                                    schema_kind: SchemaKind::Type(SchemaType::String(StringType {
+                                        enumeration: vec![Some(variant.tag_value.to_owned())],
+                                        ..Default::default()
+                                    })),
+                                    schema_data: Default::default(),
+                                })),
+                            },
+                            required: vec![tag_name.to_owned()],
+                            ..Default::default()
+                        })),
+                        schema_data: Default::default(),
+                    };
+
+                    let variant_schema = match variant.kind {
+                        EnumVariantKind::Unit => Schema {
+                            schema_data,
+                            ..tag_schema
+                        },
+                        EnumVariantKind::NewType(ty) => Schema {
+                            schema_kind: SchemaKind::AllOf {
+                                all_of: vec![ReferenceOr::Item(tag_schema), type_to_schema(ty)],
+                            },
+                            schema_data,
+                        },
+                        EnumVariantKind::Struct(fields) => Schema {
+                            schema_kind: SchemaKind::AllOf {
+                                all_of: vec![
+                                    ReferenceOr::Item(tag_schema),
+                                    ReferenceOr::Item(schema_for_fields(fields)),
+                                ],
+                            },
+                            schema_data,
+                        },
+                    };
+
+                    one_of.push(ReferenceOr::Item(variant_schema));
+                }
+
+                Schema {
+                    schema_kind: SchemaKind::OneOf { one_of },
+                    schema_data: SchemaData {
+                        title: Some(ty.name),
+                        ..Default::default()
+                    },
+                }
+            }
+        },
+        Type::Id(id) => {
+            return ReferenceOr::Reference {
+                reference: format!("#/components/schemas/{id}"),
+            }
+        }
+    };
+
+    ReferenceOr::Item(schema)
+}
+
+fn type_schema(ty: openapiv3::Type) -> Schema {
+    Schema {
+        schema_kind: SchemaKind::Type(ty),
+        schema_data: Default::default(),
+    }
+}
+
+fn box_schema(schema: ReferenceOr<Schema>) -> ReferenceOr<Box<Schema>> {
+    match schema {
+        ReferenceOr::Reference { reference } => ReferenceOr::Reference { reference },
+        ReferenceOr::Item(schema) => ReferenceOr::Item(Box::new(schema)),
+    }
+}
+
+fn schema_for_fields(fields: Vec<Field>) -> Schema {
+    let mut all_of = vec![];
+    let mut properties = indexmap! {};
+    let mut required = vec![];
+
+    for field in fields {
+        let optional = matches!(field.type_desc, Type::Basic(BasicType::Option(_)));
+        let field_schema = type_to_schema(field.type_desc);
+        if field.flatten {
+            all_of.push(field_schema);
+        } else {
+            properties.insert(field.name.to_owned(), box_schema(field_schema));
+            if !optional {
+                required.push(field.name.to_owned());
+            }
+        }
+    }
+
+    Schema {
+        schema_kind: SchemaKind::Any(AnySchema {
+            typ: Some("object".to_owned()),
+            properties,
+            all_of,
+            required,
+            ..Default::default()
+        }),
+        schema_data: Default::default(),
+    }
 }

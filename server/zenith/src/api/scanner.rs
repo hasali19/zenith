@@ -3,8 +3,7 @@ use std::sync::Arc;
 use axum::extract::{Extension, Path, Query};
 use axum::response::IntoResponse;
 use axum::Json;
-use axum_codegen::post;
-use schemars::JsonSchema;
+use axum_codegen::{post, Reflect};
 use serde::{Deserialize, Serialize};
 
 use crate::api::error::not_found;
@@ -40,7 +39,7 @@ async fn start_scan(
     scanner.start_scan(query.into());
 }
 
-#[derive(Serialize, JsonSchema)]
+#[derive(Serialize, Reflect)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum ItemScanResult {
     Added { id: i64 },

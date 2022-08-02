@@ -1,4 +1,4 @@
-use schemars::JsonSchema;
+use axum_codegen::Reflect;
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqliteConnection};
@@ -11,7 +11,7 @@ pub struct NewSubtitle<'a> {
     pub language: Option<&'a str>,
 }
 
-#[derive(Serialize, JsonSchema)]
+#[derive(Serialize, Reflect)]
 pub struct Subtitle {
     pub id: i64,
     pub video_id: i64,

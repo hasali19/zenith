@@ -1,4 +1,4 @@
-use schemars::JsonSchema;
+use axum_codegen::Reflect;
 use serde::Serialize;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Row, SqliteConnection};
@@ -46,7 +46,7 @@ pub async fn get_basic_info(
     Ok(info)
 }
 
-#[derive(Serialize, JsonSchema)]
+#[derive(Serialize, Reflect)]
 pub struct VideoInfo {
     pub path: String,
     pub duration: f64,
@@ -107,7 +107,7 @@ pub async fn get_info(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Opti
     Ok(Some(info))
 }
 
-#[derive(Serialize, JsonSchema)]
+#[derive(Serialize, Reflect)]
 pub struct VideoUserData {
     pub is_watched: bool,
     pub position: Option<f64>,

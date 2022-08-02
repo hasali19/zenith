@@ -3,8 +3,8 @@ use std::path::Path;
 use std::process::Stdio;
 use std::sync::Arc;
 
+use axum_codegen::Reflect;
 use eyre::{eyre, Context};
-use schemars::JsonSchema;
 use serde::Serialize;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
@@ -18,14 +18,14 @@ use crate::ext::CommandExt;
 use crate::library::video_info;
 use crate::video_prober::{VideoInfo, VideoProber};
 
-#[derive(Clone, Serialize, JsonSchema)]
+#[derive(Clone, Serialize, Reflect)]
 pub struct Job {
     pub video_id: i64,
     #[serde(flatten)]
     pub state: JobState,
 }
 
-#[derive(Clone, Serialize, JsonSchema)]
+#[derive(Clone, Serialize, Reflect)]
 #[serde(tag = "state")]
 #[serde(rename_all = "snake_case")]
 pub enum JobState {

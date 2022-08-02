@@ -1,11 +1,10 @@
 use std::convert::TryFrom;
 
 use eyre::eyre;
-use schemars::JsonSchema;
 use serde::Serialize;
 use sqlx::{SqliteConnection, Type};
 
-#[derive(Clone, Copy, Debug, Type, Serialize, JsonSchema)]
+#[derive(Clone, Copy, Debug, Type, Serialize)]
 #[repr(i32)]
 #[serde(rename_all = "snake_case")]
 pub enum MediaItemType {
