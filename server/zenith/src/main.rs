@@ -80,6 +80,8 @@ async fn run_server() -> eyre::Result<()> {
 
     let addr = SocketAddr::from_str(&format!("{}:{}", config.http.host, config.http.port))?;
 
+    tracing::info!("starting server at http://{addr}");
+
     let app = axum::Router::new()
         .nest("/api", zenith::api::router())
         .fallback(axum::routing::get(spa))
