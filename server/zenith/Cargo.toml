@@ -31,11 +31,16 @@ tmdb = { path = "../tmdb" }
 
 [dependencies.axum]
 version = "0.5"
-features = ["multipart"]
+default-features = false
+features = ["json", "multipart", "original-uri", "tower-log"]
 
 [dependencies.serde]
 version = "1.0"
 features = ["derive"]
+
+[dependencies.serde_qs]
+version = "0.10"
+features = ["axum"]
 
 [dependencies.sqlx]
 version = "0.6"

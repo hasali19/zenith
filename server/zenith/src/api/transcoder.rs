@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
-use axum::extract::{Extension, Query};
+use axum::extract::Extension;
 use axum::http::StatusCode;
 use axum::response::{sse, IntoResponse};
 use axum::Json;
 use axum_codegen::{get, post, Reflect};
 use serde::{Deserialize, Serialize};
+use serde_qs::axum::QsQuery;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
 
@@ -80,7 +81,7 @@ pub struct TranscodeParams {
 #[query(name = "all", model = bool)]
 #[response(status = 200)]
 pub async fn transcode(
-    query: Query<TranscodeParams>,
+    query: QsQuery<TranscodeParams>,
     transcoder: Extension<Arc<Transcoder>>,
 ) -> ApiResult<impl IntoResponse> {
     match query.video_id {

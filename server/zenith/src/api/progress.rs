@@ -1,8 +1,9 @@
-use axum::extract::{Extension, Path, Query};
+use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum_codegen::post;
 use serde::Deserialize;
+use serde_qs::axum::QsQuery;
 
 use crate::api::ApiResult;
 use crate::db::videos::UpdateVideoUserData;
@@ -22,7 +23,7 @@ struct ProgressUpdate {
 #[response(status = 200)]
 async fn update_progress(
     id: Path<i64>,
-    query: Query<ProgressUpdate>,
+    query: QsQuery<ProgressUpdate>,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;

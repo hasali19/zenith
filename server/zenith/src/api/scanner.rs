@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
-use axum::extract::{Extension, Path, Query};
+use axum::extract::{Extension, Path};
 use axum::response::IntoResponse;
 use axum::Json;
 use axum_codegen::{post, Reflect};
 use serde::{Deserialize, Serialize};
+use serde_qs::axum::QsQuery;
 
 use crate::api::error::not_found;
 use crate::api::ApiResult;
@@ -33,7 +34,7 @@ impl From<ScanOptionsQuery> for ScanOptions {
 #[query(name = "refresh_metadata", model = bool)]
 #[response(status = 200)]
 async fn start_scan(
-    Query(query): Query<ScanOptionsQuery>,
+    QsQuery(query): QsQuery<ScanOptionsQuery>,
     Extension(scanner): Extension<Arc<LibraryScanner>>,
 ) {
     scanner.start_scan(query.into());
@@ -55,7 +56,7 @@ enum ItemScanResult {
 #[response(model = ItemScanResult)]
 async fn scan_item(
     Path(id): Path<i64>,
-    Query(query): Query<ScanOptionsQuery>,
+    QsQuery(query): QsQuery<ScanOptionsQuery>,
     Extension(scanner): Extension<Arc<LibraryScanner>>,
 ) -> ApiResult<impl IntoResponse> {
     let result = match scanner.scan_file(id, &query.into()).await? {

@@ -112,6 +112,8 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
 
             params.push(param_spec);
         } else if attr.path.is_ident("query") {
+            // TODO: Support passing a `Reflect` type and automatically determining the individual
+            // fields.
             let args = attr.parse_args::<QueryArgs>().unwrap();
             let name = args.name;
             let model = args.model;

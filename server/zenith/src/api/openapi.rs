@@ -108,8 +108,18 @@ fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<O
     }
 
     for param in route.params(cx) {
+        // serde_qs requires array parameters to be passed in the form 'key[]=a&key[]=b'. While
+        // openapi doesn't have a dedicated option for this, we can make it work by appending []
+        // to the parameter name.
+        let mut name = param.name;
+        if matches!(param.location, ParamLocation::Query) {
+            if let Type::Basic(BasicType::Array(_)) = &param.type_desc {
+                name += "[]";
+            }
+        }
+
         let parameter_data = ParameterData {
-            name: param.name.clone(),
+            name,
             required: matches!(param.location, ParamLocation::Path),
             deprecated: None,
             description: None,
@@ -127,7 +137,9 @@ fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<O
             },
             ParamLocation::Query => Parameter::Query {
                 parameter_data,
-                allow_reserved: false,
+                // serde_qs requires the [] for arrays to be passed unencoded when using strict
+                // mode: https://docs.rs/serde_qs/latest/serde_qs/#strict-vs-non-strict-modes
+                allow_reserved: true,
                 style: QueryStyle::Form,
                 allow_empty_value: None,
             },

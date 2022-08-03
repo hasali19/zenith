@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
-use axum::extract::{Extension, Path, Query};
+use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use axum_codegen::{delete, get, patch, Reflect};
 use serde::Deserialize;
+use serde_qs::axum::QsQuery;
 
 use crate::api::ApiResult;
 use crate::db::items::MediaItem;
@@ -27,7 +28,7 @@ struct GetItemsQuery {
 #[query(name = "ids", model = Vec<i64>)]
 #[response(model = Vec<MediaItem>)]
 async fn get_items(
-    Query(query): Query<GetItemsQuery>,
+    QsQuery(query): QsQuery<GetItemsQuery>,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
@@ -44,7 +45,7 @@ struct ContinueWatchingQuery {
 #[query(name = "limit", model = Option<u32>)]
 #[response(model = Vec<MediaItem>)]
 async fn get_continue_watching(
-    Query(query): Query<ContinueWatchingQuery>,
+    QsQuery(query): QsQuery<ContinueWatchingQuery>,
     Extension(db): Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
