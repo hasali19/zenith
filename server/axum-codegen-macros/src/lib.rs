@@ -186,6 +186,10 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
             struct Route;
 
             impl axum_codegen::Route for Route {
+                fn name(&self) -> &'static str {
+                    stringify!(#name)
+                }
+
                 fn path(&self) -> &'static str {
                     #path
                 }

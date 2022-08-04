@@ -28,6 +28,7 @@ pub struct ResponseSpec {
 }
 
 pub trait Route: Send + Sync {
+    fn name(&self) -> &'static str;
     fn path(&self) -> &'static str;
     fn method(&self) -> Method;
 
