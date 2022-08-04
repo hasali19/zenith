@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct TypeContext {
     types: HashMap<String, Type>,
 }
@@ -55,7 +55,7 @@ pub trait Reflect {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Type {
     Basic(BasicType),
     Struct(StructType),
@@ -63,7 +63,7 @@ pub enum Type {
     Id(String),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum BasicType {
     Primitive(PrimitiveType),
     Option(Box<Type>),
@@ -99,7 +99,7 @@ impl FloatWidth {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum PrimitiveType {
     Bool,
     Int(IntWidth),
@@ -108,39 +108,39 @@ pub enum PrimitiveType {
     String,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Field {
     pub name: String,
     pub flatten: bool,
     pub type_desc: Type,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct StructType {
     pub name: String,
     pub fields: Vec<Field>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum EnumTag {
     Internal(String),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct EnumVariant {
     pub name: String,
     pub tag_value: String,
     pub kind: EnumVariantKind,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum EnumVariantKind {
     Unit,
     NewType(Type),
     Struct(Vec<Field>),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct EnumType {
     pub name: String,
     pub tag: Option<EnumTag>,
