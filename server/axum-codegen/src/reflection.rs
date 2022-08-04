@@ -13,6 +13,10 @@ impl TypeContext {
         }
     }
 
+    pub fn get(&mut self, id: &str) -> Option<&TypeDecl> {
+        self.types.get(id)
+    }
+
     pub fn insert_with(&mut self, id: Cow<'static, str>, f: impl FnOnce(&mut Self) -> TypeDecl) {
         #[allow(clippy::map_entry)]
         if !self.types.contains_key(&id) {
@@ -47,6 +51,16 @@ pub enum Type {
     Array(Box<Type>),
     Map(Box<Type>),
     Id(Cow<'static, str>),
+}
+
+impl Type {
+    pub fn as_id(&self) -> Option<&str> {
+        if let Type::Id(id) = self {
+            Some(id)
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

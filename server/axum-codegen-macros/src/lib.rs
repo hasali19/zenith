@@ -19,13 +19,13 @@ enum Method {
 
 #[derive(StructMeta)]
 struct PathArgs {
-    name: LitStr,
-    model: syn::Path,
+    #[struct_meta(unnamed)]
+    model: Vec<syn::Path>,
 }
 
 #[derive(StructMeta)]
 struct QueryArgs {
-    name: LitStr,
+    #[struct_meta(unnamed)]
     model: syn::Path,
 }
 
@@ -99,31 +99,33 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
             writeln!(doc, "{}", val).unwrap();
         } else if attr.path.is_ident("path") {
             let args = attr.parse_args::<PathArgs>().unwrap();
-            let name = args.name;
             let model = args.model;
 
-            let param_spec = quote! {
-                axum_codegen::ParamSpec {
-                    location: axum_codegen::ParamLocation::Path,
-                    name: #name.to_owned(),
-                    type_desc: <#model as axum_codegen::reflection::Reflect>::reflect(cx),
-                }
-            };
+            let param_specs = path
+                .split('/')
+                .filter(|it| it.starts_with(':'))
+                .enumerate()
+                .map(|(i, name)| {
+                    let name = name.trim_start_matches(':');
+                    let model = model
+                        .get(i)
+                        .expect("number of path parameters must match path string");
+                    quote! {
+                        params.push(axum_codegen::ParamSpec {
+                            location: axum_codegen::ParamLocation::Path,
+                            name: #name.to_owned(),
+                            type_desc: <#model as axum_codegen::reflection::Reflect>::reflect(cx),
+                        });
+                    }
+                });
 
-            params.push(param_spec);
+            params.extend(param_specs);
         } else if attr.path.is_ident("query") {
-            // TODO: Support passing a `Reflect` type and automatically determining the individual
-            // fields.
             let args = attr.parse_args::<QueryArgs>().unwrap();
-            let name = args.name;
             let model = args.model;
 
             let param_spec = quote! {
-                axum_codegen::ParamSpec {
-                    location: axum_codegen::ParamLocation::Query,
-                    name: #name.to_owned(),
-                    type_desc: <#model as axum_codegen::reflection::Reflect>::reflect(cx),
-                }
+                params.extend(axum_codegen::query_params_from_reflected_type::<#model>(cx));
             };
 
             params.push(param_spec);
@@ -207,7 +209,9 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
                 }
 
                 fn params(&self, cx: &mut axum_codegen::reflection::TypeContext) -> Vec<axum_codegen::ParamSpec> {
-                    vec![#(#params),*]
+                    let mut params = vec![];
+                    #(#params)*
+                    params
                 }
 
                 fn request(&self, cx: &mut axum_codegen::reflection::TypeContext) -> Option<axum_codegen::RequestSpec> {

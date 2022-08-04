@@ -12,7 +12,7 @@ use crate::metadata::{self, RefreshRequest};
 use super::ext::OptionExt;
 
 #[post("/metadata/:id/refresh")]
-#[path(name = "id", model = i64)]
+#[path(i64)]
 #[response(status = 200)]
 async fn refresh_metadata(
     Path(id): Path<i64>,

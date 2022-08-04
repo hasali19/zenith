@@ -18,14 +18,14 @@ use crate::library::LibraryScanner;
 
 use super::ext::OptionExt;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 struct GetItemsQuery {
     #[serde(default)]
     ids: Vec<i64>,
 }
 
 #[get("/items")]
-#[query(name = "ids", model = Vec<i64>)]
+#[query(GetItemsQuery)]
 #[response(model = Vec<MediaItem>)]
 async fn get_items(
     QsQuery(query): QsQuery<GetItemsQuery>,
@@ -36,13 +36,13 @@ async fn get_items(
     Ok(Json(items))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 struct ContinueWatchingQuery {
     limit: Option<u32>,
 }
 
 #[get("/items/continue_watching")]
-#[query(name = "limit", model = Option<u32>)]
+#[query(ContinueWatchingQuery)]
 #[response(model = Vec<MediaItem>)]
 async fn get_continue_watching(
     QsQuery(query): QsQuery<ContinueWatchingQuery>,
@@ -55,7 +55,7 @@ async fn get_continue_watching(
 }
 
 #[get("/items/:id")]
-#[path(name = "id", model = i64)]
+#[path(i64)]
 #[response(model = MediaItem)]
 pub async fn get_item(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
@@ -68,7 +68,7 @@ pub async fn get_item(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoRe
 }
 
 #[delete("/items/:id")]
-#[path(name = "id", model = i64)]
+#[path(i64)]
 #[response(status = 200)]
 async fn delete_item(
     Path(id): Path<i64>,
@@ -119,7 +119,7 @@ struct VideoUserDataPatch {
 }
 
 #[patch("/items/:id/user_data")]
-#[path(name = "id", model = i64)]
+#[path(i64)]
 #[request(model = VideoUserDataPatch)]
 #[response(status = 200)]
 async fn update_user_data(

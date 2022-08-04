@@ -68,7 +68,7 @@ pub async fn get_events(transcoder: Extension<Arc<Transcoder>>) -> ApiResult<imp
     Ok(sse::Sse::new(initial.chain(events)))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 pub struct TranscodeParams {
     #[serde(default)]
     video_id: Option<i64>,
@@ -77,8 +77,7 @@ pub struct TranscodeParams {
 }
 
 #[post("/transcoder")]
-#[query(name = "video_id", model = Option<i64>)]
-#[query(name = "all", model = bool)]
+#[query(TranscodeParams)]
 #[response(status = 200)]
 pub async fn transcode(
     query: QsQuery<TranscodeParams>,

@@ -17,7 +17,7 @@ pub async fn get_movies(db: Extension<Db>) -> ApiResult<Json<Vec<Movie>>> {
 }
 
 #[get("/movies/:id")]
-#[path(name = "id", model = i64)]
+#[path(i64)]
 #[response(model = Movie)]
 pub async fn get_movie(id: Path<i64>, db: Extension<Db>) -> ApiResult<Json<Movie>> {
     let mut conn = db.acquire().await?;

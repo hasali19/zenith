@@ -63,3 +63,18 @@ macro_rules! submit {
 pub fn routes() -> impl Iterator<Item = &'static dyn Route> {
     ::inventory::iter::<&'static dyn Route>.into_iter().copied()
 }
+
+pub fn query_params_from_reflected_type<T: reflection::Reflect>(
+    cx: &mut TypeContext,
+) -> impl Iterator<Item = ParamSpec> + '_ {
+    let struct_type = match T::reflect(cx).as_id().map(|id| cx.get(id).unwrap()) {
+        Some(reflection::TypeDecl::Struct(inner)) => inner,
+        _ => panic!("query model type must be a struct or map"),
+    };
+
+    struct_type.fields.iter().map(|field| ParamSpec {
+        location: ParamLocation::Query,
+        name: field.name.clone(),
+        type_desc: field.type_desc.clone(),
+    })
+}

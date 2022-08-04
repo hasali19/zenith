@@ -12,7 +12,7 @@ use crate::api::ApiResult;
 use crate::library::scanner::{FileScanResult, ScanOptions};
 use crate::library::LibraryScanner;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 struct ScanOptionsQuery {
     #[serde(default)]
     rescan_files: bool,
@@ -30,8 +30,7 @@ impl From<ScanOptionsQuery> for ScanOptions {
 }
 
 #[post("/scanner/start")]
-#[query(name = "rescan_files", model = bool)]
-#[query(name = "refresh_metadata", model = bool)]
+#[query(ScanOptionsQuery)]
 #[response(status = 200)]
 async fn start_scan(
     QsQuery(query): QsQuery<ScanOptionsQuery>,
@@ -50,9 +49,8 @@ enum ItemScanResult {
 }
 
 #[post("/scanner/run/:id")]
-#[path(name = "id", model = i64)]
-#[query(name = "rescan_files", model = bool)]
-#[query(name = "refresh_metadata", model = bool)]
+#[path(i64)]
+#[query(ScanOptionsQuery)]
 #[response(model = ItemScanResult)]
 async fn scan_item(
     Path(id): Path<i64>,

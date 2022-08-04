@@ -1,7 +1,7 @@
 use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum_codegen::post;
+use axum_codegen::{post, Reflect};
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
 
@@ -12,14 +12,14 @@ use crate::db::{self, Db};
 use super::error::bad_request;
 use super::ext::OptionExt;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 struct ProgressUpdate {
     position: f64,
 }
 
 #[post("/progress/:id")]
-#[path(name = "id", model = i64)]
-#[query(name = "position", model = f64)]
+#[path(i64)]
+#[query(ProgressUpdate)]
 #[response(status = 200)]
 async fn update_progress(
     id: Path<i64>,
