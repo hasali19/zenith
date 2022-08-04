@@ -13,6 +13,7 @@ pub enum ParamLocation {
 pub struct ParamSpec {
     pub location: ParamLocation,
     pub name: String,
+    pub required: bool,
     pub type_desc: Type,
 }
 
@@ -75,6 +76,7 @@ pub fn query_params_from_reflected_type<T: reflection::Reflect>(
     struct_type.fields.iter().map(|field| ParamSpec {
         location: ParamLocation::Query,
         name: field.name.clone(),
+        required: !field.has_default,
         type_desc: field.type_desc.clone(),
     })
 }

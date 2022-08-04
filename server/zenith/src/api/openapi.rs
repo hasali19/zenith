@@ -120,7 +120,7 @@ fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<O
 
         let parameter_data = ParameterData {
             name,
-            required: matches!(param.location, ParamLocation::Path),
+            required: param.required && !matches!(param.type_desc, Type::Option(_)),
             deprecated: None,
             description: None,
             example: None,

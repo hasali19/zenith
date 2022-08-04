@@ -115,6 +115,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
                         params.push(axum_codegen::ParamSpec {
                             location: axum_codegen::ParamLocation::Path,
                             name: #name.to_owned(),
+                            required: true,
                             type_desc: <#model as axum_codegen::reflection::Reflect>::reflect(cx),
                         });
                     }
@@ -379,10 +380,12 @@ fn build_field(field: serde_derive_internals::ast::Field) -> proc_macro2::TokenS
     let name = field.attrs.name().serialize_name();
     let ty = field.ty;
     let flatten = field.attrs.flatten();
+    let has_default = !field.attrs.default().is_none();
     quote! {
         Field {
             name: #name.to_owned(),
             flatten: #flatten,
+            has_default: #has_default,
             type_desc: <#ty as Reflect>::reflect(cx),
         }
     }

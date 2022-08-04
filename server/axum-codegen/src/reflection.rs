@@ -110,6 +110,7 @@ pub enum PrimitiveType {
 pub struct Field {
     pub name: String,
     pub flatten: bool,
+    pub has_default: bool,
     pub type_desc: Type,
 }
 
