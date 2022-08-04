@@ -106,7 +106,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
                 axum_codegen::ParamSpec {
                     location: axum_codegen::ParamLocation::Path,
                     name: #name.to_owned(),
-                    type_desc: cx.type_or_id_for::<#model>(),
+                    type_desc: <#model as axum_codegen::reflection::Reflect>::reflect(cx),
                 }
             };
 
@@ -122,7 +122,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
                 axum_codegen::ParamSpec {
                     location: axum_codegen::ParamLocation::Query,
                     name: #name.to_owned(),
-                    type_desc: cx.type_or_id_for::<#model>(),
+                    type_desc: <#model as axum_codegen::reflection::Reflect>::reflect(cx),
                 }
             };
 
@@ -134,7 +134,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
             request = quote! {
                 Some(
                     axum_codegen::RequestSpec {
-                        type_desc: cx.type_or_id_for::<#model>(),
+                        type_desc: <#model as axum_codegen::reflection::Reflect>::reflect(cx),
                     }
                 )
             };
@@ -157,7 +157,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
                     quote! { None }
                 }
                 Some(model) => {
-                    quote! { Some(cx.type_or_id_for::<#model>()) }
+                    quote! { Some(<#model as axum_codegen::reflection::Reflect>::reflect(cx)) }
                 }
             };
 
@@ -289,7 +289,7 @@ pub fn derive_reflect(input: TokenStream) -> TokenStream {
                     serde_ast::Style::Newtype => {
                         let ty = variant.fields[0].ty;
                         quote! {
-                            EnumVariantKind::NewType(cx.type_or_id_for::<#ty>())
+                            EnumVariantKind::NewType(<#ty as Reflect>::reflect(cx))
                         }
                     }
                     serde_ast::Style::Unit => quote! {
@@ -306,7 +306,7 @@ pub fn derive_reflect(input: TokenStream) -> TokenStream {
             });
 
             quote! {
-                Type::Enum(EnumType {
+                TypeDecl::Enum(EnumType {
                     name: stringify!(#ident).to_string(),
                     tag: Some(EnumTag::Internal(#tag.to_owned())),
                     variants: vec![#(#variants),*],
@@ -317,7 +317,7 @@ pub fn derive_reflect(input: TokenStream) -> TokenStream {
             serde_ast::Style::Struct => {
                 let fields = fields.into_iter().map(build_field);
                 quote! {
-                    Type::Struct(StructType {
+                    TypeDecl::Struct(StructType {
                         name: stringify!(#ident).to_string(),
                         fields: vec![#(#fields),*],
                     })
@@ -335,9 +335,11 @@ pub fn derive_reflect(input: TokenStream) -> TokenStream {
                 Some(concat!(module_path!(), "::", stringify!(#ident)).into())
             }
 
-            fn type_description(cx: &mut axum_codegen::reflection::TypeContext) -> axum_codegen::reflection::Type {
+            fn reflect(cx: &mut axum_codegen::reflection::TypeContext) -> axum_codegen::reflection::Type {
                 use axum_codegen::reflection::*;
-                #expr
+                let id = Self::type_id().unwrap();
+                cx.insert_with(id.clone(), |cx| #expr);
+                Type::Id(id)
             }
         }
     })
@@ -351,7 +353,7 @@ fn build_field(field: serde_derive_internals::ast::Field) -> proc_macro2::TokenS
         Field {
             name: #name.to_owned(),
             flatten: #flatten,
-            type_desc: cx.type_or_id_for::<#ty>(),
+            type_desc: <#ty as Reflect>::reflect(cx),
         }
     }
 }

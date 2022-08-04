@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct TypeContext {
-    types: HashMap<Cow<'static, str>, Type>,
+    types: HashMap<Cow<'static, str>, TypeDecl>,
 }
 
 impl TypeContext {
@@ -13,28 +13,18 @@ impl TypeContext {
         }
     }
 
-    /// Returns a type description for the specified type.
-    ///
-    /// If T is a basic type, this will return its concrete type description. Otherwise, an id
-    /// will be returned.
-    pub fn type_or_id_for<T: Reflect>(&mut self) -> Type {
-        let id = match T::type_id() {
-            Some(id) => id,
-            None => return T::type_description(self),
-        };
-
+    pub fn insert_with(&mut self, id: Cow<'static, str>, f: impl FnOnce(&mut Self) -> TypeDecl) {
+        #[allow(clippy::map_entry)]
         if !self.types.contains_key(&id) {
-            let type_desc = T::type_description(self);
-            self.types.insert(id.clone(), type_desc);
+            let decl = f(self);
+            self.types.insert(id, decl);
         }
-
-        Type::Id(id)
     }
 
     /// Returns the inner map storing type descriptions.
     ///
     /// This is a map from type id to the corresponding description.
-    pub fn into_types(self) -> HashMap<Cow<'static, str>, Type> {
+    pub fn into_types(self) -> HashMap<Cow<'static, str>, TypeDecl> {
         self.types
     }
 }
@@ -47,23 +37,22 @@ impl Default for TypeContext {
 
 pub trait Reflect {
     fn type_id() -> Option<Cow<'static, str>>;
-    fn type_description(cx: &mut TypeContext) -> Type;
+    fn reflect(cx: &mut TypeContext) -> Type;
 }
 
 #[derive(Clone, Debug)]
 pub enum Type {
-    Basic(BasicType),
-    Struct(StructType),
-    Enum(EnumType),
-    Id(Cow<'static, str>),
-}
-
-#[derive(Clone, Debug)]
-pub enum BasicType {
     Primitive(PrimitiveType),
     Option(Box<Type>),
     Array(Box<Type>),
     Map(Box<Type>),
+    Id(Cow<'static, str>),
+}
+
+#[derive(Clone, Debug)]
+pub enum TypeDecl {
+    Struct(StructType),
+    Enum(EnumType),
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -152,8 +141,8 @@ mod impls {
                     None
                 }
 
-                fn type_description(_: &mut TypeContext) -> Type {
-                    Type::Basic(BasicType::Primitive($e))
+                fn reflect(_: &mut TypeContext) -> Type {
+                    Type::Primitive($e)
                 }
             }
         };
@@ -182,8 +171,8 @@ mod impls {
             None
         }
 
-        fn type_description(cx: &mut TypeContext) -> Type {
-            Type::Basic(BasicType::Option(Box::new(cx.type_or_id_for::<T>())))
+        fn reflect(cx: &mut TypeContext) -> Type {
+            Type::Option(Box::new(T::reflect(cx)))
         }
     }
 
@@ -192,8 +181,8 @@ mod impls {
             None
         }
 
-        fn type_description(cx: &mut TypeContext) -> Type {
-            Type::Basic(BasicType::Array(Box::new(cx.type_or_id_for::<T>())))
+        fn reflect(cx: &mut TypeContext) -> Type {
+            Type::Array(Box::new(T::reflect(cx)))
         }
     }
 }

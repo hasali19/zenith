@@ -1,6 +1,6 @@
 use axum::http::Method;
 use axum_codegen::reflection::{
-    BasicType, EnumTag, EnumVariantKind, Field, FloatWidth, PrimitiveType, Type, TypeContext,
+    EnumTag, EnumVariantKind, Field, FloatWidth, PrimitiveType, Type, TypeContext, TypeDecl,
 };
 use axum_codegen::{ParamLocation, Route};
 use indexmap::indexmap;
@@ -65,7 +65,7 @@ fn build_openapi_spec(mut cx: TypeContext) -> OpenAPI {
     for (name, schema) in cx.into_types() {
         components
             .schemas
-            .insert(name.into_owned(), type_to_schema(schema));
+            .insert(name.into_owned(), type_decl_to_schema(schema));
     }
 
     components.schemas.sort_keys();
@@ -113,7 +113,7 @@ fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<O
         // to the parameter name.
         let mut name = param.name;
         if matches!(param.location, ParamLocation::Query) {
-            if let Type::Basic(BasicType::Array(_)) = &param.type_desc {
+            if let Type::Array(_) = &param.type_desc {
                 name += "[]";
             }
         }
@@ -200,60 +200,71 @@ fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<O
 fn type_to_schema(type_desc: Type) -> ReferenceOr<Schema> {
     use openapiv3::Type as SchemaType;
     let schema = match type_desc {
-        Type::Basic(ty) => match ty {
-            BasicType::Primitive(ty) => match ty {
-                PrimitiveType::Bool => type_schema(SchemaType::Boolean {}),
-                PrimitiveType::Int(width) => type_schema(SchemaType::Integer(IntegerType {
-                    format: VariantOrUnknownOrEmpty::Unknown(format!("int{}", width.as_u8())),
-                    ..Default::default()
-                })),
-                PrimitiveType::UInt(width) => type_schema(SchemaType::Integer(IntegerType {
-                    format: VariantOrUnknownOrEmpty::Unknown(format!("uint{}", width.as_u8())),
-                    minimum: Some(0),
-                    ..Default::default()
-                })),
-                PrimitiveType::Float(width) => type_schema(SchemaType::Number(NumberType {
-                    format: VariantOrUnknownOrEmpty::Item(match width {
-                        FloatWidth::F32 => NumberFormat::Float,
-                        FloatWidth::F64 => NumberFormat::Double,
-                    }),
-                    ..Default::default()
-                })),
-                PrimitiveType::String => type_schema(SchemaType::String(StringType {
-                    ..Default::default()
-                })),
-            },
-            BasicType::Option(inner) => {
-                let schema = type_to_schema(*inner);
-                if let ReferenceOr::Item(mut schema) = schema {
-                    schema.schema_data.nullable = true;
-                    schema
-                } else {
-                    Schema {
-                        schema_kind: SchemaKind::AllOf {
-                            all_of: vec![schema],
-                        },
-                        schema_data: SchemaData {
-                            nullable: true,
-                            ..Default::default()
-                        },
-                    }
+        Type::Primitive(ty) => match ty {
+            PrimitiveType::Bool => type_schema(SchemaType::Boolean {}),
+            PrimitiveType::Int(width) => type_schema(SchemaType::Integer(IntegerType {
+                format: VariantOrUnknownOrEmpty::Unknown(format!("int{}", width.as_u8())),
+                ..Default::default()
+            })),
+            PrimitiveType::UInt(width) => type_schema(SchemaType::Integer(IntegerType {
+                format: VariantOrUnknownOrEmpty::Unknown(format!("uint{}", width.as_u8())),
+                minimum: Some(0),
+                ..Default::default()
+            })),
+            PrimitiveType::Float(width) => type_schema(SchemaType::Number(NumberType {
+                format: VariantOrUnknownOrEmpty::Item(match width {
+                    FloatWidth::F32 => NumberFormat::Float,
+                    FloatWidth::F64 => NumberFormat::Double,
+                }),
+                ..Default::default()
+            })),
+            PrimitiveType::String => type_schema(SchemaType::String(StringType {
+                ..Default::default()
+            })),
+        },
+        Type::Option(inner) => {
+            let schema = type_to_schema(*inner);
+            if let ReferenceOr::Item(mut schema) = schema {
+                schema.schema_data.nullable = true;
+                schema
+            } else {
+                Schema {
+                    schema_kind: SchemaKind::AllOf {
+                        all_of: vec![schema],
+                    },
+                    schema_data: SchemaData {
+                        nullable: true,
+                        ..Default::default()
+                    },
                 }
             }
-            BasicType::Array(inner) => type_schema(SchemaType::Array(ArrayType {
-                items: Some(box_schema(type_to_schema(*inner))),
-                min_items: None,
-                max_items: None,
-                unique_items: false,
-            })),
-            BasicType::Map(_) => todo!(),
-        },
-        Type::Struct(ty) => {
+        }
+        Type::Array(inner) => type_schema(SchemaType::Array(ArrayType {
+            items: Some(box_schema(type_to_schema(*inner))),
+            min_items: None,
+            max_items: None,
+            unique_items: false,
+        })),
+        Type::Map(_) => todo!(),
+        Type::Id(id) => {
+            return ReferenceOr::Reference {
+                reference: format!("#/components/schemas/{id}"),
+            }
+        }
+    };
+
+    ReferenceOr::Item(schema)
+}
+
+fn type_decl_to_schema(type_decl: TypeDecl) -> ReferenceOr<Schema> {
+    use openapiv3::Type as SchemaType;
+    let schema = match type_decl {
+        TypeDecl::Struct(ty) => {
             let mut schema = schema_for_fields(ty.fields);
             schema.schema_data.title = Some(ty.name);
             schema
         }
-        Type::Enum(ty) => match ty.tag {
+        TypeDecl::Enum(ty) => match ty.tag {
             None => todo!(),
             Some(EnumTag::Internal(tag_name)) => {
                 let mut one_of = vec![];
@@ -315,13 +326,7 @@ fn type_to_schema(type_desc: Type) -> ReferenceOr<Schema> {
                 }
             }
         },
-        Type::Id(id) => {
-            return ReferenceOr::Reference {
-                reference: format!("#/components/schemas/{id}"),
-            }
-        }
     };
-
     ReferenceOr::Item(schema)
 }
 
@@ -345,7 +350,7 @@ fn schema_for_fields(fields: Vec<Field>) -> Schema {
     let mut required = vec![];
 
     for field in fields {
-        let optional = matches!(field.type_desc, Type::Basic(BasicType::Option(_)));
+        let optional = matches!(field.type_desc, Type::Option(_));
         let field_schema = type_to_schema(field.type_desc);
         if field.flatten {
             all_of.push(field_schema);
