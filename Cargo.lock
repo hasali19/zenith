@@ -111,6 +111,7 @@ dependencies = [
  "axum",
  "axum-codegen-macros",
  "inventory",
+ "serde_qs",
 ]
 
 [[package]]

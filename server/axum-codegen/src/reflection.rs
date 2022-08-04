@@ -199,4 +199,14 @@ mod impls {
             Type::Array(Box::new(T::reflect(cx)))
         }
     }
+
+    impl<T: Reflect> Reflect for serde_qs::axum::QsQuery<T> {
+        fn type_id() -> Option<Cow<'static, str>> {
+            T::type_id()
+        }
+
+        fn reflect(cx: &mut TypeContext) -> Type {
+            T::reflect(cx)
+        }
+    }
 }

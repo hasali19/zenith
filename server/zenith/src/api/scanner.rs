@@ -30,10 +30,9 @@ impl From<ScanOptionsQuery> for ScanOptions {
 }
 
 #[post("/scanner/start")]
-#[query(ScanOptionsQuery)]
 #[response(status = 200)]
 async fn start_scan(
-    QsQuery(query): QsQuery<ScanOptionsQuery>,
+    #[query] QsQuery(query): QsQuery<ScanOptionsQuery>,
     Extension(scanner): Extension<Arc<LibraryScanner>>,
 ) {
     scanner.start_scan(query.into());
@@ -50,11 +49,10 @@ enum ItemScanResult {
 
 #[post("/scanner/run/:id")]
 #[path(i64)]
-#[query(ScanOptionsQuery)]
 #[response(model = ItemScanResult)]
 async fn scan_item(
     Path(id): Path<i64>,
-    QsQuery(query): QsQuery<ScanOptionsQuery>,
+    #[query] QsQuery(query): QsQuery<ScanOptionsQuery>,
     Extension(scanner): Extension<Arc<LibraryScanner>>,
 ) -> ApiResult<impl IntoResponse> {
     let result = match scanner.scan_file(id, &query.into()).await? {

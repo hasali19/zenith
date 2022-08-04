@@ -4,6 +4,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use structmeta::StructMeta;
 use syn::{AttributeArgs, DeriveInput, Lit, LitInt, LitStr, Meta};
+use syn_mid::FnArg;
 
 enum Method {
     Get,
@@ -180,6 +181,31 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
             .iter()
             .all(|ident| !attr.path.is_ident(ident))
     });
+
+    let query_param = input.sig.inputs.iter().find_map(|input| match input {
+        FnArg::Receiver(_) => None,
+        FnArg::Typed(param) => param
+            .attrs
+            .iter()
+            .find(|it| it.path.is_ident("query"))
+            .map(|attr| (param, attr)),
+    });
+
+    if let Some((param, _)) = query_param {
+        let model = &param.ty;
+
+        let param_spec = quote! {
+            params.extend(axum_codegen::query_params_from_reflected_type::<#model>(cx));
+        };
+
+        params.push(param_spec);
+    }
+
+    for input in input.sig.inputs.iter_mut() {
+        if let FnArg::Typed(param) = input {
+            param.attrs.retain(|attr| !attr.path.is_ident("query"));
+        }
+    }
 
     TokenStream::from(quote! {
         #input

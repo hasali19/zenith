@@ -25,10 +25,9 @@ struct GetItemsQuery {
 }
 
 #[get("/items")]
-#[query(GetItemsQuery)]
 #[response(model = Vec<MediaItem>)]
 async fn get_items(
-    QsQuery(query): QsQuery<GetItemsQuery>,
+    #[query] QsQuery(query): QsQuery<GetItemsQuery>,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
@@ -42,10 +41,9 @@ struct ContinueWatchingQuery {
 }
 
 #[get("/items/continue_watching")]
-#[query(ContinueWatchingQuery)]
 #[response(model = Vec<MediaItem>)]
 async fn get_continue_watching(
-    QsQuery(query): QsQuery<ContinueWatchingQuery>,
+    #[query] QsQuery(query): QsQuery<ContinueWatchingQuery>,
     Extension(db): Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;

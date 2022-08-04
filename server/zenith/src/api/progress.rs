@@ -19,11 +19,10 @@ struct ProgressUpdate {
 
 #[post("/progress/:id")]
 #[path(i64)]
-#[query(ProgressUpdate)]
 #[response(status = 200)]
 async fn update_progress(
     id: Path<i64>,
-    query: QsQuery<ProgressUpdate>,
+    #[query] query: QsQuery<ProgressUpdate>,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
