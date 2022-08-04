@@ -65,7 +65,7 @@ fn build_openapi_spec(mut cx: TypeContext) -> OpenAPI {
     for (name, schema) in cx.into_types() {
         components
             .schemas
-            .insert(name.clone(), type_to_schema(schema));
+            .insert(name.into_owned(), type_to_schema(schema));
     }
 
     components.schemas.sort_keys();

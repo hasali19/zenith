@@ -1,8 +1,9 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct TypeContext {
-    types: HashMap<String, Type>,
+    types: HashMap<Cow<'static, str>, Type>,
 }
 
 impl TypeContext {
@@ -17,11 +18,10 @@ impl TypeContext {
     /// If T is a basic type, this will return its concrete type description. Otherwise, an id
     /// will be returned.
     pub fn type_or_id_for<T: Reflect>(&mut self) -> Type {
-        if T::__is_basic_type() {
-            return T::type_description(self);
-        }
-
-        let id = T::type_id();
+        let id = match T::type_id() {
+            Some(id) => id,
+            None => return T::type_description(self),
+        };
 
         if !self.types.contains_key(&id) {
             let type_desc = T::type_description(self);
@@ -34,7 +34,7 @@ impl TypeContext {
     /// Returns the inner map storing type descriptions.
     ///
     /// This is a map from type id to the corresponding description.
-    pub fn into_types(self) -> HashMap<String, Type> {
+    pub fn into_types(self) -> HashMap<Cow<'static, str>, Type> {
         self.types
     }
 }
@@ -46,13 +46,8 @@ impl Default for TypeContext {
 }
 
 pub trait Reflect {
-    fn type_id() -> String;
+    fn type_id() -> Option<Cow<'static, str>>;
     fn type_description(cx: &mut TypeContext) -> Type;
-
-    #[doc(hidden)]
-    fn __is_basic_type() -> bool {
-        false
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -60,7 +55,7 @@ pub enum Type {
     Basic(BasicType),
     Struct(StructType),
     Enum(EnumType),
-    Id(String),
+    Id(Cow<'static, str>),
 }
 
 #[derive(Clone, Debug)]
@@ -153,16 +148,12 @@ mod impls {
     macro_rules! impl_for_primitive {
         ($t:ty, $e:expr) => {
             impl Reflect for $t {
-                fn type_id() -> String {
-                    stringify!($t).to_owned()
+                fn type_id() -> Option<Cow<'static, str>> {
+                    None
                 }
 
                 fn type_description(_: &mut TypeContext) -> Type {
                     Type::Basic(BasicType::Primitive($e))
-                }
-
-                fn __is_basic_type() -> bool {
-                    true
                 }
             }
         };
@@ -187,30 +178,22 @@ mod impls {
     impl_for_primitive!(String, PrimitiveType::String);
 
     impl<T: Reflect> Reflect for Option<T> {
-        fn type_id() -> String {
-            format!("Option<{}>", T::type_id())
+        fn type_id() -> Option<Cow<'static, str>> {
+            None
         }
 
         fn type_description(cx: &mut TypeContext) -> Type {
             Type::Basic(BasicType::Option(Box::new(cx.type_or_id_for::<T>())))
         }
-
-        fn __is_basic_type() -> bool {
-            true
-        }
     }
 
     impl<T: Reflect> Reflect for Vec<T> {
-        fn type_id() -> String {
-            format!("Vec<{}>", T::type_id())
+        fn type_id() -> Option<Cow<'static, str>> {
+            None
         }
 
         fn type_description(cx: &mut TypeContext) -> Type {
             Type::Basic(BasicType::Array(Box::new(cx.type_or_id_for::<T>())))
-        }
-
-        fn __is_basic_type() -> bool {
-            true
         }
     }
 }

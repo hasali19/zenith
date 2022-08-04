@@ -331,8 +331,8 @@ pub fn derive_reflect(input: TokenStream) -> TokenStream {
 
     TokenStream::from(quote! {
         impl axum_codegen::reflection::Reflect for #ident {
-            fn type_id() -> String {
-                concat!(module_path!(), "::", stringify!(#ident)).to_owned()
+            fn type_id() -> Option<std::borrow::Cow<'static, str>> {
+                Some(concat!(module_path!(), "::", stringify!(#ident)).into())
             }
 
             fn type_description(cx: &mut axum_codegen::reflection::TypeContext) -> axum_codegen::reflection::Type {
