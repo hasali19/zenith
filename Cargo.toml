@@ -1,2 +1,5 @@
 [workspace]
 members = ["client/desktop", "server/*"]
+
+[profile.dev.build-override]
+opt-level = 3
