@@ -5,17 +5,14 @@ pub use axum_codegen_macros::*;
 
 use reflection::{Type, TypeContext};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ParamLocation {
-    Path,
-    Query,
+#[derive(Clone, Debug)]
+pub struct ParamSpec {
+    pub name: String,
+    pub type_desc: Type,
 }
 
 #[derive(Clone, Debug)]
-pub struct ParamSpec {
-    pub location: ParamLocation,
-    pub name: String,
-    pub required: bool,
+pub struct QuerySpec {
     pub type_desc: Type,
 }
 
@@ -43,6 +40,7 @@ pub trait Route: Send + Sync {
     }
 
     fn params(&self, cx: &mut TypeContext) -> Vec<ParamSpec>;
+    fn query(&self, cx: &mut TypeContext) -> Option<QuerySpec>;
     fn request(&self, cx: &mut TypeContext) -> Option<RequestSpec>;
     fn responses(&self, cx: &mut TypeContext) -> Vec<ResponseSpec>;
 
@@ -66,20 +64,4 @@ macro_rules! submit {
 
 pub fn routes() -> impl Iterator<Item = &'static dyn Route> {
     ::inventory::iter::<&'static dyn Route>.into_iter().copied()
-}
-
-pub fn query_params_from_reflected_type<T: reflection::Reflect>(
-    cx: &mut TypeContext,
-) -> impl Iterator<Item = ParamSpec> + '_ {
-    let struct_type = match T::reflect(cx).as_id().map(|id| cx.get(id).unwrap()) {
-        Some(reflection::TypeDecl::Struct(inner)) => inner,
-        _ => panic!("query model type must be a struct or map"),
-    };
-
-    struct_type.fields.iter().map(|field| ParamSpec {
-        location: ParamLocation::Query,
-        name: field.name.clone(),
-        required: !field.has_default,
-        type_desc: field.type_desc.clone(),
-    })
 }

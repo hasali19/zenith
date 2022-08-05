@@ -25,12 +25,6 @@ struct PathArgs {
 }
 
 #[derive(StructMeta)]
-struct QueryArgs {
-    #[struct_meta(unnamed)]
-    model: syn::Path,
-}
-
-#[derive(StructMeta)]
 struct RequestArgs {
     model: Option<syn::Path>,
 }
@@ -81,6 +75,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
 
     let mut doc = String::new();
     let mut params = vec![];
+    let mut query = quote! { None };
     let mut request = quote! { None };
     let mut responses = vec![];
 
@@ -113,24 +108,13 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
                         .expect("number of path parameters must match path string");
                     quote! {
                         params.push(axum_codegen::ParamSpec {
-                            location: axum_codegen::ParamLocation::Path,
                             name: #name.to_owned(),
-                            required: true,
                             type_desc: <#model as axum_codegen::reflection::Reflect>::reflect(cx),
                         });
                     }
                 });
 
             params.extend(param_specs);
-        } else if attr.path.is_ident("query") {
-            let args = attr.parse_args::<QueryArgs>().unwrap();
-            let model = args.model;
-
-            let param_spec = quote! {
-                params.extend(axum_codegen::query_params_from_reflected_type::<#model>(cx));
-            };
-
-            params.push(param_spec);
         } else if attr.path.is_ident("request") {
             let args = attr.parse_args::<RequestArgs>().unwrap();
             let model = args.model;
@@ -178,7 +162,7 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
     }
 
     input.attrs.retain(|attr| {
-        ["path", "query", "request", "response"]
+        ["path", "request", "response"]
             .iter()
             .all(|ident| !attr.path.is_ident(ident))
     });
@@ -194,12 +178,11 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
 
     if let Some((param, _)) = query_param {
         let model = &param.ty;
-
-        let param_spec = quote! {
-            params.extend(axum_codegen::query_params_from_reflected_type::<#model>(cx));
+        query = quote! {
+            Some(axum_codegen::QuerySpec {
+                type_desc: <#model as axum_codegen::reflection::Reflect>::reflect(cx)
+            })
         };
-
-        params.push(param_spec);
     }
 
     for input in input.sig.inputs.iter_mut() {
@@ -239,6 +222,10 @@ fn route(method: Method, args: TokenStream, mut item: TokenStream) -> TokenStrea
                     let mut params = vec![];
                     #(#params)*
                     params
+                }
+
+                fn query(&self, cx: &mut axum_codegen::reflection::TypeContext) -> Option<axum_codegen::QuerySpec> {
+                    #query
                 }
 
                 fn request(&self, cx: &mut axum_codegen::reflection::TypeContext) -> Option<axum_codegen::RequestSpec> {
@@ -290,7 +277,7 @@ method_attr!(trace, Trace);
 
 #[proc_macro_derive(Reflect, attributes(serde))]
 pub fn derive_reflect(input: TokenStream) -> TokenStream {
-    use serde_derive_internals::{ast as serde_ast, Derive};
+    use serde_derive_internals::{ast as serde_ast, attr as serde_attr, Derive};
     let input = syn::parse_macro_input!(input as DeriveInput);
     let cx = serde_derive_internals::Ctxt::new();
     let container = serde_ast::Container::from_ast(&cx, &input, Derive::Serialize).unwrap();
@@ -300,10 +287,10 @@ pub fn derive_reflect(input: TokenStream) -> TokenStream {
     let expr = match container.data {
         serde_ast::Data::Enum(variants) => {
             let tag = match container.attrs.tag() {
-                serde_derive_internals::attr::TagType::External => todo!("external tag"),
-                serde_derive_internals::attr::TagType::Internal { tag } => tag,
-                serde_derive_internals::attr::TagType::Adjacent { .. } => todo!("adjacent tag"),
-                serde_derive_internals::attr::TagType::None => todo!("untagged"),
+                serde_attr::TagType::External => todo!("external tag"),
+                serde_attr::TagType::Internal { tag } => tag,
+                serde_attr::TagType::Adjacent { .. } => todo!("adjacent tag"),
+                serde_attr::TagType::None => todo!("untagged"),
             };
 
             let variants = variants.into_iter().map(|variant| {
@@ -380,12 +367,12 @@ fn build_field(field: serde_derive_internals::ast::Field) -> proc_macro2::TokenS
     let name = field.attrs.name().serialize_name();
     let ty = field.ty;
     let flatten = field.attrs.flatten();
-    let has_default = !field.attrs.default().is_none();
+    let required = field.attrs.default().is_none();
     quote! {
         Field {
             name: #name.to_owned(),
             flatten: #flatten,
-            has_default: #has_default,
+            required: #required,
             type_desc: <#ty as Reflect>::reflect(cx),
         }
     }

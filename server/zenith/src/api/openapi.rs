@@ -2,7 +2,7 @@ use axum::http::Method;
 use axum_codegen::reflection::{
     EnumTag, EnumVariantKind, Field, FloatWidth, PrimitiveType, Type, TypeContext, TypeDecl,
 };
-use axum_codegen::{ParamLocation, Route};
+use axum_codegen::Route;
 use indexmap::indexmap;
 use markdown::{Block, Span};
 use openapiv3::*;
@@ -108,50 +108,71 @@ fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<O
     }
 
     for param in route.params(cx) {
-        // serde_qs requires array parameters to be passed in the form 'key[]=a&key[]=b'. While
-        // openapi doesn't have a dedicated option for this, we can make it work by appending []
-        // to the parameter name.
-        let mut name = param.name;
-        if matches!(param.location, ParamLocation::Query) {
-            if let Type::Array(_) = &param.type_desc {
-                name += "[]";
-            }
-        }
-
         let parameter_data = ParameterData {
-            name,
-            required: param.required && !matches!(param.type_desc, Type::Option(_)),
+            name: param.name,
+            required: true,
             deprecated: None,
             description: None,
             example: None,
             examples: Default::default(),
             explode: None,
             extensions: Default::default(),
-            format: ParameterSchemaOrContent::Schema(type_to_schema(param.type_desc)),
+            format: ParameterSchemaOrContent::Schema(type_to_schema(&param.type_desc)),
         };
 
-        let param = match param.location {
-            ParamLocation::Path => Parameter::Path {
+        operation
+            .parameters
+            .push(ReferenceOr::Item(Parameter::Path {
                 parameter_data,
                 style: PathStyle::Simple,
-            },
-            ParamLocation::Query => Parameter::Query {
-                parameter_data,
-                // serde_qs requires the [] for arrays to be passed unencoded when using strict
-                // mode: https://docs.rs/serde_qs/latest/serde_qs/#strict-vs-non-strict-modes
-                allow_reserved: true,
-                style: QueryStyle::Form,
-                allow_empty_value: None,
-            },
-        };
+            }));
+    }
 
-        operation.parameters.push(ReferenceOr::Item(param));
+    if let Some(query) = route.query(cx) {
+        let struct_type = query
+            .type_desc
+            .as_id()
+            .and_then(|id| cx.get(id))
+            .and_then(|decl| decl.as_struct())
+            .unwrap_or_else(|| panic!("unsupported query model type: {:?}", query.type_desc));
+
+        for field in &struct_type.fields {
+            // serde_qs requires array parameters to be passed in the form 'key[]=a&key[]=b'. While openapi doesn't have
+            // a dedicated option for this, we can make it work by appending [] to the parameter name.
+            let mut name = field.name.to_owned();
+            if let Type::Array(_) = &field.type_desc {
+                name += "[]";
+            }
+
+            let parameter_data = ParameterData {
+                name,
+                required: field.required && !matches!(field.type_desc, Type::Option(_)),
+                deprecated: None,
+                description: None,
+                example: None,
+                examples: Default::default(),
+                explode: None,
+                extensions: Default::default(),
+                format: ParameterSchemaOrContent::Schema(type_to_schema(&field.type_desc)),
+            };
+
+            operation
+                .parameters
+                .push(ReferenceOr::Item(Parameter::Query {
+                    parameter_data,
+                    // serde_qs requires the [] for arrays to be passed unencoded when using strict mode:
+                    // https://docs.rs/serde_qs/latest/serde_qs/#strict-vs-non-strict-modes
+                    allow_reserved: true,
+                    style: QueryStyle::Form,
+                    allow_empty_value: None,
+                }));
+        }
     }
 
     operation.request_body = route.request(cx).map(|req| {
         let content = indexmap! {
             "application/json".to_owned() => MediaType {
-                schema: Some(type_to_schema(req.type_desc)),
+                schema: Some(type_to_schema(&req.type_desc)),
                 ..Default::default()
             },
         };
@@ -170,7 +191,7 @@ fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<O
             content.insert(
                 "application/json".to_owned(),
                 MediaType {
-                    schema: Some(type_to_schema(schema)),
+                    schema: Some(type_to_schema(&schema)),
                     ..Default::default()
                 },
             );
@@ -197,7 +218,7 @@ fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<O
     Some(operation)
 }
 
-fn type_to_schema(type_desc: Type) -> ReferenceOr<Schema> {
+fn type_to_schema(type_desc: &Type) -> ReferenceOr<Schema> {
     use openapiv3::Type as SchemaType;
     let schema = match type_desc {
         Type::Primitive(ty) => match ty {
@@ -223,7 +244,7 @@ fn type_to_schema(type_desc: Type) -> ReferenceOr<Schema> {
             })),
         },
         Type::Option(inner) => {
-            let schema = type_to_schema(*inner);
+            let schema = type_to_schema(inner);
             if let ReferenceOr::Item(mut schema) = schema {
                 schema.schema_data.nullable = true;
                 schema
@@ -240,7 +261,7 @@ fn type_to_schema(type_desc: Type) -> ReferenceOr<Schema> {
             }
         }
         Type::Array(inner) => type_schema(SchemaType::Array(ArrayType {
-            items: Some(box_schema(type_to_schema(*inner))),
+            items: Some(box_schema(type_to_schema(inner))),
             min_items: None,
             max_items: None,
             unique_items: false,
@@ -299,7 +320,7 @@ fn type_decl_to_schema(type_decl: TypeDecl) -> ReferenceOr<Schema> {
                         },
                         EnumVariantKind::NewType(ty) => Schema {
                             schema_kind: SchemaKind::AllOf {
-                                all_of: vec![ReferenceOr::Item(tag_schema), type_to_schema(ty)],
+                                all_of: vec![ReferenceOr::Item(tag_schema), type_to_schema(&ty)],
                             },
                             schema_data,
                         },
@@ -351,7 +372,7 @@ fn schema_for_fields(fields: Vec<Field>) -> Schema {
 
     for field in fields {
         let optional = matches!(field.type_desc, Type::Option(_));
-        let field_schema = type_to_schema(field.type_desc);
+        let field_schema = type_to_schema(&field.type_desc);
         if field.flatten {
             all_of.push(field_schema);
         } else {

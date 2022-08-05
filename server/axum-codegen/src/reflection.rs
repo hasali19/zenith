@@ -69,6 +69,16 @@ pub enum TypeDecl {
     Enum(EnumType),
 }
 
+impl TypeDecl {
+    pub fn as_struct(&self) -> Option<&StructType> {
+        if let Self::Struct(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub enum IntWidth {
     W8 = 8,
@@ -110,7 +120,7 @@ pub enum PrimitiveType {
 pub struct Field {
     pub name: String,
     pub flatten: bool,
-    pub has_default: bool,
+    pub required: bool,
     pub type_desc: Type,
 }
 
