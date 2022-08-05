@@ -1,15 +1,17 @@
 pub mod reflection;
 
-use axum::http::{Method, StatusCode};
+pub use axum::http::{Method, StatusCode};
 pub use axum_codegen_macros::*;
 
 use reflection::{Type, TypeContext};
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ParamLocation {
     Path,
     Query,
 }
 
+#[derive(Clone, Debug)]
 pub struct ParamSpec {
     pub location: ParamLocation,
     pub name: String,
@@ -17,11 +19,12 @@ pub struct ParamSpec {
     pub type_desc: Type,
 }
 
+#[derive(Clone, Debug)]
 pub struct RequestSpec {
     pub type_desc: Type,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct ResponseSpec {
     pub status: StatusCode,
     pub description: Option<String>,
