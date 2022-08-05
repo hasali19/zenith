@@ -24,7 +24,6 @@ tokio-util = "0.7"
 tracing = "0.1"
 walkdir = "2.3"
 
-axum-codegen = { path = "../axum-codegen" }
 axum-files = { path = "../axum-files" }
 migrations = { path = "../migrations" }
 tmdb = { path = "../tmdb" }
@@ -41,6 +40,11 @@ features = ["derive"]
 [dependencies.serde_qs]
 version = "0.10"
 features = ["axum"]
+
+[dependencies.speq]
+git = "https://github.com/hasali19/speq"
+rev = "c5a319131340a3c5ff9911a4da1c27f924f86999"
+features = ["serde_qs"]
 
 [dependencies.sqlx]
 version = "0.6"

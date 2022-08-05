@@ -1,5 +1,5 @@
-use axum_codegen::Reflect;
 use serde::Serialize;
+use speq::Reflect;
 
 #[derive(Serialize, Reflect)]
 pub struct CollectionUserData {

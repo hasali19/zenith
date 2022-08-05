@@ -1,9 +1,9 @@
 use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum_codegen::{post, Reflect};
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
+use speq::{post, Reflect};
 
 use crate::api::ApiResult;
 use crate::db::videos::UpdateVideoUserData;

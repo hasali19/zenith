@@ -3,9 +3,9 @@ use std::sync::Arc;
 use axum::extract::{Extension, Path};
 use axum::response::IntoResponse;
 use axum::Json;
-use axum_codegen::{post, Reflect};
 use serde::{Deserialize, Serialize};
 use serde_qs::axum::QsQuery;
+use speq::{post, Reflect};
 
 use crate::api::error::not_found;
 use crate::api::ApiResult;

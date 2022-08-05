@@ -1,7 +1,7 @@
 use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum_codegen::post;
+use speq::post;
 use tmdb::TmdbClient;
 
 use crate::api::ApiResult;

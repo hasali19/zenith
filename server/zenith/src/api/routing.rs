@@ -12,7 +12,7 @@ const RAPIDOC_JS: &str = include_str!("docs/rapidoc-min.js");
 pub fn router() -> axum::Router {
     let spec = super::openapi_spec();
 
-    axum_codegen::routes()
+    speq::routes()
         .fold(Router::new(), |router, route| route.register(router))
         .route("/", get(|| async move { Html(DOCS_INDEX) }))
         .route(

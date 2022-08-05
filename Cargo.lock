@@ -105,28 +105,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "axum-codegen"
-version = "0.1.0"
-dependencies = [
- "axum",
- "axum-codegen-macros",
- "inventory",
- "serde_qs",
-]
-
-[[package]]
-name = "axum-codegen-macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "serde_derive_internals",
- "structmeta",
- "syn",
- "syn-mid",
-]
-
-[[package]]
 name = "axum-core"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1469,6 +1447,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "speq"
+version = "0.1.0"
+source = "git+https://github.com/hasali19/speq?rev=c5a319131340a3c5ff9911a4da1c27f924f86999#c5a319131340a3c5ff9911a4da1c27f924f86999"
+dependencies = [
+ "axum",
+ "inventory",
+ "serde_qs",
+ "speq-macros",
+]
+
+[[package]]
+name = "speq-macros"
+version = "0.1.0"
+source = "git+https://github.com/hasali19/speq?rev=c5a319131340a3c5ff9911a4da1c27f924f86999#c5a319131340a3c5ff9911a4da1c27f924f86999"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde_derive_internals",
+ "structmeta",
+ "syn",
+ "syn-mid",
+]
+
+[[package]]
 name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2212,7 +2214,6 @@ version = "0.0.0"
 dependencies = [
  "async-trait",
  "axum",
- "axum-codegen",
  "axum-files",
  "bytes",
  "color-eyre",
@@ -2229,6 +2230,7 @@ dependencies = [
  "serde_json",
  "serde_qs",
  "serde_yaml",
+ "speq",
  "sqlx",
  "time",
  "tmdb",

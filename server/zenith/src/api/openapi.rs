@@ -1,11 +1,11 @@
 use axum::http::Method;
-use axum_codegen::reflection::{
-    EnumTag, EnumVariantKind, Field, FloatWidth, PrimitiveType, Type, TypeContext, TypeDecl,
-};
-use axum_codegen::Route;
 use indexmap::indexmap;
 use markdown::{Block, Span};
 use openapiv3::*;
+use speq::reflection::{
+    EnumTag, EnumVariantKind, Field, FloatWidth, PrimitiveType, Type, TypeContext, TypeDecl,
+};
+use speq::Route;
 
 pub fn openapi_spec() -> OpenAPI {
     build_openapi_spec(TypeContext::new())
@@ -22,7 +22,7 @@ fn build_openapi_spec(mut cx: TypeContext) -> OpenAPI {
         ..Default::default()
     };
 
-    spec.paths = axum_codegen::routes().fold(Default::default(), |mut paths, route| {
+    spec.paths = speq::routes().fold(Default::default(), |mut paths, route| {
         let path = route
             .path()
             .trim_start_matches('/')

@@ -4,9 +4,9 @@ use axum::extract::Extension;
 use axum::http::StatusCode;
 use axum::response::{sse, IntoResponse};
 use axum::Json;
-use axum_codegen::{get, post, Reflect};
 use serde::{Deserialize, Serialize};
 use serde_qs::axum::QsQuery;
+use speq::{get, post, Reflect};
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
 

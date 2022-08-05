@@ -4,9 +4,9 @@ use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
-use axum_codegen::{delete, get, patch, Reflect};
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
+use speq::{delete, get, patch, Reflect};
 
 use crate::api::ApiResult;
 use crate::db::items::MediaItem;

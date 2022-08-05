@@ -1,6 +1,6 @@
 use axum::extract::{Extension, Path};
 use axum::Json;
-use axum_codegen::get;
+use speq::get;
 
 use crate::db::movies::Movie;
 use crate::db::{self, Db};

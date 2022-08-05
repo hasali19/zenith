@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 
-use axum_codegen::Reflect;
 use serde::Serialize;
+use speq::Reflect;
 use sqlx::sqlite::{SqliteArguments, SqliteRow};
 use sqlx::Type;
 use sqlx::{Arguments, FromRow, Row, SqliteConnection};

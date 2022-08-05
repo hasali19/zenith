@@ -1,7 +1,7 @@
 use axum::extract::{Extension, Path};
 use axum::response::IntoResponse;
 use axum::Json;
-use axum_codegen::get;
+use speq::get;
 
 use crate::api::ApiResult;
 use crate::db::episodes::Episode;
