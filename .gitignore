@@ -8,6 +8,10 @@
 
 # Environment variables
 .env
+.envrc
+
+# IDE config
+.vscode/
 
 # App config
 /config.yml
