@@ -1,9 +1,9 @@
-import { Component, JSX, Show } from "solid-js";
+import { Component, JSX, ParentComponent, Show } from "solid-js";
 import { Image } from "./Image";
 import * as styles from "./MediaDetailsScreen.css";
 import { Poster } from "./Poster";
 
-export const MediaDetailsScreen: Component<{
+export const MediaDetailsScreen: ParentComponent<{
   backdrop: string;
   poster: string;
   name: string;

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "solid-app-router";
-import { Component, JSX } from "solid-js";
+import { Component, JSX, ParentComponent } from "solid-js";
 import { FilmIcon, GearIcon, HomeIcon, TvIcon } from "./icons";
 import * as styles from "./NavDrawer.css";
 
@@ -17,11 +17,11 @@ export const NavDrawer: Component = () => {
     }
   }
 
-  const SubTitle: Component = (p) => {
+  const SubTitle: ParentComponent = (p) => {
     return <p class={styles.subtitle}>{p.children}</p>;
   };
 
-  const Section: Component = (p) => {
+  const Section: ParentComponent = (p) => {
     return <div class={styles.section}>{p.children}</div>;
   };
 
@@ -49,7 +49,7 @@ export const NavDrawer: Component = () => {
   };
 
   return (
-    <div className={styles.drawer}>
+    <div class={styles.drawer}>
       <div class={styles.header}>
         <img src="/images/zenith.png" class={styles.img} />
       </div>

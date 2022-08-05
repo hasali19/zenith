@@ -15,11 +15,11 @@ export interface MediaItemWithPosterProps {
 }
 
 export const MediaItemWithPoster: Component<MediaItemWithPosterProps> = (p) => (
-  <div className={styles.item} style={p.style} onClick={p.onClick}>
+  <div class={styles.item} style={p.style} onClick={p.onClick}>
     <Poster src={p.poster} watched={p.watched} />
-    <div className={styles.details}>
-      <p className={styles.name}>{p.name}</p>
-      <p className={styles.secondary}>{p.secondary}</p>
+    <div class={styles.details}>
+      <p class={styles.name}>{p.name}</p>
+      <p class={styles.secondary}>{p.secondary}</p>
     </div>
   </div>
 );
@@ -37,7 +37,7 @@ export interface MediaItemWithThumbnailProps {
 export const MediaItemWithThumbnail: Component<MediaItemWithThumbnailProps> = (
   p
 ) => (
-  <div className={styles.item} style={p.style} onClick={p.onClick}>
+  <div class={styles.item} style={p.style} onClick={p.onClick}>
     <div class={styles.thumbnail}>
       <Show when={p.thumbnail} fallback={<ImageFallback />}>
         {(src) => <Image class={styles.image} src={src} />}
@@ -70,9 +70,9 @@ export const MediaItemWithThumbnail: Component<MediaItemWithThumbnailProps> = (
         </div>
       </Show>
     </div>
-    <div className={styles.details}>
-      <p className={styles.name}>{p.name}</p>
-      <p className={styles.secondary}>{p.secondary}</p>
+    <div class={styles.details}>
+      <p class={styles.name}>{p.name}</p>
+      <p class={styles.secondary}>{p.secondary}</p>
     </div>
   </div>
 );

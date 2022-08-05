@@ -8,7 +8,6 @@ export default defineConfig({
   plugins: [vanillaExtractPlugin(), solidPlugin()],
   build: {
     target: "esnext",
-    polyfillDynamicImport: false,
   },
   server: {
     proxy: {

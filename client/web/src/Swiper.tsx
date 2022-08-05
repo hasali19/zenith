@@ -1,4 +1,4 @@
-import { Component, createEffect, onCleanup, onMount } from "solid-js";
+import { onCleanup, onMount, ParentComponent } from "solid-js";
 import SwiperClass, { SwiperOptions } from "swiper";
 
 import "swiper/css";
@@ -9,7 +9,7 @@ export interface SwiperProps {
   };
 }
 
-export const Swiper: Component<SwiperProps> = (p) => {
+export const Swiper: ParentComponent<SwiperProps> = (p) => {
   let el!: HTMLDivElement;
   let swiper!: SwiperClass;
 
@@ -33,6 +33,6 @@ export const Swiper: Component<SwiperProps> = (p) => {
   );
 };
 
-export const SwiperSlide: Component = (p) => (
+export const SwiperSlide: ParentComponent = (p) => (
   <div class="swiper-slide">{p.children}</div>
 );
