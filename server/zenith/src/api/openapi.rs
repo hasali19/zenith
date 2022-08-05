@@ -1,18 +1,19 @@
+use std::borrow::Cow;
+use std::collections::HashMap;
+
 use axum::http::Method;
 use indexmap::indexmap;
 use markdown::{Block, Span};
 use openapiv3::*;
 use speq::reflection::{
-    EnumTag, EnumVariantKind, Field, FloatWidth, PrimitiveType, Type, TypeContext, TypeDecl,
+    EnumTag, EnumVariantKind, Field, FloatWidth, PrimitiveType, Type, TypeDecl,
 };
-use speq::Route;
+use speq::RouteSpec;
 
 pub fn openapi_spec() -> OpenAPI {
-    build_openapi_spec(TypeContext::new())
-}
+    let spec = speq::spec();
 
-fn build_openapi_spec(mut cx: TypeContext) -> OpenAPI {
-    let mut spec = OpenAPI {
+    let mut openapi = OpenAPI {
         openapi: "3.0.0".to_owned(),
         info: Info {
             title: "Zenith Media Server API".to_owned(),
@@ -22,47 +23,50 @@ fn build_openapi_spec(mut cx: TypeContext) -> OpenAPI {
         ..Default::default()
     };
 
-    spec.paths = speq::routes().fold(Default::default(), |mut paths, route| {
-        let path = route
-            .path()
-            .trim_start_matches('/')
-            .split('/')
-            .map(|segment| {
-                if segment.starts_with(':') {
-                    format!("{{{}}}", segment.trim_start_matches(':'))
-                } else {
-                    segment.to_owned()
-                }
-            })
-            .collect::<Vec<_>>()
-            .join("/");
+    openapi.paths = spec
+        .routes
+        .into_iter()
+        .fold(Default::default(), |mut paths, route| {
+            let path = route
+                .path
+                .trim_start_matches('/')
+                .split('/')
+                .map(|segment| {
+                    if segment.starts_with(':') {
+                        format!("{{{}}}", segment.trim_start_matches(':'))
+                    } else {
+                        segment.to_owned()
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join("/");
 
-        let item = match paths
-            .paths
-            .entry(format!("/api/{path}"))
-            .or_insert_with(|| ReferenceOr::Item(Default::default()))
-        {
-            ReferenceOr::Reference { .. } => unreachable!(),
-            ReferenceOr::Item(item) => item,
-        };
+            let item = match paths
+                .paths
+                .entry(format!("/api/{path}"))
+                .or_insert_with(|| ReferenceOr::Item(Default::default()))
+            {
+                ReferenceOr::Reference { .. } => unreachable!(),
+                ReferenceOr::Item(item) => item,
+            };
 
-        let operation_ref = match route.method() {
-            Method::GET => &mut item.get,
-            Method::POST => &mut item.post,
-            Method::PUT => &mut item.put,
-            Method::PATCH => &mut item.patch,
-            Method::DELETE => &mut item.delete,
-            method => panic!("invalid method: {method}"),
-        };
+            let operation_ref = match route.method {
+                Method::GET => &mut item.get,
+                Method::POST => &mut item.post,
+                Method::PUT => &mut item.put,
+                Method::PATCH => &mut item.patch,
+                Method::DELETE => &mut item.delete,
+                method => panic!("invalid method: {method}"),
+            };
 
-        *operation_ref = build_route_spec(route, &mut cx);
+            *operation_ref = build_route_spec(route, &spec.types);
 
-        paths
-    });
+            paths
+        });
 
-    let mut components = spec.components.unwrap_or_default();
+    let mut components = openapi.components.unwrap_or_default();
 
-    for (name, schema) in cx.into_types() {
+    for (name, schema) in spec.types {
         components
             .schemas
             .insert(name.into_owned(), type_decl_to_schema(schema));
@@ -70,19 +74,22 @@ fn build_openapi_spec(mut cx: TypeContext) -> OpenAPI {
 
     components.schemas.sort_keys();
 
-    spec.components = Some(components);
+    openapi.components = Some(components);
 
-    spec
+    openapi
 }
 
-fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<Operation> {
-    let doc = route.doc()?;
-    let md = markdown::tokenize(doc);
-    let mut blocks = md.into_iter();
-
-    let summary = blocks
+fn build_route_spec(
+    route: RouteSpec,
+    types: &HashMap<Cow<'static, str>, TypeDecl>,
+) -> Option<Operation> {
+    let summary = route
+        .doc
+        .map(|doc| markdown::tokenize(&doc))
+        .unwrap_or_default()
+        .into_iter()
         .by_ref()
-        .filter_map(|block| {
+        .find_map(|block| {
             let spans = match block {
                 Block::Paragraph(spans) => spans,
                 _ => return None,
@@ -92,8 +99,7 @@ fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<O
                 Some(Span::Text(text)) => Some(text),
                 _ => None,
             }
-        })
-        .next();
+        });
 
     let mut operation = Operation::default();
 
@@ -102,12 +108,12 @@ fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<O
     }
 
     if operation.tags.is_empty() {
-        if let Some(file_stem) = std::path::Path::new(route.src_file()).file_stem() {
+        if let Some(file_stem) = std::path::Path::new(route.src_file.as_ref()).file_stem() {
             operation.tags = vec![file_stem.to_str().unwrap().to_owned()]
         }
     }
 
-    for param in route.params(cx) {
+    for param in route.params {
         let parameter_data = ParameterData {
             name: param.name,
             required: true,
@@ -128,11 +134,11 @@ fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<O
             }));
     }
 
-    if let Some(query) = route.query(cx) {
+    if let Some(query) = route.query {
         let struct_type = query
             .type_desc
             .as_id()
-            .and_then(|id| cx.get(id))
+            .and_then(|id| types.get(id))
             .and_then(|decl| decl.as_struct())
             .unwrap_or_else(|| panic!("unsupported query model type: {:?}", query.type_desc));
 
@@ -169,7 +175,7 @@ fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<O
         }
     }
 
-    operation.request_body = route.request(cx).map(|req| {
+    operation.request_body = route.request.map(|req| {
         let content = indexmap! {
             "application/json".to_owned() => MediaType {
                 schema: Some(type_to_schema(&req.type_desc)),
@@ -183,7 +189,7 @@ fn build_route_spec(route: &'static dyn Route, cx: &mut TypeContext) -> Option<O
         })
     });
 
-    for res in route.responses(cx) {
+    for res in route.responses {
         let status = res.status;
         let mut content = indexmap! {};
 

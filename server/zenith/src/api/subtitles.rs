@@ -2,7 +2,7 @@ use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum_files::{FileRequest, FileResponse};
-use speq::{delete, get};
+use speq::axum::{delete, get};
 
 use crate::api::error::bad_request;
 use crate::api::ApiResult;

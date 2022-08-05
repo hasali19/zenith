@@ -5,7 +5,7 @@ use axum::extract::{Extension, Multipart};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use serde::Deserialize;
-use speq::post;
+use speq::axum::post;
 use tokio::fs::File;
 use tokio::io::BufWriter;
 use tokio_stream::StreamExt;

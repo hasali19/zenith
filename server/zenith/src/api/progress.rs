@@ -3,7 +3,8 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
-use speq::{post, Reflect};
+use speq::axum::post;
+use speq::Reflect;
 
 use crate::api::ApiResult;
 use crate::db::videos::UpdateVideoUserData;

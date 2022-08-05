@@ -5,7 +5,8 @@ use axum::response::IntoResponse;
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use serde_qs::axum::QsQuery;
-use speq::{post, Reflect};
+use speq::axum::post;
+use speq::Reflect;
 
 use crate::api::error::not_found;
 use crate::api::ApiResult;

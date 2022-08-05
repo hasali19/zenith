@@ -6,7 +6,8 @@ use axum::response::IntoResponse;
 use axum::Json;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
-use speq::{delete, get, patch, Reflect};
+use speq::axum::{delete, get, patch};
+use speq::Reflect;
 
 use crate::api::ApiResult;
 use crate::db::items::MediaItem;

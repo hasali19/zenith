@@ -1449,9 +1449,10 @@ dependencies = [
 [[package]]
 name = "speq"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/speq?rev=c5a319131340a3c5ff9911a4da1c27f924f86999#c5a319131340a3c5ff9911a4da1c27f924f86999"
+source = "git+https://github.com/hasali19/speq?rev=2ccbea73d4c1537cc7df2788a828fa6114ad5aae#2ccbea73d4c1537cc7df2788a828fa6114ad5aae"
 dependencies = [
  "axum",
+ "http",
  "inventory",
  "serde_qs",
  "speq-macros",
@@ -1460,7 +1461,7 @@ dependencies = [
 [[package]]
 name = "speq-macros"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/speq?rev=c5a319131340a3c5ff9911a4da1c27f924f86999#c5a319131340a3c5ff9911a4da1c27f924f86999"
+source = "git+https://github.com/hasali19/speq?rev=2ccbea73d4c1537cc7df2788a828fa6114ad5aae#2ccbea73d4c1537cc7df2788a828fa6114ad5aae"
 dependencies = [
  "proc-macro2",
  "quote",

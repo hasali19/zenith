@@ -3,7 +3,7 @@ use axum::http::header::ACCESS_CONTROL_ALLOW_ORIGIN;
 use axum::http::{HeaderValue, Response, StatusCode};
 use axum::response::Html;
 use axum::routing::get;
-use axum::{Json, Router};
+use axum::Json;
 use tower_http::set_header::SetResponseHeaderLayer;
 
 const DOCS_INDEX: &str = include_str!("docs/docs.html");
@@ -12,8 +12,7 @@ const RAPIDOC_JS: &str = include_str!("docs/rapidoc-min.js");
 pub fn router() -> axum::Router {
     let spec = super::openapi_spec();
 
-    speq::routes()
-        .fold(Router::new(), |router, route| route.register(router))
+    speq::axum::router()
         .route("/", get(|| async move { Html(DOCS_INDEX) }))
         .route(
             "/rapidoc-min.js",

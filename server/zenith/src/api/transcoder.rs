@@ -6,7 +6,8 @@ use axum::response::{sse, IntoResponse};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use serde_qs::axum::QsQuery;
-use speq::{get, post, Reflect};
+use speq::axum::{get, post};
+use speq::Reflect;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
 

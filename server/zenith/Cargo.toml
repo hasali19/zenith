@@ -43,8 +43,8 @@ features = ["axum"]
 
 [dependencies.speq]
 git = "https://github.com/hasali19/speq"
-rev = "c5a319131340a3c5ff9911a4da1c27f924f86999"
-features = ["serde_qs"]
+rev = "2ccbea73d4c1537cc7df2788a828fa6114ad5aae"
+features = ["axum", "serde_qs_axum"]
 
 [dependencies.sqlx]
 version = "0.6"
