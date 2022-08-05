@@ -115,7 +115,7 @@ fn build_route_spec(
 
     for param in route.params {
         let parameter_data = ParameterData {
-            name: param.name,
+            name: param.name.into_owned(),
             required: true,
             deprecated: None,
             description: None,
@@ -151,7 +151,7 @@ fn build_route_spec(
             }
 
             let parameter_data = ParameterData {
-                name,
+                name: name.into_owned(),
                 required: field.required && !matches!(field.type_desc, Type::Option(_)),
                 deprecated: None,
                 description: None,
@@ -207,7 +207,7 @@ fn build_route_spec(
             content,
             description: res
                 .description
-                .to_owned()
+                .map(|it| it.into_owned())
                 .or_else(|| status.canonical_reason().map(|reason| reason.to_owned()))
                 .unwrap_or_else(|| res.status.to_string()),
             ..Default::default()
@@ -288,7 +288,7 @@ fn type_decl_to_schema(type_decl: TypeDecl) -> ReferenceOr<Schema> {
     let schema = match type_decl {
         TypeDecl::Struct(ty) => {
             let mut schema = schema_for_fields(ty.fields);
-            schema.schema_data.title = Some(ty.name);
+            schema.schema_data.title = Some(ty.name.into_owned());
             schema
         }
         TypeDecl::Enum(ty) => match ty.tag {
@@ -298,22 +298,22 @@ fn type_decl_to_schema(type_decl: TypeDecl) -> ReferenceOr<Schema> {
 
                 for variant in ty.variants {
                     let schema_data = SchemaData {
-                        title: Some(variant.name.to_owned()),
+                        title: Some(variant.name.into_owned()),
                         ..Default::default()
                     };
 
                     let tag_schema = Schema {
                         schema_kind: SchemaKind::Type(SchemaType::Object(ObjectType {
                             properties: indexmap! {
-                                tag_name.to_owned() => ReferenceOr::Item(Box::new(Schema {
+                                tag_name.clone().into_owned() => ReferenceOr::Item(Box::new(Schema {
                                     schema_kind: SchemaKind::Type(SchemaType::String(StringType {
-                                        enumeration: vec![Some(variant.tag_value.to_owned())],
+                                        enumeration: vec![Some(variant.tag_value.into_owned())],
                                         ..Default::default()
                                     })),
                                     schema_data: Default::default(),
                                 })),
                             },
-                            required: vec![tag_name.to_owned()],
+                            required: vec![tag_name.clone().into_owned()],
                             ..Default::default()
                         })),
                         schema_data: Default::default(),
@@ -347,7 +347,7 @@ fn type_decl_to_schema(type_decl: TypeDecl) -> ReferenceOr<Schema> {
                 Schema {
                     schema_kind: SchemaKind::OneOf { one_of },
                     schema_data: SchemaData {
-                        title: Some(ty.name),
+                        title: Some(ty.name.into_owned()),
                         ..Default::default()
                     },
                 }
@@ -382,10 +382,10 @@ fn schema_for_fields(fields: Vec<Field>) -> Schema {
         if field.flatten {
             all_of.push(field_schema);
         } else {
-            properties.insert(field.name.to_owned(), box_schema(field_schema));
             if !optional {
-                required.push(field.name.to_owned());
+                required.push(field.name.clone().into_owned());
             }
+            properties.insert(field.name.into_owned(), box_schema(field_schema));
         }
     }
 
