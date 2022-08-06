@@ -86,7 +86,7 @@ const EpisodesSection: Component<{
       <For each={p.episodes}>
         {(episode) => (
           <MediaItemWithThumbnail
-            thumbnail={episode.thumbnail}
+            thumbnail={episode.thumbnail || episode.backdrop}
             name={episode.name}
             secondary={`Episode ${episode.episode_number}`}
             watched={episode.user_data.is_watched}
