@@ -8,7 +8,7 @@ use crate::{sql, utils};
 
 use super::collections::CollectionUserData;
 use super::items::ExternalIds;
-use super::media::MediaImage;
+use super::media::{MediaImage, MediaImageType};
 
 #[derive(Serialize, Reflect)]
 pub struct Season {
@@ -22,6 +22,16 @@ pub struct Season {
     pub backdrop: Option<String>,
     pub external_ids: ExternalIds,
     pub user_data: CollectionUserData,
+}
+
+impl Season {
+    pub fn image(&self, img_type: MediaImageType) -> Option<&str> {
+        match img_type {
+            MediaImageType::Poster => self.poster.as_deref(),
+            MediaImageType::Backdrop => self.backdrop.as_deref(),
+            MediaImageType::Thumbnail => self.backdrop.as_deref(),
+        }
+    }
 }
 
 const SEASON_COLUMNS: &[&str] = &[

@@ -1,7 +1,8 @@
 use std::convert::TryFrom;
 
 use eyre::eyre;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use speq::Reflect;
 use sqlx::{SqliteConnection, Type};
 
 #[derive(Clone, Copy, Debug, Type, Serialize)]
@@ -14,7 +15,8 @@ pub enum MediaItemType {
     Episode = 4,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Deserialize, Reflect)]
+#[serde(rename_all = "snake_case")]
 pub enum MediaImageType {
     Poster = 1,
     Backdrop = 2,

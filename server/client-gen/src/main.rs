@@ -166,7 +166,9 @@ fn gen_ts_type_decl(type_decl: TypeDecl) -> String {
             let tag = match enum_type.tag {
                 None => todo!(),
                 Some(tag) => match tag {
+                    EnumTag::External => todo!(),
                     EnumTag::Internal(tag) => tag,
+                    EnumTag::Adjacent { .. } => todo!(),
                 },
             };
 

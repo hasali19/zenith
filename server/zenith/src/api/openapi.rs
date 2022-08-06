@@ -293,6 +293,25 @@ fn type_decl_to_schema(type_decl: TypeDecl) -> ReferenceOr<Schema> {
         }
         TypeDecl::Enum(ty) => match ty.tag {
             None => todo!(),
+            Some(EnumTag::Adjacent { .. }) => todo!(),
+            Some(EnumTag::External) => Schema {
+                schema_kind: SchemaKind::Type(SchemaType::String(StringType {
+                    enumeration: ty
+                        .variants
+                        .into_iter()
+                        .map(|variant| match variant.kind {
+                            EnumVariantKind::Unit => Some(variant.tag_value.into_owned()),
+                            EnumVariantKind::NewType(_) => todo!(),
+                            EnumVariantKind::Struct(_) => todo!(),
+                        })
+                        .collect(),
+                    ..Default::default()
+                })),
+                schema_data: SchemaData {
+                    title: Some(ty.name.into_owned()),
+                    ..Default::default()
+                },
+            },
             Some(EnumTag::Internal(tag_name)) => {
                 let mut one_of = vec![];
 

@@ -8,7 +8,7 @@ use crate::util::VecExt;
 use crate::{sql, utils};
 
 use super::items::ExternalIds;
-use super::media::MediaImage;
+use super::media::{MediaImage, MediaImageType};
 use super::videos::{self, VideoInfo, VideoUserData};
 
 #[derive(Serialize, Reflect)]
@@ -22,6 +22,16 @@ pub struct Movie {
     pub external_ids: ExternalIds,
     pub video_info: VideoInfo,
     pub user_data: VideoUserData,
+}
+
+impl Movie {
+    pub fn image(&self, img_type: MediaImageType) -> Option<&str> {
+        match img_type {
+            MediaImageType::Poster => self.poster.as_deref(),
+            MediaImageType::Backdrop => self.backdrop.as_deref(),
+            MediaImageType::Thumbnail => self.backdrop.as_deref(),
+        }
+    }
 }
 
 const MOVIE_COLUMNS: &[&str] = &[

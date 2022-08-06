@@ -11,5 +11,5 @@ zenith = { path = "../zenith" }
 
 [dependencies.speq]
 git = "https://github.com/hasali19/speq"
-rev = "02fa74c28876687ddc289ae520ff3b9bbbc35f86"
+rev = "8df3410ac4dd88cda5a62d584fbaa77ec4a6afd2"
 features = ["axum"]

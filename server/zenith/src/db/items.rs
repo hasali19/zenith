@@ -5,7 +5,7 @@ use speq::Reflect;
 use sqlx::SqliteConnection;
 
 use super::episodes::{self, Episode};
-use super::media::{self, MediaItemType};
+use super::media::{self, MediaImageType, MediaItemType};
 use super::movies::{self, Movie};
 use super::seasons::{self, Season};
 use super::shows::{self, Show};
@@ -23,6 +23,17 @@ pub enum MediaItem {
     Show(Show),
     Season(Season),
     Episode(Episode),
+}
+
+impl MediaItem {
+    pub fn image(&self, img_type: MediaImageType) -> Option<&str> {
+        match self {
+            MediaItem::Movie(movie) => movie.image(img_type),
+            MediaItem::Show(show) => show.image(img_type),
+            MediaItem::Season(season) => season.image(img_type),
+            MediaItem::Episode(episode) => episode.image(img_type),
+        }
+    }
 }
 
 pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<MediaItem>> {

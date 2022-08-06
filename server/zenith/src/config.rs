@@ -11,6 +11,8 @@ pub struct Config {
     #[serde(default)]
     pub http: Http,
     pub libraries: Libraries,
+    #[serde(default)]
+    pub paths: Paths,
     pub tmdb: Tmdb,
     #[serde(default)]
     pub transcoding: Transcoding,
@@ -38,6 +40,33 @@ pub struct Libraries {
     pub movies: PathBuf,
     #[serde(deserialize_with = "deserialize_lib_path")]
     pub tv_shows: PathBuf,
+}
+
+#[derive(Deserialize)]
+pub struct Paths {
+    #[serde(default = "Paths::default_cache")]
+    pub cache: PathBuf,
+    #[serde(default = "Paths::default_data")]
+    pub data: PathBuf,
+}
+
+impl Paths {
+    fn default_cache() -> PathBuf {
+        "cache".into()
+    }
+
+    fn default_data() -> PathBuf {
+        "data".into()
+    }
+}
+
+impl Default for Paths {
+    fn default() -> Self {
+        Paths {
+            cache: Self::default_cache(),
+            data: Self::default_data(),
+        }
+    }
 }
 
 #[derive(Deserialize)]

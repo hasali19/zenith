@@ -7,7 +7,7 @@ use crate::sql::Join;
 use crate::{sql, utils};
 
 use super::items::ExternalIds;
-use super::media::MediaImage;
+use super::media::{MediaImage, MediaImageType};
 use super::videos::{self, VideoInfo, VideoUserData};
 
 #[derive(Serialize, Reflect)]
@@ -27,6 +27,16 @@ pub struct Episode {
     pub external_ids: ExternalIds,
     pub video_info: VideoInfo,
     pub user_data: VideoUserData,
+}
+
+impl Episode {
+    pub fn image(&self, img_type: MediaImageType) -> Option<&str> {
+        match img_type {
+            MediaImageType::Poster => self.poster.as_deref(),
+            MediaImageType::Backdrop => self.backdrop.as_deref(),
+            MediaImageType::Thumbnail => self.thumbnail.as_deref(),
+        }
+    }
 }
 
 const EPISODE_COLUMNS: &[&str] = &[

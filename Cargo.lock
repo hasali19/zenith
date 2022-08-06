@@ -1481,7 +1481,7 @@ dependencies = [
 [[package]]
 name = "speq"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/speq?rev=02fa74c28876687ddc289ae520ff3b9bbbc35f86#02fa74c28876687ddc289ae520ff3b9bbbc35f86"
+source = "git+https://github.com/hasali19/speq?rev=8df3410ac4dd88cda5a62d584fbaa77ec4a6afd2#8df3410ac4dd88cda5a62d584fbaa77ec4a6afd2"
 dependencies = [
  "axum",
  "http",
@@ -1493,7 +1493,7 @@ dependencies = [
 [[package]]
 name = "speq-macros"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/speq?rev=02fa74c28876687ddc289ae520ff3b9bbbc35f86#02fa74c28876687ddc289ae520ff3b9bbbc35f86"
+source = "git+https://github.com/hasali19/speq?rev=8df3410ac4dd88cda5a62d584fbaa77ec4a6afd2#8df3410ac4dd88cda5a62d584fbaa77ec4a6afd2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2259,10 +2259,12 @@ dependencies = [
  "once_cell",
  "openapiv3",
  "regex",
+ "reqwest",
  "serde",
  "serde_json",
  "serde_qs",
  "serde_yaml",
+ "sha2",
  "speq",
  "sqlx",
  "time",
