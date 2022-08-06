@@ -1,11 +1,18 @@
 import { style } from "@vanilla-extract/css";
 
 export const heroSection = style({
+  width: "100%",
   height: "40vh",
-  backgroundSize: "cover",
-  backgroundPosition: "center",
+  backgroundColor: "rgb(100,100,100)",
   borderRadius: 8,
   margin: 8,
+});
+
+export const heroSectionImg = style({
+  width: "100%",
+  height: "100%",
+  backgroundColor: "rgb(100,100,100)",
+  borderRadius: 8,
 });
 
 export const featuredSection = style({

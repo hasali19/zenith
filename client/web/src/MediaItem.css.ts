@@ -19,6 +19,7 @@ const imageWrapper = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  background: "rgb(100,100,100)",
   borderRadius: 8,
 });
 

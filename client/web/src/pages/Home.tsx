@@ -1,6 +1,7 @@
 import { useNavigate } from "solid-app-router";
-import { Component, createSignal, For, JSX, onMount } from "solid-js";
+import { Component, createResource, For, JSX, Suspense } from "solid-js";
 import { SwiperOptions } from "swiper";
+import { Image } from "../Image";
 import { MediaItemWithPoster, MediaItemWithThumbnail } from "../MediaItem";
 import preferences from "../preferences";
 import { Swiper, SwiperSlide } from "../Swiper";
@@ -25,114 +26,118 @@ const THUMBNAIL_SWIPER_BREAKPOINTS = {
 export const HomeScreen: Component = () => {
   const navigate = useNavigate();
 
-  const [continueWatching, setContinueWatching] = createSignal<any[]>([]);
-  const [movies, setMovies] = createSignal<any[]>([]);
-  const [shows, setShows] = createSignal<any[]>([]);
+  const [data] = createResource(() =>
+    Promise.all([
+      fetch(`${preferences.server}/api/items/continue_watching`).then((res) =>
+        res.json()
+      ),
+      fetch(`${preferences.server}/api/movies/recent`).then((res) =>
+        res.json()
+      ),
+      fetch(`${preferences.server}/api/tv/shows/recent`).then((res) =>
+        res.json()
+      ),
+    ])
+  );
 
-  onMount(() => {
-    fetch(`${preferences.server}/api/items/continue_watching`)
-      .then((res) => res.json())
-      .then(setContinueWatching);
-
-    fetch(`${preferences.server}/api/movies/recent`)
-      .then((res) => res.json())
-      .then(setMovies);
-
-    fetch(`${preferences.server}/api/tv/shows/recent`)
-      .then((res) => res.json())
-      .then(setShows);
-  });
+  const continueWatching = () => (data()?.[0] as any[]) ?? [];
+  const movies = () => (data()?.[1] as any[]) ?? [];
+  const shows = () => (data()?.[2] as any[]) ?? [];
 
   return (
-    <div style={{ padding: "32px" }}>
-      <HeroSection item={movies()[0]} />
-      <FeaturedSection
-        title="Continue Watching"
-        breakpoints={THUMBNAIL_SWIPER_BREAKPOINTS}
-        items={continueWatching()}
-      >
-        {(item) => (
-          <MediaItemWithThumbnail
-            style={{ margin: "4px" }}
-            thumbnail={`${preferences.server}/api/items/${item.id}/images/thumbnail`}
-            name={item.title ?? item.show_name}
-            secondary={
-              item.release_date ? (
-                formatYear(item.release_date)
-              ) : (
-                <span>
-                  <span>S{item.season_number.toString().padStart(2, "0")}</span>
+    <Suspense>
+      <div style={{ padding: "32px" }}>
+        <HeroSection item={movies()[0]} />
+        <FeaturedSection
+          title="Continue Watching"
+          breakpoints={THUMBNAIL_SWIPER_BREAKPOINTS}
+          items={continueWatching()}
+        >
+          {(item) => (
+            <MediaItemWithThumbnail
+              style={{ margin: "4px" }}
+              thumbnail={`${preferences.server}/api/items/${item.id}/images/thumbnail`}
+              name={item.title ?? item.show_name}
+              secondary={
+                item.release_date ? (
+                  formatYear(item.release_date)
+                ) : (
                   <span>
-                    E{item.episode_number.toString().padStart(2, "0")}
+                    <span>
+                      S{item.season_number.toString().padStart(2, "0")}
+                    </span>
+                    <span>
+                      E{item.episode_number.toString().padStart(2, "0")}
+                    </span>
                   </span>
-                </span>
-              )
-            }
-            watched={false}
-            progress={item.user_data.position / item.video_info.duration}
-            onClick={() => {
-              let type;
-              switch (item.type) {
-                case "movie":
-                  type = "movies";
-                  break;
-                case "episode":
-                  type = "episodes";
-                  break;
-                default:
-                  console.error(`invalid video item type: ${type}`);
-                  return;
+                )
               }
-              return navigate(`/${type}/${item.id}`);
-            }}
-          />
-        )}
-      </FeaturedSection>
-      <FeaturedSection
-        title="Recent Movies"
-        breakpoints={POSTER_SWIPER_BREAKPOINTS}
-        items={movies()}
-      >
-        {(item) => (
-          <MediaItemWithPoster
-            style={{ margin: "4px" }}
-            poster={`${preferences.server}/api/items/${item.id}/images/poster`}
-            name={item.title}
-            secondary={formatYear(item.release_date)}
-            watched={item.user_data.is_watched}
-            onClick={() => navigate(`/movies/${item.id}`)}
-          />
-        )}
-      </FeaturedSection>
-      <FeaturedSection
-        title="Updated Shows"
-        breakpoints={POSTER_SWIPER_BREAKPOINTS}
-        items={shows()}
-      >
-        {(item) => (
-          <MediaItemWithPoster
-            style={{ margin: "4px" }}
-            poster={`${preferences.server}/api/items/${item.id}/images/poster`}
-            name={item.name}
-            secondary={formatYear(item.start_date)}
-            watched={item.user_data.unwatched === 0}
-            onClick={() => navigate(`/shows/${item.id}`)}
-          />
-        )}
-      </FeaturedSection>
-    </div>
+              watched={false}
+              progress={item.user_data.position / item.video_info.duration}
+              onClick={() => {
+                let type;
+                switch (item.type) {
+                  case "movie":
+                    type = "movies";
+                    break;
+                  case "episode":
+                    type = "episodes";
+                    break;
+                  default:
+                    console.error(`invalid video item type: ${type}`);
+                    return;
+                }
+                return navigate(`/${type}/${item.id}`);
+              }}
+            />
+          )}
+        </FeaturedSection>
+        <FeaturedSection
+          title="Recent Movies"
+          breakpoints={POSTER_SWIPER_BREAKPOINTS}
+          items={movies()}
+        >
+          {(item) => (
+            <MediaItemWithPoster
+              style={{ margin: "4px" }}
+              poster={`${preferences.server}/api/items/${item.id}/images/poster`}
+              name={item.title}
+              secondary={formatYear(item.release_date)}
+              watched={item.user_data.is_watched}
+              onClick={() => navigate(`/movies/${item.id}`)}
+            />
+          )}
+        </FeaturedSection>
+        <FeaturedSection
+          title="Updated Shows"
+          breakpoints={POSTER_SWIPER_BREAKPOINTS}
+          items={shows()}
+        >
+          {(item) => (
+            <MediaItemWithPoster
+              style={{ margin: "4px" }}
+              poster={`${preferences.server}/api/items/${item.id}/images/poster`}
+              name={item.name}
+              secondary={formatYear(item.start_date)}
+              watched={item.user_data.unwatched === 0}
+              onClick={() => navigate(`/shows/${item.id}`)}
+            />
+          )}
+        </FeaturedSection>
+      </div>
+    </Suspense>
   );
 };
 
 const HeroSection: Component<{ item?: any }> = (p) => (
   <>
     {p.item && (
-      <div
-        class={styles.heroSection}
-        style={{
-          "background-image": `url(${preferences.server}/api/items/${p.item.id}/images/backdrop)`,
-        }}
-      />
+      <div class={styles.heroSection}>
+        <Image
+          src={`${preferences.server}/api/items/${p.item.id}/images/backdrop`}
+          class={styles.heroSectionImg}
+        />
+      </div>
     )}
   </>
 );
