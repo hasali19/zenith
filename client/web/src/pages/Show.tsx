@@ -70,7 +70,7 @@ const SeasonsSection: Component<{
   onItemClick: (item: any) => void;
 }> = (p) => (
   <div class={styles.seriesSection}>
-    <h3 class={styles.seriesHeading}>Series</h3>
+    <h3>Series</h3>
     <div class={styles.seriesGrid}>
       <For each={p.seasons}>
         {(season) => (

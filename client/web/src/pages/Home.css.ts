@@ -12,16 +12,12 @@ export const featuredSection = style({
   padding: 4,
 });
 
-export const featuredSectionTitle = style([
-  "title",
-  "is-5",
-  {
-    margin: 4,
-    marginTop: 20,
-    selectors: {
-      "&.title.is-5": {
-        marginBottom: 12,
-      },
+export const featuredSectionTitle = style({
+  margin: 4,
+  marginTop: 20,
+  selectors: {
+    "&.title.is-5": {
+      marginBottom: 12,
     },
   },
-]);
+});

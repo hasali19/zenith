@@ -45,8 +45,8 @@ const HeaderSection: Component<{
   <div class={styles.headerSection}>
     <Poster src={p.poster} watched={p.watched} class={styles.poster} />
     <div class={styles.headerContentContainer}>
-      <h1 class={styles.headerSectionTitle}>{p.name}</h1>
-      <h2 class={styles.headerSectionSubtitle}>{p.subtitle}</h2>
+      <h1>{p.name}</h1>
+      <h2>{p.subtitle}</h2>
       <Show when={p.actions}>
         <div style={{ "margin-top": "32px" }}>{p.actions}</div>
       </Show>

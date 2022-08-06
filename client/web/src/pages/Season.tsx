@@ -81,7 +81,7 @@ const EpisodesSection: Component<{
   onItemClick: (item: any) => void;
 }> = (p) => (
   <div class={styles.seriesSection}>
-    <h3 class={styles.seriesHeading}>Episodes</h3>
+    <h3>Episodes</h3>
     <div class={styles.seriesGrid}>
       <For each={p.episodes}>
         {(episode) => (

@@ -51,10 +51,6 @@ export const headerContentContainer = style({
   marginLeft: 64,
 });
 
-export const headerSectionTitle = style(["title", "is-1"]);
-
-export const headerSectionSubtitle = style(["subtitle", "is-3"]);
-
 export const headerSectionOverview = style({
   marginTop: 32,
 });

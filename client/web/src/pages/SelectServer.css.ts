@@ -14,41 +14,30 @@ export const form = style({
   flexDirection: "column",
 });
 
-export const title = style([
-  "title",
-  "is-2",
-  {
-    marginTop: 16,
-    marginBottom: 16,
-    textAlign: "center",
-    fontWeight: "normal",
-  },
-]);
+export const title = style({
+  marginTop: 16,
+  marginBottom: 16,
+  textAlign: "center",
+  fontWeight: "normal",
+});
 
-export const input = style([
-  "input",
-  {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 4,
-    color: "white",
-    ":focus-visible": {
-      backgroundColor: "rgba(50, 50, 50, 0.6)",
-    },
-    "::placeholder": {
-      color: "grey",
-    },
+export const input = style({
+  backgroundColor: "rgba(255, 255, 255, 0.1)",
+  borderRadius: 4,
+  color: "white",
+  ":focus-visible": {
+    backgroundColor: "rgba(50, 50, 50, 0.6)",
   },
-]);
+  "::placeholder": {
+    color: "grey",
+  },
+});
 
-export const button = style([
-  "button",
-  "is-primary",
-  {
-    marginTop: 16,
-    selectors: {
-      "&.button:disabled": {
-        backgroundColor: "#d16318",
-      },
+export const button = style({
+  marginTop: 16,
+  selectors: {
+    "&.button:disabled": {
+      backgroundColor: "#d16318",
     },
   },
-]);
+});
