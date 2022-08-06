@@ -49,8 +49,8 @@ export const EpisodeScreen: Component = () => {
       {({ show, season, episode }) => (
         <MediaDetailsScreen
           name={episode.name}
-          poster={season.poster || show.poster}
-          backdrop={season.backdrop || show.backdrop}
+          poster={`${preferences.server}/api/items/${episode.id}/images/poster`}
+          backdrop={`${preferences.server}/api/items/${episode.id}/images/backdrop`}
           subtitle={
             <span>
               <span>S{episode.season_number.toString().padStart(2, "0")}</span>

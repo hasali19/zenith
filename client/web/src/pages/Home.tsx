@@ -54,7 +54,7 @@ export const HomeScreen: Component = () => {
         {(item) => (
           <MediaItemWithThumbnail
             style={{ margin: "4px" }}
-            thumbnail={item.thumbnail ?? item.backdrop}
+            thumbnail={`${preferences.server}/api/items/${item.id}/images/thumbnail`}
             name={item.title ?? item.show_name}
             secondary={
               item.release_date ? (
@@ -96,7 +96,7 @@ export const HomeScreen: Component = () => {
         {(item) => (
           <MediaItemWithPoster
             style={{ margin: "4px" }}
-            poster={item.poster}
+            poster={`${preferences.server}/api/items/${item.id}/images/poster`}
             name={item.title}
             secondary={formatYear(item.release_date)}
             watched={item.user_data.is_watched}
@@ -112,7 +112,7 @@ export const HomeScreen: Component = () => {
         {(item) => (
           <MediaItemWithPoster
             style={{ margin: "4px" }}
-            poster={item.poster}
+            poster={`${preferences.server}/api/items/${item.id}/images/poster`}
             name={item.name}
             secondary={formatYear(item.start_date)}
             watched={item.user_data.unwatched === 0}
@@ -129,7 +129,9 @@ const HeroSection: Component<{ item?: any }> = (p) => (
     {p.item && (
       <div
         class={styles.heroSection}
-        style={{ "background-image": `url(${p.item.backdrop})` }}
+        style={{
+          "background-image": `url(${preferences.server}/api/items/${p.item.id}/images/backdrop)`,
+        }}
       />
     )}
   </>

@@ -59,8 +59,8 @@ export const SeasonScreen: Component = () => {
       {({ show, season }) => (
         <MediaDetailsScreen
           name={show.name}
-          poster={season.poster || show.poster}
-          backdrop={season.backdrop || show.backdrop}
+          poster={`${preferences.server}/api/items/${season.id}/images/poster`}
+          backdrop={`${preferences.server}/api/items/${season.id}/images/backdrop`}
           subtitle={formatSeasonTitle(season)}
           overview={season.overview || show.overview}
           watched={season.user_data.unwatched === 0}
@@ -86,7 +86,7 @@ const EpisodesSection: Component<{
       <For each={p.episodes}>
         {(episode) => (
           <MediaItemWithThumbnail
-            thumbnail={episode.thumbnail || episode.backdrop}
+            thumbnail={`${preferences.server}/api/items/${episode.id}/images/thumbnail`}
             name={episode.name}
             secondary={`Episode ${episode.episode_number}`}
             watched={episode.user_data.is_watched}

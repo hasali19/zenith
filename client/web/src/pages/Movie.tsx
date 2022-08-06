@@ -21,8 +21,8 @@ export const MovieScreen: Component = () => {
       {(movie) => (
         <MediaDetailsScreen
           name={movie.title}
-          poster={movie.poster}
-          backdrop={movie.backdrop}
+          poster={`${preferences.server}/api/items/${movie.id}/images/poster`}
+          backdrop={`${preferences.server}/api/items/${movie.id}/images/backdrop`}
           subtitle={
             <span>
               <span>{formatYear(movie.release_date)}</span>

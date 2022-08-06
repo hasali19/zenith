@@ -19,7 +19,7 @@ export const ShowsScreen: Component = () => {
         id: show.id,
         name: show.name,
         date: show.start_date,
-        poster: show.poster,
+        poster: `${preferences.server}/api/items/${show.id}/images/poster`,
         watched: show.user_data.unwatched === 0,
       }))}
       onItemClick={(item) => navigate(`/shows/${item.id}`)}
