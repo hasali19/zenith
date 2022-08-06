@@ -125,7 +125,7 @@ impl LibraryScanner {
         if let Ok(scanner) = self.inner.try_lock() {
             let start_time = Instant::now();
 
-            tracing::info!(?options, "starting library scan");
+            tracing::info!("starting library scan");
 
             async fn log_error(fut: impl std::future::Future<Output = eyre::Result<()>>) {
                 if let Err(e) = fut.await {
