@@ -21,6 +21,7 @@ export const header = style({
 
 export const img = style({
   width: 64,
+  height: 88,
 });
 
 export const divider = style({
