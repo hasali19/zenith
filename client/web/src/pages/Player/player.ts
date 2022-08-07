@@ -6,7 +6,7 @@ export type VideoPlayer = ReturnType<typeof useVideoPlayer>;
 
 export function useVideoPlayer(
   container: () => HTMLDivElement | undefined,
-  id: () => number,
+  item: () => any,
   start: () => number
 ) {
   const [duration, setDuration] = createSignal(0);
@@ -16,11 +16,19 @@ export function useVideoPlayer(
   createEffect(() => {
     const currentContainer = container();
     if (currentContainer) {
-      player.init(
-        currentContainer,
-        `${preferences.server}/api/videos/${id()}`,
-        untrack(start)
+      const currentItem = item();
+
+      const url = `${preferences.server}/api/videos/${currentItem.id}`;
+      const subtitles = currentItem.video_info.subtitles.map(
+        (subtitle: any) => ({
+          id: subtitle.id,
+          title: subtitle.title,
+          language: subtitle.language,
+          src: `${preferences.server}/api/subtitles/${subtitle.id}`,
+        })
       );
+
+      player.init(currentContainer, url, subtitles, untrack(start));
     }
     onCleanup(() => player.stop());
   });
@@ -35,7 +43,7 @@ export function useVideoPlayer(
 
   async function updateServerPosition(position: number) {
     await fetch(
-      `${preferences.server}/api/progress/${id()}?position=${position}`,
+      `${preferences.server}/api/progress/${item().id}?position=${position}`,
       {
         method: "POST",
       }
@@ -78,6 +86,10 @@ export function useVideoPlayer(
 
     set isPlaying(value: boolean) {
       player.setPlaying(value);
+    },
+
+    setSubtitleTrack(id: number | null) {
+      player.setSubtitleTrack(id);
     },
   };
 }

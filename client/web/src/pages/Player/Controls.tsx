@@ -1,15 +1,21 @@
 import { css } from "@emotion/css";
+import { autoUpdate, offset, shift } from "@floating-ui/dom";
+import { useFloating } from "solid-floating-ui";
 import {
   Component,
   createEffect,
   createSignal,
+  For,
   onCleanup,
   Show,
 } from "solid-js";
 import { Dynamic } from "solid-js/web";
+import { Transition } from "solid-transition-group";
 import {
   BackwardIcon,
   BackwardStepIcon,
+  CheckIcon,
+  ClosedCaptioningIcon,
   CompressIcon,
   ExpandIcon,
   ForwardIcon,
@@ -69,8 +75,9 @@ export interface ControlsProps {
   isVisible: boolean;
   video: VideoPlayer;
   isFullscreen: boolean;
-  onSeekStart: () => void;
-  onSeekEnd: () => void;
+  subtitles: any[];
+  onSetAutoHide: (value: boolean) => void;
+  onSetSubtitleTrack: (id: number | null) => void;
   onToggleFullscreen: () => void;
 }
 
@@ -105,10 +112,20 @@ const button = css`
 `;
 
 export const Controls: Component<ControlsProps> = (p) => {
+  const [showSubtitlesMenu, setShowSubtitlesMenu] = createSignal(false);
+
+  function onSeekStart() {
+    p.onSetAutoHide(false);
+  }
+
   function onSeekEnd(position: number) {
     p.video.position = position;
-    p.onSeekEnd();
+    p.onSetAutoHide(true);
   }
+
+  createEffect(() => {
+    p.onSetAutoHide(!showSubtitlesMenu());
+  });
 
   const root = css`
     position: absolute;
@@ -175,7 +192,7 @@ export const Controls: Component<ControlsProps> = (p) => {
           <Seekbar
             duration={p.video.duration}
             position={p.video.position}
-            onSeekStart={p.onSeekStart}
+            onSeekStart={onSeekStart}
             onSeekEnd={onSeekEnd}
           />
         </div>
@@ -197,6 +214,12 @@ export const Controls: Component<ControlsProps> = (p) => {
             <Button disabled icon={ForwardStepIcon} />
           </div>
           <div class={secondaryActions}>
+            <SubtitlesButton
+              subtitles={p.subtitles}
+              visible={showSubtitlesMenu()}
+              onVisibleChange={setShowSubtitlesMenu}
+              onSetSubtitleTrack={p.onSetSubtitleTrack}
+            />
             <Show when={document.fullscreenEnabled}>
               <Button
                 icon={p.isFullscreen ? CompressIcon : ExpandIcon}
@@ -247,6 +270,7 @@ const TimeText: Component<TimeTextProps> = (p) => {
 };
 
 interface ButtonProps {
+  ref?: (e: HTMLButtonElement) => void;
   icon: Component;
   disabled?: boolean;
   onClick?: () => void;
@@ -254,7 +278,12 @@ interface ButtonProps {
 
 const Button: Component<ButtonProps> = (p) => {
   return (
-    <button class={button} disabled={p.disabled} onClick={p.onClick}>
+    <button
+      ref={p.ref}
+      class={button}
+      disabled={p.disabled}
+      onClick={p.onClick}
+    >
       <Dynamic component={p.icon} />
     </button>
   );
@@ -276,5 +305,199 @@ const PlayPauseButton: Component<PlayPauseButtonProps> = (p) => {
     <button class={playPauseButton} onClick={p.onClick}>
       {p.isPlaying ? <PauseIcon size={32} /> : <PlayIcon size={32} />}
     </button>
+  );
+};
+
+interface SubtitlesButtonProps {
+  subtitles: any[];
+  visible: boolean;
+  onVisibleChange: (visible: boolean) => void;
+  onSetSubtitleTrack: (id: number | null) => void;
+}
+
+const SubtitlesButton: Component<SubtitlesButtonProps> = (p) => {
+  const [selected, setSelected] = createSignal<number | null>(null);
+  const [reference, setReference] = createSignal<HTMLElement>();
+  const [floating, setFloating] = createSignal<HTMLElement>();
+
+  const position = useFloating(reference, floating, {
+    strategy: "fixed",
+    placement: "top-start",
+    middleware: [
+      offset({ mainAxis: 8, crossAxis: -8 }),
+      shift({ padding: 16 }),
+    ],
+    whileElementsMounted: autoUpdate,
+  });
+
+  createEffect(() => {
+    const currentFloating = floating();
+    const currentReference = reference();
+    if (currentFloating && currentReference && p.visible) {
+      const onClick = (e: MouseEvent) => {
+        if (
+          e.target &&
+          !currentFloating.contains(e.target as HTMLElement) &&
+          !currentReference.contains(e.target as HTMLElement)
+        ) {
+          e.preventDefault();
+          p.onVisibleChange(false);
+        }
+      };
+      document.body.addEventListener("click", onClick);
+      onCleanup(() => document.body.removeEventListener("click", onClick));
+    }
+  });
+
+  function setSelectedItem(id: number | null) {
+    setSelected(id);
+    p.onVisibleChange(false);
+    p.onSetSubtitleTrack(id);
+  }
+
+  const root = css`
+    width: 200px;
+    padding: 16px 0px;
+    border-radius: 4px;
+    background-color: #1d1d1d;
+    user-select: none;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+
+    &.enter {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+  `;
+
+  function onBeforeEnter(el: Element) {
+    el.classList.add("enter");
+  }
+
+  function onEnter(el: Element, done: () => void) {
+    el.classList.remove("enter");
+    const a = el.animate(
+      [
+        { transform: "scale(0.9)", opacity: 0 },
+        { transform: "scale(1)", opacity: 1 },
+      ],
+      {
+        duration: 100,
+        easing: "ease-in",
+      }
+    );
+    a.finished.then(done);
+  }
+
+  function onExit(el: Element, done: () => void) {
+    const a = el.animate(
+      [
+        { transform: "scale(1)", opacity: 1 },
+        { transform: "scale(0.9)", opacity: 0 },
+      ],
+      {
+        duration: 100,
+        easing: "ease-in",
+      }
+    );
+    a.finished.then(done);
+  }
+
+  return (
+    <Show when={p.subtitles.length > 0}>
+      <Button
+        ref={setReference}
+        icon={ClosedCaptioningIcon}
+        onClick={() => p.onVisibleChange(!p.visible)}
+      />
+      <Transition
+        onBeforeEnter={onBeforeEnter}
+        onEnter={onEnter}
+        onExit={onExit}
+      >
+        <Show when={p.visible}>
+          <div
+            ref={setFloating}
+            class={root}
+            style={{
+              position: position.strategy,
+              left: `${position.x ?? 0}px`,
+              top: `${position.y ?? 0}px`,
+            }}
+          >
+            <SubtitleMenuItem
+              primary="None"
+              active={selected() === null}
+              onClick={() => setSelectedItem(null)}
+            />
+            <For each={p.subtitles}>
+              {(subtitle) => (
+                <SubtitleMenuItem
+                  primary={subtitle.language}
+                  secondary={subtitle.title}
+                  active={selected() === subtitle.id}
+                  onClick={() => setSelectedItem(subtitle.id)}
+                />
+              )}
+            </For>
+          </div>
+        </Show>
+      </Transition>
+    </Show>
+  );
+};
+
+interface SubtitlesMenuItemProps {
+  active?: boolean;
+  primary: string;
+  secondary?: string;
+  onClick?: () => void;
+}
+
+const SubtitleMenuItem: Component<SubtitlesMenuItemProps> = (p) => {
+  const root = css`
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background-color 200ms, color 200ms;
+
+    &.selected {
+      color: orange;
+    }
+
+    &:hover {
+      color: white;
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    &:active {
+      color: white;
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+  `;
+
+  const main = css`
+    flex: 1;
+  `;
+
+  const secondary = css`
+    font-size: 0.9em;
+    color: darkgrey;
+  `;
+
+  console.log(secondary);
+
+  return (
+    <div class={root} classList={{ selected: p.active }} onClick={p.onClick}>
+      <div class={main}>
+        <div>{p.primary}</div>
+        <Show when={p.secondary}>
+          <div class={secondary}>{p.secondary}</div>
+        </Show>
+      </div>
+      <Show when={p.active}>
+        <CheckIcon size={16} />
+      </Show>
+    </div>
   );
 };

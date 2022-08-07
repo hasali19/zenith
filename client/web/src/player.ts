@@ -4,12 +4,25 @@ type DurationChangeListener = (duration: number) => void;
 type PositionChangeListener = (position: number) => void;
 type IsPlayingChangeListener = (isPlaying: boolean) => void;
 
+export interface SubtitleTrack {
+  id: number;
+  title: string | null;
+  language: string | null;
+  src: string;
+}
+
 export interface Player {
-  init(container: HTMLDivElement, src: string, start: number): void;
+  init(
+    container: HTMLDivElement,
+    src: string,
+    subtitles: SubtitleTrack[],
+    start: number
+  ): void;
   stop(): void;
 
   setPlaying(isPlaying: boolean): void;
   seekTo(position: number): void;
+  setSubtitleTrack(id: number | null): void;
 
   addDurationChangeListener(listener: (duration: number) => void): void;
   removeDurationChangeListener(listener: (duration: number) => void): void;
@@ -33,7 +46,12 @@ class Html5Player implements Player {
   private positionChangeListeners: PositionChangeListener[] = [];
   private positionChangeIntervals: number[] = [];
 
-  init(container: HTMLDivElement, src: string, start: number): void {
+  init(
+    container: HTMLDivElement,
+    src: string,
+    subtitles: SubtitleTrack[],
+    start: number
+  ): void {
     const video = (this.video = document.createElement("video"));
 
     video.style.width = "100%";
@@ -60,6 +78,22 @@ class Html5Player implements Player {
       }
     });
 
+    for (const subtitle of subtitles) {
+      const track = document.createElement("track");
+      track.id = subtitle.id.toString();
+      track.kind = "subtitles";
+      track.src = subtitle.src;
+      if (subtitle.title) {
+        track.label = subtitle.title;
+      }
+      if (subtitle.language) {
+        track.srclang = subtitle.language;
+      }
+      video.appendChild(track);
+    }
+
+    this.setSubtitleTrack(null);
+
     video.currentTime = start;
 
     container.appendChild(video);
@@ -83,6 +117,18 @@ class Html5Player implements Player {
   seekTo(position: number): void {
     if (this.video) {
       this.video.currentTime = position;
+    }
+  }
+
+  setSubtitleTrack(id: number | null) {
+    if (this.video) {
+      for (const track of this.video.textTracks) {
+        if (parseInt(track.id) === id) {
+          track.mode = "showing";
+        } else {
+          track.mode = "hidden";
+        }
+      }
     }
   }
 

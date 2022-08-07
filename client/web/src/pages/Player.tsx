@@ -1,6 +1,14 @@
 import { css } from "@emotion/css";
 import { useLocation, useParams } from "solid-app-router";
-import { Component, createMemo, createSignal, onCleanup } from "solid-js";
+import {
+  Component,
+  createMemo,
+  createResource,
+  createSignal,
+  onCleanup,
+  Show,
+} from "solid-js";
+import preferences from "../preferences";
 import { Controls, useControlsVisibility } from "./Player/Controls";
 import { useVideoPlayer } from "./Player/player";
 
@@ -11,12 +19,37 @@ export const PlayerScreen: Component = () => {
   const startPosition = () =>
     location.query.start ? parseFloat(location.query.start) ?? 0 : 0;
 
-  const [videoContainer, setVideoContainer] = createSignal<HTMLDivElement>();
-  const [isSeeking, setSeeking] = createSignal(false);
-
   const id = createMemo(() => parseInt(params.id));
-  const video = useVideoPlayer(videoContainer, id, startPosition);
-  const controls = useControlsVisibility(() => video.isPlaying && !isSeeking());
+  const [item] = createResource(() =>
+    fetch(`${preferences.server}/api/items/${id()}`).then((res) => res.json())
+  );
+
+  return (
+    <Show when={item()}>
+      <Player item={item()} startPosition={startPosition()} />
+    </Show>
+  );
+};
+
+interface PlayerProps {
+  item: any;
+  startPosition: number;
+}
+
+const Player: Component<PlayerProps> = (p) => {
+  const [videoContainer, setVideoContainer] = createSignal<HTMLDivElement>();
+  const [autoHideControls, setAutoHideControls] = createSignal(true);
+
+  const video = useVideoPlayer(
+    videoContainer,
+    () => p.item,
+    () => p.startPosition
+  );
+
+  const controls = useControlsVisibility(
+    () => video.isPlaying && autoHideControls()
+  );
+
   const fullscreen = useFullscreen();
 
   const root = css`
@@ -39,9 +72,10 @@ export const PlayerScreen: Component = () => {
         isVisible={controls.isVisible}
         video={video}
         isFullscreen={fullscreen.isFullscreen}
-        onSeekStart={() => setSeeking(true)}
-        onSeekEnd={() => setSeeking(false)}
+        subtitles={p.item.video_info.subtitles}
+        onSetAutoHide={setAutoHideControls}
         onToggleFullscreen={fullscreen.toggle}
+        onSetSubtitleTrack={video.setSubtitleTrack}
       />
     </div>
   );
