@@ -1,5 +1,5 @@
 import { css } from "@emotion/css";
-import { autoUpdate, offset, shift } from "@floating-ui/dom";
+import { autoUpdate, offset, shift, size } from "@floating-ui/dom";
 import { useFloating } from "solid-floating-ui";
 import {
   Component,
@@ -326,6 +326,14 @@ const SubtitlesButton: Component<SubtitlesButtonProps> = (p) => {
     middleware: [
       offset({ mainAxis: 8, crossAxis: -8 }),
       shift({ padding: 16 }),
+      size({
+        padding: 16,
+        apply({ availableHeight, elements }) {
+          Object.assign(elements.floating.style, {
+            maxHeight: `${Math.min(availableHeight, 800)}px`,
+          });
+        },
+      }),
     ],
     whileElementsMounted: autoUpdate,
   });
@@ -362,10 +370,32 @@ const SubtitlesButton: Component<SubtitlesButtonProps> = (p) => {
     background-color: #1d1d1d;
     user-select: none;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    overflow: auto;
+    box-sizing: border-box;
 
     &.enter {
       transform: scale(0.9);
       opacity: 0;
+    }
+
+    &::-webkit-scrollbar {
+      width: 16px;
+    }
+
+    &::-webkit-scrollbar-track {
+      margin: 0px 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: 8px;
+      background-color: #4d4d4d;
+      border: 4px solid transparent;
+      transition: all 2000ms;
+      background-clip: padding-box;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background-color: #696969;
     }
   `;
 
