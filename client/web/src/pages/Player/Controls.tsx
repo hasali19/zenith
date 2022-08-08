@@ -4,6 +4,7 @@ import { useFloating } from "solid-floating-ui";
 import {
   Component,
   createEffect,
+  createMemo,
   createSignal,
   For,
   onCleanup,
@@ -23,6 +24,7 @@ import {
   PauseIcon,
   PlayIcon,
 } from "../../icons";
+import { languages } from "../../language-codes";
 import { Seekbar } from "../../Seekbar";
 import { formatPosition } from "../../utils";
 import { VideoPlayer } from "./player";
@@ -432,6 +434,24 @@ const SubtitlesButton: Component<SubtitlesButtonProps> = (p) => {
     a.finished.then(done);
   }
 
+  const subtitles = createMemo(() => {
+    return p.subtitles
+      .map((subtitle) => ({
+        id: subtitle.id,
+        title: subtitle.title,
+        language: languages[subtitle.language],
+      }))
+      .sort((a, b) => {
+        if (a.language < b.language) {
+          return -1;
+        }
+        if (a.language > b.language) {
+          return 1;
+        }
+        return 0;
+      });
+  });
+
   return (
     <Show when={p.subtitles.length > 0}>
       <Button
@@ -459,7 +479,7 @@ const SubtitlesButton: Component<SubtitlesButtonProps> = (p) => {
               active={selected() === null}
               onClick={() => setSelectedItem(null)}
             />
-            <For each={p.subtitles}>
+            <For each={subtitles()}>
               {(subtitle) => (
                 <SubtitleMenuItem
                   primary={subtitle.language}

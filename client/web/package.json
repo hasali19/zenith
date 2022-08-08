@@ -13,6 +13,7 @@
     "@mdi/js": "^7.0.96",
     "@minht11/solid-virtual-container": "^0.2.1",
     "@vanilla-extract/css": "^1.7.2",
+    "iso-639-2": "^3.0.2",
     "solid-app-router": "^0.4.2",
     "solid-js": "^1.4.8",
     "swiper": "^8.3.2"
