@@ -102,6 +102,9 @@ function useFullscreen() {
 
   onCleanup(() => {
     document.removeEventListener("fullscreenchange", onFullscreenChange);
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    }
   });
 
   return {
