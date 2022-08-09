@@ -17,7 +17,7 @@ use sqlx::{ConnectOptions, Sqlite, SqlitePool, Transaction};
 pub struct Db(SqlitePool);
 
 impl Db {
-    pub async fn init(path: &str) -> sqlx::Result<Self> {
+    pub async fn init(path: &str) -> eyre::Result<Self> {
         let mut options = SqliteConnectOptions::new()
             .filename(path)
             .create_if_missing(true);

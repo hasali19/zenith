@@ -936,7 +936,12 @@ checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
 name = "migrations"
 version = "0.1.0"
 dependencies = [
+ "color-eyre",
+ "eyre",
+ "hex",
+ "sha2",
  "sqlx",
+ "tracing",
 ]
 
 [[package]]
