@@ -21,8 +21,8 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.insets.LocalWindowInsets
 import kotlinx.coroutines.*
 import uk.hasali.zenith.media.SubtitleTrack
 import uk.hasali.zenith.media.VideoPlayer
@@ -72,13 +72,27 @@ fun Controls(
         FullScreen()
     }
 
-    val insets = LocalWindowInsets.current
+    val insets = WindowInsets
+    val layoutDirection = LocalLayoutDirection.current
     val insetsPadding = with(LocalDensity.current) {
+        val top = maxOf(insets.systemBars.getTop(this), insets.displayCutout.getTop(this))
+        val bottom = maxOf(
+            insets.systemBars.getBottom(this),
+            insets.displayCutout.getBottom(this)
+        )
+        val left = maxOf(
+            insets.systemBars.getLeft(this, layoutDirection),
+            insets.displayCutout.getLeft(this, layoutDirection)
+        )
+        val right = maxOf(
+            insets.systemBars.getRight(this, layoutDirection),
+            insets.displayCutout.getRight(this, layoutDirection)
+        )
         PaddingValues(
-            top = maxOf(insets.systemBars.top, insets.displayCutout.top).toDp(),
-            bottom = maxOf(insets.systemBars.bottom, insets.displayCutout.bottom).toDp(),
-            start = maxOf(insets.systemBars.left, insets.displayCutout.left).toDp(),
-            end = maxOf(insets.systemBars.right, insets.displayCutout.right).toDp(),
+            top = top.toDp(),
+            bottom = bottom.toDp(),
+            start = left.toDp(),
+            end = right.toDp(),
         )
     }
 

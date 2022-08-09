@@ -40,10 +40,11 @@
 
         <activity
             android:name=".SelectServerActivity"
-            android:theme="@style/Theme.Zenith" />
+            android:theme="@style/Theme.Zenith"
+            android:windowSoftInputMode="adjustResize" />
 
         <receiver android:name=".InstallReceiver" />
-        
+
         <receiver android:name=".PackageInstalledReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />

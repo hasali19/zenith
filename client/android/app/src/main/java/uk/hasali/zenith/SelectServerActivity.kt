@@ -16,9 +16,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-import com.google.accompanist.insets.ProvideWindowInsets
-import com.google.accompanist.insets.navigationBarsWithImePadding
-import com.google.accompanist.insets.statusBarsPadding
 import kotlinx.coroutines.launch
 import uk.hasali.zenith.ui.AppTheme
 
@@ -41,86 +38,85 @@ class SelectServerActivity : ComponentActivity() {
             var https by remember { mutableStateOf(false) }
 
             AppTheme {
-                ProvideWindowInsets {
-                    Scaffold {
-                        Column(
+                Scaffold {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .statusBarsPadding()
+                            .navigationBarsPadding()
+                            .imePadding()
+                            .pointerInput(Unit) {
+                                detectTapGestures {
+                                    focusManager.clearFocus()
+                                }
+                            },
+                    ) {
+                        Box(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .statusBarsPadding()
-                                .navigationBarsWithImePadding()
-                                .pointerInput(Unit) {
-                                    detectTapGestures {
-                                        focusManager.clearFocus()
+                                .fillMaxWidth()
+                                .weight(1f),
+                        ) {
+                            Text(
+                                text = "Select server",
+                                style = MaterialTheme.typography.h4,
+                                modifier = Modifier.align(Alignment.Center),
+                            )
+                        }
+
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 32.dp),
+                            ) {
+                                TextField(
+                                    value = address,
+                                    label = { Text("Address") },
+                                    singleLine = true,
+                                    onValueChange = { address = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Row(modifier = Modifier.align(Alignment.End)) {
+                                    Text("Use https")
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Switch(checked = https, onCheckedChange = { https = it })
+                                }
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                        ) {
+                            Button(
+                                modifier = Modifier.align(Alignment.Center),
+                                onClick = {
+                                    val protocol = when (https) {
+                                        true -> "https"
+                                        else -> "http"
+                                    }
+
+                                    scope.launch {
+                                        preferences.setServerUrl("$protocol://$address")
+
+                                        val intent = Intent(
+                                            this@SelectServerActivity,
+                                            MainActivity::class.java
+                                        )
+
+                                        startActivity(intent)
+                                        finish()
                                     }
                                 },
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
                             ) {
-                                Text(
-                                    text = "Select server",
-                                    style = MaterialTheme.typography.h4,
-                                    modifier = Modifier.align(Alignment.Center),
-                                )
-                            }
-
-                            Box(modifier = Modifier.fillMaxWidth()) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 32.dp),
-                                ) {
-                                    TextField(
-                                        value = address,
-                                        label = { Text("Address") },
-                                        singleLine = true,
-                                        onValueChange = { address = it },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
-                                    )
-
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    Row(modifier = Modifier.align(Alignment.End)) {
-                                        Text("Use https")
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Switch(checked = https, onCheckedChange = { https = it })
-                                    }
-                                }
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                            ) {
-                                Button(
-                                    modifier = Modifier.align(Alignment.Center),
-                                    onClick = {
-                                        val protocol = when (https) {
-                                            true -> "https"
-                                            else -> "http"
-                                        }
-
-                                        scope.launch {
-                                            preferences.setServerUrl("$protocol://$address")
-
-                                            val intent = Intent(
-                                                this@SelectServerActivity,
-                                                MainActivity::class.java
-                                            )
-
-                                            startActivity(intent)
-                                            finish()
-                                        }
-                                    },
-                                ) {
-                                    Text("Start")
-                                }
+                                Text("Start")
                             }
                         }
                     }

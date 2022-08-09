@@ -20,7 +20,6 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.android.gms.cast.framework.CastContext
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
@@ -178,20 +177,18 @@ class MainActivity : FragmentActivity() {
     @Composable
     private fun App() {
         AppTheme {
-            ProvideWindowInsets {
-                availableUpdate?.let {
-                    UpdateDialog(availableUpdate = it)
-                }
+            availableUpdate?.let {
+                UpdateDialog(availableUpdate = it)
+            }
 
-                CompositionLocalProvider(
-                    LocalPictureInPictureController provides pictureInPictureController,
-                    LocalZenithClient provides zenith.get(),
-                ) {
-                    AppNavigation(
-                        mediaSessionManager = mediaSessionManager,
-                        onLaunchSelectServer = this::startSelectServerActivity,
-                    )
-                }
+            CompositionLocalProvider(
+                LocalPictureInPictureController provides pictureInPictureController,
+                LocalZenithClient provides zenith.get(),
+            ) {
+                AppNavigation(
+                    mediaSessionManager = mediaSessionManager,
+                    onLaunchSelectServer = this::startSelectServerActivity,
+                )
             }
         }
     }
