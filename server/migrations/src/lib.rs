@@ -1,3 +1,4 @@
+#[rustfmt::skip]
 mod migrations;
 
 use std::future::Future;
