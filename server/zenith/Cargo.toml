@@ -23,6 +23,7 @@ serde_yaml = "0.8"
 sha2 = "0.10"
 tokio-util = "0.7"
 tracing = "0.1"
+tracing-error = "0.2"
 walkdir = "2.3"
 
 axum-files = { path = "../axum-files" }

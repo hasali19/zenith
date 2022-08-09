@@ -2274,6 +2274,7 @@ dependencies = [
  "tokio-util",
  "tower-http",
  "tracing",
+ "tracing-error",
  "tracing-subscriber",
  "uuid",
  "walkdir",

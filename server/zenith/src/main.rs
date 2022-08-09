@@ -14,7 +14,10 @@ use futures::FutureExt;
 use tmdb::TmdbClient;
 use tokio::sync::Notify;
 use tower_http::trace::TraceLayer;
-use tracing_subscriber::EnvFilter;
+use tracing_error::ErrorLayer;
+use tracing_subscriber::prelude::*;
+use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::{EnvFilter, Layer};
 use zenith::config::Config;
 use zenith::db::Db;
 use zenith::library::scanner::{LibraryScanner, ScanOptions};
@@ -27,14 +30,18 @@ use zenith::video_prober::Ffprobe;
 async fn main() -> eyre::Result<()> {
     color_eyre::install()?;
 
-    tracing_subscriber::fmt()
+    let fmt_layer = tracing_subscriber::fmt::layer()
         .pretty()
-        .with_env_filter(if std::env::var_os("RUST_LOG").is_some() {
+        .with_target(true)
+        .with_filter(if std::env::var_os("RUST_LOG").is_some() {
             EnvFilter::from_default_env()
         } else {
             EnvFilter::from("info")
-        })
-        .with_target(true)
+        });
+
+    tracing_subscriber::registry()
+        .with(fmt_layer)
+        .with(ErrorLayer::default())
         .init();
 
     match std::env::args().nth(1).as_deref().unwrap_or("serve") {
