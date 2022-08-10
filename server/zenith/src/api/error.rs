@@ -5,8 +5,8 @@ use eyre::eyre;
 use serde_json::json;
 
 pub struct ApiError {
-    status: StatusCode,
-    inner: eyre::Report,
+    pub status: StatusCode,
+    pub inner: eyre::Report,
 }
 
 impl From<std::io::Error> for ApiError {
@@ -54,6 +54,7 @@ impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let mut res = Json(json!({"message": self.inner.to_string()})).into_response();
         *res.status_mut() = self.status;
+        res.extensions_mut().insert(self);
         res
     }
 }
