@@ -1,32 +1,25 @@
 use eyre::eyre;
 use sqlx::SqliteConnection;
+use thiserror::Error;
 use time::{format_description, Date, Time};
 use tmdb::{MovieSearchQuery, TmdbClient, TvShowSearchQuery};
 use tokio::sync::mpsc;
 
-use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType};
+use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType, MediaItemType};
 use crate::db::{self, Db};
 use crate::library::scanner;
 
-#[derive(Debug)]
-pub enum RefreshRequest {
-    Movie(i64),
-    TvShow(i64),
-    TvSeason(i64),
-    TvEpisode(i64),
-}
-
 #[derive(Clone)]
-pub struct MetadataManager(mpsc::UnboundedSender<RefreshRequest>);
+pub struct MetadataManager(mpsc::UnboundedSender<i64>);
 
 impl MetadataManager {
     pub fn new(db: Db, tmdb: TmdbClient) -> Self {
         let (sender, mut receiver) = mpsc::unbounded_channel();
 
         tokio::spawn(async move {
-            while let Some(req) = receiver.recv().await {
+            while let Some(id) = receiver.recv().await {
                 let mut conn = db.acquire().await.unwrap();
-                let res = refresh(&mut conn, &tmdb, req).await;
+                let res = refresh(&mut conn, &tmdb, id).await;
                 if let Err(e) = res {
                     tracing::error!("{e}");
                 }
@@ -36,24 +29,39 @@ impl MetadataManager {
         MetadataManager(sender)
     }
 
-    pub fn enqueue(&self, req: RefreshRequest) {
+    pub fn enqueue(&self, id: i64) {
         self.0
-            .send(req)
+            .send(id)
             .expect("failed to send metadata refresh request");
     }
+}
+
+#[derive(Debug, Error)]
+pub enum RefreshError {
+    #[error("item not found")]
+    NotFound,
+    #[error(transparent)]
+    Other(#[from] eyre::Report),
 }
 
 pub async fn refresh(
     conn: &mut SqliteConnection,
     tmdb: &TmdbClient,
-    req: RefreshRequest,
-) -> eyre::Result<()> {
-    match req {
-        RefreshRequest::Movie(id) => refresh_movie_metadata(conn, tmdb, id).await,
-        RefreshRequest::TvShow(id) => refresh_tv_show_metadata(conn, tmdb, id).await,
-        RefreshRequest::TvSeason(id) => refresh_tv_season_metadata(conn, tmdb, id).await,
-        RefreshRequest::TvEpisode(id) => refresh_tv_episode_metadata(conn, tmdb, id).await,
+    id: i64,
+) -> eyre::Result<(), RefreshError> {
+    let item_type = db::media::get_item_type(&mut *conn, id)
+        .await
+        .map_err(RefreshError::Other)?
+        .ok_or(RefreshError::NotFound)?;
+
+    match item_type {
+        MediaItemType::Movie => refresh_movie_metadata(conn, tmdb, id).await?,
+        MediaItemType::Show => refresh_tv_show_metadata(conn, tmdb, id).await?,
+        MediaItemType::Season => refresh_tv_season_metadata(conn, tmdb, id).await?,
+        MediaItemType::Episode => refresh_tv_episode_metadata(conn, tmdb, id).await?,
     }
+
+    Ok(())
 }
 
 async fn refresh_movie_metadata(

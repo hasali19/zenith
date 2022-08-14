@@ -23,7 +23,7 @@ use zenith::db::media::MediaItemType;
 use zenith::db::Db;
 use zenith::library::scanner::{LibraryScanner, ScanOptions};
 use zenith::library::{LibraryEvent, MediaLibrary};
-use zenith::metadata::{self, MetadataManager};
+use zenith::metadata::MetadataManager;
 use zenith::transcoder::{self, Transcoder};
 use zenith::video_prober::Ffprobe;
 
@@ -88,12 +88,7 @@ async fn run_server() -> eyre::Result<()> {
                         transcoder.enqueue(transcoder::Job::new(id)).await;
                     }
 
-                    metadata.enqueue(match item_type {
-                        MediaItemType::Movie => metadata::RefreshRequest::Movie(id),
-                        MediaItemType::Show => metadata::RefreshRequest::TvShow(id),
-                        MediaItemType::Season => metadata::RefreshRequest::TvSeason(id),
-                        MediaItemType::Episode => metadata::RefreshRequest::TvEpisode(id),
-                    });
+                    metadata.enqueue(id);
                 }
             }
         }

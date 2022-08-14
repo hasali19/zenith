@@ -2272,6 +2272,7 @@ dependencies = [
  "sha2",
  "speq",
  "sqlx",
+ "thiserror",
  "time",
  "tmdb",
  "tokio",
