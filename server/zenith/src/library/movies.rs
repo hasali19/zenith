@@ -1,16 +1,8 @@
 use std::path::Path;
-use std::sync::Arc;
 
 use crate::db::media::MediaItemType;
-use crate::db::Db;
-use crate::video_prober::VideoProber;
 
-use super::video_info;
-
-pub struct MovieLibrary {
-    db: Db,
-    video_prober: Arc<dyn VideoProber>,
-}
+use super::{video_info, LibraryEvent, MediaLibrary};
 
 pub struct NewMovie<'a> {
     pub path: &'a str,
@@ -18,11 +10,7 @@ pub struct NewMovie<'a> {
     pub release_date: Option<i64>,
 }
 
-impl MovieLibrary {
-    pub fn new(db: Db, video_prober: Arc<dyn VideoProber>) -> MovieLibrary {
-        MovieLibrary { db, video_prober }
-    }
-
+impl MediaLibrary {
     /// Adds a new movie
     pub async fn add_movie(&self, movie: &NewMovie<'_>) -> eyre::Result<i64> {
         let info = self.video_prober.probe(movie.path).await?;
@@ -67,6 +55,10 @@ impl MovieLibrary {
         video_info::update_video_info(&mut *transaction, id, &info).await?;
 
         transaction.commit().await?;
+
+        let _ = self
+            .notifier
+            .send(LibraryEvent::Added(MediaItemType::Movie, id));
 
         Ok(id)
     }
@@ -124,6 +116,10 @@ impl MovieLibrary {
 
         transaction.commit().await?;
 
+        let _ = self
+            .notifier
+            .send(LibraryEvent::Removed(MediaItemType::Movie, id));
+
         Ok(())
     }
 
@@ -144,7 +140,7 @@ impl MovieLibrary {
     }
 
     /// Removes any movies that no longer exist on the filesystem
-    pub async fn validate(&self) -> eyre::Result<()> {
+    pub async fn validate_movies(&self) -> eyre::Result<()> {
         let mut conn = self.db.acquire().await?;
 
         let sql = "

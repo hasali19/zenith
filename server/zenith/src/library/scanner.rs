@@ -17,8 +17,6 @@ use crate::db::{self, Db};
 use crate::library::movies::NewMovie;
 use crate::library::shows::{NewEpisode, NewSeason, NewShow};
 use crate::library::{video_info, MediaLibrary};
-use crate::metadata::{MetadataManager, RefreshRequest};
-use crate::transcoder::{self, Transcoder};
 use crate::video_prober::VideoProber;
 
 pub struct LibraryScanner {
@@ -29,10 +27,8 @@ pub struct LibraryScanner {
 struct LibraryScannerImpl {
     db: Db,
     library: Arc<MediaLibrary>,
-    metadata: MetadataManager,
     config: Arc<Config>,
     video_prober: Arc<dyn VideoProber>,
-    transcoder: Arc<Transcoder>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -88,20 +84,16 @@ impl LibraryScanner {
     pub fn new(
         db: Db,
         library: Arc<MediaLibrary>,
-        metadata: MetadataManager,
         config: Arc<Config>,
         video_prober: Arc<dyn VideoProber>,
-        transcoder: Arc<Transcoder>,
     ) -> LibraryScanner {
         LibraryScanner {
             db: db.clone(),
             inner: Mutex::new(LibraryScannerImpl {
                 db,
                 library,
-                metadata,
                 config,
                 video_prober,
-                transcoder,
             }),
         }
     }
@@ -133,10 +125,10 @@ impl LibraryScanner {
                 }
             }
 
-            log_error(scanner.library.movies().validate()).await;
+            log_error(scanner.library.validate_movies()).await;
             log_error(scanner.scan_movies(&scanner.config.libraries.movies, options)).await;
 
-            log_error(scanner.library.shows().validate()).await;
+            log_error(scanner.library.validate_shows()).await;
             log_error(scanner.scan_shows(&scanner.config.libraries.tv_shows, options)).await;
 
             let duration = Instant::now() - start_time;
@@ -372,12 +364,11 @@ impl LibraryScannerImpl {
     ) -> eyre::Result<FileScanResult> {
         let name = path.file_name().and_then(|v| v.to_str()).unwrap();
         let path_str = path.to_str().unwrap();
-        let library = self.library.movies();
 
-        if let Some(id) = library.get_id_by_path(path_str).await? {
+        if let Some(id) = self.library.get_id_by_path(path_str).await? {
             if !path.is_file() {
                 // Remove movie from database if file no longer exists
-                library.remove_movie(id).await?;
+                self.library.remove_movie(id).await?;
                 return Ok(FileScanResult::Removed);
             }
 
@@ -405,9 +396,7 @@ impl LibraryScannerImpl {
             release_date: release_date.map(|dt| dt.unix_timestamp()),
         };
 
-        let id = library.add_movie(&movie).await?;
-        self.metadata.enqueue(RefreshRequest::Movie(id));
-        self.transcoder.enqueue(transcoder::Job::new(id)).await;
+        let id = self.library.add_movie(&movie).await?;
 
         Ok(FileScanResult::Added(id))
     }
@@ -417,8 +406,6 @@ impl LibraryScannerImpl {
         path: &Path,
         options: &ScanOptions,
     ) -> eyre::Result<FileScanResult> {
-        let library = self.library.shows();
-
         let (show_name, season, episode, name) = match parse_episode_path(self.matchers(), path) {
             Some(v) => v,
             None => return Ok(FileScanResult::Ignored),
@@ -434,19 +421,19 @@ impl LibraryScannerImpl {
             None => return Ok(FileScanResult::Ignored),
         };
 
-        let show_id = library.get_show_id_by_path(parent_path).await?;
+        let show_id = self.library.get_show_id_by_path(parent_path).await?;
         let season_id = match show_id {
             None => None,
-            Some(show_id) => library.get_season_id(show_id, season).await?,
+            Some(show_id) => self.library.get_season_id(show_id, season).await?,
         };
 
         if let Some(season_id) = season_id {
-            if let Some(id) = library.get_episode_id(season_id, episode).await? {
+            if let Some(id) = self.library.get_episode_id(season_id, episode).await? {
                 if !path.is_file() {
                     // Remove episode from database if file no longer exists
-                    library.remove_episode(id).await?;
+                    self.library.remove_episode(id).await?;
                     // Cleanup any empty shows/seasons after episode removed
-                    library.remove_empty_collections().await?;
+                    self.library.remove_empty_collections().await?;
                     return Ok(FileScanResult::Removed);
                 }
 
@@ -472,9 +459,7 @@ impl LibraryScannerImpl {
                     name: &show_name,
                 };
 
-                let id = library.add_show(show).await?;
-                self.metadata.enqueue(RefreshRequest::TvShow(id));
-                id
+                self.library.add_show(show).await?
             }
         };
 
@@ -488,9 +473,7 @@ impl LibraryScannerImpl {
                     season_number: season,
                 };
 
-                let id = library.add_season(season).await?;
-                self.metadata.enqueue(RefreshRequest::TvSeason(id));
-                id
+                self.library.add_season(season).await?
             }
         };
 
@@ -503,9 +486,7 @@ impl LibraryScannerImpl {
             path: path_str,
         };
 
-        let id = library.add_episode(episode).await?;
-        self.metadata.enqueue(RefreshRequest::TvEpisode(id));
-        self.transcoder.enqueue(transcoder::Job::new(id)).await;
+        let id = self.library.add_episode(episode).await?;
 
         Ok(FileScanResult::Added(id))
     }

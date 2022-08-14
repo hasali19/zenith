@@ -1,18 +1,10 @@
 use std::path::Path;
-use std::sync::Arc;
 
 use sqlx::Connection;
 
 use crate::db::media::MediaItemType;
-use crate::db::Db;
-use crate::video_prober::VideoProber;
 
-use super::video_info;
-
-pub struct ShowLibrary {
-    db: Db,
-    video_info: Arc<dyn VideoProber>,
-}
+use super::{video_info, LibraryEvent, MediaLibrary};
 
 pub struct NewShow<'a> {
     pub path: &'a str,
@@ -31,11 +23,7 @@ pub struct NewEpisode<'a> {
     pub path: &'a str,
 }
 
-impl ShowLibrary {
-    pub fn new(db: Db, video_info: Arc<dyn VideoProber>) -> ShowLibrary {
-        ShowLibrary { db, video_info }
-    }
-
+impl MediaLibrary {
     /// Adds a new show
     pub async fn add_show(&self, show: NewShow<'_>) -> eyre::Result<i64> {
         let mut transaction = self.db.begin().await?;
@@ -64,6 +52,10 @@ impl ShowLibrary {
             .await?;
 
         transaction.commit().await?;
+
+        let _ = self
+            .notifier
+            .send(LibraryEvent::Added(MediaItemType::Show, id));
 
         Ok(id)
     }
@@ -97,6 +89,10 @@ impl ShowLibrary {
             .await?;
 
         transaction.commit().await?;
+
+        let _ = self
+            .notifier
+            .send(LibraryEvent::Removed(MediaItemType::Show, id));
 
         Ok(())
     }
@@ -140,6 +136,10 @@ impl ShowLibrary {
 
         transaction.commit().await?;
 
+        let _ = self
+            .notifier
+            .send(LibraryEvent::Added(MediaItemType::Season, id));
+
         Ok(id)
     }
 
@@ -173,6 +173,10 @@ impl ShowLibrary {
 
         transaction.commit().await?;
 
+        let _ = self
+            .notifier
+            .send(LibraryEvent::Removed(MediaItemType::Season, id));
+
         Ok(())
     }
 
@@ -198,7 +202,7 @@ impl ShowLibrary {
 
     /// Adds a new episode
     pub async fn add_episode(&self, episode: NewEpisode<'_>) -> eyre::Result<i64> {
-        let info = self.video_info.probe(episode.path).await?;
+        let info = self.video_prober.probe(episode.path).await?;
         let duration: f64 = info.format.duration.parse()?;
         let mut transaction = self.db.begin().await?;
 
@@ -241,6 +245,10 @@ impl ShowLibrary {
         video_info::update_video_info(&mut *transaction, id, &info).await?;
 
         transaction.commit().await?;
+
+        let _ = self
+            .notifier
+            .send(LibraryEvent::Added(MediaItemType::Episode, id));
 
         Ok(id)
     }
@@ -292,6 +300,10 @@ impl ShowLibrary {
 
         transaction.commit().await?;
 
+        let _ = self
+            .notifier
+            .send(LibraryEvent::Removed(MediaItemType::Episode, id));
+
         Ok(())
     }
 
@@ -319,7 +331,7 @@ impl ShowLibrary {
     ///
     /// This will delete any episodes that don't exist anymore, seasons
     /// that don't have any episodes and shows that don't have any seasons.
-    pub async fn validate(&self) -> eyre::Result<()> {
+    pub async fn validate_shows(&self) -> eyre::Result<()> {
         let mut conn = self.db.acquire().await?;
 
         let sql = "

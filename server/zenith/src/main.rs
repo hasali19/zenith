@@ -19,11 +19,12 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
 use zenith::config::Config;
+use zenith::db::media::MediaItemType;
 use zenith::db::Db;
 use zenith::library::scanner::{LibraryScanner, ScanOptions};
-use zenith::library::MediaLibrary;
-use zenith::metadata::MetadataManager;
-use zenith::transcoder::Transcoder;
+use zenith::library::{LibraryEvent, MediaLibrary};
+use zenith::metadata::{self, MetadataManager};
+use zenith::transcoder::{self, Transcoder};
 use zenith::video_prober::Ffprobe;
 
 #[tokio::main]
@@ -72,11 +73,31 @@ async fn run_server() -> eyre::Result<()> {
     let scanner = Arc::new(LibraryScanner::new(
         db.clone(),
         library.clone(),
-        metadata.clone(),
         config.clone(),
         video_prober,
-        transcoder.clone(),
     ));
+
+    tokio::spawn({
+        let metadata = metadata.clone();
+        let transcoder = transcoder.clone();
+        async move {
+            let mut receiver = library.subscribe();
+            while let Ok(event) = receiver.recv().await {
+                if let LibraryEvent::Added(item_type, id) = event {
+                    if let MediaItemType::Movie | MediaItemType::Episode = item_type {
+                        transcoder.enqueue(transcoder::Job::new(id)).await;
+                    }
+
+                    metadata.enqueue(match item_type {
+                        MediaItemType::Movie => metadata::RefreshRequest::Movie(id),
+                        MediaItemType::Show => metadata::RefreshRequest::TvShow(id),
+                        MediaItemType::Season => metadata::RefreshRequest::TvSeason(id),
+                        MediaItemType::Episode => metadata::RefreshRequest::TvEpisode(id),
+                    });
+                }
+            }
+        }
+    });
 
     scanner.clone().start_scan(ScanOptions::default());
     transcoder.clone().start();
