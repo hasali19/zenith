@@ -18,7 +18,7 @@ use tracing_error::ErrorLayer;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
-use zenith::config::Config;
+use zenith::config::{Config, LogFormat};
 use zenith::db::media::MediaItemType;
 use zenith::db::Db;
 use zenith::library::scanner::{LibraryScanner, ScanOptions};
@@ -27,23 +27,32 @@ use zenith::metadata::MetadataManager;
 use zenith::transcoder::{self, Transcoder};
 use zenith::video_prober::Ffprobe;
 
-#[tokio::main]
-async fn main() -> eyre::Result<()> {
-    color_eyre::install()?;
+fn init_tracing(config: &Config) {
+    let fmt_layer = tracing_subscriber::fmt::layer();
 
-    let fmt_layer = tracing_subscriber::fmt::layer()
-        .pretty()
-        .with_target(true)
-        .with_filter(if std::env::var_os("RUST_LOG").is_some() {
-            EnvFilter::from_default_env()
-        } else {
-            EnvFilter::from("info")
-        });
+    let fmt_layer = match config.logging.format {
+        LogFormat::Compact => fmt_layer.compact().boxed(),
+        LogFormat::Pretty => fmt_layer.pretty().boxed(),
+    };
+
+    let fmt_layer = fmt_layer.with_filter(if std::env::var_os("RUST_LOG").is_some() {
+        EnvFilter::from_default_env()
+    } else {
+        EnvFilter::from("info")
+    });
 
     tracing_subscriber::registry()
         .with(fmt_layer)
         .with(ErrorLayer::default())
         .init();
+}
+
+#[tokio::main]
+async fn main() -> eyre::Result<()> {
+    let config = Arc::new(Config::load("config.yml")?);
+
+    color_eyre::install()?;
+    init_tracing(&config);
 
     match std::env::args().nth(1).as_deref().unwrap_or("serve") {
         "openapi" => {
@@ -52,7 +61,7 @@ async fn main() -> eyre::Result<()> {
             println!("{json}");
         }
         "serve" => {
-            run_server().await?;
+            run_server(config).await?;
         }
         cmd => {
             eprintln!("unrecognised command: {cmd}");
@@ -62,8 +71,7 @@ async fn main() -> eyre::Result<()> {
     Ok(())
 }
 
-async fn run_server() -> eyre::Result<()> {
-    let config = Arc::new(Config::load("config.yml")?);
+async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
     let db = Db::init(&config.database.path).await?;
     let tmdb = TmdbClient::new(&config.tmdb.api_key);
     let metadata = MetadataManager::new(db.clone(), tmdb.clone());

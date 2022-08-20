@@ -9,6 +9,8 @@ use serde::{Deserialize, Deserializer};
 #[derive(Deserialize)]
 pub struct Config {
     #[serde(default)]
+    pub logging: Logging,
+    #[serde(default)]
     pub http: Http,
     pub libraries: Libraries,
     #[serde(default)]
@@ -24,6 +26,20 @@ pub struct Config {
     pub subtitles: Subtitles,
     #[serde(default)]
     pub watcher: Watcher,
+}
+
+#[derive(Default, Deserialize)]
+pub struct Logging {
+    pub format: LogFormat,
+}
+
+#[derive(Default, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LogFormat {
+    #[cfg_attr(not(debug_assertions), default)]
+    Compact,
+    #[cfg_attr(debug_assertions, default)]
+    Pretty,
 }
 
 #[derive(Deserialize)]
