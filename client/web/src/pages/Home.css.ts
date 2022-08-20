@@ -13,6 +13,7 @@ export const heroSectionImg = style({
   height: "100%",
   backgroundColor: "rgb(100,100,100)",
   borderRadius: 8,
+  objectFit: "cover",
 });
 
 export const featuredSection = style({
