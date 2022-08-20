@@ -182,7 +182,7 @@ impl Transcoder {
     async fn process_job(&self, job: Job) -> eyre::Result<()> {
         let id = job.video_id;
 
-        tracing::info!("starting transcode for video (id: {id})");
+        tracing::info!("processing new job");
 
         let path = self
             .get_video_path(id)
@@ -196,7 +196,7 @@ impl Transcoder {
             .await
             .wrap_err("failed to probe video info")?;
 
-        self.convert_video(&job, &path, &info).await?;
+        self.process_video(&job, &path, &info).await?;
 
         let info = self
             .video_prober
@@ -209,7 +209,7 @@ impl Transcoder {
         Ok(())
     }
 
-    async fn convert_video(&self, job: &Job, path: &str, info: &VideoInfo) -> eyre::Result<()> {
+    async fn process_video(&self, job: &Job, path: &str, info: &VideoInfo) -> eyre::Result<()> {
         let id = job.video_id;
         let output = Path::new(path).with_extension("mkv.temp");
 
@@ -250,6 +250,7 @@ impl Transcoder {
                         cmd.arg_pair(format!("-c:{index}"), "copy");
                     }
                     StreamMapping::ConvertAudio(index) => {
+                        tracing::info!(stream = index, "converting audio stream");
                         cmd.arg_pair("-map", format!("0:{index}"));
                         cmd.arg_pair(format!("-c:{index}"), "aac");
                         cmd.arg_pair(format!("-ac:{index}"), "2");
@@ -296,6 +297,7 @@ impl Transcoder {
 
         // Ensure the subtitle directory exists
         if !subtitle_tmps.is_empty() {
+            tracing::info!("extracting {} subtitle streams", subtitle_tmps.len());
             tokio::fs::create_dir_all(subtitles_dir)
                 .await
                 .wrap_err("failed to create subtitles directory")?;
@@ -329,8 +331,6 @@ impl Transcoder {
             }
         }
 
-        tracing::info!("finished reading ffmpeg progress");
-
         if !child.wait().await?.success() {
             return Err(eyre!("ffmpeg terminated unsuccessfully"));
         }
@@ -350,6 +350,8 @@ impl Transcoder {
             self.update_subtitle_path(id, stream_index, &path.with_extension(""))
                 .await?;
         }
+
+        tracing::info!("finished processing job");
 
         Ok(())
     }
