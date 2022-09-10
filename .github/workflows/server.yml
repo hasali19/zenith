@@ -25,7 +25,7 @@ jobs:
           toolchain: stable
           override: true
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
       - name: Check formatting
         uses: actions-rs/cargo@v1
@@ -62,7 +62,9 @@ jobs:
       - name: Install cargo-nextest
         run: cargo binstall cargo-nextest --secure --no-confirm
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: test
 
       - name: Run tests
         uses: actions-rs/cargo@v1
@@ -89,7 +91,7 @@ jobs:
           toolchain: stable
           override: true
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
 
