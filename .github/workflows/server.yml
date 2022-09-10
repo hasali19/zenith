@@ -39,6 +39,37 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features
 
+  test_server:
+    name: Test server
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Install cargo-binstall
+        run: |
+          wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz
+          tar -xvf cargo-binstall-x86_64-unknown-linux-musl.tgz cargo-binstall
+          sudo mv cargo-binstall /usr/local/bin
+
+      - name: Install cargo-nextest
+        run: cargo binstall cargo-nextest --secure --no-confirm
+
+      - uses: Swatinem/rust-cache@v1
+
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: nextest
+          args: run
+
   build_server:
     name: Build server
     runs-on: ubuntu-latest
@@ -110,6 +141,7 @@ jobs:
     if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs:
       - lint_server
+      - test_server
       - build_server
       - build_web_client
     steps:
