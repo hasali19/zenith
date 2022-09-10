@@ -1,0 +1,18 @@
+[package]
+name = "test-macros"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "1"
+structmeta = "0.1"
+syn-mid = "0.5"
+
+[dependencies.syn]
+version = "1"
+default-features = false
