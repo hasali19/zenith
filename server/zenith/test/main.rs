@@ -1,7 +1,5 @@
 mod media;
 
-use std::sync::Arc;
-
 use axum::body::Body;
 use axum::http::Request;
 use axum::Extension;
@@ -18,7 +16,6 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
 use uuid::Uuid;
-use zenith::config::Config;
 use zenith::db::media::MediaItemType;
 use zenith::db::Db;
 
@@ -144,15 +141,12 @@ struct TestApp {
 }
 
 pub async fn init_test_app(db: &Db) -> axum::Router {
-    let config = Arc::new(Config::load("../../config.yml").unwrap());
-
     init_test_data(&mut db.acquire().await.unwrap())
         .await
         .unwrap();
 
     zenith::api::router()
         .layer(TraceLayer::new_for_http())
-        .layer(Extension(config))
         .layer(Extension(db.clone()))
 }
 
