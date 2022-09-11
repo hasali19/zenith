@@ -1,0 +1,61 @@
+name: Flutter
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/flutter.yml
+      - client/flutter/**
+
+defaults:
+  run:
+    working-directory: client/flutter
+
+jobs:
+  build_android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: master
+
+      - run: flutter build apk
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: zenith-flutter-android
+          path: client/flutter/build/app/outputs/flutter-apk/app-release.apk
+
+  build_web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: master
+
+      - run: flutter build web --web-renderer canvaskit
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: zenith-flutter-web
+          path: client/flutter/build/web
+
+  build_windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: master
+
+      - run: flutter build windows
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: zenith-flutter-windows
+          path: client/flutter/build/windows/runner/Release
