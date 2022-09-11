@@ -1,0 +1,61 @@
+---
+source: server/zenith/test/media.rs
+assertion_line: 22
+expression: "app.get(\"/tv/seasons/7/episodes\").await"
+---
+[
+  {
+    "air_date": null,
+    "backdrop": null,
+    "episode_number": 1,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 9,
+    "name": "Episode 1",
+    "overview": null,
+    "poster": null,
+    "season_id": 7,
+    "season_number": 1,
+    "show_id": 4,
+    "show_name": "Test Show 1",
+    "thumbnail": null,
+    "user_data": {
+      "is_watched": false,
+      "last_watched_at": null,
+      "position": null
+    },
+    "video_info": {
+      "duration": 0.0,
+      "format": null,
+      "path": "/path/to/Test Episode 1"
+    }
+  },
+  {
+    "air_date": null,
+    "backdrop": null,
+    "episode_number": 2,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 10,
+    "name": "Episode 2",
+    "overview": null,
+    "poster": null,
+    "season_id": 7,
+    "season_number": 1,
+    "show_id": 4,
+    "show_name": "Test Show 1",
+    "thumbnail": null,
+    "user_data": {
+      "is_watched": false,
+      "last_watched_at": null,
+      "position": null
+    },
+    "video_info": {
+      "duration": 0.0,
+      "format": null,
+      "path": "/path/to/Test Episode 2"
+    }
+  }
+]

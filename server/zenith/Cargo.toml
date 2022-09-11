@@ -95,3 +95,7 @@ inventory = "0.3"
 libtest-mimic = "0.5"
 test-macros = { path = "../test-macros" }
 tower = "0.4"
+
+[dev-dependencies.insta]
+version = "1.19"
+features = ["json"]

@@ -1,0 +1,39 @@
+---
+source: server/zenith/test/media.rs
+assertion_line: 19
+expression: "app.get(\"/tv/shows/4/seasons\").await"
+---
+[
+  {
+    "backdrop": null,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 7,
+    "name": "Season 1",
+    "overview": null,
+    "poster": null,
+    "season_number": 1,
+    "show_id": 4,
+    "show_name": "Test Show 1",
+    "user_data": {
+      "unwatched": 2
+    }
+  },
+  {
+    "backdrop": null,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 8,
+    "name": "Season 2",
+    "overview": null,
+    "poster": null,
+    "season_number": 2,
+    "show_id": 4,
+    "show_name": "Test Show 1",
+    "user_data": {
+      "unwatched": 2
+    }
+  }
+]

@@ -1,0 +1,52 @@
+---
+source: server/zenith/test/media.rs
+assertion_line: 17
+expression: "app.get(\"/tv/shows\").await"
+---
+[
+  {
+    "backdrop": null,
+    "end_date": null,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 4,
+    "name": "Test Show 1",
+    "overview": null,
+    "poster": null,
+    "start_date": null,
+    "user_data": {
+      "unwatched": 4
+    }
+  },
+  {
+    "backdrop": null,
+    "end_date": null,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 5,
+    "name": "Test Show 2",
+    "overview": null,
+    "poster": null,
+    "start_date": null,
+    "user_data": {
+      "unwatched": 0
+    }
+  },
+  {
+    "backdrop": null,
+    "end_date": null,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 6,
+    "name": "Test Show 3",
+    "overview": null,
+    "poster": null,
+    "start_date": null,
+    "user_data": {
+      "unwatched": 0
+    }
+  }
+]

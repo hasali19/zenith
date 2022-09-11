@@ -1,0 +1,70 @@
+---
+source: server/zenith/test/media.rs
+assertion_line: 15
+expression: "app.get(\"/movies\").await"
+---
+[
+  {
+    "backdrop": null,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 1,
+    "overview": null,
+    "poster": null,
+    "release_date": null,
+    "title": "Test Movie 1",
+    "user_data": {
+      "is_watched": false,
+      "last_watched_at": null,
+      "position": null
+    },
+    "video_info": {
+      "duration": 0.0,
+      "format": null,
+      "path": "/path/to/Test Movie 1/Test Movie 1.mp4"
+    }
+  },
+  {
+    "backdrop": null,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 2,
+    "overview": null,
+    "poster": null,
+    "release_date": null,
+    "title": "Test Movie 2",
+    "user_data": {
+      "is_watched": false,
+      "last_watched_at": null,
+      "position": null
+    },
+    "video_info": {
+      "duration": 0.0,
+      "format": null,
+      "path": "/path/to/Test Movie 2/Test Movie 2.mp4"
+    }
+  },
+  {
+    "backdrop": null,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 3,
+    "overview": null,
+    "poster": null,
+    "release_date": null,
+    "title": "Test Movie 3",
+    "user_data": {
+      "is_watched": false,
+      "last_watched_at": null,
+      "position": null
+    },
+    "video_info": {
+      "duration": 0.0,
+      "format": null,
+      "path": "/path/to/Test Movie 3/Test Movie 3.mp4"
+    }
+  }
+]

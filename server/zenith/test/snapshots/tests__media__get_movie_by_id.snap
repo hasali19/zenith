@@ -1,0 +1,29 @@
+---
+source: server/zenith/test/media.rs
+assertion_line: 16
+expression: "app.get(\"/movies/1\").await"
+---
+{
+  "backdrop": null,
+  "external_ids": {
+    "tmdb": null
+  },
+  "id": 1,
+  "overview": null,
+  "poster": null,
+  "release_date": null,
+  "title": "Test Movie 1",
+  "user_data": {
+    "is_watched": false,
+    "last_watched_at": null,
+    "position": null
+  },
+  "video_info": {
+    "audio": [],
+    "duration": 0.0,
+    "format": null,
+    "path": "/path/to/Test Movie 1/Test Movie 1.mp4",
+    "subtitles": [],
+    "video": null
+  }
+}
