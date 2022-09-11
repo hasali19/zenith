@@ -1,6 +1,6 @@
 ---
 source: server/zenith/test/media.rs
-assertion_line: 22
+assertion_line: 24
 expression: "app.get(\"/tv/seasons/7/episodes\").await"
 ---
 [
@@ -26,7 +26,7 @@ expression: "app.get(\"/tv/seasons/7/episodes\").await"
       "position": null
     },
     "video_info": {
-      "duration": 0.0,
+      "duration": 100.0,
       "format": null,
       "path": "/path/to/Test Episode 1"
     }
@@ -49,11 +49,11 @@ expression: "app.get(\"/tv/seasons/7/episodes\").await"
     "thumbnail": null,
     "user_data": {
       "is_watched": false,
-      "last_watched_at": null,
-      "position": null
+      "last_watched_at": 1662911415,
+      "position": 50.0
     },
     "video_info": {
-      "duration": 0.0,
+      "duration": 100.0,
       "format": null,
       "path": "/path/to/Test Episode 2"
     }

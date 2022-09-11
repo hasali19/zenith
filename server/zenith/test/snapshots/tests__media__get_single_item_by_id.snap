@@ -1,6 +1,5 @@
 ---
 source: server/zenith/test/media.rs
-assertion_line: 24
 expression: "app.get(\"/items/1\").await"
 ---
 {
@@ -16,12 +15,12 @@ expression: "app.get(\"/items/1\").await"
   "type": "movie",
   "user_data": {
     "is_watched": false,
-    "last_watched_at": null,
-    "position": null
+    "last_watched_at": 1662911415,
+    "position": 50.0
   },
   "video_info": {
     "audio": [],
-    "duration": 0.0,
+    "duration": 100.0,
     "format": null,
     "path": "/path/to/Test Movie 1/Test Movie 1.mp4",
     "subtitles": [],

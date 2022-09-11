@@ -5,6 +5,7 @@ use crate::db::media::MediaItemType;
 use super::{video_info, LibraryEvent, MediaLibrary};
 
 pub struct NewMovie<'a> {
+    pub parent_path: &'a str,
     pub path: &'a str,
     pub title: &'a str,
     pub release_date: Option<i64>,
@@ -18,25 +19,25 @@ impl MediaLibrary {
         let mut transaction = self.db.begin().await?;
 
         let sql = "
-            INSERT INTO media_items (item_type)
-            VALUES (?)
+            INSERT INTO media_items (item_type, name, start_date)
+            VALUES (?, ?, ?)
         ";
 
-        let id: i64 = sqlx::query(sql)
+        let id = sqlx::query(sql)
             .bind(MediaItemType::Movie)
+            .bind(movie.title)
+            .bind(movie.release_date)
             .execute(&mut transaction)
             .await?
             .last_insert_rowid();
 
         let sql = "
-            INSERT INTO movies (item_id, title, release_date)
-            VALUES (?, ?, ?)
-        ";
+            INSERT INTO indexed_paths (item_id, path)
+            VALUES (?, ?)";
 
         sqlx::query(sql)
             .bind(id)
-            .bind(movie.title)
-            .bind(movie.release_date)
+            .bind(movie.parent_path)
             .execute(&mut transaction)
             .await?;
 
@@ -69,8 +70,8 @@ impl MediaLibrary {
 
         let sql = "
             SELECT path FROM movies AS m
-            JOIN video_files AS v ON m.item_id = v.item_id
-            WHERE m.item_id = ?
+            JOIN video_files AS v ON m.id = v.item_id
+            WHERE m.id = ?
         ";
 
         let path: Option<String> = sqlx::query_scalar(sql)
@@ -98,11 +99,6 @@ impl MediaLibrary {
             .execute(&mut transaction)
             .await?;
 
-        sqlx::query("DELETE FROM movies WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
         sqlx::query("DELETE FROM media_items WHERE id = ?")
             .bind(id)
             .execute(&mut transaction)
@@ -126,8 +122,8 @@ impl MediaLibrary {
     /// Checks if a movie exists with the given path
     pub async fn get_id_by_path(&self, path: &str) -> eyre::Result<Option<i64>> {
         let sql = "
-            SELECT m.item_id FROM movies AS m
-            JOIN video_files AS v ON m.item_id = v.item_id
+            SELECT m.id FROM movies AS m
+            JOIN video_files AS v ON m.id = v.item_id
             WHERE v.path = ?
         ";
 
@@ -144,8 +140,8 @@ impl MediaLibrary {
         let mut conn = self.db.acquire().await?;
 
         let sql = "
-            SELECT item_id, path FROM movies
-            JOIN video_files USING (item_id)
+            SELECT id, path FROM movies
+            JOIN video_files ON movies.id = video_files.item_id
         ";
 
         let movies: Vec<(i64, String)> = sqlx::query_as(sql).fetch_all(&mut conn).await?;

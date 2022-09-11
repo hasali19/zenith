@@ -17,9 +17,11 @@ pub struct NewSeason {
 }
 
 pub struct NewEpisode<'a> {
+    pub show_id: i64,
     pub season_id: i64,
+    pub season_number: u32,
     pub episode_number: u32,
-    pub name: Option<&'a str>,
+    pub name: &'a str,
     pub path: &'a str,
 }
 
@@ -29,25 +31,25 @@ impl MediaLibrary {
         let mut transaction = self.db.begin().await?;
 
         let sql = "
-            INSERT INTO media_items (item_type)
-            VALUES (?)
+            INSERT INTO media_items (item_type, name)
+            VALUES (?, ?)
         ";
 
         let id: i64 = sqlx::query(sql)
             .bind(MediaItemType::Show)
+            .bind(show.name)
             .execute(&mut transaction)
             .await?
             .last_insert_rowid();
 
         let sql = "
-            INSERT INTO tv_shows (item_id, path, name)
-            VALUES (?, ?, ?)
+            INSERT INTO indexed_paths (item_id, path)
+            VALUES (?, ?)
         ";
 
         sqlx::query(sql)
             .bind(id)
             .bind(show.path)
-            .bind(show.name)
             .execute(&mut transaction)
             .await?;
 
@@ -66,11 +68,10 @@ impl MediaLibrary {
     pub async fn remove_show(&self, id: i64) -> eyre::Result<()> {
         let mut db = self.db.acquire().await?;
 
-        let seasons: Vec<i64> =
-            sqlx::query_scalar("SELECT item_id FROM tv_seasons WHERE show_id = ?")
-                .bind(id)
-                .fetch_all(&mut *db)
-                .await?;
+        let seasons: Vec<i64> = sqlx::query_scalar("SELECT id FROM seasons WHERE show_id = ?")
+            .bind(id)
+            .fetch_all(&mut *db)
+            .await?;
 
         for season in seasons {
             self.remove_season(season).await?;
@@ -78,13 +79,9 @@ impl MediaLibrary {
 
         let mut transaction = db.begin().await?;
 
-        sqlx::query("DELETE FROM tv_shows WHERE item_id = ?")
+        sqlx::query("DELETE FROM media_items WHERE id = ? AND item_type = ?")
             .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM media_items WHERE id = ?")
-            .bind(id)
+            .bind(MediaItemType::Show)
             .execute(&mut transaction)
             .await?;
 
@@ -99,7 +96,12 @@ impl MediaLibrary {
 
     /// Retrieves a show id by path
     pub async fn get_show_id_by_path(&self, path: &str) -> eyre::Result<Option<i64>> {
-        let id = sqlx::query_scalar("SELECT item_id FROM tv_shows WHERE path = ?")
+        let sql = "
+            SELECT item_id FROM indexed_paths
+            JOIN shows ON shows.id = item_id
+            WHERE path = ?";
+
+        let id = sqlx::query_scalar(sql)
             .bind(path)
             .fetch_optional(&mut *self.db.acquire().await?)
             .await?;
@@ -112,27 +114,18 @@ impl MediaLibrary {
         let mut transaction = self.db.begin().await?;
 
         let sql = "
-            INSERT INTO media_items (item_type)
-            VALUES (?)
+            INSERT INTO media_items (item_type, name, parent_id, parent_index)
+            VALUES (?, ?, ?, ?)
         ";
 
         let id: i64 = sqlx::query(sql)
             .bind(MediaItemType::Season)
-            .execute(&mut *transaction)
-            .await?
-            .last_insert_rowid();
-
-        let sql = "
-            INSERT INTO tv_seasons (item_id, show_id, season_number)
-            VALUES (?, ?, ?)
-        ";
-
-        sqlx::query(sql)
-            .bind(id)
+            .bind(format!("Season {}", season.season_number))
             .bind(season.show_id)
             .bind(season.season_number)
             .execute(&mut *transaction)
-            .await?;
+            .await?
+            .last_insert_rowid();
 
         transaction.commit().await?;
 
@@ -149,11 +142,10 @@ impl MediaLibrary {
     pub async fn remove_season(&self, id: i64) -> eyre::Result<()> {
         let mut db = self.db.acquire().await?;
 
-        let episodes: Vec<i64> =
-            sqlx::query_scalar("SELECT item_id FROM tv_episodes WHERE season_id = ?")
-                .bind(id)
-                .fetch_all(&mut *db)
-                .await?;
+        let episodes: Vec<i64> = sqlx::query_scalar("SELECT id FROM episodes WHERE season_id = ?")
+            .bind(id)
+            .fetch_all(&mut *db)
+            .await?;
 
         for episode in episodes {
             self.remove_episode(episode).await?;
@@ -161,13 +153,9 @@ impl MediaLibrary {
 
         let mut transaction = db.begin().await?;
 
-        sqlx::query("DELETE FROM tv_seasons WHERE item_id = ?")
+        sqlx::query("DELETE FROM media_items WHERE id = ? AND item_type = ?")
             .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM media_items WHERE id = ?")
-            .bind(id)
+            .bind(MediaItemType::Season)
             .execute(&mut transaction)
             .await?;
 
@@ -187,8 +175,8 @@ impl MediaLibrary {
         season_number: u32,
     ) -> eyre::Result<Option<i64>> {
         let sql = "
-            SELECT item_id FROM tv_seasons
-            WHERE show_id = ? AND season_number = ?
+            SELECT id FROM seasons
+            WHERE show_id = ? AND season_no = ?
         ";
 
         let id = sqlx::query_scalar(sql)
@@ -207,28 +195,20 @@ impl MediaLibrary {
         let mut transaction = self.db.begin().await?;
 
         let sql = "
-            INSERT INTO media_items (item_type)
-            VALUES (?)
+            INSERT INTO media_items (item_type, name, parent_id, parent_index, grandparent_id, grandparent_index)
+            VALUES (?, ?, ?, ?, ?, ?)
         ";
 
-        let id: i64 = sqlx::query(sql)
+        let id = sqlx::query(sql)
             .bind(MediaItemType::Episode)
+            .bind(episode.name)
+            .bind(episode.season_id)
+            .bind(episode.episode_number)
+            .bind(episode.show_id)
+            .bind(episode.season_number)
             .execute(&mut *transaction)
             .await?
             .last_insert_rowid();
-
-        let sql = "
-            INSERT INTO tv_episodes (item_id, season_id, episode_number, name)
-            VALUES (?, ?, ?, ?)
-        ";
-
-        sqlx::query(sql)
-            .bind(id)
-            .bind(episode.season_id)
-            .bind(episode.episode_number)
-            .bind(episode.name)
-            .execute(&mut *transaction)
-            .await?;
 
         let sql = "
             INSERT INTO video_files (item_id, path, duration)
@@ -284,11 +264,6 @@ impl MediaLibrary {
             .execute(&mut transaction)
             .await?;
 
-        sqlx::query("DELETE FROM tv_episodes WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
         sqlx::query("DELETE FROM media_items WHERE id = ?")
             .bind(id)
             .execute(&mut transaction)
@@ -314,8 +289,8 @@ impl MediaLibrary {
         episode_number: u32,
     ) -> eyre::Result<Option<i64>> {
         let sql = "
-            SELECT item_id FROM tv_episodes
-            WHERE season_id = ? AND episode_number = ?
+            SELECT id FROM episodes
+            WHERE season_id = ? AND episode_no = ?
         ";
 
         let id = sqlx::query_scalar(sql)
@@ -335,8 +310,8 @@ impl MediaLibrary {
         let mut conn = self.db.acquire().await?;
 
         let sql = "
-            SELECT item_id, path FROM tv_episodes
-            JOIN video_files USING (item_id)
+            SELECT episodes.id, path FROM episodes
+            JOIN video_files ON episodes.id = video_files.item_id
         ";
 
         let episodes: Vec<(i64, String)> = sqlx::query_as(sql).fetch_all(&mut conn).await?;
@@ -358,9 +333,9 @@ impl MediaLibrary {
         let mut conn = self.db.acquire().await?;
 
         let sql = "
-            SELECT item_id AS season FROM tv_seasons
+            SELECT id AS season FROM seasons
             WHERE NOT EXISTS (
-                SELECT item_id FROM tv_episodes
+                SELECT id FROM episodes
                 WHERE season_id = season
             )
         ";
@@ -373,9 +348,9 @@ impl MediaLibrary {
         }
 
         let sql = "
-            SELECT item_id AS show FROM tv_shows
+            SELECT id AS show FROM shows
             WHERE NOT EXISTS (
-                SELECT item_id FROM tv_seasons
+                SELECT id FROM seasons
                 WHERE show_id = show
             )
         ";

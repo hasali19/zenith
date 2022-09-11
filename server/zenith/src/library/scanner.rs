@@ -391,6 +391,7 @@ impl LibraryScannerImpl {
         tracing::info!("adding movie: {name}");
 
         let movie = NewMovie {
+            parent_path: path.parent().and_then(|it| it.to_str()).unwrap(),
             path: path_str,
             title: &title,
             release_date: release_date.map(|dt| dt.unix_timestamp()),
@@ -480,9 +481,11 @@ impl LibraryScannerImpl {
         tracing::info!("adding episode: {show_name} ({season}:{episode})");
 
         let episode = NewEpisode {
+            show_id,
             season_id,
+            season_number: season,
             episode_number: episode,
-            name: name.as_deref(),
+            name: &name.unwrap_or_else(|| format!("S{season:02}E{episode:02}")),
             path: path_str,
         };
 

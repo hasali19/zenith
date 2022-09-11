@@ -8,7 +8,7 @@ use crate::{sql, utils};
 
 use super::collections::CollectionUserData;
 use super::items::ExternalIds;
-use super::media::{MediaImage, MediaImageType};
+use super::media::{MediaImage, MediaImageType, MediaItemType};
 
 #[derive(Serialize, Reflect)]
 pub struct Season {
@@ -35,9 +35,9 @@ impl Season {
 }
 
 const SEASON_COLUMNS: &[&str] = &[
-    "se.item_id AS id",
-    "show_id",
-    "season_number",
+    "se.id",
+    "se.show_id",
+    "se.season_no",
     "se.name",
     "sh.name AS show_name",
     "se.overview",
@@ -46,9 +46,9 @@ const SEASON_COLUMNS: &[&str] = &[
     "se.tmdb_id",
     "(
         SELECT COUNT(*)
-        FROM tv_episodes AS episode
-        LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
-        WHERE episode.season_id = se.item_id AND COALESCE(u.is_watched, 0) = 0
+        FROM episodes AS episode
+        LEFT JOIN user_item_data AS u ON u.item_id = episode.id
+        WHERE episode.season_id = se.id AND COALESCE(u.is_watched, 0) = 0
     ) AS unwatched",
 ];
 
@@ -60,7 +60,7 @@ impl<'r> FromRow<'r, SqliteRow> for Season {
         Ok(Season {
             id: row.try_get("id")?,
             show_id: row.try_get("show_id")?,
-            season_number: row.try_get("season_number")?,
+            season_number: row.try_get("season_no")?,
             name: row.try_get("name")?,
             show_name: row.try_get("show_name")?,
             overview: row.try_get("overview")?,
@@ -77,21 +77,21 @@ impl<'r> FromRow<'r, SqliteRow> for Season {
 }
 
 pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Season>> {
-    let sql = sql::select("tv_seasons AS se")
+    let sql = sql::select("seasons AS se")
         .columns(SEASON_COLUMNS)
-        .joins(&[Join::inner("tv_shows AS sh").on("sh.item_id = se.show_id")])
-        .condition("se.item_id = ?1")
+        .joins(&[Join::inner("shows AS sh").on("sh.id = se.show_id")])
+        .condition("se.id = ?1")
         .to_sql();
 
     Ok(sqlx::query_as(&sql).bind(id).fetch_optional(conn).await?)
 }
 
 pub async fn get_for_show(conn: &mut SqliteConnection, show_id: i64) -> eyre::Result<Vec<Season>> {
-    let sql = sql::select("tv_seasons AS se")
+    let sql = sql::select("seasons AS se")
         .columns(SEASON_COLUMNS)
-        .joins(&[Join::inner("tv_shows AS sh").on("sh.item_id = se.show_id")])
+        .joins(&[Join::inner("shows AS sh").on("sh.id = se.show_id")])
         .condition("se.show_id = ?1")
-        .order_by(&["season_number"])
+        .order_by(&["season_no"])
         .to_sql();
 
     Ok(sqlx::query_as(&sql).bind(show_id).fetch_all(conn).await?)
@@ -110,12 +110,12 @@ pub async fn update_metadata(
     data: UpdateMetadata<'_>,
 ) -> eyre::Result<()> {
     let sql = "
-        UPDATE tv_seasons
+        UPDATE media_items
         SET name = ?,
             overview = ?,
             poster = ?,
             tmdb_id = ?
-        WHERE item_id = ?
+        WHERE item_type = ? AND id = ?
     ";
 
     sqlx::query(sql)
@@ -123,6 +123,7 @@ pub async fn update_metadata(
         .bind(data.overview)
         .bind(data.poster.map(|p| p.to_string()))
         .bind(data.tmdb_id)
+        .bind(MediaItemType::Season)
         .bind(id)
         .execute(conn)
         .await?;

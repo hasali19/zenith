@@ -1,6 +1,7 @@
 ---
 source: server/zenith/test/media.rs
-expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
+assertion_line: 31
+expression: "app.get(\"/items/continue_watching\").await"
 ---
 [
   {
@@ -30,46 +31,38 @@ expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
   },
   {
     "backdrop": null,
-    "end_date": null,
     "external_ids": {
       "tmdb": null
     },
-    "id": 4,
-    "name": "Test Show 1",
+    "id": 2,
     "overview": null,
     "poster": null,
-    "start_date": null,
-    "type": "show",
+    "release_date": null,
+    "title": "Test Movie 2",
+    "type": "movie",
     "user_data": {
-      "unwatched": 4
-    }
-  },
-  {
-    "backdrop": null,
-    "external_ids": {
-      "tmdb": null
+      "is_watched": false,
+      "last_watched_at": 1662911415,
+      "position": 50.0
     },
-    "id": 7,
-    "name": "Season 1",
-    "overview": null,
-    "poster": null,
-    "season_number": 1,
-    "show_id": 4,
-    "show_name": "Test Show 1",
-    "type": "season",
-    "user_data": {
-      "unwatched": 2
+    "video_info": {
+      "audio": [],
+      "duration": 100.0,
+      "format": null,
+      "path": "/path/to/Test Movie 2/Test Movie 2.mp4",
+      "subtitles": [],
+      "video": null
     }
   },
   {
     "air_date": null,
     "backdrop": null,
-    "episode_number": 1,
+    "episode_number": 2,
     "external_ids": {
       "tmdb": null
     },
-    "id": 9,
-    "name": "Episode 1",
+    "id": 10,
+    "name": "Episode 2",
     "overview": null,
     "poster": null,
     "season_id": 7,
@@ -80,14 +73,14 @@ expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
     "type": "episode",
     "user_data": {
       "is_watched": false,
-      "last_watched_at": null,
-      "position": null
+      "last_watched_at": 1662911415,
+      "position": 50.0
     },
     "video_info": {
       "audio": [],
       "duration": 100.0,
       "format": null,
-      "path": "/path/to/Test Episode 1",
+      "path": "/path/to/Test Episode 2",
       "subtitles": [],
       "video": null
     }

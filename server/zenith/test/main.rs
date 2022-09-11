@@ -22,14 +22,9 @@ use zenith::db::Db;
 async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
     // Create some movies
     for i in 1..=3 {
-        sqlx::query("INSERT INTO media_items (id, item_type) VALUES (?, ?)")
+        sqlx::query("INSERT INTO media_items (id, item_type, name) VALUES (?, ?, ?)")
             .bind(i)
             .bind(MediaItemType::Movie)
-            .execute(&mut *conn)
-            .await?;
-
-        sqlx::query("INSERT INTO movies (item_id, title) VALUES (?, ?)")
-            .bind(i)
             .bind(format!("Test Movie {i}"))
             .execute(&mut *conn)
             .await?;
@@ -37,7 +32,7 @@ async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
         sqlx::query("INSERT INTO video_files (item_id, path, duration) VALUES (?, ?, ?)")
             .bind(i)
             .bind(format!("/path/to/Test Movie {i}/Test Movie {i}.mp4"))
-            .bind(0.0)
+            .bind(100.0)
             .execute(&mut *conn)
             .await?;
     }
@@ -46,15 +41,9 @@ async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
     for i in 1..=3 {
         let id = i + 3;
 
-        sqlx::query("INSERT INTO media_items (id, item_type) VALUES (?, ?)")
+        sqlx::query("INSERT INTO media_items (id, item_type, name) VALUES (?, ?, ?)")
             .bind(id)
             .bind(MediaItemType::Show)
-            .execute(&mut *conn)
-            .await?;
-
-        sqlx::query("INSERT INTO tv_shows (item_id, path, name) VALUES (?, ?, ?)")
-            .bind(id)
-            .bind(format!("/path/to/Test Show {i}"))
             .bind(format!("Test Show {i}"))
             .execute(&mut *conn)
             .await?;
@@ -64,45 +53,43 @@ async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
     for i in 1..=2 {
         let id = i + 6;
 
-        sqlx::query("INSERT INTO media_items (id, item_type) VALUES (?, ?)")
+        let sql = "
+            INSERT INTO media_items (id, item_type, name, parent_id, parent_index)
+            VALUES (?, ?, ?, ?, ?)";
+
+        sqlx::query(sql)
             .bind(id)
             .bind(MediaItemType::Season)
+            .bind(format!("Season {i}"))
+            .bind(4)
+            .bind(i)
             .execute(&mut *conn)
             .await?;
-
-        sqlx::query(
-            "INSERT INTO tv_seasons (item_id, show_id, season_number, name) VALUES (?, ?, ?, ?)",
-        )
-        .bind(id)
-        .bind(4)
-        .bind(i)
-        .bind(format!("Season {i}"))
-        .execute(&mut *conn)
-        .await?;
     }
 
     // Create some episodes for Season 1
     for i in 1..=2 {
         let id = i + 8;
 
-        sqlx::query("INSERT INTO media_items (id, item_type) VALUES (?, ?)")
+        let sql = "
+            INSERT INTO media_items (id, item_type, name, parent_id, parent_index, grandparent_id, grandparent_index)
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        sqlx::query(sql)
             .bind(id)
             .bind(MediaItemType::Episode)
-            .execute(&mut *conn)
-            .await?;
-
-        sqlx::query("INSERT INTO tv_episodes (item_id, season_id, episode_number, name) VALUES (?, ?, ?, ?)")
-            .bind(id)
+            .bind(format!("Episode {i}"))
             .bind(7)
             .bind(i)
-            .bind(format!("Episode {i}"))
+            .bind(4)
+            .bind(1)
             .execute(&mut *conn)
             .await?;
 
         sqlx::query("INSERT INTO video_files (item_id, path, duration) VALUES (?, ?, ?)")
             .bind(id)
             .bind(format!("/path/to/Test Episode {i}"))
-            .bind(0.0)
+            .bind(100.0)
             .execute(&mut *conn)
             .await?;
     }
@@ -111,24 +98,37 @@ async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
     for i in 1..=2 {
         let id = i + 10;
 
-        sqlx::query("INSERT INTO media_items (id, item_type) VALUES (?, ?)")
+        let sql = "
+            INSERT INTO media_items (id, item_type, name, parent_id, parent_index, grandparent_id, grandparent_index)
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        sqlx::query(sql)
             .bind(id)
             .bind(MediaItemType::Episode)
-            .execute(&mut *conn)
-            .await?;
-
-        sqlx::query("INSERT INTO tv_episodes (item_id, season_id, episode_number, name) VALUES (?, ?, ?, ?)")
-            .bind(id)
+            .bind(format!("Episode {i}"))
             .bind(8)
             .bind(i)
-            .bind(format!("Episode {i}"))
+            .bind(4)
+            .bind(2)
             .execute(&mut *conn)
             .await?;
 
         sqlx::query("INSERT INTO video_files (item_id, path, duration) VALUES (?, ?, ?)")
             .bind(id)
             .bind(format!("/path/to/Test Show 1/S02E{i:02}.mp4"))
-            .bind(0.0)
+            .bind(100.0)
+            .execute(&mut *conn)
+            .await?;
+    }
+
+    for id in [1, 2, 10, 11] {
+        let sql = "
+            INSERT INTO user_item_data (item_id, position, last_watched_at)
+            VALUES (?, ?, 1662911415)";
+
+        sqlx::query(sql)
+            .bind(id)
+            .bind(50.0)
             .execute(&mut *conn)
             .await?;
     }

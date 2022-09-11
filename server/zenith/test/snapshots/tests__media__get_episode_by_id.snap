@@ -1,6 +1,6 @@
 ---
 source: server/zenith/test/media.rs
-assertion_line: 23
+assertion_line: 25
 expression: "app.get(\"/tv/episodes/9\").await"
 ---
 {
@@ -26,7 +26,7 @@ expression: "app.get(\"/tv/episodes/9\").await"
   },
   "video_info": {
     "audio": [],
-    "duration": 0.0,
+    "duration": 100.0,
     "format": null,
     "path": "/path/to/Test Episode 1",
     "subtitles": [],

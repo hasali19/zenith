@@ -4,11 +4,10 @@ use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqliteConnection};
 
 use crate::sql::Join;
-use crate::util::VecExt;
 use crate::{sql, utils};
 
 use super::items::ExternalIds;
-use super::media::{MediaImage, MediaImageType};
+use super::media::{MediaImage, MediaImageType, MediaItemType};
 use super::videos::{self, VideoInfo, VideoUserData};
 
 #[derive(Serialize, Reflect)]
@@ -35,9 +34,9 @@ impl Movie {
 }
 
 const MOVIE_COLUMNS: &[&str] = &[
-    "m.item_id AS id",
-    "title",
-    "release_date",
+    "m.id",
+    "name",
+    "start_date",
     "overview",
     "poster",
     "backdrop",
@@ -51,8 +50,8 @@ const MOVIE_COLUMNS: &[&str] = &[
 ];
 
 const MOVIE_JOINS: &[Join] = &[
-    Join::inner("video_files AS v").on("m.item_id = v.item_id"),
-    Join::left("user_item_data AS u").on("m.item_id = u.item_id"),
+    Join::inner("video_files AS v").on("m.id = v.item_id"),
+    Join::left("user_item_data AS u").on("m.id = u.item_id"),
 ];
 
 impl<'r> FromRow<'r, SqliteRow> for Movie {
@@ -62,8 +61,8 @@ impl<'r> FromRow<'r, SqliteRow> for Movie {
 
         Ok(Movie {
             id: row.try_get("id")?,
-            title: row.try_get("title")?,
-            release_date: row.try_get("release_date")?,
+            title: row.try_get("name")?,
+            release_date: row.try_get("start_date")?,
             overview: row.try_get("overview")?,
             poster: poster.map(utils::get_image_url),
             backdrop: backdrop.map(utils::get_image_url),
@@ -91,7 +90,7 @@ pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Mo
     let sql = sql::select("movies AS m")
         .columns(MOVIE_COLUMNS)
         .joins(MOVIE_JOINS)
-        .condition("m.item_id = ?1")
+        .condition("m.id = ?1")
         .to_sql();
 
     let mut movie: Movie = match sqlx::query_as(&sql)
@@ -115,7 +114,7 @@ pub async fn get_all(conn: &mut SqliteConnection) -> eyre::Result<Vec<Movie>> {
     let sql = sql::select("movies AS m")
         .columns(MOVIE_COLUMNS)
         .joins(MOVIE_JOINS)
-        .order_by(&["title"])
+        .order_by(&["name"])
         .to_sql();
 
     Ok(sqlx::query_as(&sql).fetch_all(conn).await?)
@@ -124,13 +123,9 @@ pub async fn get_all(conn: &mut SqliteConnection) -> eyre::Result<Vec<Movie>> {
 pub async fn get_recently_added(conn: &mut SqliteConnection) -> eyre::Result<Vec<Movie>> {
     let sql = sql::select("movies AS m")
         .columns(MOVIE_COLUMNS)
-        .joins(
-            MOVIE_JOINS
-                .to_vec()
-                .with_push(Join::inner("media_items AS i").on("m.item_id = i.id")),
-        )
+        .joins(MOVIE_JOINS)
         .condition("COALESCE(u.is_watched, 0) = 0")
-        .order_by(&["added_at DESC", "title"])
+        .order_by(&["added_at DESC", "name"])
         .limit(30)
         .to_sql();
 
@@ -151,13 +146,13 @@ pub async fn update_metadata(
     data: UpdateMetadata<'_>,
 ) -> eyre::Result<()> {
     let sql = "
-        UPDATE movies
-        SET title    = ?,
+        UPDATE media_items
+        SET name    = ?,
             overview = ?,
             poster   = ?,
             backdrop = ?,
             tmdb_id  = ?
-        WHERE item_id = ?
+        WHERE item_type = ? AND id = ?
     ";
 
     sqlx::query(sql)
@@ -166,6 +161,7 @@ pub async fn update_metadata(
         .bind(data.poster.map(|v| v.to_string()))
         .bind(data.backdrop.map(|v| v.to_string()))
         .bind(data.tmdb_id)
+        .bind(MediaItemType::Movie)
         .bind(id)
         .execute(conn)
         .await?;

@@ -13,8 +13,10 @@ macro_rules! test_snapshot {
 }
 
 test_snapshot!(get_all_movies, "/movies");
+test_snapshot!(get_recently_added_movies, "/movies/recent");
 test_snapshot!(get_movie_by_id, "/movies/1");
 test_snapshot!(get_all_tv_shows, "/tv/shows");
+test_snapshot!(get_recently_updated_shows, "/tv/shows/recent");
 test_snapshot!(get_show_by_id, "/tv/shows/4");
 test_snapshot!(get_seasons_for_show, "/tv/shows/4/seasons");
 test_snapshot!(get_season_by_id, "/tv/seasons/7");
@@ -26,3 +28,4 @@ test_snapshot!(
     get_multiple_items_by_ids,
     "/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9",
 );
+test_snapshot!(get_continue_watching, "/items/continue_watching");

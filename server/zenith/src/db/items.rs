@@ -78,9 +78,9 @@ pub async fn get_continue_watching(
     //   get the next episode if it exists
     let mut sql = "
         SELECT id, last_watched_at FROM (
-            SELECT m.item_id AS id, u.last_watched_at AS last_watched_at FROM movies AS m
-            JOIN video_files AS v ON v.item_id = m.item_id
-            LEFT JOIN user_item_data AS u ON m.item_id = u.item_id
+            SELECT m.id AS id, u.last_watched_at AS last_watched_at FROM movies AS m
+            JOIN video_files AS v ON v.item_id = m.id
+            LEFT JOIN user_item_data AS u ON m.id = u.item_id
             WHERE u.position > (0.05 * v.duration) AND u.position < (0.9 * v.duration) AND u.last_watched_at IS NOT NULL
         )
         UNION
@@ -88,25 +88,25 @@ pub async fn get_continue_watching(
             SELECT IIF(
                 u.position < (0.9 * v.duration),
                 -- return current episode if the position is below 'completed' threshold
-                e.item_id,
+                e.id,
                 -- otherwise find the next episode
                 (
-                    SELECT e1.item_id FROM tv_episodes AS e1
-                    JOIN tv_seasons AS season1 ON season1.item_id = e1.season_id
-                    JOIN tv_shows AS show1 ON show1.item_id = season1.show_id
-                    WHERE show1.item_id = show.item_id
-                        AND (season1.season_number > season.season_number
-                            OR (season1.season_number = season.season_number AND e1.episode_number > e.episode_number))
-                    ORDER BY season1.season_number, e1.episode_number
+                    SELECT e1.id FROM episodes AS e1
+                    JOIN seasons AS season1 ON season1.id = e1.season_id
+                    JOIN shows AS show1 ON show1.id = season1.show_id
+                    WHERE show1.id = show.id
+                        AND (season1.season_no > season.season_no
+                            OR (season1.season_no = season.season_no AND e1.episode_no > e.episode_no))
+                    ORDER BY season1.season_no, e1.episode_no
                     LIMIT 1
                 )
-            ) AS id, MAX(last_watched_at) AS last_watched_at FROM tv_episodes AS e
-            JOIN tv_seasons AS season ON season.item_id = e.season_id
-            JOIN tv_shows AS show ON show.item_id = season.show_id
-            JOIN video_files AS v ON v.item_id = e.item_id
-            LEFT JOIN user_item_data AS u ON e.item_id = u.item_id
+            ) AS id, MAX(last_watched_at) AS last_watched_at FROM episodes AS e
+            JOIN seasons AS season ON season.id = e.season_id
+            JOIN shows AS show ON show.id = season.show_id
+            JOIN video_files AS v ON v.item_id = e.id
+            LEFT JOIN user_item_data AS u ON e.id = u.item_id
             WHERE u.position > (0.05 * v.duration) AND u.last_watched_at IS NOT NULL
-            GROUP BY show.item_id
+            GROUP BY show.id
         )
         ORDER BY last_watched_at DESC
     ".to_owned();

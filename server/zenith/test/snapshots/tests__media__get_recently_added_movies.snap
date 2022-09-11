@@ -1,7 +1,6 @@
 ---
 source: server/zenith/test/media.rs
-assertion_line: 15
-expression: "app.get(\"/movies\").await"
+expression: "app.get(\"/movies/recent\").await"
 ---
 [
   {

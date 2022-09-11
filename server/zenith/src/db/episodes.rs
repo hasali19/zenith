@@ -7,7 +7,7 @@ use crate::sql::Join;
 use crate::{sql, utils};
 
 use super::items::ExternalIds;
-use super::media::{MediaImage, MediaImageType};
+use super::media::{MediaImage, MediaImageType, MediaItemType};
 use super::videos::{self, VideoInfo, VideoUserData};
 
 #[derive(Serialize, Reflect)]
@@ -40,14 +40,14 @@ impl Episode {
 }
 
 const EPISODE_COLUMNS: &[&str] = &[
-    "e.item_id AS id",
-    "show_id",
-    "season_id",
-    "season_number",
-    "episode_number",
+    "e.id",
+    "e.show_id",
+    "e.season_id",
+    "e.season_no",
+    "e.episode_no",
     "e.name",
     "sh.name AS show_name",
-    "e.air_date",
+    "e.start_date",
     "e.overview",
     "COALESCE(se.poster, sh.poster) AS poster",
     "COALESCE(sh.backdrop, e.thumbnail) AS backdrop",
@@ -62,10 +62,10 @@ const EPISODE_COLUMNS: &[&str] = &[
 ];
 
 const EPISODE_JOINS: &[Join] = &[
-    Join::inner("tv_seasons AS se").on("se.item_id = e.season_id"),
-    Join::inner("tv_shows AS sh").on("sh.item_id = se.show_id"),
-    Join::inner("video_files AS v").on("v.item_id = e.item_id"),
-    Join::left("user_item_data AS u").on("u.item_id = e.item_id"),
+    Join::inner("seasons AS se").on("se.id = e.season_id"),
+    Join::inner("shows AS sh").on("sh.id = e.show_id"),
+    Join::inner("video_files AS v").on("v.item_id = e.id"),
+    Join::left("user_item_data AS u").on("u.item_id = e.id"),
 ];
 
 impl<'r> FromRow<'r, SqliteRow> for Episode {
@@ -78,11 +78,11 @@ impl<'r> FromRow<'r, SqliteRow> for Episode {
             id: row.try_get("id")?,
             show_id: row.try_get("show_id")?,
             season_id: row.try_get("season_id")?,
-            season_number: row.try_get("season_number")?,
-            episode_number: row.try_get("episode_number")?,
+            season_number: row.try_get("season_no")?,
+            episode_number: row.try_get("episode_no")?,
             name: row.try_get("name")?,
             show_name: row.try_get("show_name")?,
-            air_date: row.try_get("air_date")?,
+            air_date: row.try_get("start_date")?,
             overview: row.try_get("overview")?,
             poster: poster.map(utils::get_image_url),
             backdrop: backdrop.map(utils::get_image_url),
@@ -108,10 +108,10 @@ impl<'r> FromRow<'r, SqliteRow> for Episode {
 }
 
 pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Episode>> {
-    let sql = sql::select("tv_episodes AS e")
+    let sql = sql::select("episodes AS e")
         .columns(EPISODE_COLUMNS)
         .joins(EPISODE_JOINS)
-        .condition("e.item_id = ?1")
+        .condition("e.id = ?1")
         .to_sql();
 
     let mut episode: Episode = match sqlx::query_as(&sql)
@@ -135,22 +135,22 @@ pub async fn get_for_season(
     conn: &mut SqliteConnection,
     season_id: i64,
 ) -> eyre::Result<Vec<Episode>> {
-    let sql = sql::select("tv_episodes AS e")
+    let sql = sql::select("episodes AS e")
         .columns(EPISODE_COLUMNS)
         .joins(EPISODE_JOINS)
         .condition("season_id = ?1")
-        .order_by(&["episode_number"])
+        .order_by(&["episode_no"])
         .to_sql();
 
     Ok(sqlx::query_as(&sql).bind(season_id).fetch_all(conn).await?)
 }
 
 pub async fn get_for_show(conn: &mut SqliteConnection, show_id: i64) -> eyre::Result<Vec<Episode>> {
-    let sql = sql::select("tv_episodes AS e")
+    let sql = sql::select("episodes AS e")
         .columns(EPISODE_COLUMNS)
         .joins(EPISODE_JOINS)
-        .condition("show_id = ?1")
-        .order_by(&["season_number", "episode_number"])
+        .condition("e.show_id = ?1")
+        .order_by(&["e.season_no", "e.episode_no"])
         .to_sql();
 
     Ok(sqlx::query_as(&sql).bind(show_id).fetch_all(conn).await?)
@@ -169,12 +169,12 @@ pub async fn update_metadata(
     data: UpdateMetadata<'_>,
 ) -> eyre::Result<()> {
     let sql = "
-        UPDATE tv_episodes
+        UPDATE media_items
         SET name = ?,
             overview = ?,
             thumbnail = ?,
             tmdb_id = ?
-        WHERE item_id = ?
+        WHERE item_type = ? AND id = ?
     ";
 
     sqlx::query(sql)
@@ -182,6 +182,7 @@ pub async fn update_metadata(
         .bind(data.overview)
         .bind(data.thumbnail.map(|t| t.to_string()))
         .bind(data.tmdb_id)
+        .bind(MediaItemType::Episode)
         .bind(id)
         .execute(conn)
         .await?;

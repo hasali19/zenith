@@ -9,7 +9,7 @@ use crate::{sql, utils};
 
 use super::collections::CollectionUserData;
 use super::items::ExternalIds;
-use super::media::{MediaImage, MediaImageType};
+use super::media::{MediaImage, MediaImageType, MediaItemType};
 
 #[derive(Serialize, Reflect)]
 pub struct Show {
@@ -35,7 +35,7 @@ impl Show {
 }
 
 const SHOW_COLUMNS: &[&str] = &[
-    "sh.item_id AS id",
+    "sh.id",
     "sh.name",
     "sh.start_date",
     "sh.end_date",
@@ -45,10 +45,9 @@ const SHOW_COLUMNS: &[&str] = &[
     "sh.tmdb_id",
     "(
         SELECT COUNT(*)
-        FROM tv_episodes AS episode
-        JOIN tv_seasons AS season ON season.item_id = episode.season_id
-        LEFT JOIN user_item_data AS u ON u.item_id = episode.item_id
-        WHERE season.show_id = sh.item_id AND COALESCE(u.is_watched, 0) = 0
+        FROM episodes AS episode
+        LEFT JOIN user_item_data AS u ON u.item_id = episode.id
+        WHERE episode.show_id = sh.id AND COALESCE(u.is_watched, 0) = 0
     ) AS unwatched",
 ];
 
@@ -76,16 +75,21 @@ impl<'r> FromRow<'r, SqliteRow> for Show {
 }
 
 pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Show>> {
-    let sql = sql::select("tv_shows AS sh")
+    let sql = sql::select("shows AS sh")
         .columns(SHOW_COLUMNS)
-        .condition("item_id = ?1")
+        .condition("id = ?1")
         .to_sql();
 
     Ok(sqlx::query_as(&sql).bind(id).fetch_optional(conn).await?)
 }
 
 pub async fn get_path(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<String>> {
-    let path = sqlx::query_scalar("SELECT path from tv_shows WHERE item_id = ?")
+    let sql = "
+        SELECT path from indexed_paths
+        JOIN shows ON item_id = shows.id
+        WHERE shows.id = ?";
+
+    let path = sqlx::query_scalar(sql)
         .bind(id)
         .fetch_optional(conn)
         .await?;
@@ -94,7 +98,7 @@ pub async fn get_path(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Opti
 }
 
 pub async fn get_all(conn: &mut SqliteConnection) -> eyre::Result<Vec<Show>> {
-    let sql = sql::select("tv_shows AS sh")
+    let sql = sql::select("shows AS sh")
         .columns(SHOW_COLUMNS)
         .order_by(&["name"])
         .to_sql();
@@ -105,19 +109,15 @@ pub async fn get_all(conn: &mut SqliteConnection) -> eyre::Result<Vec<Show>> {
 pub async fn get_recently_updated(conn: &mut SqliteConnection) -> eyre::Result<Vec<Show>> {
     // Get shows sorted by the added_at of their most recently added episode
     // (i.e. shows that have had an episode added recently will appear higher up)
-    let sql = sql::select("tv_shows AS sh")
+    let sql = sql::select("shows AS sh")
         .columns(
             SHOW_COLUMNS
                 .to_vec()
-                .with_push("MAX(i.added_at) AS latest_episode_added_at"),
+                .with_push("MAX(e.added_at) AS latest_episode_added_at"),
         )
-        .joins(&[
-            Join::inner("tv_seasons AS se").on("se.show_id = sh.item_id"),
-            Join::inner("tv_episodes AS e").on("e.season_id = se.item_id"),
-            Join::inner("media_items AS i").on("i.id = e.item_id"),
-        ])
+        .joins(&[Join::inner("episodes AS e").on("e.show_id = sh.id")])
         .condition("unwatched > 0")
-        .group_by("sh.item_id")
+        .group_by("sh.id")
         .order_by(&["latest_episode_added_at DESC", "sh.name"])
         .limit(30)
         .to_sql();
@@ -141,7 +141,7 @@ pub async fn update_metadata(
     data: UpdateMetadata<'_>,
 ) -> eyre::Result<()> {
     let sql = "
-        UPDATE tv_shows
+        UPDATE media_items
         SET name = ?,
             start_date = ?,
             end_date = ?,
@@ -149,7 +149,7 @@ pub async fn update_metadata(
             poster = ?,
             backdrop = ?,
             tmdb_id = ?
-        WHERE item_id = ?
+        WHERE item_type = ? AND id = ?
     ";
 
     sqlx::query(sql)
@@ -160,6 +160,7 @@ pub async fn update_metadata(
         .bind(data.poster.map(|p| p.to_string()))
         .bind(data.backdrop.map(|b| b.to_string()))
         .bind(data.tmdb_id)
+        .bind(MediaItemType::Show)
         .bind(id)
         .execute(conn)
         .await?;

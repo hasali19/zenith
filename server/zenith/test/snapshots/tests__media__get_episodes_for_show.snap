@@ -1,6 +1,5 @@
 ---
 source: server/zenith/test/media.rs
-assertion_line: 21
 expression: "app.get(\"/tv/shows/4/episodes\").await"
 ---
 [
@@ -26,7 +25,7 @@ expression: "app.get(\"/tv/shows/4/episodes\").await"
       "position": null
     },
     "video_info": {
-      "duration": 0.0,
+      "duration": 100.0,
       "format": null,
       "path": "/path/to/Test Episode 1"
     }
@@ -49,11 +48,11 @@ expression: "app.get(\"/tv/shows/4/episodes\").await"
     "thumbnail": null,
     "user_data": {
       "is_watched": false,
-      "last_watched_at": null,
-      "position": null
+      "last_watched_at": 1662911415,
+      "position": 50.0
     },
     "video_info": {
-      "duration": 0.0,
+      "duration": 100.0,
       "format": null,
       "path": "/path/to/Test Episode 2"
     }
@@ -76,11 +75,11 @@ expression: "app.get(\"/tv/shows/4/episodes\").await"
     "thumbnail": null,
     "user_data": {
       "is_watched": false,
-      "last_watched_at": null,
-      "position": null
+      "last_watched_at": 1662911415,
+      "position": 50.0
     },
     "video_info": {
-      "duration": 0.0,
+      "duration": 100.0,
       "format": null,
       "path": "/path/to/Test Show 1/S02E01.mp4"
     }
@@ -107,7 +106,7 @@ expression: "app.get(\"/tv/shows/4/episodes\").await"
       "position": null
     },
     "video_info": {
-      "duration": 0.0,
+      "duration": 100.0,
       "format": null,
       "path": "/path/to/Test Show 1/S02E02.mp4"
     }
