@@ -64,7 +64,7 @@ jobs:
           mv cargo-binstall ~/.cargo/bin
 
       - name: Install cargo-nextest
-        run: cargo binstall cargo-nextest --secure --no-confirm
+        run: cargo binstall cargo-nextest --secure --no-confirm --force
 
       - name: Run tests
         uses: actions-rs/cargo@v1
