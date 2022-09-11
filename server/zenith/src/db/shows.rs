@@ -9,7 +9,7 @@ use crate::{sql, utils};
 
 use super::collections::CollectionUserData;
 use super::items::ExternalIds;
-use super::media::{MediaImage, MediaImageType, MediaItemType};
+use super::media::MediaImageType;
 
 #[derive(Serialize, Reflect)]
 pub struct Show {
@@ -123,47 +123,4 @@ pub async fn get_recently_updated(conn: &mut SqliteConnection) -> eyre::Result<V
         .to_sql();
 
     Ok(sqlx::query_as(&sql).fetch_all(conn).await?)
-}
-
-pub struct UpdateMetadata<'a> {
-    pub name: &'a str,
-    pub start_date: Option<i64>,
-    pub end_date: Option<i64>,
-    pub overview: Option<&'a str>,
-    pub poster: Option<MediaImage<'a>>,
-    pub backdrop: Option<MediaImage<'a>>,
-    pub tmdb_id: Option<i32>,
-}
-
-pub async fn update_metadata(
-    conn: &mut SqliteConnection,
-    id: i64,
-    data: UpdateMetadata<'_>,
-) -> eyre::Result<()> {
-    let sql = "
-        UPDATE media_items
-        SET name = ?,
-            start_date = ?,
-            end_date = ?,
-            overview = ?,
-            poster = ?,
-            backdrop = ?,
-            tmdb_id = ?
-        WHERE item_type = ? AND id = ?
-    ";
-
-    sqlx::query(sql)
-        .bind(data.name)
-        .bind(data.start_date)
-        .bind(data.end_date)
-        .bind(data.overview)
-        .bind(data.poster.map(|p| p.to_string()))
-        .bind(data.backdrop.map(|b| b.to_string()))
-        .bind(data.tmdb_id)
-        .bind(MediaItemType::Show)
-        .bind(id)
-        .execute(conn)
-        .await?;
-
-    Ok(())
 }

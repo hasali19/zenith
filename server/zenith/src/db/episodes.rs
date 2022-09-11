@@ -7,7 +7,7 @@ use crate::sql::Join;
 use crate::{sql, utils};
 
 use super::items::ExternalIds;
-use super::media::{MediaImage, MediaImageType, MediaItemType};
+use super::media::MediaImageType;
 use super::videos::{self, VideoInfo, VideoUserData};
 
 #[derive(Serialize, Reflect)]
@@ -154,38 +154,4 @@ pub async fn get_for_show(conn: &mut SqliteConnection, show_id: i64) -> eyre::Re
         .to_sql();
 
     Ok(sqlx::query_as(&sql).bind(show_id).fetch_all(conn).await?)
-}
-
-pub struct UpdateMetadata<'a> {
-    pub name: Option<&'a str>,
-    pub overview: Option<&'a str>,
-    pub thumbnail: Option<MediaImage<'a>>,
-    pub tmdb_id: Option<i32>,
-}
-
-pub async fn update_metadata(
-    conn: &mut SqliteConnection,
-    id: i64,
-    data: UpdateMetadata<'_>,
-) -> eyre::Result<()> {
-    let sql = "
-        UPDATE media_items
-        SET name = ?,
-            overview = ?,
-            thumbnail = ?,
-            tmdb_id = ?
-        WHERE item_type = ? AND id = ?
-    ";
-
-    sqlx::query(sql)
-        .bind(data.name)
-        .bind(data.overview)
-        .bind(data.thumbnail.map(|t| t.to_string()))
-        .bind(data.tmdb_id)
-        .bind(MediaItemType::Episode)
-        .bind(id)
-        .execute(conn)
-        .await?;
-
-    Ok(())
 }

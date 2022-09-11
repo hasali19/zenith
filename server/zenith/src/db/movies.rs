@@ -7,7 +7,7 @@ use crate::sql::Join;
 use crate::{sql, utils};
 
 use super::items::ExternalIds;
-use super::media::{MediaImage, MediaImageType, MediaItemType};
+use super::media::MediaImageType;
 use super::videos::{self, VideoInfo, VideoUserData};
 
 #[derive(Serialize, Reflect)]
@@ -130,41 +130,4 @@ pub async fn get_recently_added(conn: &mut SqliteConnection) -> eyre::Result<Vec
         .to_sql();
 
     Ok(sqlx::query_as(&sql).fetch_all(conn).await?)
-}
-
-pub struct UpdateMetadata<'a> {
-    pub title: &'a str,
-    pub overview: Option<&'a str>,
-    pub poster: Option<MediaImage<'a>>,
-    pub backdrop: Option<MediaImage<'a>>,
-    pub tmdb_id: Option<i32>,
-}
-
-pub async fn update_metadata(
-    conn: &mut SqliteConnection,
-    id: i64,
-    data: UpdateMetadata<'_>,
-) -> eyre::Result<()> {
-    let sql = "
-        UPDATE media_items
-        SET name    = ?,
-            overview = ?,
-            poster   = ?,
-            backdrop = ?,
-            tmdb_id  = ?
-        WHERE item_type = ? AND id = ?
-    ";
-
-    sqlx::query(sql)
-        .bind(data.title)
-        .bind(data.overview)
-        .bind(data.poster.map(|v| v.to_string()))
-        .bind(data.backdrop.map(|v| v.to_string()))
-        .bind(data.tmdb_id)
-        .bind(MediaItemType::Movie)
-        .bind(id)
-        .execute(conn)
-        .await?;
-
-    Ok(())
 }

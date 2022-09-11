@@ -79,15 +79,9 @@ impl<'a> SelectStatement<'a> {
             }
         }
 
-        fn write_cond(sql: &mut String, cond: &Condition<'_>) {
-            match cond {
-                Condition::Atom(str) => sql.push_str(str),
-            }
-        }
-
         if let Some(condition) = &self.condition {
             sql.push_str(" WHERE ");
-            write_cond(&mut sql, condition);
+            condition.write_to(&mut sql);
         }
 
         if let Some(group_by) = self.group_by {
@@ -110,6 +104,14 @@ impl<'a> SelectStatement<'a> {
 
 pub enum Condition<'a> {
     Atom(&'a str),
+}
+
+impl<'a> Condition<'a> {
+    fn write_to(&self, sql: &mut String) {
+        match self {
+            Condition::Atom(str) => sql.push_str(str),
+        }
+    }
 }
 
 impl<'a> From<&'a str> for Condition<'a> {
@@ -254,6 +256,61 @@ impl<'a> UpdateList<'a> {
     pub fn values(mut self, values: &'a [&'a str]) -> Self {
         self.values = values;
         self
+    }
+}
+
+pub struct UpdateStatement<'a> {
+    table: &'a str,
+    update: UpdateList<'a>,
+    condition: Option<Condition<'a>>,
+}
+
+pub fn update(table: &str) -> UpdateStatement {
+    UpdateStatement {
+        table,
+        update: UpdateList::new(),
+        condition: None,
+    }
+}
+
+impl<'a> UpdateStatement<'a> {
+    pub fn columns(mut self, columns: &'a [&'a str]) -> Self {
+        self.update.columns = columns;
+        self
+    }
+
+    pub fn values(mut self, values: &'a [&'a str]) -> Self {
+        self.update.values = values;
+        self
+    }
+
+    pub fn condition(mut self, condition: impl Into<Condition<'a>>) -> Self {
+        self.condition = Some(condition.into());
+        self
+    }
+
+    pub fn to_sql(&self) -> String {
+        let mut sql = String::new();
+
+        sql.push_str("UPDATE ");
+        sql.push_str(self.table);
+        sql.push_str(" SET ");
+
+        sql.push_list(
+            self.update.columns.iter().zip(self.update.values.iter()),
+            |sql, (col, val)| {
+                sql.push_str(col);
+                sql.push_str(" = ");
+                sql.push_str(val);
+            },
+        );
+
+        if let Some(condition) = &self.condition {
+            sql.push_str(" WHERE ");
+            condition.write_to(&mut sql);
+        }
+
+        sql
     }
 }
 

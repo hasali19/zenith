@@ -2,10 +2,13 @@ use std::fmt::Write;
 
 use serde::Serialize;
 use speq::Reflect;
-use sqlx::SqliteConnection;
+use sqlx::sqlite::SqliteArguments;
+use sqlx::{Arguments, SqliteConnection};
+
+use crate::sql;
 
 use super::episodes::{self, Episode};
-use super::media::{self, MediaImageType, MediaItemType};
+use super::media::{self, MediaImage, MediaImageType, MediaItemType};
 use super::movies::{self, Movie};
 use super::seasons::{self, Season};
 use super::shows::{self, Show};
@@ -118,4 +121,65 @@ pub async fn get_continue_watching(
     let ids: Vec<i64> = sqlx::query_scalar(&sql).fetch_all(&mut *conn).await?;
 
     get_multiple(conn, ids).await
+}
+
+pub struct UpdateMetadata<'a> {
+    pub name: Option<&'a str>,
+    pub overview: Option<Option<&'a str>>,
+    pub start_date: Option<Option<i64>>,
+    pub end_date: Option<Option<i64>>,
+    pub poster: Option<Option<MediaImage<'a>>>,
+    pub backdrop: Option<Option<MediaImage<'a>>>,
+    pub thumbnail: Option<Option<MediaImage<'a>>>,
+    pub tmdb_id: Option<Option<i32>>,
+}
+
+pub async fn update_metadata(
+    conn: &mut SqliteConnection,
+    id: i64,
+    data: UpdateMetadata<'_>,
+) -> eyre::Result<()> {
+    let mut columns = vec![];
+    let mut values = vec![];
+    let mut args = SqliteArguments::default();
+
+    macro_rules! collect {
+        ($field:ident) => {
+            if let Some($field) = data.$field {
+                columns.push(stringify!($field));
+                values.push("?");
+                args.add($field);
+            }
+        };
+        ($field:ident, $($fields:ident),+) => {
+            collect!($field);
+            $(collect!($fields));+
+        }
+    }
+
+    collect!(name, overview, start_date, end_date, tmdb_id);
+
+    for (column, img) in [
+        ("poster", data.poster),
+        ("backdrop", data.backdrop),
+        ("thumbnail", data.thumbnail),
+    ] {
+        if let Some(img) = img {
+            columns.push(column);
+            values.push("?");
+            args.add(img.map(|img| img.to_string()));
+        }
+    }
+
+    args.add(id);
+
+    let sql = sql::update("media_items")
+        .columns(&columns)
+        .values(&values)
+        .condition("id = ?")
+        .to_sql();
+
+    sqlx::query_with(&sql, args).execute(conn).await?;
+
+    Ok(())
 }

@@ -113,15 +113,18 @@ async fn refresh_movie_metadata(
         src: backdrop,
     });
 
-    let data = db::movies::UpdateMetadata {
-        title: &result.title,
-        overview: result.overview.as_deref(),
-        poster,
-        backdrop,
-        tmdb_id: Some(result.id),
+    let data = db::items::UpdateMetadata {
+        name: Some(&result.title),
+        overview: Some(result.overview.as_deref()),
+        start_date: None,
+        end_date: None,
+        poster: Some(poster),
+        backdrop: Some(backdrop),
+        thumbnail: None,
+        tmdb_id: Some(Some(result.id)),
     };
 
-    db::movies::update_metadata(&mut *db, id, data).await?;
+    db::items::update_metadata(&mut *db, id, data).await?;
 
     Ok(())
 }
@@ -183,17 +186,18 @@ async fn refresh_tv_show_metadata(
         src: backdrop,
     });
 
-    let data = db::shows::UpdateMetadata {
-        name: &result.name,
-        start_date: first_air_date,
-        end_date: last_air_date,
-        overview: result.overview.as_deref(),
-        poster,
-        backdrop,
-        tmdb_id: Some(result.id),
+    let data = db::items::UpdateMetadata {
+        name: Some(&result.name),
+        start_date: Some(first_air_date),
+        end_date: Some(last_air_date),
+        overview: Some(result.overview.as_deref()),
+        poster: Some(poster),
+        thumbnail: None,
+        backdrop: Some(backdrop),
+        tmdb_id: Some(Some(result.id)),
     };
 
-    db::shows::update_metadata(&mut *db, id, data).await?;
+    db::items::update_metadata(&mut *db, id, data).await?;
 
     Ok(())
 }
@@ -233,14 +237,18 @@ async fn refresh_tv_season_metadata(
         metadata.name.as_deref().unwrap_or("unknown name")
     );
 
-    let data = db::seasons::UpdateMetadata {
+    let data = db::items::UpdateMetadata {
         name: metadata.name.as_deref(),
-        overview: metadata.overview.as_deref(),
-        poster,
-        tmdb_id: Some(metadata.id),
+        overview: Some(metadata.overview.as_deref()),
+        start_date: None,
+        end_date: None,
+        poster: Some(poster),
+        backdrop: None,
+        thumbnail: None,
+        tmdb_id: Some(Some(metadata.id)),
     };
 
-    db::seasons::update_metadata(&mut *db, id, data).await?;
+    db::items::update_metadata(&mut *db, id, data).await?;
 
     Ok(())
 }
@@ -288,14 +296,18 @@ async fn refresh_tv_episode_metadata(
         metadata.name.as_deref().unwrap_or("unknown name")
     );
 
-    let data = db::episodes::UpdateMetadata {
+    let data = db::items::UpdateMetadata {
         name: metadata.name.as_deref(),
-        overview: metadata.overview.as_deref(),
-        thumbnail,
-        tmdb_id: Some(metadata.id),
+        overview: Some(metadata.overview.as_deref()),
+        start_date: None,
+        end_date: None,
+        poster: None,
+        backdrop: None,
+        thumbnail: Some(thumbnail),
+        tmdb_id: Some(Some(metadata.id)),
     };
 
-    db::episodes::update_metadata(&mut *db, id, data).await?;
+    db::items::update_metadata(&mut *db, id, data).await?;
 
     Ok(())
 }
