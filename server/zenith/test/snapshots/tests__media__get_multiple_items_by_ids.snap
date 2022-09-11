@@ -1,0 +1,96 @@
+---
+source: server/zenith/test/media.rs
+assertion_line: 24
+expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
+---
+[
+  {
+    "backdrop": null,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 1,
+    "overview": null,
+    "poster": null,
+    "release_date": null,
+    "title": "Test Movie 1",
+    "type": "movie",
+    "user_data": {
+      "is_watched": false,
+      "last_watched_at": null,
+      "position": null
+    },
+    "video_info": {
+      "audio": [],
+      "duration": 0.0,
+      "format": null,
+      "path": "/path/to/Test Movie 1/Test Movie 1.mp4",
+      "subtitles": [],
+      "video": null
+    }
+  },
+  {
+    "backdrop": null,
+    "end_date": null,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 4,
+    "name": "Test Show 1",
+    "overview": null,
+    "poster": null,
+    "start_date": null,
+    "type": "show",
+    "user_data": {
+      "unwatched": 4
+    }
+  },
+  {
+    "backdrop": null,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 7,
+    "name": "Season 1",
+    "overview": null,
+    "poster": null,
+    "season_number": 1,
+    "show_id": 4,
+    "show_name": "Test Show 1",
+    "type": "season",
+    "user_data": {
+      "unwatched": 2
+    }
+  },
+  {
+    "air_date": null,
+    "backdrop": null,
+    "episode_number": 1,
+    "external_ids": {
+      "tmdb": null
+    },
+    "id": 9,
+    "name": "Episode 1",
+    "overview": null,
+    "poster": null,
+    "season_id": 7,
+    "season_number": 1,
+    "show_id": 4,
+    "show_name": "Test Show 1",
+    "thumbnail": null,
+    "type": "episode",
+    "user_data": {
+      "is_watched": false,
+      "last_watched_at": null,
+      "position": null
+    },
+    "video_info": {
+      "audio": [],
+      "duration": 0.0,
+      "format": null,
+      "path": "/path/to/Test Episode 1",
+      "subtitles": [],
+      "video": null
+    }
+  }
+]
