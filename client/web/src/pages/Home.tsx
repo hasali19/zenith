@@ -1,7 +1,16 @@
 import { useNavigate } from "solid-app-router";
-import { Component, createResource, For, JSX, Suspense } from "solid-js";
+import {
+  Component,
+  createEffect,
+  createResource,
+  createSignal,
+  For,
+  JSX,
+  onCleanup,
+  Suspense,
+  untrack,
+} from "solid-js";
 import { SwiperOptions } from "swiper";
-import { Image } from "../Image";
 import { MediaItemWithPoster, MediaItemWithThumbnail } from "../MediaItem";
 import preferences from "../preferences";
 import { Swiper, SwiperSlide } from "../Swiper";
@@ -44,10 +53,18 @@ export const HomeScreen: Component = () => {
   const movies = () => (data()?.[1] as any[]) ?? [];
   const shows = () => (data()?.[2] as any[]) ?? [];
 
+  const [hero, setHero] = createSignal(0);
+
+  createEffect(() => {
+    const n = movies().length;
+    const interval = setInterval(() => setHero((i) => (i + 1) % n), 10_000);
+    onCleanup(() => clearInterval(interval));
+  });
+
   return (
     <Suspense>
       <div style={{ padding: "32px" }}>
-        <HeroSection item={movies()[0]} />
+        <HeroSection item={movies()[hero()]} />
         <FeaturedSection
           title="Continue Watching"
           breakpoints={THUMBNAIL_SWIPER_BREAKPOINTS}
@@ -129,18 +146,37 @@ export const HomeScreen: Component = () => {
   );
 };
 
-const HeroSection: Component<{ item?: any }> = (p) => (
-  <>
-    {p.item && (
-      <div class={styles.heroSection}>
-        <Image
-          src={`${preferences.server}/api/items/${p.item.id}/images/backdrop`}
-          class={styles.heroSectionImg}
-        />
-      </div>
-    )}
-  </>
-);
+const HeroSection: Component<{ item?: any }> = (p) => {
+  const [stack, setStack] = createSignal<any[]>([]);
+
+  createEffect(() => {
+    const prev = untrack(stack)[0];
+    if (p.item) {
+      setStack((s) => [...s, p.item]);
+    }
+    if (prev) {
+      setTimeout(() => setStack((s) => s.filter((i) => i !== prev)), 1000);
+    }
+  });
+
+  return (
+    <>
+      {
+        <div class={styles.heroSection + " relative"}>
+          <For each={stack()}>
+            {(item) => (
+              <img
+                src={`${preferences.server}/api/items/${item.id}/images/backdrop`}
+                class="w-full h-full absolute rounded-lg object-cover transition-opacity duration-1000 opacity-0"
+                onLoad={(e) => e.currentTarget.classList.add("opacity-100")}
+              />
+            )}
+          </For>
+        </div>
+      }
+    </>
+  );
+};
 
 function FeaturedSection<T>(p: {
   title: string;
