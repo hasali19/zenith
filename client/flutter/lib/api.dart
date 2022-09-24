@@ -218,7 +218,7 @@ class Episode extends VideoItem {
   final String poster;
   final String backdrop;
   @override
-  final String thumbnail;
+  final String? thumbnail;
   final String overview;
   final int seasonNumber;
   final int episodeNumber;

@@ -276,7 +276,7 @@ class EpisodeListItem extends StatelessWidget {
           SizedBox(
             height: height,
             child: EpisodeThumbnail(
-              url: episode.thumbnail,
+              url: episode.thumbnail!,
               onTap: () {
                 Navigator.push(
                   context,

@@ -45,7 +45,8 @@ class ContinueWatchingItem {
 
     return ContinueWatchingItem(
       id: item.id,
-      thumbnail: item.thumbnail,
+      thumbnail:
+          "https://zenith.hasali.uk/api/items/${item.id}/images/thumbnail",
       title: title,
       subtitle: subtitle,
       progress:
