@@ -96,8 +96,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final cardBorderRadius = desktop ? 16.0 : 8.0;
 
-    final thumbnailItemWidth = desktop ? 350.0 : 240.0;
+    final thumbnailItemWidth = desktop ? 350.0 : 268.0;
     final thumbnailItemHeight = thumbnailItemWidth / (16 / 9);
+    final thumbnailItemPadding = desktop ? 16.0 : 12.0;
 
     final posterItemWidth = desktop ? 180.0 : 120.0;
     final posterItemHeight = posterItemWidth / (2 / 3) + (desktop ? 64 : 40);
@@ -128,6 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
             subtitle: item.subtitle,
             progress: item.progress,
             borderRadius: cardBorderRadius,
+            padding: thumbnailItemPadding,
             primaryTextStyle: primaryTextStyle,
             secondaryTextStyle: secondaryTextStyle,
             onTap: () async {
@@ -285,6 +287,7 @@ class ThumbnailItem extends StatelessWidget {
   final String subtitle;
   final double progress;
   final double borderRadius;
+  final double padding;
   final TextStyle? primaryTextStyle;
   final TextStyle? secondaryTextStyle;
   final void Function() onTap;
@@ -296,6 +299,7 @@ class ThumbnailItem extends StatelessWidget {
     required this.subtitle,
     required this.progress,
     required this.borderRadius,
+    required this.padding,
     required this.primaryTextStyle,
     required this.secondaryTextStyle,
     required this.onTap,
@@ -321,7 +325,7 @@ class ThumbnailItem extends StatelessWidget {
             onTap: onTap,
             child: Container(
               alignment: Alignment.bottomCenter,
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(padding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
