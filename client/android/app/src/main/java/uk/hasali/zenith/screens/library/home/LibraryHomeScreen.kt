@@ -48,9 +48,13 @@ fun LibraryHomeScreen(
                 CastButton()
             }
         },
-    ) {
+    ) { padding ->
         if (state.isError) {
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+            ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.align(Alignment.Center),

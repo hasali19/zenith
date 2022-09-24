@@ -17,7 +17,8 @@ class MediaSessionManager @Inject constructor(
         fun onPlayerChanged() {}
     }
 
-    private val castContext = CastContext.getSharedInstance(context)
+    private var castContext: CastContext? = null
+
     private val castSessionManagerListener = object : SessionManagerListener<CastSession> {
         override fun onSessionEnded(p0: CastSession, p1: Int) {}
 
@@ -26,7 +27,7 @@ class MediaSessionManager @Inject constructor(
         override fun onSessionResumeFailed(p0: CastSession, p1: Int) {}
 
         override fun onSessionResumed(p0: CastSession, p1: Boolean) {
-            val session = castContext.sessionManager.currentCastSession!!
+            val session = castContext?.sessionManager?.currentCastSession!!
             val client = session.remoteMediaClient!!
             if (player == null) {
                 val remotePlayer = RemoteVideoPlayer(context, client)
@@ -48,8 +49,15 @@ class MediaSessionManager @Inject constructor(
     private val listeners = mutableListOf<Listener>()
     private var player: VideoPlayer? = null
 
+    init {
+        CastContext.getSharedInstance(context) { it.run() }
+            .addOnCompleteListener {
+                castContext = it.result
+            }
+    }
+
     fun init() {
-        castContext.sessionManager.addSessionManagerListener(
+        castContext?.sessionManager?.addSessionManagerListener(
             castSessionManagerListener,
             CastSession::class.java
         )
@@ -82,7 +90,7 @@ class MediaSessionManager @Inject constructor(
     }
 
     fun dispose() {
-        castContext.sessionManager.removeSessionManagerListener(
+        castContext?.sessionManager?.removeSessionManagerListener(
             castSessionManagerListener,
             CastSession::class.java
         )
@@ -97,7 +105,7 @@ class MediaSessionManager @Inject constructor(
     }
 
     private fun createPlayer(): VideoPlayer {
-        val currentCastSession = castContext.sessionManager.currentCastSession
+        val currentCastSession = castContext?.sessionManager?.currentCastSession
         val mediaClient = currentCastSession?.remoteMediaClient
         return if (mediaClient == null) {
             LocalVideoPlayer(context)

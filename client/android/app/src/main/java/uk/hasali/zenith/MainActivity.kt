@@ -1,10 +1,12 @@
 package uk.hasali.zenith
 
+import android.app.PictureInPictureParams
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -23,7 +25,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.cast.framework.CastContext
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import uk.hasali.zenith.api.ZenithMediaService
@@ -75,7 +78,7 @@ class MainActivity : FragmentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         // Initialise cast context
-        CastContext.getSharedInstance(this)
+        CastContext.getSharedInstance(this) { it.run() }
 
         // Create notification channel for media notifications
         NotificationManagerCompat.from(this)
@@ -158,6 +161,7 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onPictureInPictureModeChanged(
         isInPictureInPictureMode: Boolean,
         newConfig: Configuration,
@@ -169,7 +173,15 @@ class MainActivity : FragmentActivity() {
     override fun onUserLeaveHint() {
         if (pictureInPictureController.shouldEnterOnUserLeaveHint) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                enterPictureInPictureMode()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    enterPictureInPictureMode(
+                        PictureInPictureParams.Builder()
+                            .build()
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    enterPictureInPictureMode()
+                }
             }
         }
     }

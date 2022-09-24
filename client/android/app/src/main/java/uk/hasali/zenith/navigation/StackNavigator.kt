@@ -15,6 +15,8 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import uk.hasali.zenith.parcelable
+import uk.hasali.zenith.parcelableArrayList
 
 class StackNavigator<T : Parcelable> constructor(
     private val lifecycleOwner: LifecycleOwner,
@@ -28,8 +30,9 @@ class StackNavigator<T : Parcelable> constructor(
     private val _stack = SnapshotStateList<DefaultNavEntry<T>>().apply {
         if (savedState != null) {
             // Restore backstack from saved state
-            savedState.getParcelableArrayList<Bundle>("backstack")?.forEach {
-                add(createEntry(it.getParcelable("screen")!!, it.getBundle("state")))
+            savedState.parcelableArrayList("backstack", Bundle::class.java)?.forEach {
+                @Suppress("UNCHECKED_CAST")
+                add(createEntry(it.parcelable("screen", Parcelable::class.java)!! as T, it.getBundle("state")))
             }
 
             // Ensure that the topmost entry gets RESUMED
