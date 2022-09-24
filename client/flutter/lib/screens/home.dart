@@ -330,8 +330,10 @@ class ThumbnailItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextOneLine(title, style: primaryTextStyle),
-                  TextOneLine(subtitle, style: secondaryTextStyle),
+                  TextOneLine(title,
+                      style: primaryTextStyle?.copyWith(color: Colors.white)),
+                  TextOneLine(subtitle,
+                      style: secondaryTextStyle?.copyWith(color: Colors.white)),
                   const SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
