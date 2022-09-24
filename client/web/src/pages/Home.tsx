@@ -150,7 +150,7 @@ function FeaturedSection<T>(p: {
 }) {
   return (
     <div class={styles.featuredSection}>
-      <h2 class={styles.featuredSectionTitle}>{p.title}</h2>
+      <h2 class="text-2xl m-1 mt-6">{p.title}</h2>
       <Swiper breakpoints={p.breakpoints}>
         <For each={p.items}>
           {(item) => <SwiperSlide>{p.children(item)}</SwiperSlide>}
