@@ -1,6 +1,5 @@
 import { Component, JSX, ParentComponent, Show } from "solid-js";
 import { Image } from "./Image";
-import * as styles from "./MediaDetailsScreen.css";
 import { Poster } from "./Poster";
 
 export const MediaDetailsScreen: ParentComponent<{
@@ -14,10 +13,13 @@ export const MediaDetailsScreen: ParentComponent<{
   headerActions?: JSX.Element;
 }> = (p) => {
   return (
-    <div class={styles.root}>
-      <Image src={p.backdrop} class={styles.backdrop} />
-      <div class={styles.backdropOverlay} />
-      <div class={styles.content}>
+    <div class="w-full h-full relative">
+      <Image
+        src={p.backdrop}
+        class="w-full h-full absolute object-cover backdrop-blur"
+      />
+      <div class="w-full h-full absolute bg-white/70 dark:bg-black/70" />
+      <div class="w-full h-full relative overflow-auto p-[5%]">
         <HeaderSection
           poster={p.poster}
           name={p.name}
@@ -42,17 +44,17 @@ const HeaderSection: Component<{
   watched: boolean;
   actions?: JSX.Element;
 }> = (p) => (
-  <div class={styles.headerSection}>
-    <Poster src={p.poster} watched={p.watched} class={styles.poster} />
-    <div class={styles.headerContentContainer}>
-      <h1>{p.name}</h1>
-      <h2>{p.subtitle}</h2>
+  <div class="flex min-w-0">
+    <Poster src={p.poster} watched={p.watched} class="w-[280px]" />
+    <div class="flex-1 max-w-[720px] ml-12">
+      <h1 class="text-5xl mb-8">{p.name}</h1>
+      <h2 class="text-2xl mb-8">{p.subtitle}</h2>
       <Show when={p.actions}>
-        <div style={{ "margin-top": "32px" }}>{p.actions}</div>
+        <div class="mb-8">{p.actions}</div>
       </Show>
-      <p class={styles.headerSectionOverview}>{p.overview}</p>
+      <p>{p.overview}</p>
     </div>
-    <TmdbLink href={p.tmdbLink} class={styles.tmdbLinkBox} />
+    <TmdbLink href={p.tmdbLink} class="ml-6" />
   </div>
 );
 
@@ -61,7 +63,7 @@ const TmdbLink: Component<{ href: any; class?: string }> = (p) => (
     <a href={p.href}>
       <img
         src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_1-5bdc75aaebeb75dc7ae79426ddd9be3b2be1e342510f8202baf6bffa71d7f5c4.svg"
-        class={styles.tmdbLinkImg}
+        class="h-8 inline ml-6 mt-3"
       />
     </a>
   </div>

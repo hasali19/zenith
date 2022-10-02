@@ -1,6 +1,5 @@
 import { Component, createSignal, Show } from "solid-js";
 import preferences from "../preferences";
-import * as styles from "./SelectServer.css";
 
 export const SelectServerScreen: Component = () => {
   const [server, setServer] = createSignal("");
@@ -32,17 +31,17 @@ export const SelectServerScreen: Component = () => {
   };
 
   return (
-    <div class={styles.root}>
-      <form class={styles.form} onSubmit={onSubmit}>
-        <h1 class={styles.title}>Select server</h1>
+    <div class="flex-1 flex items-center justify-center">
+      <form class="flex-1 max-w-[480px] flex flex-col" onSubmit={onSubmit}>
+        <h1 class="my-4 text-center">Select server</h1>
         <input
           type="url"
-          class={styles.input}
+          class="bg-white/10 rounded-md text-white focus-visible:bg-[rgba(50,50,50,0.6)] placeholder:text-neutral-300"
           placeholder="Server address"
           onInput={(e) => setServer(e.currentTarget.value)}
         />
         <button
-          class={styles.button}
+          class="mt-4 disabled:bg-[#d16318]"
           classList={{ "is-loading": isLoading() }}
           disabled={isLoading() || !isValid()}
         >

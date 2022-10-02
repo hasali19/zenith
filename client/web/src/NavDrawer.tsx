@@ -1,7 +1,6 @@
 import { useLocation, useNavigate } from "solid-app-router";
 import { Component, JSX, ParentComponent } from "solid-js";
 import { FilmIcon, GearIcon, HomeIcon, TvIcon } from "./icons";
-import * as styles from "./NavDrawer.css";
 
 export const NavDrawer: Component = () => {
   const location = useLocation();
@@ -18,11 +17,11 @@ export const NavDrawer: Component = () => {
   }
 
   const SubTitle: ParentComponent = (p) => {
-    return <p class={styles.subtitle}>{p.children}</p>;
+    return <p class="text-sm font-bold text-gray-400">{p.children}</p>;
   };
 
   const Section: ParentComponent = (p) => {
-    return <div class={styles.section}>{p.children}</div>;
+    return <div class="p-1">{p.children}</div>;
   };
 
   interface LinkProps {
@@ -34,24 +33,26 @@ export const NavDrawer: Component = () => {
   const Link: Component<LinkProps> = (p) => {
     return (
       <div
-        class={styles.link}
-        classList={{ [styles.active]: isPath(p.path) }}
+        class="my-1 p-3 flex items-center select-none text-base transition-colors rounded-lg cursor-pointer [&:not(.active)]:hover:bg-black/10 dark:[&:not(.active)]:hover:bg-white/10"
+        classList={{
+          "bg-black/20 dark:bg-white/20 text-orange-500 active": isPath(p.path),
+        }}
         onClick={[onNavigate, p.path]}
       >
-        <div class={styles.icon}>{p.icon}</div>
+        <div class="mr-4">{p.icon}</div>
         {p.title}
       </div>
     );
   };
 
   const Divider: Component = () => {
-    return <div class={styles.divider} />;
+    return <div class={"border-t border-neutral-600 my-3"} />;
   };
 
   return (
-    <div class={styles.drawer}>
-      <div class={styles.header}>
-        <img src="/images/zenith.png" class={styles.img} />
+    <div class="flex flex-col p-2 bg-neutral-200 dark:bg-neutral-800 shadow-[0px_0px_4px_#aaaaaa] dark:shadow-[0px_0px_4px_#141414]">
+      <div class="p-8 flex justify-center">
+        <img src="/images/zenith.png" class="w-[64px] h-[88px]" />
       </div>
       <Divider />
       <Section>

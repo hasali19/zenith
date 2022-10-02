@@ -1,7 +1,5 @@
 import { Component, Show } from "solid-js";
 import { Outlet, Route, Router, Routes } from "solid-app-router";
-
-import * as styles from "./App.css";
 import preferences from "./preferences";
 
 import { NavDrawer } from "./NavDrawer";
@@ -41,9 +39,9 @@ export const App: Component = () => {
 
 const MainScreen: Component = () => {
   return (
-    <div class={styles.app}>
+    <div class="w-screen h-screen grid grid-cols-[256px_minmax(0,_1fr)]">
       <NavDrawer />
-      <div class={styles.content}>{<Outlet />}</div>
+      <div class="100-screen overflow-auto">{<Outlet />}</div>
     </div>
   );
 };

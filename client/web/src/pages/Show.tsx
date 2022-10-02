@@ -4,7 +4,6 @@ import { MediaDetailsScreen } from "../MediaDetailsScreen";
 import { MediaItemWithPoster } from "../MediaItem";
 import preferences from "../preferences";
 import { formatYear } from "../utils";
-import * as styles from "./Show.css";
 
 async function fetchShow(id: string) {
   const url = `${preferences.server}/api/tv/shows/${id}`;
@@ -69,12 +68,12 @@ const SeasonsSection: Component<{
   seasons: any[];
   onItemClick: (item: any) => void;
 }> = (p) => (
-  <div class={styles.seriesSection}>
-    <h3>Series</h3>
-    <div class={styles.seriesGrid}>
+  <div class="mt-20">
+    <h3 class="my-8 text-2xl">Series</h3>
+    <div class="grid grid-cols-[repeat(auto-fill,_160px)] gap-8">
       <For each={p.seasons}>
         {(season) => (
-          <div class={styles.seriesItemWrapper}>
+          <div class="mb-4">
             <MediaItemWithPoster
               poster={`${preferences.server}/api/items/${season.id}/images/poster`}
               name={season.name}

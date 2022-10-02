@@ -1,5 +1,4 @@
 import { Component, JSX } from "solid-js";
-import * as styles from "./Image.css";
 
 export const Image: Component<JSX.ImgHTMLAttributes<HTMLImageElement>> = (
   p
@@ -7,8 +6,8 @@ export const Image: Component<JSX.ImgHTMLAttributes<HTMLImageElement>> = (
   return (
     <img
       {...p}
-      class={`${p.class ?? ""} ${styles.img}`}
-      onLoad={(e) => e.currentTarget.classList.add(styles.loaded)}
+      class={`${p.class ?? ""} transition-opacity duration-300 opacity-0`}
+      onLoad={(e) => e.currentTarget.classList.add("opacity-100")}
     />
   );
 };

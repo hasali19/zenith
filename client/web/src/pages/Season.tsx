@@ -3,7 +3,6 @@ import { Component, createEffect, createSignal, For, Show } from "solid-js";
 import { MediaDetailsScreen } from "../MediaDetailsScreen";
 import { MediaItemWithThumbnail } from "../MediaItem";
 import preferences from "../preferences";
-import * as styles from "./Season.css";
 
 async function fetchShow(id: string) {
   const url = `${preferences.server}/api/tv/shows/${id}`;
@@ -80,9 +79,9 @@ const EpisodesSection: Component<{
   episodes: any[];
   onItemClick: (item: any) => void;
 }> = (p) => (
-  <div class={styles.seriesSection}>
-    <h3>Episodes</h3>
-    <div class={styles.seriesGrid}>
+  <div class="mt-20">
+    <h3 class="my-8 text-2xl">Episodes</h3>
+    <div class="grid grid-cols-[repeat(auto-fill,_minmax(360px,_1fr))] gap-8">
       <For each={p.episodes}>
         {(episode) => (
           <MediaItemWithThumbnail

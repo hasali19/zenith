@@ -16,8 +16,6 @@ import preferences from "../preferences";
 import { Swiper, SwiperSlide } from "../Swiper";
 import { formatYear } from "../utils";
 
-import * as styles from "./Home.css";
-
 const POSTER_SWIPER_BREAKPOINTS = {
   480: { slidesPerView: 3, slidesPerGroup: 3 },
   640: { slidesPerView: 5, slidesPerGroup: 5 },
@@ -162,7 +160,7 @@ const HeroSection: Component<{ item?: any }> = (p) => {
   return (
     <>
       {
-        <div class={styles.heroSection + " relative"}>
+        <div class="w-100 h-[40vh] relative shadow-xl rounded-lg m-2">
           <For each={stack()}>
             {(item) => (
               <img
@@ -185,8 +183,8 @@ function FeaturedSection<T>(p: {
   children: (item: T) => JSX.Element;
 }) {
   return (
-    <div class={styles.featuredSection}>
-      <h2 class="text-2xl m-1 mt-6">{p.title}</h2>
+    <div class="p-1">
+      <h2 class="text-2xl m-1 mt-6 mb-3">{p.title}</h2>
       <Swiper breakpoints={p.breakpoints}>
         <For each={p.items}>
           {(item) => <SwiperSlide>{p.children(item)}</SwiperSlide>}

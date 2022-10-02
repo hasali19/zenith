@@ -1,7 +1,6 @@
 import { splitProps } from "solid-js";
 import { JSX } from "solid-js/jsx-runtime";
 import { Component } from "solid-js/types";
-import * as styles from "./SvgIcon.css";
 
 export interface SvgIconProps extends JSX.SvgSVGAttributes<SVGSVGElement> {
   path: string;
@@ -15,7 +14,7 @@ export const SvgIcon: Component<SvgIconProps> = (p) => {
   const viewBox = p.viewBox || "0 0 24 24";
   return (
     <svg
-      class={`${styles.svg} ${props.class ?? ""}`}
+      class={`fill-current ${props.class ?? ""}`}
       width={size()}
       height={size()}
       viewBox={viewBox}

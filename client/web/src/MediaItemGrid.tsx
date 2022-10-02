@@ -1,6 +1,5 @@
 import { VirtualContainer } from "@minht11/solid-virtual-container";
 import { Component } from "solid-js";
-import * as styles from "./MediaItemGrid.css";
 import { MediaItemWithPoster } from "./MediaItem";
 import { formatYear } from "./utils";
 
@@ -31,8 +30,8 @@ export const MediaItemGrid: Component<{
   }
 
   return (
-    <div ref={root} class={styles.scrollRoot}>
-      <div class={styles.outerMargin}>
+    <div ref={root} class="w-full h-full overflow-auto">
+      <div class="m-8">
         <VirtualContainer
           items={p.items}
           scrollTarget={root}
@@ -42,7 +41,7 @@ export const MediaItemGrid: Component<{
           }
         >
           {(q) => (
-            <div class={styles.item} style={q.style}>
+            <div class="p-4" style={q.style}>
               <MediaItemWithPoster
                 poster={q.item.poster}
                 name={q.item.name}
