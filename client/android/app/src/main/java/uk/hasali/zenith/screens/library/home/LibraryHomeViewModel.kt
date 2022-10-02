@@ -9,9 +9,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import uk.hasali.zenith.api.MediaItem
 import uk.hasali.zenith.api.Movie
 import uk.hasali.zenith.api.Show
+import uk.hasali.zenith.api.VideoItem
 import uk.hasali.zenith.api.ZenithMediaService
 import javax.inject.Inject
 
@@ -19,7 +19,7 @@ import javax.inject.Inject
 class LibraryHomeViewModel @Inject constructor(
     private val client: ZenithMediaService,
 ) : ViewModel() {
-    private val _continueWatching = MutableStateFlow<List<MediaItem>>(emptyList())
+    private val _continueWatching = MutableStateFlow<List<VideoItem>>(emptyList())
     private val _recentMovies = MutableStateFlow<List<Movie>>(emptyList())
     private val _recentShows = MutableStateFlow<List<Show>>(emptyList())
     private val _isRefreshing = MutableStateFlow(false)

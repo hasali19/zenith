@@ -4,9 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import uk.hasali.zenith.api.Movie
 import uk.hasali.zenith.ui.BottomSheetController
 import uk.hasali.zenith.ui.formatDuration
@@ -28,8 +25,7 @@ fun MovieDetailsScreen(
         poster = movie.poster,
         overview = movie.overview,
         headerContent = { HeaderContent(movie = movie) },
-        info = movie.videoInfo,
-        userData = movie.userData,
+        video = movie,
         bottomSheetController = bottomSheetController,
         onSetWatched = onSetWatched,
         onPlay = onPlay,

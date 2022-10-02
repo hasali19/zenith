@@ -25,9 +25,21 @@ enum class MediaItemType {
 }
 
 @Serializable
-sealed class MediaItem {
-    abstract val id: Int
-    abstract val type: MediaItemType
+sealed interface MediaItem {
+    val id: Int
+    val type: MediaItemType
+}
+
+@Serializable
+sealed interface VideoItem : MediaItem {
+    val videoInfo: VideoInfo
+    val userData: VideoUserData
+
+    val shouldResume: Boolean
+        get() {
+            val position = userData.position ?: return false
+            return position > 0.05 * videoInfo.duration && position < 0.9 * videoInfo.duration
+        }
 }
 
 @Serializable
@@ -41,10 +53,10 @@ data class Movie(
     val poster: String?,
     val backdrop: String?,
     @SerialName("video_info")
-    val videoInfo: VideoInfo,
+    override val videoInfo: VideoInfo,
     @SerialName("user_data")
-    val userData: VideoUserData,
-) : MediaItem() {
+    override val userData: VideoUserData,
+) : MediaItem, VideoItem {
     override val type: MediaItemType
         get() = MediaItemType.Movie
 
@@ -69,7 +81,7 @@ data class Show(
     val backdrop: String?,
     @SerialName("user_data")
     val userData: CollectionUserData,
-) : MediaItem() {
+) : MediaItem {
     override val type: MediaItemType
         get() = MediaItemType.Show
 
@@ -96,7 +108,7 @@ data class Season(
     val backdrop: String?,
     @SerialName("user_data")
     val userData: CollectionUserData,
-) : MediaItem() {
+) : MediaItem {
     override val type: MediaItemType
         get() = MediaItemType.Season
 }
@@ -121,10 +133,10 @@ data class Episode(
     val backdrop: String?,
     val thumbnail: String?,
     @SerialName("video_info")
-    val videoInfo: VideoInfo,
+    override val videoInfo: VideoInfo,
     @SerialName("user_data")
-    val userData: VideoUserData,
-) : MediaItem() {
+    override val userData: VideoUserData,
+) : MediaItem, VideoItem {
     override val type: MediaItemType
         get() = MediaItemType.Episode
 

@@ -82,7 +82,7 @@ fun LibraryHomeScreen(
 
 @Composable
 private fun LibraryHomeScreen(
-    continueWatching: List<MediaItem>,
+    continueWatching: List<VideoItem>,
     movies: List<Movie>,
     shows: List<Show>,
     isRefreshing: Boolean,
@@ -167,7 +167,7 @@ private fun Section(
 }
 
 @Composable
-private fun ContinueWatchingList(items: List<MediaItem>, onItemClick: (MediaItem) -> Unit) {
+private fun ContinueWatchingList(items: List<VideoItem>, onItemClick: (VideoItem) -> Unit) {
     LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
         items(items) { item ->
             val title: String
@@ -191,7 +191,6 @@ private fun ContinueWatchingList(items: List<MediaItem>, onItemClick: (MediaItem
                     userData = item.userData
                     videoInfo = item.videoInfo
                 }
-                else -> throw IllegalArgumentException("Invalid item type")
             }
 
             val progress =
@@ -226,20 +225,24 @@ private fun ContinueWatchingList(items: List<MediaItem>, onItemClick: (MediaItem
                             }
                         }
 
-                        Box(
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .fillMaxWidth()
-                                .height(2.dp)
-                                .clip(RoundedCornerShape(50))
-                                .background(Color.White)
-                        ) {
+                        if (item.shouldResume) {
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth(progress)
-                                    .fillMaxHeight()
-                                    .background(MaterialTheme.colors.primary)
-                            )
+                                    .padding(8.dp)
+                                    .fillMaxWidth()
+                                    .height(2.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(Color.White)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(progress)
+                                        .fillMaxHeight()
+                                        .background(MaterialTheme.colors.primary)
+                                )
+                            }
+                        } else {
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
                 },

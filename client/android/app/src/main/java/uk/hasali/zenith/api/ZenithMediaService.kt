@@ -38,7 +38,7 @@ interface ZenithMediaService {
     suspend fun getItem(@Path("id") id: Int): MediaItem
 
     @GET("items/continue_watching")
-    suspend fun getContinueWatching(): List<MediaItem>
+    suspend fun getContinueWatching(): List<VideoItem>
 
     @PATCH("items/{id}/user_data")
     suspend fun updateUserData(@Path("id") id: Int, @Body data: VideoUserDataPatch)

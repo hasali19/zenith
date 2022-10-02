@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 import uk.hasali.zenith.LanguageCodes
 import uk.hasali.zenith.api.SubtitleInfo
 import uk.hasali.zenith.api.VideoInfo
-import uk.hasali.zenith.api.VideoUserData
+import uk.hasali.zenith.api.VideoItem
 import uk.hasali.zenith.ui.*
 import kotlin.io.path.Path
 import kotlin.io.path.extension
@@ -61,8 +61,7 @@ fun VideoItemDetailsScreen(
     poster: String?,
     overview: String?,
     headerContent: @Composable () -> Unit,
-    info: VideoInfo,
-    userData: VideoUserData,
+    video: VideoItem,
     bottomSheetController: BottomSheetController,
     onSetWatched: (Boolean) -> Unit,
     onPlay: (position: Double?) -> Unit,
@@ -73,8 +72,8 @@ fun VideoItemDetailsScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val position = userData.position ?: 0.0
-    var isWatched by remember(userData) { mutableStateOf(userData.isWatched) }
+    val position = video.userData.position ?: 0.0
+    var isWatched by remember(video) { mutableStateOf(video.userData.isWatched) }
 
     val subtitlePickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
@@ -108,7 +107,7 @@ fun VideoItemDetailsScreen(
             Poster(
                 url = poster,
                 overlay = {
-                    if (position > 0.05 * info.duration && position < 0.9 * info.duration)
+                    if (position > 0.05 * video.videoInfo.duration && position < 0.9 * video.videoInfo.duration)
                         VideoPositionOverlay(position)
                 },
             )
@@ -119,8 +118,7 @@ fun VideoItemDetailsScreen(
         headerContent = headerContent,
         actionsRow = {
             ActionsSection(
-                duration = info.duration,
-                position = userData.position,
+                video = video,
                 isWatched = isWatched,
                 onPlay = onPlay,
                 onSetWatched = {
@@ -129,7 +127,7 @@ fun VideoItemDetailsScreen(
                 },
                 onShowMediaInfo = {
                     scope.launch {
-                        bottomSheetController.show(MediaInfoSheetContent(info))
+                        bottomSheetController.show(MediaInfoSheetContent(video.videoInfo))
                     }
                 },
                 onShowMoreActions = {
@@ -137,7 +135,7 @@ fun VideoItemDetailsScreen(
                         bottomSheetController.show(
                             ActionsSheetContent(
                                 title = name,
-                                subtitles = info.subtitles.orEmpty(),
+                                subtitles = video.videoInfo.subtitles.orEmpty(),
                                 onConvertVideo = onConvertVideo,
                                 onRefreshMetadata = onRefreshMetadata,
                                 onImportSubtitle = {
@@ -180,8 +178,7 @@ private fun VideoPositionOverlay(position: Double) {
 
 @Composable
 private fun ActionsSection(
-    duration: Double,
-    position: Double?,
+    video: VideoItem,
     isWatched: Boolean,
     onPlay: (position: Double?) -> Unit,
     onSetWatched: (Boolean) -> Unit,
@@ -189,11 +186,11 @@ private fun ActionsSection(
     onShowMoreActions: () -> Unit,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        val resume = position != null && position > 0.05 * duration && position < 0.9 * duration
+        val shouldResume = video.shouldResume
 
         PlayButton(
-            resume = resume,
-            onClick = { onPlay(if (resume) position else null) },
+            resume = shouldResume,
+            onClick = { onPlay(if (shouldResume) video.userData.position else null) },
         )
 
         Spacer(modifier = Modifier.width(8.dp))
