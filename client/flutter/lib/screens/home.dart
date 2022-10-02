@@ -324,7 +324,7 @@ class ThumbnailItem extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             child: Container(
-              alignment: Alignment.bottomCenter,
+              alignment: Alignment.bottomLeft,
               padding: EdgeInsets.all(padding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,14 +334,16 @@ class ThumbnailItem extends StatelessWidget {
                       style: primaryTextStyle?.copyWith(color: Colors.white)),
                   TextOneLine(subtitle,
                       style: secondaryTextStyle?.copyWith(color: Colors.white)),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: Colors.white,
+                  if (progress > 0.05 && progress < 0.9) ...[
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.white,
+                      ),
                     ),
-                  ),
+                  ]
                 ],
               ),
             ),
