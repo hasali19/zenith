@@ -1,16 +1,16 @@
 package uk.hasali.zenith.screens.library.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedButton
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -98,18 +98,6 @@ private fun LibraryHomeScreen(
                 .verticalScroll(state = rememberScrollState())
                 .padding(bottom = 8.dp),
         ) {
-            Row(modifier = Modifier.padding(top = 12.dp, start = 12.dp, end = 12.dp)) {
-                OutlinedButton(modifier = Modifier.weight(1f), onClick = onNavigateToMovies) {
-                    Text("Movies")
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                OutlinedButton(modifier = Modifier.weight(1f), onClick = onNavigateToShows) {
-                    Text("Shows")
-                }
-            }
-
             if (continueWatching.isNotEmpty()) {
                 Section(title = "Continue Watching") {
                     ContinueWatchingList(
@@ -127,6 +115,7 @@ private fun LibraryHomeScreen(
                     name = { it.title },
                     year = { it.releaseYear() },
                     isWatched = { it.userData.isWatched },
+                    onNavigate = onNavigateToMovies,
                     onItemClick = { onNavigateToItem(it.id) },
                 )
             }
@@ -139,6 +128,7 @@ private fun LibraryHomeScreen(
                     name = { it.name },
                     year = { it.startYear() },
                     isWatched = { it.userData.unwatched == 0 },
+                    onNavigate = onNavigateToShows,
                     onItemClick = { onNavigateToItem(it.id) },
                 )
             }
@@ -147,17 +137,30 @@ private fun LibraryHomeScreen(
 }
 
 @Composable
-private fun Section(title: String, content: @Composable () -> Unit) {
+private fun Section(
+    title: String,
+    onNavigate: (() -> Unit)? = null,
+    content: @Composable () -> Unit
+) {
     Column {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.subtitle1,
-            fontWeight = FontWeight.Bold,
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp, bottom = 4.dp)
+                .clickable(onNavigate != null) { onNavigate?.invoke() }
                 .padding(horizontal = 12.dp, vertical = 8.dp),
-        )
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.subtitle1,
+                fontWeight = FontWeight.Bold,
+            )
+
+            if (onNavigate != null) {
+                Spacer(modifier = Modifier.weight(1f))
+                Icon(Icons.Default.ChevronRight, contentDescription = null)
+            }
+        }
 
         content()
     }
@@ -257,9 +260,10 @@ private fun <T> Section(
     name: (T) -> String,
     year: (T) -> Int?,
     isWatched: (T) -> Boolean = { false },
+    onNavigate: () -> Unit,
     onItemClick: (T) -> Unit,
 ) {
-    Section(title = title) {
+    Section(title = title, onNavigate = onNavigate) {
         LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
             items(items) { item ->
                 MediaItemWithPoster(
