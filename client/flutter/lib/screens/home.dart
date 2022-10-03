@@ -124,7 +124,8 @@ class _HomeScreenState extends State<HomeScreen> {
           listItemHeight: thumbnailItemHeight,
           future: _continueWatching,
           itemBuilder: (context, item) => ThumbnailItem(
-            thumbnail: item.thumbnail!,
+            thumbnail:
+                "https://zenith.hasali.uk/api/items/${item.id}/images/thumbnail",
             title: item.title,
             subtitle: item.subtitle,
             progress: item.progress,
@@ -156,7 +157,8 @@ class _HomeScreenState extends State<HomeScreen> {
           listItemHeight: posterItemHeight,
           future: _recentMovies,
           itemBuilder: (context, item) => PosterItem(
-              poster: item.poster,
+              poster:
+                  "https://zenith.hasali.uk/api/items/${item.id}/images/poster",
               title: item.title,
               subtitle: item.subtitle,
               borderRadius: cardBorderRadius,
@@ -186,7 +188,8 @@ class _HomeScreenState extends State<HomeScreen> {
           listItemHeight: posterItemHeight,
           future: _recentShows,
           itemBuilder: (context, item) => PosterItem(
-              poster: item.poster,
+              poster:
+                  "https://zenith.hasali.uk/api/items/${item.id}/images/poster",
               title: item.title,
               subtitle: item.subtitle,
               borderRadius: cardBorderRadius,

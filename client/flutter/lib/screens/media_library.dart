@@ -104,7 +104,8 @@ class MediaItemGrid extends StatelessWidget {
                     aspectRatio: 2 / 3,
                     child: FadeInImage.memoryNetwork(
                       placeholder: transparentImage,
-                      image: item.poster!,
+                      image:
+                          "https://zenith.hasali.uk/api/items/${item.id}/images/poster",
                     ),
                   ),
                 ),
