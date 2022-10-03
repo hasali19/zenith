@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/responsive.dart';
+import 'package:zenith_flutter/screens/show_details.dart';
 import 'package:zenith_flutter/text_one_line.dart';
 
 class MediaLibraryScreen extends StatefulWidget {
@@ -92,19 +93,33 @@ class MediaItemGrid extends StatelessWidget {
           for (var i = rowIndex * cols; i < maxItemIndex; i++) {
             final item = items[i];
 
-            final poster = Material(
-              elevation: 2.0,
-              type: MaterialType.card,
-              clipBehavior: Clip.hardEdge,
-              borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
-              child: Ink.image(
-                fit: BoxFit.cover,
-                image: NetworkImage(item.poster!),
-                child: InkWell(
-                  onTap: () => onItemTap(item),
-                  child: const AspectRatio(aspectRatio: 2 / 3),
+            final poster = Stack(
+              children: [
+                Material(
+                  elevation: 2.0,
+                  type: MaterialType.card,
+                  clipBehavior: Clip.hardEdge,
+                  borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+                  child: AspectRatio(
+                    aspectRatio: 2 / 3,
+                    child: FadeInImage.memoryNetwork(
+                      placeholder: transparentImage,
+                      image: item.poster!,
+                    ),
+                  ),
                 ),
-              ),
+                Positioned.fill(
+                  child: Material(
+                    color: Colors.transparent,
+                    clipBehavior: Clip.hardEdge,
+                    borderRadius:
+                        BorderRadius.all(Radius.circular(borderRadius)),
+                    child: InkWell(
+                      onTap: () => onItemTap(item),
+                    ),
+                  ),
+                )
+              ],
             );
 
             final info = Padding(
