@@ -33,6 +33,7 @@ dependencies:
     sdk: flutter
 
   http: ^0.13.4
+  sliver_tools: ^0.2.8
   video_player:
     path: video_player/video_player
   wakelock: ^0.6.2

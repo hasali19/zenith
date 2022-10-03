@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/screens/show_details.dart';
+import 'package:zenith_flutter/screens/item_details.dart';
 import 'package:zenith_flutter/text_one_line.dart';
 
 class MediaLibraryScreen extends StatefulWidget {
