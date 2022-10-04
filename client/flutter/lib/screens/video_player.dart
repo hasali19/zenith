@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock/wakelock.dart';
@@ -40,7 +39,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           return _VideoPlayer(
-            item: snapshot.data! as api.VideoItem,
+            item: snapshot.data!,
             startPosition: widget.startPosition,
           );
         } else {
@@ -52,7 +51,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 }
 
 class _VideoPlayer extends StatefulWidget {
-  final api.VideoItem item;
+  final api.MediaItem item;
   final double startPosition;
 
   const _VideoPlayer({
@@ -79,7 +78,6 @@ SubtitleTrack subtitleFromApi(api.SubtitleTrack subtitle) {
 class _VideoPlayerState extends State<_VideoPlayer> {
   VideoController? _controller;
   bool _shouldShowControls = true;
-  bool _isTap = false;
 
   late Timer _progressTimer;
   Timer? _controlsTimer;
@@ -221,7 +219,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
 
 class ControlsContainer extends StatelessWidget {
   final VideoController controller;
-  final api.VideoItem item;
+  final api.MediaItem item;
   final bool visible;
 
   final void Function() onButtonTap;
@@ -256,7 +254,7 @@ class ControlsContainer extends StatelessWidget {
 
 class _Controls extends StatefulWidget {
   final VideoController controller;
-  final api.VideoItem item;
+  final api.MediaItem item;
 
   final void Function() onButtonTap;
   final void Function() onSeekStart;
@@ -322,7 +320,7 @@ class _ControlsState extends State<_Controls> {
               child: Padding(
                 padding: EdgeInsets.all(appBarPadding),
                 child: AppBar(
-                  title: Text(widget.item.title),
+                  title: Text(widget.item.name),
                   backgroundColor: Colors.transparent,
                   elevation: 0,
                 ),

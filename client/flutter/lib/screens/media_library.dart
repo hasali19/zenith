@@ -129,13 +129,13 @@ class MediaItemGrid extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TextOneLine(
-                    item.title,
+                    item.name,
                     style: titleStyle,
                   ),
                   const SizedBox(height: 2),
-                  if (item.year != null)
+                  if (item.startDate != null)
                     TextOneLine(
-                      item.year.toString(),
+                      item.startDate!.year.toString(),
                       style: subtitleStyle,
                     ),
                 ],

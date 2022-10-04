@@ -13,55 +13,12 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class ContinueWatchingItem {
-  final int id;
-  final String? thumbnail;
-  final String title;
-  final String subtitle;
-  final double progress;
-  final double startPosition;
-
-  ContinueWatchingItem({
-    required this.id,
-    required this.thumbnail,
-    required this.title,
-    required this.subtitle,
-    required this.progress,
-    required this.startPosition,
-  });
-
-  factory ContinueWatchingItem.fromMediaItem(api.VideoItem item) {
-    final String title;
-    final String subtitle;
-    if (item is api.Movie) {
-      title = item.title;
-      subtitle = item.year.toString();
-    } else if (item is api.Episode) {
-      title = item.showName;
-      subtitle = item.formatSeasonEpisode();
-    } else {
-      throw Exception("invalid media item: $item");
-    }
-
-    return ContinueWatchingItem(
-      id: item.id,
-      thumbnail:
-          "https://zenith.hasali.uk/api/items/${item.id}/images/thumbnail",
-      title: title,
-      subtitle: subtitle,
-      progress:
-          (item.userData?.position ?? 0) / (item.videoInfo?.duration ?? 1),
-      startPosition: item.userData?.position ?? 0,
-    );
-  }
-}
-
 class _HomeScreenState extends State<HomeScreen> {
   final _scrollController = ScrollController();
 
-  late Future<List<ContinueWatchingItem>> _continueWatching;
-  late Future<List<api.Movie>> _recentMovies;
-  late Future<List<api.Show>> _recentShows;
+  late Future<List<api.MediaItem>> _continueWatching;
+  late Future<List<api.MediaItem>> _recentMovies;
+  late Future<List<api.MediaItem>> _recentShows;
 
   @override
   void initState() {
@@ -71,8 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _refresh() {
     setState(() {
-      _continueWatching = api.fetchContinueWatching().then((value) =>
-          value.map((e) => ContinueWatchingItem.fromMediaItem(e)).toList());
+      _continueWatching = api.fetchContinueWatching();
       _recentMovies = api.fetchRecentMovies();
       _recentShows = api.fetchRecentShows();
     });
@@ -114,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(vertical: 16),
       children: [
-        Section<ContinueWatchingItem>(
+        Section<api.MediaItem>(
           title: "Continue Watching",
           titlePadding: sectionTitlePadding,
           titleStyle: sectionTitleStyle,
@@ -126,9 +82,10 @@ class _HomeScreenState extends State<HomeScreen> {
           itemBuilder: (context, item) => ThumbnailItem(
             thumbnail:
                 "https://zenith.hasali.uk/api/items/${item.id}/images/thumbnail",
-            title: item.title,
-            subtitle: item.subtitle,
-            progress: item.progress,
+            title: item.name,
+            subtitle: item.startDate?.year.toString() ?? "",
+            progress: (item.videoUserData?.position ?? 0) /
+                (item.videoInfo?.duration ?? 1),
             borderRadius: cardBorderRadius,
             padding: thumbnailItemPadding,
             primaryTextStyle: primaryTextStyle,
@@ -139,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(
                   builder: (context) => VideoPlayerScreen(
                     id: item.id,
-                    startPosition: item.startPosition,
+                    startPosition: item.videoUserData?.position ?? 0,
                   ),
                 ),
               );
@@ -147,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
-        Section<api.Movie>(
+        Section<api.MediaItem>(
           title: "Recent Movies",
           titlePadding: sectionTitlePadding,
           titleStyle: sectionTitleStyle,
@@ -159,8 +116,8 @@ class _HomeScreenState extends State<HomeScreen> {
           itemBuilder: (context, item) => PosterItem(
               poster:
                   "https://zenith.hasali.uk/api/items/${item.id}/images/poster",
-              title: item.title,
-              subtitle: item.subtitle,
+              title: item.name,
+              subtitle: item.startDate?.year.toString() ?? "",
               borderRadius: cardBorderRadius,
               infoSeparator: posterItemInfoSeparator,
               primaryTextStyle: primaryTextStyle,
@@ -171,14 +128,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   MaterialPageRoute(
                     builder: (context) => VideoPlayerScreen(
                       id: item.id,
-                      startPosition: item.userData?.position ?? 0,
+                      startPosition: item.videoUserData?.position ?? 0,
                     ),
                   ),
                 );
                 _refresh();
               }),
         ),
-        Section<api.Show>(
+        Section<api.MediaItem>(
           title: "Recent Shows",
           titlePadding: sectionTitlePadding,
           titleStyle: sectionTitleStyle,
@@ -190,8 +147,8 @@ class _HomeScreenState extends State<HomeScreen> {
           itemBuilder: (context, item) => PosterItem(
               poster:
                   "https://zenith.hasali.uk/api/items/${item.id}/images/poster",
-              title: item.title,
-              subtitle: item.subtitle,
+              title: item.name,
+              subtitle: item.startDate?.year.toString() ?? "",
               borderRadius: cardBorderRadius,
               infoSeparator: posterItemInfoSeparator,
               primaryTextStyle: primaryTextStyle,

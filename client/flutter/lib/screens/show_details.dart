@@ -13,8 +13,8 @@ final transparentImage = base64Decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
 
 class Season {
-  final api.Season data;
-  final List<api.Episode> episodes;
+  final api.MediaItem data;
+  final List<api.MediaItem> episodes;
 
   Season({
     required this.data,
@@ -24,7 +24,7 @@ class Season {
 
 Future<List<Season>> fetchSeasons(int showId) async {
   final seasons = <Season>[];
-  for (final api.Season season in await api.fetchSeasons(showId)) {
+  for (final season in await api.fetchSeasons(showId)) {
     final episodes = await api.fetchEpisodes(season.id);
     seasons.add(Season(data: season, episodes: episodes));
   }
@@ -32,7 +32,7 @@ Future<List<Season>> fetchSeasons(int showId) async {
 }
 
 class ShowDetailsScreen extends StatefulWidget {
-  final api.Show show;
+  final api.MediaItem show;
 
   const ShowDetailsScreen({Key? key, required this.show}) : super(key: key);
 
@@ -53,10 +53,12 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).isDesktop;
     return ItemDetailsScreen(
-      poster: widget.show.poster,
-      backdrop: widget.show.backdrop,
+      poster:
+          "https://zenith.hasali.uk/api/items/${widget.show.id}/images/poster",
+      backdrop:
+          "https://zenith.hasali.uk/api/items/${widget.show.id}/images/backdrop",
       name: widget.show.name,
-      year: widget.show.startYear,
+      year: widget.show.startDate?.year,
       overview: widget.show.overview,
       body: FutureBuilder<List<Season>>(
         future: _seasons,
@@ -93,8 +95,8 @@ class EpisodeList extends StatefulWidget {
 class _EpisodeListState extends State<EpisodeList> {
   final controller = ScrollController();
 
-  api.Season get season => widget.season.data;
-  List<api.Episode> get episodes => widget.season.episodes;
+  api.MediaItem get season => widget.season.data;
+  List<api.MediaItem> get episodes => widget.season.episodes;
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +154,7 @@ class EpisodeListItem extends StatelessWidget {
     required this.width,
   }) : super(key: key);
 
-  final api.Episode episode;
+  final api.MediaItem episode;
   final double width;
 
   @override
@@ -171,7 +173,9 @@ class EpisodeListItem extends StatelessWidget {
                   SizedBox(
                     width: width,
                     height: height,
-                    child: EpisodeThumbnail(url: episode.thumbnail),
+                    child: EpisodeThumbnail(
+                        url:
+                            "https://zenith.hasali.uk/api/items/${episode.id}/images/thumbnail"),
                   ),
                   const SizedBox(width: 12),
                   Flexible(
@@ -180,12 +184,12 @@ class EpisodeListItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         TextOneLine(
-                            "${episode.episodeNumber} - ${episode.name}",
+                            "${episode.parent!.index} - ${episode.name}",
                             style: theme.textTheme.titleMedium),
                         const SizedBox(height: 8),
                         Flexible(
                           child: Text(
-                            episode.overview,
+                            episode.overview ?? "",
                             style: theme.textTheme.bodySmall,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
@@ -208,7 +212,7 @@ class EpisodeListItem extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (context) => VideoPlayerScreen(
                         id: episode.id,
-                        startPosition: episode.userData?.position ?? 0,
+                        startPosition: episode.videoUserData?.position ?? 0,
                       ),
                     ),
                   );

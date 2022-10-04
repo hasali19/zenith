@@ -143,7 +143,7 @@ class _MainScreenState extends State<MainScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ShowDetailsScreen(show: item as Show),
+                builder: (context) => ShowDetailsScreen(show: item),
               ),
             );
           },
