@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock/wakelock.dart';
@@ -175,7 +176,11 @@ class _VideoPlayerState extends State<_VideoPlayer> {
           ? const Center(child: CircularProgressIndicator())
           : Listener(
               behavior: HitTestBehavior.opaque,
-              onPointerHover: (e) => _showControls(),
+              onPointerHover: (e) {
+                if (e.kind == PointerDeviceKind.mouse) {
+                  _showControls();
+                }
+              },
               child: Stack(
                 children: [
                   Center(
