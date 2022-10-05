@@ -17,6 +17,7 @@ class MediaItem {
   final DateTime? startDate;
   final DateTime? endDate;
   final MediaItemParent? parent;
+  final MediaItemParent? grandparent;
   final VideoInfo? videoInfo;
   final VideoUserData? videoUserData;
 
@@ -28,28 +29,37 @@ class MediaItem {
     required this.startDate,
     required this.endDate,
     required this.parent,
+    required this.grandparent,
     required this.videoInfo,
     required this.videoUserData,
   });
 
   factory MediaItem.fromJson(MediaType type, Map<String, dynamic> json) {
     final String name;
+    final int? startDate;
     MediaItemParent? parent;
+    MediaItemParent? grandparent;
     switch (type) {
       case MediaType.movie:
         name = json['title'];
+        startDate = json['release_date'];
         break;
       case MediaType.show:
         name = json['name'];
+        startDate = json['start_date'];
         break;
       case MediaType.season:
         name = json['name'];
+        startDate = json['start_date'];
         parent = MediaItemParent(
             json['show_id'], json['season_number'], json['show_name']);
         break;
       case MediaType.episode:
         name = json['name'];
+        startDate = json['air_date'];
         parent = MediaItemParent(json['season_id'], json['episode_number'], '');
+        grandparent = MediaItemParent(
+            json['show_id'], json['season_number'], json['show_name']);
         break;
     }
     return MediaItem(
@@ -57,13 +67,14 @@ class MediaItem {
       type: type,
       name: name,
       overview: json['overview'],
-      startDate: json['start_date'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['start_date'])
+      startDate: startDate != null
+          ? DateTime.fromMillisecondsSinceEpoch(startDate * 1000)
           : null,
       endDate: json['end_date'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['end_date'])
+          ? DateTime.fromMillisecondsSinceEpoch(json['end_date'] * 1000)
           : null,
       parent: parent,
+      grandparent: grandparent,
       videoInfo: json['video_info'] != null
           ? VideoInfo.fromJson(json['video_info'])
           : null,

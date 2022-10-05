@@ -83,7 +83,9 @@ class _HomeScreenState extends State<HomeScreen> {
             thumbnail:
                 "https://zenith.hasali.uk/api/items/${item.id}/images/thumbnail",
             title: item.name,
-            subtitle: item.startDate?.year.toString() ?? "",
+            subtitle: item.type == api.MediaType.episode
+                ? item.grandparent?.name ?? ""
+                : item.startDate?.year.toString() ?? "",
             progress: (item.videoUserData?.position ?? 0) /
                 (item.videoInfo?.duration ?? 1),
             borderRadius: cardBorderRadius,
