@@ -62,7 +62,10 @@ pub async fn get_image(
                 _ => "original",
             },
         },
-        None => "original",
+        None => match img_type {
+            MediaImageType::Poster => "w342",
+            MediaImageType::Backdrop | MediaImageType::Thumbnail => "original",
+        },
     };
 
     let item = db::items::get(&mut conn, id)
