@@ -7,8 +7,11 @@ use axum::extract::Path;
 use axum::response::IntoResponse;
 use axum::Extension;
 use axum_files::{FileRequest, FileResponse};
+use serde::Deserialize;
+use serde_qs::axum::QsQuery;
 use sha2::{Digest, Sha256};
 use speq::axum::get;
+use speq::Reflect;
 
 use crate::config::Config;
 use crate::db::media::MediaImageType;
@@ -17,17 +20,50 @@ use crate::db::{self, Db};
 use super::ext::OptionExt;
 use super::ApiResult;
 
+#[derive(Deserialize, Reflect)]
+pub struct ImageQuery {
+    width: Option<u32>,
+}
+
 #[get("/items/:id/images/:type")]
 #[path(i64, MediaImageType)]
 #[response(status = 200)]
 #[response(status = 404)]
 pub async fn get_image(
     Path((id, img_type)): Path<(i64, MediaImageType)>,
+    #[query] QsQuery(query): QsQuery<ImageQuery>,
     file: FileRequest,
     Extension(config): Extension<Arc<Config>>,
     Extension(db): Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
+
+    // TODO: query sizes from tmdb api dynamically
+    let size = match query.width {
+        Some(width) => match img_type {
+            MediaImageType::Poster => match width {
+                0..=92 => "w92",
+                93..=154 => "w154",
+                155..=185 => "w185",
+                186..=342 => "w342",
+                343..=500 => "w500",
+                _ => "original",
+            },
+            MediaImageType::Backdrop => match width {
+                0..=300 => "w300",
+                301..=780 => "w780",
+                781..=1280 => "w1280",
+                _ => "original",
+            },
+            MediaImageType::Thumbnail => match width {
+                0..=92 => "w92",
+                93..=185 => "w185",
+                186..=300 => "w300",
+                _ => "original",
+            },
+        },
+        None => "original",
+    };
 
     let item = db::items::get(&mut conn, id)
         .await?
@@ -37,7 +73,13 @@ pub async fn get_image(
         .image(img_type)
         .or_not_found("item does not have image of requested type")?;
 
-    let img_path = get_img_path(url, &config.paths.cache).await?;
+    // FIXME: super hacky - should use stored db values directly rather than result of utils::get_image_url
+    let url = match img_type {
+        MediaImageType::Poster => url.replacen("w342", size, 1),
+        MediaImageType::Backdrop | MediaImageType::Thumbnail => url.replacen("original", size, 1),
+    };
+
+    let img_path = get_img_path(&url, &config.paths.cache).await?;
 
     Ok(FileResponse::from_request(file, img_path).await?)
 }
