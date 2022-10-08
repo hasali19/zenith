@@ -175,7 +175,9 @@ class EpisodeListItem extends StatelessWidget {
                     height: height,
                     child: EpisodeThumbnail(
                         url:
-                            "https://zenith.hasali.uk/api/items/${episode.id}/images/thumbnail"),
+                          "https://zenith.hasali.uk/api/items/${episode.id}/images/thumbnail",
+                      isWatched: episode.videoUserData?.isWatched ?? false,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Flexible(
@@ -228,8 +230,13 @@ class EpisodeListItem extends StatelessWidget {
 
 class EpisodeThumbnail extends StatelessWidget {
   final String? url;
+  final bool isWatched;
 
-  const EpisodeThumbnail({Key? key, required this.url}) : super(key: key);
+  const EpisodeThumbnail({
+    Key? key,
+    required this.url,
+    required this.isWatched,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -238,13 +245,22 @@ class EpisodeThumbnail extends StatelessWidget {
       type: MaterialType.card,
       clipBehavior: Clip.hardEdge,
       borderRadius: const BorderRadius.all(Radius.circular(8)),
-      child: url == null
+      child: Stack(children: [
+        url == null
           ? const Icon(Icons.video_file, size: 48)
-          : FadeInImage.memoryNetwork(
+            : Positioned.fill(
+                child: FadeInImage.memoryNetwork(
               placeholder: transparentImage,
               image: url!,
               fit: BoxFit.cover,
             ),
+              ),
+        if (isWatched)
+          Container(
+            color: Colors.black.withAlpha(127),
+            child: const Center(child: Icon(Icons.check, size: 36)),
+          ),
+      ]),
     );
   }
 }

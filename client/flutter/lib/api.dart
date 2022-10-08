@@ -139,11 +139,18 @@ class VideoInfo {
 
 class VideoUserData {
   final double position;
+  final bool isWatched;
 
-  VideoUserData({required this.position});
+  VideoUserData({
+    required this.position,
+    required this.isWatched,
+  });
 
   factory VideoUserData.fromJson(Map<String, dynamic> json) {
-    return VideoUserData(position: json['position'] ?? 0);
+    return VideoUserData(
+      position: json['position'] ?? 0,
+      isWatched: json['is_watched'],
+    );
   }
 }
 
