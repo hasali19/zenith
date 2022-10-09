@@ -521,31 +521,7 @@ class _BottomControls extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.closed_caption),
               splashRadius: 20,
-              onPressed: () {
-                final width = MediaQuery.of(context).size.width;
-                showModalBottomSheet<void>(
-                  context: context,
-                  constraints: width > 600
-                      ? const BoxConstraints.expand(width: 600)
-                      : null,
-                  builder: (context) {
-                    return ListView(
-                      children: subtitles
-                          .map(
-                            (track) => ListTile(
-                              title: Text(track.language ?? "Unknown"),
-                              subtitle: Text(track.title ?? ""),
-                              onTap: () {
-                                onSelectSubtitle(track);
-                                Navigator.pop(context);
-                              },
-                            ),
-                          )
-                          .toList(),
-                    );
-                  },
-                );
-              },
+              onPressed: () => _showSubtitlesMenu(context),
             ),
             IconButton(
               icon: const Icon(Icons.fullscreen),
@@ -556,6 +532,42 @@ class _BottomControls extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _showSubtitlesMenu(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    showModalBottomSheet<void>(
+      context: context,
+      constraints: width > 600 ? const BoxConstraints.expand(width: 600) : null,
+      builder: (context) => ListView(
+        children: _buildSubtitlesMenuItems(context),
+      ),
+    );
+  }
+
+  List<Widget> _buildSubtitlesMenuItems(BuildContext context) {
+    final items = [
+      ListTile(
+        title: const Text("None"),
+        onTap: () {
+          onSelectSubtitle(null);
+          Navigator.pop(context);
+        },
+      )
+    ];
+
+    for (final track in subtitles) {
+      items.add(ListTile(
+        title: Text(track.language ?? "Unknown"),
+        subtitle: track.title != null ? Text(track.title!) : null,
+        onTap: () {
+          onSelectSubtitle(track);
+          Navigator.pop(context);
+        },
+      ));
+    }
+
+    return items;
   }
 }
 
