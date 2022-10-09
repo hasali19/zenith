@@ -15,7 +15,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: master
+          channel: stable
 
       - run: flutter build apk
         working-directory: client/flutter
@@ -32,7 +32,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: master
+          channel: stable
 
       - run: flutter build web --web-renderer canvaskit
         working-directory: client/flutter
@@ -68,7 +68,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: master
+          channel: stable
 
       - run: flutter build windows
         working-directory: client/flutter
