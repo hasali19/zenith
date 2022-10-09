@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:zenith_flutter/poster_item.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/screens/show_details.dart';
-import 'package:zenith_flutter/screens/video_player.dart';
+import 'package:zenith_flutter/screens/video_details_screen.dart';
 import 'package:zenith_flutter/text_one_line.dart';
 
 import '../api.dart' as api;
@@ -37,34 +38,40 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final desktop = MediaQuery.of(context).isDesktop;
-    final theme = Theme.of(context);
 
     final sectionTitlePadding = desktop
         ? const EdgeInsets.fromLTRB(32, 16, 32, 16)
         : const EdgeInsets.fromLTRB(16, 8, 16, 8);
-    final sectionTitleStyle = desktop
-        ? theme.textTheme.headline5
-        : theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold);
-    final sectionListPadding = desktop
-        ? const EdgeInsets.symmetric(horizontal: 32)
-        : const EdgeInsets.symmetric(horizontal: 16);
     final sectionListSpacing = desktop ? 16.0 : 8.0;
-
-    final cardBorderRadius = desktop ? 16.0 : 8.0;
 
     final thumbnailItemWidth = desktop ? 350.0 : 268.0;
     final thumbnailItemHeight = thumbnailItemWidth / (16 / 9);
     final thumbnailItemPadding = desktop ? 16.0 : 12.0;
 
     final posterItemWidth = desktop ? 180.0 : 120.0;
-    final posterItemHeight = posterItemWidth / (2 / 3) + (desktop ? 64 : 40);
+    final posterItemHeight = posterItemWidth / (2 / 3) + 52;
     final posterItemInfoSeparator = desktop ? 16.0 : 4.0;
-    final primaryTextStyle =
-        desktop ? theme.textTheme.titleMedium : theme.textTheme.bodyText2;
-    final secondaryTextStyle = desktop
-        ? theme.textTheme.titleSmall!
-            .copyWith(color: theme.textTheme.titleSmall!.color!.withAlpha(150))
-        : theme.textTheme.caption;
+
+    buildPosterItemSection(
+      Future<List<api.MediaItem>> future,
+      String title,
+      void Function(api.MediaItem item) onTap,
+    ) =>
+        Section<api.MediaItem>(
+          title: title,
+          titlePadding: sectionTitlePadding,
+          listSpacing: sectionListSpacing,
+          listItemWidth: posterItemWidth,
+          listItemHeight: posterItemHeight,
+          future: future,
+          itemBuilder: (context, item) => PosterItem(
+            poster: api.getMediaImageUrl(item.id, api.ImageType.poster),
+            title: item.name,
+            subtitle: item.startDate?.year.toString() ?? "",
+            infoSeparator: posterItemInfoSeparator,
+            onTap: () => onTap(item),
+          ),
+        );
 
     return ListView(
       controller: _scrollController,
@@ -73,98 +80,48 @@ class _HomeScreenState extends State<HomeScreen> {
         Section<api.MediaItem>(
           title: "Continue Watching",
           titlePadding: sectionTitlePadding,
-          titleStyle: sectionTitleStyle,
-          listPadding: sectionListPadding,
           listSpacing: sectionListSpacing,
           listItemWidth: thumbnailItemWidth,
           listItemHeight: thumbnailItemHeight,
           future: _continueWatching,
-          itemBuilder: (context, item) => ThumbnailItem(
-            thumbnail:
-                "https://zenith.hasali.uk/api/items/${item.id}/images/thumbnail",
+          itemBuilder: (context, item) => ContinueWatchingCard(
+            thumbnail: api.getMediaImageUrl(item.id, api.ImageType.thumbnail),
             title: item.name,
             subtitle: item.type == api.MediaType.episode
                 ? item.grandparent?.name ?? ""
                 : item.startDate?.year.toString() ?? "",
             progress: (item.videoUserData?.position ?? 0) /
                 (item.videoInfo?.duration ?? 1),
-            borderRadius: cardBorderRadius,
             padding: thumbnailItemPadding,
-            primaryTextStyle: primaryTextStyle,
-            secondaryTextStyle: secondaryTextStyle,
             onTap: () async {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => VideoPlayerScreen(
-                    id: item.id,
-                    startPosition: item.videoUserData?.position ?? 0,
-                  ),
+                  builder: (context) => VideoDetailsScreen(item: item),
                 ),
               );
               _refresh();
             },
           ),
         ),
-        Section<api.MediaItem>(
-          title: "Recent Movies",
-          titlePadding: sectionTitlePadding,
-          titleStyle: sectionTitleStyle,
-          listPadding: sectionListPadding,
-          listSpacing: sectionListSpacing,
-          listItemWidth: posterItemWidth,
-          listItemHeight: posterItemHeight,
-          future: _recentMovies,
-          itemBuilder: (context, item) => PosterItem(
-              poster:
-                  "https://zenith.hasali.uk/api/items/${item.id}/images/poster",
-              title: item.name,
-              subtitle: item.startDate?.year.toString() ?? "",
-              borderRadius: cardBorderRadius,
-              infoSeparator: posterItemInfoSeparator,
-              primaryTextStyle: primaryTextStyle,
-              secondaryTextStyle: secondaryTextStyle,
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => VideoPlayerScreen(
-                      id: item.id,
-                      startPosition: item.videoUserData?.position ?? 0,
-                    ),
-                  ),
-                );
-                _refresh();
-              }),
-        ),
-        Section<api.MediaItem>(
-          title: "Recent Shows",
-          titlePadding: sectionTitlePadding,
-          titleStyle: sectionTitleStyle,
-          listPadding: sectionListPadding,
-          listSpacing: sectionListSpacing,
-          listItemWidth: posterItemWidth,
-          listItemHeight: posterItemHeight,
-          future: _recentShows,
-          itemBuilder: (context, item) => PosterItem(
-              poster:
-                  "https://zenith.hasali.uk/api/items/${item.id}/images/poster",
-              title: item.name,
-              subtitle: item.startDate?.year.toString() ?? "",
-              borderRadius: cardBorderRadius,
-              infoSeparator: posterItemInfoSeparator,
-              primaryTextStyle: primaryTextStyle,
-              secondaryTextStyle: secondaryTextStyle,
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ShowDetailsScreen(show: item),
-                  ),
-                );
-                _refresh();
-              }),
-        ),
+        buildPosterItemSection(_recentMovies, "Recent Movies", (item) async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => VideoDetailsScreen(item: item),
+            ),
+          );
+          _refresh();
+        }),
+        buildPosterItemSection(_recentShows, "Recent Shows", (item) async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ShowDetailsScreen(show: item),
+            ),
+          );
+          _refresh();
+        }),
       ],
     );
   }
@@ -174,8 +131,6 @@ class Section<T> extends StatefulWidget {
   final String title;
   final Future<List<T>> future;
   final EdgeInsets titlePadding;
-  final TextStyle? titleStyle;
-  final EdgeInsets listPadding;
   final double listSpacing;
   final double listItemWidth;
   final double listItemHeight;
@@ -187,8 +142,6 @@ class Section<T> extends StatefulWidget {
     required this.future,
     required this.itemBuilder,
     required this.titlePadding,
-    required this.titleStyle,
-    required this.listPadding,
     required this.listSpacing,
     required this.listItemWidth,
     required this.listItemHeight,
@@ -203,33 +156,21 @@ class _SectionState<T> extends State<Section<T>> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final titleStyle =
+        textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: widget.titlePadding,
-          child: Text(widget.title, style: widget.titleStyle),
+          child: Text(widget.title, style: titleStyle),
         ),
         FutureBuilder<List<T>>(
           future: widget.future,
           builder: ((context, snapshot) {
             if (snapshot.hasData) {
-              final data = snapshot.data!;
-              return SizedBox(
-                height: widget.listItemHeight,
-                child: ListView.separated(
-                  controller: _scrollController,
-                  padding: widget.listPadding,
-                  separatorBuilder: (context, index) =>
-                      SizedBox(width: widget.listSpacing),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: data.length,
-                  itemBuilder: (context, index) => SizedBox(
-                    width: widget.listItemWidth,
-                    child: widget.itemBuilder(context, data[index]),
-                  ),
-                ),
-              );
+              return _buildContent(snapshot.data!);
             } else {
               return const Center(
                 child: CircularProgressIndicator(),
@@ -241,41 +182,60 @@ class _SectionState<T> extends State<Section<T>> {
       ],
     );
   }
+
+  Widget _buildContent(List<T> data) {
+    return SizedBox(
+      height: widget.listItemHeight,
+      child: ListView.separated(
+        controller: _scrollController,
+        padding: EdgeInsets.symmetric(horizontal: widget.listSpacing * 2),
+        separatorBuilder: (context, index) =>
+            SizedBox(width: widget.listSpacing),
+        scrollDirection: Axis.horizontal,
+        itemCount: data.length,
+        itemBuilder: (context, index) => SizedBox(
+          width: widget.listItemWidth,
+          child: widget.itemBuilder(context, data[index]),
+        ),
+      ),
+    );
+  }
 }
 
-class ThumbnailItem extends StatelessWidget {
+class ContinueWatchingCard extends StatelessWidget {
   final String thumbnail;
   final String title;
   final String subtitle;
   final double progress;
-  final double borderRadius;
   final double padding;
-  final TextStyle? primaryTextStyle;
-  final TextStyle? secondaryTextStyle;
   final void Function() onTap;
 
-  const ThumbnailItem({
+  const ContinueWatchingCard({
     Key? key,
     required this.thumbnail,
     required this.title,
     required this.subtitle,
     required this.progress,
-    required this.borderRadius,
     required this.padding,
-    required this.primaryTextStyle,
-    required this.secondaryTextStyle,
     required this.onTap,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cardTheme = theme.cardTheme;
+    final textTheme = theme.textTheme;
+
+    final titleStyle = textTheme.bodyMedium!.copyWith(color: Colors.white);
+    final subtitleStyle = textTheme.bodySmall!.copyWith(color: Colors.white);
+
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: Material(
-        elevation: 2.0,
+        elevation: cardTheme.elevation ?? 1,
         type: MaterialType.card,
         clipBehavior: Clip.hardEdge,
-        borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+        shape: cardTheme.shape,
         child: Ink(
           decoration: BoxDecoration(
             image: DecorationImage(
@@ -292,10 +252,8 @@ class ThumbnailItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextOneLine(title,
-                      style: primaryTextStyle?.copyWith(color: Colors.white)),
-                  TextOneLine(subtitle,
-                      style: secondaryTextStyle?.copyWith(color: Colors.white)),
+                  TextOneLine(title, style: titleStyle),
+                  TextOneLine(subtitle, style: subtitleStyle),
                   if (progress > 0.05 && progress < 0.9) ...[
                     const SizedBox(height: 8),
                     ClipRRect(
@@ -312,55 +270,6 @@ class ThumbnailItem extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class PosterItem extends StatelessWidget {
-  final String poster;
-  final String title;
-  final String subtitle;
-  final double borderRadius;
-  final double infoSeparator;
-  final TextStyle? primaryTextStyle;
-  final TextStyle? secondaryTextStyle;
-  final void Function() onTap;
-
-  const PosterItem({
-    Key? key,
-    required this.poster,
-    required this.title,
-    required this.subtitle,
-    required this.infoSeparator,
-    required this.borderRadius,
-    required this.primaryTextStyle,
-    required this.secondaryTextStyle,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AspectRatio(
-          aspectRatio: 2 / 3,
-          child: Material(
-            elevation: 2.0,
-            type: MaterialType.card,
-            clipBehavior: Clip.hardEdge,
-            borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
-            child: Ink.image(
-              fit: BoxFit.cover,
-              image: NetworkImage(poster),
-              child: InkWell(onTap: onTap),
-            ),
-          ),
-        ),
-        SizedBox(height: infoSeparator),
-        TextOneLine(title, style: primaryTextStyle),
-        TextOneLine(subtitle, style: secondaryTextStyle),
-      ],
     );
   }
 }

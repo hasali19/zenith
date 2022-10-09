@@ -263,6 +263,18 @@ String getSubtitleUrl(int id) {
   return "https://zenith.hasali.uk/api/subtitles/$id";
 }
 
+enum ImageType { poster, backdrop, thumbnail }
+
+String getMediaImageUrl(int id, ImageType type, {int? width}) {
+  final uri = Uri(
+    scheme: "https",
+    host: "zenith.hasali.uk",
+    path: "api/items/$id/images/${type.name}",
+    queryParameters: {if (width != null) 'width': width.toString()},
+  );
+  return uri.toString();
+}
+
 Future updateProgress(int id, int position) async {
   await http.post(Uri.parse(
       "https://zenith.hasali.uk/api/progress/$id?position=$position"));

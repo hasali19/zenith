@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/drawer.dart';
+import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/screens/home.dart';
 import 'package:zenith_flutter/screens/media_library.dart';
 import 'package:zenith_flutter/screens/show_details.dart';
-import 'package:zenith_flutter/screens/video_player.dart';
+import 'package:zenith_flutter/screens/video_details_screen.dart';
 
 void main() {
   runApp(const ZenithApp());
@@ -20,6 +21,10 @@ class ZenithApp extends StatelessWidget {
       theme: _buildTheme(Brightness.light),
       darkTheme: _buildTheme(Brightness.dark),
       home: const MainScreen(),
+      builder: (context, child) => Theme(
+        data: _buildThemeOverrides(context),
+        child: child!,
+      ),
     );
   }
 
@@ -40,6 +45,26 @@ class ZenithApp extends StatelessWidget {
       case Brightness.light:
         return theme;
     }
+  }
+
+  ThemeData _buildThemeOverrides(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDesktop = context.isDesktop;
+    return theme.copyWith(
+      cardTheme: theme.cardTheme.copyWith(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+      ),
+      textTheme: theme.textTheme.copyWith(
+        bodySmall:
+            theme.textTheme.bodySmall!.copyWith(fontSize: isDesktop ? 14 : 12),
+        bodyMedium:
+            theme.textTheme.bodyMedium!.copyWith(fontSize: isDesktop ? 16 : 14),
+        titleMedium: theme.textTheme.titleMedium!
+            .copyWith(fontSize: isDesktop ? 22 : 16),
+      ),
+    );
   }
 }
 
@@ -126,10 +151,7 @@ class _MainScreenState extends State<MainScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => VideoPlayerScreen(
-                  id: item.id,
-                  startPosition: 0,
-                ),
+                builder: (context) => VideoDetailsScreen(item: item),
               ),
             );
           },

@@ -20,7 +20,7 @@ class TextOneLine extends Text {
     TextAlign? textAlign,
     TextDirection? textDirection,
     Locale? locale,
-    TextOverflow? overflow = TextOverflow.ellipsis,
+    TextOverflow? overflow = TextOverflow.fade,
     double? textScaleFactor,
     String? semanticsLabel,
     TextWidthBasis textWidthBasis = TextWidthBasis.parent,
@@ -41,7 +41,4 @@ class TextOneLine extends Text {
           textWidthBasis: textWidthBasis,
           textHeightBehavior: textHeightBehavior,
         );
-
-  @override
-  String? get data => super.data == null ? null : Characters(super.data!).toList().join("\u{200B}");
 }

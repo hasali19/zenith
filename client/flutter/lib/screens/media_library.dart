@@ -2,9 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
+import 'package:zenith_flutter/poster_item.dart';
 import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/screens/item_details.dart';
-import 'package:zenith_flutter/text_one_line.dart';
 
 class MediaLibraryScreen extends StatefulWidget {
   final Future<List<MediaItem>> Function() provider;
@@ -67,20 +66,11 @@ class MediaItemGrid extends StatelessWidget {
       final maxColWidth = desktop ? 180.0 : 120.0;
       final gridPadding = desktop ? 64.0 : 4.0;
       final itemSpacing = desktop ? 32.0 : 8.0;
-      final borderRadius = desktop ? 16.0 : 8.0;
 
       final gridWidth = constraints.maxWidth - gridPadding * 2;
       final cols = (gridWidth / (maxColWidth + itemSpacing * 2)).ceil();
       final colWidth = gridWidth / cols;
       final infoTopPadding = desktop ? 16.0 : 8.0;
-
-      final theme = Theme.of(context).textTheme;
-      final titleStyle = desktop
-          ? theme.subtitle1!.copyWith(fontWeight: FontWeight.bold)
-          : theme.subtitle2;
-      final subtitleStyle = desktop
-          ? theme.bodyMedium!.copyWith(color: theme.caption!.color)
-          : theme.caption;
 
       return ListView.builder(
         controller: _scrollController,
@@ -92,62 +82,15 @@ class MediaItemGrid extends StatelessWidget {
 
           for (var i = rowIndex * cols; i < maxItemIndex; i++) {
             final item = items[i];
-
-            final poster = Stack(
-              children: [
-                Material(
-                  elevation: 2.0,
-                  type: MaterialType.card,
-                  clipBehavior: Clip.hardEdge,
-                  borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
-                  child: AspectRatio(
-                    aspectRatio: 2 / 3,
-                    child: FadeInImage.memoryNetwork(
-                      placeholder: transparentImage,
-                      image:
-                          "https://zenith.hasali.uk/api/items/${item.id}/images/poster",
-                    ),
-                  ),
-                ),
-                Positioned.fill(
-                  child: Material(
-                    color: Colors.transparent,
-                    clipBehavior: Clip.hardEdge,
-                    borderRadius:
-                        BorderRadius.all(Radius.circular(borderRadius)),
-                    child: InkWell(
-                      onTap: () => onItemTap(item),
-                    ),
-                  ),
-                )
-              ],
-            );
-
-            final info = Padding(
-              padding: EdgeInsets.only(top: infoTopPadding, bottom: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextOneLine(
-                    item.name,
-                    style: titleStyle,
-                  ),
-                  const SizedBox(height: 2),
-                  if (item.startDate != null)
-                    TextOneLine(
-                      item.startDate!.year.toString(),
-                      style: subtitleStyle,
-                    ),
-                ],
-              ),
-            );
-
             columns.add(Container(
               width: colWidth,
               padding: EdgeInsets.all(itemSpacing / 2),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [poster, info],
+              child: PosterItem(
+                poster: getMediaImageUrl(item.id, ImageType.poster),
+                title: item.name,
+                subtitle: item.startDate!.year.toString(),
+                infoSeparator: infoTopPadding,
+                onTap: () => onItemTap(item),
               ),
             ));
           }

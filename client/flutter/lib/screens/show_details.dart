@@ -1,16 +1,11 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/screens/item_details.dart';
-import 'package:zenith_flutter/screens/video_player.dart';
+import 'package:zenith_flutter/screens/video_details_screen.dart';
 import 'package:zenith_flutter/text_one_line.dart';
 
 import '../api.dart' as api;
-
-final transparentImage = base64Decode(
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
 
 class Season {
   final api.MediaItem data;
@@ -53,13 +48,7 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).isDesktop;
     return ItemDetailsScreen(
-      poster:
-          "https://zenith.hasali.uk/api/items/${widget.show.id}/images/poster",
-      backdrop:
-          "https://zenith.hasali.uk/api/items/${widget.show.id}/images/backdrop",
-      name: widget.show.name,
-      year: widget.show.startDate?.year,
-      overview: widget.show.overview,
+      item: widget.show,
       body: FutureBuilder<List<Season>>(
         future: _seasons,
         builder: (context, snapshot) {
@@ -174,8 +163,8 @@ class EpisodeListItem extends StatelessWidget {
                     width: width,
                     height: height,
                     child: EpisodeThumbnail(
-                        url:
-                          "https://zenith.hasali.uk/api/items/${episode.id}/images/thumbnail",
+                      url: api.getMediaImageUrl(
+                          episode.id, api.ImageType.thumbnail),
                       isWatched: episode.videoUserData?.isWatched ?? false,
                     ),
                   ),
@@ -212,10 +201,7 @@ class EpisodeListItem extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => VideoPlayerScreen(
-                        id: episode.id,
-                        startPosition: episode.videoUserData?.position ?? 0,
-                      ),
+                      builder: (context) => VideoDetailsScreen(item: episode),
                     ),
                   );
                 },
@@ -247,13 +233,13 @@ class EpisodeThumbnail extends StatelessWidget {
       borderRadius: const BorderRadius.all(Radius.circular(8)),
       child: Stack(children: [
         url == null
-          ? const Icon(Icons.video_file, size: 48)
+            ? const Icon(Icons.video_file, size: 48)
             : Positioned.fill(
                 child: FadeInImage.memoryNetwork(
-              placeholder: transparentImage,
-              image: url!,
-              fit: BoxFit.cover,
-            ),
+                  placeholder: transparentImage,
+                  image: url!,
+                  fit: BoxFit.cover,
+                ),
               ),
         if (isWatched)
           Container(
