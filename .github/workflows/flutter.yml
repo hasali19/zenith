@@ -7,10 +7,6 @@ on:
       - .github/workflows/flutter.yml
       - client/flutter/**
 
-defaults:
-  run:
-    working-directory: client/flutter
-
 jobs:
   build_android:
     runs-on: ubuntu-latest
@@ -22,6 +18,7 @@ jobs:
           channel: master
 
       - run: flutter build apk
+        working-directory: client/flutter
 
       - uses: actions/upload-artifact@v2
         with:
@@ -38,11 +35,31 @@ jobs:
           channel: master
 
       - run: flutter build web --web-renderer canvaskit
+        working-directory: client/flutter
 
       - uses: actions/upload-artifact@v2
         with:
           name: zenith-flutter-web
           path: client/flutter/build/web
+
+  deploy_web:
+    runs-on: ubuntu-latest
+    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs:
+      - build_web
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: zenith-flutter-web
+
+      - run: echo "/* /index.html" > _redirects
+
+      - uses: netlify/actions/cli@master
+        with:
+          args: deploy --dir=. --prod
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
 
   build_windows:
     runs-on: windows-latest
@@ -54,6 +71,7 @@ jobs:
           channel: master
 
       - run: flutter build windows
+        working-directory: client/flutter
 
       - uses: actions/upload-artifact@v2
         with:
