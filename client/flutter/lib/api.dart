@@ -84,6 +84,20 @@ class MediaItem {
           : null,
     );
   }
+
+  String? getSeasonEpisode() {
+    String? seasonEpisode;
+    if (parent != null) {
+      final parent = this.parent!.index.toString().padLeft(2, '0');
+      if (grandparent != null) {
+        final grandparent = this.grandparent!.index.toString().padLeft(2, '0');
+        seasonEpisode = "S${grandparent}E$parent";
+      } else {
+        seasonEpisode = "S$parent";
+      }
+    }
+    return seasonEpisode;
+  }
 }
 
 class MediaItemParent {

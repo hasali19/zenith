@@ -71,7 +71,7 @@ class ItemDetails extends StatelessWidget {
     final isDesktop = MediaQuery.of(context).isDesktop;
 
     final poster = Poster(url: getMediaImageUrl(item.id, ImageType.poster));
-    final year = _buildYear(context);
+    final subtitle = _buildSubtitle(context);
     final overview = _buildOverview();
 
     final mainContent = [
@@ -83,7 +83,7 @@ class ItemDetails extends StatelessWidget {
       else if (item.parent != null)
         Text(item.parent!.name),
       Title(text: item.name),
-      if (year != null) year,
+      if (subtitle != null) subtitle,
       _buildActions(context),
       if (overview != null) overview,
     ];
@@ -114,26 +114,37 @@ class ItemDetails extends StatelessWidget {
     }
   }
 
-  Widget? _buildYear(BuildContext context) {
+  Widget? _buildSubtitle(BuildContext context) {
     final theme = Theme.of(context);
     final style = theme.textTheme.subtitle1;
     final date = item.startDate;
     final videoInfo = item.videoInfo;
+    final seasonEpisode = item.getSeasonEpisode();
+
+    final items = [
+      if (seasonEpisode != null) TextSpan(text: seasonEpisode),
+      if (date != null) TextSpan(text: "${date.year}"),
+      if (videoInfo != null)
+        TextSpan(text: _formatDuration(videoInfo.duration)),
+    ];
+
+    final separated = <TextSpan>[];
+    for (var i = 0; i < items.length; i++) {
+      if (i > 0) {
+        separated.add(const TextSpan(children: [
+          WidgetSpan(child: SizedBox(width: 12)),
+          TextSpan(text: "•"),
+          WidgetSpan(child: SizedBox(width: 12)),
+        ]));
+      }
+      separated.add(items[i]);
+    }
+
     return Padding(
       padding: const EdgeInsets.only(top: 16.0),
       child: Text.rich(TextSpan(
         style: style,
-        children: [
-          if (date != null) TextSpan(text: "${date.year}"),
-          if (date != null && videoInfo != null)
-            const TextSpan(children: [
-              WidgetSpan(child: SizedBox(width: 12)),
-              TextSpan(text: "•"),
-              WidgetSpan(child: SizedBox(width: 12)),
-            ]),
-          if (videoInfo != null)
-            TextSpan(text: _formatDuration(videoInfo.duration)),
-        ],
+        children: separated,
       )),
     );
   }

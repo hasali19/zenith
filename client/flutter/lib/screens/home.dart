@@ -88,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
             thumbnail: api.getMediaImageUrl(item.id, api.ImageType.thumbnail),
             title: item.name,
             subtitle: item.type == api.MediaType.episode
-                ? item.grandparent?.name ?? ""
+                ? item.getSeasonEpisode()! + ": " + item.grandparent!.name
                 : item.startDate?.year.toString() ?? "",
             progress: (item.videoUserData?.position ?? 0) /
                 (item.videoInfo?.duration ?? 1),
