@@ -21,12 +21,25 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
   @override
   Widget buildView(VideoController controller) {
     if (controller is _VideoController) {
-      return ValueListenableBuilder(
+      return ValueListenableBuilder<double>(
         valueListenable: controller.aspectRatio,
-        builder: (context, value, child) => AspectRatio(
-          aspectRatio: controller.aspectRatio.value,
-          child: Texture(textureId: controller.id),
+        builder: (context, aspectRatio, child) =>
+            ValueListenableBuilder<BoxFit>(
+          valueListenable: controller.fit,
+          builder: (context, fit, child) => SizedBox.expand(
+            child: FittedBox(
+              fit: fit,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: aspectRatio,
+                height: 1,
+                child: child,
+              ),
+            ),
+          ),
+          child: child,
         ),
+        child: Texture(textureId: controller.id),
       );
     } else {
       throw ArgumentError.value(controller, "controller");
@@ -67,6 +80,7 @@ class _VideoController extends VideoController {
   double duration = 0.0;
 
   final aspectRatio = ValueNotifier(1.0);
+  final fit = ValueNotifier(BoxFit.contain);
 
   bool playing = false;
   int _lastKnownPosition = 0;
@@ -146,6 +160,11 @@ class _VideoController extends VideoController {
   @override
   void play() {
     _methodChannel.invokeListMethod("play", {"id": id});
+  }
+
+  @override
+  void setFit(BoxFit fit) {
+    this.fit.value = fit;
   }
 
   final List<void Function()> _listeners = [];

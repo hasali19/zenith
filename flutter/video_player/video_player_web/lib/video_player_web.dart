@@ -151,6 +151,11 @@ class VideoControllerWeb extends VideoController {
   }
 
   @override
+  void setFit(BoxFit fit) {
+    // TODO: implement setFit
+  }
+
+  @override
   void addListener(void Function() listener) {
     _listeners.add(listener);
   }

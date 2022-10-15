@@ -184,9 +184,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
               },
               child: Stack(
                 children: [
-                  Center(
-                    child: VideoPlayerPlatform.instance.buildView(_controller!),
-                  ),
+                  VideoPlayerPlatform.instance.buildView(_controller!),
                   GestureDetector(onTap: _toggleControls),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
@@ -388,6 +386,7 @@ class _ControlsState extends State<_Controls> {
               onSeekEnd: widget.onSeekEnd,
               onSelectSubtitle: (track) => _controller
                   .setTextTrack(track != null ? subtitleFromApi(track) : null),
+              onSetBoxFit: _controller.setFit,
             ),
           ),
         ],
@@ -474,6 +473,7 @@ class _BottomControls extends StatelessWidget {
   final void Function() onSeekStart;
   final void Function() onSeekEnd;
   final void Function(api.SubtitleTrack?) onSelectSubtitle;
+  final void Function(BoxFit fit) onSetBoxFit;
 
   const _BottomControls({
     required this.duration,
@@ -486,6 +486,7 @@ class _BottomControls extends StatelessWidget {
     required this.onSeekStart,
     required this.onSeekEnd,
     required this.onSelectSubtitle,
+    required this.onSetBoxFit,
   });
 
   @override
@@ -525,10 +526,16 @@ class _BottomControls extends StatelessWidget {
               onPressed: () => _showSubtitlesMenu(context),
             ),
             IconButton(
-              icon: const Icon(Icons.fullscreen),
+              icon: const Icon(Icons.aspect_ratio),
               splashRadius: 20,
-              onPressed: VideoPlayerPlatform.instance.toggleFullscreen,
-            )
+              onPressed: () => _showBoxFitMenu(context),
+            ),
+            if (VideoPlayerPlatform.instance.isWindowed)
+              IconButton(
+                icon: const Icon(Icons.fullscreen),
+                splashRadius: 20,
+                onPressed: VideoPlayerPlatform.instance.toggleFullscreen,
+              )
           ],
         ),
       ),
@@ -574,6 +581,34 @@ class _BottomControls extends StatelessWidget {
     }
 
     return items;
+  }
+
+  void _showBoxFitMenu(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    showModalBottomSheet<void>(
+      context: context,
+      constraints: width > 600
+          ? const BoxConstraints.expand(width: 600).copyWith(minHeight: 0)
+          : null,
+      builder: (context) => Wrap(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.crop_free),
+            title: const Text("Cover"),
+            onTap: () {
+              onSetBoxFit(BoxFit.cover);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.fit_screen),
+            title: const Text("Contain"),
+            onTap: () {
+              onSetBoxFit(BoxFit.contain);
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
 
