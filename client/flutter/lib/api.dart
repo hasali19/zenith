@@ -293,3 +293,22 @@ Future updateProgress(int id, int position) async {
   await http.post(Uri.parse(
       "https://zenith.hasali.uk/api/progress/$id?position=$position"));
 }
+
+class VideoUserDataPatch {
+  bool? isWatched;
+  double? position;
+  VideoUserDataPatch({this.isWatched, this.position});
+}
+
+Future updateUserData(int id, VideoUserDataPatch data) async {
+  await http.patch(
+    Uri.parse("https://zenith.hasali.uk/api/items/$id/user_data"),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'is_watched': data.isWatched,
+      'position': data.position,
+    }),
+  );
+}

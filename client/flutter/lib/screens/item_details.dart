@@ -194,14 +194,22 @@ class ItemDetails extends StatelessWidget {
       ));
 
       if (shouldResume) {
-        actions.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text("${(position / duration * 100).toInt()}%"),
-        ));
+        actions.add(const SizedBox(width: 16));
+        actions.add(Text("${(position / duration * 100).toInt()}%"));
       }
+
+      actions.add(const SizedBox(width: 16));
+      actions.add(WatchedToggleButton(
+        isWatched: item.videoUserData?.isWatched ?? false,
+        onChange: _onIsWatchedToggled,
+      ));
     }
 
     return actions;
+  }
+
+  void _onIsWatchedToggled(isWatched) {
+    updateUserData(item.id, VideoUserDataPatch(isWatched: isWatched));
   }
 
   String _formatDuration(double duration) {
@@ -212,6 +220,44 @@ class ItemDetails extends StatelessWidget {
       final minutes = (duration % 3600) ~/ 60;
       return "${hours}h ${minutes}m";
     }
+  }
+}
+
+class WatchedToggleButton extends StatefulWidget {
+  final bool isWatched;
+  final void Function(bool isWatched) onChange;
+
+  const WatchedToggleButton({
+    Key? key,
+    required this.isWatched,
+    required this.onChange,
+  }) : super(key: key);
+
+  @override
+  State<WatchedToggleButton> createState() => _WatchedToggleButtonState();
+}
+
+class _WatchedToggleButtonState extends State<WatchedToggleButton> {
+  late bool _isSelected;
+
+  @override
+  void initState() {
+    super.initState();
+    _isSelected = widget.isWatched;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: () {
+        setState(() {
+          _isSelected = !_isSelected;
+          widget.onChange(_isSelected);
+        });
+      },
+      icon: const Icon(Icons.check_circle_outline),
+      isSelected: _isSelected,
+    );
   }
 }
 
