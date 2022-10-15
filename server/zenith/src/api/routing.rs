@@ -1,4 +1,5 @@
 use axum::body::Body;
+use axum::http::header::{ACCEPT, CONTENT_TYPE};
 use axum::http::{Request, Response, StatusCode};
 use axum::middleware::Next;
 use axum::response::{Html, IntoResponse};
@@ -32,7 +33,8 @@ pub fn router() -> axum::Router {
         .layer(
             CorsLayer::new()
                 .allow_origin(cors::Any)
-                .allow_methods(cors::Any),
+                .allow_methods(cors::Any)
+                .allow_headers([ACCEPT, CONTENT_TYPE]),
         )
         .layer(middleware::from_fn(error_handler))
 }
