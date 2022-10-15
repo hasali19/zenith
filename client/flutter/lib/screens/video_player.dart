@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock/wakelock.dart';
+import 'package:zenith_flutter/language_codes.dart';
 import 'package:zenith_flutter/responsive.dart';
 
 import '../api.dart' as api;
@@ -556,9 +557,14 @@ class _BottomControls extends StatelessWidget {
       )
     ];
 
+    final subtitles = [...this.subtitles];
     for (final track in subtitles) {
+      var language = track.language;
+      if (language != null) {
+        language = tryResolveLanguageCode(language);
+      }
       items.add(ListTile(
-        title: Text(track.language ?? "Unknown"),
+        title: Text(language ?? "Unknown"),
         subtitle: track.title != null ? Text(track.title!) : null,
         onTap: () {
           onSelectSubtitle(track);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/drawer.dart';
+import 'package:zenith_flutter/language_codes.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/screens/home.dart';
 import 'package:zenith_flutter/screens/media_library.dart';
@@ -11,8 +12,19 @@ void main() {
   runApp(const ZenithApp());
 }
 
-class ZenithApp extends StatelessWidget {
+class ZenithApp extends StatefulWidget {
   const ZenithApp({Key? key}) : super(key: key);
+
+  @override
+  State<ZenithApp> createState() => _ZenithAppState();
+}
+
+class _ZenithAppState extends State<ZenithApp> {
+  @override
+  void initState() {
+    super.initState();
+    loadLanguageCodes();
+  }
 
   @override
   Widget build(BuildContext context) {
