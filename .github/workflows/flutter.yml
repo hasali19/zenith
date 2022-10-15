@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - .github/workflows/flutter.yml
-      - client/flutter/**
+      - flutter/**
 
 jobs:
   build_android:
@@ -18,12 +18,12 @@ jobs:
           channel: stable
 
       - run: flutter build apk
-        working-directory: client/flutter
+        working-directory: flutter
 
       - uses: actions/upload-artifact@v2
         with:
           name: zenith-flutter-android
-          path: client/flutter/build/app/outputs/flutter-apk/app-release.apk
+          path: flutter/build/app/outputs/flutter-apk/app-release.apk
 
   build_web:
     runs-on: ubuntu-latest
@@ -35,12 +35,12 @@ jobs:
           channel: stable
 
       - run: flutter build web --web-renderer canvaskit
-        working-directory: client/flutter
+        working-directory: flutter
 
       - uses: actions/upload-artifact@v2
         with:
           name: zenith-flutter-web
-          path: client/flutter/build/web
+          path: flutter/build/web
 
   deploy_web:
     runs-on: ubuntu-latest
@@ -71,9 +71,9 @@ jobs:
           channel: stable
 
       - run: flutter build windows
-        working-directory: client/flutter
+        working-directory: flutter
 
       - uses: actions/upload-artifact@v2
         with:
           name: zenith-flutter-windows
-          path: client/flutter/build/windows/runner/Release
+          path: flutter/build/windows/runner/Release

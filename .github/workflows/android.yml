@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - .github/workflows/android.yml
-      - client/android/**
+      - android/**
 
 jobs:
   build_android:
@@ -26,7 +26,7 @@ jobs:
           ANDROID_KEYSTORE_KEY_ALIAS: ${{ secrets.ANDROID_KEYSTORE_KEY_ALIAS }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEYSTORE_PATH: ../keystore.jks
-        working-directory: client/android
+        working-directory: android
         run: |
           echo $ANDROID_KEYSTORE | base64 -d > keystore.jks
           ./gradlew assembleRelease
@@ -34,4 +34,4 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: zenith-apk
-          path: client/android/app/build/outputs/apk/release/app-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk

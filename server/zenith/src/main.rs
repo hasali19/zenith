@@ -167,11 +167,11 @@ async fn spa(OriginalUri(uri): OriginalUri, file: FileRequest) -> Result<FileRes
         return Err(StatusCode::NOT_FOUND);
     }
 
-    let path = Path::new("client/web/dist").join(path);
+    let path = Path::new("web/dist").join(path);
     let path = if path.is_file() {
         path.as_path()
     } else {
-        Path::new("client/web/dist/index.html")
+        Path::new("web/dist/index.html")
     };
 
     FileResponse::from_request(file, path)

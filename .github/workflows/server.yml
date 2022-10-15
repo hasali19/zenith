@@ -6,7 +6,7 @@ on:
     paths:
       - .github/workflows/server.yml
       - server/**
-      - client/web/**
+      - web/**
       - Cargo.lock
       - Cargo.toml
       - Dockerfile
@@ -115,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: client/web
+        working-directory: web
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v2
@@ -135,7 +135,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: web
-          path: client/web/dist
+          path: web/dist
 
   deploy:
     name: Deploy docker image

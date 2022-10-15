@@ -1,6 +1,6 @@
 [workspace]
 members = ["server/*"]
-exclude = ["client"]
+exclude = ["desktop"]
 
 [profile.dev.build-override]
 opt-level = 3
