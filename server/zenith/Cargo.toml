@@ -78,7 +78,7 @@ features = ["sync"]
 
 [dependencies.tower-http]
 version = "0.3"
-features = ["set-header", "trace"]
+features = ["cors", "trace"]
 
 [dependencies.tracing-subscriber]
 version = "0.3"

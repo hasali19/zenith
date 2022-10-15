@@ -1,11 +1,10 @@
 use axum::body::Body;
-use axum::http::header::ACCESS_CONTROL_ALLOW_ORIGIN;
-use axum::http::{HeaderValue, Request, Response, StatusCode};
+use axum::http::{Request, Response, StatusCode};
 use axum::middleware::Next;
 use axum::response::{Html, IntoResponse};
 use axum::routing::get;
 use axum::{middleware, Json};
-use tower_http::set_header::SetResponseHeaderLayer;
+use tower_http::cors::{self, CorsLayer};
 
 use super::error::ApiError;
 
@@ -30,10 +29,7 @@ pub fn router() -> axum::Router {
             }),
         )
         .route("/openapi.json", get(|| async move { Json(spec) }))
-        .layer(SetResponseHeaderLayer::overriding(
-            ACCESS_CONTROL_ALLOW_ORIGIN,
-            HeaderValue::from_static("*"),
-        ))
+        .layer(CorsLayer::new().allow_origin(cors::Any))
         .layer(middleware::from_fn(error_handler))
 }
 
