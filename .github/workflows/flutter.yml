@@ -17,8 +17,15 @@ jobs:
         with:
           channel: stable
 
-      - run: flutter build apk --dart-define=GIT_COMMIT_HASH=$(git rev-parse HEAD)
+      - run: |
+          echo $ANDROID_KEYSTORE | base64 -d > keystore.jks
+          flutter build apk --dart-define=GIT_COMMIT_HASH=$(git rev-parse HEAD)
         working-directory: flutter
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          ANDROID_KEYSTORE_KEY_ALIAS: ${{ secrets.ANDROID_KEYSTORE_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEYSTORE_PATH: ../../keystore.jks
 
       - uses: actions/upload-artifact@v2
         with:
