@@ -5,6 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:zenith_flutter/github.dart';
 
+const _gitHash = bool.hasEnvironment("GIT_COMMIT_HASH")
+    ? String.fromEnvironment("GIT_COMMIT_HASH")
+    : null;
+
 abstract class Updater {
   factory Updater() {
     if (kIsWeb) return _StubUpdater();
@@ -47,7 +51,10 @@ class _AndroidUpdater implements Updater {
       }
     }
 
-    if (latestRun == null || latestRun.headBranch != "master") {
+    if (latestRun == null ||
+        latestRun.headBranch != "master" ||
+        _gitHash == null ||
+        _gitHash == latestRun.headSha) {
       return null;
     }
 
