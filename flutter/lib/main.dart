@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/drawer.dart';
@@ -7,6 +8,8 @@ import 'package:zenith_flutter/screens/home.dart';
 import 'package:zenith_flutter/screens/media_library.dart';
 import 'package:zenith_flutter/screens/show_details.dart';
 import 'package:zenith_flutter/screens/video_details_screen.dart';
+import 'package:zenith_flutter/update_dialog.dart';
+import 'package:zenith_flutter/updater.dart';
 
 void main() {
   runApp(const ZenithApp());
@@ -95,6 +98,27 @@ enum Screen {
 
 class _MainScreenState extends State<MainScreen> {
   Screen _screen = Screen.home;
+
+  final _updater = Updater();
+
+  @override
+  void initState() {
+    super.initState();
+    if (kReleaseMode) {
+      _checkForUpdates();
+    }
+  }
+
+  _checkForUpdates() async {
+    final update = await _updater.checkForUpdates();
+    if (update != null) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => UpdateDialog(update: update),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
