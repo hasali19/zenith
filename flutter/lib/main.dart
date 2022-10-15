@@ -109,7 +109,7 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  _checkForUpdates() async {
+  _checkForUpdates({bool confirmLatest = false}) async {
     final update = await _updater.checkForUpdates();
     if (update != null) {
       showDialog(
@@ -117,6 +117,16 @@ class _MainScreenState extends State<MainScreen> {
         barrierDismissible: false,
         builder: (context) => UpdateDialog(update: update),
       );
+    } else if (confirmLatest) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text("No updates available"),
+        action: SnackBarAction(
+          label: "OK",
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
+      ));
     }
   }
 
@@ -208,9 +218,18 @@ class _MainScreenState extends State<MainScreen> {
         );
 
       case Screen.settings:
-        return const Center(
-          child: Icon(Icons.settings),
-        );
+        return ListView(children: [
+          ListTile(
+            title: const Text("Revision"),
+            subtitle: Text(Updater.revision ?? "Unknown"),
+          ),
+          ListTile(
+            title: const Text("Check for updates"),
+            onTap: () {
+              _checkForUpdates(confirmLatest: true);
+            },
+          ),
+        ]);
     }
   }
 }

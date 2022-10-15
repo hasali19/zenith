@@ -19,6 +19,8 @@ abstract class Updater {
     }
   }
 
+  static String? get revision => _gitHash;
+
   Future<Update?> checkForUpdates();
 }
 
