@@ -168,8 +168,11 @@ class VideoUserData {
   }
 }
 
+const apiBaseUrl = String.fromEnvironment("API_BASE_URL",
+    defaultValue: "https://zenith.hasali.uk");
+
 Future<List<MediaItem>> fetchMovies() async {
-  final res = await http.get(Uri.parse('https://zenith.hasali.uk/api/movies'));
+  final res = await http.get(Uri.parse('$apiBaseUrl/api/movies'));
   if (res.statusCode == 200) {
     final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
     return json.map((e) => MediaItem.fromJson(MediaType.movie, e)).toList();
@@ -179,8 +182,7 @@ Future<List<MediaItem>> fetchMovies() async {
 }
 
 Future<List<MediaItem>> fetchRecentMovies() async {
-  final res =
-      await http.get(Uri.parse('https://zenith.hasali.uk/api/movies/recent'));
+  final res = await http.get(Uri.parse('$apiBaseUrl/api/movies/recent'));
   if (res.statusCode == 200) {
     final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
     return json.map((e) => MediaItem.fromJson(MediaType.movie, e)).toList();
@@ -190,8 +192,7 @@ Future<List<MediaItem>> fetchRecentMovies() async {
 }
 
 Future<List<MediaItem>> fetchShows() async {
-  final res =
-      await http.get(Uri.parse('https://zenith.hasali.uk/api/tv/shows'));
+  final res = await http.get(Uri.parse('$apiBaseUrl/api/tv/shows'));
   if (res.statusCode == 200) {
     final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
     return json.map((e) => MediaItem.fromJson(MediaType.show, e)).toList();
@@ -201,8 +202,7 @@ Future<List<MediaItem>> fetchShows() async {
 }
 
 Future<List<MediaItem>> fetchRecentShows() async {
-  final res =
-      await http.get(Uri.parse('https://zenith.hasali.uk/api/tv/shows/recent'));
+  final res = await http.get(Uri.parse('$apiBaseUrl/api/tv/shows/recent'));
   if (res.statusCode == 200) {
     final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
     return json.map((e) => MediaItem.fromJson(MediaType.show, e)).toList();
@@ -212,8 +212,8 @@ Future<List<MediaItem>> fetchRecentShows() async {
 }
 
 Future<List<MediaItem>> fetchSeasons(int showId) async {
-  final res = await http
-      .get(Uri.parse('https://zenith.hasali.uk/api/tv/shows/$showId/seasons'));
+  final res =
+      await http.get(Uri.parse('$apiBaseUrl/api/tv/shows/$showId/seasons'));
   if (res.statusCode == 200) {
     final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
     return json.map((e) => MediaItem.fromJson(MediaType.season, e)).toList();
@@ -223,8 +223,8 @@ Future<List<MediaItem>> fetchSeasons(int showId) async {
 }
 
 Future<List<MediaItem>> fetchEpisodes(int seasonId) async {
-  final res = await http.get(
-      Uri.parse('https://zenith.hasali.uk/api/tv/seasons/$seasonId/episodes'));
+  final res = await http
+      .get(Uri.parse('$apiBaseUrl/api/tv/seasons/$seasonId/episodes'));
   if (res.statusCode == 200) {
     final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
     return json.map((e) => MediaItem.fromJson(MediaType.episode, e)).toList();
@@ -234,8 +234,7 @@ Future<List<MediaItem>> fetchEpisodes(int seasonId) async {
 }
 
 Future<MediaItem> fetchMediaItem(int id) async {
-  final res =
-      await http.get(Uri.parse('https://zenith.hasali.uk/api/items/$id'));
+  final res = await http.get(Uri.parse('$apiBaseUrl/api/items/$id'));
   if (res.statusCode == 200) {
     final dynamic json = jsonDecode(utf8.decode(res.bodyBytes));
     if (json["type"] == "movie") {
@@ -251,8 +250,8 @@ Future<MediaItem> fetchMediaItem(int id) async {
 }
 
 Future<List<MediaItem>> fetchContinueWatching() async {
-  final res = await http
-      .get(Uri.parse('https://zenith.hasali.uk/api/items/continue_watching'));
+  final res =
+      await http.get(Uri.parse('$apiBaseUrl/api/items/continue_watching'));
   if (res.statusCode == 200) {
     final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
     return json.map((json) {
@@ -270,28 +269,24 @@ Future<List<MediaItem>> fetchContinueWatching() async {
 }
 
 String getVideoUrl(int id) {
-  return "https://zenith.hasali.uk/api/videos/$id";
+  return "$apiBaseUrl/api/videos/$id";
 }
 
 String getSubtitleUrl(int id) {
-  return "https://zenith.hasali.uk/api/subtitles/$id";
+  return "$apiBaseUrl/api/subtitles/$id";
 }
 
 enum ImageType { poster, backdrop, thumbnail }
 
 String getMediaImageUrl(int id, ImageType type, {int? width}) {
-  final uri = Uri(
-    scheme: "https",
-    host: "zenith.hasali.uk",
+  return Uri.parse(apiBaseUrl).replace(
     path: "api/items/$id/images/${type.name}",
     queryParameters: {if (width != null) 'width': width.toString()},
-  );
-  return uri.toString();
+  ).toString();
 }
 
 Future updateProgress(int id, int position) async {
-  await http.post(Uri.parse(
-      "https://zenith.hasali.uk/api/progress/$id?position=$position"));
+  await http.post(Uri.parse("$apiBaseUrl/api/progress/$id?position=$position"));
 }
 
 class VideoUserDataPatch {
@@ -302,7 +297,7 @@ class VideoUserDataPatch {
 
 Future updateUserData(int id, VideoUserDataPatch data) async {
   await http.patch(
-    Uri.parse("https://zenith.hasali.uk/api/items/$id/user_data"),
+    Uri.parse("$apiBaseUrl/api/items/$id/user_data"),
     headers: {
       'Content-Type': 'application/json',
     },
