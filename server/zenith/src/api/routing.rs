@@ -29,7 +29,11 @@ pub fn router() -> axum::Router {
             }),
         )
         .route("/openapi.json", get(|| async move { Json(spec) }))
-        .layer(CorsLayer::new().allow_origin(cors::Any))
+        .layer(
+            CorsLayer::new()
+                .allow_origin(cors::Any)
+                .allow_methods(cors::Any),
+        )
         .layer(middleware::from_fn(error_handler))
 }
 
