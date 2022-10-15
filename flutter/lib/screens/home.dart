@@ -7,6 +7,18 @@ import 'package:zenith_flutter/text_one_line.dart';
 
 import '../api.dart' as api;
 
+class HomeScreenData {
+  List<api.MediaItem> continueWatching;
+  List<api.MediaItem> recentMovies;
+  List<api.MediaItem> recentShows;
+
+  HomeScreenData({
+    required this.continueWatching,
+    required this.recentMovies,
+    required this.recentShows,
+  });
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -17,9 +29,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _scrollController = ScrollController();
 
-  late Future<List<api.MediaItem>> _continueWatching;
-  late Future<List<api.MediaItem>> _recentMovies;
-  late Future<List<api.MediaItem>> _recentShows;
+  late Future<HomeScreenData> _data;
 
   @override
   void initState() {
@@ -29,9 +39,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _refresh() {
     setState(() {
-      _continueWatching = api.fetchContinueWatching();
-      _recentMovies = api.fetchRecentMovies();
-      _recentShows = api.fetchRecentShows();
+      _data = Future(() async {
+        final results = await Future.wait([
+          api.fetchContinueWatching(),
+          api.fetchRecentMovies(),
+          api.fetchRecentShows(),
+        ]);
+
+        return HomeScreenData(
+          continueWatching: results[0],
+          recentMovies: results[1],
+          recentShows: results[2],
+        );
+      });
     });
   }
 
@@ -53,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final posterItemInfoSeparator = desktop ? 16.0 : 4.0;
 
     buildPosterItemSection(
-      Future<List<api.MediaItem>> future,
+      List<api.MediaItem> items,
       String title,
       void Function(api.MediaItem item) onTap,
     ) =>
@@ -63,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
           listSpacing: sectionListSpacing,
           listItemWidth: posterItemWidth,
           listItemHeight: posterItemHeight,
-          future: future,
+          items: items,
           itemBuilder: (context, item) => PosterItem(
             poster: api.getMediaImageUrl(item.id, api.ImageType.poster),
             title: item.name,
@@ -73,27 +93,49 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
 
-    return ListView(
-      controller: _scrollController,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      children: [
-        Section<api.MediaItem>(
-          title: "Continue Watching",
-          titlePadding: sectionTitlePadding,
-          listSpacing: sectionListSpacing,
-          listItemWidth: thumbnailItemWidth,
-          listItemHeight: thumbnailItemHeight,
-          future: _continueWatching,
-          itemBuilder: (context, item) => ContinueWatchingCard(
-            thumbnail: api.getMediaImageUrl(item.id, api.ImageType.thumbnail),
-            title: item.name,
-            subtitle: item.type == api.MediaType.episode
-                ? item.getSeasonEpisode()! + ": " + item.grandparent!.name
-                : item.startDate?.year.toString() ?? "",
-            progress: (item.videoUserData?.position ?? 0) /
-                (item.videoInfo?.duration ?? 1),
-            padding: thumbnailItemPadding,
-            onTap: () async {
+    return FutureBuilder<HomeScreenData>(
+      future: _data,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        return ListView(
+          controller: _scrollController,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          children: [
+            Section<api.MediaItem>(
+              title: "Continue Watching",
+              titlePadding: sectionTitlePadding,
+              listSpacing: sectionListSpacing,
+              listItemWidth: thumbnailItemWidth,
+              listItemHeight: thumbnailItemHeight,
+              items: snapshot.data!.continueWatching,
+              itemBuilder: (context, item) => ContinueWatchingCard(
+                thumbnail:
+                    api.getMediaImageUrl(item.id, api.ImageType.thumbnail),
+                title: item.name,
+                subtitle: item.type == api.MediaType.episode
+                    ? item.getSeasonEpisode()! + ": " + item.grandparent!.name
+                    : item.startDate?.year.toString() ?? "",
+                progress: (item.videoUserData?.position ?? 0) /
+                    (item.videoInfo?.duration ?? 1),
+                padding: thumbnailItemPadding,
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => VideoDetailsScreen(item: item),
+                    ),
+                  );
+                  _refresh();
+                },
+              ),
+            ),
+            buildPosterItemSection(snapshot.data!.recentMovies, "Recent Movies",
+                (item) async {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -101,35 +143,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
               _refresh();
-            },
-          ),
-        ),
-        buildPosterItemSection(_recentMovies, "Recent Movies", (item) async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => VideoDetailsScreen(item: item),
-            ),
-          );
-          _refresh();
-        }),
-        buildPosterItemSection(_recentShows, "Recent Shows", (item) async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ShowDetailsScreen(show: item),
-            ),
-          );
-          _refresh();
-        }),
-      ],
+            }),
+            buildPosterItemSection(snapshot.data!.recentShows, "Recent Shows",
+                (item) async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ShowDetailsScreen(show: item),
+                ),
+              );
+              _refresh();
+            }),
+          ],
+        );
+      },
     );
   }
 }
 
 class Section<T> extends StatefulWidget {
   final String title;
-  final Future<List<T>> future;
+  final List<T> items;
   final EdgeInsets titlePadding;
   final double listSpacing;
   final double listItemWidth;
@@ -139,7 +173,7 @@ class Section<T> extends StatefulWidget {
   const Section({
     Key? key,
     required this.title,
-    required this.future,
+    required this.items,
     required this.itemBuilder,
     required this.titlePadding,
     required this.listSpacing,
@@ -166,18 +200,7 @@ class _SectionState<T> extends State<Section<T>> {
           padding: widget.titlePadding,
           child: Text(widget.title, style: titleStyle),
         ),
-        FutureBuilder<List<T>>(
-          future: widget.future,
-          builder: ((context, snapshot) {
-            if (snapshot.hasData) {
-              return _buildContent(snapshot.data!);
-            } else {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-          }),
-        ),
+        _buildContent(widget.items),
         const SizedBox(height: 16),
       ],
     );
