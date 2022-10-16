@@ -6,6 +6,7 @@ import 'package:zenith_flutter/language_codes.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/screens/home.dart';
 import 'package:zenith_flutter/screens/media_library.dart';
+import 'package:zenith_flutter/screens/settings.dart';
 import 'package:zenith_flutter/screens/show_details.dart';
 import 'package:zenith_flutter/screens/video_details_screen.dart';
 import 'package:zenith_flutter/update_dialog.dart';
@@ -109,7 +110,7 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  _checkForUpdates({bool confirmLatest = false}) async {
+  _checkForUpdates() async {
     final update = await _updater.checkForUpdates();
     if (update != null) {
       showDialog(
@@ -117,16 +118,6 @@ class _MainScreenState extends State<MainScreen> {
         barrierDismissible: false,
         builder: (context) => UpdateDialog(update: update),
       );
-    } else if (confirmLatest) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text("No updates available"),
-        action: SnackBarAction(
-          label: "OK",
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
-      ));
     }
   }
 
@@ -142,7 +133,12 @@ class _MainScreenState extends State<MainScreen> {
         if (!desktop) {
           Navigator.pop(context);
         }
-        setState(() => _screen = screen);
+        if (screen == Screen.settings) {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => SettingsScreen()));
+        } else {
+          setState(() => _screen = screen);
+        }
       },
     );
 
@@ -218,18 +214,7 @@ class _MainScreenState extends State<MainScreen> {
         );
 
       case Screen.settings:
-        return ListView(children: [
-          ListTile(
-            title: const Text("Revision"),
-            subtitle: Text(Updater.revision ?? "Unknown"),
-          ),
-          ListTile(
-            title: const Text("Check for updates"),
-            onTap: () {
-              _checkForUpdates(confirmLatest: true);
-            },
-          ),
-        ]);
+        throw ArgumentError.value(screen);
     }
   }
 }
