@@ -244,7 +244,9 @@ class EpisodeThumbnail extends StatelessWidget {
         if (isWatched)
           Container(
             color: Colors.black.withAlpha(127),
-            child: const Center(child: Icon(Icons.check, size: 36)),
+            child: const Center(
+              child: Icon(Icons.check, size: 36, color: Colors.white),
+            ),
           ),
       ]),
     );
