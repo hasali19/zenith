@@ -237,13 +237,9 @@ Future<MediaItem> fetchMediaItem(int id) async {
   final res = await http.get(Uri.parse('$apiBaseUrl/api/items/$id'));
   if (res.statusCode == 200) {
     final dynamic json = jsonDecode(utf8.decode(res.bodyBytes));
-    if (json["type"] == "movie") {
-      return MediaItem.fromJson(MediaType.movie, json);
-    } else if (json['type'] == "episode") {
-      return MediaItem.fromJson(MediaType.episode, json);
-    } else {
-      throw Exception("Unsupported media item type");
-    }
+    final type =
+        MediaType.values.firstWhere((type) => type.name == json['type']);
+    return MediaItem.fromJson(type, json);
   } else {
     throw Exception('Failed to fetch shows');
   }

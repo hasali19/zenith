@@ -197,7 +197,7 @@ class EpisodeListItem extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ItemDetailsScreen(item: episode),
+                      builder: (context) => ItemDetailsScreen(id: episode.id),
                     ),
                   );
                 },

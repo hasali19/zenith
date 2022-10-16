@@ -4,16 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/poster_item.dart';
 import 'package:zenith_flutter/responsive.dart';
+import 'package:zenith_flutter/screens/item_details/item_details.dart';
 
 class MediaLibraryScreen extends StatefulWidget {
   final Future<List<MediaItem>> Function() provider;
-  final void Function(MediaItem) onItemTap;
 
-  const MediaLibraryScreen({
-    Key? key,
-    required this.provider,
-    required this.onItemTap,
-  }) : super(key: key);
+  const MediaLibraryScreen({Key? key, required this.provider})
+      : super(key: key);
 
   @override
   State<MediaLibraryScreen> createState() => _MediaLibraryScreenState();
@@ -34,10 +31,7 @@ class _MediaLibraryScreenState extends State<MediaLibraryScreen> {
       future: _items,
       builder: ((context, snapshot) {
         if (snapshot.hasData) {
-          return MediaItemGrid(
-            items: snapshot.data!,
-            onItemTap: widget.onItemTap,
-          );
+          return MediaItemGrid(items: snapshot.data!);
         } else if (snapshot.hasError) {
           return Text("${snapshot.error}");
         }
@@ -49,15 +43,10 @@ class _MediaLibraryScreenState extends State<MediaLibraryScreen> {
 
 class MediaItemGrid extends StatelessWidget {
   final List<MediaItem> items;
-  final void Function(MediaItem) onItemTap;
 
   final ScrollController _scrollController = ScrollController();
 
-  MediaItemGrid({
-    Key? key,
-    required this.items,
-    required this.onItemTap,
-  }) : super(key: key);
+  MediaItemGrid({Key? key, required this.items}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +79,12 @@ class MediaItemGrid extends StatelessWidget {
                 title: item.name,
                 subtitle: item.startDate!.year.toString(),
                 infoSeparator: infoTopPadding,
-                onTap: () => onItemTap(item),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ItemDetailsScreen(id: item.id),
+                  ),
+                ),
               ),
             ));
           }

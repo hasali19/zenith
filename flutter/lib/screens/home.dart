@@ -74,7 +74,6 @@ class _HomeScreenState extends State<HomeScreen> {
     buildPosterItemSection(
       List<api.MediaItem> items,
       String title,
-      void Function(api.MediaItem item) onTap,
     ) =>
         Section<api.MediaItem>(
           title: title,
@@ -88,7 +87,15 @@ class _HomeScreenState extends State<HomeScreen> {
             title: item.name,
             subtitle: item.startDate?.year.toString() ?? "",
             infoSeparator: posterItemInfoSeparator,
-            onTap: () => onTap(item),
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ItemDetailsScreen(id: item.id),
+                ),
+              );
+              _refresh();
+            },
           ),
         );
 
@@ -101,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
+        final data = snapshot.data!;
         return ListView(
           controller: _scrollController,
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -111,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
               listSpacing: sectionListSpacing,
               listItemWidth: thumbnailItemWidth,
               listItemHeight: thumbnailItemHeight,
-              items: snapshot.data!.continueWatching,
+              items: data.continueWatching,
               itemBuilder: (context, item) => ContinueWatchingCard(
                 thumbnail:
                     api.getMediaImageUrl(item.id, api.ImageType.thumbnail),
@@ -126,33 +134,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ItemDetailsScreen(item: item),
+                      builder: (context) => ItemDetailsScreen(id: item.id),
                     ),
                   );
                   _refresh();
                 },
               ),
             ),
-            buildPosterItemSection(snapshot.data!.recentMovies, "Recent Movies",
-                (item) async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ItemDetailsScreen(item: item),
-                ),
-              );
-              _refresh();
-            }),
-            buildPosterItemSection(snapshot.data!.recentShows, "Recent Shows",
-                (item) async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ItemDetailsScreen(item: item),
-                ),
-              );
-              _refresh();
-            }),
+            buildPosterItemSection(data.recentMovies, "Recent Movies"),
+            buildPosterItemSection(data.recentShows, "Recent Shows"),
           ],
         );
       },

@@ -5,7 +5,6 @@ import 'package:zenith_flutter/drawer.dart';
 import 'package:zenith_flutter/language_codes.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/screens/home.dart';
-import 'package:zenith_flutter/screens/item_details/item_details.dart';
 import 'package:zenith_flutter/screens/media_library.dart';
 import 'package:zenith_flutter/screens/settings.dart';
 import 'package:zenith_flutter/update_dialog.dart';
@@ -185,31 +184,15 @@ class _MainScreenState extends State<MainScreen> {
         return const HomeScreen();
 
       case Screen.movies:
-        return MediaLibraryScreen(
-          key: const ValueKey(Screen.movies),
+        return const MediaLibraryScreen(
+          key: ValueKey(Screen.movies),
           provider: fetchMovies,
-          onItemTap: (item) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ItemDetailsScreen(item: item),
-              ),
-            );
-          },
         );
 
       case Screen.shows:
-        return MediaLibraryScreen(
-          key: const ValueKey(Screen.shows),
+        return const MediaLibraryScreen(
+          key: ValueKey(Screen.shows),
           provider: fetchShows,
-          onItemTap: (item) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ItemDetailsScreen(item: item),
-              ),
-            );
-          },
         );
 
       case Screen.settings:
