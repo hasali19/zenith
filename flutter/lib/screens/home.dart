@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/poster_item.dart';
 import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/screens/show_details.dart';
-import 'package:zenith_flutter/screens/video_details_screen.dart';
+import 'package:zenith_flutter/screens/item_details/item_details.dart';
 import 'package:zenith_flutter/text_one_line.dart';
 
 import '../api.dart' as api;
@@ -127,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => VideoDetailsScreen(item: item),
+                      builder: (context) => ItemDetailsScreen(item: item),
                     ),
                   );
                   _refresh();
@@ -139,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => VideoDetailsScreen(item: item),
+                  builder: (context) => ItemDetailsScreen(item: item),
                 ),
               );
               _refresh();
@@ -149,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ShowDetailsScreen(show: item),
+                  builder: (context) => ItemDetailsScreen(item: item),
                 ),
               );
               _refresh();

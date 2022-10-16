@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zenith_flutter/screens/item_details.dart';
+import 'package:zenith_flutter/screens/item_details/item_details.dart';
 import 'package:zenith_flutter/text_one_line.dart';
 
 class PosterItem extends StatelessWidget {

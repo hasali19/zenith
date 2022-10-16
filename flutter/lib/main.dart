@@ -5,10 +5,9 @@ import 'package:zenith_flutter/drawer.dart';
 import 'package:zenith_flutter/language_codes.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/screens/home.dart';
+import 'package:zenith_flutter/screens/item_details/item_details.dart';
 import 'package:zenith_flutter/screens/media_library.dart';
 import 'package:zenith_flutter/screens/settings.dart';
-import 'package:zenith_flutter/screens/show_details.dart';
-import 'package:zenith_flutter/screens/video_details_screen.dart';
 import 'package:zenith_flutter/update_dialog.dart';
 import 'package:zenith_flutter/updater.dart';
 
@@ -193,7 +192,7 @@ class _MainScreenState extends State<MainScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => VideoDetailsScreen(item: item),
+                builder: (context) => ItemDetailsScreen(item: item),
               ),
             );
           },
@@ -207,7 +206,7 @@ class _MainScreenState extends State<MainScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ShowDetailsScreen(show: item),
+                builder: (context) => ItemDetailsScreen(item: item),
               ),
             );
           },

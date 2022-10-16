@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/screens/item_details.dart';
-import 'package:zenith_flutter/screens/video_details_screen.dart';
+import 'package:zenith_flutter/screens/item_details/item_details.dart';
 import 'package:zenith_flutter/text_one_line.dart';
 
-import '../api.dart' as api;
+import '../../api.dart' as api;
 
 class Season {
   final api.MediaItem data;
@@ -26,62 +25,59 @@ Future<List<Season>> fetchSeasons(int showId) async {
   return seasons;
 }
 
-class ShowDetailsScreen extends StatefulWidget {
-  final api.MediaItem show;
+class EpisodesList extends StatefulWidget {
+  final int id;
 
-  const ShowDetailsScreen({Key? key, required this.show}) : super(key: key);
+  const EpisodesList({Key? key, required this.id}) : super(key: key);
 
   @override
-  State<ShowDetailsScreen> createState() => _ShowDetailsScreenState();
+  State<EpisodesList> createState() => _EpisodesListState();
 }
 
-class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
+class _EpisodesListState extends State<EpisodesList> {
   late Future<List<Season>> _seasons;
 
   @override
   void initState() {
     super.initState();
-    _seasons = fetchSeasons(widget.show.id);
+    _seasons = fetchSeasons(widget.id);
   }
 
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).isDesktop;
-    return ItemDetailsScreen(
-      item: widget.show,
-      body: FutureBuilder<List<Season>>(
-        future: _seasons,
-        builder: (context, snapshot) {
-          return MultiSliver(
-            children: [
-              if (snapshot.hasData) ...[
-                for (final Season season in snapshot.data!)
-                  EpisodeList(season: season),
-                SliverToBoxAdapter(
-                  child: SizedBox(height: isDesktop ? 128 : 16),
-                ),
-              ]
-            ],
-          );
-        },
-      ),
+    return FutureBuilder<List<Season>>(
+      future: _seasons,
+      builder: (context, snapshot) {
+        return MultiSliver(
+          children: [
+            if (snapshot.hasData) ...[
+              for (final Season season in snapshot.data!)
+                _EpisodesListInner(season: season),
+              SliverToBoxAdapter(
+                child: SizedBox(height: isDesktop ? 128 : 16),
+              ),
+            ]
+          ],
+        );
+      },
     );
   }
 }
 
-class EpisodeList extends StatefulWidget {
+class _EpisodesListInner extends StatefulWidget {
   final Season season;
 
-  const EpisodeList({
+  const _EpisodesListInner({
     Key? key,
     required this.season,
   }) : super(key: key);
 
   @override
-  State<EpisodeList> createState() => _EpisodeListState();
+  State<_EpisodesListInner> createState() => _EpisodesListInnerState();
 }
 
-class _EpisodeListState extends State<EpisodeList> {
+class _EpisodesListInnerState extends State<_EpisodesListInner> {
   final controller = ScrollController();
 
   api.MediaItem get season => widget.season.data;
@@ -201,7 +197,7 @@ class EpisodeListItem extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => VideoDetailsScreen(item: episode),
+                      builder: (context) => ItemDetailsScreen(item: episode),
                     ),
                   );
                 },
