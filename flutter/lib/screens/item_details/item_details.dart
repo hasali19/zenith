@@ -25,7 +25,13 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _item = fetchMediaItem(widget.id);
+    _refresh();
+  }
+
+  void _refresh() {
+    setState(() {
+      _item = fetchMediaItem(widget.id);
+    });
   }
 
   @override
@@ -47,7 +53,13 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final item = snapshot.data!;
-          return Content(item: item);
+          return Content(
+            item: item,
+            onRefresh: () async {
+              _refresh();
+              await _item;
+            },
+          );
         },
       ),
     );
@@ -55,9 +67,14 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 }
 
 class Content extends StatelessWidget {
-  const Content({Key? key, required this.item}) : super(key: key);
+  const Content({
+    Key? key,
+    required this.item,
+    required this.onRefresh,
+  }) : super(key: key);
 
   final MediaItem item;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -65,24 +82,27 @@ class Content extends StatelessWidget {
     final padding = isDesktop
         ? const EdgeInsets.fromLTRB(128, 128, 128, 32)
         : const EdgeInsets.fromLTRB(16, 96, 16, 16);
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Backdrop(url: getMediaImageUrl(item.id, ImageType.backdrop)),
-        BackdropBlur(
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: padding,
-                  child: HeaderContent(item: item),
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Backdrop(url: getMediaImageUrl(item.id, ImageType.backdrop)),
+          BackdropBlur(
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: padding,
+                    child: HeaderContent(item: item),
+                  ),
                 ),
-              ),
-              if (item.type == MediaType.show) EpisodesList(id: item.id),
-            ],
+                if (item.type == MediaType.show) EpisodesList(id: item.id),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
