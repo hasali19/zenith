@@ -1,5 +1,8 @@
 package com.example.zenith_flutter
 
+import android.app.PictureInPictureParams
+import android.content.res.Configuration
+import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
@@ -11,9 +14,13 @@ class MainActivity : FlutterActivity() {
     private val executor = Executors.newCachedThreadPool()
 
     private lateinit var updaterChannel: MethodChannel
+    private lateinit var pipChannel: MethodChannel
+
+    private var isPipModeEnabled = false
 
     object Channels {
         const val Updater = "zenith.hasali.uk/updater"
+        const val Pip = "zenith.hasali.uk/pip"
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -23,6 +30,10 @@ class MainActivity : FlutterActivity() {
 
         updaterChannel = MethodChannel(messenger, Channels.Updater).apply {
             setMethodCallHandler(this@MainActivity::handleUpdaterMethodCall)
+        }
+
+        pipChannel = MethodChannel(messenger, Channels.Pip).apply {
+            setMethodCallHandler(this@MainActivity::handlePipMethodCall)
         }
     }
 
@@ -42,6 +53,16 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private fun handlePipMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        when (call.method) {
+            "setPipEnabled" -> {
+                isPipModeEnabled = call.argument("enabled")
+                    ?: return result.error("missing_param", "enabled is required", null)
+                result.success(null)
+            }
+        }
+    }
+
     private fun install(artifactId: Int) {
         executor.execute {
             AppUpdater(this)
@@ -50,6 +71,31 @@ class MainActivity : FlutterActivity() {
                         updaterChannel.invokeMethod("install/onProgress", it)
                     }
                 }
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: Configuration?
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        pipChannel.invokeMethod("notifyPipChanged", isInPictureInPictureMode)
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (isPipModeEnabled) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    enterPictureInPictureMode(
+                        PictureInPictureParams.Builder()
+                            .build()
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    enterPictureInPictureMode()
+                }
+            }
         }
     }
 }

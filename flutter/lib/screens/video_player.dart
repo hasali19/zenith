@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock/wakelock.dart';
 import 'package:zenith_flutter/language_codes.dart';
@@ -77,9 +78,12 @@ SubtitleTrack subtitleFromApi(api.SubtitleTrack subtitle) {
   );
 }
 
+const _pipChannel = MethodChannel("zenith.hasali.uk/pip");
+
 class _VideoPlayerState extends State<_VideoPlayer> {
   VideoController? _controller;
   bool _shouldShowControls = true;
+  bool _isInPipMode = false;
 
   late Timer _progressTimer;
   Timer? _controlsTimer;
@@ -91,6 +95,16 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   void initState() {
     super.initState();
     Wakelock.enable();
+
+    _pipChannel.invokeMethod("setPipEnabled", {"enabled": true});
+    _pipChannel.setMethodCallHandler((call) async {
+      if (call.method == "notifyPipChanged") {
+        setState(() {
+          _isInPipMode = call.arguments;
+        });
+      }
+      return null;
+    });
 
     VideoPlayerPlatform.instance.createController().then((controller) {
       setState(() {
@@ -133,6 +147,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
     _controlsTimer?.cancel();
     _progressTimer.cancel();
     _controller?.dispose();
+    _pipChannel.invokeMethod("setPipEnabled", {"enabled": false});
   }
 
   void _toggleControls() {
@@ -185,23 +200,25 @@ class _VideoPlayerState extends State<_VideoPlayer> {
               child: Stack(
                 children: [
                   VideoPlayerPlatform.instance.buildView(_controller!),
-                  GestureDetector(onTap: _toggleControls),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: child,
+                  if (!_isInPipMode) ...[
+                    GestureDetector(onTap: _toggleControls),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      transitionBuilder: (child, animation) => FadeTransition(
+                        opacity: animation,
+                        child: child,
+                      ),
+                      child: ControlsContainer(
+                        key: ValueKey<bool>(_shouldShowControls),
+                        controller: _controller!,
+                        item: widget.item,
+                        visible: _shouldShowControls,
+                        onButtonTap: _resetControlsTimer,
+                        onSeekStart: _disableAutoHideControls,
+                        onSeekEnd: _resetControlsTimer,
+                      ),
                     ),
-                    child: ControlsContainer(
-                      key: ValueKey<bool>(_shouldShowControls),
-                      controller: _controller!,
-                      item: widget.item,
-                      visible: _shouldShowControls,
-                      onButtonTap: _resetControlsTimer,
-                      onSeekStart: _disableAutoHideControls,
-                      onSeekEnd: _resetControlsTimer,
-                    ),
-                  ),
+                  ],
                 ],
               ),
             ),
