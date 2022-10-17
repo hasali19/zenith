@@ -12,6 +12,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.session.MediaSession
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -234,6 +235,9 @@ private class PlayerInstance(
         .setTrackSelector(trackSelector)
         .build()
 
+    private val session = MediaSession.Builder(context, player)
+        .build()
+
     private var previousDuration = 0L
     private var onEvent: EventCallback? = null
 
@@ -304,6 +308,7 @@ private class PlayerInstance(
     }
 
     fun release() {
+        session.release()
         player.release()
         surface.release()
         texture.release()
