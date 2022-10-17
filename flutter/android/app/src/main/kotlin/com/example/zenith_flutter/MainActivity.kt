@@ -58,6 +58,21 @@ class MainActivity : FlutterActivity() {
             "setPipEnabled" -> {
                 isPipModeEnabled = call.argument("enabled")
                     ?: return result.error("missing_param", "enabled is required", null)
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    setPictureInPictureParams(
+                        PictureInPictureParams.Builder()
+                            // TODO: Set video aspect ratio
+                            // .setAspectRatio(...)
+                            .apply {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                    setAutoEnterEnabled(isPipModeEnabled)
+                                }
+                            }
+                            .build()
+                    )
+                }
+
                 result.success(null)
             }
         }
@@ -86,15 +101,8 @@ class MainActivity : FlutterActivity() {
         super.onUserLeaveHint()
         if (isPipModeEnabled) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    enterPictureInPictureMode(
-                        PictureInPictureParams.Builder()
-                            .build()
-                    )
-                } else {
-                    @Suppress("DEPRECATION")
-                    enterPictureInPictureMode()
-                }
+                @Suppress("DEPRECATION")
+                enterPictureInPictureMode()
             }
         }
     }
