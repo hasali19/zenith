@@ -78,6 +78,9 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   bool _shouldShowControls = true;
   bool _isInPipMode = false;
 
+  bool _isPaused = false;
+  VideoState _videoState = VideoState.idle;
+
   final _progressController = ProgressController();
 
   late Timer _progressReportTimer;
@@ -110,7 +113,18 @@ class _VideoPlayerState extends State<_VideoPlayer> {
             api.getVideoUrl(widget.item.id),
             subtitles.map(subtitleFromApi).toList(),
             widget.startPosition,
-          );
+          )
+          ..addListener(() {
+            setState(() {
+              _videoState = controller.state;
+            });
+
+            if (_isPaused != controller.paused) {
+              // video was paused or unpaused
+              _isPaused = controller.paused;
+              _showControls();
+            }
+          });
         _progressController.init(controller);
       });
     });
@@ -182,7 +196,9 @@ class _VideoPlayerState extends State<_VideoPlayer> {
 
   void _resetControlsTimer() {
     _controlsTimer?.cancel();
-    _controlsTimer = Timer(const Duration(seconds: 5), _hideControls);
+    if (!_isPaused) {
+      _controlsTimer = Timer(const Duration(seconds: 5), _hideControls);
+    }
   }
 
   Widget _buildPlayer(VideoController controller) {
@@ -216,7 +232,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   }
 
   Widget _buildUi() {
-    if (!_shouldShowControls) {
+    if (!_shouldShowControls && _videoState != VideoState.ended) {
       return const SizedBox.expand();
     }
     return VideoPlayerUi(
