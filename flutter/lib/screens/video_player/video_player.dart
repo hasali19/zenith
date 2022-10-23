@@ -277,8 +277,8 @@ class _VideoPlayerState extends State<_VideoPlayer> {
 }
 
 class ProgressController {
-  final StreamController<VideoProgressData> _controller =
-      StreamController.broadcast();
+  late final StreamController<VideoProgressData> _controller =
+      StreamController.broadcast(onListen: _onListen);
 
   Timer? _timer;
   VideoController? _videoController;
@@ -305,5 +305,9 @@ class ProgressController {
       total: Duration(seconds: controller.duration.toInt()),
       progress: Duration(seconds: controller.position.toInt()),
     ));
+  }
+
+  void _onListen() {
+    _emitProgress();
   }
 }
