@@ -1,18 +1,19 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock/wakelock.dart';
 
+import '../../api.dart' as api;
+import '../../platform.dart' as platform;
 import 'ui.dart';
 import 'utils.dart';
 import 'video_progress_bar.dart';
-
-import '../../api.dart' as api;
 
 class VideoPlayerScreen extends StatefulWidget {
   final int id;
@@ -71,12 +72,9 @@ class _VideoPlayer extends StatefulWidget {
   }
 }
 
-const _pipChannel = MethodChannel("zenith.hasali.uk/pip");
-
 class _VideoPlayerState extends State<_VideoPlayer> {
   VideoController? _controller;
   bool _shouldShowControls = true;
-  bool _isInPipMode = false;
 
   bool _isPaused = false;
   VideoState _videoState = VideoState.idle;
@@ -94,17 +92,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
     super.initState();
     Wakelock.enable();
 
-    if (!kIsWeb && Platform.isAndroid) {
-      _pipChannel.invokeMethod("setPipEnabled", {"enabled": true});
-      _pipChannel.setMethodCallHandler((call) async {
-        if (call.method == "notifyPipChanged") {
-          setState(() {
-            _isInPipMode = call.arguments;
-          });
-        }
-        return null;
-      });
-    }
+    platform.setPipEnabled(true);
 
     VideoPlayerPlatform.instance.createController().then((controller) {
       setState(() {
@@ -160,9 +148,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
     _progressReportTimer.cancel();
     _progressController.dispose();
     _controller?.dispose();
-    if (!kIsWeb && Platform.isAndroid) {
-      _pipChannel.invokeMethod("setPipEnabled", {"enabled": false});
-    }
+    platform.setPipEnabled(false);
   }
 
   void _toggleControls() {
@@ -176,12 +162,14 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   void _hideControls() {
     _controlsTimer?.cancel();
     if (_shouldShowControls) {
+      platform.setSystemBarsVisible(false);
       setState(() => _shouldShowControls = false);
     }
   }
 
   void _showControls() {
     if (!_shouldShowControls) {
+      platform.setSystemBarsVisible(true);
       setState(() => _shouldShowControls = true);
     }
     _resetControlsTimer();
@@ -190,6 +178,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
   void _disableAutoHideControls() {
     _controlsTimer?.cancel();
     if (!_shouldShowControls) {
+      platform.setSystemBarsVisible(true);
       setState(() => _shouldShowControls = true);
     }
   }
@@ -212,20 +201,24 @@ class _VideoPlayerState extends State<_VideoPlayer> {
       child: Stack(
         children: [
           VideoPlayerPlatform.instance.buildView(_controller!),
-          if (!_isInPipMode) ...[
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _toggleControls,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: animation,
-                  child: child,
+          ValueListenableBuilder<bool>(
+            valueListenable: platform.isInPipMode,
+            builder: (context, isInPipMode, child) {
+              if (isInPipMode) return const SizedBox.expand();
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _toggleControls,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  ),
+                  child: _buildUi(),
                 ),
-                child: _buildUi(),
-              ),
-            ),
-          ],
+              );
+            },
+          )
         ],
       ),
     );
@@ -247,13 +240,31 @@ class _VideoPlayerState extends State<_VideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    final content = ValueListenableBuilder<EdgeInsets>(
+      valueListenable: platform.stableSystemBarInsets,
+      builder: (context, physicalInsets, child) {
+        final stableSystemBarInsets =
+            physicalInsets / context.mq.devicePixelRatio;
+        final insets = EdgeInsets.fromLTRB(
+            max(stableSystemBarInsets.left, context.mq.padding.left),
+            max(stableSystemBarInsets.top, context.mq.padding.top),
+            max(stableSystemBarInsets.right, context.mq.padding.right),
+            max(stableSystemBarInsets.bottom, context.mq.padding.bottom));
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(padding: insets),
+          child: child!,
+        );
+      },
+      child: _controller == null
+          ? const Center(child: CircularProgressIndicator())
+          : _buildPlayer(_controller!),
+    );
+
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: _controller == null
-            ? const Center(child: CircularProgressIndicator())
-            : _buildPlayer(_controller!),
+        body: content,
       ),
     );
   }

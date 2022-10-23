@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:sized_context/sized_context.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/poster_item.dart';
 import 'package:zenith_flutter/responsive.dart';
@@ -63,7 +64,7 @@ class MediaItemGrid extends StatelessWidget {
 
       return ListView.builder(
         controller: _scrollController,
-        padding: EdgeInsets.all(gridPadding),
+        padding: EdgeInsets.all(gridPadding) + context.mq.padding,
         itemCount: (items.length / cols).ceil(),
         itemBuilder: (context, rowIndex) {
           final columns = <Widget>[];

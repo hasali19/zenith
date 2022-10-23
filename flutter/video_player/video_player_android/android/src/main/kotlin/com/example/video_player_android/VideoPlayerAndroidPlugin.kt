@@ -3,17 +3,13 @@ package com.example.video_player_android
 import android.app.Activity
 import android.content.Context
 import android.net.Uri
-import android.os.Build
 import android.view.Surface
-import android.view.WindowManager
-import androidx.annotation.NonNull
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
-
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -32,7 +28,7 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
     private var activity: Activity? = null
     private val players = mutableMapOf<Long, PlayerInstance>()
 
-    override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         applicationContext = flutterPluginBinding.applicationContext
         textureRegistry = flutterPluginBinding.textureRegistry
 
@@ -54,8 +50,6 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                             position = call.argument("position")!!,
                         )
                         "dispose" -> responder.dispose(id = call.argument("id")!!)
-                        "extendIntoCutout" -> responder.extendIntoCutout()
-                        "unsetExtendIntoCutout" -> responder.unsetExtendIntoCutout()
                     }
                 }
             }
@@ -130,7 +124,7 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
         }
     }
 
-    override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         methodChannel.setMethodCallHandler(null)
         eventChannel.setStreamHandler(null)
         players.values.forEach { it.release() }
@@ -151,16 +145,6 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
 
     override fun onDetachedFromActivity() {
         activity = null
-    }
-
-    private fun setWindowLayoutInDisplayCutoutMode(getter: () -> Int) {
-        activity?.window?.let { window ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                window.attributes = window.attributes.apply {
-                    layoutInDisplayCutoutMode = getter()
-                }
-            }
-        }
     }
 
     private inner class Responder(private val result: Result) {
@@ -193,16 +177,6 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
 
         fun dispose(id: Long) {
             players.remove(id)!!.release()
-            result.success(null)
-        }
-
-        fun extendIntoCutout() {
-            setWindowLayoutInDisplayCutoutMode { WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES }
-            result.success(null)
-        }
-
-        fun unsetExtendIntoCutout() {
-            setWindowLayoutInDisplayCutoutMode { WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT }
             result.success(null)
         }
     }

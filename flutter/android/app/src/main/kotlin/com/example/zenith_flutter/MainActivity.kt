@@ -3,6 +3,11 @@ package com.example.zenith_flutter
 import android.app.PictureInPictureParams
 import android.content.res.Configuration
 import android.os.Build
+import android.view.WindowManager
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
@@ -14,13 +19,13 @@ class MainActivity : FlutterActivity() {
     private val executor = Executors.newCachedThreadPool()
 
     private lateinit var updaterChannel: MethodChannel
-    private lateinit var pipChannel: MethodChannel
+    private lateinit var platformChannel: MethodChannel
 
     private var isPipModeEnabled = false
 
     object Channels {
         const val Updater = "zenith.hasali.uk/updater"
-        const val Pip = "zenith.hasali.uk/pip"
+        const val Platform = "zenith.hasali.uk/platform"
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -32,8 +37,22 @@ class MainActivity : FlutterActivity() {
             setMethodCallHandler(this@MainActivity::handleUpdaterMethodCall)
         }
 
-        pipChannel = MethodChannel(messenger, Channels.Pip).apply {
-            setMethodCallHandler(this@MainActivity::handlePipMethodCall)
+        platformChannel = MethodChannel(messenger, Channels.Platform).apply {
+            setMethodCallHandler(this@MainActivity::handlePlatformMethodCall)
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
+            val stableSystemBars =
+                insets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.systemBars())
+            platformChannel.invokeMethod(
+                "setStableSystemBarInsets", mapOf(
+                    "top" to stableSystemBars.top,
+                    "bottom" to stableSystemBars.bottom,
+                    "left" to stableSystemBars.left,
+                    "right" to stableSystemBars.right,
+                )
+            )
+            insets
         }
     }
 
@@ -53,12 +72,10 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun handlePipMethodCall(call: MethodCall, result: MethodChannel.Result) {
+    private fun handlePlatformMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "setPipEnabled" -> {
-                isPipModeEnabled = call.argument("enabled")
-                    ?: return result.error("missing_param", "enabled is required", null)
-
+                val isPipModeEnabled = call.arguments as Boolean
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     setPictureInPictureParams(
                         PictureInPictureParams.Builder()
@@ -72,7 +89,31 @@ class MainActivity : FlutterActivity() {
                             .build()
                     )
                 }
-
+                result.success(null)
+            }
+            "setExtendIntoCutout" -> {
+                val extendIntoCutout = call.arguments as Boolean
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    window.attributes = window.attributes.apply {
+                        layoutInDisplayCutoutMode = if (extendIntoCutout) {
+                            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                        } else {
+                            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                        }
+                    }
+                }
+                result.success(null)
+            }
+            "setSystemBarsVisible" -> {
+                val visible = call.arguments as Boolean
+                val controller = WindowCompat.getInsetsController(window, window.decorView)!!
+                if (visible) {
+                    controller.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+                } else {
+                    controller.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+                    controller.systemBarsBehavior =
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
                 result.success(null)
             }
         }
@@ -94,7 +135,7 @@ class MainActivity : FlutterActivity() {
         newConfig: Configuration?
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        pipChannel.invokeMethod("notifyPipChanged", isInPictureInPictureMode)
+        platformChannel.invokeMethod("setIsInPipMode", isInPictureInPictureMode)
     }
 
     override fun onUserLeaveHint() {

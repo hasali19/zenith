@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:sized_context/sized_context.dart';
+import 'package:sliver_tools/sliver_tools.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/screens/item_details/episodes_list.dart';
@@ -91,13 +93,25 @@ class Content extends StatelessWidget {
           BackdropBlur(
             child: CustomScrollView(
               slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: padding,
-                    child: HeaderContent(item: item),
+                SliverCrossAxisPadded(
+                  paddingStart: context.mq.padding.left,
+                  paddingEnd: context.mq.padding.right,
+                  child: MultiSliver(
+                    children: [
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: padding,
+                          child: HeaderContent(item: item),
+                        ),
+                      ),
+                      if (item.type == MediaType.show)
+                        EpisodesList(id: item.id),
+                      SliverToBoxAdapter(
+                        child: SizedBox(height: context.mq.padding.bottom),
+                      ),
+                    ],
                   ),
                 ),
-                if (item.type == MediaType.show) EpisodesList(id: item.id),
               ],
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sized_context/sized_context.dart';
 import 'package:zenith_flutter/poster_item.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/screens/item_details/item_details.dart';
@@ -111,7 +112,8 @@ class _HomeScreenState extends State<HomeScreen> {
         final data = snapshot.data!;
         return ListView(
           controller: _scrollController,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding:
+              const EdgeInsets.symmetric(vertical: 16) + context.mq.padding,
           children: [
             Section<api.MediaItem>(
               title: "Continue Watching",

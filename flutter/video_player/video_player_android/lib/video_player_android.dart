@@ -50,17 +50,10 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
   bool get isWindowed => false;
 
   @override
-  Future<void> enterFullscreen() async {
-    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    await _methodChannel.invokeMethod("extendIntoCutout");
-  }
+  Future<void> enterFullscreen() async {}
 
   @override
-  Future<void> exitFullscreen() async {
-    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-        overlays: SystemUiOverlay.values);
-    await _methodChannel.invokeMethod("unsetExtendIntoCutout");
-  }
+  Future<void> exitFullscreen() async {}
 
   @override
   Future<void> toggleFullscreen() async {}
