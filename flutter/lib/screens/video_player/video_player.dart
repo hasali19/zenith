@@ -133,9 +133,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
       }
     });
 
-    if (!VideoPlayerPlatform.instance.isWindowed) {
-      VideoPlayerPlatform.instance.enterFullscreen();
-    }
+    platform.setExtendIntoCutout(true);
 
     _showControls();
   }
@@ -271,7 +269,8 @@ class _VideoPlayerState extends State<_VideoPlayer> {
 
   Future<bool> _onWillPop() async {
     if (!VideoPlayerPlatform.instance.isWindowed) {
-      await VideoPlayerPlatform.instance.exitFullscreen();
+      await platform.setExtendIntoCutout(false);
+      await platform.setSystemBarsVisible(true);
     }
     return true;
   }
