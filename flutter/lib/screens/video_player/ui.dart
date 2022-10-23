@@ -148,8 +148,26 @@ class _VideoPlayerUiState extends State<VideoPlayerUi> {
   }
 
   Widget _buildAppBar() {
+    final Widget title;
+    if (widget.item.type == api.MediaType.episode) {
+      title = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.item.getSeasonEpisode()! + ": " + widget.item.name,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          Text(
+            widget.item.grandparent!.name,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      );
+    } else {
+      title = Text(widget.item.name);
+    }
     return AppBar(
-      title: Text(widget.item.name),
+      title: title,
       backgroundColor: Colors.transparent,
       elevation: 0,
       actions: [
