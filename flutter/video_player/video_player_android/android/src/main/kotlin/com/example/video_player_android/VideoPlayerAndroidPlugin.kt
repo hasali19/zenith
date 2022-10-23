@@ -4,10 +4,14 @@ import android.app.Activity
 import android.content.Context
 import android.net.Uri
 import android.view.Surface
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.common.VideoSize
+import android.widget.Toast
+import androidx.media3.common.*
+import androidx.media3.common.text.CueGroup
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.MergingMediaSource
+import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -41,6 +45,15 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                         "load" -> responder.load(
                             id = call.argument("id")!!,
                             url = call.argument("url")!!,
+                            subtitles = call.argument<List<Map<String, Any>>>("subtitles")!!
+                                .map {
+                                    SubtitleTrack(
+                                        id = it["id"] as String,
+                                        src = it["src"] as String,
+                                        title = it["title"] as String?,
+                                        language = it["language"] as String?,
+                                    )
+                                },
                             startPosition = call.argument("startPosition")!!,
                         )
                         "play" -> responder.play(id = call.argument("id")!!)
@@ -48,6 +61,10 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                         "seekTo" -> responder.seekTo(
                             id = call.argument("id")!!,
                             position = call.argument("position")!!,
+                        )
+                        "setTextTrack" -> responder.setTextTrack(
+                            id = call.argument("id")!!,
+                            trackId = call.argument("trackId"),
                         )
                         "dispose" -> responder.dispose(id = call.argument("id")!!)
                     }
@@ -112,6 +129,12 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                                     "position" to it.position,
                                 )
                             )
+                            is PlayerInstance.Event.Cues -> events.success(
+                                mapOf(
+                                    "type" to "cues",
+                                    "text" to it.text,
+                                )
+                            )
                         }
                     }
                 }
@@ -155,8 +178,8 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
             result.success(texture.id())
         }
 
-        fun load(id: Long, url: String, startPosition: Long) {
-            players[id]!!.load(url, startPosition)
+        fun load(id: Long, url: String, subtitles: List<SubtitleTrack>, startPosition: Long) {
+            players[id]!!.load(url, subtitles, startPosition)
             result.success(null)
         }
 
@@ -175,6 +198,12 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
             result.success(null)
         }
 
+        fun setTextTrack(id: Long, trackId: String?) {
+            println("Setting text track")
+            players[id]!!.setTextTrack(trackId)
+            result.success(null)
+        }
+
         fun dispose(id: Long) {
             players.remove(id)!!.release()
             result.success(null)
@@ -184,8 +213,10 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
 
 private typealias EventCallback = (event: PlayerInstance.Event) -> Unit
 
+data class SubtitleTrack(val id: String, val src: String, val title: String?, val language: String?)
+
 private class PlayerInstance(
-    context: Context,
+    private val context: Context,
     private val texture: TextureRegistry.SurfaceTextureEntry
 ) {
     enum class PlaybackState(val value: Int) {
@@ -201,6 +232,7 @@ private class PlayerInstance(
         data class PlayWhenReadyChanged(val value: Boolean, val position: Long) : Event()
         data class IsPlayingChanged(val value: Boolean, val position: Long) : Event()
         data class PositionDiscontinuity(val position: Long) : Event()
+        data class Cues(val text: String?) : Event()
     }
 
     private val surface = Surface(texture.surfaceTexture())
@@ -212,6 +244,7 @@ private class PlayerInstance(
     private val session = MediaSession.Builder(context, player)
         .build()
 
+    private var textRenderer: Int? = null
     private var previousDuration = 0L
     private var onEvent: EventCallback? = null
 
@@ -256,15 +289,70 @@ private class PlayerInstance(
             ) {
                 onEvent?.invoke(Event.PositionDiscontinuity(newPosition.positionMs))
             }
+
+            override fun onCues(cueGroup: CueGroup) {
+                if (cueGroup.cues.isNotEmpty()) {
+                    onEvent?.invoke(Event.Cues(cueGroup.cues[0].text?.toString()))
+                } else {
+                    onEvent?.invoke(Event.Cues(null))
+                }
+            }
         })
+
+        for (i in 0 until player.rendererCount) {
+            if (player.getRendererType(i) == C.TRACK_TYPE_TEXT) {
+                textRenderer = i
+                break
+            }
+        }
+
+        // Disable the text renderer initially
+        textRenderer.let { textRenderer ->
+            if (textRenderer == null) {
+                Toast.makeText(context, "Missing text renderer", Toast.LENGTH_LONG)
+                    .show()
+            } else {
+                trackSelector.parameters = trackSelector.buildUponParameters()
+                    .setRendererDisabled(textRenderer, true)
+                    .build()
+            }
+        }
     }
 
     fun setEventCallback(callback: EventCallback?) {
         onEvent = callback
     }
 
-    fun load(url: String, startPosition: Long) {
-        player.setMediaItem(MediaItem.fromUri(Uri.parse(url)), startPosition)
+    fun load(url: String, subtitles: List<SubtitleTrack>, startPosition: Long) {
+        val mediaItem = MediaItem.Builder()
+            .setUri(url)
+            .build()
+
+        val dataSourceFactory = DefaultHttpDataSource.Factory()
+        val sources = mutableListOf(
+            DefaultMediaSourceFactory(context)
+                .createMediaSource(mediaItem)
+        )
+
+        subtitles.forEach {
+            val uri = Uri.parse(it.src)
+
+            val subtitle = MediaItem.SubtitleConfiguration.Builder(uri)
+                .setId("external:${it.id}")
+                .setMimeType(MimeTypes.TEXT_VTT)
+                .setLanguage(it.language)
+                .setLabel(it.title)
+                .build()
+
+            val source = SingleSampleMediaSource.Factory(dataSourceFactory)
+                .createMediaSource(subtitle, C.TIME_UNSET)
+
+            sources.add(source)
+        }
+
+        val mergedSource = MergingMediaSource(*sources.toTypedArray())
+
+        player.setMediaSource(mergedSource, startPosition)
         player.prepare()
         player.play()
     }
@@ -279,6 +367,47 @@ private class PlayerInstance(
 
     fun seekTo(position: Long) {
         player.seekTo(position)
+    }
+
+    fun setTextTrack(trackId: String?) {
+        val renderer = textRenderer ?: return
+
+        if (trackId == null) {
+            trackSelector.parameters = trackSelector.buildUponParameters()
+                .setRendererDisabled(renderer, true)
+                .build()
+        } else {
+            val mappedTrackInfo = trackSelector.currentMappedTrackInfo ?: return
+            val trackGroups = mappedTrackInfo.getTrackGroups(renderer)
+            val requestedTrackId = "external:${trackId}"
+
+            var group: TrackGroup? = null
+            var track: Int? = null
+            outer@ for (i in 0 until trackGroups.length) {
+                group = trackGroups[i]
+                for (j in 0 until group.length) {
+                    val format = group.getFormat(j)
+                    if (format.id == requestedTrackId) {
+                        track = j
+                        break@outer
+                    }
+                }
+            }
+
+            if (group == null || track == null) {
+                val toast = Toast.makeText(
+                    context,
+                    "Failed to find requested subtitle track",
+                    Toast.LENGTH_SHORT
+                )
+                return toast.show()
+            }
+
+            trackSelector.parameters = trackSelector.buildUponParameters()
+                .setRendererDisabled(renderer, false)
+                .addOverride(TrackSelectionOverride(group, track))
+                .build()
+        }
     }
 
     fun release() {

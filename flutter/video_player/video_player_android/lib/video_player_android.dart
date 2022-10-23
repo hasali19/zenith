@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -26,20 +27,62 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
         builder: (context, aspectRatio, child) =>
             ValueListenableBuilder<BoxFit>(
           valueListenable: controller.fit,
-          builder: (context, fit, child) => SizedBox.expand(
-            child: FittedBox(
-              fit: fit,
-              clipBehavior: Clip.hardEdge,
+          builder: (context, fit, child) =>
+              LayoutBuilder(builder: (context, constraints) {
+            var width = constraints.maxWidth;
+            var height = width / aspectRatio;
+            if (height > constraints.maxHeight) {
+              height = constraints.maxHeight;
+              width = height * aspectRatio;
+            }
+            var textStyle = Theme.of(context).textTheme.titleLarge!;
+            textStyle = textStyle.copyWith(
+                fontSize: math.max(textStyle.fontSize! * (width / 730), 14));
+            return Center(
               child: SizedBox(
-                width: aspectRatio,
-                height: 1,
-                child: child,
+                width: width,
+                height: height,
+                child: Stack(children: [
+                  Texture(textureId: controller.id),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: StreamBuilder<String?>(
+                      stream: controller._subsController.stream,
+                      builder: (context, snapshot) {
+                        final event = snapshot.data;
+                        if (event != null) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Stack(
+                              children: [
+                                Text(
+                                  event,
+                                  textAlign: TextAlign.center,
+                                  style: textStyle.copyWith(
+                                      foreground: Paint()
+                                        ..style = PaintingStyle.stroke
+                                        ..strokeWidth = 2
+                                        ..color = Colors.black),
+                                ),
+                                Text(
+                                  event,
+                                  textAlign: TextAlign.center,
+                                  style: textStyle,
+                                ),
+                              ],
+                            ),
+                          );
+                        } else {
+                          return const SizedBox();
+                        }
+                      },
+                    ),
+                  ),
+                ]),
               ),
-            ),
-          ),
-          child: child,
+            );
+          }),
         ),
-        child: Texture(textureId: controller.id),
       );
     } else {
       throw ArgumentError.value(controller, "controller");
@@ -62,6 +105,8 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
 class _VideoController extends VideoController {
   final int id;
   late StreamSubscription<dynamic> _subscription;
+  final StreamController<String?> _subsController =
+      StreamController.broadcast();
 
   @override
   VideoState state = VideoState.idle;
@@ -117,6 +162,8 @@ class _VideoController extends VideoController {
         playing = event["value"];
       } else if (type == "aspectRatioChanged") {
         aspectRatio.value = event["value"];
+      } else if (type == "cues") {
+        _subsController.add(event["text"]);
       }
       if (event.containsKey("position")) {
         _lastKnownPosition = event["position"];
@@ -138,12 +185,23 @@ class _VideoController extends VideoController {
     await _methodChannel.invokeMethod("load", {
       "id": id,
       "url": url,
+      "subtitles": subtitles
+          .map((track) => {
+                "id": track.id,
+                "src": track.src,
+                "title": track.title,
+                "language": track.language
+              })
+          .toList(),
       "startPosition": (startPosition * 1000).toInt(),
     });
   }
 
   @override
-  void setTextTrack(SubtitleTrack? track) {}
+  void setTextTrack(SubtitleTrack? track) {
+    _methodChannel
+        .invokeMethod("setTextTrack", {"id": id, "trackId": track?.id});
+  }
 
   @override
   void pause() {
