@@ -264,8 +264,12 @@ Future<List<MediaItem>> fetchContinueWatching() async {
   }
 }
 
-String getVideoUrl(int id) {
-  return "$apiBaseUrl/api/videos/$id";
+String getVideoUrl(int id, {bool attachment = false}) {
+  var url = "$apiBaseUrl/api/videos/$id";
+  if (attachment) {
+    url += "?attachment=true";
+  }
+  return url;
 }
 
 String getSubtitleUrl(int id) {

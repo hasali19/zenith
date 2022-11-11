@@ -4,6 +4,9 @@ import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/screens/item_details/item_details.dart';
 import 'package:zenith_flutter/screens/video_player.dart';
 
+import 'package:zenith_flutter/download.dart'
+    if (dart.library.html) 'package:zenith_flutter/download_web.dart';
+
 class HeaderContent extends StatelessWidget {
   const HeaderContent({Key? key, required this.item}) : super(key: key);
 
@@ -145,6 +148,14 @@ class HeaderContent extends StatelessWidget {
       actions.add(WatchedToggleButton(
         isWatched: item.videoUserData?.isWatched ?? false,
         onChange: _onIsWatchedToggled,
+      ));
+
+      actions.add(const SizedBox(width: 16));
+      actions.add(IconButton(
+        icon: const Icon(Icons.download),
+        onPressed: () {
+          downloadFile(getVideoUrl(item.id, attachment: true));
+        },
       ));
     }
 
