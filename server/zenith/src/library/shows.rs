@@ -79,6 +79,11 @@ impl MediaLibrary {
 
         let mut transaction = db.begin().await?;
 
+        sqlx::query("DELETE FROM indexed_paths WHERE item_id = ?")
+            .bind(id)
+            .execute(&mut transaction)
+            .await?;
+
         sqlx::query("DELETE FROM media_items WHERE id = ? AND item_type = ?")
             .bind(id)
             .bind(MediaItemType::Show)
