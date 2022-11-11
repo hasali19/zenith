@@ -35,48 +35,17 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
               height = constraints.maxHeight;
               width = height * aspectRatio;
             }
-            var textStyle = Theme.of(context).textTheme.titleLarge!;
-            textStyle = textStyle.copyWith(
-                fontSize: math.max(textStyle.fontSize! * (width / 730), 14));
-            return Center(
+            return FittedBox(
+              fit: fit,
+              alignment: Alignment.center,
               child: SizedBox(
                 width: width,
                 height: height,
                 child: Stack(children: [
                   Texture(textureId: controller.id),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: StreamBuilder<String?>(
-                      stream: controller._subsController.stream,
-                      builder: (context, snapshot) {
-                        final event = snapshot.data;
-                        if (event != null) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Stack(
-                              children: [
-                                Text(
-                                  event,
-                                  textAlign: TextAlign.center,
-                                  style: textStyle.copyWith(
-                                      foreground: Paint()
-                                        ..style = PaintingStyle.stroke
-                                        ..strokeWidth = 2
-                                        ..color = Colors.black),
-                                ),
-                                Text(
-                                  event,
-                                  textAlign: TextAlign.center,
-                                  style: textStyle,
-                                ),
-                              ],
-                            ),
-                          );
-                        } else {
-                          return const SizedBox();
-                        }
-                      },
-                    ),
+                  SubtitleView(
+                    events: controller._subsController.stream,
+                    textScale: width / 730,
                   ),
                 ]),
               ),
@@ -100,6 +69,53 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
 
   @override
   Future<void> toggleFullscreen() async {}
+}
+
+class SubtitleView extends StatelessWidget {
+  const SubtitleView({
+    Key? key,
+    required this.events,
+    required this.textScale,
+  }) : super(key: key);
+
+  final double textScale;
+  final Stream<String?> events;
+
+  @override
+  Widget build(BuildContext context) {
+    var textStyle = Theme.of(context).textTheme.titleLarge!;
+    textStyle = textStyle.copyWith(
+        fontSize: math.max(textStyle.fontSize! * textScale, 14));
+
+    final outlineStyle = textStyle.copyWith(
+        foreground: Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..color = Colors.black);
+
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: StreamBuilder<String?>(
+        stream: events,
+        builder: (context, snapshot) {
+          final event = snapshot.data;
+          if (event != null) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Stack(
+                children: [
+                  Text(event, textAlign: TextAlign.center, style: outlineStyle),
+                  Text(event, textAlign: TextAlign.center, style: textStyle),
+                ],
+              ),
+            );
+          } else {
+            return const SizedBox();
+          }
+        },
+      ),
+    );
+  }
 }
 
 class _VideoController extends VideoController {

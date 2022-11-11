@@ -198,7 +198,9 @@ class _VideoPlayerState extends State<_VideoPlayer> {
       },
       child: Stack(
         children: [
-          VideoPlayerPlatform.instance.buildView(_controller!),
+          Positioned.fill(
+            child: VideoPlayerPlatform.instance.buildView(_controller!),
+          ),
           ValueListenableBuilder<bool>(
             valueListenable: platform.isInPipMode,
             builder: (context, isInPipMode, child) {
