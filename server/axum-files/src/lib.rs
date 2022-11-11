@@ -8,7 +8,10 @@ use axum::extract::rejection::{TypedHeaderRejection, TypedHeaderRejectionReason}
 use axum::extract::{FromRequest, RequestParts, TypedHeader};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use headers::{AcceptRanges, ContentLength, ContentRange, ContentType, HeaderMapExt, Range};
+use headers::{
+    AcceptRanges, ContentDisposition, ContentLength, ContentRange, ContentType, Header,
+    HeaderMapExt, HeaderValue, Range,
+};
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio_util::codec::{BytesCodec, FramedRead};
 
@@ -36,6 +39,7 @@ impl<B: Send> FromRequest<B> for FileRequest {
 
 pub struct FileResponse {
     res: Response<Body>,
+    content_disposition: Option<HeaderValue>,
 }
 
 impl FileResponse {
@@ -90,12 +94,25 @@ impl FileResponse {
             }
         }
 
-        Ok(FileResponse { res })
+        Ok(FileResponse {
+            res,
+            content_disposition: None,
+        })
+    }
+
+    pub fn with_content_disposition(mut self, value: HeaderValue) -> Self {
+        self.content_disposition = Some(value);
+        self
     }
 }
 
 impl IntoResponse for FileResponse {
-    fn into_response(self) -> Response {
+    fn into_response(mut self) -> Response {
+        if let Some(content_disposition) = self.content_disposition {
+            self.res
+                .headers_mut()
+                .insert(ContentDisposition::name(), content_disposition);
+        }
         self.res.into_response()
     }
 }
