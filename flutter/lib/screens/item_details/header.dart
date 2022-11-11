@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/responsive.dart';
@@ -150,13 +151,15 @@ class HeaderContent extends StatelessWidget {
         onChange: _onIsWatchedToggled,
       ));
 
-      actions.add(const SizedBox(width: 16));
-      actions.add(IconButton(
-        icon: const Icon(Icons.download),
-        onPressed: () {
-          downloadFile(getVideoUrl(item.id, attachment: true));
-        },
-      ));
+      if (kIsWeb) {
+        actions.add(const SizedBox(width: 16));
+        actions.add(IconButton(
+          icon: const Icon(Icons.download),
+          onPressed: () {
+            downloadFile(getVideoUrl(item.id, attachment: true));
+          },
+        ));
+      }
     }
 
     return actions;
