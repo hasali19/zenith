@@ -51,8 +51,10 @@ class VideoProgressBar extends StatelessWidget {
       stream: stream,
       builder: (context, snapshot) {
         final data = snapshot.data;
-        final progress = data?.progress ?? Duration.zero;
         final total = data?.total ?? Duration.zero;
+        final progress = total > Duration.zero
+            ? (data?.progress ?? Duration.zero)
+            : Duration.zero;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
