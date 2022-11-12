@@ -1,8 +1,9 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:zenith_flutter/poster_item.dart';
 import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/screens/item_details/item_details.dart';
+import 'package:zenith_flutter/router.dart';
 import 'package:zenith_flutter/text_one_line.dart';
 
 import '../api.dart' as api;
@@ -55,6 +56,11 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _navigateToItem(api.MediaItem item) async {
+    await context.router.push(ItemDetailsScreenRoute(id: item.id));
+    _refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
     final desktop = MediaQuery.of(context).isDesktop;
@@ -90,15 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
             title: item.name,
             subtitle: item.startDate?.year.toString() ?? "",
             infoSeparator: posterItemInfoSeparator,
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ItemDetailsScreen(id: item.id),
-                ),
-              );
-              _refresh();
-            },
+            onTap: () => _navigateToItem(item),
           ),
         );
 
@@ -135,15 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 progress: (item.videoUserData?.position ?? 0) /
                     (item.videoInfo?.duration ?? 1),
                 padding: thumbnailItemPadding,
-                onTap: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ItemDetailsScreen(id: item.id),
-                    ),
-                  );
-                  _refresh();
-                },
+                onTap: () => _navigateToItem(item),
               ),
             ),
             buildPosterItemSection(data.recentMovies, "Recent Movies"),

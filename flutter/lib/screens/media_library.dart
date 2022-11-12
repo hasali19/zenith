@@ -1,11 +1,12 @@
 import 'dart:math' as math;
 
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/poster_item.dart';
 import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/screens/item_details/item_details.dart';
+import 'package:zenith_flutter/router.dart';
 
 class MediaLibraryScreen extends StatefulWidget {
   final Future<List<MediaItem>> Function() provider;
@@ -80,12 +81,8 @@ class MediaItemGrid extends StatelessWidget {
                 title: item.name,
                 subtitle: item.startDate!.year.toString(),
                 infoSeparator: infoTopPadding,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ItemDetailsScreen(id: item.id),
-                  ),
-                ),
+                onTap: () =>
+                    context.router.push(ItemDetailsScreenRoute(id: item.id)),
               ),
             ));
           }

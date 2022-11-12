@@ -1,12 +1,13 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/drawer.dart';
 import 'package:zenith_flutter/language_codes.dart';
 import 'package:zenith_flutter/responsive.dart';
+import 'package:zenith_flutter/router.dart';
 import 'package:zenith_flutter/screens/home.dart';
 import 'package:zenith_flutter/screens/media_library.dart';
-import 'package:zenith_flutter/screens/settings.dart';
 import 'package:zenith_flutter/update_dialog.dart';
 import 'package:zenith_flutter/updater.dart';
 
@@ -22,6 +23,8 @@ class ZenithApp extends StatefulWidget {
 }
 
 class _ZenithAppState extends State<ZenithApp> {
+  final _router = AppRouter();
+
   @override
   void initState() {
     super.initState();
@@ -30,11 +33,12 @@ class _ZenithAppState extends State<ZenithApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Zenith',
       theme: _buildTheme(Brightness.light),
       darkTheme: _buildTheme(Brightness.dark),
-      home: const MainScreen(),
+      routerDelegate: _router.delegate(),
+      routeInformationParser: _router.defaultRouteParser(),
       builder: (context, child) => Theme(
         data: _buildThemeOverrides(context),
         child: child!,
@@ -96,8 +100,6 @@ enum Screen {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  Screen _screen = Screen.home;
-
   final _updater = Updater();
 
   @override
@@ -122,44 +124,52 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final desktop = MediaQuery.of(context).size.width > 960;
+    return AutoTabsRouter(
+      routes: const [
+        HomeScreenRoute(),
+        MoviesScreenRoute(),
+        ShowsScreenRoute(),
+      ],
+      builder: (context, child, animation) {
+        final screen = _activeScreen(context.tabsRouter.activeIndex);
 
-    // Use a permanent navigation drawer on larger screens
+        // Use a permanent navigation drawer on larger screens
 
-    final drawer = NavigationDrawer(
-      current: _screen,
-      onTap: (screen) {
-        if (!desktop) {
-          Navigator.pop(context);
-        }
-        if (screen == Screen.settings) {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => SettingsScreen()));
+        final drawer = NavigationDrawer(
+          current: screen,
+          onTap: (screen) {
+            if (!desktop) {
+              // Close drawer
+              Navigator.pop(context);
+            }
+            _navigateTo(context, screen);
+          },
+        );
+
+        child = FadeTransition(opacity: animation, child: child);
+
+        if (desktop) {
+          return Row(
+            children: [
+              drawer,
+              Expanded(
+                child: Scaffold(
+                  body: child,
+                ),
+              ),
+            ],
+          );
         } else {
-          setState(() => _screen = screen);
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(_title(screen)),
+            ),
+            drawer: desktop ? null : drawer,
+            body: child,
+          );
         }
       },
     );
-
-    if (desktop) {
-      return Row(
-        children: [
-          drawer,
-          Expanded(
-            child: Scaffold(
-              body: _buildScreen(_screen),
-            ),
-          ),
-        ],
-      );
-    } else {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(_title(_screen)),
-        ),
-        drawer: desktop ? null : drawer,
-        body: _buildScreen(_screen),
-      );
-    }
   }
 
   String _title(Screen screen) {
@@ -178,25 +188,33 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  Widget _buildScreen(Screen screen) {
+  Screen _activeScreen(int index) {
+    switch (index) {
+      case 0:
+        return Screen.home;
+      case 1:
+        return Screen.movies;
+      case 2:
+        return Screen.shows;
+      default:
+        throw Exception("invalid tab index: $index");
+    }
+  }
+
+  void _navigateTo(BuildContext context, Screen screen) {
     switch (screen) {
       case Screen.home:
-        return const HomeScreen();
-
+        context.tabsRouter.setActiveIndex(0);
+        break;
       case Screen.movies:
-        return const MediaLibraryScreen(
-          key: ValueKey(Screen.movies),
-          provider: fetchMovies,
-        );
-
+        context.tabsRouter.setActiveIndex(1);
+        break;
       case Screen.shows:
-        return const MediaLibraryScreen(
-          key: ValueKey(Screen.shows),
-          provider: fetchShows,
-        );
-
+        context.tabsRouter.setActiveIndex(2);
+        break;
       case Screen.settings:
-        throw ArgumentError.value(screen);
+        context.router.push(SettingsScreenRoute());
+        break;
     }
   }
 }

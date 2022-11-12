@@ -1,9 +1,10 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/responsive.dart';
+import 'package:zenith_flutter/router.dart';
 import 'package:zenith_flutter/screens/item_details/item_details.dart';
-import 'package:zenith_flutter/screens/video_player.dart';
 
 import 'package:zenith_flutter/download.dart'
     if (dart.library.html) 'package:zenith_flutter/download_web.dart';
@@ -128,15 +129,10 @@ class HeaderContent extends StatelessWidget {
         icon: const Icon(Icons.play_arrow),
         label: Text(shouldResume ? "Resume" : "Play"),
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => VideoPlayerScreen(
-                id: item.id,
-                startPosition: shouldResume ? position : 0,
-              ),
-            ),
-          );
+          context.router.push(VideoPlayerScreenRoute(
+            id: item.id,
+            startPosition: shouldResume ? position : 0,
+          ));
         },
       ));
 

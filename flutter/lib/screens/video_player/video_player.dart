@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -21,8 +21,8 @@ class VideoPlayerScreen extends StatefulWidget {
 
   const VideoPlayerScreen({
     Key? key,
-    required this.id,
-    required this.startPosition,
+    @pathParam required this.id,
+    @queryParam this.startPosition = 0,
   }) : super(key: key);
 
   @override

@@ -1,6 +1,8 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 import 'package:zenith_flutter/responsive.dart';
+import 'package:zenith_flutter/router.dart';
 import 'package:zenith_flutter/screens/item_details/item_details.dart';
 import 'package:zenith_flutter/text_one_line.dart';
 
@@ -194,12 +196,7 @@ class EpisodeListItem extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ItemDetailsScreen(id: episode.id),
-                    ),
-                  );
+                  context.router.push(ItemDetailsScreenRoute(id: episode.id));
                 },
               ),
             ),

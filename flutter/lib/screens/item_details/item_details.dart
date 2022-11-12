@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:sliver_tools/sliver_tools.dart';
@@ -15,7 +16,10 @@ final transparentImage = base64Decode(
 class ItemDetailsScreen extends StatefulWidget {
   final int id;
 
-  const ItemDetailsScreen({Key? key, required this.id}) : super(key: key);
+  const ItemDetailsScreen({
+    Key? key,
+    @pathParam required this.id,
+  }) : super(key: key);
 
   @override
   State<ItemDetailsScreen> createState() => _ItemDetailsScreenState();
