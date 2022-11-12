@@ -167,7 +167,16 @@ class VideoControllerWeb extends VideoController {
 
   @override
   void setFit(BoxFit fit) {
-    // TODO: implement setFit
+    _element.style.objectFit = () {
+      switch (fit) {
+        case BoxFit.cover:
+          return "cover";
+        case BoxFit.contain:
+          return "contain";
+        default:
+          return "contain";
+      }
+    }();
   }
 
   @override
