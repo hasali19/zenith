@@ -60,15 +60,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final desktop = MediaQuery.of(context).isDesktop;
 
     final sectionTitlePadding = desktop
-        ? const EdgeInsets.fromLTRB(32, 16, 32, 16)
+        ? const EdgeInsets.fromLTRB(64, 16, 64, 16)
         : const EdgeInsets.fromLTRB(16, 8, 16, 8);
-    final sectionListSpacing = desktop ? 16.0 : 8.0;
+    final sectionListSpacing = desktop ? 32.0 : 8.0;
+    final sectionEndPadding = desktop ? 32.0 : 16.0;
 
-    final thumbnailItemWidth = desktop ? 350.0 : 268.0;
+    final thumbnailItemWidth = desktop ? 440.0 : 268.0;
     final thumbnailItemHeight = thumbnailItemWidth / (16 / 9);
     final thumbnailItemPadding = desktop ? 16.0 : 12.0;
 
-    final posterItemWidth = desktop ? 180.0 : 120.0;
+    final posterItemWidth = desktop ? 200.0 : 120.0;
     final posterItemHeight = posterItemWidth / (2 / 3) + 52;
     final posterItemInfoSeparator = desktop ? 16.0 : 4.0;
 
@@ -82,6 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
           listSpacing: sectionListSpacing,
           listItemWidth: posterItemWidth,
           listItemHeight: posterItemHeight,
+          endPadding: sectionEndPadding,
           items: items,
           itemBuilder: (context, item) => PosterItem(
             poster: api.getMediaImageUrl(item.id, api.ImageType.poster),
@@ -121,6 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
               listSpacing: sectionListSpacing,
               listItemWidth: thumbnailItemWidth,
               listItemHeight: thumbnailItemHeight,
+              endPadding: sectionEndPadding,
               items: data.continueWatching,
               itemBuilder: (context, item) => ContinueWatchingCard(
                 thumbnail:
@@ -159,6 +162,7 @@ class Section<T> extends StatefulWidget {
   final double listSpacing;
   final double listItemWidth;
   final double listItemHeight;
+  final double endPadding;
   final Widget Function(BuildContext context, T item) itemBuilder;
 
   const Section({
@@ -170,6 +174,7 @@ class Section<T> extends StatefulWidget {
     required this.listSpacing,
     required this.listItemWidth,
     required this.listItemHeight,
+    required this.endPadding,
   }) : super(key: key);
 
   @override
@@ -192,7 +197,7 @@ class _SectionState<T> extends State<Section<T>> {
           child: Text(widget.title, style: titleStyle),
         ),
         _buildContent(widget.items),
-        const SizedBox(height: 16),
+        SizedBox(height: widget.endPadding),
       ],
     );
   }

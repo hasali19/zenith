@@ -53,9 +53,9 @@ class MediaItemGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final desktop = MediaQuery.of(context).isDesktop;
     return LayoutBuilder(builder: ((context, constraints) {
-      final maxColWidth = desktop ? 180.0 : 120.0;
+      final maxColWidth = desktop ? 240.0 : 150.0;
       final gridPadding = desktop ? 64.0 : 4.0;
-      final itemSpacing = desktop ? 32.0 : 8.0;
+      final itemSpacing = desktop ? 16.0 : 4.0;
 
       final gridWidth = constraints.maxWidth - gridPadding * 2;
       final cols = (gridWidth / (maxColWidth + itemSpacing * 2)).ceil();
@@ -74,7 +74,7 @@ class MediaItemGrid extends StatelessWidget {
             final item = items[i];
             columns.add(Container(
               width: colWidth,
-              padding: EdgeInsets.all(itemSpacing / 2),
+              padding: EdgeInsets.all(itemSpacing),
               child: PosterItem(
                 poster: getMediaImageUrl(item.id, ImageType.poster),
                 title: item.name,
