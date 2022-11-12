@@ -12,7 +12,7 @@ jobs:
     name: Build android app
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
 
@@ -31,7 +31,7 @@ jobs:
           echo $ANDROID_KEYSTORE | base64 -d > keystore.jks
           ./gradlew assembleRelease
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: zenith-apk
           path: android/app/build/outputs/apk/release/app-release.apk
