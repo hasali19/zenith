@@ -236,6 +236,11 @@ class _VideoPlayerUiState extends State<VideoPlayerUi> {
               child: _buildAppBar(),
             ),
           ),
+          if (_controller.loading)
+            const Align(
+              alignment: Alignment.center,
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
           Positioned(
             bottom: 0,
             left: 0,

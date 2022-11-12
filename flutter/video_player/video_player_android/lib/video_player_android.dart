@@ -133,17 +133,20 @@ class _VideoController extends VideoController {
   @override
   double duration = 0.0;
 
+  @override
+  bool get loading => !paused && !_playing && state != VideoState.ended;
+
   final aspectRatio = ValueNotifier(1.0);
   final fit = ValueNotifier(BoxFit.contain);
 
-  bool playing = false;
+  bool _playing = false;
   int _lastKnownPosition = 0;
   int _lastKnownPositionTs = DateTime.now().millisecondsSinceEpoch;
 
   @override
   double get position {
     var position = _lastKnownPosition;
-    if (playing) {
+    if (_playing) {
       position += DateTime.now().millisecondsSinceEpoch - _lastKnownPositionTs;
     }
     return position.toDouble() / 1000.0;
@@ -175,7 +178,7 @@ class _VideoController extends VideoController {
           throw ArgumentError.value(state, "value");
         }
       } else if (type == "isPlayingChanged") {
-        playing = event["value"];
+        _playing = event["value"];
       } else if (type == "aspectRatioChanged") {
         aspectRatio.value = event["value"];
       } else if (type == "cues") {

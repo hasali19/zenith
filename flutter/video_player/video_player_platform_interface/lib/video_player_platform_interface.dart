@@ -46,6 +46,7 @@ abstract class VideoController {
   set position(double value);
   double get duration;
   bool get paused;
+  bool get loading;
 
   void load(String url, List<SubtitleTrack> subtitles, double startPosition);
   void play();

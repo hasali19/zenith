@@ -74,6 +74,17 @@ class VideoControllerWeb extends VideoController {
     _element.addEventListener("durationchange", (event) => _notifyListeners());
     _element.addEventListener("pause", (event) => _notifyListeners());
     _element.addEventListener("play", (event) => _notifyListeners());
+
+    _element.addEventListener("playing", (event) {
+      _loading = false;
+      _notifyListeners();
+    });
+
+    _element.addEventListener("waiting", (event) {
+      _loading = true;
+      _notifyListeners();
+    });
+
     _element.addEventListener("ended", (event) {
       _state = VideoState.ended;
       _notifyListeners();
@@ -99,6 +110,10 @@ class VideoControllerWeb extends VideoController {
 
   @override
   bool get paused => _element.paused;
+
+  @override
+  bool get loading => _loading && !paused && state != VideoState.ended;
+  bool _loading = true;
 
   @override
   void load(
@@ -176,51 +191,3 @@ class VideoControllerWeb extends VideoController {
     }
   }
 }
-
-// class VideoView extends StatefulWidget {
-//   final void Function(VideoController controller) onReady;
-
-//   const VideoView({Key? key, required this.onReady}) : super(key: key);
-
-//   @override
-//   State<VideoView> createState() => _VideoViewState();
-// }
-
-// class _VideoViewState extends State<VideoView> {
-//   static final Map<int, VideoElement> _views = {};
-
-//   late int _id;
-//   late VideoControllerWeb _controller;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     ui.platformViewRegistry.registerViewFactory("video-player", (viewId) {
-//       final view = VideoElement()
-//         ..autoplay = true
-//         ..disableRemotePlayback = true
-//         ..style.background = "black";
-//       _views[viewId] = view;
-//       return view;
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return HtmlElementView(
-//       viewType: "video-player",
-//       onPlatformViewCreated: (id) => setState(() {
-//         _id = id;
-//         _controller = VideoControllerWeb(_views[id]!);
-//         widget.onReady(_controller);
-//       }),
-//     );
-//   }
-
-//   @override
-//   void dispose() {
-//     super.dispose();
-//     _controller.dispose();
-//     _views.remove(_id);
-//   }
-// }
