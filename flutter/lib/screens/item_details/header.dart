@@ -3,9 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith_flutter/api.dart';
+import 'package:zenith_flutter/language_codes.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/router.dart';
 import 'package:zenith_flutter/screens/item_details/item_details.dart';
+import 'package:zenith_flutter/text_one_line.dart';
 
 import 'package:zenith_flutter/download.dart'
     if (dart.library.html) 'package:zenith_flutter/download_web.dart';
@@ -23,6 +25,7 @@ class HeaderContent extends ConsumerWidget {
     final poster = Poster(url: api.getMediaImageUrl(item.id, ImageType.poster));
     final subtitle = _buildSubtitle(context);
     final overview = _buildOverview();
+    final videoInfo = _buildVideoInfo(context);
 
     final mainContent = [
       if (item.grandparent != null)
@@ -36,6 +39,7 @@ class HeaderContent extends ConsumerWidget {
       if (subtitle != null) subtitle,
       _buildActions(context, api),
       if (overview != null) overview,
+      if (videoInfo != null) videoInfo,
     ];
 
     if (isDesktop) {
@@ -173,6 +177,96 @@ class HeaderContent extends ConsumerWidget {
       return "${hours}h ${minutes}m";
     }
   }
+
+  Widget? _buildVideoInfo(BuildContext context) {
+    final videoInfo = item.videoInfo;
+    if (videoInfo == null) {
+      return null;
+    }
+
+    final isDesktop = context.isDesktop;
+    final bodySmall = Theme.of(context).textTheme.bodySmall;
+    final bodyLarge = Theme.of(context).textTheme.bodyLarge;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 32),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600),
+        child: Table(
+          defaultColumnWidth: const IntrinsicColumnWidth(),
+          columnWidths: {
+            1: const IntrinsicColumnWidth(),
+            2: isDesktop
+                ? const IntrinsicColumnWidth()
+                : const FlexColumnWidth(),
+          },
+          children: [
+            TableRow(
+              children: [
+                Text("Video", style: bodyLarge),
+                const SizedBox(width: 16),
+                StreamDropdownButton<VideoStreamInfo>(
+                  items: [videoInfo.video!],
+                  itemBuilder: (item) => Text(item.codec),
+                ),
+              ],
+            ),
+            TableRow(
+              children: [
+                Text("Audio", style: bodyLarge),
+                const SizedBox(width: 16),
+                StreamDropdownButton<AudioStreamInfo>(
+                  items: videoInfo.audio!,
+                  itemBuilder: (item) => Text(
+                      "${tryResolveLanguageCode(item.language)} (${item.codec})"),
+                ),
+              ],
+            ),
+            TableRow(
+              children: [
+                Text("Subtitles", style: bodyLarge),
+                const SizedBox(width: 16),
+                StreamDropdownButton<SubtitleTrack>(
+                  items: videoInfo.subtitles,
+                  itemBuilder: (item) => Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextOneLine(
+                          tryResolveLanguageCode(item.language ?? "Unknown")),
+                      if (item.title != null)
+                        TextOneLine(
+                          item.title!,
+                          style: bodyLarge!.copyWith(color: bodySmall!.color),
+                        ),
+                    ],
+                  ),
+                  selectedItemBuilder: (context, item) => Text(
+                    tryResolveLanguageCode(item.language ?? "Unknown"),
+                    style: bodyLarge,
+                  ),
+                ),
+              ],
+            ),
+            TableRow(
+              children: [
+                Text("Format", style: bodyLarge),
+                const SizedBox(width: 16),
+                Text(videoInfo.format),
+              ],
+            ),
+            TableRow(
+              children: [
+                Text("Path", style: bodyLarge),
+                const SizedBox(width: 16),
+                Text(videoInfo.path),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class WatchedToggleButton extends StatefulWidget {
@@ -284,5 +378,41 @@ class Overview extends StatelessWidget {
     final theme = Theme.of(context);
     final style = theme.textTheme.bodyLarge!.copyWith(fontSize: 16);
     return Text(text, style: style);
+  }
+}
+
+class StreamDropdownButton<T> extends StatelessWidget {
+  final List<T> items;
+  final Widget Function(T item) itemBuilder;
+  final Widget Function(BuildContext context, T item)? selectedItemBuilder;
+
+  const StreamDropdownButton({
+    super.key,
+    required this.items,
+    required this.itemBuilder,
+    this.selectedItemBuilder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bodyLarge = Theme.of(context).textTheme.bodyLarge;
+    return DropdownButton<T>(
+      value: items[0],
+      items: items
+          .map((a) => DropdownMenuItem(
+                value: a,
+                child: itemBuilder(a),
+              ))
+          .toList(),
+      onChanged: (value) {},
+      underline: const SizedBox(),
+      isDense: true,
+      isExpanded: true,
+      style: bodyLarge,
+      selectedItemBuilder: selectedItemBuilder != null
+          ? ((context) =>
+              items.map((e) => selectedItemBuilder!(context, e)).toList())
+          : null,
+    );
   }
 }

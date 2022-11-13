@@ -127,16 +127,74 @@ class SubtitleTrack {
       );
 }
 
+class VideoStreamInfo {
+  final int id;
+  final int index;
+  final String codec;
+  final int width;
+  final int height;
+
+  const VideoStreamInfo({
+    required this.id,
+    required this.index,
+    required this.codec,
+    required this.width,
+    required this.height,
+  });
+
+  factory VideoStreamInfo.fromJson(Map<String, dynamic> json) {
+    return VideoStreamInfo(
+      id: json['id'],
+      index: json['index'],
+      codec: json['codec'],
+      width: json['width'],
+      height: json['height'],
+    );
+  }
+}
+
+class AudioStreamInfo {
+  final int id;
+  final int index;
+  final String codec;
+  final String language;
+
+  const AudioStreamInfo({
+    required this.id,
+    required this.index,
+    required this.codec,
+    required this.language,
+  });
+
+  factory AudioStreamInfo.fromJson(Map<String, dynamic> json) {
+    return AudioStreamInfo(
+      id: json['id'],
+      index: json['index'],
+      codec: json['codec'],
+      language: json['language'],
+    );
+  }
+}
+
 class VideoInfo {
+  final String path;
   final double duration;
+  final String format;
+  final VideoStreamInfo? video;
+  final List<AudioStreamInfo>? audio;
   final List<SubtitleTrack> subtitles;
 
   const VideoInfo({
+    required this.path,
     required this.duration,
+    required this.format,
+    required this.video,
+    required this.audio,
     required this.subtitles,
   });
 
   factory VideoInfo.fromJson(Map<String, dynamic> json) {
+    final List<dynamic>? audio = json['audio'];
     final List<dynamic>? subtitlesJson = json['subtitles'];
     final List<SubtitleTrack> subtitles;
     if (subtitlesJson != null) {
@@ -146,7 +204,13 @@ class VideoInfo {
       subtitles = [];
     }
     return VideoInfo(
+      path: json['path'],
       duration: json['duration'],
+      format: json['format'],
+      video: json['video'] != null
+          ? VideoStreamInfo.fromJson(json['video'])
+          : null,
+      audio: audio?.map((e) => AudioStreamInfo.fromJson(e)).toList(),
       subtitles: subtitles,
     );
   }
