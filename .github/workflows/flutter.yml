@@ -41,7 +41,7 @@ jobs:
         with:
           channel: stable
 
-      - run: flutter build web --web-renderer canvaskit
+      - run: flutter build web --web-renderer canvaskit --dart-define=DEFAULT_SERVER=
         working-directory: flutter
 
       - uses: actions/upload-artifact@v3
