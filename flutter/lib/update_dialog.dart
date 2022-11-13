@@ -48,7 +48,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
           onPressed: !_isUpdating ? () => Navigator.pop(context) : null,
         ),
         TextButton(
-          child: const Text("Apply"),
+          child: const Text("Install"),
           onPressed: !_isUpdating ? _onApplyUpdate : null,
         ),
       ],
