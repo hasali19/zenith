@@ -24,7 +24,7 @@ class NavigationDrawer extends ConsumerWidget {
               image: AssetImage('assets/zenith_icon.png'),
             ),
           ),
-          if (servers.isNotEmpty)
+          if (servers.length > 1)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: DropdownButton<Server>(
