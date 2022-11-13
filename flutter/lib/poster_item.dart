@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zenith_flutter/screens/item_details/item_details.dart';
 import 'package:zenith_flutter/text_one_line.dart';
+import 'package:zenith_flutter/theme.dart';
 
 class PosterItem extends StatelessWidget {
   final String poster;
@@ -20,9 +21,7 @@ class PosterItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cardTheme = theme.cardTheme;
-    final textTheme = theme.textTheme;
+    final cardTheme = Theme.of(context).cardTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -52,8 +51,8 @@ class PosterItem extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        TextOneLine(title, style: textTheme.bodyMedium),
-        TextOneLine(subtitle, style: textTheme.bodySmall),
+        TextOneLine(title, style: context.zenithTheme.bodyMedium),
+        TextOneLine(subtitle, style: context.zenithTheme.bodySmall),
       ],
     );
   }

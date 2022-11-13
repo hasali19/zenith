@@ -1,5 +1,6 @@
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:zenith_flutter/theme.dart';
 
 class VideoProgressData {
   final Duration total;
@@ -45,8 +46,8 @@ class VideoProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textStyle = theme.textTheme.bodyMedium!.copyWith(color: Colors.white);
+    final textStyle =
+        context.zenithTheme.bodyMedium.copyWith(color: Colors.white);
     return StreamBuilder<VideoProgressData>(
       stream: stream,
       builder: (context, snapshot) {

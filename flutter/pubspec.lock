@@ -609,6 +609,20 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.4.12"
+  theme_tailor:
+    dependency: "direct dev"
+    description:
+      name: theme_tailor
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.8"
+  theme_tailor_annotation:
+    dependency: "direct main"
+    description:
+      name: theme_tailor_annotation
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.3"
   timing:
     dependency: transitive
     description:

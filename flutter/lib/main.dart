@@ -9,6 +9,7 @@ import 'package:zenith_flutter/language_codes.dart';
 import 'package:zenith_flutter/preferences.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/router.dart';
+import 'package:zenith_flutter/theme.dart';
 import 'package:zenith_flutter/update_dialog.dart';
 import 'package:zenith_flutter/updater.dart';
 
@@ -99,14 +100,16 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
       ),
-      textTheme: theme.textTheme.copyWith(
-        bodySmall:
-            theme.textTheme.bodySmall!.copyWith(fontSize: isDesktop ? 14 : 12),
-        bodyMedium:
-            theme.textTheme.bodyMedium!.copyWith(fontSize: isDesktop ? 16 : 14),
-        titleMedium: theme.textTheme.titleMedium!
-            .copyWith(fontSize: isDesktop ? 22 : 16),
-      ),
+      extensions: [
+        ZenithTheme(
+          titleMedium: theme.textTheme.titleMedium!
+              .copyWith(fontSize: isDesktop ? 22 : 16),
+          bodySmall: theme.textTheme.bodySmall!
+              .copyWith(fontSize: isDesktop ? 14 : 12),
+          bodyMedium: theme.textTheme.bodyMedium!
+              .copyWith(fontSize: isDesktop ? 16 : 14),
+        ),
+      ],
     );
   }
 }

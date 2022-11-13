@@ -4,6 +4,7 @@ import 'package:video_player/video_player.dart';
 import 'package:zenith_flutter/api.dart' as api;
 import 'package:zenith_flutter/language_codes.dart';
 import 'package:zenith_flutter/responsive.dart';
+import 'package:zenith_flutter/theme.dart';
 
 import 'bottom_controls.dart';
 import 'video_progress_bar.dart';
@@ -158,11 +159,11 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         children: [
           Text(
             widget.item.getSeasonEpisode()! + ": " + widget.item.name,
-            style: Theme.of(context).textTheme.titleMedium,
+            style: context.zenithTheme.titleMedium,
           ),
           Text(
             widget.item.grandparent!.name,
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: context.zenithTheme.bodyMedium,
           ),
         ],
       );

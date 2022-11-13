@@ -7,6 +7,7 @@ import 'package:zenith_flutter/poster_item.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/router.dart';
 import 'package:zenith_flutter/text_one_line.dart';
+import 'package:zenith_flutter/theme.dart';
 
 class HomeScreenData {
   List<MediaItem> continueWatching;
@@ -177,9 +178,8 @@ class _SectionState<T> extends State<Section<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final titleStyle =
-        textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold);
+        context.zenithTheme.titleMedium.copyWith(fontWeight: FontWeight.bold);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -234,10 +234,11 @@ class ContinueWatchingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cardTheme = theme.cardTheme;
-    final textTheme = theme.textTheme;
 
-    final titleStyle = textTheme.bodyMedium!.copyWith(color: Colors.white);
-    final subtitleStyle = textTheme.bodySmall!.copyWith(color: Colors.white);
+    final titleStyle =
+        context.zenithTheme.bodyMedium.copyWith(color: Colors.white);
+    final subtitleStyle =
+        context.zenithTheme.bodySmall.copyWith(color: Colors.white);
 
     return AspectRatio(
       aspectRatio: 16 / 9,

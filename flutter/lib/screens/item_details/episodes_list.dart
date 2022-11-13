@@ -6,6 +6,7 @@ import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/router.dart';
 import 'package:zenith_flutter/screens/item_details/item_details.dart';
 import 'package:zenith_flutter/text_one_line.dart';
+import 'package:zenith_flutter/theme.dart';
 
 import '../../api.dart' as api;
 
@@ -150,7 +151,6 @@ class EpisodeListItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final zenith = ref.watch(api.apiProvider);
-    final theme = Theme.of(context);
     final height = width * (9.0 / 16.0);
     return SizedBox(
       height: height + 16,
@@ -178,12 +178,12 @@ class EpisodeListItem extends ConsumerWidget {
                       children: [
                         TextOneLine(
                             "${episode.parent!.index} - ${episode.name}",
-                            style: theme.textTheme.titleMedium),
+                            style: context.zenithTheme.titleMedium),
                         const SizedBox(height: 8),
                         Flexible(
                           child: Text(
                             episode.overview ?? "",
-                            style: theme.textTheme.bodySmall,
+                            style: context.zenithTheme.bodySmall,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                           ),
