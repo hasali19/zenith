@@ -1,13 +1,10 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/drawer.dart';
 import 'package:zenith_flutter/language_codes.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/router.dart';
-import 'package:zenith_flutter/screens/home.dart';
-import 'package:zenith_flutter/screens/media_library.dart';
 import 'package:zenith_flutter/update_dialog.dart';
 import 'package:zenith_flutter/updater.dart';
 
