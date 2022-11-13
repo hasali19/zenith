@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 import 'package:zenith_flutter/api.dart';
@@ -13,7 +14,7 @@ import 'package:zenith_flutter/screens/item_details/header.dart';
 final transparentImage = base64Decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
 
-class ItemDetailsScreen extends StatefulWidget {
+class ItemDetailsScreen extends ConsumerStatefulWidget {
   final int id;
 
   const ItemDetailsScreen({
@@ -22,21 +23,22 @@ class ItemDetailsScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ItemDetailsScreen> createState() => _ItemDetailsScreenState();
+  ConsumerState<ItemDetailsScreen> createState() => _ItemDetailsScreenState();
 }
 
-class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
+class _ItemDetailsScreenState extends ConsumerState<ItemDetailsScreen> {
   late Future<MediaItem> _item;
+  ZenithApiClient get api => ref.watch(apiProvider);
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _refresh();
   }
 
   void _refresh() {
     setState(() {
-      _item = fetchMediaItem(widget.id);
+      _item = api.fetchMediaItem(widget.id);
     });
   }
 
@@ -72,7 +74,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   }
 }
 
-class Content extends StatelessWidget {
+class Content extends ConsumerWidget {
   const Content({
     Key? key,
     required this.item,
@@ -83,7 +85,8 @@ class Content extends StatelessWidget {
   final Future<void> Function() onRefresh;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final api = ref.watch(apiProvider);
     final isDesktop = MediaQuery.of(context).isDesktop;
     final padding = isDesktop
         ? const EdgeInsets.fromLTRB(128, 128, 128, 32)
@@ -93,7 +96,7 @@ class Content extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Backdrop(url: getMediaImageUrl(item.id, ImageType.backdrop)),
+          Backdrop(url: api.getMediaImageUrl(item.id, ImageType.backdrop)),
           BackdropBlur(
             child: CustomScrollView(
               slivers: [

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith_flutter/main.dart';
+import 'package:zenith_flutter/preferences.dart';
 
-class NavigationDrawer extends StatelessWidget {
+class NavigationDrawer extends ConsumerWidget {
   final Screen current;
   final void Function(Screen) onTap;
 
@@ -12,7 +14,8 @@ class NavigationDrawer extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final servers = ref.watch(serversPrefProvider);
     return Drawer(
       child: ListView(
         children: [
@@ -21,6 +24,18 @@ class NavigationDrawer extends StatelessWidget {
               image: AssetImage('assets/zenith_icon.png'),
             ),
           ),
+          if (servers.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: DropdownButton<Server>(
+                items: servers
+                    .map((e) => DropdownMenuItem(
+                        value: e, child: Text(e.name ?? e.url)))
+                    .toList(),
+                value: ref.watch(activeServerProvider),
+                onChanged: (value) {},
+              ),
+            ),
           const DrawerSectionTitle(text: "General"),
           NavigationDrawerItem(
             title: "Home",

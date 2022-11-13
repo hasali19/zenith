@@ -5,6 +5,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock/wakelock.dart';
@@ -15,7 +16,7 @@ import 'ui.dart';
 import 'utils.dart';
 import 'video_progress_bar.dart';
 
-class VideoPlayerScreen extends StatefulWidget {
+class VideoPlayerScreen extends ConsumerStatefulWidget {
   final int id;
   final double startPosition;
 
@@ -26,16 +27,17 @@ class VideoPlayerScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
+  ConsumerState<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
 }
 
-class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   late Future<api.MediaItem> _item;
+  api.ZenithApiClient get _api => ref.watch(api.apiProvider);
 
   @override
-  void initState() {
-    super.initState();
-    _item = api.fetchMediaItem(widget.id);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _item = _api.fetchMediaItem(widget.id);
   }
 
   @override
@@ -56,7 +58,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 }
 
-class _VideoPlayer extends StatefulWidget {
+class _VideoPlayer extends ConsumerStatefulWidget {
   final api.MediaItem item;
   final double startPosition;
 
@@ -67,12 +69,14 @@ class _VideoPlayer extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() {
+  ConsumerState<_VideoPlayer> createState() {
     return _VideoPlayerState();
   }
 }
 
-class _VideoPlayerState extends State<_VideoPlayer> {
+class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
+  api.ZenithApiClient get _api => ref.watch(api.apiProvider);
+
   VideoController? _controller;
   bool _shouldShowControls = true;
 
@@ -98,8 +102,8 @@ class _VideoPlayerState extends State<_VideoPlayer> {
       setState(() {
         _controller = controller
           ..load(
-            api.getVideoUrl(widget.item.id),
-            subtitles.map(subtitleFromApi).toList(),
+            _api.getVideoUrl(widget.item.id),
+            subtitles.map((s) => subtitleFromApi(_api, s)).toList(),
             widget.startPosition,
           )
           ..addListener(() {
@@ -129,7 +133,7 @@ class _VideoPlayerState extends State<_VideoPlayer> {
         // TODO: Be smarter about progress reporting
         // - report when playback state changes, after seeking, etc
         // - maybe disable timer altogether when video is paused?
-        api.updateProgress(widget.item.id, position);
+        _api.updateProgress(widget.item.id, position);
       }
     });
 

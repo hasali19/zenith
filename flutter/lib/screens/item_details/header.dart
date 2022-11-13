@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/router.dart';
@@ -9,16 +10,17 @@ import 'package:zenith_flutter/screens/item_details/item_details.dart';
 import 'package:zenith_flutter/download.dart'
     if (dart.library.html) 'package:zenith_flutter/download_web.dart';
 
-class HeaderContent extends StatelessWidget {
+class HeaderContent extends ConsumerWidget {
   const HeaderContent({Key? key, required this.item}) : super(key: key);
 
   final MediaItem item;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDesktop = MediaQuery.of(context).isDesktop;
+    final api = ref.watch(apiProvider);
 
-    final poster = Poster(url: getMediaImageUrl(item.id, ImageType.poster));
+    final poster = Poster(url: api.getMediaImageUrl(item.id, ImageType.poster));
     final subtitle = _buildSubtitle(context);
     final overview = _buildOverview();
 
@@ -32,7 +34,7 @@ class HeaderContent extends StatelessWidget {
         Text(item.parent!.name),
       Title(text: item.name),
       if (subtitle != null) subtitle,
-      _buildActions(context),
+      _buildActions(context, api),
       if (overview != null) overview,
     ];
 
@@ -106,8 +108,8 @@ class HeaderContent extends StatelessWidget {
     );
   }
 
-  Widget _buildActions(BuildContext context) {
-    final actions = _buildActionsItems(context);
+  Widget _buildActions(BuildContext context, ZenithApiClient api) {
+    final actions = _buildActionsItems(context, api);
     if (actions.isEmpty) {
       return const SizedBox(height: 32);
     }
@@ -117,7 +119,7 @@ class HeaderContent extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildActionsItems(BuildContext context) {
+  List<Widget> _buildActionsItems(BuildContext context, ZenithApiClient api) {
     final actions = <Widget>[];
 
     if (item.type == MediaType.movie || item.type == MediaType.episode) {
@@ -144,7 +146,8 @@ class HeaderContent extends StatelessWidget {
       actions.add(const SizedBox(width: 16));
       actions.add(WatchedToggleButton(
         isWatched: item.videoUserData?.isWatched ?? false,
-        onChange: _onIsWatchedToggled,
+        onChange: (v) =>
+            api.updateUserData(item.id, VideoUserDataPatch(isWatched: v)),
       ));
 
       if (kIsWeb) {
@@ -152,17 +155,13 @@ class HeaderContent extends StatelessWidget {
         actions.add(IconButton(
           icon: const Icon(Icons.download),
           onPressed: () {
-            downloadFile(getVideoUrl(item.id, attachment: true));
+            downloadFile(api.getVideoUrl(item.id, attachment: true));
           },
         ));
       }
     }
 
     return actions;
-  }
-
-  void _onIsWatchedToggled(isWatched) {
-    updateUserData(item.id, VideoUserDataPatch(isWatched: isWatched));
   }
 
   String _formatDuration(double duration) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import 'package:zenith_flutter/api.dart' as api;
 import 'package:zenith_flutter/language_codes.dart';
@@ -8,7 +9,7 @@ import 'bottom_controls.dart';
 import 'video_progress_bar.dart';
 import 'utils.dart';
 
-class VideoPlayerUi extends StatefulWidget {
+class VideoPlayerUi extends ConsumerStatefulWidget {
   final VideoController controller;
   final api.MediaItem item;
   final Stream<VideoProgressData> progress;
@@ -28,11 +29,12 @@ class VideoPlayerUi extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<VideoPlayerUi> createState() => _VideoPlayerUiState();
+  ConsumerState<VideoPlayerUi> createState() => _VideoPlayerUiState();
 }
 
-class _VideoPlayerUiState extends State<VideoPlayerUi> {
+class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
   VideoController get _controller => widget.controller;
+  api.ZenithApiClient get _api => ref.watch(api.apiProvider);
 
   @override
   void initState() {
@@ -144,7 +146,8 @@ class _VideoPlayerUiState extends State<VideoPlayerUi> {
   }
 
   void _setSubtitleTrack(api.SubtitleTrack? track) {
-    _controller.setTextTrack(track != null ? subtitleFromApi(track) : null);
+    _controller
+        .setTextTrack(track != null ? subtitleFromApi(_api, track) : null);
   }
 
   Widget _buildAppBar() {

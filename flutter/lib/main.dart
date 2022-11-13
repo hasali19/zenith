@@ -1,31 +1,59 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/drawer.dart';
 import 'package:zenith_flutter/language_codes.dart';
+import 'package:zenith_flutter/preferences.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/router.dart';
 import 'package:zenith_flutter/update_dialog.dart';
 import 'package:zenith_flutter/updater.dart';
 
-void main() {
-  runApp(const ZenithApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  runApp(
+    ProviderScope(
+      overrides: [
+        preferencesProvider.overrideWithValue(prefs),
+      ],
+      child: Consumer(builder: (context, ref, child) {
+        Widget app = const ZenithApp();
+        final activeServer = ref.watch(activeServerProvider);
+        if (activeServer != null) {
+          app = ProviderScope(
+            overrides: [
+              apiProvider.overrideWithValue(ZenithApiClient(activeServer.url)),
+            ],
+            child: app,
+          );
+        }
+        return app;
+      }),
+    ),
+  );
 }
 
-class ZenithApp extends StatefulWidget {
+class ZenithApp extends ConsumerStatefulWidget {
   const ZenithApp({Key? key}) : super(key: key);
 
   @override
-  State<ZenithApp> createState() => _ZenithAppState();
+  ConsumerState<ZenithApp> createState() => _ZenithAppState();
 }
 
-class _ZenithAppState extends State<ZenithApp> {
-  final _router = AppRouter();
+class _ZenithAppState extends ConsumerState<ZenithApp> {
+  late final AppRouter _router;
 
   @override
   void initState() {
     super.initState();
     loadLanguageCodes();
+    _router = AppRouter(
+      setupGuard: SetupGuard(() => ref.watch(activeServerProvider)),
+    );
   }
 
   @override

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/poster_item.dart';
@@ -43,7 +44,7 @@ class _MediaLibraryScreenState extends State<MediaLibraryScreen> {
   }
 }
 
-class MediaItemGrid extends StatelessWidget {
+class MediaItemGrid extends ConsumerWidget {
   final List<MediaItem> items;
 
   final ScrollController _scrollController = ScrollController();
@@ -51,9 +52,11 @@ class MediaItemGrid extends StatelessWidget {
   MediaItemGrid({Key? key, required this.items}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final desktop = MediaQuery.of(context).isDesktop;
     return LayoutBuilder(builder: ((context, constraints) {
+      final api = ref.read(apiProvider);
+
       final maxColWidth = desktop ? 240.0 : 150.0;
       final gridPadding = desktop ? 64.0 : 4.0;
       final itemSpacing = desktop ? 16.0 : 4.0;
@@ -77,7 +80,7 @@ class MediaItemGrid extends StatelessWidget {
               width: colWidth,
               padding: EdgeInsets.all(itemSpacing),
               child: PosterItem(
-                poster: getMediaImageUrl(item.id, ImageType.poster),
+                poster: api.getMediaImageUrl(item.id, ImageType.poster),
                 title: item.name,
                 subtitle: item.startDate!.year.toString(),
                 infoSeparator: infoTopPadding,

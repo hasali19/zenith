@@ -13,7 +13,12 @@
 part of 'router.dart';
 
 class _$AppRouter extends RootStackRouter {
-  _$AppRouter([GlobalKey<NavigatorState>? navigatorKey]) : super(navigatorKey);
+  _$AppRouter({
+    GlobalKey<NavigatorState>? navigatorKey,
+    required this.setupGuard,
+  }) : super(navigatorKey);
+
+  final SetupGuard setupGuard;
 
   @override
   final Map<String, PageFactory> pagesMap = {
@@ -56,6 +61,12 @@ class _$AppRouter extends RootStackRouter {
         ),
       );
     },
+    SetupScreenRoute.name: (routeData) {
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: const SetupScreen(),
+      );
+    },
     SettingsScreenRoute.name: (routeData) {
       final args = routeData.argsAs<SettingsScreenRouteArgs>(
           orElse: () => const SettingsScreenRouteArgs());
@@ -89,6 +100,7 @@ class _$AppRouter extends RootStackRouter {
         RouteConfig(
           MainScreenRoute.name,
           path: '/',
+          guards: [setupGuard],
           children: [
             RouteConfig(
               HomeScreenRoute.name,
@@ -116,6 +128,11 @@ class _$AppRouter extends RootStackRouter {
           VideoPlayerScreenRoute.name,
           path: '/player/:id',
           usesPathAsKey: true,
+        ),
+        RouteConfig(
+          SetupScreenRoute.name,
+          path: '/setup',
+          guards: [setupGuard],
         ),
         RouteConfig(
           SettingsScreenRoute.name,
@@ -211,6 +228,18 @@ class VideoPlayerScreenRouteArgs {
   String toString() {
     return 'VideoPlayerScreenRouteArgs{key: $key, id: $id, startPosition: $startPosition}';
   }
+}
+
+/// generated route for
+/// [SetupScreen]
+class SetupScreenRoute extends PageRouteInfo<void> {
+  const SetupScreenRoute()
+      : super(
+          SetupScreenRoute.name,
+          path: '/setup',
+        );
+
+  static const String name = 'SetupScreenRoute';
 }
 
 /// generated route for

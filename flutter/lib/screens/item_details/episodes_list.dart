@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 import 'package:zenith_flutter/responsive.dart';
 import 'package:zenith_flutter/router.dart';
@@ -18,31 +19,33 @@ class Season {
   });
 }
 
-Future<List<Season>> fetchSeasons(int showId) async {
+Future<List<Season>> fetchSeasons(
+    api.ZenithApiClient zenith, int showId) async {
   final seasons = <Season>[];
-  for (final season in await api.fetchSeasons(showId)) {
-    final episodes = await api.fetchEpisodes(season.id);
+  for (final season in await zenith.fetchSeasons(showId)) {
+    final episodes = await zenith.fetchEpisodes(season.id);
     seasons.add(Season(data: season, episodes: episodes));
   }
   return seasons;
 }
 
-class EpisodesList extends StatefulWidget {
+class EpisodesList extends ConsumerStatefulWidget {
   final int id;
 
   const EpisodesList({Key? key, required this.id}) : super(key: key);
 
   @override
-  State<EpisodesList> createState() => _EpisodesListState();
+  ConsumerState<EpisodesList> createState() => _EpisodesListState();
 }
 
-class _EpisodesListState extends State<EpisodesList> {
+class _EpisodesListState extends ConsumerState<EpisodesList> {
   late Future<List<Season>> _seasons;
+  api.ZenithApiClient get _api => ref.watch(api.apiProvider);
 
   @override
-  void initState() {
-    super.initState();
-    _seasons = fetchSeasons(widget.id);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _seasons = fetchSeasons(_api, widget.id);
   }
 
   @override
@@ -134,7 +137,7 @@ class _EpisodesListInnerState extends State<_EpisodesListInner> {
   }
 }
 
-class EpisodeListItem extends StatelessWidget {
+class EpisodeListItem extends ConsumerWidget {
   const EpisodeListItem({
     Key? key,
     required this.episode,
@@ -145,7 +148,8 @@ class EpisodeListItem extends StatelessWidget {
   final double width;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final zenith = ref.watch(api.apiProvider);
     final theme = Theme.of(context);
     final height = width * (9.0 / 16.0);
     return SizedBox(
@@ -161,7 +165,7 @@ class EpisodeListItem extends StatelessWidget {
                     width: width,
                     height: height,
                     child: EpisodeThumbnail(
-                      url: api.getMediaImageUrl(
+                      url: zenith.getMediaImageUrl(
                           episode.id, api.ImageType.thumbnail),
                       isWatched: episode.videoUserData?.isWatched ?? false,
                     ),
