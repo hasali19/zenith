@@ -9,8 +9,10 @@ environment:
   flutter: ">=2.5.0"
 
 dependencies:
+  ffi: ^2.0.1
   flutter:
     sdk: flutter
+  flutter_native_view: ^0.0.2
   plugin_platform_interface: ^2.0.2
   video_player_platform_interface:
     path: ../video_player_platform_interface

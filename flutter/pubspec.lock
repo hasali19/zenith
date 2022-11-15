@@ -209,6 +209,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.4"
+  flutter_native_view:
+    dependency: transitive
+    description:
+      name: flutter_native_view
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.2"
   flutter_riverpod:
     dependency: "direct main"
     description:
