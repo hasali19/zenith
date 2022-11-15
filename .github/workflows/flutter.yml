@@ -78,6 +78,13 @@ jobs:
         with:
           channel: stable
 
+      - name: Install corrosion
+        run: |
+          git clone https://github.com/corrosion-rs/corrosion.git
+          cmake -Scorrosion -Bbuild -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
+          cmake --install build --config Release
+
       - run: flutter build windows
         working-directory: flutter
 
