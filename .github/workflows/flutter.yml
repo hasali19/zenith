@@ -85,6 +85,16 @@ jobs:
           cmake --build build --config Release
           cmake --install build --config Release
 
+      - name: Install wget
+        run: |
+          choco install wget
+
+      - name: Download mpv
+        run: |
+          wget https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-v3-20221113-git-2f74734.7z/download
+          7z e download -ompv
+          echo "MPV_DIR=$(pwd)\mpv" >> $GITHUB_ENV
+
       - run: flutter build windows
         working-directory: flutter
 
