@@ -8,11 +8,12 @@ use std::sync::Arc;
 
 use mpv::{
     mpv_command, mpv_command_async, mpv_create, mpv_event_id_MPV_EVENT_END_FILE,
-    mpv_event_id_MPV_EVENT_PLAYBACK_RESTART, mpv_event_id_MPV_EVENT_PROPERTY_CHANGE,
-    mpv_event_id_MPV_EVENT_SHUTDOWN, mpv_event_id_MPV_EVENT_START_FILE, mpv_event_property,
+    mpv_event_id_MPV_EVENT_LOG_MESSAGE, mpv_event_id_MPV_EVENT_PLAYBACK_RESTART,
+    mpv_event_id_MPV_EVENT_PROPERTY_CHANGE, mpv_event_id_MPV_EVENT_SHUTDOWN,
+    mpv_event_id_MPV_EVENT_START_FILE, mpv_event_log_message, mpv_event_property,
     mpv_format_MPV_FORMAT_DOUBLE, mpv_format_MPV_FORMAT_FLAG, mpv_format_MPV_FORMAT_INT64,
-    mpv_get_property, mpv_handle, mpv_initialize, mpv_observe_property, mpv_set_option,
-    mpv_set_property, mpv_terminate_destroy, mpv_wait_event, mpv_wakeup,
+    mpv_get_property, mpv_handle, mpv_initialize, mpv_observe_property, mpv_request_log_messages,
+    mpv_set_option, mpv_set_property, mpv_terminate_destroy, mpv_wait_event, mpv_wakeup,
 };
 use windows::Win32::Foundation::HWND;
 
@@ -58,6 +59,7 @@ pub unsafe extern "C" fn create_player(
         &mut hwnd.clone() as *mut _ as *mut _,
     );
 
+    mpv_request_log_messages(ctx, s!("info"));
     mpv_initialize(ctx);
 
     mpv_observe_property(ctx, 0, s!("duration"), mpv_format_MPV_FORMAT_DOUBLE);
@@ -160,6 +162,10 @@ unsafe fn run_player_event_loop(player: Arc<Player>, native_port: i64) {
                         );
                     }
                 }
+            }
+            mpv_event_id_MPV_EVENT_LOG_MESSAGE => {
+                let data = unsafe { (*event).data as *mut mpv_event_log_message };
+                print!("{}", CStr::from_ptr((*data).text).to_str().unwrap());
             }
             _ => {}
         }
