@@ -7,7 +7,7 @@ use std::sync::atomic::{self, AtomicBool, AtomicU64};
 use std::sync::Arc;
 
 use mpv::{
-    mpv_command, mpv_create, mpv_event_id_MPV_EVENT_END_FILE,
+    mpv_command, mpv_command_async, mpv_create, mpv_event_id_MPV_EVENT_END_FILE,
     mpv_event_id_MPV_EVENT_PLAYBACK_RESTART, mpv_event_id_MPV_EVENT_PROPERTY_CHANGE,
     mpv_event_id_MPV_EVENT_SHUTDOWN, mpv_event_id_MPV_EVENT_START_FILE, mpv_event_property,
     mpv_format_MPV_FORMAT_DOUBLE, mpv_format_MPV_FORMAT_FLAG, mpv_format_MPV_FORMAT_INT64,
@@ -245,6 +245,15 @@ pub unsafe extern "C" fn load(player: *const Player, url: *const i8, start_posit
     mpv_command(
         (*player).ctx,
         &mut [s!("loadfile"), url, std::ptr::null()] as *mut *const i8,
+    );
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn set_subtitle_file(player: *const Player, url: *const i8) {
+    mpv_command_async(
+        (*player).ctx,
+        0,
+        &mut [s!("sub-add"), url, s!("cached"), std::ptr::null()] as *mut *const i8,
     );
 }
 

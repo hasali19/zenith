@@ -19,6 +19,10 @@ final void Function(int player, Pointer<Utf8> url, double startPosition)
         .lookup<NativeFunction<Void Function(IntPtr, Pointer<Utf8>, Double)>>(
             "load")
         .asFunction();
+final void Function(int player, Pointer<Utf8> url) ffiSetSubtitleFile = _lib
+    .lookup<NativeFunction<Void Function(IntPtr, Pointer<Utf8>)>>(
+        "set_subtitle_file")
+    .asFunction();
 final void Function(int player) ffiPause =
     _lib.lookup<NativeFunction<Void Function(IntPtr)>>("pause").asFunction();
 final void Function(int player) ffiPlay =
@@ -187,7 +191,11 @@ class VideoControllerWindows extends VideoController {
 
   @override
   void setTextTrack(SubtitleTrack? track) {
-    // TODO: implement setTextTrack
+    if (track != null) {
+      final pUrl = track.src.toNativeUtf8();
+      ffiSetSubtitleFile(player, pUrl);
+      calloc.free(pUrl);
+    }
   }
 
   @override
