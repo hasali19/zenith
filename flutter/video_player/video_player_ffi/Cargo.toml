@@ -6,12 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
-members = ["mpv"]
+members = ["dart_sdk", "mpv"]
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
+dart_sdk = { path = "dart_sdk" }
 mpv = { path = "mpv" }
 
 [dependencies.windows]

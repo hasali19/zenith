@@ -1,5 +1,5 @@
 [package]
-name = "mpv"
+name = "dart_sdk"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,3 +9,5 @@ edition = "2021"
 
 [build-dependencies]
 bindgen = "0.62.0"
+cc = "1.0.76"
+which = "4.3.0"
