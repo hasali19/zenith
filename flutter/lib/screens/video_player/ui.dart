@@ -15,18 +15,16 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
   final api.MediaItem item;
   final Stream<VideoProgressData> progress;
 
-  final void Function() onButtonTap;
-  final void Function() onSeekStart;
-  final void Function() onSeekEnd;
+  final void Function() onInteractionStart;
+  final void Function() onInteractionEnd;
 
   const VideoPlayerUi({
     Key? key,
     required this.controller,
     required this.item,
     required this.progress,
-    required this.onButtonTap,
-    required this.onSeekStart,
-    required this.onSeekEnd,
+    required this.onInteractionStart,
+    required this.onInteractionEnd,
   }) : super(key: key);
 
   @override
@@ -53,9 +51,10 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     setState(() {});
   }
 
-  void _showModalBottomSheet(Widget Function(BuildContext context) builder) {
+  Future<void> _showModalBottomSheet(
+      Widget Function(BuildContext context) builder) {
     final width = MediaQuery.of(context).size.width;
-    showModalBottomSheet<void>(
+    return showModalBottomSheet<void>(
       context: context,
       constraints: width > 600
           ? const BoxConstraints.expand(width: 600).copyWith(minHeight: 0)
@@ -64,33 +63,35 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     );
   }
 
-  void _showOptionsMenu(BuildContext context) {
-    _showModalBottomSheet(
+  void _showOptionsMenu(BuildContext context) async {
+    widget.onInteractionStart();
+    await _showModalBottomSheet(
       (context) => Wrap(
         children: [
           ListTile(
             leading: const Icon(Icons.aspect_ratio),
             title: const Text("Fit"),
-            onTap: () {
+            onTap: () async {
+              await _showBoxFitMenu(context);
               Navigator.pop(context);
-              _showBoxFitMenu(context);
             },
           ),
           ListTile(
             leading: const Icon(Icons.closed_caption),
             title: const Text("Subtitles"),
-            onTap: () {
+            onTap: () async {
+              await _showSubtitlesMenu(context);
               Navigator.pop(context);
-              _showSubtitlesMenu(context);
             },
           ),
         ],
       ),
     );
+    widget.onInteractionEnd();
   }
 
-  void _showSubtitlesMenu(BuildContext context) {
-    _showModalBottomSheet(
+  Future<void> _showSubtitlesMenu(BuildContext context) {
+    return _showModalBottomSheet(
       (context) => ListView(
         children: _buildSubtitlesMenuItems(context),
       ),
@@ -127,8 +128,8 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     return items;
   }
 
-  void _showBoxFitMenu(BuildContext context) {
-    _showModalBottomSheet(
+  Future<void> _showBoxFitMenu(BuildContext context) {
+    return _showModalBottomSheet(
       (context) => Wrap(
         children: [
           ListTile(
@@ -196,15 +197,15 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
           stream: widget.progress,
           onSeek: (position) =>
               _controller.position = position.inSeconds.toDouble(),
-          onSeekStart: widget.onSeekStart,
-          onSeekEnd: widget.onSeekEnd,
+          onSeekStart: widget.onInteractionStart,
+          onSeekEnd: widget.onInteractionEnd,
         ),
         const SizedBox(height: 8),
         BottomControls(
           seekIconSize: seekIconSize,
           controller: _controller,
           playPauseIconSize: playPauseIconSize,
-          onButtonTap: widget.onButtonTap,
+          onButtonTap: widget.onInteractionEnd,
         ),
       ],
     );

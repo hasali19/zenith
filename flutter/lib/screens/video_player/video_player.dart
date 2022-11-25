@@ -236,9 +236,8 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
       controller: _controller!,
       item: widget.item,
       progress: _progressController.stream,
-      onButtonTap: _resetControlsTimer,
-      onSeekStart: _disableAutoHideControls,
-      onSeekEnd: _resetControlsTimer,
+      onInteractionStart: _disableAutoHideControls,
+      onInteractionEnd: _resetControlsTimer,
     );
   }
 
