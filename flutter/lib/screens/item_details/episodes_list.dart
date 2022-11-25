@@ -1,9 +1,7 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/router.dart';
 import 'package:zenith_flutter/screens/item_details/item_details.dart';
 import 'package:zenith_flutter/text_one_line.dart';
 import 'package:zenith_flutter/theme.dart';
@@ -32,8 +30,13 @@ Future<List<Season>> fetchSeasons(
 
 class EpisodesList extends ConsumerStatefulWidget {
   final int id;
+  final void Function(api.MediaItem) onEpisodePressed;
 
-  const EpisodesList({Key? key, required this.id}) : super(key: key);
+  const EpisodesList({
+    Key? key,
+    required this.id,
+    required this.onEpisodePressed,
+  }) : super(key: key);
 
   @override
   ConsumerState<EpisodesList> createState() => _EpisodesListState();
@@ -59,7 +62,10 @@ class _EpisodesListState extends ConsumerState<EpisodesList> {
           children: [
             if (snapshot.hasData) ...[
               for (final Season season in snapshot.data!)
-                _EpisodesListInner(season: season),
+                _EpisodesListInner(
+                  season: season,
+                  onEpisodePressed: widget.onEpisodePressed,
+                ),
               SliverToBoxAdapter(
                 child: SizedBox(height: isDesktop ? 128 : 16),
               ),
@@ -73,10 +79,12 @@ class _EpisodesListState extends ConsumerState<EpisodesList> {
 
 class _EpisodesListInner extends StatefulWidget {
   final Season season;
+  final void Function(api.MediaItem) onEpisodePressed;
 
   const _EpisodesListInner({
     Key? key,
     required this.season,
+    required this.onEpisodePressed,
   }) : super(key: key);
 
   @override
@@ -128,6 +136,7 @@ class _EpisodesListInnerState extends State<_EpisodesListInner> {
               (context, index) => EpisodeListItem(
                 episode: episodes[index],
                 width: thumbnailWidth,
+                onPressed: () => widget.onEpisodePressed(episodes[index]),
               ),
               childCount: episodes.length,
             ),
@@ -143,10 +152,12 @@ class EpisodeListItem extends ConsumerWidget {
     Key? key,
     required this.episode,
     required this.width,
+    required this.onPressed,
   }) : super(key: key);
 
   final api.MediaItem episode;
   final double width;
+  final void Function() onPressed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -198,11 +209,7 @@ class EpisodeListItem extends ConsumerWidget {
           Positioned.fill(
             child: Material(
               color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  context.router.push(ItemDetailsScreenRoute(id: episode.id));
-                },
-              ),
+              child: InkWell(onTap: onPressed),
             ),
           )
         ],

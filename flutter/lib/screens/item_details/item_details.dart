@@ -8,6 +8,7 @@ import 'package:sized_context/sized_context.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 import 'package:zenith_flutter/api.dart';
 import 'package:zenith_flutter/responsive.dart';
+import 'package:zenith_flutter/router.dart';
 import 'package:zenith_flutter/screens/item_details/episodes_list.dart';
 import 'package:zenith_flutter/screens/item_details/header.dart';
 
@@ -75,7 +76,7 @@ class _ItemDetailsScreenState extends ConsumerState<ItemDetailsScreen> {
 }
 
 class Content extends ConsumerWidget {
-  const Content({
+  Content({
     Key? key,
     required this.item,
     required this.onRefresh,
@@ -84,6 +85,8 @@ class Content extends ConsumerWidget {
   final MediaItem item;
   final Future<void> Function() onRefresh;
 
+  final _refresh = GlobalKey<RefreshIndicatorState>();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final api = ref.watch(apiProvider);
@@ -91,8 +94,27 @@ class Content extends ConsumerWidget {
     final padding = isDesktop
         ? const EdgeInsets.fromLTRB(128, 128, 128, 32)
         : const EdgeInsets.fromLTRB(16, 96, 16, 16);
+
+    void pushRoute(route) async {
+      await context.router.push(route);
+      _refresh.currentState?.show();
+    }
+
+    void onPlayPressed() async {
+      pushRoute(VideoPlayerScreenRoute(
+        id: item.id,
+        startPosition:
+            item.shouldResume ? item.videoUserData?.position ?? 0 : 0,
+      ));
+    }
+
+    void onEpisodePressed(MediaItem episode) async {
+      pushRoute(ItemDetailsScreenRoute(id: episode.id));
+    }
+
     return RefreshIndicator(
       onRefresh: onRefresh,
+      triggerMode: RefreshIndicatorTriggerMode.anywhere,
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -108,11 +130,17 @@ class Content extends ConsumerWidget {
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: padding,
-                          child: HeaderContent(item: item),
+                          child: HeaderContent(
+                            item: item,
+                            onPlayPressed: onPlayPressed,
+                          ),
                         ),
                       ),
                       if (item.type == MediaType.show)
-                        EpisodesList(id: item.id),
+                        EpisodesList(
+                          id: item.id,
+                          onEpisodePressed: onEpisodePressed,
+                        ),
                       SliverToBoxAdapter(
                         child: SizedBox(height: context.mq.padding.bottom),
                       ),

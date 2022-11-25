@@ -13,9 +13,14 @@ import 'package:zenith_flutter/download.dart'
     if (dart.library.html) 'package:zenith_flutter/download_web.dart';
 
 class HeaderContent extends ConsumerWidget {
-  const HeaderContent({Key? key, required this.item}) : super(key: key);
+  const HeaderContent({
+    Key? key,
+    required this.item,
+    required this.onPlayPressed,
+  }) : super(key: key);
 
   final MediaItem item;
+  final void Function() onPlayPressed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -129,17 +134,11 @@ class HeaderContent extends ConsumerWidget {
     if (item.type == MediaType.movie || item.type == MediaType.episode) {
       final position = item.videoUserData?.position ?? 0;
       final duration = item.videoInfo!.duration;
-      final shouldResume =
-          position > 0.05 * duration && position < 0.9 * duration;
+      final shouldResume = item.shouldResume;
       actions.add(ElevatedButton.icon(
         icon: const Icon(Icons.play_arrow),
         label: Text(shouldResume ? "Resume" : "Play"),
-        onPressed: () {
-          context.router.push(VideoPlayerScreenRoute(
-            id: item.id,
-            startPosition: shouldResume ? position : 0,
-          ));
-        },
+        onPressed: onPlayPressed,
       ));
 
       if (shouldResume) {

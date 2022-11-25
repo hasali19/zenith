@@ -99,6 +99,12 @@ class MediaItem {
     }
     return seasonEpisode;
   }
+
+  bool get shouldResume {
+    final position = videoUserData?.position ?? 0;
+    final duration = videoInfo!.duration;
+    return position > 0.05 * duration && position < 0.9 * duration;
+  }
 }
 
 class MediaItemParent {
