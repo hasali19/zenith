@@ -221,32 +221,33 @@ class HeaderContent extends ConsumerWidget {
                 ),
               ],
             ),
-            TableRow(
-              children: [
-                Text("Subtitles", style: bodyLarge),
-                const SizedBox(width: 16),
-                StreamDropdownButton<SubtitleTrack>(
-                  items: videoInfo.subtitles,
-                  itemBuilder: (item) => Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextOneLine(
-                          tryResolveLanguageCode(item.language ?? "Unknown")),
-                      if (item.title != null)
+            if (videoInfo.subtitles.isNotEmpty)
+              TableRow(
+                children: [
+                  Text("Subtitles", style: bodyLarge),
+                  const SizedBox(width: 16),
+                  StreamDropdownButton<SubtitleTrack>(
+                    items: videoInfo.subtitles,
+                    itemBuilder: (item) => Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         TextOneLine(
-                          item.title!,
-                          style: bodyLarge!.copyWith(color: bodySmall!.color),
-                        ),
-                    ],
+                            tryResolveLanguageCode(item.language ?? "Unknown")),
+                        if (item.title != null)
+                          TextOneLine(
+                            item.title!,
+                            style: bodyLarge!.copyWith(color: bodySmall!.color),
+                          ),
+                      ],
+                    ),
+                    selectedItemBuilder: (context, item) => Text(
+                      tryResolveLanguageCode(item.language ?? "Unknown"),
+                      style: bodyLarge,
+                    ),
                   ),
-                  selectedItemBuilder: (context, item) => Text(
-                    tryResolveLanguageCode(item.language ?? "Unknown"),
-                    style: bodyLarge,
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
             TableRow(
               children: [
                 Text("Format", style: bodyLarge),
