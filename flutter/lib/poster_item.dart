@@ -7,6 +7,7 @@ class PosterItem extends StatelessWidget {
   final String poster;
   final String title;
   final String subtitle;
+  final bool isWatched;
   final double infoSeparator;
   final void Function() onTap;
 
@@ -15,6 +16,7 @@ class PosterItem extends StatelessWidget {
     required this.poster,
     required this.title,
     required this.subtitle,
+    required this.isWatched,
     required this.infoSeparator,
     required this.onTap,
   }) : super(key: key);
@@ -34,9 +36,24 @@ class PosterItem extends StatelessWidget {
                 type: MaterialType.card,
                 clipBehavior: Clip.hardEdge,
                 shape: cardTheme.shape,
-                child: FadeInImage.memoryNetwork(
-                  placeholder: transparentImage,
-                  image: poster,
+                child: Stack(
+                  children: [
+                    FadeInImage.memoryNetwork(
+                      placeholder: transparentImage,
+                      image: poster,
+                    ),
+                    if (!isWatched)
+                      const Positioned.fill(
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: Padding(
+                            padding: EdgeInsets.all(8),
+                            child: Icon(Icons.new_releases,
+                                size: 20, color: Colors.amber),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               Positioned.fill(

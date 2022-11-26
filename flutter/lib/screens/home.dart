@@ -98,6 +98,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             poster: api.getMediaImageUrl(item.id, ImageType.poster),
             title: item.name,
             subtitle: item.startDate?.year.toString() ?? "",
+            isWatched: true, // hide new icon since they're all new
             infoSeparator: posterItemInfoSeparator,
             onTap: () => _navigateToItem(item),
           ),

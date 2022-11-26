@@ -83,6 +83,7 @@ class MediaItemGrid extends ConsumerWidget {
                 poster: api.getMediaImageUrl(item.id, ImageType.poster),
                 title: item.name,
                 subtitle: item.startDate!.year.toString(),
+                isWatched: item.videoUserData?.isWatched ?? false,
                 infoSeparator: infoTopPadding,
                 onTap: () =>
                     context.router.push(ItemDetailsScreenRoute(id: item.id)),
