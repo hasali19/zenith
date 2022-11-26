@@ -31,6 +31,7 @@
             </intent-filter>
         </activity>
         <receiver android:name=".InstallReceiver" />
+        <meta-data android:name="GIT_COMMIT_HASH" android:value="@string/git_commit_hash" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

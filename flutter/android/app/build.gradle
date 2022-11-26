@@ -42,6 +42,11 @@ if (releaseStoreFile == null) {
     releaseStoreFile = System.getenv('ANDROID_KEYSTORE_PATH')
 }
 
+def gitCommitHash = System.getenv('GIT_COMMIT_HASH')
+if (gitCommitHash == null) {
+    gitCommitHash = "UNKNOWN"
+}
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
@@ -69,6 +74,7 @@ android {
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        resValue "string", "git_commit_hash", gitCommitHash
     }
 
     signingConfigs {

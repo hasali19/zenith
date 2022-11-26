@@ -19,7 +19,8 @@ jobs:
 
       - run: |
           echo $ANDROID_KEYSTORE | base64 -d > keystore.jks
-          flutter build apk --dart-define=GIT_COMMIT_HASH=$(git rev-parse HEAD)
+          export GIT_COMMIT_HASH=$(git rev-parse HEAD)
+          flutter build apk --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH
         working-directory: flutter
         env:
           ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
