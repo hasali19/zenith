@@ -258,6 +258,7 @@ class ContinueWatchingCard extends StatelessWidget {
             image: DecorationImage(
               image: NetworkImage(thumbnail),
               fit: BoxFit.cover,
+              filterQuality: FilterQuality.medium,
             ),
           ),
           child: InkWell(
