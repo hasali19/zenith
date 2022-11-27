@@ -107,6 +107,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return FutureBuilder<HomeScreenData>(
       future: _data,
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text("${snapshot.error}"),
+          );
+        }
+
         if (!snapshot.hasData) {
           return const Center(
             child: CircularProgressIndicator(),
@@ -139,7 +145,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ? item.getSeasonEpisode()! + ": " + item.grandparent!.name
                       : item.startDate?.year.toString() ?? "",
                   progress: (item.videoUserData?.position ?? 0) /
-                      (item.videoInfo?.duration ?? 1),
+                      (item.videoFile?.duration ?? 1),
                   padding: thumbnailItemPadding,
                   onTap: () => _navigateToItem(item),
                 ),

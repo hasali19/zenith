@@ -56,7 +56,7 @@ class _ItemDetailsScreenState extends ConsumerState<ItemDetailsScreen> {
         future: _item,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Center(child: Text("Failed to load data"));
+            return Center(child: Text("${snapshot.error}"));
           }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());

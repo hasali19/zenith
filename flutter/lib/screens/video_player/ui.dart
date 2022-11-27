@@ -109,7 +109,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
       )
     ];
 
-    final subtitles = widget.item.videoInfo?.subtitles ?? [];
+    final subtitles = widget.item.videoFile?.subtitles ?? [];
     for (final track in subtitles) {
       var language = track.language;
       if (language != null) {

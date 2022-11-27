@@ -75,7 +75,7 @@ class HeaderContent extends ConsumerWidget {
     final theme = Theme.of(context);
     final style = theme.textTheme.subtitle1;
     final date = item.startDate;
-    final videoInfo = item.videoInfo;
+    final videoInfo = item.videoFile;
     final seasonEpisode = item.getSeasonEpisode();
 
     final items = [
@@ -131,7 +131,7 @@ class HeaderContent extends ConsumerWidget {
 
     if (item.type == MediaType.movie || item.type == MediaType.episode) {
       final position = item.videoUserData?.position ?? 0;
-      final duration = item.videoInfo!.duration;
+      final duration = item.videoFile!.duration;
       final shouldResume = item.shouldResume;
       actions.add(ElevatedButton.icon(
         icon: const Icon(Icons.play_arrow),
@@ -176,7 +176,7 @@ class HeaderContent extends ConsumerWidget {
   }
 
   Widget? _buildVideoInfo(BuildContext context) {
-    final videoInfo = item.videoInfo;
+    final videoInfo = item.videoFile;
     if (videoInfo == null) {
       return null;
     }
@@ -203,7 +203,8 @@ class HeaderContent extends ConsumerWidget {
                 Text("Video", style: bodyLarge),
                 const SizedBox(width: 16),
                 StreamDropdownButton<VideoStreamInfo>(
-                  items: [videoInfo.video!],
+                  items:
+                      videoInfo.streams.whereType<VideoStreamInfo>().toList(),
                   itemBuilder: (item) => Text(item.codec),
                 ),
               ],
@@ -213,7 +214,8 @@ class HeaderContent extends ConsumerWidget {
                 Text("Audio", style: bodyLarge),
                 const SizedBox(width: 16),
                 StreamDropdownButton<AudioStreamInfo>(
-                  items: videoInfo.audio!,
+                  items:
+                      videoInfo.streams.whereType<AudioStreamInfo>().toList(),
                   itemBuilder: (item) => Text(
                       "${tryResolveLanguageCode(item.language)} (${item.codec})"),
                 ),

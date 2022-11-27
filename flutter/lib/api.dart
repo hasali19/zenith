@@ -19,7 +19,7 @@ class MediaItem {
   final DateTime? endDate;
   final MediaItemParent? parent;
   final MediaItemParent? grandparent;
-  final VideoInfo? videoInfo;
+  final VideoFile? videoFile;
   final VideoUserData? videoUserData;
 
   MediaItem({
@@ -31,53 +31,30 @@ class MediaItem {
     required this.endDate,
     required this.parent,
     required this.grandparent,
-    required this.videoInfo,
+    required this.videoFile,
     required this.videoUserData,
   });
 
   factory MediaItem.fromJson(MediaType type, Map<String, dynamic> json) {
-    final String name;
-    final int? startDate;
-    MediaItemParent? parent;
-    MediaItemParent? grandparent;
-    switch (type) {
-      case MediaType.movie:
-        name = json['title'];
-        startDate = json['release_date'];
-        break;
-      case MediaType.show:
-        name = json['name'];
-        startDate = json['start_date'];
-        break;
-      case MediaType.season:
-        name = json['name'];
-        startDate = json['start_date'];
-        parent = MediaItemParent(
-            json['show_id'], json['season_number'], json['show_name']);
-        break;
-      case MediaType.episode:
-        name = json['name'];
-        startDate = json['air_date'];
-        parent = MediaItemParent(json['season_id'], json['episode_number'], '');
-        grandparent = MediaItemParent(
-            json['show_id'], json['season_number'], json['show_name']);
-        break;
-    }
     return MediaItem(
       id: json['id'],
       type: type,
-      name: name,
+      name: json['name'],
       overview: json['overview'],
-      startDate: startDate != null
-          ? DateTime.fromMillisecondsSinceEpoch(startDate * 1000)
+      startDate: json['start_date'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(json['start_date'] * 1000)
           : null,
       endDate: json['end_date'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['end_date'] * 1000)
           : null,
-      parent: parent,
-      grandparent: grandparent,
-      videoInfo: json['video_info'] != null
-          ? VideoInfo.fromJson(json['video_info'])
+      parent: json['parent'] != null
+          ? MediaItemParent.fromJson(json['parent'])
+          : null,
+      grandparent: json['grandparent'] != null
+          ? MediaItemParent.fromJson(json['grandparent'])
+          : null,
+      videoFile: json['video_file'] != null
+          ? VideoFile.fromJson(json['video_file'])
           : null,
       videoUserData: (type == MediaType.movie || type == MediaType.episode) &&
               json['user_data'] != null
@@ -102,7 +79,7 @@ class MediaItem {
 
   bool get shouldResume {
     final position = videoUserData?.position ?? 0;
-    final duration = videoInfo!.duration;
+    final duration = videoFile!.duration;
     return position > 0.05 * duration && position < 0.9 * duration;
   }
 }
@@ -113,6 +90,9 @@ class MediaItemParent {
   final String name;
 
   MediaItemParent(this.id, this.index, this.name);
+
+  factory MediaItemParent.fromJson(Map<String, dynamic> json) =>
+      MediaItemParent(json['id'], json['index'], json['name']);
 }
 
 class SubtitleTrack {
@@ -133,20 +113,40 @@ class SubtitleTrack {
       );
 }
 
-class VideoStreamInfo {
+abstract class StreamInfo {
   final int id;
   final int index;
   final String codec;
+
+  const StreamInfo({
+    required this.id,
+    required this.index,
+    required this.codec,
+  });
+
+  factory StreamInfo.fromJson(Map<String, dynamic> json) {
+    switch (json['type']) {
+      case "audio":
+        return AudioStreamInfo.fromJson(json);
+      case "video":
+        return VideoStreamInfo.fromJson(json);
+      default:
+        throw Exception("Invalid stream type: ${json['type']}");
+    }
+  }
+}
+
+class VideoStreamInfo extends StreamInfo {
   final int width;
   final int height;
 
   const VideoStreamInfo({
-    required this.id,
-    required this.index,
-    required this.codec,
+    required int id,
+    required int index,
+    required String codec,
     required this.width,
     required this.height,
-  });
+  }) : super(id: id, index: index, codec: codec);
 
   factory VideoStreamInfo.fromJson(Map<String, dynamic> json) {
     return VideoStreamInfo(
@@ -159,18 +159,15 @@ class VideoStreamInfo {
   }
 }
 
-class AudioStreamInfo {
-  final int id;
-  final int index;
-  final String codec;
+class AudioStreamInfo extends StreamInfo {
   final String language;
 
   const AudioStreamInfo({
-    required this.id,
-    required this.index,
-    required this.codec,
+    required int id,
+    required int index,
+    required String codec,
     required this.language,
-  });
+  }) : super(id: id, index: index, codec: codec);
 
   factory AudioStreamInfo.fromJson(Map<String, dynamic> json) {
     return AudioStreamInfo(
@@ -182,42 +179,30 @@ class AudioStreamInfo {
   }
 }
 
-class VideoInfo {
+class VideoFile {
   final String path;
   final double duration;
   final String format;
-  final VideoStreamInfo? video;
-  final List<AudioStreamInfo>? audio;
+  final List<StreamInfo> streams;
   final List<SubtitleTrack> subtitles;
 
-  const VideoInfo({
+  const VideoFile({
     required this.path,
     required this.duration,
     required this.format,
-    required this.video,
-    required this.audio,
+    required this.streams,
     required this.subtitles,
   });
 
-  factory VideoInfo.fromJson(Map<String, dynamic> json) {
-    final List<dynamic>? audio = json['audio'];
-    final List<dynamic>? subtitlesJson = json['subtitles'];
-    final List<SubtitleTrack> subtitles;
-    if (subtitlesJson != null) {
-      subtitles =
-          subtitlesJson.map((json) => SubtitleTrack.fromJson(json)).toList();
-    } else {
-      subtitles = [];
-    }
-    return VideoInfo(
+  factory VideoFile.fromJson(Map<String, dynamic> json) {
+    final List<dynamic> streams = json['streams'];
+    final List<dynamic> subtitles = json['subtitles'];
+    return VideoFile(
       path: json['path'],
       duration: json['duration'],
       format: json['format'],
-      video: json['video'] != null
-          ? VideoStreamInfo.fromJson(json['video'])
-          : null,
-      audio: audio?.map((e) => AudioStreamInfo.fromJson(e)).toList(),
-      subtitles: subtitles,
+      streams: streams.map((s) => StreamInfo.fromJson(s)).toList(),
+      subtitles: subtitles.map((json) => SubtitleTrack.fromJson(json)).toList(),
     );
   }
 }
@@ -273,7 +258,7 @@ class ZenithApiClient {
   }
 
   Future<List<MediaItem>> fetchShows() async {
-    final res = await http.get(Uri.parse('$_baseUrl/api/tv/shows'));
+    final res = await http.get(Uri.parse('$_baseUrl/api/shows'));
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((e) => MediaItem.fromJson(MediaType.show, e)).toList();
@@ -283,7 +268,7 @@ class ZenithApiClient {
   }
 
   Future<List<MediaItem>> fetchRecentShows() async {
-    final res = await http.get(Uri.parse('$_baseUrl/api/tv/shows/recent'));
+    final res = await http.get(Uri.parse('$_baseUrl/api/shows/recent'));
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((e) => MediaItem.fromJson(MediaType.show, e)).toList();
@@ -294,7 +279,7 @@ class ZenithApiClient {
 
   Future<List<MediaItem>> fetchSeasons(int showId) async {
     final res =
-        await http.get(Uri.parse('$_baseUrl/api/tv/shows/$showId/seasons'));
+        await http.get(Uri.parse('$_baseUrl/api/shows/$showId/seasons'));
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((e) => MediaItem.fromJson(MediaType.season, e)).toList();
@@ -304,8 +289,8 @@ class ZenithApiClient {
   }
 
   Future<List<MediaItem>> fetchEpisodes(int seasonId) async {
-    final res = await http
-        .get(Uri.parse('$_baseUrl/api/tv/seasons/$seasonId/episodes'));
+    final res =
+        await http.get(Uri.parse('$_baseUrl/api/seasons/$seasonId/episodes'));
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((e) => MediaItem.fromJson(MediaType.episode, e)).toList();

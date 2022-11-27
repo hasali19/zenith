@@ -89,7 +89,7 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
   Timer? _controlsTimer;
 
   List<api.SubtitleTrack> get subtitles =>
-      widget.item.videoInfo?.subtitles ?? [];
+      widget.item.videoFile?.subtitles ?? [];
 
   @override
   void initState() {
