@@ -16,8 +16,7 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
 use uuid::Uuid;
-use zenith::db::media::MediaItemType;
-use zenith::db::Db;
+use zenith::{Db, MediaItemType};
 
 async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
     // Create some movies

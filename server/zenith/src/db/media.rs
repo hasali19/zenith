@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use speq::Reflect;
 use sqlx::{SqliteConnection, Type};
 
-#[derive(Clone, Copy, Debug, Type, Serialize)]
+#[derive(Clone, Copy, Debug, Type, Serialize, Deserialize, Reflect)]
 #[repr(i32)]
 #[serde(rename_all = "snake_case")]
 pub enum MediaItemType {
@@ -84,6 +84,14 @@ impl<'a> TryFrom<&'a str> for MediaImage<'a> {
             src_type,
             src,
         })
+    }
+}
+
+impl<'a> TryFrom<&'a String> for MediaImage<'a> {
+    type Error = <MediaImage<'a> as TryFrom<&'a str>>::Error;
+
+    fn try_from(value: &'a String) -> Result<Self, Self::Error> {
+        MediaImage::try_from(value.as_str())
     }
 }
 

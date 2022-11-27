@@ -1,7 +1,6 @@
 ---
 source: server/zenith/test/media.rs
-assertion_line: 17
-expression: "app.get(\"/tv/shows\").await"
+expression: "app.get(\"/shows\").await"
 ---
 [
   {
@@ -15,7 +14,10 @@ expression: "app.get(\"/tv/shows\").await"
     "overview": null,
     "poster": null,
     "start_date": null,
+    "thumbnail": null,
+    "type": "show",
     "user_data": {
+      "type": "collection",
       "unwatched": 4
     }
   },
@@ -30,7 +32,10 @@ expression: "app.get(\"/tv/shows\").await"
     "overview": null,
     "poster": null,
     "start_date": null,
+    "thumbnail": null,
+    "type": "show",
     "user_data": {
+      "type": "collection",
       "unwatched": 0
     }
   },
@@ -45,7 +50,10 @@ expression: "app.get(\"/tv/shows\").await"
     "overview": null,
     "poster": null,
     "start_date": null,
+    "thumbnail": null,
+    "type": "show",
     "user_data": {
+      "type": "collection",
       "unwatched": 0
     }
   }

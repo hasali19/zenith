@@ -5,27 +5,29 @@ expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
 [
   {
     "backdrop": null,
+    "end_date": null,
     "external_ids": {
       "tmdb": null
     },
     "id": 1,
+    "name": "Test Movie 1",
     "overview": null,
     "poster": null,
-    "release_date": null,
-    "title": "Test Movie 1",
+    "start_date": null,
+    "thumbnail": null,
     "type": "movie",
     "user_data": {
       "is_watched": false,
       "last_watched_at": 1662911415,
-      "position": 50.0
+      "position": 50.0,
+      "type": "video"
     },
-    "video_info": {
-      "audio": [],
+    "video_file": {
       "duration": 100.0,
       "format": null,
       "path": "/path/to/Test Movie 1/Test Movie 1.mp4",
-      "subtitles": [],
-      "video": null
+      "streams": [],
+      "subtitles": []
     }
   },
   {
@@ -39,57 +41,71 @@ expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
     "overview": null,
     "poster": null,
     "start_date": null,
+    "thumbnail": null,
     "type": "show",
     "user_data": {
+      "type": "collection",
       "unwatched": 4
     }
   },
   {
     "backdrop": null,
+    "end_date": null,
     "external_ids": {
       "tmdb": null
     },
     "id": 7,
     "name": "Season 1",
     "overview": null,
+    "parent": {
+      "id": 4,
+      "index": 1,
+      "name": "Test Show 1"
+    },
     "poster": null,
-    "season_number": 1,
-    "show_id": 4,
-    "show_name": "Test Show 1",
+    "start_date": null,
+    "thumbnail": null,
     "type": "season",
     "user_data": {
+      "type": "collection",
       "unwatched": 2
     }
   },
   {
-    "air_date": null,
     "backdrop": null,
-    "episode_number": 1,
+    "end_date": null,
     "external_ids": {
       "tmdb": null
+    },
+    "grandparent": {
+      "id": 4,
+      "index": 1,
+      "name": "Test Show 1"
     },
     "id": 9,
     "name": "Episode 1",
     "overview": null,
+    "parent": {
+      "id": 7,
+      "index": 1,
+      "name": "Season 1"
+    },
     "poster": null,
-    "season_id": 7,
-    "season_number": 1,
-    "show_id": 4,
-    "show_name": "Test Show 1",
+    "start_date": null,
     "thumbnail": null,
     "type": "episode",
     "user_data": {
       "is_watched": false,
       "last_watched_at": null,
-      "position": null
+      "position": 0.0,
+      "type": "video"
     },
-    "video_info": {
-      "audio": [],
+    "video_file": {
       "duration": 100.0,
       "format": null,
       "path": "/path/to/Test Episode 1",
-      "subtitles": [],
-      "video": null
+      "streams": [],
+      "subtitles": []
     }
   }
 ]

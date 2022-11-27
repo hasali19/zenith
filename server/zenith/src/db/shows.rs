@@ -3,13 +3,10 @@ use speq::Reflect;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqliteConnection};
 
-use crate::sql::Join;
-use crate::util::VecExt;
 use crate::{sql, utils};
 
 use super::collections::CollectionUserData;
 use super::items::ExternalIds;
-use super::media::MediaImageType;
 
 #[derive(Serialize, Reflect)]
 pub struct Show {
@@ -22,16 +19,6 @@ pub struct Show {
     pub backdrop: Option<String>,
     pub external_ids: ExternalIds,
     pub user_data: CollectionUserData,
-}
-
-impl Show {
-    pub fn image(&self, img_type: MediaImageType) -> Option<&str> {
-        match img_type {
-            MediaImageType::Poster => self.poster.as_deref(),
-            MediaImageType::Backdrop => self.backdrop.as_deref(),
-            MediaImageType::Thumbnail => self.backdrop.as_deref(),
-        }
-    }
 }
 
 const SHOW_COLUMNS: &[&str] = &[
@@ -95,32 +82,4 @@ pub async fn get_path(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Opti
         .await?;
 
     Ok(path)
-}
-
-pub async fn get_all(conn: &mut SqliteConnection) -> eyre::Result<Vec<Show>> {
-    let sql = sql::select("shows AS sh")
-        .columns(SHOW_COLUMNS)
-        .order_by(&["name"])
-        .to_sql();
-
-    Ok(sqlx::query_as(&sql).fetch_all(conn).await?)
-}
-
-pub async fn get_recently_updated(conn: &mut SqliteConnection) -> eyre::Result<Vec<Show>> {
-    // Get shows sorted by the added_at of their most recently added episode
-    // (i.e. shows that have had an episode added recently will appear higher up)
-    let sql = sql::select("shows AS sh")
-        .columns(
-            SHOW_COLUMNS
-                .to_vec()
-                .with_push("MAX(e.added_at) AS latest_episode_added_at"),
-        )
-        .joins(&[Join::inner("episodes AS e").on("e.show_id = sh.id")])
-        .condition("unwatched > 0")
-        .group_by("sh.id")
-        .order_by(&["latest_episode_added_at DESC", "sh.name"])
-        .limit(30)
-        .to_sql();
-
-    Ok(sqlx::query_as(&sql).fetch_all(conn).await?)
 }

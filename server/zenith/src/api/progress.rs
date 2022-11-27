@@ -7,6 +7,7 @@ use speq::axum::post;
 use speq::Reflect;
 
 use crate::api::ApiResult;
+use crate::db::items::VideoUserData;
 use crate::db::videos::UpdateVideoUserData;
 use crate::db::{self, Db};
 
@@ -32,18 +33,25 @@ async fn update_progress(
         .await?
         .or_not_found("item not found")?;
 
-    let (video_info, user_data) = match item {
-        db::items::MediaItem::Movie(m) => (m.video_info, m.user_data),
-        db::items::MediaItem::Episode(e) => (e.video_info, e.user_data),
-        _ => return Err(bad_request("item id must refer to a movie or tv episode")),
+    let user_data = db::items::get_user_data_for_video(&mut conn, *id).await?;
+    let Some(video_info) = item.video_file else {
+        return Err(bad_request("item id must refer to a video item"));
     };
+
+    let is_watched = matches!(
+        user_data,
+        Some(VideoUserData {
+            is_watched: true,
+            ..
+        }),
+    );
 
     let data = UpdateVideoUserData {
         position: Some(query.position),
-        is_watched: if user_data.is_watched {
+        is_watched: if is_watched {
             None
         } else {
-            Some((query.position / video_info.duration) >= 0.9)
+            Some((query.position / video_info.duration.unwrap()) >= 0.9)
         },
         set_watched_at: true,
     };

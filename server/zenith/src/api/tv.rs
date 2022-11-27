@@ -4,94 +4,82 @@ use axum::Json;
 use speq::axum::get;
 
 use crate::api::ApiResult;
-use crate::db::episodes::Episode;
-use crate::db::seasons::Season;
-use crate::db::shows::Show;
+use crate::db::items::SortField;
 use crate::db::{self, Db};
+use crate::MediaItemType;
 
-use super::ext::OptionExt;
+use super::dto::MediaItem;
+use super::items::{query_items, query_items_by_id};
 
-#[get("/tv/shows")]
-#[response(model = Vec<Show>)]
+#[get("/shows")]
+#[response(model = Vec<MediaItem>)]
 pub async fn get_shows(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
-    let shows = db::shows::get_all(&mut conn).await?;
-    Ok(Json(shows))
+
+    let query = db::items::Query {
+        item_type: Some(MediaItemType::Show),
+        sort_by: &[SortField::Name],
+        ..Default::default()
+    };
+
+    Ok(Json(query_items(&mut conn, query).await?))
 }
 
-#[get("/tv/shows/:id")]
-#[path(i64)]
-#[response(model = Show)]
-pub async fn get_show(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
+#[get("/shows/recent")]
+#[response(model = Vec<MediaItem>)]
+pub async fn get_recent_shows(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
-
-    let show = db::shows::get(&mut conn, *id)
-        .await?
-        .or_not_found("show not found")?;
-
-    Ok(Json(show))
+    let ids = db::items::get_recently_updated_shows(&mut conn).await?;
+    Ok(Json(query_items_by_id(&mut conn, &ids).await?))
 }
 
-#[get("/tv/shows/recent")]
-#[response(model = Vec<Show>)]
-pub async fn get_recently_updated_shows(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
-    let shows = db::shows::get_recently_updated(&mut conn).await?;
-    Ok(Json(shows))
-}
-
-#[get("/tv/shows/:id/seasons")]
+#[get("/shows/:id/seasons")]
 #[path(i64)]
-#[response(model = Vec<Season>)]
+#[response(model = Vec<MediaItem>)]
 pub async fn get_seasons(show_id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
-    let seasons = db::seasons::get_for_show(&mut conn, *show_id).await?;
-    Ok(Json(seasons))
+
+    let query = db::items::Query {
+        item_type: Some(MediaItemType::Season),
+        parent_id: Some(*show_id),
+        sort_by: &[SortField::ParentIndex],
+        ..Default::default()
+    };
+
+    Ok(Json(query_items(&mut conn, query).await?))
 }
 
-#[get("/tv/shows/:id/episodes")]
+#[get("/shows/:id/episodes")]
 #[path(i64)]
-#[response(model = Vec<Episode>)]
+#[response(model = Vec<MediaItem>)]
 pub async fn get_show_episodes(
     show_id: Path<i64>,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
-    let episodes = db::episodes::get_for_show(&mut conn, *show_id).await?;
-    Ok(Json(episodes))
+
+    let query = db::items::Query {
+        item_type: Some(MediaItemType::Episode),
+        grandparent_id: Some(*show_id),
+        sort_by: &[SortField::GrandparentIndex, SortField::ParentIndex],
+        ..Default::default()
+    };
+
+    Ok(Json(query_items(&mut conn, query).await?))
 }
 
-#[get("/tv/seasons/:id")]
+#[get("/seasons/:id/episodes")]
 #[path(i64)]
-#[response(model = Season)]
-pub async fn get_season(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
-
-    let season = db::seasons::get(&mut conn, *id)
-        .await?
-        .or_not_found("season not found")?;
-
-    Ok(Json(season))
-}
-
-#[get("/tv/seasons/:id/episodes")]
-#[path(i64)]
-#[response(model = Vec<Episode>)]
+#[response(model = Vec<MediaItem>)]
 pub async fn get_episodes(season_id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
-    let episodes = db::episodes::get_for_season(&mut conn, *season_id).await?;
-    Ok(Json(episodes))
-}
 
-#[get("/tv/episodes/:id")]
-#[path(i64)]
-#[response(model = Episode)]
-pub async fn get_episode(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
+    let query = db::items::Query {
+        item_type: Some(MediaItemType::Episode),
+        parent_id: Some(*season_id),
+        sort_by: &[SortField::ParentIndex],
+        ..Default::default()
+    };
 
-    let episode = db::episodes::get(&mut conn, *id)
-        .await?
-        .or_not_found("episode not found")?;
-
-    Ok(Json(episode))
+    Ok(Json(query_items(&mut conn, query).await?))
 }

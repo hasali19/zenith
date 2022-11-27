@@ -5,65 +5,83 @@ expression: "app.get(\"/movies/recent\").await"
 [
   {
     "backdrop": null,
+    "end_date": null,
     "external_ids": {
       "tmdb": null
     },
     "id": 1,
+    "name": "Test Movie 1",
     "overview": null,
     "poster": null,
-    "release_date": null,
-    "title": "Test Movie 1",
+    "start_date": null,
+    "thumbnail": null,
+    "type": "movie",
     "user_data": {
       "is_watched": false,
       "last_watched_at": 1662911415,
-      "position": 50.0
+      "position": 50.0,
+      "type": "video"
     },
-    "video_info": {
+    "video_file": {
       "duration": 100.0,
       "format": null,
-      "path": "/path/to/Test Movie 1/Test Movie 1.mp4"
+      "path": "/path/to/Test Movie 1/Test Movie 1.mp4",
+      "streams": [],
+      "subtitles": []
     }
   },
   {
     "backdrop": null,
+    "end_date": null,
     "external_ids": {
       "tmdb": null
     },
     "id": 2,
+    "name": "Test Movie 2",
     "overview": null,
     "poster": null,
-    "release_date": null,
-    "title": "Test Movie 2",
+    "start_date": null,
+    "thumbnail": null,
+    "type": "movie",
     "user_data": {
       "is_watched": false,
       "last_watched_at": 1662911415,
-      "position": 50.0
+      "position": 50.0,
+      "type": "video"
     },
-    "video_info": {
+    "video_file": {
       "duration": 100.0,
       "format": null,
-      "path": "/path/to/Test Movie 2/Test Movie 2.mp4"
+      "path": "/path/to/Test Movie 2/Test Movie 2.mp4",
+      "streams": [],
+      "subtitles": []
     }
   },
   {
     "backdrop": null,
+    "end_date": null,
     "external_ids": {
       "tmdb": null
     },
     "id": 3,
+    "name": "Test Movie 3",
     "overview": null,
     "poster": null,
-    "release_date": null,
-    "title": "Test Movie 3",
+    "start_date": null,
+    "thumbnail": null,
+    "type": "movie",
     "user_data": {
       "is_watched": false,
       "last_watched_at": null,
-      "position": null
+      "position": 0.0,
+      "type": "video"
     },
-    "video_info": {
+    "video_file": {
       "duration": 100.0,
       "format": null,
-      "path": "/path/to/Test Movie 3/Test Movie 3.mp4"
+      "path": "/path/to/Test Movie 3/Test Movie 3.mp4",
+      "streams": [],
+      "subtitles": []
     }
   }
 ]

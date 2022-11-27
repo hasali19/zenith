@@ -7,7 +7,6 @@ use crate::sql::Join;
 use crate::{sql, utils};
 
 use super::items::ExternalIds;
-use super::media::MediaImageType;
 use super::videos::{self, VideoInfo, VideoUserData};
 
 #[derive(Serialize, Reflect)]
@@ -21,16 +20,6 @@ pub struct Movie {
     pub external_ids: ExternalIds,
     pub video_info: VideoInfo,
     pub user_data: VideoUserData,
-}
-
-impl Movie {
-    pub fn image(&self, img_type: MediaImageType) -> Option<&str> {
-        match img_type {
-            MediaImageType::Poster => self.poster.as_deref(),
-            MediaImageType::Backdrop => self.backdrop.as_deref(),
-            MediaImageType::Thumbnail => self.backdrop.as_deref(),
-        }
-    }
 }
 
 const MOVIE_COLUMNS: &[&str] = &[
@@ -108,26 +97,4 @@ pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Mo
     };
 
     Ok(Some(movie))
-}
-
-pub async fn get_all(conn: &mut SqliteConnection) -> eyre::Result<Vec<Movie>> {
-    let sql = sql::select("movies AS m")
-        .columns(MOVIE_COLUMNS)
-        .joins(MOVIE_JOINS)
-        .order_by(&["name"])
-        .to_sql();
-
-    Ok(sqlx::query_as(&sql).fetch_all(conn).await?)
-}
-
-pub async fn get_recently_added(conn: &mut SqliteConnection) -> eyre::Result<Vec<Movie>> {
-    let sql = sql::select("movies AS m")
-        .columns(MOVIE_COLUMNS)
-        .joins(MOVIE_JOINS)
-        .condition("COALESCE(u.is_watched, 0) = 0")
-        .order_by(&["added_at DESC", "name"])
-        .limit(30)
-        .to_sql();
-
-    Ok(sqlx::query_as(&sql).fetch_all(conn).await?)
 }

@@ -19,13 +19,12 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
 use zenith::config::{Config, LogFormat};
-use zenith::db::media::MediaItemType;
-use zenith::db::Db;
 use zenith::library::scanner::{LibraryScanner, ScanOptions};
 use zenith::library::{LibraryEvent, MediaLibrary};
 use zenith::metadata::MetadataManager;
 use zenith::transcoder::{self, Transcoder};
 use zenith::video_prober::Ffprobe;
+use zenith::{Db, MediaItemType};
 
 fn init_tracing(config: &Config) {
     let fmt_layer = tracing_subscriber::fmt::layer();

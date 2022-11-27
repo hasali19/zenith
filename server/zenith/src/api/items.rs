@@ -1,39 +1,83 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
+use itertools::Itertools;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
 use speq::axum::{delete, get, patch};
 use speq::Reflect;
+use sqlx::SqliteConnection;
 
 use crate::api::ApiResult;
-use crate::db::items::MediaItem;
 use crate::db::media::MediaItemType;
 use crate::db::videos::UpdateVideoUserData;
 use crate::db::{self, Db};
 use crate::library::scanner::{ScanOptions, VideoFileType};
 use crate::library::LibraryScanner;
 
+use super::dto::MediaItem;
 use super::ext::OptionExt;
 
-#[derive(Deserialize, Reflect)]
-struct GetItemsQuery {
+#[derive(Debug, Deserialize, Reflect)]
+struct ItemsQuery {
     #[serde(default)]
     ids: Vec<i64>,
+    item_type: Option<MediaItemType>,
+    parent_id: Option<i64>,
+    grandparent_id: Option<i64>,
+    is_watched: Option<bool>,
+    #[serde(default)]
+    sort_by: Vec<ItemSortField>,
+    limit: Option<u32>,
+    offset: Option<u32>,
+}
+
+#[derive(Debug, Deserialize, Reflect)]
+#[serde(rename_all = "snake_case")]
+enum ItemSortField {
+    Name,
+    ParentIndex,
+    GrandparentIndex,
 }
 
 #[get("/items")]
 #[response(model = Vec<MediaItem>)]
 async fn get_items(
-    #[query] QsQuery(query): QsQuery<GetItemsQuery>,
+    #[query] QsQuery(query): QsQuery<ItemsQuery>,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
-    let items = db::items::get_multiple(&mut conn, query.ids).await?;
-    Ok(Json(items))
+
+    tracing::warn!(?query);
+
+    let query = db::items::Query {
+        ids: if query.ids.is_empty() {
+            None
+        } else {
+            Some(&query.ids)
+        },
+        item_type: query.item_type,
+        parent_id: query.parent_id,
+        grandparent_id: query.grandparent_id,
+        sort_by: &query
+            .sort_by
+            .iter()
+            .map(|f| match f {
+                ItemSortField::Name => db::items::SortField::Name,
+                ItemSortField::ParentIndex => db::items::SortField::ParentIndex,
+                ItemSortField::GrandparentIndex => db::items::SortField::GrandparentIndex,
+            })
+            .collect_vec(),
+        is_watched: query.is_watched,
+        limit: query.limit,
+        offset: query.offset,
+    };
+
+    Ok(Json(query_items(&mut conn, query).await?))
 }
 
 #[derive(Deserialize, Reflect)]
@@ -49,8 +93,8 @@ async fn get_continue_watching(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let limit = query.limit.unwrap_or(10);
-    let items = db::items::get_continue_watching(&mut conn, Some(limit)).await?;
-    Ok(Json(items))
+    let ids = db::items::get_continue_watching(&mut conn, Some(limit)).await?;
+    Ok(Json(query_items_by_id(&mut conn, &ids).await?))
 }
 
 #[get("/items/:id")]
@@ -58,12 +102,81 @@ async fn get_continue_watching(
 #[response(model = MediaItem)]
 pub async fn get_item(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
+    Ok(Json(
+        query_items_by_id(&mut conn, &[*id])
+            .await?
+            .into_iter()
+            .next(),
+    ))
+}
 
-    let item = db::items::get(&mut conn, *id)
+pub(super) async fn query_items_by_id(
+    conn: &mut SqliteConnection,
+    ids: &[i64],
+) -> eyre::Result<Vec<MediaItem>> {
+    let query = db::items::Query {
+        ids: Some(ids),
+        ..Default::default()
+    };
+
+    let mut items = query_items(conn, query)
         .await?
-        .or_not_found("media item not found")?;
+        .into_iter()
+        .map(|item| (item.id, item))
+        .collect::<HashMap<_, _>>();
 
-    Ok(Json(item))
+    Ok(ids.iter().filter_map(|id| items.remove(id)).collect_vec())
+}
+
+pub(super) async fn query_items(
+    conn: &mut SqliteConnection,
+    query: db::items::Query<'_>,
+) -> eyre::Result<Vec<MediaItem>> {
+    let items = db::items::query(&mut *conn, query).await?;
+    let ids = items.iter().map(|item| item.id).collect_vec();
+
+    let mut video_user_data = db::items::get_user_data_for_videos(&mut *conn, &ids)
+        .await?
+        .into_iter()
+        .map(|user_data| (user_data.item_id, user_data))
+        .collect::<HashMap<_, _>>();
+
+    let mut collection_user_data = db::items::get_user_data_for_collections(&mut *conn, &ids)
+        .await?
+        .into_iter()
+        .map(|user_data| (user_data.item_id, user_data))
+        .collect::<HashMap<_, _>>();
+
+    let mut res = vec![];
+    for item in items {
+        let user_data = match item.kind {
+            MediaItemType::Movie | MediaItemType::Episode => video_user_data
+                .remove(&item.id)
+                .unwrap_or(db::items::VideoUserData {
+                    item_id: item.id,
+                    is_watched: false,
+                    position: 0.0,
+                    last_watched_at: None,
+                })
+                .into(),
+            MediaItemType::Show | MediaItemType::Season => collection_user_data
+                .remove(&item.id)
+                .unwrap_or(db::items::CollectionUserData {
+                    item_id: item.id,
+                    unwatched: 0,
+                })
+                .into(),
+        };
+
+        let item = MediaItem {
+            user_data: Some(user_data),
+            ..MediaItem::from(item)
+        };
+
+        res.push(item);
+    }
+
+    Ok(res)
 }
 
 #[delete("/items/:id")]
@@ -81,18 +194,18 @@ async fn delete_item(
         .or_not_found("media item not found")?;
 
     let mut files = vec![];
-    match item {
-        MediaItem::Movie(movie) => files.push((movie.video_info.path, VideoFileType::Movie)),
-        MediaItem::Episode(episode) => {
-            files.push((episode.video_info.path, VideoFileType::Episode))
+    match item.kind {
+        MediaItemType::Movie => files.push((item.video_file.unwrap().path, VideoFileType::Movie)),
+        MediaItemType::Episode => {
+            files.push((item.video_file.unwrap().path, VideoFileType::Episode))
         }
-        MediaItem::Show(show) => {
-            for episode in db::episodes::get_for_show(&mut conn, show.id).await? {
+        MediaItemType::Show => {
+            for episode in db::episodes::get_for_show(&mut conn, item.id).await? {
                 files.push((episode.video_info.path, VideoFileType::Episode));
             }
         }
-        MediaItem::Season(season) => {
-            for episode in db::episodes::get_for_season(&mut conn, season.id).await? {
+        MediaItemType::Season => {
+            for episode in db::episodes::get_for_season(&mut conn, item.id).await? {
                 files.push((episode.video_info.path, VideoFileType::Episode));
             }
         }

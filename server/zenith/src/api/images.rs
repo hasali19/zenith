@@ -16,6 +16,7 @@ use speq::Reflect;
 use crate::config::Config;
 use crate::db::media::MediaImageType;
 use crate::db::{self, Db};
+use crate::utils;
 
 use super::ext::OptionExt;
 use super::ApiResult;
@@ -72,9 +73,13 @@ pub async fn get_image(
         .await?
         .or_not_found("media item not found")?;
 
-    let url = item
-        .image(img_type)
-        .or_not_found("item does not have image of requested type")?;
+    let img = match img_type {
+        MediaImageType::Poster => item.poster,
+        MediaImageType::Backdrop => item.backdrop,
+        MediaImageType::Thumbnail => item.thumbnail,
+    };
+
+    let url = utils::get_image_url(img.or_not_found("item does not have image of requested type")?);
 
     // FIXME: super hacky - should use stored db values directly rather than result of utils::get_image_url
     let url = match img_type {
@@ -90,7 +95,7 @@ pub async fn get_image(
 async fn get_img_path(url: &str, cache_dir: &std::path::Path) -> ApiResult<PathBuf> {
     let hash = {
         let mut hasher = Sha256::new();
-        hasher.update(&url);
+        hasher.update(url);
         format!("{:x}", hasher.finalize())
     };
 

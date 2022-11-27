@@ -4,26 +4,28 @@ expression: "app.get(\"/items/1\").await"
 ---
 {
   "backdrop": null,
+  "end_date": null,
   "external_ids": {
     "tmdb": null
   },
   "id": 1,
+  "name": "Test Movie 1",
   "overview": null,
   "poster": null,
-  "release_date": null,
-  "title": "Test Movie 1",
+  "start_date": null,
+  "thumbnail": null,
   "type": "movie",
   "user_data": {
     "is_watched": false,
     "last_watched_at": 1662911415,
-    "position": 50.0
+    "position": 50.0,
+    "type": "video"
   },
-  "video_info": {
-    "audio": [],
+  "video_file": {
     "duration": 100.0,
     "format": null,
     "path": "/path/to/Test Movie 1/Test Movie 1.mp4",
-    "subtitles": [],
-    "video": null
+    "streams": [],
+    "subtitles": []
   }
 }

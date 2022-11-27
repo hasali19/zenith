@@ -1,3 +1,4 @@
+mod dto;
 mod error;
 mod ext;
 mod images;

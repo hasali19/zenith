@@ -4,7 +4,8 @@ use axum::http::{Request, Response, StatusCode};
 use axum::middleware::Next;
 use axum::response::{Html, IntoResponse};
 use axum::routing::get;
-use axum::{middleware, Json};
+use axum::{middleware, Extension, Json};
+use serde_qs::axum::QsQueryConfig;
 use tower_http::cors::{self, CorsLayer};
 
 use super::error::ApiError;
@@ -37,6 +38,7 @@ pub fn router() -> axum::Router {
                 .allow_headers([ACCEPT, CONTENT_TYPE]),
         )
         .layer(middleware::from_fn(error_handler))
+        .layer(Extension(QsQueryConfig::new(5, false)))
 }
 
 async fn error_handler<B>(req: Request<B>, next: Next<B>) -> impl IntoResponse {

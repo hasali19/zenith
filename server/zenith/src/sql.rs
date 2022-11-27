@@ -44,12 +44,14 @@ impl<'a> SelectStatement<'a> {
     }
 
     pub fn order_by(mut self, order_by: &'a [&'a str]) -> Self {
-        self.order_by = Some(order_by);
+        if !order_by.is_empty() {
+            self.order_by = Some(order_by);
+        }
         self
     }
 
-    pub fn limit(mut self, limit: u32) -> Self {
-        self.limit = Some(limit);
+    pub fn limit(mut self, limit: impl Into<Option<u32>>) -> Self {
+        self.limit = limit.into();
         self
     }
 
@@ -116,6 +118,12 @@ impl<'a> Condition<'a> {
 
 impl<'a> From<&'a str> for Condition<'a> {
     fn from(str: &'a str) -> Self {
+        Condition::Atom(str)
+    }
+}
+
+impl<'a> From<&'a String> for Condition<'a> {
+    fn from(str: &'a String) -> Self {
         Condition::Atom(str)
     }
 }
