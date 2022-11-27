@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith_flutter/main.dart';
-import 'package:zenith_flutter/preferences.dart';
+import 'package:zenith/main.dart';
+import 'package:zenith/preferences.dart';
 
 class NavigationDrawer extends ConsumerWidget {
   final Screen current;

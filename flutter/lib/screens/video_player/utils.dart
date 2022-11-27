@@ -1,5 +1,5 @@
 import 'package:video_player/video_player.dart' as video_player;
-import 'package:zenith_flutter/api.dart';
+import 'package:zenith/api.dart';
 
 video_player.SubtitleTrack subtitleFromApi(
     ZenithApiClient api, SubtitleTrack subtitle) {

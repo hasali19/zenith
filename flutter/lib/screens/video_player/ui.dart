@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
-import 'package:zenith_flutter/api.dart' as api;
-import 'package:zenith_flutter/language_codes.dart';
-import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/theme.dart';
+import 'package:zenith/api.dart' as api;
+import 'package:zenith/language_codes.dart';
+import 'package:zenith/responsive.dart';
+import 'package:zenith/theme.dart';
 
 import 'bottom_controls.dart';
 import 'video_progress_bar.dart';

@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:zenith_flutter/github.dart';
+import 'package:zenith/github.dart';
 
 const _gitHash = bool.hasEnvironment("GIT_COMMIT_HASH")
     ? String.fromEnvironment("GIT_COMMIT_HASH")
@@ -80,7 +80,7 @@ class _AndroidUpdater implements Updater {
 }
 
 class _AndroidUpdate implements Update {
-  static const platform = MethodChannel("zenith.hasali.uk/updater");
+  static const platform = MethodChannel("zenith.hasali.dev/updater");
 
   _AndroidUpdate(this.artifact);
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:zenith_flutter/update_dialog.dart';
-import 'package:zenith_flutter/updater.dart';
+import 'package:zenith/update_dialog.dart';
+import 'package:zenith/updater.dart';
 
 class SettingsScreen extends StatelessWidget {
   SettingsScreen({Key? key}) : super(key: key);

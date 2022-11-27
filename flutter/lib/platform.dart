@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 final isInPipMode = ValueNotifier(false);
 final stableSystemBarInsets = ValueNotifier(EdgeInsets.zero);
 
-final _channel = const MethodChannel("zenith.hasali.uk/platform")
+final _channel = const MethodChannel("zenith.hasali.dev/platform")
   ..setMethodCallHandler((call) async {
     if (call.method == "setIsInPipMode") {
       isInPipMode.value = call.arguments;

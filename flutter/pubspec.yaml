@@ -1,4 +1,4 @@
-name: zenith_flutter
+name: zenith
 description: Flutter client for Zenith media server.
 
 # The following line prevents the package from being accidentally published to

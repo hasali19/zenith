@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sliver_tools/sliver_tools.dart';
-import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/screens/item_details/item_details.dart';
-import 'package:zenith_flutter/text_one_line.dart';
-import 'package:zenith_flutter/theme.dart';
+import 'package:zenith/responsive.dart';
+import 'package:zenith/screens/item_details/item_details.dart';
+import 'package:zenith/text_one_line.dart';
+import 'package:zenith/theme.dart';
 
 import '../../api.dart' as api;
 

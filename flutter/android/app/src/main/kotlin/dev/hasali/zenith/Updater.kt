@@ -1,4 +1,4 @@
-package com.example.zenith_flutter
+package dev.hasali.zenith
 
 import android.app.PendingIntent
 import android.content.Context

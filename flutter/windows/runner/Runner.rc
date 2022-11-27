@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "zenith_flutter" "\0"
+            VALUE "CompanyName", "hasali.dev" "\0"
+            VALUE "FileDescription", "zenith" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "zenith_flutter" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2022 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "zenith_flutter.exe" "\0"
-            VALUE "ProductName", "zenith_flutter" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2022 Hasan Mohsin All rights reserved." "\0"
+            VALUE "OriginalFilename", "zenith.exe" "\0"
+            VALUE "ProductName", "zenith" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

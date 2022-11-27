@@ -3,15 +3,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:zenith_flutter/api.dart';
-import 'package:zenith_flutter/drawer.dart';
-import 'package:zenith_flutter/language_codes.dart';
-import 'package:zenith_flutter/preferences.dart';
-import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/router.dart';
-import 'package:zenith_flutter/theme.dart';
-import 'package:zenith_flutter/update_dialog.dart';
-import 'package:zenith_flutter/updater.dart';
+import 'package:zenith/api.dart';
+import 'package:zenith/drawer.dart';
+import 'package:zenith/language_codes.dart';
+import 'package:zenith/preferences.dart';
+import 'package:zenith/responsive.dart';
+import 'package:zenith/router.dart';
+import 'package:zenith/theme.dart';
+import 'package:zenith/update_dialog.dart';
+import 'package:zenith/updater.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

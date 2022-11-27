@@ -1,15 +1,15 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith_flutter/api.dart';
-import 'package:zenith_flutter/main.dart';
-import 'package:zenith_flutter/preferences.dart';
-import 'package:zenith_flutter/screens/home.dart';
-import 'package:zenith_flutter/screens/item_details/item_details.dart';
-import 'package:zenith_flutter/screens/media_library.dart';
-import 'package:zenith_flutter/screens/settings.dart';
-import 'package:zenith_flutter/screens/setup.dart';
-import 'package:zenith_flutter/screens/video_player.dart';
+import 'package:zenith/api.dart';
+import 'package:zenith/main.dart';
+import 'package:zenith/preferences.dart';
+import 'package:zenith/screens/home.dart';
+import 'package:zenith/screens/item_details/item_details.dart';
+import 'package:zenith/screens/media_library.dart';
+import 'package:zenith/screens/settings.dart';
+import 'package:zenith/screens/setup.dart';
+import 'package:zenith/screens/video_player.dart';
 
 part 'router.gr.dart';
 

@@ -1,4 +1,4 @@
-group 'com.example.video_player_android'
+group 'dev.hasali.zenith.video_player'
 version '1.0-SNAPSHOT'
 
 buildscript {

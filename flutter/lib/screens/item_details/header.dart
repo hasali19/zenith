@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith_flutter/api.dart';
-import 'package:zenith_flutter/language_codes.dart';
-import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/screens/item_details/item_details.dart';
-import 'package:zenith_flutter/text_one_line.dart';
+import 'package:zenith/api.dart';
+import 'package:zenith/language_codes.dart';
+import 'package:zenith/responsive.dart';
+import 'package:zenith/screens/item_details/item_details.dart';
+import 'package:zenith/text_one_line.dart';
 
-import 'package:zenith_flutter/download.dart'
-    if (dart.library.html) 'package:zenith_flutter/download_web.dart';
+import 'package:zenith/download.dart'
+    if (dart.library.html) 'package:zenith/download_web.dart';
 
 class HeaderContent extends ConsumerWidget {
   const HeaderContent({

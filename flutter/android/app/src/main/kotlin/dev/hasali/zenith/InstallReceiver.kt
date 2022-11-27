@@ -1,4 +1,4 @@
-package com.example.zenith_flutter
+package dev.hasali.zenith
 
 import android.content.BroadcastReceiver
 import android.content.Context

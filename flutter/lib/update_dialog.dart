@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:zenith_flutter/updater.dart';
+import 'package:zenith/updater.dart';
 
 class UpdateDialog extends StatefulWidget {
   const UpdateDialog({

@@ -1,4 +1,4 @@
-package com.example.video_player_android
+package dev.hasali.zenith.video_player
 
 import android.app.Activity
 import android.content.Context

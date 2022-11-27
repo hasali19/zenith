@@ -1,4 +1,4 @@
-package com.example.zenith_flutter
+package dev.hasali.zenith
 
 import android.app.PictureInPictureParams
 import android.content.res.Configuration
@@ -24,8 +24,8 @@ class MainActivity : FlutterActivity() {
     private var isPipModeEnabled = false
 
     object Channels {
-        const val Updater = "zenith.hasali.uk/updater"
-        const val Platform = "zenith.hasali.uk/platform"
+        const val Updater = "zenith.hasali.dev/updater"
+        const val Platform = "zenith.hasali.dev/platform"
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

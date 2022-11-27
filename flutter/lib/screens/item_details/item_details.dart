@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:sliver_tools/sliver_tools.dart';
-import 'package:zenith_flutter/api.dart';
-import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/router.dart';
-import 'package:zenith_flutter/screens/item_details/episodes_list.dart';
-import 'package:zenith_flutter/screens/item_details/header.dart';
+import 'package:zenith/api.dart';
+import 'package:zenith/responsive.dart';
+import 'package:zenith/router.dart';
+import 'package:zenith/screens/item_details/episodes_list.dart';
+import 'package:zenith/screens/item_details/header.dart';
 
 final transparentImage = base64Decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");

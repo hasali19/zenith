@@ -2,12 +2,12 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
-import 'package:zenith_flutter/api.dart';
-import 'package:zenith_flutter/poster_item.dart';
-import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/router.dart';
-import 'package:zenith_flutter/text_one_line.dart';
-import 'package:zenith_flutter/theme.dart';
+import 'package:zenith/api.dart';
+import 'package:zenith/poster_item.dart';
+import 'package:zenith/responsive.dart';
+import 'package:zenith/router.dart';
+import 'package:zenith/text_one_line.dart';
+import 'package:zenith/theme.dart';
 
 class HomeScreenData {
   List<MediaItem> continueWatching;

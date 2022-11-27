@@ -4,9 +4,9 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import 'package:zenith_flutter/preferences.dart';
-import 'package:zenith_flutter/responsive.dart';
-import 'package:zenith_flutter/router.dart';
+import 'package:zenith/preferences.dart';
+import 'package:zenith/responsive.dart';
+import 'package:zenith/router.dart';
 
 const _uuid = Uuid();
 
