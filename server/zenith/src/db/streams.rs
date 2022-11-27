@@ -128,7 +128,7 @@ pub async fn insert_video_stream(
         .bind(stream.video_id)
         .bind(stream.index)
         .bind(StreamType::Video)
-        .bind(&stream.codec_name)
+        .bind(stream.codec_name)
         .bind(stream.width)
         .bind(stream.height)
         .execute(conn)
@@ -171,7 +171,7 @@ pub async fn insert_audio_stream(
         .bind(stream.video_id)
         .bind(stream.index)
         .bind(StreamType::Audio)
-        .bind(&stream.codec_name)
+        .bind(stream.codec_name)
         .bind(stream.language)
         .execute(conn)
         .await?;

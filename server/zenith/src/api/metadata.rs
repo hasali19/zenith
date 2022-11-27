@@ -20,7 +20,7 @@ async fn refresh_metadata(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
-    metadata::refresh(&mut conn, &*tmdb, id)
+    metadata::refresh(&mut conn, &tmdb, id)
         .await
         .map_err(|e| match e {
             metadata::RefreshError::NotFound => error::not_found("media item not found"),

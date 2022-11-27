@@ -63,9 +63,9 @@ async fn run(config: Arc<Config>, scanner: Arc<LibraryScanner>) -> eyre::Result<
                 Err(_) => path,
             };
 
-            let file_type = if path.starts_with(&movies_lib) {
+            let file_type = if path.starts_with(movies_lib) {
                 VideoFileType::Movie
-            } else if path.starts_with(&shows_lib) {
+            } else if path.starts_with(shows_lib) {
                 VideoFileType::Episode
             } else {
                 continue;

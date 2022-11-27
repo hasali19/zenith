@@ -145,7 +145,7 @@ fn build_route_spec(
         for field in &struct_type.fields {
             // serde_qs requires array parameters to be passed in the form 'key[]=a&key[]=b'. While openapi doesn't have
             // a dedicated option for this, we can make it work by appending [] to the parameter name.
-            let mut name = field.name.to_owned();
+            let mut name = field.name.clone();
             if let Type::Array(_) = &field.type_desc {
                 name += "[]";
             }

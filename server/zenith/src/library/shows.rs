@@ -227,7 +227,7 @@ impl MediaLibrary {
             .execute(&mut *transaction)
             .await?;
 
-        video_info::update_video_info(&mut *transaction, id, &info).await?;
+        video_info::update_video_info(&mut transaction, id, &info).await?;
 
         transaction.commit().await?;
 

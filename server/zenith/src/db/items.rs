@@ -8,7 +8,7 @@ use sqlx::{Arguments, FromRow, Row, SqliteConnection};
 
 use crate::sql::{self, Join};
 
-use super::media::{MediaImage, MediaImageType, MediaItemType};
+use super::media::{MediaImage, MediaItemType};
 use super::streams::StreamType;
 
 #[derive(Serialize, Reflect)]
