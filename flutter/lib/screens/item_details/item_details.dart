@@ -11,6 +11,7 @@ import 'package:zenith/responsive.dart';
 import 'package:zenith/router.dart';
 import 'package:zenith/screens/item_details/episodes_list.dart';
 import 'package:zenith/screens/item_details/header.dart';
+import 'package:zenith/screens/item_details/model.dart';
 
 final transparentImage = base64Decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
@@ -28,20 +29,17 @@ class ItemDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _ItemDetailsScreenState extends ConsumerState<ItemDetailsScreen> {
-  late Future<MediaItem> _item;
-  ZenithApiClient get api => ref.watch(apiProvider);
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _refresh();
+    ref.invalidate(itemDetailsModelProvider(widget.id));
   }
 
-  void _refresh() {
-    setState(() {
-      _item = api.fetchMediaItem(widget.id);
-    });
-  }
+  // void _refresh() {
+  //   setState(() {
+  //     _item = api.fetchMediaItem(widget.id);
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -52,25 +50,17 @@ class _ItemDetailsScreenState extends ConsumerState<ItemDetailsScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
       ),
-      body: FutureBuilder<MediaItem>(
-        future: _item,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text("${snapshot.error}"));
-          }
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final item = snapshot.data!;
-          return Content(
-            item: item,
-            onRefresh: () async {
-              _refresh();
-              await _item;
-            },
-          );
-        },
-      ),
+      body: Consumer(builder: (context, ref, child) {
+        final model = ref.watch(itemDetailsModelProvider(widget.id));
+        return model.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => Center(child: Text("$error")),
+          data: (data) => Content(
+              model: data,
+              onRefresh: () =>
+                  ref.refresh(itemDetailsModelProvider(widget.id).future)),
+        );
+      }),
     );
   }
 }
@@ -78,11 +68,11 @@ class _ItemDetailsScreenState extends ConsumerState<ItemDetailsScreen> {
 class Content extends ConsumerWidget {
   Content({
     Key? key,
-    required this.item,
+    required this.model,
     required this.onRefresh,
   }) : super(key: key);
 
-  final MediaItem item;
+  final ItemDetailsModel model;
   final Future<void> Function() onRefresh;
 
   final _refresh = GlobalKey<RefreshIndicatorState>();
@@ -100,7 +90,7 @@ class Content extends ConsumerWidget {
       _refresh.currentState?.show();
     }
 
-    void onPlayPressed() async {
+    void onPlayPressed(MediaItem item) async {
       pushRoute(VideoPlayerScreenRoute(
         id: item.id,
         startPosition:
@@ -118,7 +108,8 @@ class Content extends ConsumerWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Backdrop(url: api.getMediaImageUrl(item.id, ImageType.backdrop)),
+          Backdrop(
+              url: api.getMediaImageUrl(model.item.id, ImageType.backdrop)),
           BackdropBlur(
             child: CustomScrollView(
               slivers: [
@@ -131,14 +122,14 @@ class Content extends ConsumerWidget {
                         child: Padding(
                           padding: padding,
                           child: HeaderContent(
-                            item: item,
+                            model: model,
                             onPlayPressed: onPlayPressed,
                           ),
                         ),
                       ),
-                      if (item.type == MediaType.show)
+                      if (model.item.type == MediaType.show)
                         EpisodesList(
-                          id: item.id,
+                          id: model.item.id,
                           onEpisodePressed: onEpisodePressed,
                         ),
                       SliverToBoxAdapter(

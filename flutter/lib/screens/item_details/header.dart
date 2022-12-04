@@ -5,6 +5,7 @@ import 'package:zenith/api.dart';
 import 'package:zenith/language_codes.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/screens/item_details/item_details.dart';
+import 'package:zenith/screens/item_details/model.dart';
 import 'package:zenith/text_one_line.dart';
 
 import 'package:zenith/download.dart'
@@ -13,32 +14,33 @@ import 'package:zenith/download.dart'
 class HeaderContent extends ConsumerWidget {
   const HeaderContent({
     Key? key,
-    required this.item,
+    required this.model,
     required this.onPlayPressed,
   }) : super(key: key);
 
-  final MediaItem item;
-  final void Function() onPlayPressed;
+  final ItemDetailsModel model;
+  final void Function(MediaItem) onPlayPressed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDesktop = MediaQuery.of(context).isDesktop;
     final api = ref.watch(apiProvider);
 
-    final poster = Poster(url: api.getMediaImageUrl(item.id, ImageType.poster));
+    final poster =
+        Poster(url: api.getMediaImageUrl(model.item.id, ImageType.poster));
     final subtitle = _buildSubtitle(context);
     final overview = _buildOverview();
     final videoInfo = _buildVideoInfo(context);
 
     final mainContent = [
-      if (item.grandparent != null)
+      if (model.item.grandparent != null)
         Text(
-          item.grandparent!.name,
+          model.item.grandparent!.name,
           style: Theme.of(context).textTheme.headline6,
         )
-      else if (item.parent != null)
-        Text(item.parent!.name),
-      Title(text: item.name),
+      else if (model.item.parent != null)
+        Text(model.item.parent!.name),
+      Title(text: model.item.name),
       if (subtitle != null) subtitle,
       _buildActions(context, api),
       if (overview != null) overview,
@@ -74,9 +76,9 @@ class HeaderContent extends ConsumerWidget {
   Widget? _buildSubtitle(BuildContext context) {
     final theme = Theme.of(context);
     final style = theme.textTheme.subtitle1;
-    final date = item.startDate;
-    final videoInfo = item.videoFile;
-    final seasonEpisode = item.getSeasonEpisode();
+    final date = model.item.startDate;
+    final videoInfo = model.item.videoFile;
+    final seasonEpisode = model.item.getSeasonEpisode();
 
     final items = [
       if (seasonEpisode != null) TextSpan(text: seasonEpisode),
@@ -107,7 +109,7 @@ class HeaderContent extends ConsumerWidget {
   }
 
   Widget? _buildOverview() {
-    final overview = item.overview;
+    final overview = model.item.overview;
     if (overview == null) return null;
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 600),
@@ -129,26 +131,35 @@ class HeaderContent extends ConsumerWidget {
   List<Widget> _buildActionsItems(BuildContext context, ZenithApiClient api) {
     final actions = <Widget>[];
 
-    if (item.type == MediaType.movie || item.type == MediaType.episode) {
-      final position = item.videoUserData?.position ?? 0;
-      final duration = item.videoFile!.duration;
-      final shouldResume = item.shouldResume;
+    final playable = model.playable;
+    if (playable != null) {
+      final shouldResume = playable.shouldResume;
       actions.add(ElevatedButton.icon(
         icon: const Icon(Icons.play_arrow),
         label: Text(shouldResume ? "Resume" : "Play"),
-        onPressed: onPlayPressed,
+        onPressed: () => onPlayPressed(playable),
       ));
+    }
 
-      if (shouldResume) {
+    if (playable != null && model.item.type == MediaType.show) {
+      actions.add(const SizedBox(width: 16));
+      actions.add(Text("${playable.getSeasonEpisode()}"));
+    }
+
+    if (model.item.type == MediaType.movie ||
+        model.item.type == MediaType.episode) {
+      if (model.item.shouldResume) {
+        final position = model.item.videoUserData?.position ?? 0;
+        final duration = model.item.videoFile!.duration;
         actions.add(const SizedBox(width: 16));
         actions.add(Text("${(position / duration * 100).toInt()}%"));
       }
 
       actions.add(const SizedBox(width: 16));
       actions.add(WatchedToggleButton(
-        isWatched: item.videoUserData?.isWatched ?? false,
+        isWatched: model.item.videoUserData?.isWatched ?? false,
         onChange: (v) =>
-            api.updateUserData(item.id, VideoUserDataPatch(isWatched: v)),
+            api.updateUserData(model.item.id, VideoUserDataPatch(isWatched: v)),
       ));
 
       if (kIsWeb) {
@@ -156,7 +167,7 @@ class HeaderContent extends ConsumerWidget {
         actions.add(IconButton(
           icon: const Icon(Icons.download),
           onPressed: () {
-            downloadFile(api.getVideoUrl(item.id, attachment: true));
+            downloadFile(api.getVideoUrl(model.item.id, attachment: true));
           },
         ));
       }
@@ -176,7 +187,7 @@ class HeaderContent extends ConsumerWidget {
   }
 
   Widget? _buildVideoInfo(BuildContext context) {
-    final videoInfo = item.videoFile;
+    final videoInfo = model.item.videoFile;
     if (videoInfo == null) {
       return null;
     }

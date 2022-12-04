@@ -210,16 +210,21 @@ class VideoFile {
 class VideoUserData {
   final double position;
   final bool isWatched;
+  final DateTime? lastWatchedAt;
 
   VideoUserData({
     required this.position,
     required this.isWatched,
+    required this.lastWatchedAt,
   });
 
   factory VideoUserData.fromJson(Map<String, dynamic> json) {
     return VideoUserData(
       position: json['position'] ?? 0,
       isWatched: json['is_watched'],
+      lastWatchedAt: json['last_watched_at'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(json['last_watched_at'] * 1000)
+          : null,
     );
   }
 }

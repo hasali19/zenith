@@ -16,26 +16,36 @@ import 'package:zenith/updater.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
-  runApp(
-    ProviderScope(
+  runApp(Bootstrap(prefs: prefs));
+}
+
+class Bootstrap extends StatefulWidget {
+  const Bootstrap({super.key, required this.prefs});
+
+  final SharedPreferences prefs;
+
+  @override
+  State<Bootstrap> createState() => _BootstrapState();
+}
+
+class _BootstrapState extends State<Bootstrap> {
+  @override
+  Widget build(BuildContext context) {
+    return ProviderScope(
       overrides: [
-        preferencesProvider.overrideWithValue(prefs),
+        preferencesProvider.overrideWithValue(widget.prefs),
+        apiProvider.overrideWith((ref) {
+          final activeServer = ref.watch(activeServerProvider);
+          if (activeServer != null) {
+            return ZenithApiClient(activeServer.url);
+          } else {
+            throw UnimplementedError();
+          }
+        }),
       ],
-      child: Consumer(builder: (context, ref, child) {
-        Widget app = const ZenithApp();
-        final activeServer = ref.watch(activeServerProvider);
-        if (activeServer != null) {
-          app = ProviderScope(
-            overrides: [
-              apiProvider.overrideWithValue(ZenithApiClient(activeServer.url)),
-            ],
-            child: app,
-          );
-        }
-        return app;
-      }),
-    ),
-  );
+      child: const ZenithApp(),
+    );
+  }
 }
 
 class ZenithApp extends ConsumerStatefulWidget {
