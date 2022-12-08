@@ -104,6 +104,11 @@ impl MediaLibrary {
             .execute(&mut transaction)
             .await?;
 
+        sqlx::query("DELETE FROM collections_media_items WHERE item_id = ?")
+            .bind(id)
+            .execute(&mut transaction)
+            .await?;
+
         sqlx::query("DELETE FROM media_items WHERE id = ?")
             .bind(id)
             .execute(&mut transaction)

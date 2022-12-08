@@ -1,3 +1,4 @@
+mod collections;
 mod dto;
 mod error;
 mod ext;

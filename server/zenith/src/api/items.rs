@@ -20,6 +20,7 @@ use crate::library::scanner::{ScanOptions, VideoFileType};
 use crate::library::LibraryScanner;
 
 use super::dto::MediaItem;
+use super::error::bad_request;
 use super::ext::OptionExt;
 
 #[derive(Debug, Deserialize, Reflect)]
@@ -29,6 +30,7 @@ struct ItemsQuery {
     item_type: Option<MediaItemType>,
     parent_id: Option<i64>,
     grandparent_id: Option<i64>,
+    collection_id: Option<i64>,
     is_watched: Option<bool>,
     #[serde(default)]
     sort_by: Vec<ItemSortField>,
@@ -36,12 +38,13 @@ struct ItemsQuery {
     offset: Option<u32>,
 }
 
-#[derive(Debug, Deserialize, Reflect)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Reflect)]
 #[serde(rename_all = "snake_case")]
 enum ItemSortField {
     Name,
     ParentIndex,
     GrandparentIndex,
+    CollectionIndex,
 }
 
 #[get("/items")]
@@ -52,7 +55,11 @@ async fn get_items(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
-    tracing::warn!(?query);
+    if query.sort_by.contains(&ItemSortField::CollectionIndex) && query.collection_id.is_none() {
+        return Err(bad_request(
+            "sorting by collection_index requires a collection id",
+        ));
+    }
 
     let query = db::items::Query {
         ids: if query.ids.is_empty() {
@@ -63,6 +70,7 @@ async fn get_items(
         item_type: query.item_type,
         parent_id: query.parent_id,
         grandparent_id: query.grandparent_id,
+        collection_id: query.collection_id,
         sort_by: &query
             .sort_by
             .iter()
@@ -70,6 +78,7 @@ async fn get_items(
                 ItemSortField::Name => db::items::SortField::Name,
                 ItemSortField::ParentIndex => db::items::SortField::ParentIndex,
                 ItemSortField::GrandparentIndex => db::items::SortField::GrandparentIndex,
+                ItemSortField::CollectionIndex => db::items::SortField::CollectionIndex,
             })
             .collect_vec(),
         is_watched: query.is_watched,

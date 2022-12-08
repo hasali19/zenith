@@ -257,6 +257,7 @@ pub struct Query<'a> {
     pub item_type: Option<MediaItemType>,
     pub parent_id: Option<i64>,
     pub grandparent_id: Option<i64>,
+    pub collection_id: Option<i64>,
     pub is_watched: Option<bool>,
     pub sort_by: &'a [SortField],
     pub limit: Option<u32>,
@@ -268,11 +269,18 @@ pub enum SortField {
     Name,
     ParentIndex,
     GrandparentIndex,
+    CollectionIndex,
 }
 
 pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Result<Vec<MediaItem>> {
     let mut args = SqliteArguments::default();
     let mut conditions = vec![];
+    let mut joins = vec![
+        Join::left("video_files AS v ON v.item_id = m.id"),
+        Join::left("user_item_data AS u ON u.item_id = m.id"),
+        Join::left("media_items AS parent ON parent.id = m.parent_id"),
+        Join::left("media_items AS grandparent ON grandparent.id = m.grandparent_id"),
+    ];
 
     if let Some(ids) = query.ids {
         conditions.push(format!("m.id IN ({})", sql::Placeholders(ids.len())));
@@ -296,6 +304,14 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         args.add(id);
     }
 
+    if let Some(id) = query.collection_id {
+        joins.push(Join::left(
+            "collections_media_items AS c ON c.item_id = m.id",
+        ));
+        conditions.push("c.collection_id = ?".to_owned());
+        args.add(id);
+    }
+
     if let Some(is_watched) = query.is_watched {
         conditions.push("COALESCE(u.is_watched, 0) = ?".to_owned());
         args.add(is_watched);
@@ -308,17 +324,13 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
             SortField::Name => "m.name",
             SortField::ParentIndex => "m.parent_index",
             SortField::GrandparentIndex => "m.grandparent_index",
+            SortField::CollectionIndex => "c.idx",
         })
         .collect_vec();
 
     let sql = sql::select("media_items AS m")
         .columns(ITEM_COLUMNS)
-        .joins(&[
-            Join::left("video_files AS v ON v.item_id = m.id"),
-            Join::left("user_item_data AS u ON u.item_id = m.id"),
-            Join::left("media_items AS parent ON parent.id = m.parent_id"),
-            Join::left("media_items AS grandparent ON grandparent.id = m.grandparent_id"),
-        ])
+        .joins(&joins)
         .condition(&conditions.join(" AND "))
         .order_by(&order_by)
         .limit(query.limit)
