@@ -7,7 +7,11 @@ class ItemDetailsModel {
 
   late final MediaItem? _playable;
 
-  ItemDetailsModel(this.item, this.seasons) {
+  factory ItemDetailsModel(MediaItem item, List<SeasonModel> seasons) {
+    return ItemDetailsModel._(item, seasons);
+  }
+
+  ItemDetailsModel._(this.item, this.seasons) {
     _playable = _getPlayableItem();
   }
 
@@ -60,7 +64,7 @@ class SeasonModel {
 }
 
 final itemDetailsModelProvider =
-    FutureProvider.family<ItemDetailsModel, int>((ref, id) async {
+    FutureProvider.autoDispose.family<ItemDetailsModel, int>((ref, id) async {
   final api = ref.watch(apiProvider);
   final item = await api.fetchMediaItem(id);
   if (item.type == MediaType.show) {

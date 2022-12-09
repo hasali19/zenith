@@ -173,7 +173,40 @@ class HeaderContent extends ConsumerWidget {
       }
     }
 
+    actions.add(const SizedBox(width: 16));
+    actions.add(IconButton(
+      icon: const Icon(Icons.more_vert),
+      onPressed: () => _showOptionsMenu(context, api),
+    ));
+
     return actions;
+  }
+
+  void _showOptionsMenu(BuildContext context, ZenithApiClient api) {
+    final width = MediaQuery.of(context).size.width;
+    showModalBottomSheet(
+      context: context,
+      constraints: width > 600
+          ? const BoxConstraints.expand(width: 600).copyWith(minHeight: 0)
+          : null,
+      builder: (context) => Wrap(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.search),
+            title: const Text("Find match"),
+            onTap: () => api.findMetadataMatch(model.item.id),
+          ),
+          ListTile(
+            leading: const Icon(Icons.refresh),
+            title: const Text("Refresh metadata"),
+            onTap: () {
+              api.refreshMetadata(model.item.id);
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatDuration(double duration) {

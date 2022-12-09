@@ -335,6 +335,14 @@ class ZenithApiClient {
     }
   }
 
+  Future<void> findMetadataMatch(int id) async {
+    await http.post(Uri.parse('$_baseUrl/api/metadata/$id/find_match'));
+  }
+
+  Future<void> refreshMetadata(int id) async {
+    await http.post(Uri.parse('$_baseUrl/api/metadata/$id/refresh'));
+  }
+
   String getVideoUrl(int id, {bool attachment = false}) {
     var url = "$_baseUrl/api/videos/$id";
     if (attachment) {
