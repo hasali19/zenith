@@ -29,10 +29,30 @@ impl MetadataManager {
         MetadataManager(sender)
     }
 
-    pub fn enqueue_new_item(&self, id: i64) {
+    pub fn enqueue_unmatched(&self, id: i64) {
         self.0
             .send(id)
             .expect("failed to send metadata update request");
+    }
+
+    #[tracing::instrument(skip(self, conn))]
+    pub async fn enqueue_all_unmatched(&self, conn: &mut SqliteConnection) -> eyre::Result<()> {
+        let unmatched = sqlx::query_scalar("SELECT id FROM media_items WHERE tmdb_id IS NULL")
+            .fetch_all(conn)
+            .await?;
+
+        if !unmatched.is_empty() {
+            tracing::info!(
+                count = unmatched.len(),
+                "enqueuing unmatched items for matching"
+            );
+        }
+
+        for id in unmatched {
+            self.enqueue_unmatched(id);
+        }
+
+        Ok(())
     }
 }
 

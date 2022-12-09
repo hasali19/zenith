@@ -11,8 +11,10 @@ use axum::Extension;
 use axum_files::{FileRequest, FileResponse};
 use eyre::bail;
 use futures::FutureExt;
+use time::OffsetDateTime;
 use tmdb::TmdbClient;
 use tokio::sync::Notify;
+use tokio::time::Instant;
 use tower_http::trace::TraceLayer;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::prelude::*;
@@ -95,7 +97,31 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
                         transcoder.enqueue(transcoder::Job::new(id)).await;
                     }
 
-                    metadata.enqueue_new_item(id);
+                    metadata.enqueue_unmatched(id);
+                }
+            }
+        }
+    });
+
+    tokio::spawn({
+        let db = db.clone();
+        let metadata = metadata.clone();
+        async move {
+            let now = OffsetDateTime::now_utc();
+            let midnight = (now + time::Duration::days(1))
+                .replace_time(time::Time::from_hms(0, 0, 0).unwrap());
+            let delta = midnight - now;
+            let mut interval = tokio::time::interval_at(
+                Instant::now() + delta.try_into().unwrap(),
+                time::Duration::days(1).try_into().unwrap(),
+            );
+            loop {
+                interval.tick().await;
+                if let Err(e) = metadata
+                    .enqueue_all_unmatched(&mut db.acquire().await.unwrap())
+                    .await
+                {
+                    tracing::error!("{e:?}");
                 }
             }
         }
