@@ -14,7 +14,7 @@ pub struct MovieSearchQuery<'a> {
     pub primary_release_year: Option<i32>,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 pub struct MovieSearchResponse {
     pub page: i32,
     pub results: Vec<MovieSearchResult>,
@@ -22,7 +22,7 @@ pub struct MovieSearchResponse {
     pub total_pages: i32,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 pub struct MovieSearchResult {
     pub id: i32,
     pub title: String,
@@ -38,7 +38,7 @@ pub struct TvShowSearchQuery<'a> {
     pub first_air_date_year: Option<i32>,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 pub struct TvShowSearchResponse {
     pub page: i32,
     pub results: Vec<TvShowSearchResult>,
@@ -46,7 +46,7 @@ pub struct TvShowSearchResponse {
     pub total_pages: i32,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 pub struct TvShowSearchResult {
     pub id: i32,
     pub name: String,
@@ -56,13 +56,28 @@ pub struct TvShowSearchResult {
     pub backdrop_path: Option<String>,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
+pub struct MovieResponse {
+    pub id: i32,
+    pub title: String,
+    pub release_date: Option<String>,
+    pub overview: Option<String>,
+    pub poster_path: Option<String>,
+    pub backdrop_path: Option<String>,
+}
+
+#[derive(Debug, serde::Deserialize)]
 pub struct TvShowResponse {
     pub id: i32,
+    pub name: String,
+    pub first_air_date: Option<String>,
+    pub overview: Option<String>,
+    pub poster_path: Option<String>,
+    pub backdrop_path: Option<String>,
     pub last_air_date: Option<String>,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 pub struct TvSeasonResponse {
     pub id: i32,
     pub name: Option<String>,
@@ -71,7 +86,7 @@ pub struct TvSeasonResponse {
     pub poster_path: Option<String>,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 pub struct TvEpisodeResponse {
     pub id: i32,
     pub name: Option<String>,
@@ -79,13 +94,13 @@ pub struct TvEpisodeResponse {
     pub overview: Option<String>,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 pub struct TvEpisodeImagesResponse {
     pub id: i32,
     pub stills: Vec<Image>,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 pub struct Image {
     pub aspect_ratio: f64,
     pub file_path: String,
@@ -142,6 +157,11 @@ impl TmdbClient {
             }
         }
 
+        self.get_json(url).await
+    }
+
+    pub async fn get_movie(&self, id: i32) -> eyre::Result<MovieResponse> {
+        let url = self.url(&format!("movies/{id}"));
         self.get_json(url).await
     }
 

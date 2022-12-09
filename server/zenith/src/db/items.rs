@@ -544,6 +544,7 @@ pub async fn get_user_data_for_collections(
     Ok(sqlx::query_as_with(&sql, args).fetch_all(conn).await?)
 }
 
+#[derive(Default)]
 pub struct UpdateMetadata<'a> {
     pub name: Option<&'a str>,
     pub overview: Option<Option<&'a str>>,

@@ -2,7 +2,6 @@ pub mod collections;
 pub mod episodes;
 pub mod items;
 pub mod media;
-pub mod movies;
 pub mod seasons;
 pub mod shows;
 pub mod streams;

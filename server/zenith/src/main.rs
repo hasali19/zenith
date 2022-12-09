@@ -95,7 +95,7 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
                         transcoder.enqueue(transcoder::Job::new(id)).await;
                     }
 
-                    metadata.enqueue(id);
+                    metadata.enqueue_new_item(id);
                 }
             }
         }

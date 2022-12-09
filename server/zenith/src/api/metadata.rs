@@ -10,6 +10,26 @@ use crate::metadata;
 
 use super::error;
 
+#[post("/metadata/:id/find_match")]
+#[path(i64)]
+#[response(status = 200)]
+async fn find_match(
+    Path(id): Path<i64>,
+    tmdb: Extension<TmdbClient>,
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
+    let mut conn = db.acquire().await?;
+
+    metadata::find_match(&mut conn, &tmdb, id)
+        .await
+        .map_err(|e| match e {
+            metadata::Error::NotFound => error::not_found("media item not found"),
+            metadata::Error::Other(e) => e.into(),
+        })?;
+
+    Ok(StatusCode::OK)
+}
+
 #[post("/metadata/:id/refresh")]
 #[path(i64)]
 #[response(status = 200)]
@@ -23,8 +43,8 @@ async fn refresh_metadata(
     metadata::refresh(&mut conn, &tmdb, id)
         .await
         .map_err(|e| match e {
-            metadata::RefreshError::NotFound => error::not_found("media item not found"),
-            metadata::RefreshError::Other(e) => e.into(),
+            metadata::Error::NotFound => error::not_found("media item not found"),
+            metadata::Error::Other(e) => e.into(),
         })?;
 
     Ok(StatusCode::OK)

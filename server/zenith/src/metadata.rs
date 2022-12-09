@@ -1,13 +1,13 @@
 use eyre::eyre;
 use sqlx::SqliteConnection;
 use thiserror::Error;
-use time::{format_description, Date, Time};
+use time::{format_description, Date, OffsetDateTime, Time};
 use tmdb::{MovieSearchQuery, TmdbClient, TvShowSearchQuery};
 use tokio::sync::mpsc;
 
+use crate::db::items::MediaItem;
 use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType, MediaItemType};
 use crate::db::{self, Db};
-use crate::library::scanner;
 
 #[derive(Clone)]
 pub struct MetadataManager(mpsc::UnboundedSender<i64>);
@@ -19,7 +19,7 @@ impl MetadataManager {
         tokio::spawn(async move {
             while let Some(id) = receiver.recv().await {
                 let mut conn = db.acquire().await.unwrap();
-                let res = refresh(&mut conn, &tmdb, id).await;
+                let res = find_match(&mut conn, &tmdb, id).await;
                 if let Err(e) = res {
                     tracing::error!("{e}");
                 }
@@ -29,34 +29,35 @@ impl MetadataManager {
         MetadataManager(sender)
     }
 
-    pub fn enqueue(&self, id: i64) {
+    pub fn enqueue_new_item(&self, id: i64) {
         self.0
             .send(id)
-            .expect("failed to send metadata refresh request");
+            .expect("failed to send metadata update request");
     }
 }
 
 #[derive(Debug, Error)]
-pub enum RefreshError {
+pub enum Error {
     #[error("item not found")]
     NotFound,
     #[error(transparent)]
     Other(#[from] eyre::Report),
 }
 
-pub async fn refresh(
+#[tracing::instrument(skip(conn, tmdb))]
+pub async fn find_match(
     conn: &mut SqliteConnection,
     tmdb: &TmdbClient,
     id: i64,
-) -> eyre::Result<(), RefreshError> {
-    let item_type = db::media::get_item_type(&mut *conn, id)
+) -> Result<(), Error> {
+    let item = db::items::get(&mut *conn, id)
         .await
-        .map_err(RefreshError::Other)?
-        .ok_or(RefreshError::NotFound)?;
+        .map_err(Error::Other)?
+        .ok_or(Error::NotFound)?;
 
-    match item_type {
-        MediaItemType::Movie => refresh_movie_metadata(conn, tmdb, id).await?,
-        MediaItemType::Show => refresh_tv_show_metadata(conn, tmdb, id).await?,
+    match item.kind {
+        MediaItemType::Movie => find_match_for_movie(conn, tmdb, item).await?,
+        MediaItemType::Show => find_match_for_show(conn, tmdb, item).await?,
         MediaItemType::Season => refresh_tv_season_metadata(conn, tmdb, id).await?,
         MediaItemType::Episode => refresh_tv_episode_metadata(conn, tmdb, id).await?,
     }
@@ -64,87 +65,62 @@ pub async fn refresh(
     Ok(())
 }
 
-async fn refresh_movie_metadata(
-    db: &mut SqliteConnection,
+async fn find_match_for_movie(
+    conn: &mut SqliteConnection,
     tmdb: &TmdbClient,
-    id: i64,
+    mut item: MediaItem,
 ) -> eyre::Result<()> {
-    tracing::info!("updating metadata for movie (id: {id})");
+    tracing::info!("finding match for movie");
 
-    let movie = db::movies::get(&mut *db, id)
-        .await?
-        .ok_or_else(|| eyre!("movie not found: {id}"))?;
-
-    let path = std::path::Path::new(&movie.video_info.path);
-    let name = path
-        .file_name()
-        .and_then(|v| v.to_str())
-        .ok_or_else(|| eyre!("invalid movie path: {path:?}"))?;
-
-    let (title, year) = scanner::parse_movie_filename(name)
-        .ok_or_else(|| eyre!("failed to parse movie name: {name}"))?;
+    let title = &item.name;
+    let year = item
+        .start_date
+        .and_then(|ts| OffsetDateTime::from_unix_timestamp(ts).ok())
+        .map(|dt| dt.year());
 
     let query = MovieSearchQuery {
-        title: &title,
+        title,
         page: None,
-        primary_release_year: year.map(|dt| dt.year()),
+        primary_release_year: year,
     };
 
     let metadata = tmdb.search_movies(&query).await?;
     let result = match metadata.results.into_iter().next() {
         Some(result) => result,
         None => {
-            let year = year.map(|dt| dt.year()).unwrap_or(-1);
-            return Err(eyre!("no match found for '{title} ({year})'"));
+            return if let Some(year) = year {
+                Err(eyre!("no match found for '{title} ({year})'"))
+            } else {
+                Err(eyre!("no match found for '{title}'"))
+            }
         }
     };
 
-    tracing::info!("match found: {}", result.title);
+    tracing::info!(result.title, "match found");
 
-    let poster = result.poster_path.as_deref().map(|poster| MediaImage {
-        img_type: MediaImageType::Poster,
-        src_type: MediaImageSrcType::Tmdb,
-        src: poster,
-    });
+    db::items::update_metadata(
+        &mut *conn,
+        item.id,
+        db::items::UpdateMetadata {
+            tmdb_id: Some(Some(result.id)),
+            ..Default::default()
+        },
+    )
+    .await?;
 
-    let backdrop = result.backdrop_path.as_deref().map(|backdrop| MediaImage {
-        img_type: MediaImageType::Backdrop,
-        src_type: MediaImageSrcType::Tmdb,
-        src: backdrop,
-    });
+    item.tmdb_id = Some(result.id);
 
-    let data = db::items::UpdateMetadata {
-        name: Some(&result.title),
-        overview: Some(result.overview.as_deref()),
-        start_date: None,
-        end_date: None,
-        poster: Some(poster),
-        backdrop: Some(backdrop),
-        thumbnail: None,
-        tmdb_id: Some(Some(result.id)),
-    };
-
-    db::items::update_metadata(&mut *db, id, data).await?;
-
-    Ok(())
+    refresh_movie_metadata(conn, tmdb, item).await
 }
 
-async fn refresh_tv_show_metadata(
-    db: &mut SqliteConnection,
+async fn find_match_for_show(
+    conn: &mut SqliteConnection,
     tmdb: &TmdbClient,
-    id: i64,
+    mut item: MediaItem,
 ) -> eyre::Result<()> {
-    tracing::info!("updating metadata for tv show (id: {id})");
+    tracing::info!("finding match for show");
 
-    let path = db::shows::get_path(&mut *db, id)
-        .await?
-        .ok_or_else(|| eyre!("show not found: {id}"))?;
-
-    let path = std::path::Path::new(&path);
-    let name = path
-        .file_name()
-        .and_then(|v| v.to_str())
-        .ok_or_else(|| eyre!("invalid tv show path"))?;
+    let name = &item.name;
 
     let query = TvShowSearchQuery {
         name,
@@ -158,46 +134,143 @@ async fn refresh_tv_show_metadata(
         None => return Ok(()),
     };
 
-    tracing::info!("match found: {}", result.name);
+    tracing::info!(result.name, "match found");
 
-    let date_fmt = format_description::parse("[year]-[month]-[day]")?;
-    let first_air_date = result
-        .first_air_date
-        .and_then(|date| Date::parse(&date, &date_fmt).ok())
-        .and_then(|date| Some(date.with_time(Time::from_hms(0, 0, 0).ok()?)))
-        .map(|dt| dt.assume_utc().unix_timestamp());
+    db::items::update_metadata(
+        &mut *conn,
+        item.id,
+        db::items::UpdateMetadata {
+            tmdb_id: Some(Some(result.id)),
+            ..Default::default()
+        },
+    )
+    .await?;
 
-    let details = tmdb.get_tv_show(result.id).await?;
-    let last_air_date = details
-        .last_air_date
-        .and_then(|date| Date::parse(&date, &date_fmt).ok())
-        .and_then(|date| Some(date.with_time(Time::from_hms(0, 0, 0).ok()?)))
-        .map(|dt| dt.assume_utc().unix_timestamp());
+    item.tmdb_id = Some(result.id);
 
-    let poster = result.poster_path.as_deref().map(|poster| MediaImage {
+    refresh_tv_show_metadata(conn, tmdb, item).await
+}
+
+#[tracing::instrument(skip(conn, tmdb))]
+pub async fn refresh(conn: &mut SqliteConnection, tmdb: &TmdbClient, id: i64) -> Result<(), Error> {
+    let item = db::items::get(&mut *conn, id)
+        .await
+        .map_err(Error::Other)?
+        .ok_or(Error::NotFound)?;
+
+    match item.kind {
+        MediaItemType::Movie => refresh_movie_metadata(conn, tmdb, item).await?,
+        MediaItemType::Show => refresh_tv_show_metadata(conn, tmdb, item).await?,
+        MediaItemType::Season => refresh_tv_season_metadata(conn, tmdb, id).await?,
+        MediaItemType::Episode => refresh_tv_episode_metadata(conn, tmdb, id).await?,
+    }
+
+    Ok(())
+}
+
+async fn refresh_movie_metadata(
+    db: &mut SqliteConnection,
+    tmdb: &TmdbClient,
+    item: MediaItem,
+) -> eyre::Result<()> {
+    tracing::info!("refreshing movie metadata");
+
+    let Some(tmdb_id) = item.tmdb_id else {
+        tracing::error!(?item, "movie is unmatched");
+        return Err(eyre!("unmatched item"));
+    };
+
+    let metadata = tmdb.get_movie(tmdb_id).await?;
+
+    tracing::debug!(?metadata);
+
+    let poster = metadata.poster_path.as_deref().map(|poster| MediaImage {
         img_type: MediaImageType::Poster,
         src_type: MediaImageSrcType::Tmdb,
         src: poster,
     });
 
-    let backdrop = result.backdrop_path.as_deref().map(|backdrop| MediaImage {
-        img_type: MediaImageType::Backdrop,
-        src_type: MediaImageSrcType::Tmdb,
-        src: backdrop,
-    });
+    let backdrop = metadata
+        .backdrop_path
+        .as_deref()
+        .map(|backdrop| MediaImage {
+            img_type: MediaImageType::Backdrop,
+            src_type: MediaImageSrcType::Tmdb,
+            src: backdrop,
+        });
 
     let data = db::items::UpdateMetadata {
-        name: Some(&result.name),
+        name: Some(&metadata.title),
+        overview: Some(metadata.overview.as_deref()),
+        start_date: None,
+        end_date: None,
+        poster: Some(poster),
+        backdrop: Some(backdrop),
+        thumbnail: None,
+        tmdb_id: None,
+    };
+
+    db::items::update_metadata(&mut *db, item.id, data).await?;
+
+    Ok(())
+}
+
+async fn refresh_tv_show_metadata(
+    db: &mut SqliteConnection,
+    tmdb: &TmdbClient,
+    item: MediaItem,
+) -> eyre::Result<()> {
+    tracing::info!("refreshing show metadata");
+
+    let Some(tmdb_id) = item.tmdb_id else {
+        tracing::error!(?item, "show is unmatched");
+        return Err(eyre!("unmatched item"));
+    };
+
+    let metadata = tmdb.get_tv_show(tmdb_id).await?;
+
+    tracing::debug!(?metadata);
+
+    let date_fmt = format_description::parse("[year]-[month]-[day]")?;
+    let first_air_date = metadata
+        .first_air_date
+        .and_then(|date| Date::parse(&date, &date_fmt).ok())
+        .and_then(|date| Some(date.with_time(Time::from_hms(0, 0, 0).ok()?)))
+        .map(|dt| dt.assume_utc().unix_timestamp());
+
+    let last_air_date = metadata
+        .last_air_date
+        .and_then(|date| Date::parse(&date, &date_fmt).ok())
+        .and_then(|date| Some(date.with_time(Time::from_hms(0, 0, 0).ok()?)))
+        .map(|dt| dt.assume_utc().unix_timestamp());
+
+    let poster = metadata.poster_path.as_deref().map(|poster| MediaImage {
+        img_type: MediaImageType::Poster,
+        src_type: MediaImageSrcType::Tmdb,
+        src: poster,
+    });
+
+    let backdrop = metadata
+        .backdrop_path
+        .as_deref()
+        .map(|backdrop| MediaImage {
+            img_type: MediaImageType::Backdrop,
+            src_type: MediaImageSrcType::Tmdb,
+            src: backdrop,
+        });
+
+    let data = db::items::UpdateMetadata {
+        name: Some(&metadata.name),
         start_date: Some(first_air_date),
         end_date: Some(last_air_date),
-        overview: Some(result.overview.as_deref()),
+        overview: Some(metadata.overview.as_deref()),
         poster: Some(poster),
         thumbnail: None,
         backdrop: Some(backdrop),
-        tmdb_id: Some(Some(result.id)),
+        tmdb_id: None,
     };
 
-    db::items::update_metadata(&mut *db, id, data).await?;
+    db::items::update_metadata(&mut *db, item.id, data).await?;
 
     Ok(())
 }
@@ -207,7 +280,7 @@ async fn refresh_tv_season_metadata(
     tmdb: &TmdbClient,
     id: i64,
 ) -> eyre::Result<()> {
-    tracing::info!("updating metadata for tv season (id: {id})");
+    tracing::info!("refreshing season metadata");
 
     let season = db::seasons::get(&mut *db, id)
         .await?
@@ -226,16 +299,13 @@ async fn refresh_tv_season_metadata(
         .get_tv_season(show_tmdb_id, season.season_number as i32)
         .await?;
 
+    tracing::debug!(?metadata);
+
     let poster = metadata.poster_path.as_deref().map(|poster| MediaImage {
         img_type: MediaImageType::Poster,
         src_type: MediaImageSrcType::Tmdb,
         src: poster,
     });
-
-    tracing::info!(
-        "match found: {}",
-        metadata.name.as_deref().unwrap_or("unknown name")
-    );
 
     let data = db::items::UpdateMetadata {
         name: metadata.name.as_deref(),
@@ -258,7 +328,7 @@ async fn refresh_tv_episode_metadata(
     tmdb: &TmdbClient,
     id: i64,
 ) -> eyre::Result<()> {
-    tracing::info!("updating metadata for tv episode (id: {id})");
+    tracing::info!("refreshing episode metadata");
 
     let episode = db::episodes::get(&mut *db, id)
         .await?
@@ -277,6 +347,9 @@ async fn refresh_tv_episode_metadata(
     let episode = episode.episode_number as i32;
 
     let metadata = tmdb.get_tv_episode(show_tmdb_id, season, episode).await?;
+
+    tracing::debug!(?metadata);
+
     let thumbnail = tmdb
         .get_tv_episode_images(show_tmdb_id, season, episode)
         .await
@@ -290,11 +363,6 @@ async fn refresh_tv_episode_metadata(
         src_type: MediaImageSrcType::Tmdb,
         src: thumbnail,
     });
-
-    tracing::info!(
-        "match found: {}",
-        metadata.name.as_deref().unwrap_or("unknown name")
-    );
 
     let data = db::items::UpdateMetadata {
         name: metadata.name.as_deref(),

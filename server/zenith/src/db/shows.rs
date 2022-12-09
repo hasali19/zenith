@@ -69,17 +69,3 @@ pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Sh
 
     Ok(sqlx::query_as(&sql).bind(id).fetch_optional(conn).await?)
 }
-
-pub async fn get_path(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<String>> {
-    let sql = "
-        SELECT path from indexed_paths
-        JOIN shows ON item_id = shows.id
-        WHERE shows.id = ?";
-
-    let path = sqlx::query_scalar(sql)
-        .bind(id)
-        .fetch_optional(conn)
-        .await?;
-
-    Ok(path)
-}
