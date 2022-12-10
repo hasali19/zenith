@@ -35,12 +35,6 @@ class _ItemDetailsScreenState extends ConsumerState<ItemDetailsScreen> {
     ref.invalidate(itemDetailsModelProvider(widget.id));
   }
 
-  // void _refresh() {
-  //   setState(() {
-  //     _item = api.fetchMediaItem(widget.id);
-  //   });
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,8 +59,8 @@ class _ItemDetailsScreenState extends ConsumerState<ItemDetailsScreen> {
   }
 }
 
-class Content extends ConsumerWidget {
-  Content({
+class Content extends ConsumerStatefulWidget {
+  const Content({
     Key? key,
     required this.model,
     required this.onRefresh,
@@ -75,10 +69,15 @@ class Content extends ConsumerWidget {
   final ItemDetailsModel model;
   final Future<void> Function() onRefresh;
 
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() => _ContentState();
+}
+
+class _ContentState extends ConsumerState<Content> {
   final _refresh = GlobalKey<RefreshIndicatorState>();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final api = ref.watch(apiProvider);
     final isDesktop = MediaQuery.of(context).isDesktop;
     final padding = isDesktop
@@ -103,13 +102,15 @@ class Content extends ConsumerWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: onRefresh,
+      key: _refresh,
+      onRefresh: widget.onRefresh,
       triggerMode: RefreshIndicatorTriggerMode.anywhere,
       child: Stack(
         fit: StackFit.expand,
         children: [
           Backdrop(
-              url: api.getMediaImageUrl(model.item.id, ImageType.backdrop)),
+              url: api.getMediaImageUrl(
+                  widget.model.item.id, ImageType.backdrop)),
           BackdropBlur(
             child: CustomScrollView(
               slivers: [
@@ -122,14 +123,14 @@ class Content extends ConsumerWidget {
                         child: Padding(
                           padding: padding,
                           child: HeaderContent(
-                            model: model,
+                            model: widget.model,
                             onPlayPressed: onPlayPressed,
                           ),
                         ),
                       ),
-                      if (model.item.type == MediaType.show)
+                      if (widget.model.item.type == MediaType.show)
                         EpisodesList(
-                          id: model.item.id,
+                          model: widget.model,
                           onEpisodePressed: onEpisodePressed,
                         ),
                       SliverToBoxAdapter(
