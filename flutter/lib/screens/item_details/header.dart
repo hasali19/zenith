@@ -15,10 +15,12 @@ class HeaderContent extends ConsumerWidget {
   const HeaderContent({
     Key? key,
     required this.model,
+    required this.refresh,
     required this.onPlayPressed,
   }) : super(key: key);
 
   final ItemDetailsModel model;
+  final void Function() refresh;
   final void Function(MediaItem) onPlayPressed;
 
   @override
@@ -194,14 +196,19 @@ class HeaderContent extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.search),
             title: const Text("Find match"),
-            onTap: () => api.findMetadataMatch(model.item.id),
+            onTap: () async {
+              Navigator.pop(context);
+              await api.findMetadataMatch(model.item.id);
+              refresh();
+            },
           ),
           ListTile(
             leading: const Icon(Icons.refresh),
             title: const Text("Refresh metadata"),
-            onTap: () {
-              api.refreshMetadata(model.item.id);
+            onTap: () async {
               Navigator.pop(context);
+              await api.refreshMetadata(model.item.id);
+              refresh();
             },
           ),
         ],

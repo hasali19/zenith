@@ -124,6 +124,7 @@ class _ContentState extends ConsumerState<Content> {
                           padding: padding,
                           child: HeaderContent(
                             model: widget.model,
+                            refresh: () => _refresh.currentState?.show(),
                             onPlayPressed: onPlayPressed,
                           ),
                         ),
