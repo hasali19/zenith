@@ -101,7 +101,7 @@ async fn find_match_for_movie(
     let query = MovieSearchQuery {
         title,
         page: None,
-        primary_release_year: year,
+        year,
     };
 
     let metadata = tmdb.search_movies(&query).await?;

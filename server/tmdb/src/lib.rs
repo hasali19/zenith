@@ -11,7 +11,7 @@ pub struct TmdbClient {
 pub struct MovieSearchQuery<'a> {
     pub title: &'a str,
     pub page: Option<i32>,
-    pub primary_release_year: Option<i32>,
+    pub year: Option<i32>,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -130,8 +130,8 @@ impl TmdbClient {
                 params.append_pair("page", &page.to_string());
             }
 
-            if let Some(year) = query.primary_release_year {
-                params.append_pair("primary_release_year", &year.to_string());
+            if let Some(year) = query.year {
+                params.append_pair("year", &year.to_string());
             }
         }
 
