@@ -161,7 +161,7 @@ impl TmdbClient {
     }
 
     pub async fn get_movie(&self, id: i32) -> eyre::Result<MovieResponse> {
-        let url = self.url(&format!("movies/{id}"));
+        let url = self.url(&format!("movie/{id}"));
         self.get_json(url).await
     }
 
