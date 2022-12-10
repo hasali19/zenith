@@ -121,6 +121,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
         final data = snapshot.data!;
         return RefreshIndicator(
+          triggerMode: RefreshIndicatorTriggerMode.anywhere,
           onRefresh: () async {
             _refresh();
             await _data;
