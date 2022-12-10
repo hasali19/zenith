@@ -6,9 +6,20 @@ use tmdb::TmdbClient;
 
 use crate::api::ApiResult;
 use crate::db::Db;
-use crate::metadata;
+use crate::metadata::{self, MetadataManager};
 
 use super::error;
+
+#[post("/metadata/match_all")]
+#[response(status = 200)]
+async fn match_all(
+    metadata: Extension<MetadataManager>,
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
+    let mut conn = db.acquire().await?;
+    metadata.enqueue_all_unmatched(&mut conn).await?;
+    Ok(())
+}
 
 #[post("/metadata/:id/find_match")]
 #[path(i64)]
