@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/language_codes.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/screens/item_details/header_layout.dart';
 import 'package:zenith/screens/item_details/item_details.dart';
 import 'package:zenith/screens/item_details/model.dart';
 import 'package:zenith/text_one_line.dart';
+import 'package:zenith/theme.dart';
 
 import 'package:zenith/download.dart'
     if (dart.library.html) 'package:zenith/download_web.dart';
@@ -28,65 +30,68 @@ class HeaderContent extends ConsumerWidget {
     final isDesktop = MediaQuery.of(context).isDesktop;
     final api = ref.watch(apiProvider);
 
-    final poster =
-        Poster(url: api.getMediaImageUrl(model.item.id, ImageType.poster));
     final subtitle = _buildSubtitle(context);
     final overview = _buildOverview();
     final videoInfo = _buildVideoInfo(context);
 
-    final mainContent = [
-      if (model.item.grandparent != null)
-        Text(
-          model.item.grandparent!.name,
-          style: Theme.of(context).textTheme.headline6,
-        )
-      else if (model.item.parent != null)
-        Text(model.item.parent!.name),
-      Title(text: model.item.name),
-      if (subtitle != null) subtitle,
-      _buildActions(context, api),
-      if (overview != null) overview,
-      if (videoInfo != null) videoInfo,
-    ];
-
-    if (isDesktop) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(width: 300, child: poster),
-          const SizedBox(width: 48),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: mainContent,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        HeaderLayout(
+          backdrop: FadeInImage.memoryNetwork(
+            placeholder: transparentImage,
+            image: api.getMediaImageUrl(model.item.id, ImageType.backdrop),
+            height: 300,
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
           ),
-        ],
-      );
-    } else {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(child: SizedBox(width: 200, child: poster)),
-          const SizedBox(height: 48),
-          ...mainContent,
-        ],
-      );
-    }
+          poster: Poster(
+            url: api.getMediaImageUrl(model.item.id, ImageType.poster),
+            progress: model.playableProgress,
+            caption: model.playableCaption,
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (model.item.grandparent != null)
+                Text(
+                  model.item.grandparent!.name,
+                  style: Theme.of(context).textTheme.subtitle1,
+                )
+              else if (model.item.parent != null)
+                Text(model.item.parent!.name),
+              Text(model.item.name, style: context.zenithTheme.titleLarge),
+              if (subtitle != null) subtitle,
+            ],
+          ),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (overview != null) overview,
+              if (videoInfo != null) videoInfo,
+            ],
+          ),
+          playButton: _buildPlayButton(),
+          actions: Row(children: _buildActionsItems(context, api)),
+          posterWidth: isDesktop ? 300 : 150,
+          padding: isDesktop ? 128 : 16,
+          separation: isDesktop ? 48 : 16,
+        ),
+      ],
+    );
   }
 
   Widget? _buildSubtitle(BuildContext context) {
     final theme = Theme.of(context);
     final style = theme.textTheme.subtitle1;
-    final date = model.item.startDate;
-    final videoInfo = model.item.videoFile;
     final seasonEpisode = model.item.getSeasonEpisode();
+    final date = model.item.startDate;
+    final duration = model.formattedDuration;
 
     final items = [
       if (seasonEpisode != null) TextSpan(text: seasonEpisode),
       if (date != null) TextSpan(text: "${date.year}"),
-      if (videoInfo != null)
-        TextSpan(text: _formatDuration(videoInfo.duration)),
+      if (duration != null) TextSpan(text: duration),
     ];
 
     final separated = <TextSpan>[];
@@ -114,68 +119,54 @@ class HeaderContent extends ConsumerWidget {
     final overview = model.item.overview;
     if (overview == null) return null;
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 600),
+      constraints: const BoxConstraints(maxWidth: 960),
       child: Overview(text: overview),
     );
   }
 
-  Widget _buildActions(BuildContext context, ZenithApiClient api) {
-    final actions = _buildActionsItems(context, api);
-    if (actions.isEmpty) {
-      return const SizedBox(height: 32);
-    }
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(children: actions),
+  Widget _buildPlayButton() {
+    final playable = model.playable;
+    return ElevatedButton.icon(
+      icon: const Icon(Icons.play_arrow),
+      label: Text(playable?.shouldResume == true ? "Resume" : "Play"),
+      onPressed: () {
+        if (playable != null) {
+          onPlayPressed(playable);
+        }
+      },
     );
   }
 
   List<Widget> _buildActionsItems(BuildContext context, ZenithApiClient api) {
+    final isDesktop = context.isDesktop;
     final actions = <Widget>[];
-
-    final playable = model.playable;
-    if (playable != null) {
-      final shouldResume = playable.shouldResume;
-      actions.add(ElevatedButton.icon(
-        icon: const Icon(Icons.play_arrow),
-        label: Text(shouldResume ? "Resume" : "Play"),
-        onPressed: () => onPlayPressed(playable),
-      ));
-    }
-
-    if (playable != null && model.item.type == MediaType.show) {
-      actions.add(const SizedBox(width: 16));
-      actions.add(Text("${playable.getSeasonEpisode()}"));
-    }
 
     if (model.item.type == MediaType.movie ||
         model.item.type == MediaType.episode) {
-      if (model.item.shouldResume) {
-        final position = model.item.videoUserData?.position ?? 0;
-        final duration = model.item.videoFile!.duration;
-        actions.add(const SizedBox(width: 16));
-        actions.add(Text("${(position / duration * 100).toInt()}%"));
-      }
-
-      actions.add(const SizedBox(width: 16));
       actions.add(WatchedToggleButton(
         isWatched: model.item.videoUserData?.isWatched ?? false,
         onChange: (v) =>
             api.updateUserData(model.item.id, VideoUserDataPatch(isWatched: v)),
       ));
 
-      if (kIsWeb) {
+      if (isDesktop) {
         actions.add(const SizedBox(width: 16));
+      }
+
+      if (kIsWeb) {
         actions.add(IconButton(
           icon: const Icon(Icons.download),
           onPressed: () {
             downloadFile(api.getVideoUrl(model.item.id, attachment: true));
           },
         ));
+
+        if (isDesktop) {
+          actions.add(const SizedBox(width: 16));
+        }
       }
     }
 
-    actions.add(const SizedBox(width: 16));
     actions.add(IconButton(
       icon: const Icon(Icons.more_vert),
       onPressed: () => _showOptionsMenu(context, api),
@@ -191,39 +182,31 @@ class HeaderContent extends ConsumerWidget {
       constraints: width > 600
           ? const BoxConstraints.expand(width: 600).copyWith(minHeight: 0)
           : null,
-      builder: (context) => Wrap(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.search),
-            title: const Text("Find match"),
-            onTap: () async {
-              Navigator.pop(context);
-              await api.findMetadataMatch(model.item.id);
-              refresh();
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.refresh),
-            title: const Text("Refresh metadata"),
-            onTap: () async {
-              Navigator.pop(context);
-              await api.refreshMetadata(model.item.id);
-              refresh();
-            },
-          ),
-        ],
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.search),
+              title: const Text("Find match"),
+              onTap: () async {
+                Navigator.pop(context);
+                await api.findMetadataMatch(model.item.id);
+                refresh();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.refresh),
+              title: const Text("Refresh metadata"),
+              onTap: () async {
+                Navigator.pop(context);
+                await api.refreshMetadata(model.item.id);
+                refresh();
+              },
+            ),
+          ],
+        ),
       ),
     );
-  }
-
-  String _formatDuration(double duration) {
-    if (duration <= 90 * 60) {
-      return "${duration ~/ 60}m";
-    } else {
-      final hours = duration ~/ 3600;
-      final minutes = (duration % 3600) ~/ 60;
-      return "${hours}h ${minutes}m";
-    }
   }
 
   Widget? _buildVideoInfo(BuildContext context) {
@@ -360,59 +343,55 @@ class _WatchedToggleButtonState extends State<WatchedToggleButton> {
 
 class Poster extends StatelessWidget {
   final String url;
+  final double progress;
+  final String? caption;
 
   const Poster({
     Key? key,
     required this.url,
+    required this.progress,
+    required this.caption,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: AspectRatio(
-        aspectRatio: 2.0 / 3.0,
-        child: FadeInImage.memoryNetwork(
-          placeholder: transparentImage,
-          image: url,
-          fit: BoxFit.cover,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: caption != null
+              ? const BorderRadius.vertical(top: Radius.circular(16))
+              : BorderRadius.circular(16),
+          child: AspectRatio(
+            aspectRatio: 2.0 / 3.0,
+            child: FadeInImage.memoryNetwork(
+              placeholder: transparentImage,
+              image: url,
+              fit: BoxFit.cover,
+            ),
+          ),
         ),
-      ),
+        if (progress > 0)
+          LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.white,
+          ),
+        if (caption != null)
+          Material(
+            borderRadius:
+                const BorderRadius.vertical(bottom: Radius.circular(16)),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  caption!,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
-  }
-}
-
-class Title extends StatelessWidget {
-  final String text;
-
-  const Title({
-    Key? key,
-    required this.text,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final style = theme.textTheme.headline3!.copyWith(
-      color: theme.brightness == Brightness.dark ? Colors.white : Colors.black,
-    );
-    return Text(text, style: style);
-  }
-}
-
-class Subtitle extends StatelessWidget {
-  final String text;
-
-  const Subtitle({
-    Key? key,
-    required this.text,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final style = theme.textTheme.headline5;
-    return Text(text, style: style);
   }
 }
 

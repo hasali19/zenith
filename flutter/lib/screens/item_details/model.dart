@@ -16,6 +16,45 @@ class ItemDetailsModel {
   }
 
   MediaItem? get playable => _playable;
+  double get playableProgress {
+    final position = playable?.videoUserData?.position ?? 0;
+    final duration = playable?.videoFile!.duration ?? 0;
+    final progress = position / duration;
+    if (progress > 0.05 && progress < 0.9) {
+      return progress;
+    }
+    return 0;
+  }
+
+  double get _playableRemaining {
+    final position = playable?.videoUserData?.position ?? 0;
+    final duration = playable?.videoFile!.duration ?? 0;
+    return duration - position;
+  }
+
+  String? get playableCaption {
+    String caption = "";
+
+    if (item.type == MediaType.show) {
+      final seasonEpisode = playable?.getSeasonEpisode();
+      if (seasonEpisode != null) {
+        caption += seasonEpisode;
+      }
+    }
+
+    if (playableProgress > 0) {
+      if (caption.isNotEmpty) {
+        caption += " - ";
+      }
+      caption += "${_formatDuration(_playableRemaining)} left";
+    }
+
+    if (caption.isNotEmpty) {
+      return caption;
+    }
+
+    return null;
+  }
 
   MediaItem? _getPlayableItem() {
     if (item.type == MediaType.show) {
@@ -52,6 +91,22 @@ class ItemDetailsModel {
       return lastWatched;
     } else {
       return item;
+    }
+  }
+
+  String? get formattedDuration {
+    final video = item.videoFile;
+    if (video == null) return null;
+    return _formatDuration(video.duration);
+  }
+
+  String _formatDuration(double duration) {
+    if (duration <= 90 * 60) {
+      return "${duration ~/ 60}m";
+    } else {
+      final hours = duration ~/ 3600;
+      final minutes = (duration % 3600) ~/ 60;
+      return "${hours}h ${minutes}m";
     }
   }
 }

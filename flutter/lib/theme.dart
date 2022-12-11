@@ -5,6 +5,7 @@ part 'theme.tailor.dart';
 
 @Tailor(themeGetter: ThemeGetter.onBuildContext)
 class _$ZenithTheme {
+  static List<TextStyle> titleLarge = [];
   static List<TextStyle> titleMedium = [];
   static List<TextStyle> bodyMedium = [];
   static List<TextStyle> bodySmall = [];

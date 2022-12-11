@@ -108,9 +108,11 @@ class _ContentState extends ConsumerState<Content> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Backdrop(
+          if (isDesktop)
+            Backdrop(
               url: api.getMediaImageUrl(
-                  widget.model.item.id, ImageType.backdrop)),
+                  widget.model.item.id, ImageType.backdrop),
+            ),
           BackdropBlur(
             child: CustomScrollView(
               slivers: [
@@ -120,13 +122,10 @@ class _ContentState extends ConsumerState<Content> {
                   child: MultiSliver(
                     children: [
                       SliverToBoxAdapter(
-                        child: Padding(
-                          padding: padding,
-                          child: HeaderContent(
-                            model: widget.model,
-                            refresh: () => _refresh.currentState?.show(),
-                            onPlayPressed: onPlayPressed,
-                          ),
+                        child: HeaderContent(
+                          model: widget.model,
+                          refresh: () => _refresh.currentState?.show(),
+                          onPlayPressed: onPlayPressed,
                         ),
                       ),
                       if (widget.model.item.type == MediaType.show)
@@ -174,6 +173,9 @@ class BackdropBlur extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = context.isDesktop;
+    if (!isDesktop) return child;
+
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     final color = isDarkTheme ? Colors.black : Colors.white;
     return BackdropFilter(

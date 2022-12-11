@@ -112,6 +112,8 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
       ),
       extensions: [
         ZenithTheme(
+          titleLarge: theme.textTheme.titleLarge!
+              .copyWith(fontSize: isDesktop ? 36 : 22),
           titleMedium: theme.textTheme.titleMedium!
               .copyWith(fontSize: isDesktop ? 22 : 16),
           bodySmall: theme.textTheme.bodySmall!
