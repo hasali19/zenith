@@ -117,8 +117,16 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
             );
             loop {
                 interval.tick().await;
+
                 if let Err(e) = metadata
                     .enqueue_all_unmatched(&mut db.acquire().await.unwrap())
+                    .await
+                {
+                    tracing::error!("{e:?}");
+                }
+
+                if let Err(e) = metadata
+                    .enqueue_all_outdated(&mut db.acquire().await.unwrap())
                     .await
                 {
                     tracing::error!("{e:?}");

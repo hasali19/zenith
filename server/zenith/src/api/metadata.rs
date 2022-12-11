@@ -21,6 +21,17 @@ async fn match_all(
     Ok(())
 }
 
+#[post("/metadata/refresh_outdated")]
+#[response(status = 200)]
+async fn refresh_outdated(
+    metadata: Extension<MetadataManager>,
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
+    let mut conn = db.acquire().await?;
+    metadata.enqueue_all_outdated(&mut conn).await?;
+    Ok(())
+}
+
 #[post("/metadata/:id/find_match")]
 #[path(i64)]
 #[response(status = 200)]

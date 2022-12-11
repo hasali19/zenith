@@ -10,17 +10,27 @@ use crate::db::items::MediaItem;
 use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType, MediaItemType};
 use crate::db::{self, Db};
 
+#[derive(Debug)]
+enum Request {
+    FindMatch(i64),
+    Refresh(i64),
+}
+
 #[derive(Clone)]
-pub struct MetadataManager(mpsc::UnboundedSender<i64>);
+pub struct MetadataManager(mpsc::UnboundedSender<Request>);
 
 impl MetadataManager {
     pub fn new(db: Db, tmdb: TmdbClient) -> Self {
         let (sender, mut receiver) = mpsc::unbounded_channel();
 
         tokio::spawn(async move {
-            while let Some(id) = receiver.recv().await {
+            while let Some(req) = receiver.recv().await {
                 let mut conn = db.acquire().await.unwrap();
-                let res = find_match(&mut conn, &tmdb, id).await;
+                let res = match req {
+                    Request::FindMatch(id) => find_match(&mut conn, &tmdb, id).await,
+                    Request::Refresh(id) => refresh(&mut conn, &tmdb, id).await,
+                };
+
                 if let Err(e) = res {
                     tracing::error!("{e:?}");
                 }
@@ -32,8 +42,14 @@ impl MetadataManager {
 
     pub fn enqueue_unmatched(&self, id: i64) {
         self.0
-            .send(id)
+            .send(Request::FindMatch(id))
             .expect("failed to send metadata update request");
+    }
+
+    pub fn enqueue_outdated(&self, id: i64) {
+        self.0
+            .send(Request::Refresh(id))
+            .expect("failed to send metadata refresh request");
     }
 
     #[tracing::instrument(skip(self, conn))]
@@ -51,6 +67,25 @@ impl MetadataManager {
 
         for id in unmatched {
             self.enqueue_unmatched(id);
+        }
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self, conn))]
+    pub async fn enqueue_all_outdated(&self, conn: &mut SqliteConnection) -> eyre::Result<()> {
+        let sql = "SELECT id FROM media_items WHERE metadata_updated_at < strftime('%s') - 60 * 60 * 24 * 7";
+        let outdated = sqlx::query_scalar(sql).fetch_all(conn).await?;
+
+        if !outdated.is_empty() {
+            tracing::info!(
+                count = outdated.len(),
+                "enqueuing outdated items for refresh"
+            );
+        }
+
+        for id in outdated {
+            self.enqueue_outdated(id);
         }
 
         Ok(())
