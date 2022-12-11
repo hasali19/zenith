@@ -19,6 +19,13 @@ async fn _20221207120648_collections(conn: &mut SqliteConnection) -> eyre::Resul
     Ok(())
 }
 
+async fn _20221211142452_metadata(conn: &mut SqliteConnection) -> eyre::Result<()> {
+    sqlx::query(include_str!("../migrations/20221211142452_metadata.sql"))
+        .execute(conn)
+        .await?;
+    Ok(())
+}
+
 pub(super) fn collect(migrator: &mut super::Migrator) {
     migrator.push_migration(
         "20220809142403_initial",
@@ -34,5 +41,10 @@ pub(super) fn collect(migrator: &mut super::Migrator) {
         "20221207120648_collections",
         Box::new(|conn| Box::pin(_20221207120648_collections(conn))),
         [194, 58, 200, 181, 94, 145, 118, 34, 29, 39, 152, 79, 196, 97, 37, 176, 2, 205, 19, 70, 92, 56, 24, 17, 169, 50, 41, 148, 46, 205, 14, 173],
+    );
+    migrator.push_migration(
+        "20221211142452_metadata",
+        Box::new(|conn| Box::pin(_20221211142452_metadata(conn))),
+        [162, 136, 200, 125, 128, 41, 60, 76, 249, 95, 226, 131, 126, 42, 243, 165, 86, 250, 77, 183, 129, 0, 162, 113, 200, 158, 184, 232, 205, 105, 126, 114],
     );
 }

@@ -57,6 +57,17 @@ pub struct TvShowSearchResult {
 }
 
 #[derive(Debug, serde::Deserialize)]
+pub struct Genre {
+    pub id: i64,
+    pub name: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct ExternalIds {
+    pub imdb_id: Option<String>,
+}
+
+#[derive(Debug, serde::Deserialize)]
 pub struct MovieResponse {
     pub id: i32,
     pub title: String,
@@ -64,6 +75,25 @@ pub struct MovieResponse {
     pub overview: Option<String>,
     pub poster_path: Option<String>,
     pub backdrop_path: Option<String>,
+    pub genres: Vec<Genre>,
+    pub external_ids: ExternalIds,
+    pub release_dates: MovieReleaseDatesResults,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct MovieReleaseDatesResults {
+    pub results: Vec<MovieReleaseDatesResult>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct MovieReleaseDatesResult {
+    pub iso_3166_1: String,
+    pub release_dates: Vec<MovieReleaseDate>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct MovieReleaseDate {
+    pub certification: String,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -75,6 +105,21 @@ pub struct TvShowResponse {
     pub poster_path: Option<String>,
     pub backdrop_path: Option<String>,
     pub last_air_date: Option<String>,
+    pub imdb_id: Option<String>,
+    pub genres: Vec<Genre>,
+    pub external_ids: ExternalIds,
+    pub content_ratings: TvShowContentRatings,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct TvShowContentRatings {
+    pub results: Vec<TvShowContentRating>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct TvShowContentRating {
+    pub iso_3166_1: String,
+    pub rating: String,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -84,6 +129,7 @@ pub struct TvSeasonResponse {
     pub air_date: Option<String>,
     pub overview: Option<String>,
     pub poster_path: Option<String>,
+    pub external_ids: ExternalIds,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -92,11 +138,12 @@ pub struct TvEpisodeResponse {
     pub name: Option<String>,
     pub air_date: Option<String>,
     pub overview: Option<String>,
+    pub external_ids: ExternalIds,
+    pub images: TvEpisodeImages,
 }
 
 #[derive(Debug, serde::Deserialize)]
-pub struct TvEpisodeImagesResponse {
-    pub id: i32,
+pub struct TvEpisodeImages {
     pub stills: Vec<Image>,
 }
 
@@ -161,17 +208,23 @@ impl TmdbClient {
     }
 
     pub async fn get_movie(&self, id: i32) -> eyre::Result<MovieResponse> {
-        let url = self.url(&format!("movie/{id}"));
+        let mut url = self.url(&format!("movie/{id}"));
+        url.query_pairs_mut()
+            .append_pair("append_to_response", "external_ids,release_dates");
         self.get_json(url).await
     }
 
     pub async fn get_tv_show(&self, id: i32) -> eyre::Result<TvShowResponse> {
-        let url = self.url(&format!("tv/{id}"));
+        let mut url = self.url(&format!("tv/{id}"));
+        url.query_pairs_mut()
+            .append_pair("append_to_response", "external_ids,content_ratings");
         self.get_json(url).await
     }
 
     pub async fn get_tv_season(&self, tv_id: i32, season: i32) -> eyre::Result<TvSeasonResponse> {
-        let url = self.url(&format!("tv/{tv_id}/season/{season}"));
+        let mut url = self.url(&format!("tv/{tv_id}/season/{season}"));
+        url.query_pairs_mut()
+            .append_pair("append_to_response", "external_ids");
         self.get_json(url).await
     }
 
@@ -182,18 +235,9 @@ impl TmdbClient {
         episode: i32,
     ) -> eyre::Result<TvEpisodeResponse> {
         let path = format!("tv/{tv_id}/season/{season}/episode/{episode}");
-        let url = self.url(&path);
-        self.get_json(url).await
-    }
-
-    pub async fn get_tv_episode_images(
-        &self,
-        tv_id: i32,
-        season: i32,
-        episode: i32,
-    ) -> eyre::Result<TvEpisodeImagesResponse> {
-        let path = format!("tv/{tv_id}/season/{season}/episode/{episode}/images");
-        let url = self.url(&path);
+        let mut url = self.url(&path);
+        url.query_pairs_mut()
+            .append_pair("append_to_response", "external_ids,images");
         self.get_json(url).await
     }
 

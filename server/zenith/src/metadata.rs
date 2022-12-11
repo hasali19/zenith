@@ -1,4 +1,5 @@
 use eyre::eyre;
+use itertools::Itertools;
 use sqlx::SqliteConnection;
 use thiserror::Error;
 use time::{format_description, Date, OffsetDateTime, Time};
@@ -21,7 +22,7 @@ impl MetadataManager {
                 let mut conn = db.acquire().await.unwrap();
                 let res = find_match(&mut conn, &tmdb, id).await;
                 if let Err(e) = res {
-                    tracing::error!("{e}");
+                    tracing::error!("{e:?}");
                 }
             }
         });
@@ -219,6 +220,20 @@ async fn refresh_movie_metadata(
             src: backdrop,
         });
 
+    let genres = metadata
+        .genres
+        .iter()
+        .map(|g| g.name.as_str())
+        .collect_vec();
+
+    let age_rating = metadata
+        .release_dates
+        .results
+        .into_iter()
+        .find(|it| it.iso_3166_1 == "GB") // FIXME: Hardcoded region
+        .and_then(|it| it.release_dates.into_iter().next())
+        .map(|it| format!("GB-{}", it.certification));
+
     let data = db::items::UpdateMetadata {
         name: Some(&metadata.title),
         overview: Some(metadata.overview.as_deref()),
@@ -227,7 +242,10 @@ async fn refresh_movie_metadata(
         poster: Some(poster),
         backdrop: Some(backdrop),
         thumbnail: None,
-        tmdb_id: None,
+        age_rating: Some(age_rating.as_deref()),
+        genres: Some(&genres),
+        tmdb_id: Some(Some(metadata.id)),
+        imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
     };
 
     db::items::update_metadata(&mut *db, item.id, data).await?;
@@ -279,6 +297,19 @@ async fn refresh_tv_show_metadata(
             src: backdrop,
         });
 
+    let genres = metadata
+        .genres
+        .iter()
+        .map(|g| g.name.as_str())
+        .collect_vec();
+
+    let age_rating = metadata
+        .content_ratings
+        .results
+        .into_iter()
+        .find(|it| it.iso_3166_1 == "GB") // FIXME: Hardcoded region
+        .map(|it| format!("GB-{}", it.rating));
+
     let data = db::items::UpdateMetadata {
         name: Some(&metadata.name),
         start_date: Some(first_air_date),
@@ -287,7 +318,10 @@ async fn refresh_tv_show_metadata(
         poster: Some(poster),
         thumbnail: None,
         backdrop: Some(backdrop),
-        tmdb_id: None,
+        age_rating: Some(age_rating.as_deref()),
+        genres: Some(&genres),
+        tmdb_id: Some(Some(metadata.id)),
+        imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
     };
 
     db::items::update_metadata(&mut *db, item.id, data).await?;
@@ -306,13 +340,12 @@ async fn refresh_tv_season_metadata(
         .await?
         .ok_or_else(|| eyre!("season not found: {id}"))?;
 
-    let show = db::shows::get(&mut *db, season.show_id)
+    let show = db::items::get(&mut *db, season.show_id)
         .await?
         .ok_or_else(|| eyre!("show not found for season: {id}"))?;
 
     let show_tmdb_id = show
-        .external_ids
-        .tmdb
+        .tmdb_id
         .ok_or_else(|| eyre!("missing tmdb id for show: {}", show.id))?;
 
     let metadata = tmdb
@@ -335,7 +368,10 @@ async fn refresh_tv_season_metadata(
         poster: Some(poster),
         backdrop: None,
         thumbnail: None,
+        age_rating: None,
+        genres: None,
         tmdb_id: Some(Some(metadata.id)),
+        imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
     };
 
     db::items::update_metadata(&mut *db, id, data).await?;
@@ -370,12 +406,11 @@ async fn refresh_tv_episode_metadata(
 
     tracing::debug!(?metadata);
 
-    let thumbnail = tmdb
-        .get_tv_episode_images(show_tmdb_id, season, episode)
-        .await
-        .map(|images| images.stills.into_iter().next())
-        .ok()
-        .flatten()
+    let thumbnail = metadata
+        .images
+        .stills
+        .into_iter()
+        .next()
         .map(|image| image.file_path);
 
     let thumbnail = thumbnail.as_deref().map(|thumbnail| MediaImage {
@@ -392,7 +427,10 @@ async fn refresh_tv_episode_metadata(
         poster: None,
         backdrop: None,
         thumbnail: Some(thumbnail),
+        age_rating: None,
+        genres: None,
         tmdb_id: Some(Some(metadata.id)),
+        imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
     };
 
     db::items::update_metadata(&mut *db, id, data).await?;

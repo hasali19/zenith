@@ -4,7 +4,7 @@ use itertools::Itertools;
 use serde::Serialize;
 use speq::Reflect;
 use sqlx::sqlite::{SqliteArguments, SqliteRow};
-use sqlx::{Arguments, FromRow, Row, SqliteConnection};
+use sqlx::{Acquire, Arguments, FromRow, Row, SqliteConnection};
 
 use crate::sql::{self, Join};
 
@@ -27,7 +27,10 @@ pub struct MediaItem {
     pub poster: Option<String>,
     pub backdrop: Option<String>,
     pub thumbnail: Option<String>,
+    pub age_rating: Option<String>,
+    pub genres: Vec<String>,
     pub tmdb_id: Option<i32>,
+    pub imdb_id: Option<String>,
     pub parent: Option<Parent>,
     pub grandparent: Option<Parent>,
     pub video_file: Option<VideoFile>,
@@ -141,7 +144,10 @@ impl<'r> FromRow<'r, SqliteRow> for MediaItem {
             poster: row.try_get("poster")?,
             backdrop: row.try_get("backdrop")?,
             thumbnail: row.try_get("thumbnail")?,
+            age_rating: row.try_get("age_rating")?,
+            genres: vec![],
             tmdb_id: row.try_get("tmdb_id")?,
+            imdb_id: row.try_get("imdb_id")?,
             parent: get_parent(row, "parent_id", "parent_index", "parent_name")?,
             grandparent: get_parent(
                 row,
@@ -219,7 +225,9 @@ const ITEM_COLUMNS: &[&str] = &[
     "COALESCE(m.poster, parent.poster, grandparent.poster) AS poster",
     "COALESCE(m.backdrop, parent.backdrop, grandparent.backdrop) AS backdrop",
     "COALESCE(m.thumbnail, m.backdrop, parent.backdrop, grandparent.backdrop) AS thumbnail",
+    "m.age_rating",
     "m.tmdb_id",
+    "m.imdb_id",
     "m.parent_id",
     "m.parent_index",
     "parent.name AS parent_name",
@@ -358,13 +366,37 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         .condition(&format!("video_id IN ({})", sql::Placeholders(ids.len())))
         .to_sql();
 
-    let mut subtitles = sqlx::query_as_with(&sql, args)
+    let mut subtitles = sqlx::query_as_with(&sql, args.clone())
         .fetch_all(&mut *conn)
         .await?
         .into_iter()
         .into_group_map_by(|sub: &Subtitle| sub.video_id);
 
+    let sql = sql::select("genres AS g")
+        .columns(&["mg.item_id, g.name"])
+        .joins(&[Join::inner(
+            "media_items_genres AS mg ON mg.genre_id = g.id",
+        )])
+        .condition(&format!("mg.item_id IN ({})", sql::Placeholders(ids.len())))
+        .to_sql();
+
+    let mut genres = sqlx::query_as_with::<_, (i64, String), _>(&sql, args)
+        .fetch_all(&mut *conn)
+        .await?
+        .into_iter()
+        .into_grouping_map_by(|(item_id, _)| *item_id)
+        .aggregate(|acc: Option<Vec<String>>, _, (_, v)| {
+            if let Some(mut acc) = acc {
+                acc.push(v);
+                Some(acc)
+            } else {
+                Some(vec![])
+            }
+        });
+
     for item in &mut items {
+        item.genres = genres.remove(&item.id).unwrap_or_default();
+
         if let Some(video) = &mut item.video_file {
             video.streams = streams.remove(&video.item_id).unwrap_or_default();
             video.subtitles = subtitles.remove(&video.item_id).unwrap_or_default();
@@ -553,7 +585,10 @@ pub struct UpdateMetadata<'a> {
     pub poster: Option<Option<MediaImage<'a>>>,
     pub backdrop: Option<Option<MediaImage<'a>>>,
     pub thumbnail: Option<Option<MediaImage<'a>>>,
+    pub age_rating: Option<Option<&'a str>>,
+    pub genres: Option<&'a [&'a str]>,
     pub tmdb_id: Option<Option<i32>>,
+    pub imdb_id: Option<Option<&'a str>>,
 }
 
 pub async fn update_metadata(
@@ -579,7 +614,7 @@ pub async fn update_metadata(
         }
     }
 
-    collect!(name, overview, start_date, end_date, tmdb_id);
+    collect!(name, overview, start_date, end_date, age_rating, tmdb_id, imdb_id);
 
     for (column, img) in [
         ("poster", data.poster),
@@ -593,6 +628,9 @@ pub async fn update_metadata(
         }
     }
 
+    columns.push("metadata_updated_at");
+    values.push("(strftime('%s', 'now'))");
+
     args.add(id);
 
     let sql = sql::update("media_items")
@@ -601,7 +639,75 @@ pub async fn update_metadata(
         .condition("id = ?")
         .to_sql();
 
-    sqlx::query_with(&sql, args).execute(conn).await?;
+    let mut tx = conn.begin().await?;
+
+    sqlx::query_with(&sql, args).execute(&mut tx).await?;
+
+    if let Some(genres) = data.genres {
+        let genre_ids = if !genres.is_empty() {
+            let mut args = SqliteArguments::default();
+            let mut placeholders = String::new();
+
+            for (i, &genre) in genres.iter().enumerate() {
+                args.add(genre);
+                placeholders += "(?)";
+                if i < genres.len() - 1 {
+                    placeholders += ",";
+                }
+            }
+
+            #[rustfmt::skip]
+            let sql = format!("
+                INSERT INTO genres (name) VALUES {placeholders}
+                ON CONFLICT DO UPDATE SET name = excluded.name
+                RETURNING (id)
+            ");
+
+            let genre_ids: Vec<i64> = sqlx::query_scalar_with(&sql, args)
+                .fetch_all(&mut tx)
+                .await?;
+
+            genre_ids
+        } else {
+            vec![]
+        };
+
+        let mut args = SqliteArguments::default();
+        let mut placeholders = String::new();
+
+        for (i, genre_id) in genre_ids.iter().enumerate() {
+            args.add(id);
+            args.add(genre_id);
+            placeholders += "(?, ?)";
+            if i < genre_ids.len() - 1 {
+                placeholders += ",";
+            }
+        }
+
+        #[rustfmt::skip]
+        let sql = format!("
+            INSERT OR IGNORE INTO media_items_genres (item_id, genre_id)
+            VALUES {placeholders}
+        ");
+
+        sqlx::query_with(&sql, args).execute(&mut tx).await?;
+
+        let placeholders = sql::Placeholders(genre_ids.len());
+        let mut args = SqliteArguments::default();
+        for genre_id in &genre_ids {
+            args.add(genre_id);
+        }
+
+        #[rustfmt::skip]
+        let sql = format!("
+            DELETE FROM media_items_genres
+            WHERE item_id = ? AND genre_id NOT IN ({placeholders})
+        ");
+
+        sqlx::query_with(&sql, args).execute(&mut tx).await?;
+    }
+
+    tx.commit().await?;
 
     Ok(())
 }

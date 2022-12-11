@@ -16,6 +16,8 @@ pub struct MediaItem {
     pub poster: Option<String>,
     pub backdrop: Option<String>,
     pub thumbnail: Option<String>,
+    pub age_rating: Option<String>,
+    pub genres: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parent: Option<Parent>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -36,6 +38,7 @@ pub struct Parent {
 #[derive(Serialize, Reflect)]
 pub struct ExternalIds {
     pub tmdb: Option<i32>,
+    pub imdb: Option<String>,
 }
 
 #[derive(Serialize, Reflect)]
@@ -110,6 +113,8 @@ impl From<db::items::MediaItem> for MediaItem {
             poster: item.poster.map(utils::get_image_url),
             backdrop: item.backdrop.map(utils::get_image_url),
             thumbnail: item.thumbnail.map(utils::get_image_url),
+            age_rating: item.age_rating,
+            genres: item.genres,
             parent: item.parent.map(|parent| Parent {
                 id: parent.id,
                 index: parent.index,
@@ -120,7 +125,10 @@ impl From<db::items::MediaItem> for MediaItem {
                 index: grandparent.index,
                 name: grandparent.name,
             }),
-            external_ids: ExternalIds { tmdb: item.tmdb_id },
+            external_ids: ExternalIds {
+                tmdb: item.tmdb_id,
+                imdb: item.imdb_id,
+            },
             video_file: item.video_file.map(|v| VideoFile {
                 path: v.path,
                 duration: v.duration,
