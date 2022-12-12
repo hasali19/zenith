@@ -4,11 +4,14 @@ expression: "app.get(\"/shows\").await"
 ---
 [
   {
+    "age_rating": null,
     "backdrop": null,
     "end_date": null,
     "external_ids": {
+      "imdb": null,
       "tmdb": null
     },
+    "genres": [],
     "id": 4,
     "name": "Test Show 1",
     "overview": null,
@@ -22,11 +25,14 @@ expression: "app.get(\"/shows\").await"
     }
   },
   {
+    "age_rating": null,
     "backdrop": null,
     "end_date": null,
     "external_ids": {
+      "imdb": null,
       "tmdb": null
     },
+    "genres": [],
     "id": 5,
     "name": "Test Show 2",
     "overview": null,
@@ -40,11 +46,14 @@ expression: "app.get(\"/shows\").await"
     }
   },
   {
+    "age_rating": null,
     "backdrop": null,
     "end_date": null,
     "external_ids": {
+      "imdb": null,
       "tmdb": null
     },
+    "genres": [],
     "id": 6,
     "name": "Test Show 3",
     "overview": null,

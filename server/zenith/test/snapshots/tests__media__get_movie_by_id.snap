@@ -3,11 +3,14 @@ source: server/zenith/test/media.rs
 expression: "app.get(\"/movies/1\").await"
 ---
 {
+  "age_rating": null,
   "backdrop": null,
   "end_date": null,
   "external_ids": {
+    "imdb": null,
     "tmdb": null
   },
+  "genres": [],
   "id": 1,
   "name": "Test Movie 1",
   "overview": null,

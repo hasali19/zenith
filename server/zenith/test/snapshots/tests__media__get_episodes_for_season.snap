@@ -4,11 +4,14 @@ expression: "app.get(\"/seasons/7/episodes\").await"
 ---
 [
   {
+    "age_rating": null,
     "backdrop": null,
     "end_date": null,
     "external_ids": {
+      "imdb": null,
       "tmdb": null
     },
+    "genres": [],
     "grandparent": {
       "id": 4,
       "index": 1,
@@ -41,11 +44,14 @@ expression: "app.get(\"/seasons/7/episodes\").await"
     }
   },
   {
+    "age_rating": null,
     "backdrop": null,
     "end_date": null,
     "external_ids": {
+      "imdb": null,
       "tmdb": null
     },
+    "genres": [],
     "grandparent": {
       "id": 4,
       "index": 1,

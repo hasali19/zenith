@@ -4,11 +4,14 @@ expression: "app.get(\"/items/continue_watching\").await"
 ---
 [
   {
+    "age_rating": null,
     "backdrop": null,
     "end_date": null,
     "external_ids": {
+      "imdb": null,
       "tmdb": null
     },
+    "genres": [],
     "id": 1,
     "name": "Test Movie 1",
     "overview": null,
@@ -31,11 +34,14 @@ expression: "app.get(\"/items/continue_watching\").await"
     }
   },
   {
+    "age_rating": null,
     "backdrop": null,
     "end_date": null,
     "external_ids": {
+      "imdb": null,
       "tmdb": null
     },
+    "genres": [],
     "id": 2,
     "name": "Test Movie 2",
     "overview": null,
@@ -58,11 +64,14 @@ expression: "app.get(\"/items/continue_watching\").await"
     }
   },
   {
+    "age_rating": null,
     "backdrop": null,
     "end_date": null,
     "external_ids": {
+      "imdb": null,
       "tmdb": null
     },
+    "genres": [],
     "grandparent": {
       "id": 4,
       "index": 1,
