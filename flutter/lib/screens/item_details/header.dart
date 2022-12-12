@@ -56,7 +56,7 @@ class HeaderContent extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (model.item.grandparent != null)
-                GestureDetector(
+                InkWell(
                   child: Text(
                     model.item.grandparent!.name,
                     style: Theme.of(context).textTheme.subtitle1,
@@ -70,6 +70,14 @@ class HeaderContent extends ConsumerWidget {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (model.item.genres.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    model.item.genres.join(", "),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
               if (overview != null) overview,
               if (videoInfo != null) videoInfo,
             ],
@@ -90,20 +98,22 @@ class HeaderContent extends ConsumerWidget {
     final seasonEpisode = model.item.getSeasonEpisode();
     final date = model.item.startDate;
     final duration = model.formattedDuration;
+    final ageRating = model.item.ageRating;
 
     final items = [
       if (seasonEpisode != null) TextSpan(text: seasonEpisode),
       if (date != null) TextSpan(text: "${date.year}"),
       if (duration != null) TextSpan(text: duration),
+      if (ageRating != null) TextSpan(text: ageRating),
     ];
 
     final separated = <TextSpan>[];
     for (var i = 0; i < items.length; i++) {
       if (i > 0) {
         separated.add(const TextSpan(children: [
-          WidgetSpan(child: SizedBox(width: 12)),
+          WidgetSpan(child: SizedBox(width: 8)),
           TextSpan(text: "•"),
-          WidgetSpan(child: SizedBox(width: 12)),
+          WidgetSpan(child: SizedBox(width: 8)),
         ]));
       }
       separated.add(items[i]);
