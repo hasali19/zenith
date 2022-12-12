@@ -19,11 +19,13 @@ class HeaderContent extends ConsumerWidget {
     required this.model,
     required this.refresh,
     required this.onPlayPressed,
+    required this.onViewItemDetails,
   }) : super(key: key);
 
   final ItemDetailsModel model;
   final void Function() refresh;
-  final void Function(MediaItem) onPlayPressed;
+  final void Function(MediaItem item) onPlayPressed;
+  final void Function(int id) onViewItemDetails;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -54,12 +56,13 @@ class HeaderContent extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (model.item.grandparent != null)
-                Text(
-                  model.item.grandparent!.name,
-                  style: Theme.of(context).textTheme.subtitle1,
-                )
-              else if (model.item.parent != null)
-                Text(model.item.parent!.name),
+                GestureDetector(
+                  child: Text(
+                    model.item.grandparent!.name,
+                    style: Theme.of(context).textTheme.subtitle1,
+                  ),
+                  onTap: () => onViewItemDetails(model.item.grandparent!.id),
+                ),
               Text(model.item.name, style: context.zenithTheme.titleLarge),
               if (subtitle != null) subtitle,
             ],
@@ -185,6 +188,16 @@ class HeaderContent extends ConsumerWidget {
       builder: (context) => SafeArea(
         child: Wrap(
           children: [
+            if (model.item.type == MediaType.episode) ...[
+              ListTile(
+                leading: const Icon(Icons.tv),
+                title: const Text("Go to show"),
+                onTap: () {
+                  Navigator.pop(context);
+                  onViewItemDetails(model.item.grandparent!.id);
+                },
+              ),
+            ],
             ListTile(
               leading: const Icon(Icons.search),
               title: const Text("Find match"),

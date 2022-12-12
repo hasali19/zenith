@@ -80,12 +80,9 @@ class _ContentState extends ConsumerState<Content> {
   Widget build(BuildContext context) {
     final api = ref.watch(apiProvider);
     final isDesktop = MediaQuery.of(context).isDesktop;
-    final padding = isDesktop
-        ? const EdgeInsets.fromLTRB(128, 128, 128, 32)
-        : const EdgeInsets.fromLTRB(16, 96, 16, 16);
 
     void pushRoute(route) async {
-      await context.router.push(route);
+      await context.router.navigate(route);
       _refresh.currentState?.show();
     }
 
@@ -126,6 +123,8 @@ class _ContentState extends ConsumerState<Content> {
                           model: widget.model,
                           refresh: () => _refresh.currentState?.show(),
                           onPlayPressed: onPlayPressed,
+                          onViewItemDetails: (id) =>
+                              pushRoute(ItemDetailsScreenRoute(id: id)),
                         ),
                       ),
                       if (widget.model.item.type == MediaType.show)
