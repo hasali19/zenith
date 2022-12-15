@@ -21,6 +21,7 @@ class MediaItem {
   final MediaItemParent? grandparent;
   final VideoFile? videoFile;
   final VideoUserData? videoUserData;
+  final CollectionUserData? collectionUserData;
   final List<String> genres;
   final String? ageRating;
 
@@ -35,6 +36,7 @@ class MediaItem {
     required this.grandparent,
     required this.videoFile,
     required this.videoUserData,
+    required this.collectionUserData,
     required this.genres,
     required this.ageRating,
   });
@@ -64,6 +66,11 @@ class MediaItem {
               json['user_data'] != null
           ? VideoUserData.fromJson(json['user_data'])
           : null,
+      collectionUserData:
+          (type == MediaType.show || type == MediaType.season) &&
+                  json['user_data'] != null
+              ? CollectionUserData.fromJson(json['user_data'])
+              : null,
       genres: List<String>.from(json['genres']),
       ageRating: json['age_rating'],
     );
@@ -233,6 +240,17 @@ class VideoUserData {
           : null,
     );
   }
+}
+
+class CollectionUserData {
+  final int unwatched;
+
+  CollectionUserData({
+    required this.unwatched,
+  });
+
+  factory CollectionUserData.fromJson(Map<String, dynamic> json) =>
+      CollectionUserData(unwatched: json['unwatched']);
 }
 
 enum ImageType { poster, backdrop, thumbnail }
