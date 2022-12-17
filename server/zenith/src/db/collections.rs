@@ -83,6 +83,7 @@ pub async fn remove(conn: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
         .await?;
 
     sqlx::query("DELETE FROM collections WHERE id = ?")
+        .bind(id)
         .execute(&mut tx)
         .await?;
 
