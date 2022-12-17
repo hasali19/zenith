@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/language_codes.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/screens/item_details/add_to_collection.dart';
 import 'package:zenith/screens/item_details/header_layout.dart';
 import 'package:zenith/screens/item_details/item_details.dart';
 import 'package:zenith/screens/item_details/model.dart';
@@ -208,6 +209,18 @@ class HeaderContent extends ConsumerWidget {
                 },
               ),
             ],
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: const Text("Add to collection"),
+              onTap: () {
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  builder: (context) =>
+                      AddToCollectionDialog(id: model.item.id),
+                );
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.search),
               title: const Text("Find match"),

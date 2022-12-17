@@ -41,6 +41,19 @@ class _$AppRouter extends RootStackRouter {
         ),
       );
     },
+    CollectionDetailsScreenRoute.name: (routeData) {
+      final pathParams = routeData.inheritedPathParams;
+      final args = routeData.argsAs<CollectionDetailsScreenRouteArgs>(
+          orElse: () =>
+              CollectionDetailsScreenRouteArgs(id: pathParams.getInt('id')));
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: CollectionDetailsScreen(
+          key: args.key,
+          id: args.id,
+        ),
+      );
+    },
     VideoPlayerScreenRoute.name: (routeData) {
       final pathParams = routeData.inheritedPathParams;
       final queryParams = routeData.queryParams;
@@ -93,6 +106,12 @@ class _$AppRouter extends RootStackRouter {
         child: const ShowsScreen(),
       );
     },
+    CollectionsScreenRoute.name: (routeData) {
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: const CollectionsScreen(),
+      );
+    },
   };
 
   @override
@@ -117,11 +136,21 @@ class _$AppRouter extends RootStackRouter {
               path: 'library/shows',
               parent: MainScreenRoute.name,
             ),
+            RouteConfig(
+              CollectionsScreenRoute.name,
+              path: 'library/collections',
+              parent: MainScreenRoute.name,
+            ),
           ],
         ),
         RouteConfig(
           ItemDetailsScreenRoute.name,
           path: '/items/:id',
+          usesPathAsKey: true,
+        ),
+        RouteConfig(
+          CollectionDetailsScreenRoute.name,
+          path: '/collections/:id',
           usesPathAsKey: true,
         ),
         RouteConfig(
@@ -186,6 +215,42 @@ class ItemDetailsScreenRouteArgs {
   @override
   String toString() {
     return 'ItemDetailsScreenRouteArgs{key: $key, id: $id}';
+  }
+}
+
+/// generated route for
+/// [CollectionDetailsScreen]
+class CollectionDetailsScreenRoute
+    extends PageRouteInfo<CollectionDetailsScreenRouteArgs> {
+  CollectionDetailsScreenRoute({
+    Key? key,
+    required int id,
+  }) : super(
+          CollectionDetailsScreenRoute.name,
+          path: '/collections/:id',
+          args: CollectionDetailsScreenRouteArgs(
+            key: key,
+            id: id,
+          ),
+          rawPathParams: {'id': id},
+        );
+
+  static const String name = 'CollectionDetailsScreenRoute';
+}
+
+class CollectionDetailsScreenRouteArgs {
+  const CollectionDetailsScreenRouteArgs({
+    this.key,
+    required this.id,
+  });
+
+  final Key? key;
+
+  final int id;
+
+  @override
+  String toString() {
+    return 'CollectionDetailsScreenRouteArgs{key: $key, id: $id}';
   }
 }
 
@@ -300,4 +365,16 @@ class ShowsScreenRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'ShowsScreenRoute';
+}
+
+/// generated route for
+/// [CollectionsScreen]
+class CollectionsScreenRoute extends PageRouteInfo<void> {
+  const CollectionsScreenRoute()
+      : super(
+          CollectionsScreenRoute.name,
+          path: 'library/collections',
+        );
+
+  static const String name = 'CollectionsScreenRoute';
 }

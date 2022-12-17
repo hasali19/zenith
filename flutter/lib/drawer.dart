@@ -56,6 +56,12 @@ class NavigationDrawer extends ConsumerWidget {
             selected: current == Screen.shows,
             onTap: () => onTap(Screen.shows),
           ),
+          NavigationDrawerItem(
+            title: "Collections",
+            icon: Icons.video_collection,
+            selected: current == Screen.collections,
+            onTap: () => onTap(Screen.collections),
+          ),
           const DrawerSectionTitle(text: "System"),
           NavigationDrawerItem(
             title: "Settings",

@@ -261,6 +261,27 @@ class VideoUserDataPatch {
   VideoUserDataPatch({this.isWatched, this.position});
 }
 
+class Collection {
+  final int id;
+  final String name;
+  final String? overview;
+  final String? poster;
+
+  Collection({
+    required this.id,
+    required this.name,
+    required this.overview,
+    required this.poster,
+  });
+
+  factory Collection.fromJson(Map<String, dynamic> json) => Collection(
+        id: json['id'],
+        name: json['name'],
+        overview: json['overview'],
+        poster: json['poster'],
+      );
+}
+
 class ZenithApiClient {
   final String _baseUrl;
 
@@ -365,6 +386,55 @@ class ZenithApiClient {
 
   Future<void> refreshMetadata(int id) async {
     await http.post(Uri.parse('$_baseUrl/api/metadata/$id/refresh'));
+  }
+
+  Future<Collection> createCollection(String name) async {
+    final json = jsonEncode({'name': name});
+    final res = await http.post(
+      Uri.parse("$_baseUrl/api/collections"),
+      headers: {'Content-Type': 'application/json'},
+      body: utf8.encode(json),
+    );
+    if (res.statusCode == 200) {
+      final dynamic json = jsonDecode(utf8.decode(res.bodyBytes));
+      return Collection.fromJson(json);
+    } else {
+      throw Exception('Failed to fetch collection');
+    }
+  }
+
+  Future<List<Collection>> fetchCollections() async {
+    final res = await http.get(Uri.parse('$_baseUrl/api/collections'));
+    if (res.statusCode == 200) {
+      final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
+      return json.map((e) => Collection.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to fetch collections');
+    }
+  }
+
+  Future<List<MediaItem>> fetchCollectionItems(int id) async {
+    final res = await http.get(Uri.parse(
+        '$_baseUrl/api/items?collection_id=$id&sort_by[]=collection_index'));
+    if (res.statusCode == 200) {
+      final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
+      return json.map((e) => MediaItem.fromJson(MediaType.episode, e)).toList();
+    } else {
+      throw Exception('Failed to fetch items');
+    }
+  }
+
+  Future<void> updateCollection(int id, List<int> itemIds) async {
+    final json = jsonEncode({'items': itemIds});
+    await http.put(
+      Uri.parse("$_baseUrl/api/collections/$id"),
+      headers: {'Content-Type': 'application/json'},
+      body: utf8.encode(json),
+    );
+  }
+
+  Future<void> deleteCollection(int id) async {
+    await http.delete(Uri.parse("$_baseUrl/api/collections/$id"));
   }
 
   String getVideoUrl(int id, {bool attachment = false}) {

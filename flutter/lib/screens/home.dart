@@ -85,6 +85,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     buildPosterItemSection(
       List<MediaItem> items,
       String title,
+      IconData posterFallback,
     ) =>
         Section<MediaItem>(
           title: title,
@@ -96,6 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           items: items,
           itemBuilder: (context, item) => PosterItem(
             poster: api.getMediaImageUrl(item.id, ImageType.poster),
+            posterFallback: posterFallback,
             title: item.name,
             subtitle: item.startDate?.year.toString() ?? "",
             isWatched: true, // hide new icon since they're all new
@@ -151,8 +153,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   onTap: () => _navigateToItem(item),
                 ),
               ),
-              buildPosterItemSection(data.recentMovies, "Recent Movies"),
-              buildPosterItemSection(data.recentShows, "Recent Shows"),
+              buildPosterItemSection(
+                  data.recentMovies, "Recent Movies", Icons.movie),
+              buildPosterItemSection(
+                  data.recentShows, "Recent Shows", Icons.tv),
             ],
           ),
         );

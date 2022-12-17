@@ -137,6 +137,7 @@ enum Screen {
   movies,
   shows,
   settings,
+  collections,
 }
 
 class _MainScreenState extends State<MainScreen> {
@@ -169,6 +170,7 @@ class _MainScreenState extends State<MainScreen> {
         HomeScreenRoute(),
         MoviesScreenRoute(),
         ShowsScreenRoute(),
+        CollectionsScreenRoute(),
       ],
       builder: (context, child, animation) {
         final screen = _activeScreen(context.tabsRouter.activeIndex);
@@ -223,6 +225,9 @@ class _MainScreenState extends State<MainScreen> {
       case Screen.shows:
         return "Shows";
 
+      case Screen.collections:
+        return "Collections";
+
       case Screen.settings:
         return "Settings";
     }
@@ -236,6 +241,8 @@ class _MainScreenState extends State<MainScreen> {
         return Screen.movies;
       case 2:
         return Screen.shows;
+      case 3:
+        return Screen.collections;
       default:
         throw Exception("invalid tab index: $index");
     }
@@ -251,6 +258,9 @@ class _MainScreenState extends State<MainScreen> {
         break;
       case Screen.shows:
         context.tabsRouter.setActiveIndex(2);
+        break;
+      case Screen.collections:
+        context.tabsRouter.setActiveIndex(3);
         break;
       case Screen.settings:
         context.router.push(SettingsScreenRoute());
