@@ -43,15 +43,6 @@ pub enum StreamProps {
     Audio { language: Option<String> },
 }
 
-impl Stream {
-    pub fn stream_type(&self) -> StreamType {
-        match self.props {
-            StreamProps::Video { .. } => StreamType::Video,
-            StreamProps::Audio { .. } => StreamType::Audio,
-        }
-    }
-}
-
 impl<'r> FromRow<'r, SqliteRow> for Stream {
     fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
         let id = row.try_get("id")?;
@@ -78,18 +69,6 @@ impl<'r> FromRow<'r, SqliteRow> for Stream {
 
         Ok(stream)
     }
-}
-
-pub async fn get_for_video(
-    conn: &mut SqliteConnection,
-    video_id: i64,
-) -> eyre::Result<Vec<Stream>> {
-    let sql = "
-        SELECT id, stream_index, stream_type, codec_name, v_width, v_height, a_language
-        FROM video_file_streams WHERE video_id = ?
-    ";
-
-    Ok(sqlx::query_as(sql).bind(video_id).fetch_all(conn).await?)
 }
 
 pub struct NewVideoStream<'a> {

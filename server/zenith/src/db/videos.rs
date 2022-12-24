@@ -3,8 +3,6 @@ use speq::Reflect;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Row, SqliteConnection};
 
-use crate::db::streams::{self, StreamType};
-use crate::db::subtitles;
 use crate::sql::{self, OnConflict, UpdateList};
 
 use super::streams::Stream;
@@ -57,54 +55,6 @@ pub struct VideoInfo {
     pub audio: Option<Vec<Stream>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subtitles: Option<Vec<Subtitle>>,
-}
-
-pub async fn get_info(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<VideoInfo>> {
-    let sql = "
-        SELECT path, duration, format_name
-        FROM video_files
-        WHERE item_id = ?
-    ";
-
-    let info = sqlx::query(sql)
-        .bind(id)
-        .try_map(|row: SqliteRow| {
-            Ok(VideoInfo {
-                path: row.try_get("path")?,
-                duration: row.try_get("duration")?,
-                format: row.try_get("format_name")?,
-                video: None,
-                audio: None,
-                subtitles: None,
-            })
-        })
-        .fetch_optional(&mut *conn)
-        .await?;
-
-    let mut info = match info {
-        Some(info) => info,
-        None => return Ok(None),
-    };
-
-    let streams = streams::get_for_video(&mut *conn, id).await?;
-
-    let mut video = None;
-    let mut audio = vec![];
-
-    for stream in streams {
-        match stream.stream_type() {
-            StreamType::Video => video = Some(stream),
-            StreamType::Audio => audio.push(stream),
-        }
-    }
-
-    let subtitles = subtitles::get_for_video(&mut *conn, id).await?;
-
-    info.video = Some(video);
-    info.audio = Some(audio);
-    info.subtitles = Some(subtitles);
-
-    Ok(Some(info))
 }
 
 #[derive(Serialize, Reflect)]

@@ -7,7 +7,7 @@ use crate::sql::Join;
 use crate::{sql, utils};
 
 use super::items::ExternalIds;
-use super::videos::{self, VideoInfo, VideoUserData};
+use super::videos::{VideoInfo, VideoUserData};
 
 #[derive(Serialize, Reflect)]
 pub struct Episode {
@@ -94,30 +94,6 @@ impl<'r> FromRow<'r, SqliteRow> for Episode {
             },
         })
     }
-}
-
-pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Episode>> {
-    let sql = sql::select("episodes AS e")
-        .columns(EPISODE_COLUMNS)
-        .joins(EPISODE_JOINS)
-        .condition("e.id = ?1")
-        .to_sql();
-
-    let mut episode: Episode = match sqlx::query_as(&sql)
-        .bind(id)
-        .fetch_optional(&mut *conn)
-        .await?
-    {
-        Some(episode) => episode,
-        None => return Ok(None),
-    };
-
-    episode.video_info = match videos::get_info(&mut *conn, id).await? {
-        Some(info) => info,
-        None => return Ok(None),
-    };
-
-    Ok(Some(episode))
 }
 
 pub async fn get_for_season(
