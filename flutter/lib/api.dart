@@ -282,6 +282,18 @@ class Collection {
       );
 }
 
+class FixMetadataMatch {
+  final int? tmdbId;
+  final int? season;
+  final int? episode;
+
+  FixMetadataMatch({
+    this.tmdbId,
+    this.season,
+    this.episode,
+  });
+}
+
 class ZenithApiClient {
   final String _baseUrl;
 
@@ -382,6 +394,18 @@ class ZenithApiClient {
 
   Future<void> findMetadataMatch(int id) async {
     await http.post(Uri.parse('$_baseUrl/api/metadata/$id/find_match'));
+  }
+
+  Future<void> fixMetadataMatch(int id, FixMetadataMatch data) async {
+    await http.post(
+      Uri.parse('$_baseUrl/api/metadata/$id/set_match'),
+      headers: {'Content-Type': 'application/json'},
+      body: utf8.encode(jsonEncode({
+        'tmdb_id': data.tmdbId,
+        'season_number': data.season,
+        'episode_number': data.episode,
+      })),
+    );
   }
 
   Future<void> refreshMetadata(int id) async {

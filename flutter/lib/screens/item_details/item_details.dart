@@ -82,7 +82,7 @@ class _ContentState extends ConsumerState<Content> {
     final isDesktop = MediaQuery.of(context).isDesktop;
 
     void pushRoute(route) async {
-      await context.router.navigate(route);
+      await context.router.push(route);
       _refresh.currentState?.show();
     }
 
