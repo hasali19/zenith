@@ -8,7 +8,7 @@ use sqlx::{Acquire, Arguments, FromRow, Row, SqliteConnection};
 
 use crate::sql::{self, Join};
 
-use super::media::{MediaImage, MediaItemType};
+use super::media::{MediaImage, MediaItemType, MetadataProvider};
 use super::streams::StreamType;
 
 #[derive(Serialize, Reflect)]
@@ -34,6 +34,8 @@ pub struct MediaItem {
     pub parent: Option<Parent>,
     pub grandparent: Option<Parent>,
     pub video_file: Option<VideoFile>,
+    pub metadata_provider: Option<String>,
+    pub metadata_provider_key: Option<String>,
 }
 
 #[derive(Debug)]
@@ -156,6 +158,8 @@ impl<'r> FromRow<'r, SqliteRow> for MediaItem {
                 "grandparent_name",
             )?,
             video_file,
+            metadata_provider: row.try_get("metadata_provider")?,
+            metadata_provider_key: row.try_get("metadata_provider_key")?,
         })
     }
 }
@@ -222,6 +226,8 @@ const ITEM_COLUMNS: &[&str] = &[
     "m.overview",
     "m.start_date",
     "m.end_date",
+    "m.metadata_provider",
+    "m.metadata_provider_key",
     "COALESCE(m.poster, parent.poster, grandparent.poster) AS poster",
     "COALESCE(m.backdrop, parent.backdrop, grandparent.backdrop) AS backdrop",
     "COALESCE(m.thumbnail, m.backdrop, parent.backdrop, grandparent.backdrop) AS thumbnail",
@@ -589,6 +595,8 @@ pub struct UpdateMetadata<'a> {
     pub genres: Option<&'a [&'a str]>,
     pub tmdb_id: Option<Option<i32>>,
     pub imdb_id: Option<Option<&'a str>>,
+    pub metadata_provider: Option<Option<MetadataProvider>>,
+    pub metadata_provider_key: Option<Option<&'a str>>,
 }
 
 pub async fn update_metadata(
@@ -614,7 +622,17 @@ pub async fn update_metadata(
         }
     }
 
-    collect!(name, overview, start_date, end_date, age_rating, tmdb_id, imdb_id);
+    collect!(
+        name,
+        overview,
+        start_date,
+        end_date,
+        age_rating,
+        tmdb_id,
+        imdb_id,
+        metadata_provider,
+        metadata_provider_key
+    );
 
     for (column, img) in [
         ("poster", data.poster),

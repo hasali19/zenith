@@ -2,7 +2,7 @@ use std::path::Path;
 
 use sqlx::Connection;
 
-use crate::db::media::MediaItemType;
+use crate::db::media::{MediaItemType, MetadataProvider};
 
 use super::{video_info, LibraryEvent, MediaLibrary};
 
@@ -31,13 +31,14 @@ impl MediaLibrary {
         let mut transaction = self.db.begin().await?;
 
         let sql = "
-            INSERT INTO media_items (item_type, name)
-            VALUES (?, ?)
+            INSERT INTO media_items (item_type, name, metadata_provider)
+            VALUES (?, ?, ?)
         ";
 
         let id: i64 = sqlx::query(sql)
             .bind(MediaItemType::Show)
             .bind(show.name)
+            .bind(MetadataProvider::Tmdb)
             .execute(&mut transaction)
             .await?
             .last_insert_rowid();
@@ -129,8 +130,8 @@ impl MediaLibrary {
         let mut transaction = self.db.begin().await?;
 
         let sql = "
-            INSERT INTO media_items (item_type, name, parent_id, parent_index)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO media_items (item_type, name, parent_id, parent_index, metadata_provider)
+            VALUES (?, ?, ?, ?, ?)
         ";
 
         let id: i64 = sqlx::query(sql)
@@ -138,6 +139,7 @@ impl MediaLibrary {
             .bind(format!("Season {}", season.season_number))
             .bind(season.show_id)
             .bind(season.season_number)
+            .bind(MetadataProvider::Tmdb)
             .execute(&mut *transaction)
             .await?
             .last_insert_rowid();
@@ -220,8 +222,8 @@ impl MediaLibrary {
         let mut transaction = self.db.begin().await?;
 
         let sql = "
-            INSERT INTO media_items (item_type, name, parent_id, parent_index, grandparent_id, grandparent_index)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO media_items (item_type, name, parent_id, parent_index, grandparent_id, grandparent_index, metadata_provider)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ";
 
         let id = sqlx::query(sql)
@@ -231,6 +233,7 @@ impl MediaLibrary {
             .bind(episode.episode_number)
             .bind(episode.show_id)
             .bind(episode.season_number)
+            .bind(MetadataProvider::Tmdb)
             .execute(&mut *transaction)
             .await?
             .last_insert_rowid();

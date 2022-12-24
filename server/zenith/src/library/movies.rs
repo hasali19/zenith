@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::db::media::MediaItemType;
+use crate::db::media::{MediaItemType, MetadataProvider};
 
 use super::{video_info, LibraryEvent, MediaLibrary};
 
@@ -19,14 +19,15 @@ impl MediaLibrary {
         let mut transaction = self.db.begin().await?;
 
         let sql = "
-            INSERT INTO media_items (item_type, name, start_date)
-            VALUES (?, ?, ?)
+            INSERT INTO media_items (item_type, name, start_date, metadata_provider)
+            VALUES (?, ?, ?, ?)
         ";
 
         let id = sqlx::query(sql)
             .bind(MediaItemType::Movie)
             .bind(movie.title)
             .bind(movie.release_date)
+            .bind(MetadataProvider::Tmdb)
             .execute(&mut transaction)
             .await?
             .last_insert_rowid();

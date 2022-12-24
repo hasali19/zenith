@@ -1,4 +1,4 @@
-use eyre::eyre;
+use eyre::{eyre, Context};
 use itertools::Itertools;
 use sqlx::SqliteConnection;
 use thiserror::Error;
@@ -7,7 +7,9 @@ use tmdb::{MovieSearchQuery, TmdbClient, TvShowSearchQuery};
 use tokio::sync::mpsc;
 
 use crate::db::items::MediaItem;
-use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType, MediaItemType};
+use crate::db::media::{
+    MediaImage, MediaImageSrcType, MediaImageType, MediaItemType, MetadataProvider,
+};
 use crate::db::{self, Db};
 
 #[derive(Debug)]
@@ -54,9 +56,12 @@ impl MetadataManager {
 
     #[tracing::instrument(skip(self, conn))]
     pub async fn enqueue_all_unmatched(&self, conn: &mut SqliteConnection) -> eyre::Result<()> {
-        let unmatched = sqlx::query_scalar("SELECT id FROM media_items WHERE tmdb_id IS NULL")
-            .fetch_all(conn)
-            .await?;
+        let sql = "
+            SELECT id FROM media_items
+            WHERE metadata_provider IS NOT NULL AND metadata_provider_key IS NULL
+        ";
+
+        let unmatched = sqlx::query_scalar(sql).fetch_all(conn).await?;
 
         if !unmatched.is_empty() {
             tracing::info!(
@@ -74,7 +79,12 @@ impl MetadataManager {
 
     #[tracing::instrument(skip(self, conn))]
     pub async fn enqueue_all_outdated(&self, conn: &mut SqliteConnection) -> eyre::Result<()> {
-        let sql = "SELECT id FROM media_items WHERE metadata_updated_at < strftime('%s') - 60 * 60 * 24 * 7";
+        let sql = "
+            SELECT id FROM media_items
+            WHERE metadata_provider IS NOT NULL AND metadata_provider_key IS NOT NULL
+                AND metadata_updated_at < strftime('%s') - 60 * 60 * 24 * 7
+        ";
+
         let outdated = sqlx::query_scalar(sql).fetch_all(conn).await?;
 
         if !outdated.is_empty() {
@@ -114,8 +124,8 @@ pub async fn find_match(
     match item.kind {
         MediaItemType::Movie => find_match_for_movie(conn, tmdb, item).await?,
         MediaItemType::Show => find_match_for_show(conn, tmdb, item).await?,
-        MediaItemType::Season => refresh_tv_season_metadata(conn, tmdb, id).await?,
-        MediaItemType::Episode => refresh_tv_episode_metadata(conn, tmdb, id).await?,
+        MediaItemType::Season => refresh_tv_season_metadata(conn, tmdb, item).await?,
+        MediaItemType::Episode => refresh_tv_episode_metadata(conn, tmdb, item).await?,
     }
 
     Ok(())
@@ -154,17 +164,20 @@ async fn find_match_for_movie(
 
     tracing::info!(result.title, "match found");
 
+    let metadata_key = result.id.to_string();
+
     db::items::update_metadata(
         &mut *conn,
         item.id,
         db::items::UpdateMetadata {
-            tmdb_id: Some(Some(result.id)),
+            metadata_provider: Some(Some(MetadataProvider::Tmdb)),
+            metadata_provider_key: Some(Some(&metadata_key)),
             ..Default::default()
         },
     )
     .await?;
 
-    item.tmdb_id = Some(result.id);
+    item.metadata_provider_key = Some(metadata_key);
 
     refresh_movie_metadata(conn, tmdb, item).await
 }
@@ -192,17 +205,20 @@ async fn find_match_for_show(
 
     tracing::info!(result.name, "match found");
 
+    let metadata_key = result.id.to_string();
+
     db::items::update_metadata(
         &mut *conn,
         item.id,
         db::items::UpdateMetadata {
-            tmdb_id: Some(Some(result.id)),
+            metadata_provider: Some(Some(MetadataProvider::Tmdb)),
+            metadata_provider_key: Some(Some(&metadata_key)),
             ..Default::default()
         },
     )
     .await?;
 
-    item.tmdb_id = Some(result.id);
+    item.metadata_provider_key = Some(metadata_key);
 
     refresh_tv_show_metadata(conn, tmdb, item).await
 }
@@ -217,8 +233,8 @@ pub async fn refresh(conn: &mut SqliteConnection, tmdb: &TmdbClient, id: i64) ->
     match item.kind {
         MediaItemType::Movie => refresh_movie_metadata(conn, tmdb, item).await?,
         MediaItemType::Show => refresh_tv_show_metadata(conn, tmdb, item).await?,
-        MediaItemType::Season => refresh_tv_season_metadata(conn, tmdb, id).await?,
-        MediaItemType::Episode => refresh_tv_episode_metadata(conn, tmdb, id).await?,
+        MediaItemType::Season => refresh_tv_season_metadata(conn, tmdb, item).await?,
+        MediaItemType::Episode => refresh_tv_episode_metadata(conn, tmdb, item).await?,
     }
 
     Ok(())
@@ -231,12 +247,12 @@ async fn refresh_movie_metadata(
 ) -> eyre::Result<()> {
     tracing::info!("refreshing movie metadata");
 
-    let Some(tmdb_id) = item.tmdb_id else {
+    let Some(key) = item.metadata_provider_key.as_ref().and_then(|key|key.parse().ok()) else {
         tracing::error!(?item, "movie is unmatched");
         return Err(eyre!("unmatched item"));
     };
 
-    let metadata = tmdb.get_movie(tmdb_id).await?;
+    let metadata = tmdb.get_movie(key).await?;
 
     tracing::debug!(?metadata);
 
@@ -281,6 +297,8 @@ async fn refresh_movie_metadata(
         genres: Some(&genres),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
+        metadata_provider: Some(Some(MetadataProvider::Tmdb)),
+        metadata_provider_key: None,
     };
 
     db::items::update_metadata(&mut *db, item.id, data).await?;
@@ -295,12 +313,12 @@ async fn refresh_tv_show_metadata(
 ) -> eyre::Result<()> {
     tracing::info!("refreshing show metadata");
 
-    let Some(tmdb_id) = item.tmdb_id else {
+    let Some(key) = item.metadata_provider_key.as_ref().and_then(|key|key.parse().ok()) else {
         tracing::error!(?item, "show is unmatched");
         return Err(eyre!("unmatched item"));
     };
 
-    let metadata = tmdb.get_tv_show(tmdb_id).await?;
+    let metadata = tmdb.get_tv_show(key).await?;
 
     tracing::debug!(?metadata);
 
@@ -357,6 +375,8 @@ async fn refresh_tv_show_metadata(
         genres: Some(&genres),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
+        metadata_provider: Some(Some(MetadataProvider::Tmdb)),
+        metadata_provider_key: None,
     };
 
     db::items::update_metadata(&mut *db, item.id, data).await?;
@@ -364,28 +384,46 @@ async fn refresh_tv_show_metadata(
     Ok(())
 }
 
+fn parse_season_key(key: &str) -> Option<(i32, i32)> {
+    let (show_id, season_number) = key.split_once(':')?;
+    Some((show_id.parse().ok()?, season_number.parse().ok()?))
+}
+
 async fn refresh_tv_season_metadata(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
-    id: i64,
+    item: MediaItem,
 ) -> eyre::Result<()> {
     tracing::info!("refreshing season metadata");
 
-    let season = db::seasons::get(&mut *db, id)
-        .await?
-        .ok_or_else(|| eyre!("season not found: {id}"))?;
+    if item.metadata_provider.is_none() {
+        tracing::info!("no metadata provider set");
+        return Ok(());
+    }
 
-    let show = db::items::get(&mut *db, season.show_id)
-        .await?
-        .ok_or_else(|| eyre!("show not found for season: {id}"))?;
+    let (show_id, season_number) = match item
+        .metadata_provider_key
+        .as_deref()
+        .and_then(parse_season_key)
+    {
+        Some(key) => key,
+        None => {
+            let parent = item.parent.unwrap();
+            let show = db::items::get(&mut *db, parent.id)
+                .await?
+                .ok_or_else(|| eyre!("show not found for season: {}", item.id))?;
 
-    let show_tmdb_id = show
-        .tmdb_id
-        .ok_or_else(|| eyre!("missing tmdb id for show: {}", show.id))?;
+            let show_tmdb_id = show
+                .metadata_provider_key
+                .ok_or_else(|| eyre!("missing tmdb id for show: {}", show.id))?
+                .parse()
+                .wrap_err_with(|| eyre!("invalid tmdb id for show: {}", show.id))?;
 
-    let metadata = tmdb
-        .get_tv_season(show_tmdb_id, season.season_number as i32)
-        .await?;
+            (show_tmdb_id, parent.index as i32)
+        }
+    };
+
+    let metadata = tmdb.get_tv_season(show_id, season_number).await?;
 
     tracing::debug!(?metadata);
 
@@ -395,6 +433,7 @@ async fn refresh_tv_season_metadata(
         src: poster,
     });
 
+    let metadata_key = format!("{show_id}:{season_number}");
     let data = db::items::UpdateMetadata {
         name: metadata.name.as_deref(),
         overview: Some(metadata.overview.as_deref()),
@@ -407,37 +446,62 @@ async fn refresh_tv_season_metadata(
         genres: None,
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
+        metadata_provider: Some(Some(MetadataProvider::Tmdb)),
+        metadata_provider_key: Some(Some(&metadata_key)),
     };
 
-    db::items::update_metadata(&mut *db, id, data).await?;
+    db::items::update_metadata(&mut *db, item.id, data).await?;
 
     Ok(())
+}
+
+fn parse_episode_key(key: &str) -> Option<(i32, i32, i32)> {
+    let (show_id, season_number, episode_number) = key.splitn(3, ':').collect_tuple()?;
+    Some((
+        show_id.parse().ok()?,
+        season_number.parse().ok()?,
+        episode_number.parse().ok()?,
+    ))
 }
 
 async fn refresh_tv_episode_metadata(
     db: &mut SqliteConnection,
     tmdb: &TmdbClient,
-    id: i64,
+    item: MediaItem,
 ) -> eyre::Result<()> {
     tracing::info!("refreshing episode metadata");
 
-    let episode = db::episodes::get(&mut *db, id)
-        .await?
-        .ok_or_else(|| eyre!("show not found: {}", id))?;
+    if item.metadata_provider.is_none() {
+        tracing::info!("no metadata provider set");
+        return Ok(());
+    }
 
-    let show = db::shows::get(&mut *db, episode.show_id)
-        .await?
-        .ok_or_else(|| eyre!("show not found for episode: {}", episode.show_id))?;
+    let (show_id, season_number, episode_number) = match item
+        .metadata_provider_key
+        .as_deref()
+        .and_then(parse_episode_key)
+    {
+        Some(key) => key,
+        None => {
+            let parent = item.parent.unwrap();
+            let grandparent = item.grandparent.unwrap();
+            let show = db::items::get(&mut *db, grandparent.id)
+                .await?
+                .ok_or_else(|| eyre!("show not found for episode: {}", item.id))?;
 
-    let show_tmdb_id = show
-        .external_ids
-        .tmdb
-        .ok_or_else(|| eyre!("missing tmdb id for show: {}", show.id))?;
+            let show_tmdb_id = show
+                .metadata_provider_key
+                .ok_or_else(|| eyre!("missing tmdb id for show: {}", show.id))?
+                .parse()
+                .wrap_err_with(|| eyre!("invalid tmdb id for show: {}", show.id))?;
 
-    let season = episode.season_number as i32;
-    let episode = episode.episode_number as i32;
+            (show_tmdb_id, grandparent.index as i32, parent.index as i32)
+        }
+    };
 
-    let metadata = tmdb.get_tv_episode(show_tmdb_id, season, episode).await?;
+    let metadata = tmdb
+        .get_tv_episode(show_id, season_number, episode_number)
+        .await?;
 
     tracing::debug!(?metadata);
 
@@ -454,6 +518,7 @@ async fn refresh_tv_episode_metadata(
         src: thumbnail,
     });
 
+    let metadata_key = format!("{show_id}:{season_number}:{episode_number}");
     let data = db::items::UpdateMetadata {
         name: metadata.name.as_deref(),
         overview: Some(metadata.overview.as_deref()),
@@ -466,9 +531,11 @@ async fn refresh_tv_episode_metadata(
         genres: None,
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
+        metadata_provider: Some(Some(MetadataProvider::Tmdb)),
+        metadata_provider_key: Some(Some(&metadata_key)),
     };
 
-    db::items::update_metadata(&mut *db, id, data).await?;
+    db::items::update_metadata(&mut *db, item.id, data).await?;
 
     Ok(())
 }

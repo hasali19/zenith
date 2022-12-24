@@ -26,6 +26,13 @@ async fn _20221211142452_metadata(conn: &mut SqliteConnection) -> eyre::Result<(
     Ok(())
 }
 
+async fn _20221224150754_metadata_provider(conn: &mut SqliteConnection) -> eyre::Result<()> {
+    sqlx::query(include_str!("../migrations/20221224150754_metadata_provider.sql"))
+        .execute(conn)
+        .await?;
+    Ok(())
+}
+
 pub(super) fn collect(migrator: &mut super::Migrator) {
     migrator.push_migration(
         "20220809142403_initial",
@@ -46,5 +53,10 @@ pub(super) fn collect(migrator: &mut super::Migrator) {
         "20221211142452_metadata",
         Box::new(|conn| Box::pin(_20221211142452_metadata(conn))),
         [162, 136, 200, 125, 128, 41, 60, 76, 249, 95, 226, 131, 126, 42, 243, 165, 86, 250, 77, 183, 129, 0, 162, 113, 200, 158, 184, 232, 205, 105, 126, 114],
+    );
+    migrator.push_migration(
+        "20221224150754_metadata_provider",
+        Box::new(|conn| Box::pin(_20221224150754_metadata_provider(conn))),
+        [223, 163, 114, 148, 82, 41, 187, 241, 92, 1, 47, 56, 50, 111, 180, 77, 32, 108, 43, 185, 233, 6, 193, 74, 167, 176, 41, 99, 57, 57, 110, 39],
     );
 }

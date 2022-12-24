@@ -7,10 +7,13 @@ use speq::axum::post;
 use tmdb::TmdbClient;
 
 use crate::api::ApiResult;
+use crate::db::media::MetadataProvider;
 use crate::db::{self, Db};
 use crate::metadata::{self, MetadataManager};
+use crate::MediaItemType;
 
 use super::error;
+use super::ext::OptionExt;
 
 #[post("/metadata/match_all")]
 #[response(status = 200)]
@@ -57,6 +60,8 @@ async fn find_match(
 #[derive(Deserialize)]
 struct SetMetadataMatch {
     tmdb_id: i32,
+    season_number: Option<i32>,
+    episode_number: Option<i32>,
 }
 
 #[post("/metadata/:id/set_match")]
@@ -68,8 +73,30 @@ async fn set_match(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
+    let item = db::items::get(&mut conn, id)
+        .await?
+        .or_not_found("media item not found")?;
+
+    let tmdb_id = body.tmdb_id;
+    let key = match item.kind {
+        MediaItemType::Movie | MediaItemType::Show => format!("{tmdb_id}"),
+        MediaItemType::Season => format!(
+            "{tmdb_id}:{}",
+            body.season_number
+                .or_bad_request("season_number is required for season")?
+        ),
+        MediaItemType::Episode => format!(
+            "{tmdb_id}:{}:{}",
+            body.season_number
+                .or_bad_request("season_number is required for episode")?,
+            body.episode_number
+                .or_bad_request("episode_number is required for episode")?
+        ),
+    };
+
     let metadata = db::items::UpdateMetadata {
-        tmdb_id: Some(Some(body.tmdb_id)),
+        metadata_provider: Some(Some(MetadataProvider::Tmdb)),
+        metadata_provider_key: Some(Some(&key)),
         ..Default::default()
     };
 

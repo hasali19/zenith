@@ -114,3 +114,9 @@ pub async fn get_item_type(
         .await
         .map_err(|e| e.into())
 }
+
+#[derive(Type)]
+#[sqlx(rename_all = "snake_case")]
+pub enum MetadataProvider {
+    Tmdb,
+}
