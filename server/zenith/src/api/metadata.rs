@@ -91,7 +91,7 @@ async fn set_match(
                 .or_bad_request("season_number is required for season")?
         ),
         MediaItemType::Episode => {
-            let tmdb_id = match item.tmdb_id {
+            let tmdb_id = match body.tmdb_id {
                 Some(tmdb_id) => tmdb_id,
                 None => item
                     .metadata_provider_key
