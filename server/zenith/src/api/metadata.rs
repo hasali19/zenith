@@ -59,7 +59,7 @@ async fn find_match(
 
 #[derive(Deserialize)]
 struct SetMetadataMatch {
-    tmdb_id: i32,
+    tmdb_id: Option<i32>,
     season_number: Option<i32>,
     episode_number: Option<i32>,
 }
@@ -77,21 +77,38 @@ async fn set_match(
         .await?
         .or_not_found("media item not found")?;
 
-    let tmdb_id = body.tmdb_id;
     let key = match item.kind {
-        MediaItemType::Movie | MediaItemType::Show => format!("{tmdb_id}"),
+        MediaItemType::Movie | MediaItemType::Show => format!(
+            "{}",
+            body.tmdb_id
+                .or_bad_request("tmdb_id is required for movie or show")?
+        ),
         MediaItemType::Season => format!(
-            "{tmdb_id}:{}",
+            "{}:{}",
+            body.tmdb_id
+                .or_bad_request("tmdb_id is required for season")?,
             body.season_number
                 .or_bad_request("season_number is required for season")?
         ),
-        MediaItemType::Episode => format!(
-            "{tmdb_id}:{}:{}",
-            body.season_number
-                .or_bad_request("season_number is required for episode")?,
-            body.episode_number
-                .or_bad_request("episode_number is required for episode")?
-        ),
+        MediaItemType::Episode => {
+            let tmdb_id = match item.tmdb_id {
+                Some(tmdb_id) => tmdb_id,
+                None => item
+                    .metadata_provider_key
+                    .as_deref()
+                    .and_then(|key| key.split(':').next())
+                    .and_then(|id| id.parse().ok())
+                    .or_bad_request("tmdb_id required since episode is unmatched")?,
+            };
+
+            format!(
+                "{tmdb_id}:{}:{}",
+                body.season_number
+                    .or_bad_request("season_number is required for episode")?,
+                body.episode_number
+                    .or_bad_request("episode_number is required for episode")?
+            )
+        }
     };
 
     let metadata = db::items::UpdateMetadata {
