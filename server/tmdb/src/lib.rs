@@ -249,6 +249,7 @@ impl TmdbClient {
     }
 
     async fn get_json<T: DeserializeOwned>(&self, url: Url) -> eyre::Result<T> {
-        Ok(self.client.get(url).send().await?.json().await?)
+        let res = self.client.get(url).send().await?;
+        Ok(res.error_for_status()?.json().await?)
     }
 }
