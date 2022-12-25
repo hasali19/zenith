@@ -3,7 +3,7 @@ use itertools::Itertools;
 use sqlx::SqliteConnection;
 use thiserror::Error;
 use time::{format_description, Date, OffsetDateTime, Time};
-use tmdb::{MovieSearchQuery, TmdbClient, TvShowSearchQuery};
+use tmdb::{MovieReleaseDatesResult, MovieSearchQuery, TmdbClient, TvShowSearchQuery};
 use tokio::sync::mpsc;
 
 use crate::db::items::MediaItem;
@@ -277,11 +277,15 @@ async fn refresh_movie_metadata(
         .map(|g| g.name.as_str())
         .collect_vec();
 
+    fn has_certification(res: &MovieReleaseDatesResult) -> bool {
+        matches!(res.release_dates.first(), Some(release_date) if !release_date.certification.is_empty())
+    }
+
     let age_rating = metadata
         .release_dates
         .results
         .iter()
-        .find(|it| it.iso_3166_1 == "GB") // FIXME: Hardcoded region
+        .find(|it| it.iso_3166_1 == "GB" && has_certification(it)) // FIXME: Hardcoded region
         .and_then(|it| it.release_dates.first())
         .map(|it| format!("GB-{}", it.certification))
         .or_else(|| {
@@ -369,7 +373,7 @@ async fn refresh_tv_show_metadata(
         .content_ratings
         .results
         .iter()
-        .find(|it| it.iso_3166_1 == "GB") // FIXME: Hardcoded region
+        .find(|it| it.iso_3166_1 == "GB" && !it.rating.is_empty()) // FIXME: Hardcoded region
         .map(|it| format!("GB-{}", it.rating))
         .or_else(|| {
             metadata
