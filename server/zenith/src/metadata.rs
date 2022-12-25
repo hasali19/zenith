@@ -280,10 +280,19 @@ async fn refresh_movie_metadata(
     let age_rating = metadata
         .release_dates
         .results
-        .into_iter()
+        .iter()
         .find(|it| it.iso_3166_1 == "GB") // FIXME: Hardcoded region
-        .and_then(|it| it.release_dates.into_iter().next())
-        .map(|it| format!("GB-{}", it.certification));
+        .and_then(|it| it.release_dates.first())
+        .map(|it| format!("GB-{}", it.certification))
+        .or_else(|| {
+            metadata
+                .release_dates
+                .results
+                .iter()
+                .find(|it| it.iso_3166_1 == "US")
+                .and_then(|it| it.release_dates.first())
+                .map(|it| it.certification.to_owned())
+        });
 
     let data = db::items::UpdateMetadata {
         name: Some(&metadata.title),
@@ -359,9 +368,17 @@ async fn refresh_tv_show_metadata(
     let age_rating = metadata
         .content_ratings
         .results
-        .into_iter()
+        .iter()
         .find(|it| it.iso_3166_1 == "GB") // FIXME: Hardcoded region
-        .map(|it| format!("GB-{}", it.rating));
+        .map(|it| format!("GB-{}", it.rating))
+        .or_else(|| {
+            metadata
+                .content_ratings
+                .results
+                .iter()
+                .find(|it| it.iso_3166_1 == "US")
+                .map(|it| it.rating.to_owned())
+        });
 
     let data = db::items::UpdateMetadata {
         name: Some(&metadata.name),
