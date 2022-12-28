@@ -317,6 +317,10 @@ private class PlayerInstance(
                     .build()
             }
         }
+
+        trackSelector.parameters = trackSelector.buildUponParameters()
+            .setPreferredAudioLanguage("en")
+            .build()
     }
 
     fun setEventCallback(callback: EventCallback?) {
