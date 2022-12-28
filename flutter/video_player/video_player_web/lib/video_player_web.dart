@@ -92,6 +92,9 @@ class VideoControllerWeb extends VideoController {
   }
 
   @override
+  bool get supportsAudioTrackSelection => false;
+
+  @override
   VideoState get state => _state;
 
   @override
@@ -149,6 +152,12 @@ class VideoControllerWeb extends VideoController {
   @override
   void pause() {
     _element.pause();
+  }
+
+  @override
+  void setAudioTrack(int index) {
+    throw UnsupportedError(
+        'Changing audio tracks is not supported by the web player');
   }
 
   @override

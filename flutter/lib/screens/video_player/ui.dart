@@ -76,6 +76,15 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
               Navigator.pop(context);
             },
           ),
+          if (_controller.supportsAudioTrackSelection)
+            ListTile(
+              leading: const Icon(Icons.audiotrack),
+              title: const Text("Audio"),
+              onTap: () async {
+                await _showAudioMenu(context);
+                Navigator.pop(context);
+              },
+            ),
           ListTile(
             leading: const Icon(Icons.closed_caption),
             title: const Text("Subtitles"),
@@ -88,6 +97,34 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
       ),
     );
     widget.onInteractionEnd();
+  }
+
+  Future<void> _showAudioMenu(BuildContext context) {
+    return _showModalBottomSheet(
+      (context) => ListView(
+        children: _buildAudioMenuItems(context),
+      ),
+    );
+  }
+
+  List<Widget> _buildAudioMenuItems(BuildContext context) {
+    final items = <Widget>[];
+    final streams = widget.item.videoFile?.streams ?? [];
+
+    for (final stream in streams) {
+      if (stream is api.AudioStreamInfo) {
+        items.add(ListTile(
+          title: Text(stream.language),
+          subtitle: Text(stream.codec),
+          onTap: () {
+            _setAudioTrack(stream.index);
+            Navigator.pop(context);
+          },
+        ));
+      }
+    }
+
+    return items;
   }
 
   Future<void> _showSubtitlesMenu(BuildContext context) {
@@ -145,6 +182,10 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         ],
       ),
     );
+  }
+
+  void _setAudioTrack(int index) {
+    _controller.setAudioTrack(index);
   }
 
   void _setSubtitleTrack(api.SubtitleTrack? track) {

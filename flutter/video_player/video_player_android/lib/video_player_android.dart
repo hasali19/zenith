@@ -125,6 +125,9 @@ class _VideoController extends VideoController {
       StreamController.broadcast();
 
   @override
+  bool get supportsAudioTrackSelection => true;
+
+  @override
   VideoState state = VideoState.idle;
 
   @override
@@ -214,6 +217,11 @@ class _VideoController extends VideoController {
           .toList(),
       "startPosition": (startPosition * 1000).toInt(),
     });
+  }
+
+  @override
+  void setAudioTrack(int index) {
+    _methodChannel.invokeMethod("setAudioTrack", {"id": id, "index": index});
   }
 
   @override

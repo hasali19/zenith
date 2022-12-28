@@ -47,10 +47,12 @@ abstract class VideoController {
   double get duration;
   bool get paused;
   bool get loading;
+  bool get supportsAudioTrackSelection;
 
   void load(String url, List<SubtitleTrack> subtitles, double startPosition);
   void play();
   void pause();
+  void setAudioTrack(int index);
   void setTextTrack(SubtitleTrack? track);
   void setFit(BoxFit fit);
   void addListener(void Function() listener);

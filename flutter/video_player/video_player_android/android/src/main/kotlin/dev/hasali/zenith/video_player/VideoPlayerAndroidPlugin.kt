@@ -62,6 +62,10 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                             id = call.argument("id")!!,
                             position = call.argument("position")!!,
                         )
+                        "setAudioTrack" -> responder.setAudioTrack(
+                            id = call.argument("id")!!,
+                            index = call.argument("index")!!,
+                        )
                         "setTextTrack" -> responder.setTextTrack(
                             id = call.argument("id")!!,
                             trackId = call.argument("trackId"),
@@ -198,8 +202,12 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
             result.success(null)
         }
 
+        fun setAudioTrack(id: Long, index: Int) {
+            players[id]!!.setAudioTrack(index)
+            result.success(null)
+        }
+
         fun setTextTrack(id: Long, trackId: String?) {
-            println("Setting text track")
             players[id]!!.setTextTrack(trackId)
             result.success(null)
         }
@@ -244,7 +252,9 @@ private class PlayerInstance(
     private val session = MediaSession.Builder(context, player)
         .build()
 
+    private var audioRenderer: Int? = null
     private var textRenderer: Int? = null
+
     private var previousDuration = 0L
     private var onEvent: EventCallback? = null
 
@@ -300,9 +310,10 @@ private class PlayerInstance(
         })
 
         for (i in 0 until player.rendererCount) {
-            if (player.getRendererType(i) == C.TRACK_TYPE_TEXT) {
+            if (player.getRendererType(i) == C.TRACK_TYPE_AUDIO) {
+                audioRenderer = i
+            } else if (player.getRendererType(i) == C.TRACK_TYPE_TEXT) {
                 textRenderer = i
-                break
             }
         }
 
@@ -373,17 +384,14 @@ private class PlayerInstance(
         player.seekTo(position)
     }
 
-    fun setTextTrack(trackId: String?) {
-        val renderer = textRenderer ?: return
-
-        if (trackId == null) {
+    fun setTrackById(renderer: Int, id: String?) {
+        if (id == null) {
             trackSelector.parameters = trackSelector.buildUponParameters()
                 .setRendererDisabled(renderer, true)
                 .build()
         } else {
             val mappedTrackInfo = trackSelector.currentMappedTrackInfo ?: return
             val trackGroups = mappedTrackInfo.getTrackGroups(renderer)
-            val requestedTrackId = "external:${trackId}"
 
             var group: TrackGroup? = null
             var track: Int? = null
@@ -391,7 +399,7 @@ private class PlayerInstance(
                 group = trackGroups[i]
                 for (j in 0 until group.length) {
                     val format = group.getFormat(j)
-                    if (format.id == requestedTrackId) {
+                    if (format.id == id) {
                         track = j
                         break@outer
                     }
@@ -399,11 +407,8 @@ private class PlayerInstance(
             }
 
             if (group == null || track == null) {
-                val toast = Toast.makeText(
-                    context,
-                    "Failed to find requested subtitle track",
-                    Toast.LENGTH_SHORT
-                )
+                val toast =
+                    Toast.makeText(context, "Failed to set requested track", Toast.LENGTH_SHORT)
                 return toast.show()
             }
 
@@ -412,6 +417,14 @@ private class PlayerInstance(
                 .setOverrideForType(TrackSelectionOverride(group, track))
                 .build()
         }
+    }
+
+    fun setAudioTrack(index: Int) {
+        setTrackById(audioRenderer ?: return, (index + 1).toString())
+    }
+
+    fun setTextTrack(trackId: String?) {
+        setTrackById(textRenderer ?: return, "external:$trackId")
     }
 
     fun release() {
