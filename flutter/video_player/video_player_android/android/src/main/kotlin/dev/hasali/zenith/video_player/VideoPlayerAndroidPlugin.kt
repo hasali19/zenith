@@ -405,7 +405,7 @@ private class PlayerInstance(
 
             trackSelector.parameters = trackSelector.buildUponParameters()
                 .setRendererDisabled(renderer, false)
-                .addOverride(TrackSelectionOverride(group, track))
+                .setOverrideForType(TrackSelectionOverride(group, track))
                 .build()
         }
     }
