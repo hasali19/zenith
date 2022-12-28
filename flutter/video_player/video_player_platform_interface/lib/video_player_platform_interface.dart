@@ -31,12 +31,14 @@ class SubtitleTrack {
   String src;
   String? title;
   String? language;
+  String? displayLanguage;
 
   SubtitleTrack({
     required this.id,
     required this.src,
     this.title,
     this.language,
+    this.displayLanguage,
   });
 }
 

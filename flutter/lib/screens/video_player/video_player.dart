@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock/wakelock.dart';
+import 'package:zenith/theme.dart';
 
 import '../../api.dart' as api;
 import '../../platform.dart' as platform;
@@ -232,9 +233,36 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
     if (!_shouldShowControls && _videoState != VideoState.ended) {
       return const SizedBox.expand();
     }
+
+    final Widget title;
+    if (widget.item.type == api.MediaType.episode) {
+      title = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.item.getSeasonEpisode()! + ": " + widget.item.name,
+            style: context.zenithTheme.titleMedium,
+          ),
+          Text(
+            widget.item.grandparent!.name,
+            style: context.zenithTheme.bodyMedium,
+          ),
+        ],
+      );
+    } else {
+      title = Text(widget.item.name);
+    }
+
     return VideoPlayerUi(
       controller: _controller!,
-      item: widget.item,
+      title: title,
+      audioTracks: widget.item.videoFile!.streams
+          .whereType<api.AudioStreamInfo>()
+          .map(audioTrackFromApi)
+          .toList(),
+      subtitles: widget.item.videoFile!.subtitles
+          .map((s) => subtitleFromApi(_api, s))
+          .toList(),
       progress: _progressController.stream,
       onInteractionStart: _disableAutoHideControls,
       onInteractionEnd: _resetControlsTimer,

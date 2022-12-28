@@ -1,18 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
-import 'package:zenith/api.dart' as api;
-import 'package:zenith/language_codes.dart';
 import 'package:zenith/responsive.dart';
-import 'package:zenith/theme.dart';
 
 import 'bottom_controls.dart';
 import 'video_progress_bar.dart';
-import 'utils.dart';
+
+class AudioTrack {
+  final int index;
+  final String language;
+  final String codec;
+
+  AudioTrack({
+    required this.index,
+    required this.language,
+    required this.codec,
+  });
+}
 
 class VideoPlayerUi extends ConsumerStatefulWidget {
   final VideoController controller;
-  final api.MediaItem item;
+  final Widget title;
+  final List<AudioTrack> audioTracks;
+  final List<SubtitleTrack> subtitles;
   final Stream<VideoProgressData> progress;
 
   final void Function() onInteractionStart;
@@ -21,7 +31,9 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
   const VideoPlayerUi({
     Key? key,
     required this.controller,
-    required this.item,
+    required this.title,
+    required this.audioTracks,
+    required this.subtitles,
     required this.progress,
     required this.onInteractionStart,
     required this.onInteractionEnd,
@@ -33,11 +45,20 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
 
 class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
   VideoController get _controller => widget.controller;
-  api.ZenithApiClient get _api => ref.watch(api.apiProvider);
+
+  late final List<SubtitleTrack> _subtitles;
+  late final List<AudioTrack> _audioTracks;
 
   @override
   void initState() {
     super.initState();
+    _subtitles = [...widget.subtitles];
+    _subtitles.sort((a, b) =>
+        (a.displayLanguage ?? "").compareTo((b.displayLanguage ?? "")));
+
+    _audioTracks = [...widget.audioTracks];
+    _audioTracks.sort((a, b) => a.language.compareTo(b.language));
+
     _controller.addListener(_listener);
   }
 
@@ -76,7 +97,8 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
               Navigator.pop(context);
             },
           ),
-          if (_controller.supportsAudioTrackSelection)
+          if (_controller.supportsAudioTrackSelection &&
+              _audioTracks.length > 1)
             ListTile(
               leading: const Icon(Icons.audiotrack),
               title: const Text("Audio"),
@@ -109,19 +131,16 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
 
   List<Widget> _buildAudioMenuItems(BuildContext context) {
     final items = <Widget>[];
-    final streams = widget.item.videoFile?.streams ?? [];
 
-    for (final stream in streams) {
-      if (stream is api.AudioStreamInfo) {
-        items.add(ListTile(
-          title: Text(stream.language),
-          subtitle: Text(stream.codec),
-          onTap: () {
-            _setAudioTrack(stream.index);
-            Navigator.pop(context);
-          },
-        ));
-      }
+    for (final track in _audioTracks) {
+      items.add(ListTile(
+        title: Text(track.language),
+        subtitle: Text(track.codec),
+        onTap: () {
+          _controller.setAudioTrack(track.index);
+          Navigator.pop(context);
+        },
+      ));
     }
 
     return items;
@@ -140,23 +159,18 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
       ListTile(
         title: const Text("None"),
         onTap: () {
-          _setSubtitleTrack(null);
+          _controller.setTextTrack(null);
           Navigator.pop(context);
         },
       )
     ];
 
-    final subtitles = widget.item.videoFile?.subtitles ?? [];
-    for (final track in subtitles) {
-      var language = track.language;
-      if (language != null) {
-        language = tryResolveLanguageCode(language);
-      }
+    for (final track in _subtitles) {
       items.add(ListTile(
-        title: Text(language ?? "Unknown"),
+        title: Text(track.displayLanguage ?? "Unknown"),
         subtitle: track.title != null ? Text(track.title!) : null,
         onTap: () {
-          _setSubtitleTrack(track);
+          _controller.setTextTrack(track);
           Navigator.pop(context);
         },
       ));
@@ -184,36 +198,9 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     );
   }
 
-  void _setAudioTrack(int index) {
-    _controller.setAudioTrack(index);
-  }
-
-  void _setSubtitleTrack(api.SubtitleTrack? track) {
-    _controller
-        .setTextTrack(track != null ? subtitleFromApi(_api, track) : null);
-  }
-
   Widget _buildAppBar() {
-    final Widget title;
-    if (widget.item.type == api.MediaType.episode) {
-      title = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.item.getSeasonEpisode()! + ": " + widget.item.name,
-            style: context.zenithTheme.titleMedium,
-          ),
-          Text(
-            widget.item.grandparent!.name,
-            style: context.zenithTheme.bodyMedium,
-          ),
-        ],
-      );
-    } else {
-      title = Text(widget.item.name);
-    }
     return AppBar(
-      title: title,
+      title: widget.title,
       backgroundColor: Colors.transparent,
       elevation: 0,
       actions: [
