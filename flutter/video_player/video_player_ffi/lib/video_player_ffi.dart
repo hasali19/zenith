@@ -22,6 +22,9 @@ final void Function(int player, Pointer<Utf8> url, double startPosition)
         .lookup<NativeFunction<Void Function(IntPtr, Pointer<Utf8>, Double)>>(
             "load")
         .asFunction();
+final void Function(int player, int index) ffiSetAudioTrack = _lib
+    .lookup<NativeFunction<Void Function(IntPtr, Int32)>>("set_audio_track")
+    .asFunction();
 final void Function(int player, Pointer<Utf8> url) ffiSetSubtitleFile = _lib
     .lookup<NativeFunction<Void Function(IntPtr, Pointer<Utf8>)>>(
         "set_subtitle_file")
@@ -142,8 +145,7 @@ class VideoControllerWindows extends VideoController {
   bool _playing = false;
 
   @override
-  // TODO: implement supportsAudioTrackSelection
-  bool get supportsAudioTrackSelection => false;
+  bool get supportsAudioTrackSelection => true;
 
   @override
   double get position {
@@ -203,7 +205,7 @@ class VideoControllerWindows extends VideoController {
 
   @override
   void setAudioTrack(int index) {
-    // TODO: implement setAudioTrack
+    ffiSetAudioTrack(player, index);
   }
 
   @override

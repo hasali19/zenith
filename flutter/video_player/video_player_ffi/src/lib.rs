@@ -12,9 +12,9 @@ use mpv::{
     mpv_event_id_MPV_EVENT_PROPERTY_CHANGE, mpv_event_id_MPV_EVENT_SHUTDOWN,
     mpv_event_id_MPV_EVENT_START_FILE, mpv_event_log_message, mpv_event_property,
     mpv_format_MPV_FORMAT_DOUBLE, mpv_format_MPV_FORMAT_FLAG, mpv_format_MPV_FORMAT_INT64,
-    mpv_format_MPV_FORMAT_STRING, mpv_get_property, mpv_handle, mpv_initialize,
-    mpv_observe_property, mpv_request_log_messages, mpv_set_option, mpv_set_property,
-    mpv_set_property_string, mpv_terminate_destroy, mpv_wait_event, mpv_wakeup,
+    mpv_format_MPV_FORMAT_STRING, mpv_get_property, mpv_get_property_string, mpv_handle,
+    mpv_initialize, mpv_observe_property, mpv_request_log_messages, mpv_set_option,
+    mpv_set_property, mpv_set_property_string, mpv_terminate_destroy, mpv_wait_event, mpv_wakeup,
 };
 use windows::Win32::Foundation::HWND;
 
@@ -259,14 +259,16 @@ pub unsafe extern "C" fn load(player: *const Player, url: *const i8, start_posit
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn set_audio_track(player: *const Player, index: i32) {
+    let property = format!("track-list/{index}/id\0");
+    let value = mpv_get_property_string((*player).ctx, property.as_ptr() as _);
+    mpv_set_property_string((*player).ctx, s!("aid"), value);
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn set_subtitle_file(player: *const Player, url: *const i8) {
     if url.is_null() {
-        mpv_set_property(
-            (*player).ctx,
-            s!("sid"),
-            mpv_format_MPV_FORMAT_STRING,
-            &mut s!("no") as *mut _ as _,
-        );
+        mpv_set_property_string((*player).ctx, s!("sid"), s!("no"));
     } else {
         mpv_command_async(
             (*player).ctx,
