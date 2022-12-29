@@ -134,6 +134,10 @@ class VideoControllerWindows extends VideoController {
   bool _playing = false;
 
   @override
+  // TODO: implement supportsAudioTrackSelection
+  bool get supportsAudioTrackSelection => false;
+
+  @override
   double get position {
     var position = _lastKnownPosition;
     if (_playing) {
@@ -187,6 +191,11 @@ class VideoControllerWindows extends VideoController {
   @override
   void setFit(BoxFit fit) {
     // TODO: implement setFit
+  }
+
+  @override
+  void setAudioTrack(int index) {
+    // TODO: implement setAudioTrack
   }
 
   @override
