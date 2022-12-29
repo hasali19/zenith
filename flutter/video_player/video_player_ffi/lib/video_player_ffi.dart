@@ -212,6 +212,8 @@ class VideoControllerWindows extends VideoController {
       final pUrl = track.src.toNativeUtf8();
       ffiSetSubtitleFile(player, pUrl);
       calloc.free(pUrl);
+    } else {
+      ffiSetSubtitleFile(player, Pointer.fromAddress(0));
     }
   }
 

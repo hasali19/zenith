@@ -12,9 +12,9 @@ use mpv::{
     mpv_event_id_MPV_EVENT_PROPERTY_CHANGE, mpv_event_id_MPV_EVENT_SHUTDOWN,
     mpv_event_id_MPV_EVENT_START_FILE, mpv_event_log_message, mpv_event_property,
     mpv_format_MPV_FORMAT_DOUBLE, mpv_format_MPV_FORMAT_FLAG, mpv_format_MPV_FORMAT_INT64,
-    mpv_get_property, mpv_handle, mpv_initialize, mpv_observe_property, mpv_request_log_messages,
-    mpv_set_option, mpv_set_property, mpv_set_property_string, mpv_terminate_destroy,
-    mpv_wait_event, mpv_wakeup,
+    mpv_format_MPV_FORMAT_STRING, mpv_get_property, mpv_handle, mpv_initialize,
+    mpv_observe_property, mpv_request_log_messages, mpv_set_option, mpv_set_property,
+    mpv_set_property_string, mpv_terminate_destroy, mpv_wait_event, mpv_wakeup,
 };
 use windows::Win32::Foundation::HWND;
 
@@ -64,6 +64,7 @@ pub unsafe extern "C" fn create_player(
     mpv_initialize(ctx);
 
     mpv_set_property_string(ctx, s!("alang"), s!("eng,en"));
+    mpv_set_property_string(ctx, s!("sid"), s!("no"));
 
     mpv_observe_property(ctx, 0, s!("duration"), mpv_format_MPV_FORMAT_DOUBLE);
     mpv_observe_property(ctx, 0, s!("pause"), mpv_format_MPV_FORMAT_FLAG);
@@ -259,11 +260,20 @@ pub unsafe extern "C" fn load(player: *const Player, url: *const i8, start_posit
 
 #[no_mangle]
 pub unsafe extern "C" fn set_subtitle_file(player: *const Player, url: *const i8) {
-    mpv_command_async(
-        (*player).ctx,
-        0,
-        &mut [s!("sub-add"), url, s!("cached"), std::ptr::null()] as *mut *const i8,
-    );
+    if url.is_null() {
+        mpv_set_property(
+            (*player).ctx,
+            s!("sid"),
+            mpv_format_MPV_FORMAT_STRING,
+            &mut s!("no") as *mut _ as _,
+        );
+    } else {
+        mpv_command_async(
+            (*player).ctx,
+            0,
+            &mut [s!("sub-add"), url, s!("cached"), std::ptr::null()] as *mut *const i8,
+        );
+    }
 }
 
 #[no_mangle]
