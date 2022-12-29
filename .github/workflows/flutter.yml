@@ -110,3 +110,16 @@ jobs:
         with:
           name: zenith-flutter-windows
           path: flutter/build/windows/runner/Release
+
+      - run: |
+          $env:MPV_DIR="$(pwd)\mpv"
+          cd flutter
+          $version = (cat .\pubspec.yaml | select-string -pattern '^version: (.+)').Matches[0].Groups[1].Value.Split('+')[0].Trim()
+          $version = "$version.$env:GITHUB_RUN_NUMBER"
+          echo "Building MSIX package version $version"
+          flutter pub run msix:create --version $version --publisher 'CN=hasali19, C=UK' --sign-msix false
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: zenith-flutter-windows-msix
+          path: flutter/build/windows/runner/Release/zenith.msix

@@ -63,6 +63,7 @@ dev_dependencies:
   build_runner: ^2.0.0
   freezed: ^2.2.1
   json_serializable: ^6.0.0
+  msix: ^3.7.0
   theme_tailor: ^1.0.8
 
 # For information on the generic Dart part of this file, see the
@@ -127,3 +128,9 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+msix_config:
+  display_name: Zenith
+  publisher_display_name: hasali19
+  identity_name: dev.hasali.zenith
+  logo_path: assets/zenith_icon.png
