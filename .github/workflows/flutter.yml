@@ -111,6 +111,8 @@ jobs:
           name: zenith-flutter-windows
           path: flutter/build/windows/runner/Release
 
+      - uses: ilammy/msvc-dev-cmd@v1
+
       - run: |
           $env:MPV_DIR="$(pwd)\mpv"
           cd flutter
@@ -118,6 +120,8 @@ jobs:
           $version = "$version.$env:GITHUB_RUN_NUMBER"
           echo "Building MSIX package version $version"
           flutter pub run msix:create --version $version --publisher 'CN=hasali19, C=UK' --sign-msix false
+          [System.IO.File]::WriteAllBytes("$(pwd)\cert.pfx", [Convert]::FromBase64String("${{ secrets.CODE_SIGNING_CERT_PFX }}"))
+          signtool sign /fd SHA256 /a /f "$(pwd)\cert.pfx" /p '${{ secrets.CODE_SIGNING_CERT_PASSWORD }}' .\build\windows\runner\Release\zenith.msix
 
       - uses: actions/upload-artifact@v3
         with:
