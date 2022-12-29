@@ -61,7 +61,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for migration in &migrations {
         if let MigrationKind::Rust = migration.kind {
             let name = &migration.name;
-            let path = migration.path.display();
+            let path = migration.path.to_str().unwrap().replace('\\', "/");
             writeln!(out, "#[path = \"../{path}\"]")?;
             writeln!(out, "mod _{name};")?;
         }
@@ -80,7 +80,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         match migration.kind {
             MigrationKind::Sql => {
-                let path = migration.path.display();
+                let path = migration.path.to_str().unwrap().replace('\\', "/");
                 writeln!(out, "    sqlx::query(include_str!(\"../{path}\"))",)?;
                 writeln!(out, "        .execute(conn)")?;
                 writeln!(out, "        .await?;")?;
@@ -106,7 +106,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if matches!(migration.path.file_name(), Some(name) if name == "mod.rs") {
             hash_dir(&mut hasher, migration.path.parent().unwrap())?;
         } else {
-            hasher.update(std::fs::read(&migration.path)?);
+            hasher.update(std::fs::read_to_string(&migration.path)?.replace("\r\n", "\n"));
         }
 
         let hash = hasher.finalize();
@@ -133,7 +133,7 @@ fn hash_dir(hasher: &mut Sha256, path: &Path) -> Result<(), Box<dyn std::error::
 
     for path in paths {
         if path.is_file() {
-            hasher.update(std::fs::read(path)?);
+            hasher.update(std::fs::read_to_string(&path)?.replace("\r\n", "\n"));
         } else if path.is_dir() {
             hash_dir(&mut *hasher, &path)?;
         }
