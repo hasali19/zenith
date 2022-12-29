@@ -20,8 +20,11 @@ class NavigationDrawer extends ConsumerWidget {
       child: ListView(
         children: [
           const DrawerHeader(
-            child: Image(
-              image: AssetImage('assets/zenith_icon.png'),
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Image(
+                image: AssetImage('assets/zenith_icon.png'),
+              ),
             ),
           ),
           if (servers.length > 1)
