@@ -12,9 +12,9 @@ use mpv::{
     mpv_event_id_MPV_EVENT_PROPERTY_CHANGE, mpv_event_id_MPV_EVENT_SHUTDOWN,
     mpv_event_id_MPV_EVENT_START_FILE, mpv_event_log_message, mpv_event_property,
     mpv_format_MPV_FORMAT_DOUBLE, mpv_format_MPV_FORMAT_FLAG, mpv_format_MPV_FORMAT_INT64,
-    mpv_format_MPV_FORMAT_STRING, mpv_get_property, mpv_get_property_string, mpv_handle,
-    mpv_initialize, mpv_observe_property, mpv_request_log_messages, mpv_set_option,
-    mpv_set_property, mpv_set_property_string, mpv_terminate_destroy, mpv_wait_event, mpv_wakeup,
+    mpv_get_property, mpv_get_property_string, mpv_handle, mpv_initialize, mpv_observe_property,
+    mpv_request_log_messages, mpv_set_option, mpv_set_property, mpv_set_property_string,
+    mpv_terminate_destroy, mpv_wait_event, mpv_wakeup,
 };
 use windows::Win32::Foundation::HWND;
 
