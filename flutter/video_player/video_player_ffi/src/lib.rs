@@ -13,7 +13,8 @@ use mpv::{
     mpv_event_id_MPV_EVENT_START_FILE, mpv_event_log_message, mpv_event_property,
     mpv_format_MPV_FORMAT_DOUBLE, mpv_format_MPV_FORMAT_FLAG, mpv_format_MPV_FORMAT_INT64,
     mpv_get_property, mpv_handle, mpv_initialize, mpv_observe_property, mpv_request_log_messages,
-    mpv_set_option, mpv_set_property, mpv_terminate_destroy, mpv_wait_event, mpv_wakeup,
+    mpv_set_option, mpv_set_property, mpv_set_property_string, mpv_terminate_destroy,
+    mpv_wait_event, mpv_wakeup,
 };
 use windows::Win32::Foundation::HWND;
 
@@ -61,6 +62,8 @@ pub unsafe extern "C" fn create_player(
 
     mpv_request_log_messages(ctx, s!("info"));
     mpv_initialize(ctx);
+
+    mpv_set_property_string(ctx, s!("alang"), s!("eng,en"));
 
     mpv_observe_property(ctx, 0, s!("duration"), mpv_format_MPV_FORMAT_DOUBLE);
     mpv_observe_property(ctx, 0, s!("pause"), mpv_format_MPV_FORMAT_FLAG);
