@@ -2,9 +2,12 @@ import 'dart:ffi';
 import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_native_view/flutter_native_view.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
+
+const _channel = MethodChannel('video_player_ffi');
 
 final DynamicLibrary _lib = DynamicLibrary.open("video_player_ffi.dll");
 final int Function(int nativePort, Pointer<Void> params) ffiCreatePlayer = _lib
@@ -40,6 +43,7 @@ class VideoPlayerFfi extends VideoPlayerPlatform {
   }
 
   bool _flutterNativeViewInitialized = false;
+  bool _isFullScreen = false;
 
   @override
   Future<VideoController> createController() async {
@@ -62,22 +66,26 @@ class VideoPlayerFfi extends VideoPlayerPlatform {
   @override
   bool get isWindowed => true;
 
-  @override
-  Future<void> enterFullscreen() {
-    // TODO: implement enterFullscreen
-    throw UnimplementedError();
+  Future<void> _setFullscreen(bool isFullscreen) async {
+    await _channel
+        .invokeMethod('setFullScreen', {'isFullScreen': isFullscreen});
+    await FlutterNativeView.setFullScreen(isFullscreen);
   }
 
   @override
-  Future<void> exitFullscreen() {
-    // TODO: implement exitFullscreen
-    throw UnimplementedError();
+  Future<void> enterFullscreen() async {
+    await _setFullscreen(true);
   }
 
   @override
-  Future<void> toggleFullscreen() {
-    // TODO: implement toggleFullscreen
-    throw UnimplementedError();
+  Future<void> exitFullscreen() async {
+    await _setFullscreen(false);
+  }
+
+  @override
+  Future<void> toggleFullscreen() async {
+    _isFullScreen = !_isFullScreen;
+    await _setFullscreen(_isFullScreen);
   }
 }
 
