@@ -84,10 +84,9 @@ jobs:
 
       - name: Install corrosion
         run: |
-          git clone https://github.com/corrosion-rs/corrosion.git
-          cmake -Scorrosion -Bbuild -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --config Release
-          cmake --install build --config Release
+          wget https://github.com/hasali19/corrosion-build/releases/download/autobuild-2022-12-29-17-03/corrosion-win.tar.gz
+          tar -xvf corrosion-win.tar.gz
+          mv corrosion-win 'C:\Program Files (x86)\Corrosion'
 
       - uses: ilammy/msvc-dev-cmd@v1
 
