@@ -78,8 +78,33 @@ jobs:
         with:
           channel: stable
 
-      - run: flutter build windows
-        working-directory: flutter
+      - name: Install wget
+        run: |
+          choco install wget
+
+      - name: Install corrosion
+        run: |
+          wget https://github.com/hasali19/corrosion-build/releases/download/autobuild-2022-12-29-17-03/corrosion-win.tar.gz
+          tar -xvf corrosion-win.tar.gz
+          mv corrosion-win 'C:\Program Files (x86)\Corrosion'
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Download mpv
+        run: |
+          wget https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-v3-20221113-git-2f74734.7z/download
+          7z x download -ompv
+          cd mpv
+          $exports = get-content mpv.def
+          echo "EXPORTS" > mpv.def
+          echo $exports >> mpv.def
+          lib /def:mpv.def /name:mpv-2.dll /out:mpv.lib /MACHINE:X64
+
+      - run: |
+          $env:MPV_DIR="$(pwd)\mpv"
+          ls -r $env:MPV_DIR
+          cd flutter
+          flutter build windows
 
       - uses: actions/upload-artifact@v3
         with:

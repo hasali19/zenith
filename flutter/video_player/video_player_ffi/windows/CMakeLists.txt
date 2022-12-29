@@ -4,6 +4,8 @@
 # customers of the plugin.
 cmake_minimum_required(VERSION 3.14)
 
+find_package(Corrosion REQUIRED)
+
 # Project-level configuration.
 set(PROJECT_NAME "video_player_ffi")
 project(${PROJECT_NAME} LANGUAGES CXX)
@@ -38,6 +40,8 @@ set_target_properties(${PLUGIN_NAME} PROPERTIES
   CXX_VISIBILITY_PRESET hidden)
 target_compile_definitions(${PLUGIN_NAME} PRIVATE FLUTTER_PLUGIN_IMPL)
 
+corrosion_import_crate(MANIFEST_PATH ../Cargo.toml)
+
 # Source include directories and library dependencies. Add any plugin-specific
 # dependencies here.
 target_include_directories(${PLUGIN_NAME} INTERFACE
@@ -48,6 +52,7 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE flutter flutter_wrapper_plugin)
 # This list could contain prebuilt libraries, or libraries created by an
 # external build triggered from this build file.
 set(video_player_ffi_bundled_libraries
-  ""
+  $<TARGET_FILE:video_player_ffi-shared>
+  $ENV{MPV_DIR}/mpv-2.dll
   PARENT_SCOPE
 )

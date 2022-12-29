@@ -209,6 +209,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.4"
+  flutter_native_view:
+    dependency: transitive
+    description:
+      path: "."
+      ref: fullscreen
+      resolved-ref: "6fcb72dfbfe6e97ba59f78fb18538016d3466849"
+      url: "https://github.com/hasali19/flutter_native_view.git"
+    source: git
+    version: "0.0.2"
   flutter_riverpod:
     dependency: "direct main"
     description:
