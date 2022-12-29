@@ -89,6 +89,8 @@ class _RenderHeaderLayout extends RenderBox
     if (constraints.maxWidth > 960) {
       backdropData.visible = false;
 
+      backdrop.layout(BoxConstraints.tight(Size.zero));
+
       final lColConstraints =
           BoxConstraints(minWidth: posterWidth, maxWidth: posterWidth);
 
