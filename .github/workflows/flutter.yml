@@ -127,3 +127,33 @@ jobs:
         with:
           name: zenith-flutter-windows-msix
           path: flutter/build/windows/runner/Release/zenith.msix
+
+  release:
+    runs-on: ubuntu-latest
+    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs:
+      - build_windows
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - run: |
+          ls -R artifacts
+          mkdir release_artifacts
+
+          echo "Preparing windows zip"
+          cd artifacts/zenith-flutter-windows
+          zip -r ../../release_artifacts/zenith-windows.zip *
+          cd ../..
+
+          echo "Preparing windows msix package"
+          cp artifacts/zenith-flutter-windows-msix/zenith.msix release_artifacts/zenith-windows.msix
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.CR_PAT }}"
+          automatic_release_tag: "flutter/latest"
+          prerelease: true
+          title: "Flutter Client - Latest Build"
+          files: release_artifacts/*
