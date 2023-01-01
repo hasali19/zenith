@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AppInstaller
+    xmlns="http://schemas.microsoft.com/appx/appinstaller/2018"
+    Version="%VERSION%"
+    Uri="https://github.com/hasali19/zenith/releases/download/flutter%2Flatest/zenith-windows.appinstaller">
+
+    <MainPackage
+        Name="Zenith"
+        Publisher="CN=hasali19, C=UK"
+        Version="%VERSION%"
+        Uri="https://github.com/hasali19/zenith/releases/download/flutter%2Flatest/zenith-windows.msix"/>
+
+    <UpdateSettings>
+        <OnLaunch HoursBetweenUpdateChecks="0"/>
+        <AutomaticBackgroundTask/>
+    </UpdateSettings>
+
+</AppInstaller>

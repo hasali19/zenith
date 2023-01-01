@@ -126,11 +126,18 @@ jobs:
           flutter pub run msix:create --version $version --publisher 'CN=hasali19, C=UK' --sign-msix false
           [System.IO.File]::WriteAllBytes("$(pwd)\cert.pfx", [Convert]::FromBase64String("${{ secrets.CODE_SIGNING_CERT_PFX }}"))
           signtool sign /fd SHA256 /a /f "$(pwd)\cert.pfx" /p '${{ secrets.CODE_SIGNING_CERT_PASSWORD }}' .\build\windows\runner\Release\zenith.msix
+          echo "Generating appinstaller"
+          (cat windows\zenith.appinstaller) -replace '%VERSION%', $version > zenith.appinstaller
 
       - uses: actions/upload-artifact@v3
         with:
           name: zenith-flutter-windows-msix
           path: flutter/build/windows/runner/Release/zenith.msix
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: zenith-flutter-windows-appinstaller
+          path: flutter/zenith.appinstaller
 
   release:
     runs-on: ubuntu-latest
@@ -138,6 +145,8 @@ jobs:
     needs:
       - build_windows
     steps:
+      - uses: actions/checkout@v3
+
       - uses: actions/download-artifact@v3
         with:
           path: artifacts
@@ -153,6 +162,7 @@ jobs:
 
           echo "Preparing windows msix package"
           cp artifacts/zenith-flutter-windows-msix/zenith.msix release_artifacts/zenith-windows.msix
+          cp artifacts/zenith-flutter-windows-appinstaller/zenith.appinstaller release_artifacts/zenith-windows.appinstaller
 
           echo "Preparing android apk"
           cp artifacts/zenith-flutter-android/app-release.apk release_artifacts/zenith.apk
