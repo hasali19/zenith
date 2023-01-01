@@ -154,6 +154,14 @@ jobs:
           echo "Preparing windows msix package"
           cp artifacts/zenith-flutter-windows-msix/zenith.msix release_artifacts/zenith-windows.msix
 
+          echo "Preparing android apk"
+          cp artifacts/zenith-flutter-android/app-release.apk release_artifacts/zenith.apk
+
+          echo "Preparing web zip"
+          cd artifacts/zenith-flutter-web
+          zip -r ../../release_artifacts/zenith-web.zip *
+          cd ../..
+
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.CR_PAT }}"
