@@ -134,3 +134,4 @@ msix_config:
   publisher_display_name: hasali19
   identity_name: dev.hasali.zenith
   logo_path: assets/zenith_icon.png
+  trim_logo: false
