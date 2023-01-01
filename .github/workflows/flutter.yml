@@ -158,6 +158,6 @@ jobs:
         with:
           repo_token: "${{ secrets.CR_PAT }}"
           automatic_release_tag: "flutter/latest"
-          prerelease: true
+          prerelease: false
           title: "Flutter Client - Latest Build"
           files: release_artifacts/*
