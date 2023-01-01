@@ -6,6 +6,10 @@ on:
     paths:
       - .github/workflows/android.yml
       - android/**
+    branches:
+      - '**'
+    tags-ignore:
+      - '*/latest'
 
 jobs:
   build_android:

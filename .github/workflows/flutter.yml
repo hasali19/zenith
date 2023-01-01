@@ -6,6 +6,10 @@ on:
     paths:
       - .github/workflows/flutter.yml
       - flutter/**
+    branches:
+      - '**'
+    tags-ignore:
+      - '*/latest'
 
 jobs:
   build_android:
