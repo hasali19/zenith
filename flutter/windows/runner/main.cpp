@@ -29,7 +29,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  if (!window.CreateAndShow(L"zenith_flutter", origin, size)) {
+  if (!window.CreateAndShow(L"Zenith", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
