@@ -98,52 +98,17 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
   @override
   void initState() {
     super.initState();
-    Wakelock.enable();
 
     _focusNode = FocusNode();
 
+    Wakelock.enable();
     platform.setPipEnabled(true);
-
-    VideoPlayerPlatform.instance.createController().then((controller) {
-      setState(() {
-        _controller = controller
-          ..load(
-            _api.getVideoUrl(widget.item.id),
-            subtitles.map((s) => subtitleFromApi(_api, s)).toList(),
-            widget.startPosition,
-          )
-          ..addListener(() {
-            setState(() {
-              _videoState = controller.state;
-            });
-
-            if (_isPaused != controller.paused) {
-              // video was paused or unpaused
-              _isPaused = controller.paused;
-              _showControls();
-            }
-          });
-        _progressController.init(controller);
-      });
-    });
-
-    _progressReportTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      final controller = _controller;
-      if (controller == null) return;
-
-      final position = controller.position.toInt();
-      if (kReleaseMode &&
-          controller.state == VideoState.active &&
-          controller.paused == false &&
-          position > 0) {
-        // TODO: Be smarter about progress reporting
-        // - report when playback state changes, after seeking, etc
-        // - maybe disable timer altogether when video is paused?
-        _api.updateProgress(widget.item.id, position);
-      }
-    });
-
     platform.setExtendIntoCutout(true);
+
+    _initController();
+
+    _progressReportTimer = Timer.periodic(
+        const Duration(seconds: 5), (timer) => _onProgressReporterTick());
 
     _showControls();
   }
@@ -157,6 +122,62 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
     _progressController.dispose();
     _controller?.dispose();
     platform.setPipEnabled(false);
+  }
+
+  Future<void> _initController() async {
+    final controller = await VideoPlayerPlatform.instance.createController();
+
+    final String? title;
+    final String? subtitle;
+    if (widget.item.type == api.MediaType.movie) {
+      title = widget.item.name;
+      subtitle = widget.item.startDate?.year.toString();
+    } else {
+      title = widget.item.getSeasonEpisode()! + ": " + widget.item.name;
+      subtitle = widget.item.grandparent!.name;
+    }
+
+    final video = VideoItem(
+      url: _api.getVideoUrl(widget.item.id),
+      subtitles: subtitles.map((s) => subtitleFromApi(_api, s)).toList(),
+      title: title,
+      subtitle: subtitle,
+      startPosition: widget.startPosition,
+    );
+
+    setState(() {
+      _controller = controller
+        ..load(video)
+        ..addListener(() {
+          setState(() {
+            _videoState = controller.state;
+          });
+
+          if (_isPaused != controller.paused) {
+            // video was paused or unpaused
+            _isPaused = controller.paused;
+            _showControls();
+          }
+        });
+    });
+
+    _progressController.init(controller);
+  }
+
+  void _onProgressReporterTick() {
+    final controller = _controller;
+    if (controller == null) return;
+
+    final position = controller.position.toInt();
+    if (kReleaseMode &&
+        controller.state == VideoState.active &&
+        controller.paused == false &&
+        position > 0) {
+      // TODO: Be smarter about progress reporting
+      // - report when playback state changes, after seeking, etc
+      // - maybe disable timer altogether when video is paused?
+      _api.updateProgress(widget.item.id, position);
+    }
   }
 
   void _toggleControls() {

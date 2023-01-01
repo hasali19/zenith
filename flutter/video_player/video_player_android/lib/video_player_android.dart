@@ -202,12 +202,11 @@ class _VideoController extends VideoController {
   }
 
   @override
-  void load(
-      String url, List<SubtitleTrack> subtitles, double startPosition) async {
+  void load(VideoItem item) async {
     await _methodChannel.invokeMethod("load", {
       "id": id,
-      "url": url,
-      "subtitles": subtitles
+      "url": item.url,
+      "subtitles": item.subtitles
           .map((track) => {
                 "id": track.id,
                 "src": track.src,
@@ -215,7 +214,7 @@ class _VideoController extends VideoController {
                 "language": track.language
               })
           .toList(),
-      "startPosition": (startPosition * 1000).toInt(),
+      "startPosition": (item.startPosition * 1000).toInt(),
     });
   }
 

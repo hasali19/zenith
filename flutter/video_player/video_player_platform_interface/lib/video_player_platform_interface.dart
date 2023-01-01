@@ -42,6 +42,22 @@ class SubtitleTrack {
   });
 }
 
+class VideoItem {
+  final String? title;
+  final String? subtitle;
+  final String url;
+  final List<SubtitleTrack> subtitles;
+  final double startPosition;
+
+  VideoItem({
+    required this.url,
+    required this.subtitles,
+    this.title,
+    this.subtitle,
+    this.startPosition = 0,
+  });
+}
+
 abstract class VideoController {
   VideoState get state;
   double get position;
@@ -51,7 +67,7 @@ abstract class VideoController {
   bool get loading;
   bool get supportsAudioTrackSelection;
 
-  void load(String url, List<SubtitleTrack> subtitles, double startPosition);
+  void load(VideoItem item);
   void play();
   void pause();
   void setAudioTrack(int index);

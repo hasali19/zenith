@@ -2,20 +2,19 @@
 
 mod window;
 
-use std::ffi::{c_char, c_void, CStr};
+use std::ffi::{c_void, CStr};
 use std::sync::atomic::{self, AtomicBool, AtomicU64};
 use std::sync::Arc;
 
 use mpv::{
     mpv_command, mpv_command_async, mpv_create, mpv_event_id_MPV_EVENT_END_FILE,
-    mpv_event_id_MPV_EVENT_GET_PROPERTY_REPLY, mpv_event_id_MPV_EVENT_LOG_MESSAGE,
-    mpv_event_id_MPV_EVENT_PLAYBACK_RESTART, mpv_event_id_MPV_EVENT_PROPERTY_CHANGE,
-    mpv_event_id_MPV_EVENT_SHUTDOWN, mpv_event_id_MPV_EVENT_START_FILE, mpv_event_log_message,
-    mpv_event_property, mpv_format_MPV_FORMAT_DOUBLE, mpv_format_MPV_FORMAT_FLAG,
-    mpv_format_MPV_FORMAT_INT64, mpv_format_MPV_FORMAT_STRING, mpv_get_property,
-    mpv_get_property_async, mpv_get_property_string, mpv_handle, mpv_initialize,
-    mpv_observe_property, mpv_request_log_messages, mpv_set_option, mpv_set_property,
-    mpv_set_property_string, mpv_terminate_destroy, mpv_wait_event, mpv_wakeup,
+    mpv_event_id_MPV_EVENT_LOG_MESSAGE, mpv_event_id_MPV_EVENT_PLAYBACK_RESTART,
+    mpv_event_id_MPV_EVENT_PROPERTY_CHANGE, mpv_event_id_MPV_EVENT_SHUTDOWN,
+    mpv_event_id_MPV_EVENT_START_FILE, mpv_event_log_message, mpv_event_property,
+    mpv_format_MPV_FORMAT_DOUBLE, mpv_format_MPV_FORMAT_FLAG, mpv_format_MPV_FORMAT_INT64,
+    mpv_get_property, mpv_get_property_string, mpv_handle, mpv_initialize, mpv_observe_property,
+    mpv_request_log_messages, mpv_set_option, mpv_set_property, mpv_set_property_string,
+    mpv_terminate_destroy, mpv_wait_event, mpv_wakeup,
 };
 use windows::core::HSTRING;
 use windows::h;
@@ -212,8 +211,6 @@ unsafe fn run_player_event_loop(player: Arc<Player>, native_port: i64) {
                         player.as_ref() as *const Player,
                         f64::from_bits(player.start_position.swap(0, atomic::Ordering::SeqCst)),
                     );
-
-                    mpv_get_property_async(ctx, 0, s!("media-title"), mpv_format_MPV_FORMAT_STRING);
                 }
             }
             mpv_event_id_MPV_EVENT_PROPERTY_CHANGE => {
@@ -261,29 +258,6 @@ unsafe fn run_player_event_loop(player: Arc<Player>, native_port: i64) {
                             },
                         );
                     }
-                }
-            }
-            mpv_event_id_MPV_EVENT_GET_PROPERTY_REPLY => {
-                let data = unsafe { (*event).data as *mut mpv_event_property };
-                let name = unsafe { CStr::from_ptr((*data).name) };
-                if name.to_bytes() == b"media-title" {
-                    if (*data).data.is_null() {
-                        continue;
-                    }
-
-                    let value = unsafe { CStr::from_ptr(*((*data).data as *const *const c_char)) };
-                    let title = value.to_str().unwrap();
-
-                    let media_display_updater =
-                        player.system_media_controls.DisplayUpdater().unwrap();
-
-                    media_display_updater
-                        .VideoProperties()
-                        .unwrap()
-                        .SetTitle(&HSTRING::from(title))
-                        .unwrap();
-
-                    media_display_updater.Update().unwrap();
                 }
             }
             mpv_event_id_MPV_EVENT_LOG_MESSAGE => {
@@ -384,7 +358,13 @@ pub unsafe extern "C" fn get_window_handle(player: *const Player) -> HWND {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn load(player: *const Player, url: *const i8, start_position: f64) {
+pub unsafe extern "C" fn load(
+    player: *const Player,
+    url: *const i8,
+    title: *const i8,
+    subtitle: *const i8,
+    start_position: f64,
+) {
     (*player)
         .start_position
         .store(start_position.to_bits(), atomic::Ordering::SeqCst);
@@ -393,6 +373,36 @@ pub unsafe extern "C" fn load(player: *const Player, url: *const i8, start_posit
         (*player).ctx,
         &mut [s!("loadfile"), url, std::ptr::null()] as *mut *const i8,
     );
+
+    let title = title
+        .as_ref()
+        .map(|p| CStr::from_ptr(p))
+        .and_then(|s| s.to_str().ok());
+
+    let subtitle = subtitle
+        .as_ref()
+        .map(|p| CStr::from_ptr(p))
+        .and_then(|s| s.to_str().ok());
+
+    let media_display_updater = (*player).system_media_controls.DisplayUpdater().unwrap();
+
+    if let Some(title) = title {
+        media_display_updater
+            .VideoProperties()
+            .unwrap()
+            .SetTitle(&HSTRING::from(title))
+            .unwrap();
+    }
+
+    if let Some(subtitle) = subtitle {
+        media_display_updater
+            .VideoProperties()
+            .unwrap()
+            .SetSubtitle(&HSTRING::from(subtitle))
+            .unwrap();
+    }
+
+    media_display_updater.Update().unwrap();
 }
 
 #[no_mangle]

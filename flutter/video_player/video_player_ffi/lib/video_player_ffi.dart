@@ -17,10 +17,13 @@ final int Function(int nativePort, Pointer<Void> params) ffiCreatePlayer = _lib
 final int Function(int player) ffiGetWindowHandle = _lib
     .lookup<NativeFunction<IntPtr Function(IntPtr)>>("get_window_handle")
     .asFunction();
-final void Function(int player, Pointer<Utf8> url, double startPosition)
-    ffiLoad = _lib
-        .lookup<NativeFunction<Void Function(IntPtr, Pointer<Utf8>, Double)>>(
-            "load")
+final void Function(int player, Pointer<Utf8> url, Pointer<Utf8> title,
+        Pointer<Utf8> subtitle, double startPosition) ffiLoad =
+    _lib
+        .lookup<
+            NativeFunction<
+                Void Function(IntPtr, Pointer<Utf8>, Pointer<Utf8>,
+                    Pointer<Utf8>, Double)>>("load")
         .asFunction();
 final void Function(int player, int index) ffiSetAudioTrack = _lib
     .lookup<NativeFunction<Void Function(IntPtr, Int32)>>("set_audio_track")
@@ -172,10 +175,18 @@ class VideoControllerWindows extends VideoController {
   double _duration = 0;
 
   @override
-  void load(String url, List<SubtitleTrack> subtitles, double startPosition) {
-    final pUrl = url.toNativeUtf8();
-    ffiLoad(player, pUrl, startPosition);
+  void load(VideoItem item) {
+    final pUrl = item.url.toNativeUtf8();
+    final pTitle = item.title == null
+        ? Pointer<Utf8>.fromAddress(0)
+        : item.title!.toNativeUtf8();
+    final pSubtitle = item.subtitle == null
+        ? Pointer<Utf8>.fromAddress(0)
+        : item.subtitle!.toNativeUtf8();
+    ffiLoad(player, pUrl, pTitle, pSubtitle, item.startPosition);
     calloc.free(pUrl);
+    calloc.free(pTitle);
+    calloc.free(pSubtitle);
     _state = VideoState.active;
   }
 

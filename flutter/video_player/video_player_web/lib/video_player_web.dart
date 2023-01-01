@@ -119,17 +119,13 @@ class VideoControllerWeb extends VideoController {
   bool _loading = true;
 
   @override
-  void load(
-    String url,
-    List<SubtitleTrack> subtitles,
-    double startPosition,
-  ) {
-    _element.src = url;
+  void load(VideoItem item) {
+    _element.src = item.url;
     _element.crossOrigin = "anonymous";
-    _element.currentTime = startPosition;
+    _element.currentTime = item.startPosition;
     _element.children.clear();
 
-    for (final subtitle in subtitles) {
+    for (final subtitle in item.subtitles) {
       _element.children.add(
         TrackElement()
           ..id = "subtitle-track-${subtitle.id}"
