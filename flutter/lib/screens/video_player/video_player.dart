@@ -240,16 +240,27 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
   }
 
   void _onKeyEvent(KeyEvent event) {
-    if (kIsWeb) {
-      // Browser handles keyboard shortcuts for toggling fullscreen mode itself
-      return;
-    }
-
     if (event is KeyUpEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.escape) {
-        VideoPlayerPlatform.instance.exitFullscreen();
-      } else if (event.logicalKey == LogicalKeyboardKey.f11) {
-        VideoPlayerPlatform.instance.toggleFullscreen();
+      if (event.logicalKey == LogicalKeyboardKey.space) {
+        _togglePaused();
+      } else if (!kIsWeb) {
+        // Browser handles keyboard shortcuts for toggling fullscreen mode itself
+        if (event.logicalKey == LogicalKeyboardKey.escape) {
+          VideoPlayerPlatform.instance.exitFullscreen();
+        } else if (event.logicalKey == LogicalKeyboardKey.f11) {
+          VideoPlayerPlatform.instance.toggleFullscreen();
+        }
+      }
+    }
+  }
+
+  void _togglePaused() {
+    final controller = _controller;
+    if (controller != null) {
+      if (controller.paused) {
+        controller.play();
+      } else {
+        controller.pause();
       }
     }
   }
