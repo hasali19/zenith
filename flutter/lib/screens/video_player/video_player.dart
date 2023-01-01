@@ -337,7 +337,9 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
   }
 
   Future<bool> _onWillPop() async {
-    if (!VideoPlayerPlatform.instance.isWindowed) {
+    if (VideoPlayerPlatform.instance.isWindowed) {
+      await VideoPlayerPlatform.instance.exitFullscreen();
+    } else {
       await platform.setExtendIntoCutout(false);
       await platform.setSystemBarsVisible(true);
     }
