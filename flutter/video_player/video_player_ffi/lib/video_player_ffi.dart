@@ -70,6 +70,7 @@ class VideoPlayerFfi extends VideoPlayerPlatform {
   bool get isWindowed => true;
 
   Future<void> _setFullscreen(bool isFullscreen) async {
+    _isFullScreen = isFullscreen;
     await _channel
         .invokeMethod('setFullScreen', {'isFullScreen': isFullscreen});
     await FlutterNativeView.setFullScreen(isFullscreen);
@@ -87,8 +88,7 @@ class VideoPlayerFfi extends VideoPlayerPlatform {
 
   @override
   Future<void> toggleFullscreen() async {
-    _isFullScreen = !_isFullScreen;
-    await _setFullscreen(_isFullScreen);
+    await _setFullscreen(!_isFullScreen);
   }
 }
 

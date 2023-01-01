@@ -5,6 +5,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
@@ -78,6 +79,8 @@ class _VideoPlayer extends ConsumerStatefulWidget {
 class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
   api.ZenithApiClient get _api => ref.watch(api.apiProvider);
 
+  late FocusNode _focusNode;
+
   VideoController? _controller;
   bool _shouldShowControls = true;
 
@@ -96,6 +99,8 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
   void initState() {
     super.initState();
     Wakelock.enable();
+
+    _focusNode = FocusNode();
 
     platform.setPipEnabled(true);
 
@@ -194,39 +199,59 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
   }
 
   Widget _buildPlayer(VideoController controller) {
-    return Listener(
-      behavior: HitTestBehavior.opaque,
-      onPointerHover: (e) {
-        if (e.kind == PointerDeviceKind.mouse) {
-          _showControls();
-        }
-      },
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: VideoPlayerPlatform.instance.buildView(_controller!),
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable: platform.isInPipMode,
-            builder: (context, isInPipMode, child) {
-              if (isInPipMode) return const SizedBox.expand();
-              return GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: _toggleControls,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: child,
+    return KeyboardListener(
+      focusNode: _focusNode,
+      autofocus: true,
+      onKeyEvent: _onKeyEvent,
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerHover: (e) {
+          if (e.kind == PointerDeviceKind.mouse) {
+            _showControls();
+          }
+        },
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: VideoPlayerPlatform.instance.buildView(_controller!),
+            ),
+            ValueListenableBuilder<bool>(
+              valueListenable: platform.isInPipMode,
+              builder: (context, isInPipMode, child) {
+                if (isInPipMode) return const SizedBox.expand();
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: _toggleControls,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    ),
+                    child: _buildUi(),
                   ),
-                  child: _buildUi(),
-                ),
-              );
-            },
-          )
-        ],
+                );
+              },
+            )
+          ],
+        ),
       ),
     );
+  }
+
+  void _onKeyEvent(KeyEvent event) {
+    if (kIsWeb) {
+      // Browser handles keyboard shortcuts for toggling fullscreen mode itself
+      return;
+    }
+
+    if (event is KeyUpEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.escape) {
+        VideoPlayerPlatform.instance.exitFullscreen();
+      } else if (event.logicalKey == LogicalKeyboardKey.f11) {
+        VideoPlayerPlatform.instance.toggleFullscreen();
+      }
+    }
   }
 
   Widget _buildUi() {
