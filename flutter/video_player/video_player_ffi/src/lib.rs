@@ -83,6 +83,12 @@ pub unsafe extern "C" fn create_player(
 
     mpv_set_property_string(ctx, s!("alang"), s!("eng,en"));
     mpv_set_property_string(ctx, s!("sid"), s!("no"));
+    mpv_set_property(
+        ctx,
+        s!("sub-font-size"),
+        mpv_format_MPV_FORMAT_INT64,
+        &mut 40 as *mut _ as _,
+    );
 
     mpv_observe_property(ctx, 0, s!("duration"), mpv_format_MPV_FORMAT_DOUBLE);
     mpv_observe_property(ctx, 0, s!("pause"), mpv_format_MPV_FORMAT_FLAG);
