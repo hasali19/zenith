@@ -35,20 +35,24 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
               height = constraints.maxHeight;
               width = height * aspectRatio;
             }
-            return FittedBox(
-              fit: fit,
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: width,
-                height: height,
-                child: Stack(children: [
-                  Texture(textureId: controller.id),
-                  SubtitleView(
-                    events: controller._subsController.stream,
-                    textScale: width / 730,
+            return Stack(
+              children: [
+                Positioned.fill(
+                  child: FittedBox(
+                    fit: fit,
+                    alignment: Alignment.center,
+                    child: SizedBox(
+                      width: width,
+                      height: height,
+                      child: Texture(textureId: controller.id),
+                    ),
                   ),
-                ]),
-              ),
+                ),
+                SubtitleView(
+                  events: controller._subsController.stream,
+                  textScale: width / 730,
+                ),
+              ],
             );
           }),
         ),
