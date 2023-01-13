@@ -464,6 +464,7 @@ pub async fn get_continue_watching(
             WHERE u.position > (0.05 * v.duration) AND u.last_watched_at IS NOT NULL
             GROUP BY show.id
         )
+        WHERE id IS NOT NULL
         ORDER BY last_watched_at DESC
     ".to_owned();
 
