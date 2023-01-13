@@ -373,6 +373,10 @@ class ZenithApiClient {
     }
   }
 
+  Future<void> deleteMediaItem(int id) async {
+    await http.delete(Uri.parse("$_baseUrl/api/items/$id"));
+  }
+
   Future<List<MediaItem>> fetchContinueWatching() async {
     final res =
         await http.get(Uri.parse('$_baseUrl/api/items/continue_watching'));

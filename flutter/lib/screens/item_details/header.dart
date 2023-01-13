@@ -1,3 +1,4 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -251,6 +252,20 @@ class HeaderContent extends ConsumerWidget {
                 Navigator.pop(context);
                 await api.refreshMetadata(model.item.id);
                 refresh();
+              },
+            ),
+            ListTile(
+              iconColor: Colors.red,
+              textColor: Colors.red,
+              leading: const Icon(Icons.delete),
+              title: const Text("Delete"),
+              onTap: () async {
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  builder: (context) =>
+                      _DeleteConfirmationDialog(id: model.item.id),
+                );
               },
             ),
           ],
@@ -571,6 +586,51 @@ class StreamDropdownButton<T> extends StatelessWidget {
           ? ((context) =>
               items.map((e) => selectedItemBuilder!(context, e)).toList())
           : null,
+    );
+  }
+}
+
+class _DeleteConfirmationDialog extends ConsumerStatefulWidget {
+  final int id;
+
+  const _DeleteConfirmationDialog({required this.id});
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _DeleteConfirmationDialogState();
+}
+
+class _DeleteConfirmationDialogState
+    extends ConsumerState<_DeleteConfirmationDialog> {
+  bool _isInProgress = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async => !_isInProgress,
+      child: AlertDialog(
+        title: const Text("Delete item"),
+        content: const Text(
+            "Are you sure you want to permanently delete this item. Files will be removed."),
+        actions: [
+          TextButton(
+            child: const Text("Delete"),
+            onPressed: _isInProgress
+                ? null
+                : () async {
+                    setState(() => _isInProgress = true);
+                    await ref.read(apiProvider).deleteMediaItem(widget.id);
+                    setState(() => _isInProgress = false);
+                    Navigator.pop(context);
+                    context.router.pop();
+                  },
+          ),
+          TextButton(
+            child: const Text("Cancel"),
+            onPressed: _isInProgress ? null : () => Navigator.pop(context),
+          ),
+        ],
+      ),
     );
   }
 }
