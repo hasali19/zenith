@@ -93,12 +93,23 @@ async fn set_match(
         MediaItemType::Episode => {
             let tmdb_id = match body.tmdb_id {
                 Some(tmdb_id) => tmdb_id,
-                None => item
-                    .metadata_provider_key
-                    .as_deref()
-                    .and_then(|key| key.split(':').next())
-                    .and_then(|id| id.parse().ok())
-                    .or_bad_request("tmdb_id required since episode is unmatched")?,
+                None => {
+                    let tmdb_id = item
+                        .metadata_provider_key
+                        .as_deref()
+                        .and_then(|key| key.split(':').next())
+                        .and_then(|id| id.parse().ok());
+
+                    match tmdb_id {
+                        Some(tmdb_id) => tmdb_id,
+                        None => db::items::get(&mut conn, item.parent.unwrap().id)
+                            .await?
+                            .unwrap()
+                            .metadata_provider_key
+                            .and_then(|key| key.parse().ok())
+                            .or_bad_request("tmdb_id required since show is unmatched")?,
+                    }
+                }
             };
 
             format!(
