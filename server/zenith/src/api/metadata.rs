@@ -102,7 +102,7 @@ async fn set_match(
 
                     match tmdb_id {
                         Some(tmdb_id) => tmdb_id,
-                        None => db::items::get(&mut conn, item.parent.unwrap().id)
+                        None => db::items::get(&mut conn, item.grandparent.unwrap().id)
                             .await?
                             .unwrap()
                             .metadata_provider_key
