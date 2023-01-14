@@ -1,0 +1,4 @@
+FROM caddy:latest
+ARG BUILD_PATH
+COPY $BUILD_PATH /www
+CMD ["caddy", "file-server", "--root", "/www"]

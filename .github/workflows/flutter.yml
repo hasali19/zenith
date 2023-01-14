@@ -54,7 +54,7 @@ jobs:
           name: zenith-flutter-web
           path: flutter/build/web
 
-  deploy_web:
+  deploy_web_netlify:
     runs-on: ubuntu-latest
     if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
     needs:
@@ -72,6 +72,47 @@ jobs:
         env:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+  deploy_web_docker:
+    runs-on: ubuntu-latest
+    if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
+    needs:
+      - build_web
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: zenith-flutter-web
+          path: zenith-flutter-web
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./deploy/Dockerfile.web
+          platforms: linux/amd64,linux/arm64
+          build-args: BUILD_PATH=zenith-flutter-web
+          push: true
+          tags: |
+            ghcr.io/hasali19/zenith-web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   build_windows:
     runs-on: windows-latest
