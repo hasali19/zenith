@@ -24,7 +24,7 @@ jobs:
       - run: |
           echo $ANDROID_KEYSTORE | base64 -d > keystore.jks
           export GIT_COMMIT_HASH=$(git rev-parse HEAD)
-          flutter build apk --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH
+          flutter build apk --build-number=$GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH
         working-directory: flutter
         env:
           ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
@@ -46,7 +46,7 @@ jobs:
         with:
           channel: stable
 
-      - run: flutter build web --web-renderer canvaskit --dart-define=DEFAULT_SERVER=
+      - run: flutter build web --web-renderer canvaskit --build-number=$GITHUB_RUN_NUMBER --dart-define=DEFAULT_SERVER=
         working-directory: flutter
 
       - uses: actions/upload-artifact@v3
@@ -149,7 +149,7 @@ jobs:
           $env:MPV_DIR="$(pwd)\mpv"
           ls -r $env:MPV_DIR
           cd flutter
-          flutter build windows
+          flutter build windows --build-number=$env:GITHUB_RUN_NUMBER
 
       - uses: actions/upload-artifact@v3
         with:
