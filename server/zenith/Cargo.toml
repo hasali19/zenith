@@ -93,7 +93,7 @@ features = ["v4"]
 assert-json-diff = "2.0"
 hyper = "0.14"
 inventory = "0.3"
-libtest-mimic = "0.5"
+libtest-mimic = "0.6"
 test-macros = { path = "../test-macros" }
 tower = "0.4"
 
