@@ -40,59 +40,34 @@ class _StubUpdater implements Updater {
 class _AndroidUpdater implements Updater {
   @override
   Future<Update?> checkForUpdates() async {
+    if (_gitHash == null) {
+      return null;
+    }
+
     final github = GitHub();
-    final runs = await github
-        .getActionsWorkflowRuns(8229171)
-        .then((res) => res.workflowRuns);
+    final ref = await github.getGitRef("tags/flutter/latest");
 
-    ActionsWorkflowRun? latestRun;
-    for (final run in runs) {
-      if (run.status == "completed" && run.conclusion == "success") {
-        latestRun = run;
-        break;
-      }
-    }
-
-    if (latestRun == null ||
-        latestRun.headBranch != "master" ||
-        _gitHash == null ||
-        _gitHash == latestRun.headSha) {
+    if (_gitHash == ref.object.sha) {
       return null;
     }
 
-    final artifacts = await github
-        .getActionsWorkflowRunArtifacts(latestRun.id)
-        .then((res) => res.artifacts);
-
-    ActionsWorkflowRunArtifact? androidArtifact;
-    for (final artifact in artifacts) {
-      if (artifact.name == "zenith-flutter-android" && !artifact.expired) {
-        androidArtifact = artifact;
-      }
-    }
-
-    if (androidArtifact == null) {
-      return null;
-    }
-
-    return _AndroidUpdate(androidArtifact);
+    return _AndroidUpdate();
   }
 }
 
 class _AndroidUpdate implements Update {
-  static const platform = MethodChannel("zenith.hasali.dev/updater");
-
-  _AndroidUpdate(this.artifact);
-
-  final ActionsWorkflowRunArtifact artifact;
+  static const _platform = MethodChannel("zenith.hasali.dev/updater");
 
   @override
   Future<void> install(ProgressHandler onProgress) async {
     final completer = Completer();
 
-    await platform.invokeMethod("install", {"artifactId": artifact.id});
+    await _platform.invokeMethod("install", {
+      "url":
+          "https://github.com/hasali19/zenith/releases/download/flutter/latest/zenith.apk"
+    });
 
-    platform.setMethodCallHandler((call) async {
+    _platform.setMethodCallHandler((call) async {
       if (call.method == "install/onProgress") {
         onProgress(call.arguments);
       }

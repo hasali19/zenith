@@ -60,9 +60,9 @@ class MainActivity : FlutterActivity() {
         when (call.method) {
             "install" -> {
                 try {
-                    val artifactId: Int = call.argument("artifactId")
-                        ?: return result.error("missing_param", "artifactId is required", null)
-                    install(artifactId)
+                    val url: String = call.argument("url")
+                        ?: return result.error("missing_param", "url is required", null)
+                    install(url)
                     result.success(null)
                 } catch (ex: Exception) {
                     result.error(ex.javaClass.canonicalName!!, ex.message, null)
@@ -119,10 +119,10 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun install(artifactId: Int) {
+    private fun install(url: String) {
         executor.execute {
             AppUpdater(this)
-                .downloadAndInstall("https://nightly.link/hasali19/zenith/actions/artifacts/$artifactId.zip") {
+                .downloadAndInstall(url) {
                     runOnUiThread {
                         updaterChannel.invokeMethod("install/onProgress", it)
                     }

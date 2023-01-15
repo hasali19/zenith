@@ -10,13 +10,10 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.net.URL
-import java.util.zip.ZipInputStream
 
 class AppUpdater(private val context: Context) {
     fun downloadAndInstall(url: String, onProgress: (Float) -> Unit) {
         val result = ByteArrayOutputStream()
-
-
         val stream = BufferedInputStream(URL(url).openStream())
         val buffer = ByteArray(8192)
         var total = 0f
@@ -28,12 +25,6 @@ class AppUpdater(private val context: Context) {
             onProgress(total / 1024f / 1024f)
         }
 
-        val zip = ZipInputStream(ByteArrayInputStream(result.toByteArray()))
-        val content = ByteArrayOutputStream()
-
-        zip.nextEntry
-        zip.copyTo(content)
-
         var session: PackageInstaller.Session? = null
         try {
             val installer = context.packageManager.packageInstaller
@@ -44,7 +35,7 @@ class AppUpdater(private val context: Context) {
 
             session = installer.openSession(sessionId)
             session.openWrite("package", 0, -1).use { output ->
-                ByteArrayInputStream(content.toByteArray()).copyTo(output)
+                ByteArrayInputStream(result.toByteArray()).copyTo(output)
                 session.fsync(output)
             }
 

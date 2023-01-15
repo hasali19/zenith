@@ -6,73 +6,35 @@ import 'package:json_annotation/json_annotation.dart';
 part 'github.g.dart';
 
 @JsonSerializable(fieldRename: FieldRename.snake)
-class GetActionsWorkflowRunsResponse {
-  final List<ActionsWorkflowRun> workflowRuns;
+class GitReference {
+  final GitReferenceObject object;
 
-  GetActionsWorkflowRunsResponse({required this.workflowRuns});
+  GitReference({
+    required this.object,
+  });
 
-  factory GetActionsWorkflowRunsResponse.fromJson(Map<String, dynamic> json) =>
-      _$GetActionsWorkflowRunsResponseFromJson(json);
+  factory GitReference.fromJson(Map<String, dynamic> json) =>
+      _$GitReferenceFromJson(json);
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)
-class ActionsWorkflowRun {
-  final int id;
-  final String status;
-  final String? conclusion;
-  final String headSha;
-  final String headBranch;
+class GitReferenceObject {
+  final String sha;
+  final String type;
 
-  ActionsWorkflowRun({
-    required this.id,
-    required this.status,
-    required this.conclusion,
-    required this.headSha,
-    required this.headBranch,
+  GitReferenceObject({
+    required this.sha,
+    required this.type,
   });
 
-  factory ActionsWorkflowRun.fromJson(Map<String, dynamic> json) =>
-      _$ActionsWorkflowRunFromJson(json);
-}
-
-@JsonSerializable(fieldRename: FieldRename.snake)
-class GetActionsWorkflowRunArtifactsResponse {
-  List<ActionsWorkflowRunArtifact> artifacts;
-
-  GetActionsWorkflowRunArtifactsResponse({required this.artifacts});
-
-  factory GetActionsWorkflowRunArtifactsResponse.fromJson(
-          Map<String, dynamic> json) =>
-      _$GetActionsWorkflowRunArtifactsResponseFromJson(json);
-}
-
-@JsonSerializable(fieldRename: FieldRename.kebab)
-class ActionsWorkflowRunArtifact {
-  int id;
-  String name;
-  bool expired;
-
-  ActionsWorkflowRunArtifact({
-    required this.id,
-    required this.name,
-    required this.expired,
-  });
-
-  factory ActionsWorkflowRunArtifact.fromJson(Map<String, dynamic> json) =>
-      _$ActionsWorkflowRunArtifactFromJson(json);
+  factory GitReferenceObject.fromJson(Map<String, dynamic> json) =>
+      _$GitReferenceObjectFromJson(json);
 }
 
 class GitHub {
-  Future<GetActionsWorkflowRunsResponse> getActionsWorkflowRuns(
-      int workflowId) async {
-    return GetActionsWorkflowRunsResponse.fromJson(await _get(Uri.parse(
-        'https://api.github.com/repos/hasali19/zenith/actions/workflows/$workflowId/runs')));
-  }
-
-  Future<GetActionsWorkflowRunArtifactsResponse> getActionsWorkflowRunArtifacts(
-      int runId) async {
-    return GetActionsWorkflowRunArtifactsResponse.fromJson(await _get(Uri.parse(
-        "https://api.github.com/repos/hasali19/zenith/actions/runs/$runId/artifacts")));
+  Future<GitReference> getGitRef(String ref) async {
+    return GitReference.fromJson(await _get(Uri.parse(
+        'https://api.github.com/repos/hasali19/zenith/git/ref/$ref')));
   }
 
   Future<dynamic> _get(Uri uri) async {
