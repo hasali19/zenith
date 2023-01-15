@@ -81,11 +81,9 @@ class _$AppRouter extends RootStackRouter {
       );
     },
     SettingsScreenRoute.name: (routeData) {
-      final args = routeData.argsAs<SettingsScreenRouteArgs>(
-          orElse: () => const SettingsScreenRouteArgs());
       return MaterialPageX<dynamic>(
         routeData: routeData,
-        child: SettingsScreen(key: args.key),
+        child: const SettingsScreen(),
       );
     },
     HomeScreenRoute.name: (routeData) {
@@ -309,26 +307,14 @@ class SetupScreenRoute extends PageRouteInfo<void> {
 
 /// generated route for
 /// [SettingsScreen]
-class SettingsScreenRoute extends PageRouteInfo<SettingsScreenRouteArgs> {
-  SettingsScreenRoute({Key? key})
+class SettingsScreenRoute extends PageRouteInfo<void> {
+  const SettingsScreenRoute()
       : super(
           SettingsScreenRoute.name,
           path: '/settings',
-          args: SettingsScreenRouteArgs(key: key),
         );
 
   static const String name = 'SettingsScreenRoute';
-}
-
-class SettingsScreenRouteArgs {
-  const SettingsScreenRouteArgs({this.key});
-
-  final Key? key;
-
-  @override
-  String toString() {
-    return 'SettingsScreenRouteArgs{key: $key}';
-  }
 }
 
 /// generated route for

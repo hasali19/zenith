@@ -1,11 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:zenith/update_dialog.dart';
 import 'package:zenith/updater.dart';
 
-class SettingsScreen extends StatelessWidget {
-  SettingsScreen({Key? key}) : super(key: key);
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({Key? key}) : super(key: key);
 
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
   final _updater = Updater();
+
+  PackageInfo? _packageInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    () async {
+      final info = await PackageInfo.fromPlatform();
+      setState(() {
+        _packageInfo = info;
+      });
+    }();
+  }
 
   _checkForUpdates(BuildContext context) async {
     final update = await _updater.checkForUpdates();
@@ -34,7 +53,15 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(title: const Text("Settings")),
       body: ListView(children: [
         ListTile(
-          title: const Text("Revision"),
+          title: const Text("Version"),
+          subtitle: Text(_packageInfo?.version ?? ""),
+        ),
+        ListTile(
+          title: const Text("Build number"),
+          subtitle: Text(_packageInfo?.buildNumber ?? ""),
+        ),
+        ListTile(
+          title: const Text("Commit"),
           subtitle: Text(Updater.revision ?? "Unknown"),
         ),
         ListTile(
