@@ -46,7 +46,9 @@ jobs:
         with:
           channel: stable
 
-      - run: flutter build web --web-renderer canvaskit --build-number=$GITHUB_RUN_NUMBER --dart-define=DEFAULT_SERVER=
+      - run: |
+          export GIT_COMMIT_HASH=$(git rev-parse HEAD)
+          flutter build web --web-renderer canvaskit --build-number=$GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH --dart-define=DEFAULT_SERVER=
         working-directory: flutter
 
       - uses: actions/upload-artifact@v3
@@ -149,7 +151,8 @@ jobs:
           $env:MPV_DIR="$(pwd)\mpv"
           ls -r $env:MPV_DIR
           cd flutter
-          flutter build windows --build-number=$env:GITHUB_RUN_NUMBER
+          $env:GIT_COMMIT_HASH=(git rev-parse HEAD)
+          flutter build windows --build-number=$env:GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH
 
       - uses: actions/upload-artifact@v3
         with:
