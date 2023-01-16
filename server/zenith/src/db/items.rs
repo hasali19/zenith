@@ -396,7 +396,7 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
                 acc.push(v);
                 Some(acc)
             } else {
-                Some(vec![])
+                Some(vec![v])
             }
         });
 
