@@ -18,6 +18,7 @@ pub struct MediaItem {
     pub thumbnail: Option<String>,
     pub age_rating: Option<String>,
     pub genres: Vec<String>,
+    pub trailer: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parent: Option<Parent>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -115,6 +116,7 @@ impl From<db::items::MediaItem> for MediaItem {
             thumbnail: item.thumbnail.map(utils::get_image_url),
             age_rating: item.age_rating,
             genres: item.genres,
+            trailer: item.trailer,
             parent: item.parent.map(|parent| Parent {
                 id: parent.id,
                 index: parent.index,

@@ -3,7 +3,10 @@ use itertools::Itertools;
 use sqlx::SqliteConnection;
 use thiserror::Error;
 use time::{format_description, Date, OffsetDateTime, Time};
-use tmdb::{MovieReleaseDatesResult, MovieSearchQuery, TmdbClient, TvShowSearchQuery};
+use tmdb::{
+    MovieReleaseDatesResult, MovieSearchQuery, TmdbClient, TvShowSearchQuery, Video, VideoSite,
+    VideoType,
+};
 use tokio::sync::mpsc;
 
 use crate::db::items::MediaItem;
@@ -298,6 +301,8 @@ async fn refresh_movie_metadata(
                 .map(|it| it.certification.to_owned())
         });
 
+    let trailer = get_trailer(&metadata.videos.results);
+
     let data = db::items::UpdateMetadata {
         name: Some(&metadata.title),
         overview: Some(metadata.overview.as_deref()),
@@ -308,6 +313,7 @@ async fn refresh_movie_metadata(
         thumbnail: None,
         age_rating: Some(age_rating.as_deref()),
         genres: Some(&genres),
+        trailer: Some(trailer.as_deref()),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
         metadata_provider: Some(Some(MetadataProvider::Tmdb)),
@@ -384,6 +390,8 @@ async fn refresh_tv_show_metadata(
                 .map(|it| it.rating.to_owned())
         });
 
+    let trailer = get_trailer(&metadata.videos.results);
+
     let data = db::items::UpdateMetadata {
         name: Some(&metadata.name),
         start_date: Some(first_air_date),
@@ -394,6 +402,7 @@ async fn refresh_tv_show_metadata(
         backdrop: Some(backdrop),
         age_rating: Some(age_rating.as_deref()),
         genres: Some(&genres),
+        trailer: Some(trailer.as_deref()),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
         metadata_provider: Some(Some(MetadataProvider::Tmdb)),
@@ -454,6 +463,8 @@ async fn refresh_tv_season_metadata(
         src: poster,
     });
 
+    let trailer = get_trailer(&metadata.videos.results);
+
     let metadata_key = format!("{show_id}:{season_number}");
     let data = db::items::UpdateMetadata {
         name: metadata.name.as_deref(),
@@ -465,6 +476,7 @@ async fn refresh_tv_season_metadata(
         thumbnail: None,
         age_rating: None,
         genres: None,
+        trailer: Some(trailer.as_deref()),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
         metadata_provider: Some(Some(MetadataProvider::Tmdb)),
@@ -539,6 +551,8 @@ async fn refresh_tv_episode_metadata(
         src: thumbnail,
     });
 
+    let trailer = get_trailer(&metadata.videos.results);
+
     let metadata_key = format!("{show_id}:{season_number}:{episode_number}");
     let data = db::items::UpdateMetadata {
         name: metadata.name.as_deref(),
@@ -550,6 +564,7 @@ async fn refresh_tv_episode_metadata(
         thumbnail: Some(thumbnail),
         age_rating: None,
         genres: None,
+        trailer: Some(trailer.as_deref()),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
         metadata_provider: Some(Some(MetadataProvider::Tmdb)),
@@ -559,4 +574,22 @@ async fn refresh_tv_episode_metadata(
     db::items::update_metadata(&mut *db, item.id, data).await?;
 
     Ok(())
+}
+
+fn get_trailer(trailers: &[Video]) -> Option<String> {
+    let trailers = || {
+        trailers
+            .iter()
+            .filter(|it| it.video_type == VideoType::Trailer && it.site == VideoSite::YouTube)
+    };
+
+    trailers()
+        .filter(|t| t.official)
+        .next()
+        .or_else(|| trailers().next())
+        .map(build_youtube_url)
+}
+
+fn build_youtube_url(video: &tmdb::Video) -> String {
+    format!("https://www.youtube.com/watch?v={}", video.key)
 }

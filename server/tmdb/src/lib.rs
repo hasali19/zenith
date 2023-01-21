@@ -79,6 +79,7 @@ pub struct MovieResponse {
     pub genres: Vec<Genre>,
     pub external_ids: ExternalIds,
     pub release_dates: MovieReleaseDatesResults,
+    pub videos: VideoResults,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -110,6 +111,7 @@ pub struct TvShowResponse {
     pub genres: Vec<Genre>,
     pub external_ids: ExternalIds,
     pub content_ratings: TvShowContentRatings,
+    pub videos: VideoResults,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -131,6 +133,7 @@ pub struct TvSeasonResponse {
     pub overview: Option<String>,
     pub poster_path: Option<String>,
     pub external_ids: ExternalIds,
+    pub videos: VideoResults,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -141,6 +144,7 @@ pub struct TvEpisodeResponse {
     pub overview: Option<String>,
     pub external_ids: ExternalIds,
     pub images: TvEpisodeImages,
+    pub videos: VideoResults,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -154,6 +158,49 @@ pub struct Image {
     pub file_path: String,
     pub width: i32,
     pub height: i32,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct VideoResults {
+    pub results: Vec<Video>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct Video {
+    pub id: String,
+    #[serde(rename = "type")]
+    pub video_type: VideoType,
+    pub site: VideoSite,
+    pub key: String,
+    pub name: Option<String>,
+    pub size: Option<i32>,
+    #[serde(default)]
+    pub official: bool,
+    pub published_at: Option<String>,
+    pub iso_639_1: Option<String>,
+    pub iso_3166_1: Option<String>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+pub enum VideoType {
+    #[serde(rename = "Behind the Scenes")]
+    BehindTheScenes,
+    Bloopers,
+    Clip,
+    Featurette,
+    Recap,
+    Teaser,
+    Trailer,
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Deserialize)]
+pub enum VideoSite {
+    #[serde(rename = "YouTube")]
+    YouTube,
+    #[serde(other)]
+    Unknown,
 }
 
 impl TmdbClient {
@@ -211,21 +258,21 @@ impl TmdbClient {
     pub async fn get_movie(&self, id: i32) -> eyre::Result<MovieResponse> {
         let mut url = self.url(&format!("movie/{id}"));
         url.query_pairs_mut()
-            .append_pair("append_to_response", "external_ids,release_dates");
+            .append_pair("append_to_response", "external_ids,release_dates,videos");
         self.get_json(url).await
     }
 
     pub async fn get_tv_show(&self, id: i32) -> eyre::Result<TvShowResponse> {
         let mut url = self.url(&format!("tv/{id}"));
         url.query_pairs_mut()
-            .append_pair("append_to_response", "external_ids,content_ratings");
+            .append_pair("append_to_response", "external_ids,content_ratings,videos");
         self.get_json(url).await
     }
 
     pub async fn get_tv_season(&self, tv_id: i32, season: i32) -> eyre::Result<TvSeasonResponse> {
         let mut url = self.url(&format!("tv/{tv_id}/season/{season}"));
         url.query_pairs_mut()
-            .append_pair("append_to_response", "external_ids");
+            .append_pair("append_to_response", "external_ids,videos");
         self.get_json(url).await
     }
 
@@ -238,7 +285,7 @@ impl TmdbClient {
         let path = format!("tv/{tv_id}/season/{season}/episode/{episode}");
         let mut url = self.url(&path);
         url.query_pairs_mut()
-            .append_pair("append_to_response", "external_ids,images");
+            .append_pair("append_to_response", "external_ids,images,videos");
         self.get_json(url).await
     }
 
