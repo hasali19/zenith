@@ -23,6 +23,7 @@ expression: "app.get(\"/shows/4/seasons\").await"
     "poster": null,
     "start_date": null,
     "thumbnail": null,
+    "trailer": null,
     "type": "season",
     "user_data": {
       "type": "collection",
@@ -49,6 +50,7 @@ expression: "app.get(\"/shows/4/seasons\").await"
     "poster": null,
     "start_date": null,
     "thumbnail": null,
+    "trailer": null,
     "type": "season",
     "user_data": {
       "type": "collection",

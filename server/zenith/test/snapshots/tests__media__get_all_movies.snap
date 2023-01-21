@@ -18,6 +18,7 @@ expression: "app.get(\"/movies\").await"
     "poster": null,
     "start_date": null,
     "thumbnail": null,
+    "trailer": null,
     "type": "movie",
     "user_data": {
       "is_watched": false,
@@ -48,6 +49,7 @@ expression: "app.get(\"/movies\").await"
     "poster": null,
     "start_date": null,
     "thumbnail": null,
+    "trailer": null,
     "type": "movie",
     "user_data": {
       "is_watched": false,
@@ -78,6 +80,7 @@ expression: "app.get(\"/movies\").await"
     "poster": null,
     "start_date": null,
     "thumbnail": null,
+    "trailer": null,
     "type": "movie",
     "user_data": {
       "is_watched": false,

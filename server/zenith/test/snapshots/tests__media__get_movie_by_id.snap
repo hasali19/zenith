@@ -17,6 +17,7 @@ expression: "app.get(\"/movies/1\").await"
   "poster": null,
   "start_date": null,
   "thumbnail": null,
+  "trailer": null,
   "type": "movie",
   "user_data": {
     "is_watched": false,

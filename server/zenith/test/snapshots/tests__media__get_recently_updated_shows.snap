@@ -18,6 +18,7 @@ expression: "app.get(\"/shows/recent\").await"
     "poster": null,
     "start_date": null,
     "thumbnail": null,
+    "trailer": null,
     "type": "show",
     "user_data": {
       "type": "collection",
