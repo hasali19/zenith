@@ -124,7 +124,7 @@ class _RenderHeaderLayout extends RenderBox
           playButtonData.offset + Offset(0, actions.size.height + 24);
 
       final lh = posterData.offset.dy + poster.size.height;
-      final rh = titleData.offset.dy + title.size.height;
+      final rh = bodyData.offset.dy + body.size.height;
 
       size = Size(constraints.maxWidth, max(lh, rh));
     } else {
