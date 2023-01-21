@@ -170,6 +170,7 @@ jobs:
             ghcr.io/hasali19/zenith:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
+          provenance: false  # temp fix for watchtower https://github.com/containrrr/watchtower/issues/1528
 
       # Temp fix
       # https://github.com/docker/build-push-action/issues/252
