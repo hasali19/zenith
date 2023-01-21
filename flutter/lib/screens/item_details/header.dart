@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:expandable/expandable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -569,7 +570,7 @@ class Poster extends StatelessWidget {
   }
 }
 
-class Overview extends StatelessWidget {
+class Overview extends StatefulWidget {
   final String text;
 
   const Overview({
@@ -578,10 +579,64 @@ class Overview extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<Overview> createState() => _OverviewState();
+}
+
+class _OverviewState extends State<Overview> {
+  final _controller = ExpandableController(initialExpanded: false);
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final style = theme.textTheme.bodyLarge!.copyWith(fontSize: 16);
-    return Text(text, style: style);
+    return LayoutBuilder(builder: (context, size) {
+      final painter = TextPainter(
+          text: TextSpan(text: widget.text, style: style),
+          maxLines: 5,
+          textDirection: Directionality.of(context));
+      painter.layout(maxWidth: size.maxWidth);
+      if (!painter.didExceedMaxLines) {
+        return Text(widget.text, style: style);
+      }
+      return ExpandableNotifier(
+        controller: _controller,
+        child: Expandable(
+          collapsed: Column(
+            children: [
+              Text(widget.text,
+                  maxLines: 5, overflow: TextOverflow.ellipsis, style: style),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: InkWell(
+                  onTap: _controller.toggle,
+                  child: Text("More",
+                      style: TextStyle(color: theme.colorScheme.primary)),
+                ),
+              ),
+            ],
+          ),
+          expanded: Column(
+            children: [
+              Text(widget.text, style: style),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: InkWell(
+                  onTap: _controller.toggle,
+                  child: Text("Less",
+                      style: TextStyle(color: theme.colorScheme.primary)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 }
 
