@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/language_codes.dart';
 import 'package:zenith/responsive.dart';
@@ -132,10 +133,40 @@ class HeaderContent extends ConsumerWidget {
 
   Widget? _buildOverview() {
     final overview = model.item.overview;
-    if (overview == null) return null;
+    final trailer = model.item.trailer;
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 960),
-      child: Overview(text: overview),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (overview != null) Overview(text: overview),
+          if (trailer != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: const [
+                        Icon(Icons.play_circle_outline),
+                        Text("Trailer"),
+                      ],
+                    ),
+                  ),
+                  onTap: () {
+                    final trailer = model.item.trailer;
+                    if (trailer != null) {
+                      launchUrl(Uri.parse(trailer),
+                          mode: LaunchMode.externalApplication);
+                    }
+                  },
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
