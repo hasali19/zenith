@@ -28,6 +28,7 @@ expression: "app.get(\"/shows/4/episodes\").await"
     "poster": null,
     "start_date": null,
     "thumbnail": null,
+    "trailer": null,
     "type": "episode",
     "user_data": {
       "is_watched": false,
@@ -68,6 +69,7 @@ expression: "app.get(\"/shows/4/episodes\").await"
     "poster": null,
     "start_date": null,
     "thumbnail": null,
+    "trailer": null,
     "type": "episode",
     "user_data": {
       "is_watched": false,
@@ -108,6 +110,7 @@ expression: "app.get(\"/shows/4/episodes\").await"
     "poster": null,
     "start_date": null,
     "thumbnail": null,
+    "trailer": null,
     "type": "episode",
     "user_data": {
       "is_watched": false,
@@ -148,6 +151,7 @@ expression: "app.get(\"/shows/4/episodes\").await"
     "poster": null,
     "start_date": null,
     "thumbnail": null,
+    "trailer": null,
     "type": "episode",
     "user_data": {
       "is_watched": false,

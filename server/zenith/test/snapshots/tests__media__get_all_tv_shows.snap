@@ -18,6 +18,7 @@ expression: "app.get(\"/shows\").await"
     "poster": null,
     "start_date": null,
     "thumbnail": null,
+    "trailer": null,
     "type": "show",
     "user_data": {
       "type": "collection",
@@ -39,6 +40,7 @@ expression: "app.get(\"/shows\").await"
     "poster": null,
     "start_date": null,
     "thumbnail": null,
+    "trailer": null,
     "type": "show",
     "user_data": {
       "type": "collection",
@@ -60,6 +62,7 @@ expression: "app.get(\"/shows\").await"
     "poster": null,
     "start_date": null,
     "thumbnail": null,
+    "trailer": null,
     "type": "show",
     "user_data": {
       "type": "collection",
