@@ -1,3 +1,4 @@
+use eyre::Context;
 use reqwest::Client as HttpClient;
 use serde::de::DeserializeOwned;
 use url::Url;
@@ -250,6 +251,10 @@ impl TmdbClient {
 
     async fn get_json<T: DeserializeOwned>(&self, url: Url) -> eyre::Result<T> {
         let res = self.client.get(url).send().await?;
-        Ok(res.error_for_status()?.json().await?)
+        let bytes = res.error_for_status()?.bytes().await?;
+        serde_json::from_slice(&bytes).wrap_err_with(|| {
+            let value = String::from_utf8_lossy(&bytes);
+            format!("failed to deserialize json: {value}")
+        })
     }
 }
