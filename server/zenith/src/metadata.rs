@@ -576,17 +576,19 @@ async fn refresh_tv_episode_metadata(
     Ok(())
 }
 
-fn get_trailer(trailers: &[Video]) -> Option<String> {
-    let trailers = || {
-        trailers
+fn get_trailer(videos: &[Video]) -> Option<String> {
+    let videos = |video_type| {
+        videos
             .iter()
-            .filter(|it| it.video_type == VideoType::Trailer && it.site == VideoSite::YouTube)
+            .filter(move |it| it.video_type == video_type && it.site == VideoSite::YouTube)
     };
 
-    trailers()
+    videos(VideoType::Trailer)
         .filter(|t| t.official)
         .next()
-        .or_else(|| trailers().next())
+        .or_else(|| videos(VideoType::Teaser).filter(|t| t.official).next())
+        .or_else(|| videos(VideoType::Trailer).next())
+        .or_else(|| videos(VideoType::Teaser).next())
         .map(build_youtube_url)
 }
 
