@@ -19,7 +19,7 @@ video_player.SubtitleTrack subtitleFromApi(
 AudioTrack audioTrackFromApi(AudioStreamInfo stream) {
   return AudioTrack(
     index: stream.index,
-    language: tryResolveLanguageCode(stream.language),
+    language: tryResolveLanguageCode(stream.language ?? "Unknown"),
     codec: stream.codec,
   );
 }

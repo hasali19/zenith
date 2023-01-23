@@ -348,7 +348,7 @@ class HeaderContent extends ConsumerWidget {
                   items:
                       videoInfo.streams.whereType<AudioStreamInfo>().toList(),
                   itemBuilder: (item) => Text(
-                      "${tryResolveLanguageCode(item.language)} (${item.codec})"),
+                      "${tryResolveLanguageCode(item.language ?? "Unknown")} (${item.codec})"),
                 ),
               ],
             ),

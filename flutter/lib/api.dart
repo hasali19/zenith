@@ -176,7 +176,7 @@ class VideoStreamInfo extends StreamInfo {
 }
 
 class AudioStreamInfo extends StreamInfo {
-  final String language;
+  final String? language;
 
   const AudioStreamInfo({
     required int id,
