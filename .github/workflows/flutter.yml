@@ -56,25 +56,6 @@ jobs:
           name: zenith-flutter-web
           path: flutter/build/web
 
-  deploy_web_netlify:
-    runs-on: ubuntu-latest
-    if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
-    needs:
-      - build_web
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: zenith-flutter-web
-
-      - run: echo "/* /index.html" > _redirects
-
-      - uses: netlify/actions/cli@master
-        with:
-          args: deploy --dir=. --prod
-        env:
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-
   deploy_web_docker:
     runs-on: ubuntu-latest
     if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
