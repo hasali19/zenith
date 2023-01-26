@@ -187,6 +187,8 @@ jobs:
     runs-on: ubuntu-latest
     if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
     needs:
+      - build_android
+      - build_web
       - build_windows
     steps:
       - uses: actions/checkout@v3
