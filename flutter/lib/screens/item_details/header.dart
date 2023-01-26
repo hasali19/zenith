@@ -613,10 +613,12 @@ class _OverviewState extends State<Overview> {
                   maxLines: 5, overflow: TextOverflow.ellipsis, style: style),
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: InkWell(
-                  onTap: _controller.toggle,
-                  child: Text("More",
-                      style: TextStyle(color: theme.colorScheme.primary)),
+                child: Material(
+                  child: InkWell(
+                    onTap: _controller.toggle,
+                    child: Text("More",
+                        style: TextStyle(color: theme.colorScheme.primary)),
+                  ),
                 ),
               ),
             ],
@@ -626,10 +628,12 @@ class _OverviewState extends State<Overview> {
               Text(widget.text, style: style),
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: InkWell(
-                  onTap: _controller.toggle,
-                  child: Text("Less",
-                      style: TextStyle(color: theme.colorScheme.primary)),
+                child: Material(
+                  child: InkWell(
+                    onTap: _controller.toggle,
+                    child: Text("Less",
+                        style: TextStyle(color: theme.colorScheme.primary)),
+                  ),
                 ),
               ),
             ],
