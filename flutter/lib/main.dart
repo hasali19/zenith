@@ -84,8 +84,8 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
 
   ThemeData _buildTheme(Brightness brightness) => ThemeData(
         brightness: brightness,
-        primarySwatch: Colors.deepOrange,
         useMaterial3: true,
+        colorSchemeSeed: Colors.deepOrange,
         fontFamily: "Exo2",
       );
 
