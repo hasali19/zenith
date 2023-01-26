@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/preferences.dart';
 
-class NavigationDrawer extends ConsumerWidget {
+class AppDrawer extends ConsumerWidget {
   final Screen current;
   final void Function(Screen) onTap;
 
-  const NavigationDrawer({
+  const AppDrawer({
     Key? key,
     required this.current,
     required this.onTap,

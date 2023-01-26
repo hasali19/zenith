@@ -82,24 +82,12 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
     );
   }
 
-  ThemeData _buildTheme(Brightness brightness) {
-    final theme = ThemeData(
-      brightness: brightness,
-      primarySwatch: Colors.deepOrange,
-      useMaterial3: true,
-      fontFamily: "Exo2",
-    );
-
-    switch (brightness) {
-      case Brightness.dark:
-        return theme.copyWith(
-          scaffoldBackgroundColor: const Color.fromARGB(255, 36, 36, 36),
-        );
-
-      case Brightness.light:
-        return theme;
-    }
-  }
+  ThemeData _buildTheme(Brightness brightness) => ThemeData(
+        brightness: brightness,
+        primarySwatch: Colors.deepOrange,
+        useMaterial3: true,
+        fontFamily: "Exo2",
+      );
 
   ThemeData _buildThemeOverrides(BuildContext context) {
     final theme = Theme.of(context);
@@ -177,7 +165,7 @@ class _MainScreenState extends State<MainScreen> {
 
         // Use a permanent navigation drawer on larger screens
 
-        final drawer = NavigationDrawer(
+        final drawer = AppDrawer(
           current: screen,
           onTap: (screen) {
             if (!desktop) {
