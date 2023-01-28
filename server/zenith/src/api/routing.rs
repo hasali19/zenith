@@ -42,14 +42,19 @@ pub fn router() -> axum::Router {
 }
 
 async fn error_handler<B>(req: Request<B>, next: Next<B>) -> impl IntoResponse {
+    let method = req.method().clone();
+    let uri = req.uri().clone();
+
     let mut res = next.run(req).await;
+
     let error = res.extensions_mut().remove::<ApiError>();
     if let Some(error) = error {
-        if error.status.is_client_error() {
-            tracing::error!("{}", error.inner);
+        if res.status().is_client_error() {
+            tracing::error!(method = %method, uri = %uri, status = %res.status(), "{:#}", error.inner);
         } else {
             tracing::error!("{:?}", error.inner);
         }
     }
+
     res
 }
