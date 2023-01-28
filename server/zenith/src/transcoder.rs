@@ -310,7 +310,9 @@ impl Transcoder {
 
         cmd.env("FFREPORT", "file=data/reports/%p-%t.log:level=32");
 
-        let mut child = cmd.spawn().wrap_err("failed to spawn ffmpeg")?;
+        let mut child = cmd
+            .spawn()
+            .wrap_err_with(|| eyre!("failed to spawn command: {:?}", cmd.as_std()))?;
 
         // Monitor progress from the ffmpeg process
         let duration = info.format.duration.parse::<f64>().unwrap() * 1000f64;
