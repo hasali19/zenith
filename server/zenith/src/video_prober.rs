@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::path::Path;
 use std::process::Stdio;
 
 use async_trait::async_trait;
@@ -42,28 +43,36 @@ impl Ffprobe {
     }
 
     async fn probe(&self, path: &str) -> eyre::Result<VideoInfo> {
-        let mut ffprobe = Command::new(&self.path);
+        let json_path = Path::new(path).with_extension("ffprobe.json");
 
-        ffprobe
-            .arg_pair("-loglevel", "error")
-            .arg_pair("-print_format", "json")
-            .arg("-show_format")
-            .arg("-show_streams")
-            .arg(path)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null());
+        let output = if let Ok(bytes) = tokio::fs::read(&json_path).await {
+            bytes
+        } else {
+            let mut ffprobe = Command::new(&self.path);
 
-        let output = ffprobe
-            .spawn()
-            .wrap_err_with(|| eyre!("failed to spawn command: {:?}", ffprobe.as_std()))?
-            .wait_with_output()
-            .await?;
+            ffprobe
+                .arg_pair("-loglevel", "error")
+                .arg_pair("-print_format", "json")
+                .arg("-show_format")
+                .arg("-show_streams")
+                .arg(path)
+                .stdout(Stdio::piped())
+                .stderr(Stdio::null());
 
-        if !output.status.success() {
-            return Err(eyre!("ffprobe terminated unsuccessfully"));
-        }
+            let output = ffprobe
+                .spawn()
+                .wrap_err_with(|| eyre!("failed to spawn command: {:?}", ffprobe.as_std()))?
+                .wait_with_output()
+                .await?;
 
-        Ok(serde_json::from_slice(&output.stdout)?)
+            if !output.status.success() {
+                return Err(eyre!("ffprobe terminated unsuccessfully"));
+            }
+
+            output.stdout
+        };
+
+        Ok(serde_json::from_slice(&output)?)
     }
 }
 
