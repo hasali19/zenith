@@ -472,7 +472,7 @@ pub async fn get_continue_watching(
     ".to_owned();
 
     if let Some(limit) = limit {
-        write!(sql, "LIMIT {}", limit).unwrap();
+        write!(sql, "LIMIT {limit}").unwrap();
     }
 
     Ok(sqlx::query_scalar(&sql).fetch_all(&mut *conn).await?)

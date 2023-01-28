@@ -97,7 +97,7 @@ impl<'a> SelectStatement<'a> {
         }
 
         if let Some(limit) = self.limit {
-            write!(sql, " LIMIT {}", limit).unwrap();
+            write!(sql, " LIMIT {limit}").unwrap();
         }
 
         sql

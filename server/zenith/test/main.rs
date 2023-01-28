@@ -177,7 +177,7 @@ where
     F: Future<Output = ()> + 'static,
 {
     let id = Uuid::new_v4();
-    let db = Db::init(&format!("file:zenith_{}?mode=memory&cache=shared", id))
+    let db = Db::init(&format!("file:zenith_{id}?mode=memory&cache=shared"))
         .await
         .unwrap();
     tracing::debug!("opened db {id}");
