@@ -115,7 +115,8 @@ pub async fn get_item(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoRe
         query_items_by_id(&mut conn, &[*id])
             .await?
             .into_iter()
-            .next(),
+            .next()
+            .or_not_found("item not found")?,
     ))
 }
 
