@@ -45,7 +45,11 @@ async fn error_handler<B>(req: Request<B>, next: Next<B>) -> impl IntoResponse {
     let mut res = next.run(req).await;
     let error = res.extensions_mut().remove::<ApiError>();
     if let Some(error) = error {
-        tracing::error!("{:?}", error.inner);
+        if error.status.is_client_error() {
+            tracing::error!("{}", error.inner);
+        } else {
+            tracing::error!("{:?}", error.inner);
+        }
     }
     res
 }
