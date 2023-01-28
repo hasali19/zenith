@@ -1,13 +1,13 @@
 use std::sync::Arc;
+use std::time::Duration;
 
-use eyre::eyre;
-use notify::event::{AccessKind, AccessMode, ModifyKind, RenameMode};
-use notify::{Event, EventKind, RecursiveMode, Watcher};
+use eyre::{bail, eyre};
+use notify::{Event, RecursiveMode, Watcher};
+use tokio::time::timeout;
 
 use crate::config::Config;
 use crate::library::scanner::ScanOptions;
 
-use super::scanner::VideoFileType;
 use super::LibraryScanner;
 
 pub fn start(config: Arc<Config>, scanner: Arc<LibraryScanner>) {
@@ -37,45 +37,18 @@ async fn run(config: Arc<Config>, scanner: Arc<LibraryScanner>) -> eyre::Result<
         watcher.watch(path, RecursiveMode::Recursive)?;
     }
 
-    while let Some(event) = rx.recv().await {
-        tracing::debug!(?event);
+    let wait_time = Duration::from_secs(5);
 
-        // TODO: Event debouncing
-        let scan_options = match event.kind {
-            // Quick scan events
-            | EventKind::Access(AccessKind::Close(AccessMode::Write))
-            | EventKind::Create(_)
-            | EventKind::Modify(ModifyKind::Name(RenameMode::From | RenameMode::To))
-            | EventKind::Remove(_) => ScanOptions::quick(),
-            // Deep scan events
-            | EventKind::Modify(ModifyKind::Data(_) | ModifyKind::Metadata(_)) => {
-                ScanOptions::rescan_files()
-            }
-            // Ignore unknown events
-            _ => continue,
-        };
+    while rx.recv().await.is_some() {
+        tracing::info!("filesystem change detected, waiting a bit for more changes");
 
-        // Rescan all files associated with the event
-        for path in event.paths {
-            // Attempt to canonicalize but fallback to original path if it fails
-            let path = match path.canonicalize() {
-                Ok(path) => path,
-                Err(_) => path,
-            };
-
-            let file_type = if path.starts_with(movies_lib) {
-                VideoFileType::Movie
-            } else if path.starts_with(shows_lib) {
-                VideoFileType::Episode
-            } else {
-                continue;
-            };
-
-            scanner
-                .scan_file_path(file_type, path, &scan_options)
-                .await?;
+        while timeout(wait_time, rx.recv()).await.is_ok() {
+            tracing::trace!("filesystem change detected, restarting wait");
+            continue;
         }
+
+        scanner.clone().start_scan(ScanOptions::quick());
     }
 
-    Ok(())
+    bail!("filesystem watcher terminated unexpectedly")
 }
