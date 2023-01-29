@@ -242,13 +242,7 @@ impl LibraryScannerImpl {
 
     /// Scans a movie directory for video and subtitle files
     async fn scan_movie_dir(&self, path: &Path, options: &ScanOptions) -> eyre::Result<()> {
-        let name = path.file_name().unwrap();
-
-        let video_file = path.join(name);
-        let video_file = ["mkv", "mp4"]
-            .iter()
-            .map(|ext| video_file.with_extension(ext))
-            .find(|it| it.is_file());
+        let video_file = get_video_files(path).map(|it| it.path().to_owned()).next();
 
         if let Some(video_path) = video_file {
             let res = self.scan_movie_file(&video_path, options).await?;
