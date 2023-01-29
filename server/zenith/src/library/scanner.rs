@@ -521,7 +521,7 @@ pub fn parse_movie_filename(name: &str) -> Option<(String, Option<OffsetDateTime
     static REGEX: OnceCell<Regex> = OnceCell::new();
 
     let captures = REGEX
-        .get_or_init(|| Regex::new(r"^(\S.*?)(?: \((\d\d\d\d)\))?(?:\.\w+)?$").unwrap())
+        .get_or_init(|| Regex::new(r"^(\S.*?) \((\d\d\d\d)\).*(?:\.\w+)?$").unwrap())
         .captures(name)?;
 
     let name = captures.get(1)?.as_str().to_owned();
