@@ -1,13 +1,8 @@
-use std::collections::HashSet;
 use std::path::Path;
 use std::sync::Arc;
 
 use eyre::eyre;
-use once_cell::sync::OnceCell;
-use regex::Regex;
 use time::{Date, Instant, OffsetDateTime};
-use tokio::fs::File;
-use tokio::io::AsyncBufReadExt;
 use tokio::sync::Mutex;
 use walkdir::{DirEntry, WalkDir};
 
@@ -221,118 +216,9 @@ impl LibraryScannerImpl {
             return Err(eyre!("directory {} does not exist", path.display()));
         }
 
-        for entry in std::fs::read_dir(path)
-            .into_iter()
-            .flatten()
-            .filter_map(Result::ok)
-        {
-            let path = entry.path();
-            if !path.is_dir() {
-                continue;
-            }
-
-            match video_type {
-                VideoFileType::Movie => self.scan_movie_dir(&path, options).await?,
-                VideoFileType::Episode => self.scan_show_dir(&path, options).await?,
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Scans a movie directory for video and subtitle files
-    async fn scan_movie_dir(&self, path: &Path, options: &ScanOptions) -> eyre::Result<()> {
-        let video_file = get_video_files(path).map(|it| it.path().to_owned()).next();
-
-        if let Some(video_path) = video_file {
-            let res = self.scan_movie_file(&video_path, options).await?;
-            if let Some(video_id) = res.id() {
-                self.scan_subs_dir(&path.join("Subs"), video_id).await?;
-            }
-        }
-
-        Ok(())
-    }
-
-    async fn scan_show_dir(&self, path: &Path, options: &ScanOptions) -> eyre::Result<()> {
-        for entry in get_video_files(path) {
-            let video_path = entry.path();
-            let res = self.scan_episode_file(video_path, options).await?;
-            if let Some(video_id) = res.id() {
-                let (_, season, episode, _) = match parse_episode_path(self.matchers(), video_path)
-                {
-                    Some(v) => v,
-                    None => continue,
-                };
-
-                let subs_dir = path.join("Subs").join(format!("S{season:02}E{episode:02}"));
-                self.scan_subs_dir(&subs_dir, video_id).await?;
-            }
-        }
-
-        Ok(())
-    }
-
-    async fn scan_subs_dir(&self, path: &Path, video_id: i64) -> eyre::Result<()> {
-        let mut conn = self.db.acquire().await?;
-        let subs = db::subtitles::get_for_video(&mut conn, video_id)
-            .await?
-            .into_iter()
-            .filter_map(|it| it.path)
-            .collect::<HashSet<_>>();
-
-        for entry in std::fs::read_dir(path)
-            .into_iter()
-            .flatten()
-            .filter_map(Result::ok)
-        {
-            let path = entry.path();
-            if !path.is_file() {
-                continue;
-            }
-
-            let ext = path.extension().and_then(|it| it.to_str());
-            if !matches!(ext, Some("vtt")) {
-                continue;
-            }
-
-            let file_name = match path.file_name().and_then(|it| it.to_str()) {
-                Some(v) => v,
-                None => continue,
-            };
-
-            let language = file_name.split('.').next();
-
-            let path = match path.to_str() {
-                Some(path) => path,
-                None => continue,
-            };
-
-            if subs.contains(path) {
-                continue;
-            }
-
-            let line = tokio::io::BufReader::new(File::open(path).await?)
-                .lines()
-                .next_line()
+        for file in get_video_files(path) {
+            self.scan_video_file(video_type, file.path(), options)
                 .await?;
-
-            let title = line
-                .as_deref()
-                .and_then(|it| it.split_once(' '))
-                .filter(|(webvtt, _)| *webvtt == "WEBVTT")
-                .map(|(_, title)| title);
-
-            let subtitle = db::subtitles::NewSubtitle {
-                video_id,
-                stream_index: None,
-                path: Some(path),
-                title,
-                language,
-            };
-
-            tracing::info!(%video_id, "adding subtitle: {file_name}");
-            db::subtitles::insert(&mut conn, &subtitle).await?;
         }
 
         Ok(())
@@ -345,6 +231,7 @@ impl LibraryScannerImpl {
         path: &Path,
         options: &ScanOptions,
     ) -> eyre::Result<FileScanResult> {
+        tracing::trace!(?video_type, path = %path.display(), "scanning file");
         match video_type {
             VideoFileType::Movie => self.scan_movie_file(path, options).await,
             VideoFileType::Episode => self.scan_episode_file(path, options).await,
@@ -377,9 +264,8 @@ impl LibraryScannerImpl {
             return Ok(FileScanResult::Ignored);
         }
 
-        let (title, release_date) = match parse_movie_filename(name) {
-            Some(v) => v,
-            None => return Ok(FileScanResult::Ignored),
+        let Some((title, release_date)) = parse_movie_filename(self.matchers(), name) else {
+            return Ok(FileScanResult::Ignored);
         };
 
         tracing::info!("adding movie: {name}");
@@ -401,22 +287,25 @@ impl LibraryScannerImpl {
         path: &Path,
         options: &ScanOptions,
     ) -> eyre::Result<FileScanResult> {
-        let (show_name, season, episode, name) = match parse_episode_path(self.matchers(), path) {
-            Some(v) => v,
-            None => return Ok(FileScanResult::Ignored),
+        let Some(EpisodePathInfo {
+            show_name,
+            show_path,
+            season,
+            episode,
+            name,
+        }) = parse_episode_path(self.matchers(), path) else {
+            return Ok(FileScanResult::Ignored);
         };
 
-        let parent_path = match path.parent().and_then(|v| v.to_str()) {
-            Some(v) => v,
-            None => return Ok(FileScanResult::Ignored),
+        let Some(show_path) = show_path.to_str() else {
+            return Ok(FileScanResult::Ignored);
         };
 
-        let path_str = match path.to_str() {
-            Some(v) => v,
-            None => return Ok(FileScanResult::Ignored),
+        let Some(path_str) = path.to_str() else {
+            return Ok(FileScanResult::Ignored);
         };
 
-        let show_id = self.library.get_show_id_by_path(parent_path).await?;
+        let show_id = self.library.get_show_id_by_path(show_path).await?;
         let season_id = match show_id {
             None => None,
             Some(show_id) => self.library.get_season_id(show_id, season).await?,
@@ -450,7 +339,7 @@ impl LibraryScannerImpl {
                 tracing::info!("adding show: {show_name}");
 
                 let show = NewShow {
-                    path: parent_path,
+                    path: show_path,
                     name: &show_name,
                 };
 
@@ -491,11 +380,10 @@ impl LibraryScannerImpl {
     async fn rescan_video_file_path(&self, id: i64, path: &str) -> eyre::Result<()> {
         tracing::debug!(id, path, "rescanning video file");
 
-        let mut transaction = self.db.begin().await?;
         let info = self.video_prober.probe(path).await?;
 
+        let mut transaction = self.db.begin().await?;
         video_info::update_video_info(&mut transaction, id, &info).await?;
-
         transaction.commit().await?;
 
         Ok(())
@@ -507,45 +395,64 @@ impl LibraryScannerImpl {
 }
 
 /// Extracts a title and (optional) year from a filename.
-///
-/// Supported formats:
-/// - `This is the title.mp4`
-/// - `This is the title (2021).mp4`
-pub fn parse_movie_filename(name: &str) -> Option<(String, Option<OffsetDateTime>)> {
-    static REGEX: OnceCell<Regex> = OnceCell::new();
+fn parse_movie_filename(
+    matchers: &'_ [ImportMatcher],
+    name: &str,
+) -> Option<(String, Option<OffsetDateTime>)> {
+    let movie_matchers = matchers
+        .iter()
+        .filter(|m| m.target == ImportMatcherTarget::Movie);
 
-    let captures = REGEX
-        .get_or_init(|| Regex::new(r"^(\S.*?) \((\d\d\d\d)\).*(?:\.\w+)?$").unwrap())
-        .captures(name)?;
+    match parse_video_filename(movie_matchers, name)? {
+        VideoFilenameMeta::Movie { title, year } => {
+            let year = year
+                .and_then(|year| Date::from_ordinal_date(year as i32, 1).ok())
+                .and_then(|date| date.with_hms(0, 0, 0).ok())
+                .map(|dt| dt.assume_utc());
 
-    let name = captures.get(1)?.as_str().to_owned();
-    let year = captures
-        .get(2)
-        .and_then(|m| m.as_str().parse::<i32>().ok())
-        .and_then(|year| Date::from_ordinal_date(year, 1).ok())
-        .and_then(|date| date.with_hms(0, 0, 0).ok())
-        .map(|dt| dt.assume_utc());
-
-    Some((name, year))
+            Some((title, year))
+        }
+        _ => None,
+    }
 }
 
 /// Recursively searches a directory for video files
-pub fn get_video_files(path: impl AsRef<Path>) -> impl Iterator<Item = DirEntry> {
+fn get_video_files(path: impl AsRef<Path>) -> impl Iterator<Item = DirEntry> {
     WalkDir::new(path)
-        .max_depth(1)
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_file())
         .filter(|e| is_video_file_path(e.path()))
 }
 
+struct EpisodePathInfo<'a> {
+    show_name: String,
+    show_path: &'a Path,
+    season: u32,
+    episode: u32,
+    name: Option<String>,
+}
+
 /// Extracts a show name, season and episode number from an episode path.
-fn parse_episode_path(
-    matchers: &[ImportMatcher],
-    path: &Path,
-) -> Option<(String, u32, u32, Option<String>)> {
+fn parse_episode_path<'a>(
+    matchers: &'_ [ImportMatcher],
+    path: &'a Path,
+) -> Option<EpisodePathInfo<'a>> {
+    let parent_path = path.parent()?;
+    let parent_is_season = parent_path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .map(|name| name.starts_with("Season "))
+        .unwrap_or(false);
+
+    let show_path = if parent_is_season {
+        parent_path.parent()?
+    } else {
+        parent_path
+    };
+
     let file_name = path.file_name()?.to_str()?;
-    let folder_name = path.parent()?.file_name()?.to_str()?;
+    let show_folder_name = show_path.file_name()?.to_str()?;
 
     let episode_matchers = matchers
         .iter()
@@ -557,19 +464,20 @@ fn parse_episode_path(
             name,
             season,
             episode,
-        } => Some((
-            show_name.unwrap_or_else(|| folder_name.to_owned()),
+        } => Some(EpisodePathInfo {
+            show_name: show_name.unwrap_or_else(|| show_folder_name.to_owned()),
+            show_path,
             season,
             episode,
             name,
-        )),
+        }),
         _ => None,
     }
 }
 
 #[derive(serde::Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
-pub enum VideoFilenameMeta {
+enum VideoFilenameMeta {
     Movie {
         title: String,
         year: Option<u32>,
