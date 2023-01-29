@@ -31,6 +31,7 @@ pub struct Config {
 #[derive(Default, Deserialize)]
 pub struct Logging {
     pub format: LogFormat,
+    pub filter: Option<String>,
 }
 
 #[derive(Default, Deserialize)]

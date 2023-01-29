@@ -39,7 +39,11 @@ fn init_tracing(config: &Config) {
     let fmt_layer = fmt_layer.with_filter(if std::env::var_os("RUST_LOG").is_some() {
         EnvFilter::from_default_env()
     } else {
-        EnvFilter::from("info")
+        #[cfg(debug_assertions)]
+        let default_filter = "info,zenith=trace";
+        #[cfg(not(debug_assertions))]
+        let default_filter = "info";
+        EnvFilter::from(config.logging.filter.as_deref().unwrap_or(default_filter))
     });
 
     tracing_subscriber::registry()
