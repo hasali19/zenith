@@ -9,6 +9,7 @@ pub mod videos;
 use sqlx::pool::PoolConnection;
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::{ConnectOptions, Sqlite, SqlitePool, Transaction};
+use tempfile::NamedTempFile;
 
 #[derive(Clone, Debug)]
 pub struct Db(SqlitePool);
@@ -36,6 +37,20 @@ impl Db {
 
     pub async fn begin(&self) -> sqlx::Result<Transaction<'_, Sqlite>> {
         self.0.begin().await
+    }
+
+    pub async fn backup(&self) -> sqlx::Result<Vec<u8>> {
+        let file = tokio::task::spawn_blocking(NamedTempFile::new)
+            .await
+            .unwrap()?;
+
+        let path = file.path();
+
+        sqlx::query(&format!("VACUUM INTO {path:?}"))
+            .execute(&mut self.acquire().await?)
+            .await?;
+
+        Ok(tokio::fs::read(path).await?)
     }
 
     pub async fn close(&self) {

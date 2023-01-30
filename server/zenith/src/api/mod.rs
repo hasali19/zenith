@@ -11,6 +11,7 @@ mod openapi;
 mod progress;
 mod routing;
 mod scanner;
+mod server;
 mod subtitles;
 mod transcoder;
 mod tv;
