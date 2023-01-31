@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use crate::db;
 use crate::db::media::{MediaItemType, MetadataProvider};
 
 use super::{video_info, LibraryEvent, MediaLibrary};
@@ -68,64 +69,7 @@ impl MediaLibrary {
     /// Removes a single movie by id
     pub async fn remove_movie(&self, id: i64) -> eyre::Result<()> {
         let mut transaction = self.db.begin().await?;
-
-        let sql = "
-            SELECT path FROM movies AS m
-            JOIN video_files AS v ON m.id = v.item_id
-            WHERE m.id = ?
-        ";
-
-        let path: Option<String> = sqlx::query_scalar(sql)
-            .bind(id)
-            .fetch_optional(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM user_item_data WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM subtitles WHERE video_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM video_file_streams WHERE video_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM video_files WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM indexed_paths WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM collections_media_items WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM media_items_genres WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM media_items WHERE id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        if let Some(path) = path {
-            if Path::new(&path).is_file() {
-                std::fs::remove_file(&path)?;
-            }
-        }
-
+        db::items::remove(&mut transaction, id).await?;
         transaction.commit().await?;
 
         let _ = self

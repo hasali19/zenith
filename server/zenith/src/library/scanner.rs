@@ -475,8 +475,6 @@ fn parse_episode_path<'a>(
     }
 }
 
-#[derive(serde::Serialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
 enum VideoFilenameMeta {
     Movie {
         title: String,

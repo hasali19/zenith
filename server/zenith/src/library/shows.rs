@@ -2,6 +2,7 @@ use std::path::Path;
 
 use sqlx::Connection;
 
+use crate::db;
 use crate::db::media::{MediaItemType, MetadataProvider};
 
 use super::{video_info, LibraryEvent, MediaLibrary};
@@ -79,28 +80,7 @@ impl MediaLibrary {
         }
 
         let mut transaction = db.begin().await?;
-
-        sqlx::query("DELETE FROM indexed_paths WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM collections_media_items WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM media_items_genres WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM media_items WHERE id = ? AND item_type = ?")
-            .bind(id)
-            .bind(MediaItemType::Show)
-            .execute(&mut transaction)
-            .await?;
-
+        db::items::remove(&mut transaction, id).await?;
         transaction.commit().await?;
 
         let _ = self
@@ -169,23 +149,7 @@ impl MediaLibrary {
         }
 
         let mut transaction = db.begin().await?;
-
-        sqlx::query("DELETE FROM collections_media_items WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM media_items_genres WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM media_items WHERE id = ? AND item_type = ?")
-            .bind(id)
-            .bind(MediaItemType::Season)
-            .execute(&mut transaction)
-            .await?;
-
+        db::items::remove(&mut transaction, id).await?;
         transaction.commit().await?;
 
         let _ = self
@@ -266,51 +230,7 @@ impl MediaLibrary {
     /// This will also delete the episode file from the filesystem, if it exists
     pub async fn remove_episode(&self, id: i64) -> eyre::Result<()> {
         let mut transaction = self.db.begin().await?;
-
-        let path: String = sqlx::query_scalar("SELECT path FROM video_files WHERE item_id = ?")
-            .bind(id)
-            .fetch_one(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM user_item_data WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM subtitles WHERE video_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM video_file_streams WHERE video_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM video_files WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM collections_media_items WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM media_items_genres WHERE item_id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        sqlx::query("DELETE FROM media_items WHERE id = ?")
-            .bind(id)
-            .execute(&mut transaction)
-            .await?;
-
-        if Path::new(&path).is_file() {
-            std::fs::remove_file(&path)?;
-        }
-
+        db::items::remove(&mut transaction, id).await?;
         transaction.commit().await?;
 
         let _ = self

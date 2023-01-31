@@ -735,3 +735,50 @@ pub async fn update_metadata(
 
     Ok(())
 }
+
+/// Deletes a media item from the database, as well as any associated objects.
+///
+/// This should be called from within a transaction.
+pub async fn remove(conn: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
+    sqlx::query("DELETE FROM user_item_data WHERE item_id = ?")
+        .bind(id)
+        .execute(&mut *conn)
+        .await?;
+
+    sqlx::query("DELETE FROM subtitles WHERE video_id = ?")
+        .bind(id)
+        .execute(&mut *conn)
+        .await?;
+
+    sqlx::query("DELETE FROM video_file_streams WHERE video_id = ?")
+        .bind(id)
+        .execute(&mut *conn)
+        .await?;
+
+    sqlx::query("DELETE FROM video_files WHERE item_id = ?")
+        .bind(id)
+        .execute(&mut *conn)
+        .await?;
+
+    sqlx::query("DELETE FROM indexed_paths WHERE item_id = ?")
+        .bind(id)
+        .execute(&mut *conn)
+        .await?;
+
+    sqlx::query("DELETE FROM collections_media_items WHERE item_id = ?")
+        .bind(id)
+        .execute(&mut *conn)
+        .await?;
+
+    sqlx::query("DELETE FROM media_items_genres WHERE item_id = ?")
+        .bind(id)
+        .execute(&mut *conn)
+        .await?;
+
+    sqlx::query("DELETE FROM media_items WHERE id = ?")
+        .bind(id)
+        .execute(&mut *conn)
+        .await?;
+
+    Ok(())
+}
