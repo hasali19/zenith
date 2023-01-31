@@ -30,6 +30,7 @@ pub struct Config {
 
 #[derive(Default, Deserialize)]
 pub struct Logging {
+    #[serde(default)]
     pub format: LogFormat,
     pub filter: Option<String>,
 }
