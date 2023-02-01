@@ -60,8 +60,8 @@ struct NewCollection {
 #[post("/collections")]
 #[response(model = Collection)]
 async fn create_collection(
-    data: Json<NewCollection>,
     db: Extension<Db>,
+    data: Json<NewCollection>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let data = db::collections::NewCollection { name: &data.name };
@@ -92,8 +92,8 @@ struct UpdateCollectionMeta {
 #[response(model = Collection)]
 async fn update_collection(
     id: Path<i64>,
-    data: Json<UpdateCollection>,
     db: Extension<Db>,
+    data: Json<UpdateCollection>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 

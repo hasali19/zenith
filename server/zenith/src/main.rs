@@ -152,7 +152,7 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
 
     let app = axum::Router::new()
         .nest("/api", zenith::api::router())
-        .fallback(axum::routing::get(spa))
+        .fallback_service(axum::routing::get(spa))
         .layer(TraceLayer::new_for_http())
         .layer(Extension(config))
         .layer(Extension(db.clone()))

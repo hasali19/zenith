@@ -16,7 +16,7 @@ const RAPIDOC_JS: &str = include_str!("docs/rapidoc-min.js");
 pub fn router() -> axum::Router {
     let spec = super::openapi_spec();
 
-    speq::axum::router()
+    speq::axum_router!()
         .route("/", get(|| async move { Html(DOCS_INDEX) }))
         .route(
             "/rapidoc-min.js",

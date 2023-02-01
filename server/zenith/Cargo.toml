@@ -38,9 +38,9 @@ migrations = { path = "../migrations" }
 tmdb = { path = "../tmdb" }
 
 [dependencies.axum]
-version = "0.5"
+version = "0.6"
 default-features = false
-features = ["json", "multipart", "original-uri", "tower-log"]
+features = ["json", "multipart", "original-uri", "tokio", "tower-log"]
 
 [dependencies.notify]
 version = "5.0"
@@ -56,12 +56,12 @@ version = "1.0"
 features = ["derive"]
 
 [dependencies.serde_qs]
-version = "0.10"
+version = "0.11"
 features = ["axum"]
 
 [dependencies.speq]
 git = "https://github.com/hasali19/speq"
-rev = "8df3410ac4dd88cda5a62d584fbaa77ec4a6afd2"
+rev = "d7263383c1f25fd80e517cfe7a6f514576e46220"
 features = ["axum", "serde_qs_axum"]
 
 [dependencies.sqlx]

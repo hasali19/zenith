@@ -246,8 +246,8 @@ struct VideoUserDataPatch {
 #[response(status = 200)]
 async fn update_user_data(
     id: Path<i64>,
-    data: Json<VideoUserDataPatch>,
     db: Extension<Db>,
+    data: Json<VideoUserDataPatch>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 

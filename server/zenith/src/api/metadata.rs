@@ -67,9 +67,9 @@ struct SetMetadataMatch {
 #[post("/metadata/:id/set_match")]
 async fn set_match(
     Path(id): Path<i64>,
-    body: Json<SetMetadataMatch>,
     tmdb: Extension<TmdbClient>,
     db: Extension<Db>,
+    body: Json<SetMetadataMatch>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 

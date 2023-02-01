@@ -42,9 +42,9 @@ pub struct ImportSubtitleRequestData {
 #[post("/import/subtitle")]
 #[response(status = 200)]
 pub async fn import_subtitle(
-    mut multipart: Multipart,
     config: Extension<Arc<Config>>,
     db: Extension<Db>,
+    mut multipart: Multipart,
 ) -> ApiResult<impl IntoResponse> {
     let ImportSubtitleRequest { data } = {
         let mut field = multipart

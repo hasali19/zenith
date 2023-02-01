@@ -15,3 +15,5 @@ mod sql;
 
 pub use db::media::MediaItemType;
 pub use db::Db;
+
+speq::axum_config!(());

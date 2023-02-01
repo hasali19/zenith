@@ -5,8 +5,8 @@ use std::path::Path;
 use axum::async_trait;
 use axum::body::Body;
 use axum::extract::rejection::{TypedHeaderRejection, TypedHeaderRejectionReason};
-use axum::extract::{FromRequest, RequestParts, TypedHeader};
-use axum::http::StatusCode;
+use axum::extract::{FromRequestParts, TypedHeader};
+use axum::http::{request, StatusCode};
 use axum::response::{IntoResponse, Response};
 use headers::{
     AcceptRanges, ContentDisposition, ContentLength, ContentRange, ContentType, Header,
@@ -20,11 +20,14 @@ pub struct FileRequest {
 }
 
 #[async_trait]
-impl<B: Send> FromRequest<B> for FileRequest {
+impl<S: Send + Sync> FromRequestParts<S> for FileRequest {
     type Rejection = TypedHeaderRejection;
 
-    async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
-        let header = TypedHeader::from_request(req).await;
+    async fn from_request_parts(
+        req: &mut request::Parts,
+        state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        let header = TypedHeader::from_request_parts(req, state).await;
         let range = match header {
             Ok(TypedHeader(range)) => Some(range),
             Err(e) => match e.reason() {
