@@ -133,30 +133,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             padding:
                 const EdgeInsets.symmetric(vertical: 16) + context.mq.padding,
             children: [
-              Section<MediaItem>(
-                title: "Continue Watching",
-                titlePadding: sectionTitlePadding,
-                listSpacing: sectionListSpacing,
-                listItemWidth: thumbnailItemWidth,
-                listItemHeight: thumbnailItemHeight,
-                endPadding: sectionEndPadding,
-                items: data.continueWatching,
-                itemBuilder: (context, item) => ContinueWatchingCard(
-                  thumbnail: api.getMediaImageUrl(item.id, ImageType.thumbnail),
-                  title: item.name,
-                  subtitle: item.type == MediaType.episode
-                      ? item.getSeasonEpisode()! + ": " + item.grandparent!.name
-                      : item.startDate?.year.toString() ?? "",
-                  progress: (item.videoUserData?.position ?? 0) /
-                      (item.videoFile?.duration ?? 1),
-                  padding: thumbnailItemPadding,
-                  onTap: () => _navigateToItem(item),
+              if (data.continueWatching.isNotEmpty)
+                Section<MediaItem>(
+                  title: "Continue Watching",
+                  titlePadding: sectionTitlePadding,
+                  listSpacing: sectionListSpacing,
+                  listItemWidth: thumbnailItemWidth,
+                  listItemHeight: thumbnailItemHeight,
+                  endPadding: sectionEndPadding,
+                  items: data.continueWatching,
+                  itemBuilder: (context, item) => ContinueWatchingCard(
+                    thumbnail:
+                        api.getMediaImageUrl(item.id, ImageType.thumbnail),
+                    title: item.name,
+                    subtitle: item.type == MediaType.episode
+                        ? item.getSeasonEpisode()! +
+                            ": " +
+                            item.grandparent!.name
+                        : item.startDate?.year.toString() ?? "",
+                    progress: (item.videoUserData?.position ?? 0) /
+                        (item.videoFile?.duration ?? 1),
+                    padding: thumbnailItemPadding,
+                    onTap: () => _navigateToItem(item),
+                  ),
                 ),
-              ),
-              buildPosterItemSection(
-                  data.recentMovies, "Recent Movies", Icons.movie),
-              buildPosterItemSection(
-                  data.recentShows, "Recent Shows", Icons.tv),
+              if (data.recentMovies.isNotEmpty)
+                buildPosterItemSection(
+                    data.recentMovies, "Recent Movies", Icons.movie),
+              if (data.recentShows.isNotEmpty)
+                buildPosterItemSection(
+                    data.recentShows, "Recent Shows", Icons.tv),
             ],
           ),
         );
