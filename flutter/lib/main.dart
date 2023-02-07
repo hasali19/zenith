@@ -179,15 +179,13 @@ class _MainScreenState extends State<MainScreen> {
         child = FadeTransition(opacity: animation, child: child);
 
         if (desktop) {
-          return Row(
-            children: [
-              drawer,
-              Expanded(
-                child: Scaffold(
-                  body: child,
-                ),
-              ),
-            ],
+          return Scaffold(
+            body: Row(
+              children: [
+                drawer,
+                Expanded(child: child),
+              ],
+            ),
           );
         } else {
           return Scaffold(
