@@ -152,7 +152,7 @@ pub unsafe extern "C" fn create_player(
         hwnd,
         start_position: AtomicU64::new(0),
         quit: AtomicBool::new(false),
-        system_media_controls: system_media_controls.clone(),
+        system_media_controls,
         system_media_controls_button_handler: button_handler,
     });
 
@@ -191,7 +191,7 @@ unsafe fn run_player_event_loop(player: Arc<Player>, native_port: i64) {
                 is_start = true;
             }
             mpv_event_id_MPV_EVENT_END_FILE => {
-                (*player)
+                player
                     .system_media_controls
                     .SetPlaybackStatus(MediaPlaybackStatus::Stopped)
                     .unwrap();
@@ -208,7 +208,7 @@ unsafe fn run_player_event_loop(player: Arc<Player>, native_port: i64) {
                 if is_start {
                     is_start = false;
 
-                    (*player)
+                    player
                         .system_media_controls
                         .SetPlaybackStatus(MediaPlaybackStatus::Playing)
                         .unwrap();
@@ -236,7 +236,7 @@ unsafe fn run_player_event_loop(player: Arc<Player>, native_port: i64) {
                 } else if name.to_bytes() == b"pause" {
                     let value = unsafe { ((*data).data as *mut bool).as_ref() };
                     if let Some(paused) = value {
-                        (*player)
+                        player
                             .system_media_controls
                             .SetPlaybackStatus(if *paused {
                                 MediaPlaybackStatus::Paused
