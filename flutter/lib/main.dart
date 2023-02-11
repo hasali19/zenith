@@ -63,7 +63,10 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
     super.initState();
     loadLanguageCodes();
     _router = AppRouter(
-      setupGuard: SetupGuard(() => ref.watch(activeServerProvider)),
+      navGuard: NavGuard(
+        getServer: () => ref.read(activeServerProvider),
+        isLoggedIn: () => ref.read(apiProvider).isLoggedIn(),
+      ),
     );
   }
 
@@ -249,7 +252,7 @@ class _MainScreenState extends State<MainScreen> {
         context.tabsRouter.setActiveIndex(3);
         break;
       case Screen.settings:
-        context.router.push(SettingsScreenRoute());
+        context.router.push(const SettingsScreenRoute());
         break;
     }
   }

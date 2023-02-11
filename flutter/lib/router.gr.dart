@@ -15,10 +15,10 @@ part of 'router.dart';
 class _$AppRouter extends RootStackRouter {
   _$AppRouter({
     GlobalKey<NavigatorState>? navigatorKey,
-    required this.setupGuard,
+    required this.navGuard,
   }) : super(navigatorKey);
 
-  final SetupGuard setupGuard;
+  final NavGuard navGuard;
 
   @override
   final Map<String, PageFactory> pagesMap = {
@@ -86,6 +86,16 @@ class _$AppRouter extends RootStackRouter {
         child: const SettingsScreen(),
       );
     },
+    LoginScreenRoute.name: (routeData) {
+      final args = routeData.argsAs<LoginScreenRouteArgs>();
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: LoginScreen(
+          key: args.key,
+          onLogin: args.onLogin,
+        ),
+      );
+    },
     HomeScreenRoute.name: (routeData) {
       return MaterialPageX<dynamic>(
         routeData: routeData,
@@ -117,7 +127,7 @@ class _$AppRouter extends RootStackRouter {
         RouteConfig(
           MainScreenRoute.name,
           path: '/',
-          guards: [setupGuard],
+          guards: [navGuard],
           children: [
             RouteConfig(
               HomeScreenRoute.name,
@@ -159,11 +169,16 @@ class _$AppRouter extends RootStackRouter {
         RouteConfig(
           SetupScreenRoute.name,
           path: '/setup',
-          guards: [setupGuard],
+          guards: [navGuard],
         ),
         RouteConfig(
           SettingsScreenRoute.name,
           path: '/settings',
+        ),
+        RouteConfig(
+          LoginScreenRoute.name,
+          path: '/login',
+          guards: [navGuard],
         ),
       ];
 }
@@ -315,6 +330,40 @@ class SettingsScreenRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'SettingsScreenRoute';
+}
+
+/// generated route for
+/// [LoginScreen]
+class LoginScreenRoute extends PageRouteInfo<LoginScreenRouteArgs> {
+  LoginScreenRoute({
+    Key? key,
+    required void Function() onLogin,
+  }) : super(
+          LoginScreenRoute.name,
+          path: '/login',
+          args: LoginScreenRouteArgs(
+            key: key,
+            onLogin: onLogin,
+          ),
+        );
+
+  static const String name = 'LoginScreenRoute';
+}
+
+class LoginScreenRouteArgs {
+  const LoginScreenRouteArgs({
+    this.key,
+    required this.onLogin,
+  });
+
+  final Key? key;
+
+  final void Function() onLogin;
+
+  @override
+  String toString() {
+    return 'LoginScreenRouteArgs{key: $key, onLogin: $onLogin}';
+  }
 }
 
 /// generated route for

@@ -8,6 +8,7 @@ import 'package:zenith/screens/collection_details.dart';
 import 'package:zenith/screens/collections.dart';
 import 'package:zenith/screens/home.dart';
 import 'package:zenith/screens/item_details/item_details.dart';
+import 'package:zenith/screens/login.dart';
 import 'package:zenith/screens/media_library.dart';
 import 'package:zenith/screens/settings.dart';
 import 'package:zenith/screens/setup.dart';
@@ -18,55 +19,67 @@ part 'router.gr.dart';
 @MaterialAutoRouter(routes: [
   AutoRoute(
     path: '/',
-    page: MainScreen,
     initial: true,
-    guards: [SetupGuard],
+    guards: [NavGuard],
     children: [
-      AutoRoute(page: HomeScreen, initial: true),
-      AutoRoute(path: 'library/movies', page: MoviesScreen),
-      AutoRoute(path: 'library/shows', page: ShowsScreen),
-      AutoRoute(path: 'library/collections', page: CollectionsScreen),
+      AutoRoute(
+        path: '/',
+        page: MainScreen,
+        initial: true,
+        children: [
+          AutoRoute(page: HomeScreen, initial: true),
+          AutoRoute(path: 'library/movies', page: MoviesScreen),
+          AutoRoute(path: 'library/shows', page: ShowsScreen),
+          AutoRoute(path: 'library/collections', page: CollectionsScreen),
+        ],
+      ),
+      AutoRoute(
+        path: '/items/:id',
+        page: ItemDetailsScreen,
+        usesPathAsKey: true,
+      ),
+      AutoRoute(
+        path: '/collections/:id',
+        page: CollectionDetailsScreen,
+        usesPathAsKey: true,
+      ),
+      AutoRoute(
+        path: '/player/:id',
+        page: VideoPlayerScreen,
+        usesPathAsKey: true,
+      ),
+      AutoRoute(path: '/setup', page: SetupScreen),
+      AutoRoute(path: '/settings', page: SettingsScreen),
+      AutoRoute(path: '/login', page: LoginScreen),
     ],
   ),
-  AutoRoute(
-    path: '/items/:id',
-    page: ItemDetailsScreen,
-    usesPathAsKey: true,
-  ),
-  AutoRoute(
-    path: '/collections/:id',
-    page: CollectionDetailsScreen,
-    usesPathAsKey: true,
-  ),
-  AutoRoute(
-    path: '/player/:id',
-    page: VideoPlayerScreen,
-    usesPathAsKey: true,
-  ),
-  AutoRoute(path: '/setup', page: SetupScreen, guards: [SetupGuard]),
-  AutoRoute(path: '/settings', page: SettingsScreen),
 ])
 class AppRouter extends _$AppRouter {
-  AppRouter({required SetupGuard setupGuard}) : super(setupGuard: setupGuard);
+  AppRouter({required NavGuard navGuard}) : super(navGuard: navGuard);
 }
 
-class SetupGuard extends AutoRouteGuard {
+class NavGuard extends AutoRouteGuard {
   Server? Function() getServer;
+  Future<bool> Function() isLoggedIn;
 
-  SetupGuard(this.getServer);
+  NavGuard({required this.getServer, required this.isLoggedIn});
 
   @override
-  void onNavigation(NavigationResolver resolver, StackRouter router) {
+  void onNavigation(NavigationResolver resolver, StackRouter router) async {
     final activeServer = getServer();
-    if ((activeServer != null && resolver.route.path != "/setup") ||
-        (resolver.route.path == "/setup" && activeServer == null)) {
-      return resolver.next(true);
+    if (activeServer == null) {
+      if (resolver.route.path == '/setup') {
+        resolver.next(true);
+      } else {
+        router.push(const SetupScreenRoute());
+      }
+      return;
     }
 
-    if (activeServer != null) {
-      router.push(const MainScreenRoute());
+    if (resolver.route.path != '/login' && !await isLoggedIn()) {
+      router.push(LoginScreenRoute(onLogin: () => resolver.next()));
     } else {
-      router.push(const SetupScreenRoute());
+      resolver.next(true);
     }
   }
 }
