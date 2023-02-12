@@ -19,6 +19,7 @@ extern "C" fn rust_main() {
     let window = WindowBuilder::new()
         .with_title("Zenith")
         .with_inner_size(LogicalSize::new(1280, 720))
+        .with_min_inner_size(LogicalSize::new(300, 300))
         .build(&event_loop)
         .unwrap();
 
