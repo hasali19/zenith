@@ -1,26 +1,25 @@
 [package]
-name = "video_player_ffi"
+name = "runner"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["staticlib"]
 
 [dependencies]
-dart_sdk = { path = "dart_sdk" }
-mpv = { path = "mpv" }
+raw-window-handle = "0.5.0"
+winit = "0.28.1"
+
+[dependencies.flutter-windows-sys]
+path = "flutter-windows-sys"
 
 [dependencies.windows]
 version = "0.44.0"
 features = [
-    "Foundation",
-    "Media",
     "Win32_Foundation",
-    "Win32_Graphics_Gdi",
-    "Win32_System_LibraryLoader",
-    "Win32_System_Threading",
-    "Win32_System_WinRT",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Shell",
     "Win32_UI_WindowsAndMessaging",
 ]

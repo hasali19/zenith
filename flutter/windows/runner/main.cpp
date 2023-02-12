@@ -1,10 +1,31 @@
-#include <flutter/dart_project.h>
-#include <flutter/flutter_view_controller.h>
 #include <windows.h>
 
+#include <flutter/plugin_registry.h>
+#include <flutter_windows.h>
+
+#include "flutter/generated_plugin_registrant.h"
 #include "flutter_native_view/flutter_native_view_plugin.h"
-#include "flutter_window.h"
 #include "utils.h"
+
+class FlutterPluginRegistry : public flutter::PluginRegistry {
+ public:
+  FlutterPluginRegistry(FlutterDesktopEngineRef engine) : engine_(engine) {}
+
+  FlutterDesktopPluginRegistrarRef GetRegistrarForPlugin(
+      const std::string& plugin_name) {
+    return FlutterDesktopEngineGetPluginRegistrar(engine_, plugin_name.c_str());
+  }
+
+ private:
+  FlutterDesktopEngineRef engine_ = nullptr;
+};
+
+extern "C" void rust_main();
+
+extern "C" void register_plugins(FlutterDesktopEngineRef engine) {
+  FlutterPluginRegistry registry(engine);
+  RegisterPlugins(&registry);
+}
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance,
                       _In_opt_ HINSTANCE prev,
@@ -20,27 +41,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
-  flutter::DartProject project(L"data");
-
-  std::vector<std::string> command_line_arguments = GetCommandLineArguments();
-
-  project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
-
-  FlutterWindow window(project);
-  Win32Window::Point origin(10, 10);
-  Win32Window::Size size(1280, 720);
-  if (!window.CreateAndShow(L"Zenith", origin, size)) {
-    return EXIT_FAILURE;
-  }
-  window.SetQuitOnClose(true);
-
   flutternativeview::NativeViewContainer::GetInstance()->Create();
 
-  ::MSG msg;
-  while (::GetMessage(&msg, nullptr, 0, 0)) {
-    ::TranslateMessage(&msg);
-    ::DispatchMessage(&msg);
-  }
+  rust_main();
 
   ::CoUninitialize();
   return EXIT_SUCCESS;

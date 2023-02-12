@@ -2,6 +2,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(zenith_flutter LANGUAGES CXX)
 
+find_package(Corrosion REQUIRED)
+
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 set(BINARY_NAME "zenith_flutter")
@@ -48,6 +50,9 @@ endfunction()
 # Flutter library and tool build rules.
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})
+
+# Import targets from rust workspace
+corrosion_import_crate(MANIFEST_PATH "../Cargo.toml")
 
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
