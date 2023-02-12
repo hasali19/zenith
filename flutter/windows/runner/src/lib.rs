@@ -3,7 +3,10 @@ mod flutter_windows;
 mod window_placement;
 
 use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
-use windows::Win32::Foundation::HWND;
+use windows::core::PCWSTR;
+use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
+use windows::Win32::System::LibraryLoader::GetModuleHandleW;
+use windows::Win32::UI::WindowsAndMessaging::{LoadIconW, SendMessageW, ICON_SMALL, WM_SETICON};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
@@ -12,6 +15,17 @@ use winit::window::WindowBuilder;
 
 use crate::flutter_window_binding::FlutterWindowBinding;
 use crate::flutter_windows::FlutterDesktopViewController;
+
+/// See resource.h
+const IDI_APP_ICON: PCWSTR = PCWSTR(101usize as _);
+
+fn set_window_icon(window: HWND) {
+    unsafe {
+        let hinstance = GetModuleHandleW(None).unwrap();
+        let icon = LoadIconW(hinstance, IDI_APP_ICON).unwrap();
+        SendMessageW(window, WM_SETICON, WPARAM(ICON_SMALL as _), LPARAM(icon.0));
+    }
+}
 
 #[no_mangle]
 extern "C" fn rust_main() {
@@ -29,6 +43,8 @@ extern "C" fn rust_main() {
         RawWindowHandle::Win32(handle) => HWND(handle.hwnd as isize),
         _ => unreachable!(),
     };
+
+    set_window_icon(window_handle);
 
     let window_placement_path = dirs::data_local_dir()
         .unwrap()
