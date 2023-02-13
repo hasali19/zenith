@@ -264,6 +264,10 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
     if (event is KeyUpEvent) {
       if (event.logicalKey == LogicalKeyboardKey.space) {
         _togglePaused();
+      } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+        _controller?.position -= 10;
+      } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+        _controller?.position += 30;
       } else if (!kIsWeb) {
         // Browser handles keyboard shortcuts for toggling fullscreen mode itself
         if (event.logicalKey == LogicalKeyboardKey.escape) {
