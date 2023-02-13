@@ -185,6 +185,11 @@ class VideoControllerWeb extends VideoController {
   }
 
   @override
+  void setPlaybackSped(double speed) {
+    _element.playbackRate = speed;
+  }
+
+  @override
   void addListener(void Function() listener) {
     _listeners.add(listener);
   }

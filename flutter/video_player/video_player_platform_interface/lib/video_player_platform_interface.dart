@@ -73,6 +73,7 @@ abstract class VideoController {
   void setAudioTrack(int index);
   void setTextTrack(SubtitleTrack? track);
   void setFit(BoxFit fit);
+  void setPlaybackSped(double speed);
   void addListener(void Function() listener);
   void removeListener(void Function() listener);
   void dispose();

@@ -231,6 +231,11 @@ class VideoControllerWindows extends VideoController {
   }
 
   @override
+  void setPlaybackSped(double speed) {
+    // TODO: implement setPlaybackSped
+  }
+
+  @override
   VideoState get state => _state;
   VideoState _state = VideoState.idle;
 

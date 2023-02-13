@@ -248,6 +248,11 @@ class _VideoController extends VideoController {
     this.fit.value = fit;
   }
 
+  @override
+  void setPlaybackSped(double speed) {
+    // TODO: implement setPlaybackSped
+  }
+
   final List<void Function()> _listeners = [];
 
   @override

@@ -115,6 +115,14 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
               Navigator.pop(context);
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.speed),
+            title: const Text("Playback speed"),
+            onTap: () async {
+              await _showPlaybackSpeedMenu(context);
+              Navigator.pop(context);
+            },
+          ),
         ],
       ),
     );
@@ -194,6 +202,23 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
             onTap: () => _controller.setFit(BoxFit.contain),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _showPlaybackSpeedMenu(BuildContext context) {
+    const speeds = [1.0, 1.25, 1.5, 1.75, 2.0];
+    return _showModalBottomSheet(
+      (context) => Wrap(
+        children: speeds
+            .map((speed) => ListTile(
+                  title: Text("${speed}x"),
+                  onTap: () {
+                    _controller.setPlaybackSped(speed);
+                    Navigator.pop(context);
+                  },
+                ))
+            .toList(),
       ),
     );
   }
