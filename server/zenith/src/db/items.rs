@@ -82,7 +82,7 @@ pub struct AudioStreamProps {
     pub language: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, FromRow)]
 pub struct Subtitle {
     pub id: i64,
     pub video_id: i64,
@@ -90,6 +90,9 @@ pub struct Subtitle {
     pub path: Option<String>,
     pub title: Option<String>,
     pub language: Option<String>,
+    pub format: Option<String>,
+    pub sdh: bool,
+    pub forced: bool,
 }
 
 #[derive(Debug)]
@@ -188,19 +191,6 @@ impl<'r> FromRow<'r, SqliteRow> for Stream {
     }
 }
 
-impl<'r> FromRow<'r, SqliteRow> for Subtitle {
-    fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
-        Ok(Subtitle {
-            id: row.try_get("id")?,
-            video_id: row.try_get("video_id")?,
-            stream_index: row.try_get("stream_index")?,
-            path: row.try_get("path")?,
-            title: row.try_get("title")?,
-            language: row.try_get("language")?,
-        })
-    }
-}
-
 impl<'r> FromRow<'r, SqliteRow> for VideoUserData {
     fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
         Ok(VideoUserData {
@@ -266,6 +256,9 @@ const SUBTITLE_COLUMNS: &[&str] = &[
     "path",
     "title",
     "language",
+    "format",
+    "sdh",
+    "forced",
 ];
 
 #[derive(Debug, Default)]

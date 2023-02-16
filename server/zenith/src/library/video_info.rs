@@ -66,12 +66,26 @@ pub async fn update_video_info(
                     .and_then(|tags| tags.get("language"))
                     .and_then(|v| v.as_str());
 
+                let get_disposition_bool = |name| {
+                    stream
+                        .properties
+                        .get("disposition")
+                        .and_then(|v| v.as_object())
+                        .and_then(|v| v.get(name))
+                        .and_then(|v| v.as_i64())
+                        .map(|v| v == 1)
+                        .unwrap_or(false)
+                };
+
                 let subtitle = NewSubtitle {
                     video_id: id,
                     stream_index: Some(stream.index),
                     path: None,
                     title,
                     language,
+                    format: Some(&stream.codec_name),
+                    sdh: get_disposition_bool("hearing_impaired"),
+                    forced: get_disposition_bool("forced"),
                 };
 
                 db::subtitles::insert(&mut *conn, &subtitle).await?;

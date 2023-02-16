@@ -36,6 +36,10 @@ pub struct ImportSubtitleRequestData {
     video_id: i64,
     title: Option<String>,
     language: Option<String>,
+    #[serde(default)]
+    sdh: bool,
+    #[serde(default)]
+    forced: bool,
 }
 
 // TODO: Support specifying multipart requests
@@ -109,6 +113,9 @@ pub async fn import_subtitle(
         path: dst_path.to_str(),
         title: data.title.as_deref(),
         language: data.language.as_deref(),
+        format: Some("webvtt"),
+        sdh: data.sdh,
+        forced: data.forced,
     };
 
     db::subtitles::insert(&mut transaction, &subtitles).await?;

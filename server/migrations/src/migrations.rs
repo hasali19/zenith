@@ -40,6 +40,13 @@ async fn _20230121173622_trailers(conn: &mut SqliteConnection) -> eyre::Result<(
     Ok(())
 }
 
+async fn _20230216113153_subtitle_type(conn: &mut SqliteConnection) -> eyre::Result<()> {
+    sqlx::query(include_str!("../migrations/20230216113153_subtitle_type.sql"))
+        .execute(conn)
+        .await?;
+    Ok(())
+}
+
 pub(super) fn collect(migrator: &mut super::Migrator) {
     migrator.push_migration(
         "20220809142403_initial",
@@ -70,5 +77,10 @@ pub(super) fn collect(migrator: &mut super::Migrator) {
         "20230121173622_trailers",
         Box::new(|conn| Box::pin(_20230121173622_trailers(conn))),
         [242, 183, 94, 127, 233, 34, 168, 212, 229, 75, 246, 133, 123, 71, 22, 140, 141, 36, 97, 74, 141, 151, 255, 112, 183, 215, 16, 29, 247, 129, 221, 183],
+    );
+    migrator.push_migration(
+        "20230216113153_subtitle_type",
+        Box::new(|conn| Box::pin(_20230216113153_subtitle_type(conn))),
+        [201, 128, 238, 33, 237, 106, 51, 226, 182, 229, 33, 43, 32, 247, 110, 146, 187, 100, 29, 83, 186, 73, 165, 208, 152, 88, 225, 188, 186, 159, 197, 11],
     );
 }

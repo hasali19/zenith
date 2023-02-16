@@ -86,6 +86,9 @@ pub struct Subtitle {
     pub path: Option<String>,
     pub title: Option<String>,
     pub language: Option<String>,
+    pub format: Option<String>,
+    pub sdh: bool,
+    pub forced: bool,
 }
 
 #[derive(Serialize, Reflect)]
@@ -166,6 +169,9 @@ impl From<db::items::MediaItem> for MediaItem {
                         stream_index: subtitle.stream_index,
                         title: subtitle.title,
                         language: subtitle.language,
+                        format: subtitle.format,
+                        sdh: subtitle.sdh,
+                        forced: subtitle.forced,
                     })
                     .collect(),
             }),

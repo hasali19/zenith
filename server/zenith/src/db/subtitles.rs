@@ -1,7 +1,6 @@
 use serde::Serialize;
 use speq::Reflect;
-use sqlx::sqlite::SqliteRow;
-use sqlx::{FromRow, Row, SqliteConnection};
+use sqlx::{FromRow, SqliteConnection};
 
 pub struct NewSubtitle<'a> {
     pub video_id: i64,
@@ -9,9 +8,12 @@ pub struct NewSubtitle<'a> {
     pub path: Option<&'a str>,
     pub title: Option<&'a str>,
     pub language: Option<&'a str>,
+    pub format: Option<&'a str>,
+    pub sdh: bool,
+    pub forced: bool,
 }
 
-#[derive(Serialize, Reflect)]
+#[derive(Serialize, Reflect, FromRow)]
 pub struct Subtitle {
     pub id: i64,
     pub video_id: i64,
@@ -19,27 +21,17 @@ pub struct Subtitle {
     pub path: Option<String>,
     pub title: Option<String>,
     pub language: Option<String>,
-}
-
-impl<'r> FromRow<'r, SqliteRow> for Subtitle {
-    fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
-        Ok(Subtitle {
-            id: row.try_get("id")?,
-            video_id: row.try_get("video_id")?,
-            stream_index: row.try_get("stream_index")?,
-            path: row.try_get("path")?,
-            title: row.try_get("title")?,
-            language: row.try_get("language")?,
-        })
-    }
+    pub format: Option<String>,
+    pub sdh: bool,
+    pub forced: bool,
 }
 
 pub async fn insert(conn: &mut SqliteConnection, subtitle: &NewSubtitle<'_>) -> eyre::Result<i64> {
     let sql = "
         INSERT INTO subtitles
-            (video_id, stream_index, path, title, language)
+            (video_id, stream_index, path, title, language, format, sdh, forced)
         VALUES
-            (?, ?, ?, ?, ?)
+            (?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT
         DO UPDATE SET
             title = excluded.title,
@@ -52,6 +44,9 @@ pub async fn insert(conn: &mut SqliteConnection, subtitle: &NewSubtitle<'_>) -> 
         .bind(subtitle.path)
         .bind(subtitle.title)
         .bind(subtitle.language)
+        .bind(subtitle.format)
+        .bind(subtitle.sdh)
+        .bind(subtitle.forced)
         .execute(conn)
         .await?;
 
@@ -60,7 +55,7 @@ pub async fn insert(conn: &mut SqliteConnection, subtitle: &NewSubtitle<'_>) -> 
 
 pub async fn get_by_id(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Subtitle>> {
     let sql = "
-        SELECT id, video_id, stream_index, path, title, language
+        SELECT id, video_id, stream_index, path, title, language, format, sdh, forced
         FROM subtitles
         WHERE id = ?
     ";
@@ -77,7 +72,7 @@ pub async fn get_for_video(
     video_id: i64,
 ) -> eyre::Result<Vec<Subtitle>> {
     let sql = "
-        SELECT id, video_id, stream_index, path, title, language
+        SELECT id, video_id, stream_index, path, title, language, format, sdh, forced
         FROM subtitles
         WHERE video_id = ?
     ";

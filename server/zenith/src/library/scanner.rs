@@ -1,7 +1,9 @@
+use std::collections::HashSet;
 use std::path::Path;
 use std::sync::Arc;
 
 use eyre::eyre;
+use sqlx::Connection;
 use time::{Date, Instant, OffsetDateTime};
 use tokio::sync::Mutex;
 use walkdir::{DirEntry, WalkDir};
@@ -232,10 +234,98 @@ impl LibraryScannerImpl {
         options: &ScanOptions,
     ) -> eyre::Result<FileScanResult> {
         tracing::trace!(?video_type, path = %path.display(), "scanning file");
-        match video_type {
+        let result = match video_type {
             VideoFileType::Movie => self.scan_movie_file(path, options).await,
             VideoFileType::Episode => self.scan_episode_file(path, options).await,
+        }?;
+
+        if let Some(id) = result.id() {
+            let video_file_name = path.file_stem().unwrap();
+            let parent = path.parent().unwrap();
+            let subtitles = WalkDir::new(parent)
+                .max_depth(1)
+                .into_iter()
+                .flatten()
+                .filter(|it| it.file_type().is_file())
+                .filter(|it| {
+                    let ext = it.path().extension().and_then(|it| it.to_str());
+                    ext == Some("vtt") || ext == Some("srt")
+                });
+
+            fn split_ext(path: &str) -> (&str, Option<&str>) {
+                if let Some(index) = path.rfind('.') {
+                    let (head, tail) = path.split_at(index);
+                    (head, Some(&tail[1..]))
+                } else {
+                    (path, None)
+                }
+            }
+
+            let mut conn = self.db.acquire().await?;
+            let subs = db::subtitles::get_for_video(&mut conn, id)
+                .await?
+                .into_iter()
+                .filter_map(|it| it.path)
+                .collect::<HashSet<_>>();
+
+            for entry in subtitles {
+                let Some(sub_path) = entry.path().to_str() else { continue };
+                if subs.contains(sub_path) {
+                    continue;
+                }
+
+                let Some(mut sub_file_name) = entry.path().file_stem().and_then(|it|it.to_str()) else {
+                    continue
+                };
+
+                let format = match entry.path().extension().and_then(|it| it.to_str()) {
+                    Some("srt") => "srt",
+                    Some("vtt") => "webvtt",
+                    _ => continue,
+                };
+
+                let mut sdh = false;
+                let mut forced = false;
+
+                loop {
+                    let (name, ext) = split_ext(sub_file_name);
+                    let Some(ext) = ext else { break };
+
+                    if ext == "sdh" {
+                        sdh = true;
+                    } else if ext == "forced" {
+                        forced = true;
+                    } else {
+                        break;
+                    }
+
+                    sub_file_name = name;
+                }
+
+                let (sub_file_name, lang) = split_ext(sub_file_name);
+
+                if sub_file_name == video_file_name {
+                    let subtitle = db::subtitles::NewSubtitle {
+                        video_id: id,
+                        stream_index: None,
+                        path: entry.path().to_str(),
+                        title: entry.path().to_str(),
+                        language: lang,
+                        format: Some(format),
+                        sdh,
+                        forced,
+                    };
+
+                    tracing::info!(video_id=%id, path=?entry.path(), "adding subtitle: ");
+
+                    let mut tx = conn.begin().await?;
+                    db::subtitles::insert(&mut tx, &subtitle).await?;
+                    tx.commit().await?;
+                }
+            }
         }
+
+        Ok(result)
     }
 
     async fn scan_movie_file(
