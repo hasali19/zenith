@@ -8,8 +8,10 @@ Future loadLanguageCodes() async {
   final List<dynamic> data =
       jsonDecode(await rootBundle.loadString("assets/language-codes.json"));
   for (final language in data) {
-    String name = language['English'];
-    _languageMap[language['alpha3-b']] = name.split(";").first.trim();
+    final String names = language['English'];
+    final name = names.split(";").first.trim();
+    _languageMap[language['alpha3-b']] = name;
+    _languageMap[language['alpha2']] = name;
   }
 }
 
