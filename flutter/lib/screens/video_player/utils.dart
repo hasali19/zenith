@@ -20,7 +20,9 @@ video_player.SubtitleTrack subtitleFromApi(
   return video_player.SubtitleTrack(
     id: subtitle.id.toString(),
     src: api.getSubtitleUrl(subtitle.id),
-    mimeType: _formatToMimeType(subtitle.format),
+    mimeType: subtitle.streamIndex == null
+        ? _formatToMimeType(subtitle.format)
+        : "text/vtt", // all platforms currently use extracted vtt files for embedded subs, instead of using the stream directly
     title: subtitle.title,
     language: subtitle.language,
     displayLanguage: subtitle.language != null
