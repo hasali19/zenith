@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'dart:html';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+import 'package:http/http.dart' as http;
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
+import 'package:video_player_web/text_track_parser.dart';
 
 import "shims/dart_ui.dart" as ui;
 
@@ -66,6 +69,7 @@ class VideoControllerWeb extends VideoController {
   final int id;
   final VideoElement _element;
   final List<void Function()> _listeners = [];
+  final Map<int, TextTrack> _textTracks = {};
 
   VideoState _state = VideoState.idle;
   TextTrack? _activeTextTrack;
@@ -124,18 +128,6 @@ class VideoControllerWeb extends VideoController {
     _element.crossOrigin = "anonymous";
     _element.currentTime = item.startPosition;
     _element.children.clear();
-
-    for (final subtitle in item.subtitles) {
-      _element.children.add(
-        TrackElement()
-          ..id = "subtitle-track-${subtitle.id}"
-          ..kind = "subtitles"
-          ..src = subtitle.src
-          ..srclang = subtitle.language
-          ..label = subtitle.title,
-      );
-    }
-
     _state = VideoState.active;
     _activeTextTrack = null;
   }
@@ -157,16 +149,39 @@ class VideoControllerWeb extends VideoController {
   }
 
   @override
-  void setTextTrack(SubtitleTrack? track) {
-    if (track == null) {
-      _activeTextTrack?.mode = 'hidden';
-      _activeTextTrack = null;
-    } else {
-      final trackElement = _element
-          .querySelector("#subtitle-track-${track.id}")! as TrackElement;
-      final textTrack = trackElement.track!;
-      textTrack.mode = 'showing';
-      _activeTextTrack = textTrack;
+  Future<void> setTextTrack(SubtitleTrack? track) async {
+    _activeTextTrack?.mode = 'hidden';
+    _activeTextTrack = null;
+
+    if (track != null) {
+      var tt = _textTracks[track.id];
+
+      if (tt == null) {
+        final res = await http.get(Uri.parse(track.src));
+        final contentType = res.headers['content-type'];
+
+        final TextTrackParser parser;
+        if (contentType == "text/vtt") {
+          parser = VttParser();
+        } else if (contentType == "text/srt" ||
+            contentType == "application/x-subrip") {
+          parser = SrtParser();
+        } else {
+          window.console.error("unsupported text track format: $contentType");
+          return;
+        }
+
+        final data = utf8.decode(res.bodyBytes);
+        final tracks = parser.parse(data);
+
+        tt = _element.addTextTrack("subtitles");
+        for (final cue in tracks) {
+          tt.addCue(cue);
+        }
+      }
+
+      tt.mode = "showing";
+      _activeTextTrack = tt;
     }
   }
 
