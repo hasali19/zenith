@@ -214,7 +214,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
             .map((speed) => ListTile(
                   title: Text("${speed}x"),
                   onTap: () {
-                    _controller.setPlaybackSped(speed);
+                    _controller.setPlaybackSpeed(speed);
                     Navigator.pop(context);
                   },
                 ))

@@ -231,7 +231,7 @@ class VideoControllerWindows extends VideoController {
   }
 
   @override
-  void setPlaybackSped(double speed) {
+  void setPlaybackSpeed(double speed) {
     // TODO: implement setPlaybackSped
   }
 
