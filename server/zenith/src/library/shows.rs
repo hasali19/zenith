@@ -265,6 +265,8 @@ impl MediaLibrary {
     /// This will delete any episodes that don't exist anymore, seasons
     /// that don't have any episodes and shows that don't have any seasons.
     pub async fn validate_shows(&self) -> eyre::Result<()> {
+        tracing::info!("validating shows");
+
         let mut conn = self.db.acquire().await?;
 
         let sql = "

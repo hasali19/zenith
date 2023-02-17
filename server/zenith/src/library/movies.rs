@@ -97,6 +97,8 @@ impl MediaLibrary {
 
     /// Removes any movies that no longer exist on the filesystem
     pub async fn validate_movies(&self) -> eyre::Result<()> {
+        tracing::info!("validating movies");
+
         let mut conn = self.db.acquire().await?;
 
         let sql = "

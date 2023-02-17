@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::io;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -122,6 +123,8 @@ impl LibraryScanner {
                 }
             }
 
+            log_error(scanner.validate_subtitles()).await;
+
             log_error(scanner.library.validate_movies()).await;
             log_error(scanner.scan_movies(&scanner.config.libraries.movies, options)).await;
 
@@ -196,12 +199,14 @@ impl LibraryScanner {
 impl LibraryScannerImpl {
     /// Recursively scans a folder for movie files.
     async fn scan_movies(&self, path: impl AsRef<Path>, options: &ScanOptions) -> eyre::Result<()> {
+        tracing::info!("scanning movies");
         self.scan_library_dir(path, VideoFileType::Movie, options)
             .await
     }
 
     /// Recursively scans a folder for tv episode files.
     async fn scan_shows(&self, path: &impl AsRef<Path>, options: &ScanOptions) -> eyre::Result<()> {
+        tracing::info!("scanning shows");
         self.scan_library_dir(path, VideoFileType::Episode, options)
             .await
     }
@@ -475,6 +480,52 @@ impl LibraryScannerImpl {
         let mut transaction = self.db.begin().await?;
         video_info::update_video_info(&mut transaction, id, &info).await?;
         transaction.commit().await?;
+
+        Ok(())
+    }
+
+    async fn validate_subtitles(&self) -> eyre::Result<()> {
+        let mut conn = self.db.acquire().await?;
+
+        tracing::info!("validating external subtitles");
+
+        let subtitles: Vec<(i64, String)> =
+            sqlx::query_as("SELECT id, path FROM subtitles WHERE stream_index IS NULL")
+                .fetch_all(&mut conn)
+                .await?;
+
+        for (id, path) in subtitles {
+            if let Err(e) = tokio::fs::metadata(&path).await
+                && e.kind() == io::ErrorKind::NotFound
+            {
+                tracing::info!(%id, %path, "removing external subtitle");
+                sqlx::query("DELETE FROM subtitles WHERE id = ?")
+                    .bind(id)
+                    .execute(&mut conn)
+                    .await?;
+            }
+        }
+
+        tracing::info!("validating embedded subtitles");
+
+        let sql = "
+            SELECT id, path FROM subtitles
+            WHERE stream_index IS NOT NULL AND PATH IS NOT NULL
+        ";
+
+        let subtitles: Vec<(i64, String)> = sqlx::query_as(sql).fetch_all(&mut conn).await?;
+
+        for (id, path) in subtitles {
+            if let Err(e) = tokio::fs::metadata(&path).await
+                && e.kind() == io::ErrorKind::NotFound
+            {
+                tracing::info!(%id, %path, "invalid file for embedded subtitle");
+                sqlx::query("UPDATE subtitles SET path = NULL WHERE id = ?")
+                    .bind(id)
+                    .execute(&mut conn)
+                    .await?;
+            }
+        }
 
         Ok(())
     }
