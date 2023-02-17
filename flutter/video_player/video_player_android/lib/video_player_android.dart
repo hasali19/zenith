@@ -128,6 +128,8 @@ class _VideoController extends VideoController {
   final StreamController<String?> _subsController =
       StreamController.broadcast();
 
+  double _playbackSpeed = 1.0;
+
   @override
   bool get supportsAudioTrackSelection => true;
 
@@ -152,11 +154,13 @@ class _VideoController extends VideoController {
 
   @override
   double get position {
-    var position = _lastKnownPosition;
+    double position = _lastKnownPosition.toDouble();
     if (_playing) {
-      position += DateTime.now().millisecondsSinceEpoch - _lastKnownPositionTs;
+      position +=
+          (DateTime.now().millisecondsSinceEpoch - _lastKnownPositionTs) *
+              _playbackSpeed;
     }
-    return position.toDouble() / 1000.0;
+    return position / 1000.0;
   }
 
   @override
@@ -190,6 +194,8 @@ class _VideoController extends VideoController {
         aspectRatio.value = event["value"];
       } else if (type == "cues") {
         _subsController.add(event["text"]);
+      } else if (type == "playbackSpeed") {
+        _playbackSpeed = event["speed"];
       }
       if (event.containsKey("position")) {
         _lastKnownPosition = event["position"];
@@ -251,7 +257,7 @@ class _VideoController extends VideoController {
 
   @override
   void setPlaybackSpeed(double speed) {
-    // TODO: implement setPlaybackSped
+    _methodChannel.invokeMethod("setPlaybackSpeed", {"id": id, "speed": speed});
   }
 
   final List<void Function()> _listeners = [];

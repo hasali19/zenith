@@ -63,6 +63,10 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                             id = call.argument("id")!!,
                             position = call.argument("position")!!,
                         )
+                        "setPlaybackSpeed" -> responder.setPlaybackSpeed(
+                                id = call.argument("id")!!,
+                                speed = call.argument("speed")!!,
+                        )
                         "setAudioTrack" -> responder.setAudioTrack(
                             id = call.argument("id")!!,
                             index = call.argument("index")!!,
@@ -140,6 +144,13 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                                     "text" to it.text,
                                 )
                             )
+                            is PlayerInstance.Event.PlaybackSpeed -> events.success(
+                                mapOf(
+                                    "type" to "playbackSpeed",
+                                    "speed" to it.speed,
+                                    "position" to it.position,
+                                )
+                            )
                         }
                     }
                 }
@@ -203,6 +214,11 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
             result.success(null)
         }
 
+        fun setPlaybackSpeed(id: Long, speed: Double) {
+            players[id]!!.setPlaybackSpeed(speed)
+            result.success(null)
+        }
+
         fun setAudioTrack(id: Long, index: Int) {
             players[id]!!.setAudioTrack(index)
             result.success(null)
@@ -248,6 +264,7 @@ private class PlayerInstance(
         data class IsPlayingChanged(val value: Boolean, val position: Long) : Event()
         data class PositionDiscontinuity(val position: Long) : Event()
         data class Cues(val text: String?) : Event()
+        data class PlaybackSpeed(val speed: Double, val position: Long) : Event()
     }
 
     private val surface = Surface(texture.surfaceTexture())
@@ -313,6 +330,10 @@ private class PlayerInstance(
                 } else {
                     onEvent?.invoke(Event.Cues(null))
                 }
+            }
+
+            override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
+                onEvent?.invoke(Event.PlaybackSpeed(playbackParameters.speed.toDouble(), player.currentPosition))
             }
         })
 
@@ -389,6 +410,10 @@ private class PlayerInstance(
 
     fun seekTo(position: Long) {
         player.seekTo(position)
+    }
+
+    fun setPlaybackSpeed(speed: Double) {
+        player.setPlaybackSpeed(speed.toFloat())
     }
 
     fun setTrackById(renderer: Int, id: String?) {
