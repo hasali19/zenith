@@ -424,7 +424,7 @@ private class PlayerInstance(
     }
 
     fun setTextTrack(trackId: String?) {
-        setTrackById(textRenderer ?: return, "external:$trackId")
+        setTrackById(textRenderer ?: return, if (trackId != null) "external:$trackId" else null)
     }
 
     fun release() {
