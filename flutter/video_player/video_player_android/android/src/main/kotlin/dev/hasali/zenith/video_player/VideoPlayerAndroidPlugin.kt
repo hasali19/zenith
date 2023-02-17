@@ -50,6 +50,7 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                                     SubtitleTrack(
                                         id = it["id"] as String,
                                         src = it["src"] as String,
+                                        mimeType = it["mimeType"] as String,
                                         title = it["title"] as String?,
                                         language = it["language"] as String?,
                                     )
@@ -221,7 +222,13 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
 
 private typealias EventCallback = (event: PlayerInstance.Event) -> Unit
 
-data class SubtitleTrack(val id: String, val src: String, val title: String?, val language: String?)
+data class SubtitleTrack(
+    val id: String,
+    val src: String,
+    val mimeType: String,
+    val title: String?,
+    val language: String?,
+)
 
 private class PlayerInstance(
     private val context: Context,
@@ -354,7 +361,7 @@ private class PlayerInstance(
 
             val subtitle = MediaItem.SubtitleConfiguration.Builder(uri)
                 .setId("external:${it.id}")
-                .setMimeType(MimeTypes.TEXT_VTT)
+                .setMimeType(it.mimeType)
                 .setLanguage(it.language)
                 .setLabel(it.title)
                 .build()

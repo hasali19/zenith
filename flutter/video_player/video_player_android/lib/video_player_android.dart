@@ -214,6 +214,7 @@ class _VideoController extends VideoController {
           .map((track) => {
                 "id": track.id,
                 "src": track.src,
+                "mimeType": track.mimeType,
                 "title": track.title,
                 "language": track.language
               })

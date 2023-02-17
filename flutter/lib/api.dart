@@ -113,17 +113,20 @@ class MediaItemParent {
 
 class SubtitleTrack {
   final int id;
+  final String? format;
   final String? title;
   final String? language;
 
   const SubtitleTrack({
     required this.id,
+    required this.format,
     required this.title,
     required this.language,
   });
 
   factory SubtitleTrack.fromJson(Map<String, dynamic> json) => SubtitleTrack(
         id: json['id'],
+        format: json['format'],
         title: json['title'],
         language: json['language'],
       );

@@ -29,6 +29,7 @@ enum VideoState { idle, active, ended }
 class SubtitleTrack {
   String id;
   String src;
+  String mimeType;
   String? title;
   String? language;
   String? displayLanguage;
@@ -36,6 +37,7 @@ class SubtitleTrack {
   SubtitleTrack({
     required this.id,
     required this.src,
+    required this.mimeType,
     this.title,
     this.language,
     this.displayLanguage,
