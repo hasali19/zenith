@@ -1,5 +1,7 @@
 use eyre::{eyre, Context};
 use itertools::Itertools;
+use once_cell::sync::Lazy;
+use regex::Regex;
 use sqlx::SqliteConnection;
 use thiserror::Error;
 use time::{format_description, Date, OffsetDateTime, Time};
@@ -192,7 +194,13 @@ async fn find_match_for_show(
 ) -> eyre::Result<()> {
     tracing::info!("finding match for show");
 
-    let name = &item.name;
+    let mut name = item.name.as_str();
+
+    static YEAR_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(.+) \(\d\d\d\d\)$").unwrap());
+
+    if let Some(captures) = YEAR_RE.captures(name) {
+        name = captures.get(1).unwrap().as_str();
+    }
 
     let query = TvShowSearchQuery {
         name,
