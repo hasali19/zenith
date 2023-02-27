@@ -51,22 +51,38 @@ endfunction()
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})
 
-# Import targets from rust workspace
+# Import targets from rust workspace.
 corrosion_import_crate(MANIFEST_PATH "../Cargo.toml")
 
-# Application build; see runner/CMakeLists.txt.
-add_subdirectory("runner")
+# Link rust exe to flutter engine.
+corrosion_add_target_local_rustflags(${BINARY_NAME} "-Lnative=${FLUTTER_MANAGED_DIR}/ephemeral")
+corrosion_add_target_local_rustflags(${BINARY_NAME} "-lflutter_windows.dll")
+
+# Add explicit dependency on flutter to cargo build.
+add_dependencies(_cargo-build_${BINARY_NAME} flutter flutter_assemble)
+
+# Plugin registrar library. This will be invoked by rust exe to register plugins.
+# TODO: Consider generating a rust registrar from the plugin list, which avoids
+# needing to link with this C++ wrapper.
+add_library(plugin_registrar SHARED plugin_registrar.cc "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc")
+target_link_libraries(plugin_registrar PRIVATE flutter flutter_wrapper_app)
+corrosion_link_libraries(${BINARY_NAME} plugin_registrar)
 
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
+# Override BINARY_NAME so that plugins get linked to plugin_registrar instead.
+set(BINARY_NAME plugin_registrar)
 include(flutter/generated_plugins.cmake)
+set(BINARY_NAME zenith_flutter)
 
+# Link the plugin registrar to rust exe.
+corrosion_link_libraries(${BINARY_NAME} plugin_registrar)
 
 # === Installation ===
 # Support files are copied into place next to the executable, so that it can
 # run in place. This is done instead of making a separate bundle (as on Linux)
 # so that building and running from within Visual Studio will work.
-set(BUILD_BUNDLE_DIR "$<TARGET_FILE_DIR:${BINARY_NAME}>")
+set(BUILD_BUNDLE_DIR "${CMAKE_CURRENT_BINARY_DIR}/runner/\${CMAKE_INSTALL_CONFIG_NAME}")
 # Make the "install" step default, as it's required to run.
 set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -76,7 +92,10 @@ endif()
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}")
 
-install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
+corrosion_install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
+  COMPONENT Runtime)
+
+install(TARGETS plugin_registrar RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)
 
 install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
