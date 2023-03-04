@@ -200,17 +200,15 @@ class HeaderContent extends ConsumerWidget {
         actions.add(const SizedBox(width: 16));
       }
 
-      if (kIsWeb) {
-        actions.add(IconButton(
-          icon: const Icon(Icons.download),
-          onPressed: () {
-            downloadFile(api.getVideoUrl(model.item.id, attachment: true));
-          },
-        ));
+      actions.add(IconButton(
+        icon: const Icon(Icons.download),
+        onPressed: () {
+          downloadFile(api.getVideoUrl(model.item.id, attachment: true));
+        },
+      ));
 
-        if (isDesktop) {
-          actions.add(const SizedBox(width: 16));
-        }
+      if (isDesktop) {
+        actions.add(const SizedBox(width: 16));
       }
     }
 
