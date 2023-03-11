@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::cell::RefCell;
 
 use flutter_plugin::codec::EncodableValue;
 use flutter_plugin::messenger::FlutterDesktopMessengerReply;
@@ -14,7 +14,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 
 struct VideoPlayerFfiPlugin {
-    window_state: Mutex<WindowState>,
+    window_state: RefCell<WindowState>,
 }
 
 #[derive(Default)]
@@ -31,7 +31,7 @@ impl FlutterDesktopPlugin for VideoPlayerFfiPlugin {
         let root_window = unsafe { GetAncestor(flutter_window, GA_ROOT) };
 
         let plugin = VideoPlayerFfiPlugin {
-            window_state: Mutex::new(WindowState {
+            window_state: RefCell::new(WindowState {
                 hwnd: root_window,
                 ..Default::default()
             }),
@@ -71,7 +71,7 @@ impl VideoPlayerFfiPlugin {
 
     fn set_full_screen(&self, is_full_screen: bool) {
         unsafe {
-            let mut window_state = self.window_state.lock().unwrap();
+            let mut window_state = self.window_state.borrow_mut();
             let root_window = GetAncestor(window_state.hwnd, GA_ROOT);
 
             if !window_state.is_full_screen {
