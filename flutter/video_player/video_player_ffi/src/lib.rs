@@ -1,5 +1,6 @@
 #![allow(clippy::missing_safety_doc)]
 
+mod plugin;
 mod window;
 
 use std::ffi::{c_void, CStr};

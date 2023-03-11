@@ -14,7 +14,7 @@ raw-window-handle = "0.5.0"
 winit = "0.28.1"
 
 [dependencies.flutter-windows-sys]
-path = "flutter-windows-sys"
+path = "../../crates/flutter-windows-sys"
 
 [dependencies.windows]
 version = "0.44.0"

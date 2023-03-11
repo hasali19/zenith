@@ -1,3 +1,3 @@
 [workspace]
-members = ["windows/runner", "video_player/video_player_ffi"]
+members = ["crates/*", "windows/runner", "video_player/video_player_ffi"]
 exclude = ["windows/flutter"]
