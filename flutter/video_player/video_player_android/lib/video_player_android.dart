@@ -50,7 +50,7 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
                 ),
                 SubtitleView(
                   events: controller._subsController.stream,
-                  textScale: width / 730,
+                  textScale: constraints.maxWidth / 900,
                 ),
               ],
             );
@@ -105,7 +105,7 @@ class SubtitleView extends StatelessWidget {
           final event = snapshot.data;
           if (event != null) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.only(bottom: 24),
               child: Stack(
                 children: [
                   Text(event, textAlign: TextAlign.center, style: outlineStyle),
