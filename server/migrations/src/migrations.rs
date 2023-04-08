@@ -47,6 +47,13 @@ async fn _20230216113153_subtitle_type(conn: &mut SqliteConnection) -> eyre::Res
     Ok(())
 }
 
+async fn _20230408085807_multiple_video_files(conn: &mut SqliteConnection) -> eyre::Result<()> {
+    sqlx::query(include_str!("../migrations/20230408085807_multiple_video_files.sql"))
+        .execute(conn)
+        .await?;
+    Ok(())
+}
+
 pub(super) fn collect(migrator: &mut super::Migrator) {
     migrator.push_migration(
         "20220809142403_initial",
@@ -82,5 +89,10 @@ pub(super) fn collect(migrator: &mut super::Migrator) {
         "20230216113153_subtitle_type",
         Box::new(|conn| Box::pin(_20230216113153_subtitle_type(conn))),
         [201, 128, 238, 33, 237, 106, 51, 226, 182, 229, 33, 43, 32, 247, 110, 146, 187, 100, 29, 83, 186, 73, 165, 208, 152, 88, 225, 188, 186, 159, 197, 11],
+    );
+    migrator.push_migration(
+        "20230408085807_multiple_video_files",
+        Box::new(|conn| Box::pin(_20230408085807_multiple_video_files(conn))),
+        [156, 65, 67, 86, 42, 176, 187, 87, 57, 55, 172, 128, 157, 241, 173, 12, 132, 157, 169, 195, 51, 138, 215, 114, 203, 162, 24, 213, 92, 32, 229, 23],
     );
 }
