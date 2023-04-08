@@ -32,7 +32,7 @@ pub struct Format {
 pub struct Stream {
     pub index: u32,
     pub codec_type: String,
-    pub codec_name: String,
+    pub codec_name: Option<String>,
     #[serde(flatten)]
     pub properties: HashMap<String, Value>,
 }

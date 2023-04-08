@@ -1,3 +1,4 @@
+use eyre::eyre;
 use serde_json::Value;
 use sqlx::SqliteConnection;
 
@@ -22,6 +23,12 @@ pub async fn update_video_info(
 
     for stream in &info.streams {
         let tags = stream.properties.get("tags").and_then(|v| v.as_object());
+
+        let Some(codec_name) = stream.codec_name.as_deref() else {
+            tracing::debug!(stream.index, stream.codec_type, "stream is missing codec name");
+            continue;
+        };
+
         match stream.codec_type.as_str() {
             "video" => {
                 let (width, height) = if let (Some(width), Some(height)) = (
@@ -30,13 +37,13 @@ pub async fn update_video_info(
                 ) {
                     (width as u32, height as u32)
                 } else {
-                    return Err(eyre::eyre!("missing width and height for video stream"));
+                    return Err(eyre!("missing width and height for video stream"));
                 };
 
                 let stream = NewVideoStream {
                     video_id: id,
                     index: stream.index,
-                    codec_name: &stream.codec_name,
+                    codec_name,
                     width,
                     height,
                 };
@@ -51,7 +58,7 @@ pub async fn update_video_info(
                 let stream = NewAudioStream {
                     video_id: id,
                     index: stream.index,
-                    codec_name: &stream.codec_name,
+                    codec_name,
                     language,
                 };
 
@@ -83,7 +90,7 @@ pub async fn update_video_info(
                     path: None,
                     title,
                     language,
-                    format: Some(&stream.codec_name),
+                    format: Some(codec_name),
                     sdh: get_disposition_bool("hearing_impaired"),
                     forced: get_disposition_bool("forced"),
                 };

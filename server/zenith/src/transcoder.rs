@@ -224,7 +224,7 @@ impl Transcoder {
         for stream in &info.streams {
             if stream.codec_type == "audio" {
                 // Transcode audio stream if not already aac
-                if stream.codec_name == "aac" {
+                if stream.codec_name.as_deref() == Some("aac") {
                     mappings.push(StreamMapping::Copy(stream.index));
                 } else {
                     transcode_any = true;
