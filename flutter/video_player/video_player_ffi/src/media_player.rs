@@ -1,19 +1,17 @@
-use std::mem::ManuallyDrop;
 use std::sync::atomic::{self, AtomicU64};
 use std::sync::Arc;
 
 use windows::Media::SystemMediaTransportControlsButton;
 use windows::Win32::Foundation::HWND;
 
+use crate::cstr;
 use crate::mpv_player::{self, MpvFormat, MpvPlayer, MpvStr};
 use crate::system_media_controls::SystemMediaControls;
-use crate::{cstr, window};
 
 pub struct MediaPlayer {
     mpv: Arc<MpvPlayer>,
-    hwnd: HWND,
     start_position: AtomicU64,
-    system_media_controls: ManuallyDrop<SystemMediaControls>,
+    system_media_controls: SystemMediaControls,
 }
 
 #[allow(clippy::enum_variant_names)]
@@ -28,11 +26,9 @@ unsafe impl Send for MediaPlayer {}
 unsafe impl Sync for MediaPlayer {}
 
 impl MediaPlayer {
-    pub fn new() -> MediaPlayer {
-        let hwnd = window::create();
+    pub fn new(hwnd: HWND) -> MediaPlayer {
         let mpv = Arc::new(MpvPlayer::new());
 
-        mpv.set_property("wid", hwnd.0);
         mpv.set_property("alang", cstr!("eng,en"));
         mpv.set_property("sid", cstr!("no"));
         mpv.set_property("sub-font-size", 40);
@@ -62,10 +58,13 @@ impl MediaPlayer {
 
         MediaPlayer {
             mpv,
-            hwnd,
             start_position: AtomicU64::new(0),
-            system_media_controls: ManuallyDrop::new(controls),
+            system_media_controls: controls,
         }
+    }
+
+    pub fn mpv(&self) -> &MpvPlayer {
+        &self.mpv
     }
 
     pub fn run_event_loop(self: &MediaPlayer, event_handler: impl Fn(f64, MediaPlayerEvent)) {
@@ -136,19 +135,19 @@ impl MediaPlayer {
 
     pub fn set_audio_track(&self, index: i32) {
         let value: MpvStr = self.mpv.get_property(&format!("track-list/{index}/id"));
-        self.mpv.set_property("aid", value);
+        self.mpv.set_property_async("aid", value, 0);
     }
 
     pub fn set_subtitle_file(&self, url: Option<&str>) {
         if let Some(url) = url {
             self.mpv.add_sub_async(url);
         } else {
-            self.mpv.set_property("sid", cstr!("no"));
+            self.mpv.set_property_async("sid", cstr!("no"), 0);
         }
     }
 
     pub fn set_paused(&self, paused: bool) {
-        self.mpv.set_property("pause", paused);
+        self.mpv.set_property_async("pause", paused, 0);
     }
 
     pub fn seek_to(&self, position: f64) {
@@ -157,24 +156,5 @@ impl MediaPlayer {
 
     pub fn quit(&self) {
         self.mpv.quit();
-    }
-
-    pub fn hwnd(&self) -> HWND {
-        self.hwnd
-    }
-}
-
-impl Default for MediaPlayer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Drop for MediaPlayer {
-    fn drop(&mut self) {
-        unsafe {
-            ManuallyDrop::drop(&mut self.system_media_controls);
-            window::close(self.hwnd);
-        }
     }
 }

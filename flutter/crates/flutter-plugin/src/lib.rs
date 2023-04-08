@@ -2,9 +2,11 @@
 pub mod destruction_handler;
 pub mod messenger;
 pub mod registrar;
+pub mod texture_registrar;
 pub mod view;
 
 pub use flutter_codec as codec;
+pub use flutter_windows_sys as sys;
 #[doc(hidden)]
 pub use flutter_windows_sys::FlutterDesktopPluginRegistrarRef;
 #[doc(hidden)]

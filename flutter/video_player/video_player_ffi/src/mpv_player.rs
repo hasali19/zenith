@@ -4,7 +4,7 @@ use std::os::raw::c_char;
 use std::ptr;
 
 use mpv::{
-    mpv_command, mpv_command_async, mpv_create, mpv_event_id_MPV_EVENT_AUDIO_RECONFIG,
+    mpv_command_async, mpv_create, mpv_event_id_MPV_EVENT_AUDIO_RECONFIG,
     mpv_event_id_MPV_EVENT_CLIENT_MESSAGE, mpv_event_id_MPV_EVENT_COMMAND_REPLY,
     mpv_event_id_MPV_EVENT_END_FILE, mpv_event_id_MPV_EVENT_FILE_LOADED,
     mpv_event_id_MPV_EVENT_GET_PROPERTY_REPLY, mpv_event_id_MPV_EVENT_HOOK,
@@ -17,7 +17,7 @@ use mpv::{
     mpv_event_property, mpv_format, mpv_format_MPV_FORMAT_DOUBLE, mpv_format_MPV_FORMAT_FLAG,
     mpv_format_MPV_FORMAT_INT64, mpv_format_MPV_FORMAT_STRING, mpv_free, mpv_get_property,
     mpv_handle, mpv_initialize, mpv_observe_property, mpv_request_log_messages, mpv_set_property,
-    mpv_terminate_destroy, mpv_wait_event,
+    mpv_set_property_async, mpv_terminate_destroy, mpv_wait_event,
 };
 
 macro_rules! s {
@@ -47,6 +47,10 @@ impl MpvPlayer {
         MpvPlayer { mpv }
     }
 
+    pub fn handle(&self) -> *mut mpv_handle {
+        self.mpv
+    }
+
     pub fn get_property<T: MpvGetType>(&self, name: &str) -> T {
         let name = CString::new(name).unwrap();
 
@@ -62,6 +66,19 @@ impl MpvPlayer {
         });
     }
 
+    pub fn set_property_async<T: MpvSetType>(&self, name: &str, value: T, reply_userdata: u64) {
+        let name = CString::new(name).unwrap();
+        value.with_ptr(|ptr| unsafe {
+            mpv_set_property_async(
+                self.mpv,
+                reply_userdata,
+                name.as_ptr(),
+                T::FORMAT as mpv_format,
+                ptr,
+            );
+        });
+    }
+
     pub fn observe_property(&self, name: &str, format: MpvFormat, user_data: u64) {
         let name = CString::new(name).unwrap();
         unsafe {
@@ -73,7 +90,7 @@ impl MpvPlayer {
         let url = CString::new(url).unwrap();
         let mut args = [s!("loadfile"), url.as_ptr(), ptr::null()];
         unsafe {
-            mpv_command(self.mpv, &mut args as *mut *const c_char);
+            mpv_command_async(self.mpv, 0, &mut args as *mut *const c_char);
         }
     }
 
@@ -89,14 +106,14 @@ impl MpvPlayer {
         let position = CString::new(position.to_string()).unwrap();
         let mut args = [s!("seek"), position.as_ptr(), s!("absolute"), ptr::null()];
         unsafe {
-            mpv_command(self.mpv, &mut args as *mut *const c_char);
+            mpv_command_async(self.mpv, 0, &mut args as *mut *const c_char);
         }
     }
 
     pub fn quit(&self) {
         let mut args = [s!("quit"), ptr::null()];
         unsafe {
-            mpv_command(self.mpv, &mut args as *mut *const c_char);
+            mpv_command_async(self.mpv, 0, &mut args as *mut *const c_char);
         }
     }
 
@@ -137,6 +154,12 @@ impl MpvPlayer {
                 todo!("{}", name.to_str().unwrap())
             }
         }
+    }
+}
+
+impl Default for MpvPlayer {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

@@ -7,6 +7,7 @@ use windows::Media::{
 };
 use windows::Win32::Foundation::HWND;
 use windows::Win32::System::WinRT::{ISystemMediaTransportControlsInterop, RoGetActivationFactory};
+use windows::Win32::UI::WindowsAndMessaging::{GetAncestor, GA_ROOT};
 
 struct SystemMediaControlsButtonHandler {
     token: EventRegistrationToken,
@@ -59,8 +60,8 @@ impl SystemMediaControls {
         let controls: SystemMediaTransportControls = unsafe {
             let interop: ISystemMediaTransportControlsInterop =
                 RoGetActivationFactory(WINDOWS_MEDIA_SYSTEMMEDIATRANSPORTCONTROLS).unwrap();
-
-            interop.GetForWindow(hwnd).unwrap()
+            let root_window = GetAncestor(hwnd, GA_ROOT);
+            interop.GetForWindow(root_window).unwrap()
         };
 
         controls.SetIsEnabled(true).unwrap();

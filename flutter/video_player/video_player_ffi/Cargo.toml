@@ -10,6 +10,9 @@ crate-type = ["cdylib"]
 
 [dependencies]
 dart-sdk-sys = { path = "../../crates/dart-sdk-sys" }
+gl = "0.14"
+khronos-egl = { version = "4.1", features = ["dynamic"] }
+libloading = "0.7"
 mpv = { path = "mpv" }
 
 [dependencies.flutter-plugin]
@@ -21,9 +24,12 @@ features = [
     "Foundation",
     "Media",
     "Win32_Foundation",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
     "Win32_Graphics_Gdi",
     "Win32_System_LibraryLoader",
-    "Win32_System_Threading",
     "Win32_System_WinRT",
     "Win32_UI_WindowsAndMessaging",
 ]
