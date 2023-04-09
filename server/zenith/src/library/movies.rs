@@ -102,7 +102,7 @@ impl MediaLibrary {
         let mut conn = self.db.acquire().await?;
 
         let sql = "
-            SELECT id, path FROM movies
+            SELECT movies.id, path FROM movies
             JOIN video_files ON movies.id = video_files.item_id
         ";
 
