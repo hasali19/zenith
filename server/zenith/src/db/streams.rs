@@ -1,74 +1,14 @@
-use std::convert::TryFrom;
-
 use serde::Serialize;
-use speq::Reflect;
-use sqlx::sqlite::{SqliteArguments, SqliteRow};
+use sqlx::sqlite::SqliteArguments;
 use sqlx::Type;
-use sqlx::{Arguments, FromRow, Row, SqliteConnection};
+use sqlx::{Arguments, SqliteConnection};
 
 use crate::sql;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Type, Serialize)]
 pub enum StreamType {
-    Video = 1,
-    Audio = 2,
-}
-
-impl TryFrom<&'_ str> for StreamType {
-    type Error = ();
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value {
-            "video" => Ok(StreamType::Video),
-            "audio" => Ok(StreamType::Audio),
-            _ => Err(()),
-        }
-    }
-}
-
-#[derive(Serialize, Reflect)]
-pub struct Stream {
-    pub id: i64,
-    pub index: u32,
-    pub codec: String,
-    #[serde(flatten)]
-    pub props: StreamProps,
-}
-
-#[derive(Serialize, Reflect)]
-#[serde(tag = "type")]
-#[serde(rename_all = "snake_case")]
-pub enum StreamProps {
-    Video { width: u32, height: u32 },
-    Audio { language: Option<String> },
-}
-
-impl<'r> FromRow<'r, SqliteRow> for Stream {
-    fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
-        let id = row.try_get("id")?;
-        let index = row.try_get("stream_index")?;
-        let codec = row.try_get("codec_name")?;
-
-        let stream_type = row.try_get("stream_type")?;
-        let props = match stream_type {
-            StreamType::Audio => StreamProps::Audio {
-                language: row.try_get("a_language")?,
-            },
-            StreamType::Video => StreamProps::Video {
-                width: row.try_get("v_width")?,
-                height: row.try_get("v_height")?,
-            },
-        };
-
-        let stream = Stream {
-            id,
-            index,
-            codec,
-            props,
-        };
-
-        Ok(stream)
-    }
+    Video,
+    Audio,
 }
 
 pub struct NewVideoStream<'a> {

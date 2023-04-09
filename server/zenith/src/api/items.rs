@@ -210,13 +210,23 @@ async fn delete_item(
             files.push((item.video_file.unwrap().path, VideoFileType::Episode))
         }
         MediaItemType::Show => {
-            for episode in db::episodes::get_for_show(&mut conn, item.id).await? {
-                files.push((episode.video_info.path, VideoFileType::Episode));
+            let query = db::items::Query {
+                grandparent_id: Some(id),
+                ..Default::default()
+            };
+
+            for episode in db::items::query(&mut conn, query).await? {
+                files.push((episode.video_file.unwrap().path, VideoFileType::Episode));
             }
         }
         MediaItemType::Season => {
-            for episode in db::episodes::get_for_season(&mut conn, item.id).await? {
-                files.push((episode.video_info.path, VideoFileType::Episode));
+            let query = db::items::Query {
+                parent_id: Some(id),
+                ..Default::default()
+            };
+
+            for episode in db::items::query(&mut conn, query).await? {
+                files.push((episode.video_file.unwrap().path, VideoFileType::Episode));
             }
         }
     }
@@ -259,18 +269,32 @@ async fn update_user_data(
 
     match item_type {
         MediaItemType::Movie | MediaItemType::Episode => ids.push(*id),
-        MediaItemType::Show => ids.extend(
-            db::episodes::get_for_show(&mut conn, *id)
-                .await?
-                .iter()
-                .map(|e| e.id),
-        ),
-        MediaItemType::Season => ids.extend(
-            db::episodes::get_for_season(&mut conn, *id)
-                .await?
-                .iter()
-                .map(|e| e.id),
-        ),
+        MediaItemType::Show => {
+            let query = db::items::Query {
+                grandparent_id: Some(*id),
+                ..Default::default()
+            };
+
+            ids.extend(
+                db::items::query(&mut conn, query)
+                    .await?
+                    .iter()
+                    .map(|e| e.id),
+            )
+        }
+        MediaItemType::Season => {
+            let query = db::items::Query {
+                parent_id: Some(*id),
+                ..Default::default()
+            };
+
+            ids.extend(
+                db::items::query(&mut conn, query)
+                    .await?
+                    .iter()
+                    .map(|e| e.id),
+            )
+        }
     };
 
     for id in ids {

@@ -5,9 +5,6 @@ use sqlx::{Row, SqliteConnection};
 
 use crate::sql::{self, OnConflict, UpdateList};
 
-use super::streams::Stream;
-use super::subtitles::Subtitle;
-
 pub async fn get_all_ids(conn: &mut SqliteConnection) -> eyre::Result<Vec<i64>> {
     sqlx::query_scalar("SELECT item_id FROM video_files")
         .fetch_all(conn)
@@ -42,19 +39,6 @@ pub async fn get_basic_info(
         .await?;
 
     Ok(info)
-}
-
-#[derive(Serialize, Reflect)]
-pub struct VideoInfo {
-    pub path: String,
-    pub duration: f64,
-    pub format: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub video: Option<Option<Stream>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub audio: Option<Vec<Stream>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub subtitles: Option<Vec<Subtitle>>,
 }
 
 #[derive(Serialize, Reflect)]

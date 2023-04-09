@@ -1,5 +1,4 @@
 pub mod collections;
-pub mod episodes;
 pub mod items;
 pub mod media;
 pub mod streams;
