@@ -4,3 +4,9 @@ exclude = ["desktop", "flutter"]
 
 [profile.dev.build-override]
 opt-level = 3
+
+[patch.crates-io]
+camino = { path = "external/camino" }
+
+[patch."https://github.com/hasali19/speq"]
+speq = { path = "external/speq/speq" }

@@ -1,3 +1,4 @@
+use camino::Utf8PathBuf;
 use serde::Serialize;
 use speq::Reflect;
 
@@ -44,7 +45,7 @@ pub struct ExternalIds {
 
 #[derive(Serialize, Reflect)]
 pub struct VideoFile {
-    pub path: String,
+    pub path: Utf8PathBuf,
     pub duration: Option<f64>,
     pub format: Option<String>,
     pub streams: Vec<Stream>,
@@ -83,7 +84,7 @@ pub struct AudioStreamProps {
 pub struct Subtitle {
     pub id: i64,
     pub stream_index: Option<i64>,
-    pub path: Option<String>,
+    pub path: Option<Utf8PathBuf>,
     pub title: Option<String>,
     pub language: Option<String>,
     pub format: Option<String>,

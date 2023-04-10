@@ -1,6 +1,5 @@
 use std::io::ErrorKind;
 use std::net::SocketAddr;
-use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -9,6 +8,7 @@ use axum::extract::OriginalUri;
 use axum::http::StatusCode;
 use axum::Extension;
 use axum_files::{FileRequest, FileResponse};
+use camino::Utf8Path;
 use eyre::bail;
 use futures::FutureExt;
 use time::OffsetDateTime;
@@ -204,11 +204,11 @@ async fn spa(OriginalUri(uri): OriginalUri, file: FileRequest) -> Result<FileRes
         return Err(StatusCode::NOT_FOUND);
     }
 
-    let path = Path::new("web/dist").join(path);
+    let path = Utf8Path::new("web/dist").join(path);
     let path = if path.is_file() {
         path.as_path()
     } else {
-        Path::new("web/dist/index.html")
+        Utf8Path::new("web/dist/index.html")
     };
 
     FileResponse::from_request(file, path)

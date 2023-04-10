@@ -1,5 +1,4 @@
-use std::path::Path;
-
+use camino::Utf8Path;
 use sqlx::Connection;
 
 use crate::db;
@@ -8,7 +7,7 @@ use crate::db::media::{MediaItemType, MetadataProvider};
 use super::{video_info, LibraryEvent, MediaLibrary};
 
 pub struct NewShow<'a> {
-    pub path: &'a str,
+    pub path: &'a Utf8Path,
     pub name: &'a str,
 }
 
@@ -23,7 +22,7 @@ pub struct NewEpisode<'a> {
     pub season_number: u32,
     pub episode_number: u32,
     pub name: &'a str,
-    pub path: &'a str,
+    pub path: &'a Utf8Path,
 }
 
 impl MediaLibrary {
@@ -91,7 +90,7 @@ impl MediaLibrary {
     }
 
     /// Retrieves a show id by path
-    pub async fn get_show_id_by_path(&self, path: &str) -> eyre::Result<Option<i64>> {
+    pub async fn get_show_id_by_path(&self, path: &Utf8Path) -> eyre::Result<Option<i64>> {
         let sql = "
             SELECT item_id FROM indexed_paths
             JOIN shows ON shows.id = item_id
@@ -278,7 +277,7 @@ impl MediaLibrary {
 
         for (id, path) in episodes {
             // Check if file exists
-            if !Path::new(&path).is_file() {
+            if !Utf8Path::new(&path).is_file() {
                 tracing::info!("{path} does not exist, removing episode (id: {id})");
                 self.remove_episode(id).await?;
             }

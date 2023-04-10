@@ -1,3 +1,4 @@
+use camino::{Utf8Path, Utf8PathBuf};
 use serde::Serialize;
 use speq::Reflect;
 use sqlx::{FromRow, SqliteConnection};
@@ -5,7 +6,7 @@ use sqlx::{FromRow, SqliteConnection};
 pub struct NewSubtitle<'a> {
     pub video_id: i64,
     pub stream_index: Option<u32>,
-    pub path: Option<&'a str>,
+    pub path: Option<&'a Utf8Path>,
     pub title: Option<&'a str>,
     pub language: Option<&'a str>,
     pub format: Option<&'a str>,
@@ -18,7 +19,7 @@ pub struct Subtitle {
     pub id: i64,
     pub video_id: i64,
     pub stream_index: Option<u32>,
-    pub path: Option<String>,
+    pub path: Option<Utf8PathBuf>,
     pub title: Option<String>,
     pub language: Option<String>,
     pub format: Option<String>,
@@ -85,7 +86,7 @@ pub async fn get_for_video(
 }
 
 pub struct UpdateSubtitle<'a> {
-    pub path: Option<&'a str>,
+    pub path: Option<&'a Utf8Path>,
     pub title: Option<&'a str>,
     pub language: Option<&'a str>,
 }

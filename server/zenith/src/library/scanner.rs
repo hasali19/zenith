@@ -1,13 +1,13 @@
 use std::collections::HashSet;
 use std::io;
-use std::path::Path;
 use std::sync::Arc;
 
+use camino::{Utf8Path, Utf8PathBuf};
 use eyre::eyre;
 use sqlx::Connection;
 use time::{Date, Instant, OffsetDateTime};
 use tokio::sync::Mutex;
-use walkdir::{DirEntry, WalkDir};
+use walkdir::WalkDir;
 
 use crate::config::{Config, ImportMatcher, ImportMatcherTarget};
 use crate::db::media::MediaItemType;
@@ -165,20 +165,19 @@ impl LibraryScanner {
             _ => return Ok(None),
         };
 
-        self.scan_file_path(video_type, info.path, options)
+        self.scan_file_path(video_type, &info.path, options)
             .await
             .map(Some)
     }
 
     /// Scans a single video file.
-    #[tracing::instrument(skip(self, path), fields(path = ?path.as_ref()))]
+    #[tracing::instrument(skip(self))]
     pub async fn scan_file_path(
         &self,
         video_type: VideoFileType,
-        path: impl AsRef<Path>,
+        path: &Utf8Path,
         options: &ScanOptions,
     ) -> eyre::Result<FileScanResult> {
-        let path = path.as_ref();
         let scanner = self.inner.lock().await;
 
         // Bail if path is not a video file
@@ -198,14 +197,14 @@ impl LibraryScanner {
 
 impl LibraryScannerImpl {
     /// Recursively scans a folder for movie files.
-    async fn scan_movies(&self, path: impl AsRef<Path>, options: &ScanOptions) -> eyre::Result<()> {
+    async fn scan_movies(&self, path: &Utf8Path, options: &ScanOptions) -> eyre::Result<()> {
         tracing::info!("scanning movies");
         self.scan_library_dir(path, VideoFileType::Movie, options)
             .await
     }
 
     /// Recursively scans a folder for tv episode files.
-    async fn scan_shows(&self, path: &impl AsRef<Path>, options: &ScanOptions) -> eyre::Result<()> {
+    async fn scan_shows(&self, path: &Utf8Path, options: &ScanOptions) -> eyre::Result<()> {
         tracing::info!("scanning shows");
         self.scan_library_dir(path, VideoFileType::Episode, options)
             .await
@@ -214,17 +213,16 @@ impl LibraryScannerImpl {
     /// Recursively scans a folder for video files of the specified type.
     async fn scan_library_dir(
         &self,
-        path: impl AsRef<Path>,
+        path: &Utf8Path,
         video_type: VideoFileType,
         options: &ScanOptions,
     ) -> eyre::Result<()> {
-        let path = path.as_ref();
         if !path.is_dir() {
-            return Err(eyre!("directory {} does not exist", path.display()));
+            return Err(eyre!("directory {path} does not exist"));
         }
 
-        for file in get_video_files(path) {
-            self.scan_video_file(video_type, file.path(), options)
+        for file_path in get_video_files(path) {
+            self.scan_video_file(video_type, &file_path, options)
                 .await?;
         }
 
@@ -235,10 +233,10 @@ impl LibraryScannerImpl {
     async fn scan_video_file(
         &self,
         video_type: VideoFileType,
-        path: &Path,
+        path: &Utf8Path,
         options: &ScanOptions,
     ) -> eyre::Result<FileScanResult> {
-        tracing::trace!(?video_type, path = %path.display(), "scanning file");
+        tracing::trace!(?video_type, %path, "scanning file");
         let result = match video_type {
             VideoFileType::Movie => self.scan_movie_file(path, options).await,
             VideoFileType::Episode => self.scan_episode_file(path, options).await,
@@ -274,7 +272,7 @@ impl LibraryScannerImpl {
                 .collect::<HashSet<_>>();
 
             for entry in subtitles {
-                let Some(sub_path) = entry.path().to_str() else { continue };
+                let Some(sub_path) = Utf8Path::from_path(entry.path()) else { continue };
                 if subs.contains(sub_path) {
                     continue;
                 }
@@ -313,7 +311,7 @@ impl LibraryScannerImpl {
                     let subtitle = db::subtitles::NewSubtitle {
                         video_id: id,
                         stream_index: None,
-                        path: entry.path().to_str(),
+                        path: Some(sub_path),
                         title: entry.path().to_str(),
                         language: lang,
                         format: Some(format),
@@ -335,13 +333,12 @@ impl LibraryScannerImpl {
 
     async fn scan_movie_file(
         &self,
-        path: &Path,
+        path: &Utf8Path,
         options: &ScanOptions,
     ) -> eyre::Result<FileScanResult> {
-        let name = path.file_name().and_then(|v| v.to_str()).unwrap();
-        let path_str = path.to_str().unwrap();
+        let name = path.file_name().unwrap();
 
-        if let Some(id) = self.library.get_id_by_path(path_str).await? {
+        if let Some(id) = self.library.get_movie_id_by_path(path).await? {
             if !path.is_file() {
                 // Remove movie from database if file no longer exists
                 self.library.remove_movie(id).await?;
@@ -349,7 +346,7 @@ impl LibraryScannerImpl {
             }
 
             if options.rescan_files {
-                self.rescan_video_file_path(id, path_str).await?;
+                self.rescan_video_file_path(id, path).await?;
             }
 
             return Ok(FileScanResult::Updated(id));
@@ -366,8 +363,8 @@ impl LibraryScannerImpl {
         tracing::info!("adding movie: {name}");
 
         let movie = NewMovie {
-            parent_path: path.parent().and_then(|it| it.to_str()).unwrap(),
-            path: path_str,
+            parent_path: path.parent().unwrap(),
+            path,
             title: &title,
             release_date: release_date.map(|dt| dt.unix_timestamp()),
         };
@@ -379,7 +376,7 @@ impl LibraryScannerImpl {
 
     async fn scan_episode_file(
         &self,
-        path: &Path,
+        path: &Utf8Path,
         options: &ScanOptions,
     ) -> eyre::Result<FileScanResult> {
         let Some(EpisodePathInfo {
@@ -389,14 +386,6 @@ impl LibraryScannerImpl {
             episode,
             name,
         }) = parse_episode_path(self.matchers(), path) else {
-            return Ok(FileScanResult::Ignored);
-        };
-
-        let Some(show_path) = show_path.to_str() else {
-            return Ok(FileScanResult::Ignored);
-        };
-
-        let Some(path_str) = path.to_str() else {
             return Ok(FileScanResult::Ignored);
         };
 
@@ -417,7 +406,7 @@ impl LibraryScannerImpl {
                 }
 
                 if options.rescan_files {
-                    self.rescan_video_file_path(id, path_str).await?;
+                    self.rescan_video_file_path(id, path).await?;
                 }
 
                 return Ok(FileScanResult::Updated(id));
@@ -464,7 +453,7 @@ impl LibraryScannerImpl {
             season_number: season,
             episode_number: episode,
             name: &name.unwrap_or_else(|| format!("S{season:02}E{episode:02}")),
-            path: path_str,
+            path,
         };
 
         let id = self.library.add_episode(episode).await?;
@@ -472,8 +461,8 @@ impl LibraryScannerImpl {
         Ok(FileScanResult::Added(id))
     }
 
-    async fn rescan_video_file_path(&self, id: i64, path: &str) -> eyre::Result<()> {
-        tracing::debug!(id, path, "rescanning video file");
+    async fn rescan_video_file_path(&self, id: i64, path: &Utf8Path) -> eyre::Result<()> {
+        tracing::debug!(id, %path, "rescanning video file");
 
         let info = self.video_prober.probe(path).await?;
 
@@ -558,17 +547,24 @@ fn parse_movie_filename(
 }
 
 /// Recursively searches a directory for video files
-fn get_video_files(path: impl AsRef<Path>) -> impl Iterator<Item = DirEntry> {
+fn get_video_files(path: &Utf8Path) -> impl Iterator<Item = Utf8PathBuf> {
     WalkDir::new(path)
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_file())
-        .filter(|e| is_video_file_path(e.path()))
+        .filter_map(|e| {
+            let path = Utf8PathBuf::from_path_buf(e.into_path()).ok()?;
+            if is_video_file_path(&path) {
+                Some(path)
+            } else {
+                None
+            }
+        })
 }
 
 struct EpisodePathInfo<'a> {
     show_name: String,
-    show_path: &'a Path,
+    show_path: &'a Utf8Path,
     season: u32,
     episode: u32,
     name: Option<String>,
@@ -577,12 +573,11 @@ struct EpisodePathInfo<'a> {
 /// Extracts a show name, season and episode number from an episode path.
 fn parse_episode_path<'a>(
     matchers: &'_ [ImportMatcher],
-    path: &'a Path,
+    path: &'a Utf8Path,
 ) -> Option<EpisodePathInfo<'a>> {
     let parent_path = path.parent()?;
     let parent_is_season = parent_path
         .file_name()
-        .and_then(|name| name.to_str())
         .map(|name| name.starts_with("Season "))
         .unwrap_or(false);
 
@@ -592,8 +587,8 @@ fn parse_episode_path<'a>(
         parent_path
     };
 
-    let file_name = path.file_name()?.to_str()?;
-    let show_folder_name = show_path.file_name()?.to_str()?;
+    let file_name = path.file_name()?;
+    let show_folder_name = show_path.file_name()?;
 
     let episode_matchers = matchers
         .iter()
@@ -664,12 +659,11 @@ fn parse_video_filename<'a>(
     })
 }
 
-fn is_video_file_path(path: &Path) -> bool {
+fn is_video_file_path(path: &Utf8Path) -> bool {
     const VIDEO_EXTENSIONS: &[&str] = &["mp4", "mkv"];
 
-    let ext = match path.extension().and_then(|v| v.to_str()) {
-        Some(ext) => ext,
-        None => return false,
+    let Some(ext) = path.extension() else {
+        return false;
     };
 
     VIDEO_EXTENSIONS.contains(&ext)

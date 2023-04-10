@@ -33,8 +33,8 @@ async fn run(config: Arc<Config>, scanner: Arc<LibraryScanner>) -> eyre::Result<
     let movies_lib = &config.libraries.movies;
     let shows_lib = &config.libraries.tv_shows;
 
-    for path in [&movies_lib, &shows_lib] {
-        watcher.watch(path, RecursiveMode::Recursive)?;
+    for path in [movies_lib, shows_lib] {
+        watcher.watch(path.as_std_path(), RecursiveMode::Recursive)?;
     }
 
     let wait_time = Duration::from_secs(5);

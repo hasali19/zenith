@@ -1,5 +1,4 @@
 use std::io;
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
@@ -7,6 +6,7 @@ use axum::extract::Path;
 use axum::response::IntoResponse;
 use axum::Extension;
 use axum_files::{FileRequest, FileResponse};
+use camino::{Utf8Path, Utf8PathBuf};
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
 use sha2::{Digest, Sha256};
@@ -92,7 +92,7 @@ pub async fn get_image(
     Ok(FileResponse::from_request(file, img_path).await?)
 }
 
-async fn get_img_path(url: &str, cache_dir: &std::path::Path) -> ApiResult<PathBuf> {
+async fn get_img_path(url: &str, cache_dir: &Utf8Path) -> ApiResult<Utf8PathBuf> {
     let hash = {
         let mut hasher = Sha256::new();
         hasher.update(url);
@@ -107,7 +107,7 @@ async fn get_img_path(url: &str, cache_dir: &std::path::Path) -> ApiResult<PathB
 
     if should_refetch(&cached_path)? {
         tracing::info!(
-            path = %cached_path.display(),
+            path = %cached_path,
             url = %url,
             "image is out of date",
         );
@@ -119,7 +119,7 @@ async fn get_img_path(url: &str, cache_dir: &std::path::Path) -> ApiResult<PathB
     Ok(cached_path)
 }
 
-fn should_refetch(path: &std::path::Path) -> io::Result<bool> {
+fn should_refetch(path: &Utf8Path) -> io::Result<bool> {
     match path.metadata() {
         Ok(metadata) => {
             let now = SystemTime::now();

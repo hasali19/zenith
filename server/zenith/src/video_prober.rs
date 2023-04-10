@@ -1,8 +1,8 @@
 use std::collections::HashMap;
-use std::path::Path;
 use std::process::Stdio;
 
 use async_trait::async_trait;
+use camino::Utf8Path;
 use eyre::{eyre, Context};
 use serde::Deserialize;
 use serde_json::Value;
@@ -42,8 +42,8 @@ impl Ffprobe {
         Ffprobe { path: path.into() }
     }
 
-    async fn probe(&self, path: &str) -> eyre::Result<VideoInfo> {
-        let json_path = Path::new(path).with_extension("ffprobe.json");
+    async fn probe(&self, path: &Utf8Path) -> eyre::Result<VideoInfo> {
+        let json_path = path.with_extension("ffprobe.json");
 
         let output = if let Ok(bytes) = tokio::fs::read(&json_path).await {
             bytes
@@ -78,12 +78,12 @@ impl Ffprobe {
 
 #[async_trait]
 pub trait VideoProber: Send + Sync {
-    async fn probe(&self, path: &str) -> eyre::Result<VideoInfo>;
+    async fn probe(&self, path: &Utf8Path) -> eyre::Result<VideoInfo>;
 }
 
 #[async_trait::async_trait]
 impl VideoProber for Ffprobe {
-    async fn probe(&self, path: &str) -> eyre::Result<VideoInfo> {
+    async fn probe(&self, path: &Utf8Path) -> eyre::Result<VideoInfo> {
         Ffprobe::probe(self, path).await
     }
 }

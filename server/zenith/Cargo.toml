@@ -42,6 +42,10 @@ version = "0.6"
 default-features = false
 features = ["json", "multipart", "original-uri", "tokio", "tower-log"]
 
+[dependencies.camino]
+version = "1.1"
+features = ["serde1", "sqlx-sqlite"]
+
 [dependencies.notify]
 version = "5.0"
 default-features = false
@@ -62,7 +66,7 @@ features = ["axum"]
 [dependencies.speq]
 git = "https://github.com/hasali19/speq"
 rev = "d7263383c1f25fd80e517cfe7a6f514576e46220"
-features = ["axum", "serde_qs_axum"]
+features = ["axum", "camino", "serde_qs_axum"]
 
 [dependencies.sqlx]
 version = "0.6"

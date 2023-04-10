@@ -1,9 +1,9 @@
-use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use axum::extract::{Extension, Multipart};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use camino::{Utf8Path, Utf8PathBuf};
 use serde::Deserialize;
 use speq::axum::post;
 use tokio::fs::File;
@@ -81,7 +81,7 @@ pub async fn import_subtitle(
             .content_type()
             .or_bad_request("missing content type for file upload")?;
 
-        if !Path::new("data/tmp").exists() {
+        if !Utf8Path::new("data/tmp").exists() {
             std::fs::create_dir_all("data/tmp")?;
         }
 
@@ -97,7 +97,7 @@ pub async fn import_subtitle(
             _ => return Err(bad_request("unsupported subtitle content-type")),
         }
 
-        PathBuf::from(src_path)
+        Utf8PathBuf::from(src_path)
     };
 
     let dst_name = Uuid::new_v4().to_string();
@@ -110,7 +110,7 @@ pub async fn import_subtitle(
     let subtitles = NewSubtitle {
         video_id: data.video_id,
         stream_index: None,
-        path: dst_path.to_str(),
+        path: Some(&dst_path),
         title: data.title.as_deref(),
         language: data.language.as_deref(),
         format: Some("webvtt"),

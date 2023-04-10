@@ -1,4 +1,4 @@
-use std::path::Path;
+use camino::Utf8Path;
 
 use crate::db;
 use crate::db::media::{MediaItemType, MetadataProvider};
@@ -6,8 +6,8 @@ use crate::db::media::{MediaItemType, MetadataProvider};
 use super::{video_info, LibraryEvent, MediaLibrary};
 
 pub struct NewMovie<'a> {
-    pub parent_path: &'a str,
-    pub path: &'a str,
+    pub parent_path: &'a Utf8Path,
+    pub path: &'a Utf8Path,
     pub title: &'a str,
     pub release_date: Option<i64>,
 }
@@ -80,7 +80,7 @@ impl MediaLibrary {
     }
 
     /// Checks if a movie exists with the given path
-    pub async fn get_id_by_path(&self, path: &str) -> eyre::Result<Option<i64>> {
+    pub async fn get_movie_id_by_path(&self, path: &Utf8Path) -> eyre::Result<Option<i64>> {
         let sql = "
             SELECT m.id FROM movies AS m
             JOIN video_files AS v ON m.id = v.item_id
@@ -110,7 +110,7 @@ impl MediaLibrary {
 
         for (id, path) in movies {
             // Check if file exists
-            if !Path::new(&path).is_file() {
+            if !Utf8Path::new(&path).is_file() {
                 tracing::info!("{path} does not exist, removing movie");
                 self.remove_movie(id).await?;
             }

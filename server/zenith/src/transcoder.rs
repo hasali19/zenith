@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
-use std::path::Path;
 use std::process::Stdio;
 use std::sync::Arc;
 
+use camino::{Utf8Path, Utf8PathBuf};
 use eyre::{eyre, Context};
 use serde::Serialize;
 use speq::Reflect;
@@ -151,7 +151,7 @@ impl Transcoder {
 
     #[tracing::instrument(skip(self))]
     async fn run(self: Arc<Self>) {
-        if !Path::new("data/reports").is_dir() {
+        if !Utf8Path::new("data/reports").is_dir() {
             tokio::fs::create_dir_all("data/reports")
                 .await
                 .expect("failed to create report directory");
@@ -209,9 +209,14 @@ impl Transcoder {
         Ok(())
     }
 
-    async fn process_video(&self, job: &Job, path: &str, info: &VideoInfo) -> eyre::Result<()> {
+    async fn process_video(
+        &self,
+        job: &Job,
+        path: &Utf8Path,
+        info: &VideoInfo,
+    ) -> eyre::Result<()> {
         let id = job.video_id;
-        let output = Path::new(path).with_extension("mkv.temp");
+        let output = Utf8Path::new(path).with_extension("mkv.temp");
 
         enum StreamMapping {
             Copy(u32),
@@ -358,7 +363,7 @@ impl Transcoder {
         Ok(())
     }
 
-    async fn rename_tmp_file(&self, path: &Path) -> eyre::Result<()> {
+    async fn rename_tmp_file(&self, path: &Utf8Path) -> eyre::Result<()> {
         tokio::fs::rename(path, path.with_extension(""))
             .await
             .wrap_err("failed to rename new video file")
@@ -371,7 +376,7 @@ impl Transcoder {
             .ok();
     }
 
-    async fn get_video_path(&self, id: i64) -> eyre::Result<Option<String>> {
+    async fn get_video_path(&self, id: i64) -> eyre::Result<Option<Utf8PathBuf>> {
         let mut conn = self.db.acquire().await?;
 
         let path = db::videos::get_basic_info(&mut conn, id)
@@ -391,12 +396,12 @@ impl Transcoder {
         &self,
         video_id: i64,
         stream_index: u32,
-        path: &Path,
+        path: &Utf8Path,
     ) -> eyre::Result<()> {
         let mut conn = self.db.acquire().await?;
 
         let data = UpdateSubtitle {
-            path: path.to_str(),
+            path: Some(path),
             title: None,
             language: None,
         };
@@ -406,11 +411,11 @@ impl Transcoder {
         Ok(())
     }
 
-    async fn update_video_path(&self, id: i64, path: &Path) -> eyre::Result<()> {
+    async fn update_video_path(&self, id: i64, path: &Utf8Path) -> eyre::Result<()> {
         let mut conn = self.db.acquire().await?;
 
         let data = UpdateVideo {
-            path: path.to_str(),
+            path: Some(path),
             duration: None,
             format_name: None,
         };

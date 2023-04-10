@@ -2,6 +2,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 use axum::http::Method;
+use camino::Utf8Path;
 use indexmap::indexmap;
 use markdown::{Block, Span};
 use openapiv3::*;
@@ -108,8 +109,8 @@ fn build_route_spec(
     }
 
     if operation.tags.is_empty() {
-        if let Some(file_stem) = std::path::Path::new(route.src_file.as_ref()).file_stem() {
-            operation.tags = vec![file_stem.to_str().unwrap().to_owned()]
+        if let Some(file_stem) = Utf8Path::new(route.src_file.as_ref()).file_stem() {
+            operation.tags = vec![file_stem.to_owned()]
         }
     }
 

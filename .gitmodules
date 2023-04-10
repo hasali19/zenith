@@ -1,0 +1,6 @@
+[submodule "external/camino"]
+	path = external/camino
+	url = https://github.com/hasali19/camino
+[submodule "external/speq"]
+	path = external/speq
+	url = https://github.com/hasali19/speq

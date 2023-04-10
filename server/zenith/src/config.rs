@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::BufReader;
-use std::path::{Path, PathBuf};
 
+use camino::{Utf8Path, Utf8PathBuf};
 use regex::Regex;
 use serde::de::Visitor;
 use serde::{Deserialize, Deserializer};
@@ -55,25 +55,25 @@ pub struct Http {
 #[derive(Deserialize)]
 pub struct Libraries {
     #[serde(deserialize_with = "deserialize_lib_path")]
-    pub movies: PathBuf,
+    pub movies: Utf8PathBuf,
     #[serde(deserialize_with = "deserialize_lib_path")]
-    pub tv_shows: PathBuf,
+    pub tv_shows: Utf8PathBuf,
 }
 
 #[derive(Deserialize)]
 pub struct Paths {
     #[serde(default = "Paths::default_cache")]
-    pub cache: PathBuf,
+    pub cache: Utf8PathBuf,
     #[serde(default = "Paths::default_data")]
-    pub data: PathBuf,
+    pub data: Utf8PathBuf,
 }
 
 impl Paths {
-    fn default_cache() -> PathBuf {
+    fn default_cache() -> Utf8PathBuf {
         "cache".into()
     }
 
-    fn default_data() -> PathBuf {
+    fn default_data() -> Utf8PathBuf {
         "data".into()
     }
 }
@@ -131,7 +131,7 @@ pub enum ImportMatcherTarget {
 #[derive(Deserialize)]
 pub struct Subtitles {
     #[serde(default = "Subtitles::default_path")]
-    pub path: PathBuf,
+    pub path: Utf8PathBuf,
 }
 
 #[derive(Deserialize)]
@@ -201,7 +201,7 @@ impl Default for Database {
 }
 
 impl Subtitles {
-    fn default_path() -> PathBuf {
+    fn default_path() -> Utf8PathBuf {
         "data/subtitles".into()
     }
 }
@@ -249,11 +249,13 @@ fn deserialize_regex<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Regex
     deserializer.deserialize_str(RegexVisitor)
 }
 
-fn deserialize_lib_path<'de, D: Deserializer<'de>>(deserializer: D) -> Result<PathBuf, D::Error> {
+fn deserialize_lib_path<'de, D: Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Utf8PathBuf, D::Error> {
     struct PathBufVisitor;
 
     impl<'de> Visitor<'de> for PathBufVisitor {
-        type Value = PathBuf;
+        type Value = Utf8PathBuf;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
             formatter.write_str("a valid path")
@@ -263,7 +265,7 @@ fn deserialize_lib_path<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Pa
         where
             E: serde::de::Error,
         {
-            Path::new(v).canonicalize().map_err(E::custom)
+            Utf8Path::new(v).canonicalize_utf8().map_err(E::custom)
         }
     }
 

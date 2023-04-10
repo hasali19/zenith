@@ -1,8 +1,7 @@
-use std::ffi::OsStr;
-
 use axum::extract::{Extension, Path};
 use axum::response::IntoResponse;
 use axum_files::{FileRequest, FileResponse};
+use camino::Utf8Path;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
 use speq::axum::get;
@@ -34,8 +33,8 @@ pub async fn get_video_content(
         .await?
         .or_not_found("video not found")?;
 
-    let path = std::path::Path::new(&info.path);
-    let filename = path.file_name().and_then(OsStr::to_str).unwrap();
+    let path = Utf8Path::new(&info.path);
+    let filename = path.file_name().unwrap();
     let mut res = FileResponse::from_request(file, &info.path).await?;
 
     if query.attachment {

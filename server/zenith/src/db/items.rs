@@ -1,5 +1,6 @@
 use std::fmt::Write;
 
+use camino::Utf8PathBuf;
 use itertools::Itertools;
 use serde::Serialize;
 use speq::Reflect;
@@ -49,7 +50,7 @@ pub struct Parent {
 #[derive(Debug)]
 pub struct VideoFile {
     pub item_id: i64,
-    pub path: String,
+    pub path: Utf8PathBuf,
     pub duration: Option<f64>,
     pub format_name: Option<String>,
     pub streams: Vec<Stream>,
@@ -87,7 +88,7 @@ pub struct Subtitle {
     pub id: i64,
     pub video_id: i64,
     pub stream_index: Option<i64>,
-    pub path: Option<String>,
+    pub path: Option<Utf8PathBuf>,
     pub title: Option<String>,
     pub language: Option<String>,
     pub format: Option<String>,

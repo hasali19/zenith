@@ -1,3 +1,4 @@
+use camino::{Utf8Path, Utf8PathBuf};
 use serde::Serialize;
 use speq::Reflect;
 use sqlx::sqlite::SqliteRow;
@@ -13,7 +14,7 @@ pub async fn get_all_ids(conn: &mut SqliteConnection) -> eyre::Result<Vec<i64>> 
 }
 
 pub struct BasicVideoInfo {
-    pub path: String,
+    pub path: Utf8PathBuf,
     pub duration: f64,
 }
 
@@ -49,7 +50,7 @@ pub struct VideoUserData {
 }
 
 pub struct UpdateVideo<'a> {
-    pub path: Option<&'a str>,
+    pub path: Option<&'a Utf8Path>,
     pub duration: Option<f64>,
     pub format_name: Option<Option<&'a str>>,
 }
