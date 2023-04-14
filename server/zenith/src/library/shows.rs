@@ -1,43 +1,64 @@
 use camino::Utf8Path;
-use sqlx::Connection;
+use eyre::Context;
+use sqlx::{Connection, SqliteConnection};
 
-use crate::db;
 use crate::db::media::{MediaItemType, MetadataProvider};
+use crate::sql::{self, Join};
 
-use super::{video_info, LibraryEvent, MediaLibrary};
-
-pub struct NewShow<'a> {
-    pub path: &'a Utf8Path,
-    pub name: &'a str,
-}
-
-pub struct NewSeason {
-    pub show_id: i64,
-    pub season_number: u32,
-}
-
-pub struct NewEpisode<'a> {
-    pub show_id: i64,
-    pub season_id: i64,
-    pub season_number: u32,
-    pub episode_number: u32,
-    pub name: &'a str,
-    pub path: &'a Utf8Path,
-}
+use super::parser::EpisodePathMeta;
+use super::{LibraryEvent, MediaLibrary};
 
 impl MediaLibrary {
+    pub async fn import_episode(&self, path: &Utf8Path) -> eyre::Result<()> {
+        let Some(EpisodePathMeta {
+            show_name,
+            show_path,
+            season,
+            episode,
+            name,
+        }) = self.parser().parse_episode_path(path) else {
+            return Ok(());
+        };
+
+        tracing::info!(%path, "importing episode");
+
+        let show_id = self.create_show_if_missing(&show_name, show_path).await?;
+        let season_id = self.create_season_if_missing(show_id, season).await?;
+        let episode_id = self
+            .create_episode_if_missing(
+                show_id,
+                season_id,
+                season,
+                episode,
+                &name.unwrap_or_else(|| format!("S{season:02}E{episode:02}")),
+            )
+            .await?;
+
+        self.create_video_file(path, episode_id)
+            .await
+            .wrap_err_with(|| format!("failed to insert video file for '{path}'"))
+    }
+
     /// Adds a new show
-    pub async fn add_show(&self, show: NewShow<'_>) -> eyre::Result<i64> {
-        let mut transaction = self.db.begin().await?;
+    async fn create_show_if_missing(&self, name: &str, path: &Utf8Path) -> eyre::Result<i64> {
+        let mut conn = self.db.acquire().await?;
+
+        if let Some(id) = get_show_id_by_path(&mut conn, path).await? {
+            return Ok(id);
+        }
+
+        tracing::info!(name, %path, "adding show");
+
+        let mut transaction = conn.begin().await?;
 
         let sql = "
             INSERT INTO media_items (item_type, name, metadata_provider)
             VALUES (?, ?, ?)
         ";
 
-        let id: i64 = sqlx::query(sql)
+        let show_id: i64 = sqlx::query(sql)
             .bind(MediaItemType::Show)
-            .bind(show.name)
+            .bind(name)
             .bind(MetadataProvider::Tmdb)
             .execute(&mut transaction)
             .await?
@@ -49,8 +70,8 @@ impl MediaLibrary {
         ";
 
         sqlx::query(sql)
-            .bind(id)
-            .bind(show.path)
+            .bind(show_id)
+            .bind(path)
             .execute(&mut transaction)
             .await?;
 
@@ -58,55 +79,26 @@ impl MediaLibrary {
 
         let _ = self
             .notifier
-            .send(LibraryEvent::Added(MediaItemType::Show, id));
+            .send(LibraryEvent::MediaAdded(MediaItemType::Show, show_id));
 
-        Ok(id)
-    }
-
-    /// Removes a show by id
-    ///
-    /// This will also remove any associated seasons and episodes
-    pub async fn remove_show(&self, id: i64) -> eyre::Result<()> {
-        let mut db = self.db.acquire().await?;
-
-        let seasons: Vec<i64> = sqlx::query_scalar("SELECT id FROM seasons WHERE show_id = ?")
-            .bind(id)
-            .fetch_all(&mut *db)
-            .await?;
-
-        for season in seasons {
-            self.remove_season(season).await?;
-        }
-
-        let mut transaction = db.begin().await?;
-        db::items::remove(&mut transaction, id).await?;
-        transaction.commit().await?;
-
-        let _ = self
-            .notifier
-            .send(LibraryEvent::Removed(MediaItemType::Show, id));
-
-        Ok(())
-    }
-
-    /// Retrieves a show id by path
-    pub async fn get_show_id_by_path(&self, path: &Utf8Path) -> eyre::Result<Option<i64>> {
-        let sql = "
-            SELECT item_id FROM indexed_paths
-            JOIN shows ON shows.id = item_id
-            WHERE path = ?";
-
-        let id = sqlx::query_scalar(sql)
-            .bind(path)
-            .fetch_optional(&mut *self.db.acquire().await?)
-            .await?;
-
-        Ok(id)
+        Ok(show_id)
     }
 
     /// Adds a new season
-    pub async fn add_season(&self, season: NewSeason) -> eyre::Result<i64> {
-        let mut transaction = self.db.begin().await?;
+    async fn create_season_if_missing(
+        &self,
+        show_id: i64,
+        season_number: u32,
+    ) -> eyre::Result<i64> {
+        let mut conn = self.db.acquire().await?;
+
+        if let Some(id) = get_season_id(&mut conn, show_id, season_number).await? {
+            return Ok(id);
+        }
+
+        tracing::info!(show_id, season_number, "adding season");
+
+        let mut transaction = conn.begin().await?;
 
         let sql = "
             INSERT INTO media_items (item_type, name, parent_id, parent_index, metadata_provider)
@@ -115,9 +107,9 @@ impl MediaLibrary {
 
         let id: i64 = sqlx::query(sql)
             .bind(MediaItemType::Season)
-            .bind(format!("Season {}", season.season_number))
-            .bind(season.show_id)
-            .bind(season.season_number)
+            .bind(format!("Season {season_number}"))
+            .bind(show_id)
+            .bind(season_number)
             .bind(MetadataProvider::Tmdb)
             .execute(&mut *transaction)
             .await?
@@ -127,62 +119,29 @@ impl MediaLibrary {
 
         let _ = self
             .notifier
-            .send(LibraryEvent::Added(MediaItemType::Season, id));
-
-        Ok(id)
-    }
-
-    /// Removes a season
-    ///
-    /// This will also remove any associated episodes
-    pub async fn remove_season(&self, id: i64) -> eyre::Result<()> {
-        let mut db = self.db.acquire().await?;
-
-        let episodes: Vec<i64> = sqlx::query_scalar("SELECT id FROM episodes WHERE season_id = ?")
-            .bind(id)
-            .fetch_all(&mut *db)
-            .await?;
-
-        for episode in episodes {
-            self.remove_episode(episode).await?;
-        }
-
-        let mut transaction = db.begin().await?;
-        db::items::remove(&mut transaction, id).await?;
-        transaction.commit().await?;
-
-        let _ = self
-            .notifier
-            .send(LibraryEvent::Removed(MediaItemType::Season, id));
-
-        Ok(())
-    }
-
-    /// Retrieves a season id from a show id and season number
-    pub async fn get_season_id(
-        &self,
-        show_id: i64,
-        season_number: u32,
-    ) -> eyre::Result<Option<i64>> {
-        let sql = "
-            SELECT id FROM seasons
-            WHERE show_id = ? AND season_no = ?
-        ";
-
-        let id = sqlx::query_scalar(sql)
-            .bind(show_id)
-            .bind(season_number)
-            .fetch_optional(&mut *self.db.acquire().await?)
-            .await?;
+            .send(LibraryEvent::MediaAdded(MediaItemType::Season, id));
 
         Ok(id)
     }
 
     /// Adds a new episode
-    pub async fn add_episode(&self, episode: NewEpisode<'_>) -> eyre::Result<i64> {
-        let info = self.video_prober.probe(episode.path).await?;
-        let duration: f64 = info.format.duration.parse()?;
-        let mut transaction = self.db.begin().await?;
+    async fn create_episode_if_missing(
+        &self,
+        show_id: i64,
+        season_id: i64,
+        season_number: u32,
+        episode_number: u32,
+        name: &str,
+    ) -> eyre::Result<i64> {
+        let mut conn = self.db.acquire().await?;
+
+        if let Some(id) = get_episode_id(&mut conn, season_id, episode_number).await? {
+            return Ok(id);
+        }
+
+        tracing::info!(show_id, season_number, episode_number, "adding episode");
+
+        let mut transaction = conn.begin().await?;
 
         let sql = "
             INSERT INTO media_items (item_type, name, parent_id, parent_index, grandparent_id, grandparent_index, metadata_provider)
@@ -191,136 +150,150 @@ impl MediaLibrary {
 
         let id = sqlx::query(sql)
             .bind(MediaItemType::Episode)
-            .bind(episode.name)
-            .bind(episode.season_id)
-            .bind(episode.episode_number)
-            .bind(episode.show_id)
-            .bind(episode.season_number)
+            .bind(name)
+            .bind(season_id)
+            .bind(episode_number)
+            .bind(show_id)
+            .bind(season_number)
             .bind(MetadataProvider::Tmdb)
             .execute(&mut *transaction)
             .await?
             .last_insert_rowid();
 
-        let sql = "
-            INSERT INTO video_files (item_id, path, duration)
-            VALUES (?, ?, ?)
-        ";
-
-        sqlx::query(sql)
-            .bind(id)
-            .bind(episode.path)
-            .bind(duration)
-            .execute(&mut *transaction)
-            .await?;
-
-        video_info::update_video_info(&mut transaction, id, &info).await?;
-
         transaction.commit().await?;
 
         let _ = self
             .notifier
-            .send(LibraryEvent::Added(MediaItemType::Episode, id));
-
-        Ok(id)
-    }
-
-    /// Removes an episode
-    ///
-    /// This will also delete the episode file from the filesystem, if it exists
-    pub async fn remove_episode(&self, id: i64) -> eyre::Result<()> {
-        let mut transaction = self.db.begin().await?;
-        db::items::remove(&mut transaction, id).await?;
-        transaction.commit().await?;
-
-        let _ = self
-            .notifier
-            .send(LibraryEvent::Removed(MediaItemType::Episode, id));
-
-        Ok(())
-    }
-
-    /// Retrieves an episode id from a season id and episode number
-    pub async fn get_episode_id(
-        &self,
-        season_id: i64,
-        episode_number: u32,
-    ) -> eyre::Result<Option<i64>> {
-        let sql = "
-            SELECT id FROM episodes
-            WHERE season_id = ? AND episode_no = ?
-        ";
-
-        let id = sqlx::query_scalar(sql)
-            .bind(season_id)
-            .bind(episode_number)
-            .fetch_optional(&mut *self.db.acquire().await?)
-            .await?;
+            .send(LibraryEvent::MediaAdded(MediaItemType::Episode, id));
 
         Ok(id)
     }
 
     /// Validates the tv shows stored in the database
     ///
-    /// This will delete any episodes that don't exist anymore, seasons
-    /// that don't have any episodes and shows that don't have any seasons.
-    pub async fn validate_shows(&self) -> eyre::Result<()> {
+    /// This will delete episodes that don't have any files, seasons that
+    /// don't have any episodes and shows that don't have any seasons.
+    pub(super) async fn validate_shows(&self) -> eyre::Result<()> {
         tracing::info!("validating shows");
 
         let mut conn = self.db.acquire().await?;
 
-        let sql = "
-            SELECT episodes.id, path FROM episodes
-            JOIN video_files ON episodes.id = video_files.item_id
-        ";
+        let sql = sql::select("media_items AS e")
+            .columns(&["e.id", "e.grandparent_index", "e.parent_index", "s.name"])
+            .joins(&[Join::inner("media_items AS s ON e.grandparent_id = s.id")])
+            .condition("e.item_type = ? AND e.id NOT IN (SELECT item_id FROM video_files)")
+            .to_sql();
 
-        let episodes: Vec<(i64, String)> = sqlx::query_as(sql).fetch_all(&mut conn).await?;
+        let episodes: Vec<(i64, u32, u32, String)> = sqlx::query_as(&sql)
+            .bind(MediaItemType::Episode)
+            .fetch_all(&mut conn)
+            .await?;
 
-        for (id, path) in episodes {
-            // Check if file exists
-            if !Utf8Path::new(&path).is_file() {
-                tracing::info!("{path} does not exist, removing episode (id: {id})");
-                self.remove_episode(id).await?;
-            }
+        for (id, season, episode, show_name) in episodes {
+            tracing::info!(id, season, episode, show_name, "removing episode");
+            self.remove_item(&mut conn, id, MediaItemType::Episode)
+                .await?;
         }
 
-        drop(conn);
-
-        self.remove_empty_collections().await
+        self.remove_empty_collections(&mut conn).await
     }
 
-    pub async fn remove_empty_collections(&self) -> eyre::Result<()> {
-        let mut conn = self.db.acquire().await?;
-
+    async fn remove_empty_collections(&self, conn: &mut SqliteConnection) -> eyre::Result<()> {
         let sql = "
-            SELECT id AS season FROM seasons
-            WHERE NOT EXISTS (
-                SELECT id FROM episodes
-                WHERE season_id = season
+            SELECT se.id, se.parent_index, sh.name FROM media_items AS se
+            JOIN media_items AS sh ON sh.id = se.parent_id
+            WHERE se.item_type = ? AND se.id NOT IN (
+                SELECT parent_id FROM media_items
             )
         ";
 
-        let seasons: Vec<i64> = sqlx::query_scalar(sql).fetch_all(&mut conn).await?;
+        let seasons: Vec<(i64, u32, String)> = sqlx::query_as(sql)
+            .bind(MediaItemType::Season)
+            .fetch_all(&mut *conn)
+            .await?;
 
-        for id in seasons {
-            tracing::info!("season (id: {id}) has no episodes, removing");
-            self.remove_season(id).await?;
+        for (id, season, show_name) in seasons {
+            tracing::info!(id, season, show_name, "removing season");
+            self.remove_item(&mut *conn, id, MediaItemType::Season)
+                .await?;
         }
 
         let sql = "
-            SELECT id AS show FROM shows
-            WHERE NOT EXISTS (
-                SELECT id FROM seasons
-                WHERE show_id = show
+            SELECT id, name FROM media_items
+            WHERE item_type = ? AND id NOT IN (
+                SELECT parent_id FROM media_items
+                UNION
+                SELECT grandparent_id FROM media_items
             )
         ";
 
-        let shows: Vec<i64> = sqlx::query_scalar(sql).fetch_all(&mut conn).await?;
+        let shows: Vec<(i64, String)> = sqlx::query_as(sql)
+            .bind(MediaItemType::Show)
+            .fetch_all(&mut *conn)
+            .await?;
 
-        for id in shows {
-            tracing::info!("show (id: {id}) has no seasons, removing");
-            self.remove_show(id).await?;
+        for (id, name) in shows {
+            tracing::info!(id, name, "removing show");
+            self.remove_item(&mut *conn, id, MediaItemType::Show)
+                .await?;
         }
 
         Ok(())
     }
+}
+
+async fn get_show_id_by_path(
+    conn: &mut SqliteConnection,
+    path: &Utf8Path,
+) -> eyre::Result<Option<i64>> {
+    let sql = sql::select("indexed_paths")
+        .columns(&["item_id"])
+        .joins(&[Join::inner("shows ON shows.id = item_id")])
+        .condition("path = ?")
+        .to_sql();
+
+    let id = sqlx::query_scalar(&sql)
+        .bind(path)
+        .fetch_optional(conn)
+        .await?;
+
+    Ok(id)
+}
+
+async fn get_season_id(
+    conn: &mut SqliteConnection,
+    show_id: i64,
+    season_number: u32,
+) -> eyre::Result<Option<i64>> {
+    let sql = "
+        SELECT id FROM seasons
+        WHERE show_id = ? AND season_no = ?
+    ";
+
+    let id = sqlx::query_scalar(sql)
+        .bind(show_id)
+        .bind(season_number)
+        .fetch_optional(conn)
+        .await?;
+
+    Ok(id)
+}
+
+async fn get_episode_id(
+    conn: &mut SqliteConnection,
+    season_id: i64,
+    episode_number: u32,
+) -> eyre::Result<Option<i64>> {
+    let sql = "
+        SELECT id FROM episodes
+        WHERE season_id = ? AND episode_no = ?
+    ";
+
+    let id = sqlx::query_scalar(sql)
+        .bind(season_id)
+        .bind(episode_number)
+        .fetch_optional(conn)
+        .await?;
+
+    Ok(id)
 }

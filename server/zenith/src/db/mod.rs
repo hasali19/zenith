@@ -3,6 +3,7 @@ pub mod items;
 pub mod media;
 pub mod streams;
 pub mod subtitles;
+pub mod video_files;
 pub mod videos;
 
 use sqlx::pool::PoolConnection;

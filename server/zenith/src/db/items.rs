@@ -744,16 +744,6 @@ pub async fn remove(conn: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
         .execute(&mut *conn)
         .await?;
 
-    sqlx::query("DELETE FROM video_file_streams WHERE video_id = ?")
-        .bind(id)
-        .execute(&mut *conn)
-        .await?;
-
-    sqlx::query("DELETE FROM video_files WHERE item_id = ?")
-        .bind(id)
-        .execute(&mut *conn)
-        .await?;
-
     sqlx::query("DELETE FROM indexed_paths WHERE item_id = ?")
         .bind(id)
         .execute(&mut *conn)

@@ -16,8 +16,7 @@ use crate::api::ApiResult;
 use crate::db::media::MediaItemType;
 use crate::db::videos::UpdateVideoUserData;
 use crate::db::{self, Db};
-use crate::library::scanner::{ScanOptions, VideoFileType};
-use crate::library::LibraryScanner;
+use crate::library::MediaLibrary;
 
 use super::dto::MediaItem;
 use super::error::bad_request;
@@ -195,7 +194,7 @@ pub(super) async fn query_items(
 async fn delete_item(
     Path(id): Path<i64>,
     Extension(db): Extension<Db>,
-    Extension(scanner): Extension<Arc<LibraryScanner>>,
+    Extension(library): Extension<Arc<MediaLibrary>>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
@@ -205,10 +204,8 @@ async fn delete_item(
 
     let mut files = vec![];
     match item.kind {
-        MediaItemType::Movie => files.push((item.video_file.unwrap().path, VideoFileType::Movie)),
-        MediaItemType::Episode => {
-            files.push((item.video_file.unwrap().path, VideoFileType::Episode))
-        }
+        MediaItemType::Movie => files.push(item.video_file.unwrap().path),
+        MediaItemType::Episode => files.push(item.video_file.unwrap().path),
         MediaItemType::Show => {
             let query = db::items::Query {
                 grandparent_id: Some(id),
@@ -216,7 +213,7 @@ async fn delete_item(
             };
 
             for episode in db::items::query(&mut conn, query).await? {
-                files.push((episode.video_file.unwrap().path, VideoFileType::Episode));
+                files.push(episode.video_file.unwrap().path);
             }
         }
         MediaItemType::Season => {
@@ -226,18 +223,18 @@ async fn delete_item(
             };
 
             for episode in db::items::query(&mut conn, query).await? {
-                files.push((episode.video_file.unwrap().path, VideoFileType::Episode));
+                files.push(episode.video_file.unwrap().path);
             }
         }
     }
 
-    for (path, video_type) in files {
+    for path in files {
         tracing::info!("removing file: {path}");
         tokio::fs::remove_file(&path).await?;
-        scanner
-            .scan_file_path(video_type, &path, &ScanOptions::quick())
-            .await?;
+        library.remove_video(&path).await?;
     }
+
+    library.validate().await?;
 
     Ok(StatusCode::OK)
 }

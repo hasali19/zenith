@@ -1,12 +1,87 @@
+use camino::Utf8Path;
 use eyre::eyre;
 use serde_json::Value;
 use sqlx::SqliteConnection;
 
-use crate::db;
 use crate::db::streams::{NewAudioStream, NewVideoStream};
 use crate::db::subtitles::NewSubtitle;
 use crate::db::videos::UpdateVideo;
 use crate::video_prober::VideoInfo;
+use crate::{db, sql};
+
+use super::scanner::VideoFileType;
+use super::{LibraryEvent, MediaLibrary};
+
+impl MediaLibrary {
+    pub async fn import_video(
+        &self,
+        video_type: VideoFileType,
+        path: &Utf8Path,
+    ) -> eyre::Result<()> {
+        match video_type {
+            VideoFileType::Movie => self.import_movie(path).await,
+            VideoFileType::Episode => self.import_episode(path).await,
+        }
+    }
+
+    pub async fn rescan_video(&self, path: &Utf8Path) -> eyre::Result<()> {
+        tracing::debug!(%path, "rescanning video file");
+
+        let mut transaction = self.db.begin().await?;
+
+        let info = self.video_prober.probe(path).await?;
+        let video_id = sqlx::query_scalar("SELECT id FROM video_files WHERE path = ?")
+            .bind(path)
+            .fetch_one(&mut transaction)
+            .await?;
+
+        update_video_info(&mut transaction, video_id, &info).await?;
+
+        transaction.commit().await?;
+
+        Ok(())
+    }
+
+    pub async fn remove_video(&self, path: &Utf8Path) -> eyre::Result<()> {
+        tracing::info!(%path, "removing video");
+        let mut transaction = self.db.begin().await?;
+        db::video_files::remove_by_path(&mut transaction, path).await?;
+        transaction.commit().await?;
+        Ok(())
+    }
+
+    pub(super) async fn create_video_file(
+        &self,
+        path: &Utf8Path,
+        media_id: i64,
+    ) -> eyre::Result<()> {
+        let info = self.video_prober.probe(path).await?;
+        let duration: f64 = info.format.duration.parse()?;
+
+        let mut transaction = self.db.begin().await?;
+
+        let sql = sql::insert("video_files")
+            .columns(&["item_id", "path", "duration"])
+            .values(&["?", "?", "?"])
+            .returning(&["id"])
+            .to_sql();
+
+        let video_id = sqlx::query_scalar(&sql)
+            .bind(media_id)
+            .bind(path)
+            .bind(duration)
+            .fetch_one(&mut transaction)
+            .await?;
+
+        update_video_info(&mut transaction, video_id, &info).await?;
+
+        transaction.commit().await?;
+
+        let _ = self.notifier.send(LibraryEvent::VideoAdded(video_id));
+
+        Ok(())
+    }
+}
 
 pub async fn update_video_info(
     conn: &mut SqliteConnection,

@@ -15,7 +15,7 @@ use crate::db::subtitles::{Subtitle, UpdateSubtitle};
 use crate::db::videos::UpdateVideo;
 use crate::db::{self, Db};
 use crate::ext::CommandExt;
-use crate::library::video_info;
+use crate::library::MediaLibrary;
 use crate::video_prober::{VideoInfo, VideoProber};
 
 #[derive(Clone, Serialize, Reflect)]
@@ -52,6 +52,7 @@ impl Job {
 pub struct Transcoder {
     db: Db,
     config: Arc<Config>,
+    library: Arc<MediaLibrary>,
     video_prober: Arc<dyn VideoProber>,
     sema: Semaphore,
     queue: RwLock<VecDeque<Job>>,
@@ -69,12 +70,18 @@ pub enum Event {
 }
 
 impl Transcoder {
-    pub fn new(db: Db, config: Arc<Config>, video_prober: Arc<dyn VideoProber>) -> Arc<Transcoder> {
+    pub fn new(
+        db: Db,
+        config: Arc<Config>,
+        library: Arc<MediaLibrary>,
+        video_prober: Arc<dyn VideoProber>,
+    ) -> Arc<Transcoder> {
         let (sender, _) = broadcast::channel(8);
 
         Arc::new(Transcoder {
             db,
             config,
+            library,
             video_prober,
             sema: Semaphore::new(0),
             queue: RwLock::new(VecDeque::new()),
@@ -197,14 +204,7 @@ impl Transcoder {
             .wrap_err("failed to probe video info")?;
 
         self.process_video(&job, &path, &info).await?;
-
-        let info = self
-            .video_prober
-            .probe(&path)
-            .await
-            .wrap_err("failed to probe video info")?;
-
-        video_info::update_video_info(&mut *self.db.acquire().await?, id, &info).await?;
+        self.library.rescan_video(&path).await?;
 
         Ok(())
     }

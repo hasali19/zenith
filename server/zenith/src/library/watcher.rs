@@ -6,7 +6,6 @@ use notify::{Event, RecursiveMode, Watcher};
 use tokio::time::timeout;
 
 use crate::config::Config;
-use crate::library::scanner::ScanOptions;
 
 use super::LibraryScanner;
 
@@ -47,7 +46,7 @@ async fn run(config: Arc<Config>, scanner: Arc<LibraryScanner>) -> eyre::Result<
             continue;
         }
 
-        scanner.clone().start_scan(ScanOptions::quick());
+        scanner.clone().start_scan();
     }
 
     bail!("filesystem watcher terminated unexpectedly")

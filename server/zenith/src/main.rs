@@ -21,12 +21,12 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
 use zenith::config::{Config, LogFormat};
-use zenith::library::scanner::{LibraryScanner, ScanOptions};
+use zenith::library::scanner::LibraryScanner;
 use zenith::library::{LibraryEvent, MediaLibrary};
 use zenith::metadata::MetadataManager;
 use zenith::transcoder::{self, Transcoder};
 use zenith::video_prober::Ffprobe;
-use zenith::{Db, MediaItemType};
+use zenith::Db;
 
 fn init_tracing(config: &Config) {
     let fmt_layer = tracing_subscriber::fmt::layer();
@@ -81,27 +81,39 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
     let tmdb = TmdbClient::new(&config.tmdb.api_key);
     let metadata = MetadataManager::new(db.clone(), tmdb.clone());
     let video_prober = Arc::new(Ffprobe::new(&config.transcoding.ffprobe_path));
-    let library = Arc::new(MediaLibrary::new(db.clone(), video_prober.clone()));
-    let transcoder = Transcoder::new(db.clone(), config.clone(), video_prober.clone());
+
+    let library = Arc::new(MediaLibrary::new(
+        db.clone(),
+        config.clone(),
+        video_prober.clone(),
+    ));
+
+    let transcoder = Transcoder::new(
+        db.clone(),
+        config.clone(),
+        library.clone(),
+        video_prober.clone(),
+    );
+
     let scanner = Arc::new(LibraryScanner::new(
         db.clone(),
         library.clone(),
         config.clone(),
-        video_prober,
     ));
 
     tokio::spawn({
         let metadata = metadata.clone();
+        let library = library.clone();
         let transcoder = transcoder.clone();
         async move {
             let mut receiver = library.subscribe();
             while let Ok(event) = receiver.recv().await {
-                if let LibraryEvent::Added(item_type, id) = event {
-                    if let MediaItemType::Movie | MediaItemType::Episode = item_type {
-                        transcoder.enqueue(transcoder::Job::new(id)).await;
+                match event {
+                    LibraryEvent::MediaAdded(_, id) => metadata.enqueue_unmatched(id),
+                    LibraryEvent::MediaRemoved(_, _) => {}
+                    LibraryEvent::VideoAdded(id) => {
+                        transcoder.enqueue(transcoder::Job::new(id)).await
                     }
-
-                    metadata.enqueue_unmatched(id);
                 }
             }
         }
@@ -139,7 +151,7 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
         }
     });
 
-    scanner.clone().start_scan(ScanOptions::default());
+    scanner.clone().start_scan();
     transcoder.clone().start();
 
     if config.watcher.enabled {
@@ -156,6 +168,7 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
         .layer(TraceLayer::new_for_http())
         .layer(Extension(config))
         .layer(Extension(db.clone()))
+        .layer(Extension(library.clone()))
         .layer(Extension(metadata))
         .layer(Extension(transcoder))
         .layer(Extension(scanner))

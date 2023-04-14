@@ -1,119 +1,88 @@
 use camino::Utf8Path;
+use time::OffsetDateTime;
 
-use crate::db;
 use crate::db::media::{MediaItemType, MetadataProvider};
+use crate::library::parser::MoviePathMeta;
+use crate::sql;
 
-use super::{video_info, LibraryEvent, MediaLibrary};
-
-pub struct NewMovie<'a> {
-    pub parent_path: &'a Utf8Path,
-    pub path: &'a Utf8Path,
-    pub title: &'a str,
-    pub release_date: Option<i64>,
-}
+use super::{LibraryEvent, MediaLibrary};
 
 impl MediaLibrary {
-    /// Adds a new movie
-    pub async fn add_movie(&self, movie: &NewMovie<'_>) -> eyre::Result<i64> {
-        let info = self.video_prober.probe(movie.path).await?;
-        let duration: f64 = info.format.duration.parse()?;
+    pub async fn import_movie(&self, path: &Utf8Path) -> eyre::Result<()> {
+        let Some(MoviePathMeta { name, year }) = self.parser().parse_movie_path(path) else {
+            return Ok(());
+        };
+
+        tracing::info!(%path, "importing movie");
+
+        let movie_id = self.create_movie(path, &name, year).await?;
+
+        let _ = self
+            .notifier
+            .send(LibraryEvent::MediaAdded(MediaItemType::Movie, movie_id));
+
+        self.create_video_file(path, movie_id).await
+    }
+
+    async fn create_movie(
+        &self,
+        path: &Utf8Path,
+        name: &str,
+        year: Option<OffsetDateTime>,
+    ) -> eyre::Result<i64> {
+        tracing::info!("adding movie: {name}");
+
         let mut transaction = self.db.begin().await?;
 
-        let sql = "
-            INSERT INTO media_items (item_type, name, start_date, metadata_provider)
-            VALUES (?, ?, ?, ?)
-        ";
+        let sql = sql::insert("media_items")
+            .columns(&["item_type", "name", "start_date", "metadata_provider"])
+            .values(&["?", "?", "?", "?"])
+            .returning(&["id"])
+            .to_sql();
 
-        let id = sqlx::query(sql)
+        let movie_id: i64 = sqlx::query_scalar(&sql)
             .bind(MediaItemType::Movie)
-            .bind(movie.title)
-            .bind(movie.release_date)
+            .bind(name)
+            .bind(year.map(|dt| dt.unix_timestamp()))
             .bind(MetadataProvider::Tmdb)
-            .execute(&mut transaction)
-            .await?
-            .last_insert_rowid();
-
-        let sql = "
-            INSERT INTO indexed_paths (item_id, path)
-            VALUES (?, ?)";
-
-        sqlx::query(sql)
-            .bind(id)
-            .bind(movie.parent_path)
-            .execute(&mut transaction)
+            .fetch_one(&mut transaction)
             .await?;
 
-        let sql = "
-            INSERT INTO video_files (item_id, path, duration)
-            VALUES (?, ?, ?)
-        ";
+        let sql = sql::insert("indexed_paths")
+            .columns(&["item_id", "path"])
+            .values(&["?", "?"])
+            .to_sql();
 
-        sqlx::query(sql)
-            .bind(id)
-            .bind(movie.path)
-            .bind(duration)
+        sqlx::query(&sql)
+            .bind(movie_id)
+            .bind(path.parent().unwrap())
             .execute(&mut transaction)
             .await?;
-
-        video_info::update_video_info(&mut transaction, id, &info).await?;
 
         transaction.commit().await?;
 
-        let _ = self
-            .notifier
-            .send(LibraryEvent::Added(MediaItemType::Movie, id));
-
-        Ok(id)
+        Ok(movie_id)
     }
 
-    /// Removes a single movie by id
-    pub async fn remove_movie(&self, id: i64) -> eyre::Result<()> {
-        let mut transaction = self.db.begin().await?;
-        db::items::remove(&mut transaction, id).await?;
-        transaction.commit().await?;
-
-        let _ = self
-            .notifier
-            .send(LibraryEvent::Removed(MediaItemType::Movie, id));
-
-        Ok(())
-    }
-
-    /// Checks if a movie exists with the given path
-    pub async fn get_movie_id_by_path(&self, path: &Utf8Path) -> eyre::Result<Option<i64>> {
-        let sql = "
-            SELECT m.id FROM movies AS m
-            JOIN video_files AS v ON m.id = v.item_id
-            WHERE v.path = ?
-        ";
-
-        let id = sqlx::query_scalar(sql)
-            .bind(path)
-            .fetch_optional(&mut *self.db.acquire().await?)
-            .await?;
-
-        Ok(id)
-    }
-
-    /// Removes any movies that no longer exist on the filesystem
-    pub async fn validate_movies(&self) -> eyre::Result<()> {
+    pub(super) async fn validate_movies(&self) -> eyre::Result<()> {
         tracing::info!("validating movies");
 
         let mut conn = self.db.acquire().await?;
 
-        let sql = "
-            SELECT movies.id, path FROM movies
-            JOIN video_files ON movies.id = video_files.item_id
-        ";
+        let sql = sql::select("media_items")
+            .columns(&["id", "name"])
+            .condition("item_type = ? AND id NOT IN (SELECT item_id FROM video_files)")
+            .to_sql();
 
-        let movies: Vec<(i64, String)> = sqlx::query_as(sql).fetch_all(&mut conn).await?;
+        let ids: Vec<(i64, String)> = sqlx::query_as(&sql)
+            .bind(MediaItemType::Movie)
+            .fetch_all(&mut conn)
+            .await?;
 
-        for (id, path) in movies {
-            // Check if file exists
-            if !Utf8Path::new(&path).is_file() {
-                tracing::info!("{path} does not exist, removing movie");
-                self.remove_movie(id).await?;
-            }
+        for (id, name) in ids {
+            tracing::info!(name, "removing movie");
+            self.remove_item(&mut conn, id, MediaItemType::Movie)
+                .await?;
         }
 
         Ok(())
