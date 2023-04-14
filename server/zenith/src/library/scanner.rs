@@ -1,5 +1,6 @@
 use std::io;
 use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 
 use camino::{Utf8Path, Utf8PathBuf};
 use time::Instant;
@@ -110,22 +111,36 @@ impl LibraryScannerImpl {
         tracing::info!("validating video files");
 
         let sql = sql::select("video_files as v")
-            .columns(&["v.id", "v.path", "m.item_type"])
+            .columns(&["v.id", "v.path", "v.scanned_at", "m.item_type"])
             .joins(&[Join::inner("media_items as m on m.id = v.item_id")])
             .to_sql();
 
-        let video_files: Vec<(i64, Utf8PathBuf, MediaItemType)> =
+        let video_files: Vec<(i64, Utf8PathBuf, i64, MediaItemType)> =
             sqlx::query_as(&sql).fetch_all(&mut conn).await?;
 
-        for (id, file_path, item_type) in video_files {
-            if !file_path.is_file() {
+        for (id, file_path, scanned_at, item_type) in video_files {
+            let video_file_type = match item_type {
+                MediaItemType::Movie => VideoFileType::Movie,
+                MediaItemType::Episode => VideoFileType::Episode,
+                _ => eyre::bail!("video file {id} has unexpected media type {item_type:?}"),
+            };
+
+            if file_path.is_file() {
+                let metadata = tokio::fs::metadata(&file_path).await?;
+                let scanned_at = SystemTime::UNIX_EPOCH + Duration::from_secs(scanned_at as u64);
+                if metadata.modified()? > scanned_at {
+                    let change = FileSystemChange {
+                        path: file_path,
+                        file_type: FileType::Video(video_file_type),
+                        change_type: ChangeType::Modified,
+                    };
+
+                    self.library.process_file_system_change(change).await?;
+                }
+            } else {
                 let change = FileSystemChange {
                     path: file_path,
-                    file_type: FileType::Video(match item_type {
-                        MediaItemType::Movie => VideoFileType::Movie,
-                        MediaItemType::Episode => VideoFileType::Episode,
-                        _ => eyre::bail!("video file {id} has unexpected media type {item_type:?}"),
-                    }),
+                    file_type: FileType::Video(video_file_type),
                     change_type: ChangeType::Removed,
                 };
 

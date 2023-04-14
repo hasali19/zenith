@@ -61,8 +61,8 @@ impl MediaLibrary {
         let mut transaction = self.db.begin().await?;
 
         let sql = sql::insert("video_files")
-            .columns(&["item_id", "path", "duration"])
-            .values(&["?", "?", "?"])
+            .columns(&["item_id", "path", "duration", "scanned_at"])
+            .values(&["?", "?", "?", "strftime('%s')"])
             .returning(&["id"])
             .to_sql();
 
@@ -92,6 +92,7 @@ pub async fn update_video_info(
         path: None,
         duration: Some(info.format.duration.parse()?),
         format_name: Some(Some(info.format.format_name.as_str())),
+        set_scanned_at: true,
     };
 
     db::videos::update(&mut *conn, id, data).await?;

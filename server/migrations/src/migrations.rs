@@ -61,6 +61,13 @@ async fn _20230410172401_video_path_stem(conn: &mut SqliteConnection) -> eyre::R
     Ok(())
 }
 
+async fn _20230414220002_video_scanned_at(conn: &mut SqliteConnection) -> eyre::Result<()> {
+    sqlx::query(include_str!("../migrations/20230414220002_video_scanned_at.sql"))
+        .execute(conn)
+        .await?;
+    Ok(())
+}
+
 pub(super) fn collect(migrator: &mut super::Migrator) {
     migrator.push_migration(
         "20220809142403_initial",
@@ -106,5 +113,10 @@ pub(super) fn collect(migrator: &mut super::Migrator) {
         "20230410172401_video_path_stem",
         Box::new(|conn| Box::pin(_20230410172401_video_path_stem(conn))),
         [81, 68, 46, 190, 224, 28, 14, 42, 115, 59, 74, 114, 203, 151, 56, 65, 200, 106, 188, 240, 130, 179, 157, 81, 201, 52, 121, 207, 71, 242, 44, 106],
+    );
+    migrator.push_migration(
+        "20230414220002_video_scanned_at",
+        Box::new(|conn| Box::pin(_20230414220002_video_scanned_at(conn))),
+        [119, 235, 37, 125, 239, 159, 6, 141, 114, 183, 71, 74, 185, 82, 63, 64, 195, 199, 189, 0, 188, 68, 251, 220, 180, 122, 228, 6, 173, 184, 152, 157],
     );
 }

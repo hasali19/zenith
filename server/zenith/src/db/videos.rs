@@ -53,6 +53,7 @@ pub struct UpdateVideo<'a> {
     pub path: Option<&'a Utf8Path>,
     pub duration: Option<f64>,
     pub format_name: Option<Option<&'a str>>,
+    pub set_scanned_at: bool,
 }
 
 pub async fn update(
@@ -64,7 +65,8 @@ pub async fn update(
         UPDATE video_files
         SET path = COALESCE(?, path),
             duration = COALESCE(?, duration),
-            format_name = COALESCE(?, format_name)
+            format_name = COALESCE(?, format_name),
+            scanned_at = IIF(?, strftime('%s'), scanned_at)
         WHERE item_id = ?
     ";
 
@@ -72,6 +74,7 @@ pub async fn update(
         .bind(data.path)
         .bind(data.duration)
         .bind(data.format_name)
+        .bind(data.set_scanned_at)
         .bind(id)
         .execute(conn)
         .await?;

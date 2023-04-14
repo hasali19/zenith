@@ -418,6 +418,7 @@ impl Transcoder {
             path: Some(path),
             duration: None,
             format_name: None,
+            set_scanned_at: false,
         };
 
         db::videos::update(&mut conn, id, data).await?;
