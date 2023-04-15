@@ -1,6 +1,5 @@
-use axum::body::Body;
 use axum::http::header::{ACCEPT, CONTENT_TYPE};
-use axum::http::{Request, Response, StatusCode};
+use axum::http::Request;
 use axum::middleware::Next;
 use axum::response::{Html, IntoResponse};
 use axum::routing::get;
@@ -10,26 +9,13 @@ use tower_http::cors::{self, CorsLayer};
 
 use super::error::ApiError;
 
-const DOCS_INDEX: &str = include_str!("docs/docs.html");
-const RAPIDOC_JS: &str = include_str!("docs/rapidoc-min.js");
+const DOCS_INDEX: &str = include_str!("docs.html");
 
 pub fn router() -> axum::Router {
     let spec = super::openapi_spec();
 
     speq::axum_router!()
         .route("/", get(|| async move { Html(DOCS_INDEX) }))
-        .route(
-            "/rapidoc-min.js",
-            get(|| async move {
-                Response::builder()
-                    .header("content-type", "application/javascript; charset=utf-8")
-                    .body(Body::from(RAPIDOC_JS))
-                    .map_err(|e| {
-                        tracing::error!("{e}");
-                        StatusCode::INTERNAL_SERVER_ERROR
-                    })
-            }),
-        )
         .route("/openapi.json", get(|| async move { Json(spec) }))
         .layer(
             CorsLayer::new()
