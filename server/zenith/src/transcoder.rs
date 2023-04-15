@@ -228,8 +228,8 @@ impl Transcoder {
         let mut mappings = vec![];
         for stream in &info.streams {
             if stream.codec_type == "audio" {
-                // Transcode audio stream if not already aac
-                if stream.codec_name.as_deref() == Some("aac") {
+                // Transcode audio stream if not already stereo aac
+                if stream.codec_name.as_deref() == Some("aac") && stream.channels == Some(2) {
                     mappings.push(StreamMapping::Copy(stream.index));
                 } else {
                     transcode_any = true;
