@@ -204,7 +204,6 @@ impl Transcoder {
             .wrap_err("failed to probe video info")?;
 
         self.process_video(&job, &path, &info).await?;
-        self.library.rescan_video(&path).await?;
 
         Ok(())
     }
@@ -347,9 +346,12 @@ impl Transcoder {
                 .await
                 .wrap_err("failed to remove original video file")?;
 
+            let new_path = output.with_extension("");
+
             self.rename_tmp_file(&output).await?;
-            self.update_video_path(id, &output.with_extension(""))
-                .await?;
+            self.update_video_path(id, &new_path).await?;
+
+            self.library.rescan_video(&new_path).await?;
         }
 
         for (path, stream_index) in subtitle_tmps {
