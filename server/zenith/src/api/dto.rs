@@ -78,6 +78,8 @@ pub struct VideoStreamProps {
 #[derive(Serialize, Reflect)]
 pub struct AudioStreamProps {
     pub language: Option<String>,
+    pub channels: Option<u32>,
+    pub channel_layout: Option<String>,
 }
 
 #[derive(Serialize, Reflect)]
@@ -156,6 +158,8 @@ impl From<db::items::MediaItem> for MediaItem {
                             db::items::StreamProps::Audio(props) => {
                                 StreamProps::Audio(AudioStreamProps {
                                     language: props.language,
+                                    channels: props.channels,
+                                    channel_layout: props.channel_layout,
                                 })
                             }
                         },

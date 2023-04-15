@@ -61,6 +61,8 @@ pub struct NewAudioStream<'a> {
     pub index: u32,
     pub codec_name: &'a str,
     pub language: Option<&'a str>,
+    pub channels: Option<u32>,
+    pub channel_layout: Option<&'a str>,
 }
 
 pub async fn insert_audio_stream(
@@ -74,16 +76,19 @@ pub async fn insert_audio_stream(
                 stream_index,
                 stream_type,
                 codec_name,
-                a_language
+                a_language,
+                a_channels,
+                a_channel_layout
             )
         VALUES
-            (?, ?, ?, ?, ?)
+            (?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT (video_id, stream_index)
         DO UPDATE SET
             stream_type = excluded.stream_type,
             codec_name = excluded.codec_name,
-            v_width = excluded.v_width,
-            v_height = excluded.v_height
+            a_language = excluded.a_language,
+            a_channels = excluded.a_channels,
+            a_channel_layout = excluded.a_channel_layout
     ";
 
     sqlx::query(sql)
@@ -92,6 +97,8 @@ pub async fn insert_audio_stream(
         .bind(StreamType::Audio)
         .bind(stream.codec_name)
         .bind(stream.language)
+        .bind(stream.channels)
+        .bind(stream.channel_layout)
         .execute(conn)
         .await?;
 

@@ -33,8 +33,19 @@ pub struct Stream {
     pub index: u32,
     pub codec_type: String,
     pub codec_name: Option<String>,
+    pub width: Option<u32>,
+    pub height: Option<u32>,
+    pub channels: Option<u32>,
+    pub channel_layout: Option<String>,
+    pub tags: Option<StreamTags>,
     #[serde(flatten)]
     pub properties: HashMap<String, Value>,
+}
+
+#[derive(Deserialize)]
+pub struct StreamTags {
+    pub title: Option<String>,
+    pub language: Option<String>,
 }
 
 impl Ffprobe {

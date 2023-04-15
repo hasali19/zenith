@@ -81,6 +81,8 @@ pub struct VideoStreamProps {
 #[derive(Debug)]
 pub struct AudioStreamProps {
     pub language: Option<String>,
+    pub channels: Option<u32>,
+    pub channel_layout: Option<String>,
 }
 
 #[derive(Debug, FromRow)]
@@ -182,6 +184,8 @@ impl<'r> FromRow<'r, SqliteRow> for Stream {
             props: match stream_type {
                 StreamType::Audio => StreamProps::Audio(AudioStreamProps {
                     language: row.try_get("a_language")?,
+                    channels: row.try_get("a_channels")?,
+                    channel_layout: row.try_get("a_channel_layout")?,
                 }),
                 StreamType::Video => StreamProps::Video(VideoStreamProps {
                     width: row.try_get("v_width")?,
@@ -248,6 +252,8 @@ const STREAM_COLUMNS: &[&str] = &[
     "v_width",
     "v_height",
     "a_language",
+    "a_channels",
+    "a_channel_layout",
 ];
 
 const SUBTITLE_COLUMNS: &[&str] = &[

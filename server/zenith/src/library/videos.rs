@@ -1,6 +1,5 @@
 use camino::Utf8Path;
 use eyre::eyre;
-use serde_json::Value;
 use sqlx::SqliteConnection;
 
 use crate::db::streams::{NewAudioStream, NewVideoStream};
@@ -83,7 +82,7 @@ impl MediaLibrary {
     }
 }
 
-pub async fn update_video_info(
+async fn update_video_info(
     conn: &mut SqliteConnection,
     id: i64,
     info: &VideoInfo,
@@ -98,8 +97,6 @@ pub async fn update_video_info(
     db::videos::update(&mut *conn, id, data).await?;
 
     for stream in &info.streams {
-        let tags = stream.properties.get("tags").and_then(|v| v.as_object());
-
         let Some(codec_name) = stream.codec_name.as_deref() else {
             tracing::debug!(stream.index, stream.codec_type, "stream is missing codec name");
             continue;
@@ -107,14 +104,12 @@ pub async fn update_video_info(
 
         match stream.codec_type.as_str() {
             "video" => {
-                let (width, height) = if let (Some(width), Some(height)) = (
-                    stream.properties.get("width").and_then(Value::as_u64),
-                    stream.properties.get("height").and_then(Value::as_u64),
-                ) {
-                    (width as u32, height as u32)
-                } else {
-                    return Err(eyre!("missing width and height for video stream"));
-                };
+                let (width, height) =
+                    if let (Some(width), Some(height)) = (stream.width, stream.height) {
+                        (width as u32, height as u32)
+                    } else {
+                        return Err(eyre!("missing width and height for video stream"));
+                    };
 
                 let stream = NewVideoStream {
                     video_id: id,
@@ -127,27 +122,28 @@ pub async fn update_video_info(
                 db::streams::insert_video_stream(&mut *conn, &stream).await?;
             }
             "audio" => {
-                let language = tags
-                    .and_then(|tags| tags.get("language"))
-                    .and_then(|v| v.as_str());
+                let language = stream
+                    .tags
+                    .as_ref()
+                    .and_then(|tags| tags.language.as_deref());
 
                 let stream = NewAudioStream {
                     video_id: id,
                     index: stream.index,
                     codec_name,
                     language,
+                    channels: stream.channels,
+                    channel_layout: stream.channel_layout.as_deref(),
                 };
 
                 db::streams::insert_audio_stream(&mut *conn, &stream).await?;
             }
             "subtitle" => {
-                let title = tags
-                    .and_then(|tags| tags.get("title"))
-                    .and_then(|v| v.as_str());
-
-                let language = tags
-                    .and_then(|tags| tags.get("language"))
-                    .and_then(|v| v.as_str());
+                let title = stream.tags.as_ref().and_then(|tags| tags.title.as_deref());
+                let language = stream
+                    .tags
+                    .as_ref()
+                    .and_then(|tags| tags.language.as_deref());
 
                 let get_disposition_bool = |name| {
                     stream
