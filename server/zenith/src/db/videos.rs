@@ -1,8 +1,6 @@
-use camino::Utf8PathBuf;
 use serde::Serialize;
 use speq::Reflect;
-use sqlx::sqlite::SqliteRow;
-use sqlx::{Row, SqliteConnection};
+use sqlx::SqliteConnection;
 
 use crate::sql::{self, OnConflict, UpdateList};
 
@@ -11,35 +9,6 @@ pub async fn get_all_ids(conn: &mut SqliteConnection) -> eyre::Result<Vec<i64>> 
         .fetch_all(conn)
         .await
         .map_err(Into::into)
-}
-
-pub struct BasicVideoInfo {
-    pub path: Utf8PathBuf,
-    pub duration: f64,
-}
-
-pub async fn get_basic_info(
-    conn: &mut SqliteConnection,
-    id: i64,
-) -> eyre::Result<Option<BasicVideoInfo>> {
-    let sql = "
-        SELECT path, duration
-        FROM video_files
-        WHERE item_id = ?
-    ";
-
-    let info = sqlx::query(sql)
-        .bind(id)
-        .try_map(|row: SqliteRow| {
-            Ok(BasicVideoInfo {
-                path: row.try_get("path")?,
-                duration: row.try_get("duration")?,
-            })
-        })
-        .fetch_optional(conn)
-        .await?;
-
-    Ok(info)
 }
 
 #[derive(Serialize, Reflect)]
