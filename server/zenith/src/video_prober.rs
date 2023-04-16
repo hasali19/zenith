@@ -24,8 +24,6 @@ pub struct VideoInfo {
 pub struct Format {
     pub format_name: String,
     pub duration: String,
-    #[serde(flatten)]
-    pub properties: HashMap<String, Value>,
 }
 
 #[derive(Deserialize)]
@@ -87,6 +85,7 @@ impl Ffprobe {
     }
 }
 
+#[cfg_attr(test, mockall::automock)]
 #[async_trait]
 pub trait VideoProber: Send + Sync {
     async fn probe(&self, path: &Utf8Path) -> eyre::Result<VideoInfo>;

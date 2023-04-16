@@ -3,6 +3,8 @@ mod parser;
 pub mod scanner;
 mod shows;
 mod subtitles;
+#[cfg(test)]
+mod tests;
 mod videos;
 pub mod watcher;
 

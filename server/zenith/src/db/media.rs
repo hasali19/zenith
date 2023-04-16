@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use speq::Reflect;
 use sqlx::{SqliteConnection, Type};
 
-#[derive(Clone, Copy, Debug, Type, Serialize, Deserialize, Reflect)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Type, Serialize, Deserialize, Reflect)]
 #[repr(i32)]
 #[serde(rename_all = "snake_case")]
 pub enum MediaItemType {
