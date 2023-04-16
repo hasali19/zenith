@@ -138,7 +138,7 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
     }
 
     final video = VideoItem(
-      url: _api.getVideoUrl(widget.item.id),
+      url: _api.getVideoUrl(widget.item.videoFile!.id),
       subtitles: subtitles.map((s) => subtitleFromApi(_api, s)).toList(),
       title: title,
       subtitle: subtitle,

@@ -202,6 +202,7 @@ class AudioStreamInfo extends StreamInfo {
 }
 
 class VideoFile {
+  final int id;
   final String path;
   final double duration;
   final String format;
@@ -209,6 +210,7 @@ class VideoFile {
   final List<SubtitleTrack> subtitles;
 
   const VideoFile({
+    required this.id,
     required this.path,
     required this.duration,
     required this.format,
@@ -220,6 +222,7 @@ class VideoFile {
     final List<dynamic> streams = json['streams'];
     final List<dynamic> subtitles = json['subtitles'];
     return VideoFile(
+      id: json['id'],
       path: json['path'],
       duration: json['duration'],
       format: json['format'],
