@@ -45,6 +45,7 @@ pub struct ExternalIds {
 
 #[derive(Serialize, Reflect)]
 pub struct VideoFile {
+    pub id: i64,
     pub path: Utf8PathBuf,
     pub duration: Option<f64>,
     pub format: Option<String>,
@@ -138,6 +139,7 @@ impl From<db::items::MediaItem> for MediaItem {
                 imdb: item.imdb_id,
             },
             video_file: item.video_file.map(|v| VideoFile {
+                id: v.id,
                 path: v.path,
                 duration: v.duration,
                 format: v.format_name,

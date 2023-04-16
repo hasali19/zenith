@@ -49,6 +49,7 @@ pub struct Parent {
 
 #[derive(Debug)]
 pub struct VideoFile {
+    pub id: i64,
     pub item_id: i64,
     pub path: Utf8PathBuf,
     pub duration: Option<f64>,
@@ -132,6 +133,7 @@ impl<'r> FromRow<'r, SqliteRow> for MediaItem {
 
         let video_file = if let Some(path) = row.try_get("path")? {
             Some(VideoFile {
+                id: row.try_get("video_id")?,
                 path,
                 item_id: row.try_get("id")?,
                 duration: row.try_get("duration")?,
@@ -238,6 +240,7 @@ const ITEM_COLUMNS: &[&str] = &[
     "m.grandparent_id",
     "m.grandparent_index",
     "grandparent.name AS grandparent_name",
+    "v.id AS video_id",
     "path",
     "duration",
     "format_name",

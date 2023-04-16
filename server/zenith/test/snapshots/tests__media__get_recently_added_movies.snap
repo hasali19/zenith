@@ -29,6 +29,7 @@ expression: "app.get(\"/movies/recent\").await"
     "video_file": {
       "duration": 100.0,
       "format": null,
+      "id": 1,
       "path": "/path/to/Test Movie 1/Test Movie 1.mp4",
       "streams": [],
       "subtitles": []
@@ -60,6 +61,7 @@ expression: "app.get(\"/movies/recent\").await"
     "video_file": {
       "duration": 100.0,
       "format": null,
+      "id": 2,
       "path": "/path/to/Test Movie 2/Test Movie 2.mp4",
       "streams": [],
       "subtitles": []
@@ -91,6 +93,7 @@ expression: "app.get(\"/movies/recent\").await"
     "video_file": {
       "duration": 100.0,
       "format": null,
+      "id": 3,
       "path": "/path/to/Test Movie 3/Test Movie 3.mp4",
       "streams": [],
       "subtitles": []

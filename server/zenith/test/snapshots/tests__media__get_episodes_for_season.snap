@@ -39,6 +39,7 @@ expression: "app.get(\"/seasons/7/episodes\").await"
     "video_file": {
       "duration": 100.0,
       "format": null,
+      "id": 4,
       "path": "/path/to/Test Episode 1",
       "streams": [],
       "subtitles": []
@@ -80,6 +81,7 @@ expression: "app.get(\"/seasons/7/episodes\").await"
     "video_file": {
       "duration": 100.0,
       "format": null,
+      "id": 5,
       "path": "/path/to/Test Episode 2",
       "streams": [],
       "subtitles": []

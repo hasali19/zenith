@@ -29,6 +29,7 @@ expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
     "video_file": {
       "duration": 100.0,
       "format": null,
+      "id": 1,
       "path": "/path/to/Test Movie 1/Test Movie 1.mp4",
       "streams": [],
       "subtitles": []
@@ -119,6 +120,7 @@ expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
     "video_file": {
       "duration": 100.0,
       "format": null,
+      "id": 4,
       "path": "/path/to/Test Episode 1",
       "streams": [],
       "subtitles": []
