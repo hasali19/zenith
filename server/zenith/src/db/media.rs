@@ -15,6 +15,12 @@ pub enum MediaItemType {
     Episode = 4,
 }
 
+impl MediaItemType {
+    pub fn is_video(&self) -> bool {
+        matches!(self, MediaItemType::Movie | MediaItemType::Episode)
+    }
+}
+
 #[derive(Clone, Copy, Deserialize, Reflect)]
 #[serde(rename_all = "snake_case")]
 pub enum MediaImageType {

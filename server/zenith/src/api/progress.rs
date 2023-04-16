@@ -33,9 +33,15 @@ async fn update_progress(
         .await?
         .or_not_found("item not found")?;
 
-    let user_data = db::items::get_user_data_for_video(&mut conn, *id).await?;
-    let Some(video_info) = item.video_file else {
+    if !item.kind.is_video() {
         return Err(bad_request("item id must refer to a video item"));
+    }
+
+    let user_data = db::items::get_user_data_for_video(&mut conn, *id).await?;
+    let video_file = db::video_files::get_for_item(&mut conn, *id).await?;
+
+    let Some(video_file) = video_file.get(0) else {
+        return Err(bad_request("no associated video files found"));
     };
 
     let is_watched = matches!(
@@ -51,7 +57,7 @@ async fn update_progress(
         is_watched: if is_watched {
             None
         } else {
-            Some((query.position / video_info.duration.unwrap()) >= 0.9)
+            Some((query.position / video_file.duration.unwrap()) >= 0.9)
         },
         set_watched_at: true,
     };

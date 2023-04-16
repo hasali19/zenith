@@ -20,6 +20,17 @@ pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Vi
         .map_err(Into::into)
 }
 
+pub async fn get_for_item(
+    conn: &mut SqliteConnection,
+    item_id: i64,
+) -> eyre::Result<Vec<VideoFile>> {
+    sqlx::query_as("SELECT * FROM video_files WHERE item_id = ?")
+        .bind(item_id)
+        .fetch_all(conn)
+        .await
+        .map_err(Into::into)
+}
+
 /// Retrieves all videos associated with the item or its children/grandchildren.
 pub async fn get_recursive_for_item(
     conn: &mut SqliteConnection,
