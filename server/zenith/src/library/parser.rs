@@ -3,11 +3,13 @@ use time::{Date, OffsetDateTime};
 
 use crate::config::{ImportMatcher, ImportMatcherTarget};
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct MoviePathMeta {
     pub name: String,
     pub year: Option<OffsetDateTime>,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct EpisodePathMeta<'a> {
     pub show_name: &'a str,
     pub show_path: &'a Utf8Path,
@@ -138,5 +140,106 @@ impl<'a> PathParser<'a> {
             sdh,
             forced,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use once_cell::sync::Lazy;
+    use pretty_assertions::assert_eq;
+    use time::macros::datetime;
+
+    use crate::config::Config;
+
+    use super::*;
+
+    fn parser() -> PathParser<'static> {
+        static CONFIG: Lazy<Config> =
+            Lazy::new(|| serde_yaml::from_str(include_str!("tests/config.yml")).unwrap());
+        PathParser::new(&CONFIG.import.matchers)
+    }
+
+    #[test]
+    fn movie_with_no_year() -> eyre::Result<()> {
+        let result =
+            parser().parse_movie_path(Utf8Path::new("/media/movies/Movie Name/Movie Name.mkv"));
+
+        assert_eq!(
+            result,
+            Some(MoviePathMeta {
+                name: "Movie Name".to_owned(),
+                year: None,
+            })
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn movie_with_year() {
+        let result = parser().parse_movie_path(Utf8Path::new(
+            "/media/movies/Movie Name (2022)/Movie Name (2022).mkv",
+        ));
+
+        assert_eq!(
+            result,
+            Some(MoviePathMeta {
+                name: "Movie Name".to_owned(),
+                year: Some(datetime!(2022-01-01 0:00 UTC)),
+            })
+        );
+    }
+
+    #[test]
+    fn episode_simple() {
+        let result =
+            parser().parse_episode_path(Utf8Path::new("/media/shows/Show Name/S02E25.mkv"));
+
+        assert_eq!(
+            result,
+            Some(EpisodePathMeta {
+                show_name: "Show Name",
+                show_path: Utf8Path::new("/media/shows/Show Name"),
+                season: 2,
+                episode: 25,
+                name: None,
+            })
+        );
+    }
+
+    #[test]
+    fn episode_with_name() {
+        let result = parser().parse_episode_path(Utf8Path::new(
+            "/media/shows/Show Name/Show Name - S02E25 - Episode Name.mkv",
+        ));
+
+        assert_eq!(
+            result,
+            Some(EpisodePathMeta {
+                show_name: "Show Name",
+                show_path: Utf8Path::new("/media/shows/Show Name"),
+                season: 2,
+                episode: 25,
+                name: None,
+            })
+        );
+    }
+
+    #[test]
+    fn episode_with_season_folder() {
+        let result = parser().parse_episode_path(Utf8Path::new(
+            "/media/shows/Show Name/Season 2/Show Name - S02E25 - Episode Name.mkv",
+        ));
+
+        assert_eq!(
+            result,
+            Some(EpisodePathMeta {
+                show_name: "Show Name",
+                show_path: Utf8Path::new("/media/shows/Show Name"),
+                season: 2,
+                episode: 25,
+                name: None,
+            })
+        );
     }
 }

@@ -1,0 +1,21 @@
+libraries:
+  movies: '.'
+  tv_shows: '.'
+
+import:
+  matchers:
+    # short form: S01E01.mkv
+    - target: 'episode'
+      regex: '[Ss](?P<season>\d\d)[Ee](?P<episode>\d\d)\.(?P<extension>mp4|mkv|avi)'
+    # long form: Show Name - S01E01 - Episode Name.mkv
+    - target: 'episode'
+      regex: '.+ - [Ss](?P<season>\d\d)[Ee](?P<episode>\d\d) - .+\.(?P<extension>mp4|mkv|avi)'
+    # with year: Movie Name (2023).mkv
+    - target: 'movie'
+      regex: '(?P<title>.+) \((?P<year>\d\d\d\d)\).*\.(?P<extension>mp4|mkv|avi)'
+    # without year: Movie Name.mkv
+    - target: 'movie'
+      regex: '(?P<title>.+)\.(?P<extension>mp4|mkv|avi)'
+
+tmdb:
+  api_key: 'test123'
