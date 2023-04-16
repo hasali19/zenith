@@ -57,6 +57,7 @@ struct NewCollection {
     name: String,
 }
 
+/// xyz
 #[post("/collections")]
 #[response(model = Collection)]
 async fn create_collection(

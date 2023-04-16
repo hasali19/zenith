@@ -10,9 +10,8 @@ proc-macro = true
 
 [dependencies]
 quote = "1"
-structmeta = "0.1"
-syn-mid = "0.5"
+structmeta = "0.2"
 
 [dependencies.syn]
-version = "1"
+version = "2"
 default-features = false

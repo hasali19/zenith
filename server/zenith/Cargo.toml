@@ -60,7 +60,7 @@ version = "1.0"
 features = ["derive"]
 
 [dependencies.serde_qs]
-version = "0.11"
+version = "0.12"
 features = ["axum"]
 
 [dependencies.speq]
@@ -86,7 +86,7 @@ version = "0.1"
 features = ["sync"]
 
 [dependencies.tower-http]
-version = "0.3"
+version = "0.4"
 features = ["cors", "trace"]
 
 [dependencies.tracing-subscriber]

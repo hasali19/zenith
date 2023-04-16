@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use structmeta::StructMeta;
-use syn_mid::ItemFn;
+use syn::ItemFn;
 
 #[derive(StructMeta)]
 struct TestAttr {
