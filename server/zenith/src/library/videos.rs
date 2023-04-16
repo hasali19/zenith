@@ -24,16 +24,16 @@ impl MediaLibrary {
     }
 
     pub async fn rescan_video(&self, path: &Utf8Path) -> eyre::Result<()> {
-        tracing::debug!(%path, "rescanning video file");
-
         let mut transaction = self.db.begin().await?;
 
-        let info = self.video_prober.probe(path).await?;
         let video_id = sqlx::query_scalar("SELECT id FROM video_files WHERE path = ?")
             .bind(path)
             .fetch_one(&mut transaction)
             .await?;
 
+        tracing::debug!(video_id, %path, "rescanning video file");
+
+        let info = self.video_prober.probe(path).await?;
         update_video_info(&mut transaction, video_id, &info).await?;
 
         transaction.commit().await?;
