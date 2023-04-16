@@ -1,4 +1,4 @@
-use camino::{Utf8Path, Utf8PathBuf};
+use camino::Utf8PathBuf;
 use serde::Serialize;
 use speq::Reflect;
 use sqlx::sqlite::SqliteRow;
@@ -47,39 +47,6 @@ pub struct VideoUserData {
     pub is_watched: bool,
     pub position: Option<f64>,
     pub last_watched_at: Option<i64>,
-}
-
-pub struct UpdateVideo<'a> {
-    pub path: Option<&'a Utf8Path>,
-    pub duration: Option<f64>,
-    pub format_name: Option<Option<&'a str>>,
-    pub set_scanned_at: bool,
-}
-
-pub async fn update(
-    conn: &mut SqliteConnection,
-    id: i64,
-    data: UpdateVideo<'_>,
-) -> eyre::Result<()> {
-    let sql = "
-        UPDATE video_files
-        SET path = COALESCE(?, path),
-            duration = COALESCE(?, duration),
-            format_name = COALESCE(?, format_name),
-            scanned_at = IIF(?, strftime('%s'), scanned_at)
-        WHERE item_id = ?
-    ";
-
-    sqlx::query(sql)
-        .bind(data.path)
-        .bind(data.duration)
-        .bind(data.format_name)
-        .bind(data.set_scanned_at)
-        .bind(id)
-        .execute(conn)
-        .await?;
-
-    Ok(())
 }
 
 pub struct UpdateVideoUserData {

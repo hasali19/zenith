@@ -13,7 +13,7 @@ use tokio::sync::{broadcast, RwLock, Semaphore};
 
 use crate::config::Config;
 use crate::db::subtitles::{Subtitle, UpdateSubtitle};
-use crate::db::videos::UpdateVideo;
+use crate::db::video_files::UpdateVideoFile;
 use crate::db::{self, Db};
 use crate::ext::CommandExt;
 use crate::library::MediaLibrary;
@@ -385,7 +385,7 @@ impl Transcoder {
     async fn get_video_path(&self, id: i64) -> eyre::Result<Option<Utf8PathBuf>> {
         let mut conn = self.db.acquire().await?;
 
-        let path = db::videos::get_basic_info(&mut conn, id)
+        let path = db::video_files::get(&mut conn, id)
             .await?
             .map(|info| info.path);
 
@@ -420,14 +420,14 @@ impl Transcoder {
     async fn update_video_path(&self, id: i64, path: &Utf8Path) -> eyre::Result<()> {
         let mut conn = self.db.acquire().await?;
 
-        let data = UpdateVideo {
+        let data = UpdateVideoFile {
             path: Some(path),
             duration: None,
             format_name: None,
             set_scanned_at: false,
         };
 
-        db::videos::update(&mut conn, id, data).await?;
+        db::video_files::update(&mut conn, id, data).await?;
 
         Ok(())
     }

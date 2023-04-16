@@ -4,7 +4,7 @@ use sqlx::SqliteConnection;
 
 use crate::db::streams::{NewAudioStream, NewVideoStream};
 use crate::db::subtitles::NewSubtitle;
-use crate::db::videos::UpdateVideo;
+use crate::db::video_files::UpdateVideoFile;
 use crate::video_prober::VideoInfo;
 use crate::{db, sql};
 
@@ -87,14 +87,14 @@ async fn update_video_info(
     id: i64,
     info: &VideoInfo,
 ) -> eyre::Result<()> {
-    let data = UpdateVideo {
+    let data = UpdateVideoFile {
         path: None,
         duration: Some(info.format.duration.parse()?),
         format_name: Some(Some(info.format.format_name.as_str())),
         set_scanned_at: true,
     };
 
-    db::videos::update(&mut *conn, id, data).await?;
+    db::video_files::update(&mut *conn, id, data).await?;
 
     for stream in &info.streams {
         let Some(codec_name) = stream.codec_name.as_deref() else {
