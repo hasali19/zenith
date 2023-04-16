@@ -106,7 +106,7 @@ async fn update_video_info(
             "video" => {
                 let (width, height) =
                     if let (Some(width), Some(height)) = (stream.width, stream.height) {
-                        (width as u32, height as u32)
+                        (width, height)
                     } else {
                         return Err(eyre!("missing width and height for video stream"));
                     };

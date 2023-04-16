@@ -22,16 +22,19 @@ impl MediaLibrary {
 
         tracing::info!(%path, "importing episode");
 
-        let show_id = self.create_show_if_missing(&show_name, show_path).await?;
+        let default_name;
+        let name = match name {
+            Some(name) => name,
+            None => {
+                default_name = format!("S{season:02}E{episode:02}");
+                &default_name
+            }
+        };
+
+        let show_id = self.create_show_if_missing(show_name, show_path).await?;
         let season_id = self.create_season_if_missing(show_id, season).await?;
         let episode_id = self
-            .create_episode_if_missing(
-                show_id,
-                season_id,
-                season,
-                episode,
-                &name.unwrap_or_else(|| format!("S{season:02}E{episode:02}")),
-            )
+            .create_episode_if_missing(show_id, season_id, season, episode, name)
             .await?;
 
         self.create_video_file(path, episode_id)

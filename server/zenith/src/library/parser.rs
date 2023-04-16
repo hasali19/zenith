@@ -9,11 +9,11 @@ pub struct MoviePathMeta {
 }
 
 pub struct EpisodePathMeta<'a> {
-    pub show_name: String,
+    pub show_name: &'a str,
     pub show_path: &'a Utf8Path,
     pub season: u32,
     pub episode: u32,
-    pub name: Option<String>,
+    pub name: Option<&'a str>,
 }
 
 pub struct SubtitlePathMeta<'a> {
@@ -76,15 +76,13 @@ impl<'a> PathParser<'a> {
             .find_map(|matcher| {
                 let captures = matcher.regex.captures(file_name)?;
 
-                let show_name = captures
-                    .name("show_name")
-                    .map(|s| s.as_str().replace('.', " "));
-                let name = captures.name("name").map(|s| s.as_str().replace('.', " "));
+                let show_name = captures.name("show_name").map(|s| s.as_str());
+                let name = captures.name("name").map(|s| s.as_str());
                 let season = captures.name("season")?.as_str().parse().ok()?;
                 let episode = captures.name("episode")?.as_str().parse().ok()?;
 
                 Some(EpisodePathMeta {
-                    show_name: show_name.unwrap_or_else(|| show_folder_name.to_owned()),
+                    show_name: show_name.unwrap_or(show_folder_name),
                     show_path,
                     season,
                     episode,
