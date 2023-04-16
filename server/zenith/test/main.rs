@@ -136,6 +136,7 @@ async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
 }
 
 struct TestApp {
+    db: Db,
     router: axum::Router,
 }
 
@@ -183,6 +184,7 @@ where
     tracing::debug!("opened db {id}");
 
     let app = TestApp {
+        db: db.clone(),
         router: init_test_app(&db).await,
     };
 

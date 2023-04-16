@@ -1,5 +1,8 @@
+use hyper::{Body, Request, StatusCode};
 use insta::assert_json_snapshot;
+use pretty_assertions::assert_eq;
 use test_macros::test;
+use tower::ServiceExt;
 
 use crate::{with_app, TestApp};
 
@@ -26,3 +29,29 @@ test_snapshot!(
     "/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9",
 );
 test_snapshot!(get_continue_watching, "/items/continue_watching");
+
+#[test(with_app)]
+async fn update_progress(app: TestApp) {
+    let res = app
+        .router
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/progress/1?position=100")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let mut conn = app.db.acquire().await.unwrap();
+    let (position,): (f64,) =
+        sqlx::query_as("SELECT position FROM user_item_data WHERE item_id = 1")
+            .fetch_one(&mut conn)
+            .await
+            .unwrap();
+
+    assert_eq!(position, 100.0);
+}
