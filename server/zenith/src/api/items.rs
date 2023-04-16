@@ -202,36 +202,12 @@ async fn delete_item(
         .await?
         .or_not_found("media item not found")?;
 
-    let mut files = vec![];
-    match item.kind {
-        MediaItemType::Movie => files.push(item.video_file.unwrap().path),
-        MediaItemType::Episode => files.push(item.video_file.unwrap().path),
-        MediaItemType::Show => {
-            let query = db::items::Query {
-                grandparent_id: Some(id),
-                ..Default::default()
-            };
+    let files = db::video_files::get_recursive_for_item(&mut conn, item.id).await?;
 
-            for episode in db::items::query(&mut conn, query).await? {
-                files.push(episode.video_file.unwrap().path);
-            }
-        }
-        MediaItemType::Season => {
-            let query = db::items::Query {
-                parent_id: Some(id),
-                ..Default::default()
-            };
-
-            for episode in db::items::query(&mut conn, query).await? {
-                files.push(episode.video_file.unwrap().path);
-            }
-        }
-    }
-
-    for path in files {
-        tracing::info!("removing file: {path}");
-        tokio::fs::remove_file(&path).await?;
-        library.remove_video(&path).await?;
+    for file in files {
+        tracing::info!("removing file: {}", file.path);
+        tokio::fs::remove_file(&file.path).await?;
+        library.remove_video(&file.path).await?;
     }
 
     library.validate().await?;
