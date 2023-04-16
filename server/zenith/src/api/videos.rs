@@ -29,7 +29,7 @@ pub async fn get_video_content(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
-    let info = db::videos::get_basic_info(&mut conn, *id)
+    let info = db::video_files::get(&mut conn, *id)
         .await?
         .or_not_found("video not found")?;
 
