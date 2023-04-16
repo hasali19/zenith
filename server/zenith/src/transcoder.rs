@@ -3,6 +3,7 @@ use std::process::Stdio;
 use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
+use color_eyre::{Help, SectionExt};
 use eyre::{eyre, Context};
 use serde::Serialize;
 use speq::Reflect;
@@ -271,7 +272,9 @@ impl Transcoder {
         let existing_subtitles = self.get_video_subtitles(id).await?;
         let mut subtitle_tmps = vec![];
         for stream in &info.streams {
-            if stream.codec_type.as_str() == "subtitle" {
+            if stream.codec_type.as_str() == "subtitle"
+                && matches!(stream.codec_name.as_deref(), Some("subrip" | "ass"))
+            {
                 if existing_subtitles.iter().any(|s| {
                     matches!(s.stream_index, Some(i) if i == stream.index) && s.path.is_some()
                 }) {
@@ -338,7 +341,8 @@ impl Transcoder {
         }
 
         if !child.wait().await?.success() {
-            return Err(eyre!("ffmpeg terminated unsuccessfully"));
+            return Err(eyre!("ffmpeg terminated unsuccessfully")
+                .with_section(|| format!("{cmd:?}").header("Command:")));
         }
 
         if transcode_any {
