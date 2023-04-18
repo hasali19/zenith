@@ -243,6 +243,7 @@ pub enum OnConflict<'a> {
     Update(UpdateList<'a>),
 }
 
+#[derive(Default)]
 pub struct UpdateList<'a> {
     columns: &'a [&'a str],
     values: &'a [&'a str],

@@ -2,11 +2,11 @@ use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum_files::{FileRequest, FileResponse};
+use db::Db;
 use speq::axum::{delete, get};
 
 use crate::api::error::bad_request;
 use crate::api::ApiResult;
-use crate::db::{self, Db};
 
 use super::error::not_found;
 use super::ext::OptionExt;

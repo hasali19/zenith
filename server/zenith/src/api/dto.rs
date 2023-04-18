@@ -1,9 +1,39 @@
 use camino::Utf8PathBuf;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use speq::Reflect;
 
-use crate::db::media::MediaItemType;
-use crate::{db, utils};
+use crate::utils;
+
+#[derive(Debug, Serialize, Deserialize, Reflect)]
+#[serde(rename_all = "snake_case")]
+pub enum MediaItemType {
+    Movie,
+    Show,
+    Season,
+    Episode,
+}
+
+impl From<MediaItemType> for db::media::MediaItemType {
+    fn from(value: MediaItemType) -> Self {
+        match value {
+            MediaItemType::Movie => db::media::MediaItemType::Movie,
+            MediaItemType::Show => db::media::MediaItemType::Show,
+            MediaItemType::Season => db::media::MediaItemType::Season,
+            MediaItemType::Episode => db::media::MediaItemType::Episode,
+        }
+    }
+}
+
+impl From<db::media::MediaItemType> for MediaItemType {
+    fn from(value: db::media::MediaItemType) -> Self {
+        match value {
+            db::media::MediaItemType::Movie => MediaItemType::Movie,
+            db::media::MediaItemType::Show => MediaItemType::Show,
+            db::media::MediaItemType::Season => MediaItemType::Season,
+            db::media::MediaItemType::Episode => MediaItemType::Episode,
+        }
+    }
+}
 
 #[derive(Serialize, Reflect)]
 pub struct MediaItem {
@@ -113,7 +143,7 @@ impl From<db::items::MediaItem> for MediaItem {
     fn from(item: db::items::MediaItem) -> Self {
         MediaItem {
             id: item.id,
-            kind: item.kind,
+            kind: item.kind.into(),
             name: item.name,
             overview: item.overview,
             start_date: item.start_date,

@@ -1,11 +1,10 @@
-use serde::Serialize;
 use sqlx::sqlite::SqliteArguments;
 use sqlx::Type;
 use sqlx::{Arguments, SqliteConnection};
 
 use crate::sql;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Type, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Type)]
 pub enum StreamType {
     Video,
     Audio,

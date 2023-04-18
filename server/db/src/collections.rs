@@ -1,11 +1,8 @@
-use serde::Serialize;
-use speq::Reflect;
 use sqlx::sqlite::SqliteArguments;
 use sqlx::{Acquire, Arguments, FromRow, SqliteConnection};
 
 use crate::sql;
 
-#[derive(Serialize, Reflect)]
 pub struct CollectionUserData {
     pub unwatched: u32,
 }

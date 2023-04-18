@@ -9,6 +9,8 @@ mod videos;
 pub mod watcher;
 
 use camino::Utf8PathBuf;
+use db::media::MediaItemType;
+use db::Db;
 pub use scanner::LibraryScanner;
 use sqlx::{Connection, SqliteConnection};
 use tokio::sync::broadcast;
@@ -16,8 +18,6 @@ use tokio::sync::broadcast;
 use std::sync::Arc;
 
 use crate::config::Config;
-use crate::db::media::MediaItemType;
-use crate::db::{self, Db};
 use crate::video_prober::VideoProber;
 
 use self::parser::PathParser;

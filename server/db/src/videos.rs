@@ -1,5 +1,3 @@
-use serde::Serialize;
-use speq::Reflect;
 use sqlx::SqliteConnection;
 
 use crate::sql::{self, OnConflict, UpdateList};
@@ -11,7 +9,6 @@ pub async fn get_all_ids(conn: &mut SqliteConnection) -> eyre::Result<Vec<i64>> 
         .map_err(Into::into)
 }
 
-#[derive(Serialize, Reflect)]
 pub struct VideoUserData {
     pub is_watched: bool,
     pub position: Option<f64>,

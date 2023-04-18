@@ -3,14 +3,14 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
 use camino::{Utf8Path, Utf8PathBuf};
+use db::media::MediaItemType;
+use db::sql::{self, Join};
+use db::Db;
 use time::Instant;
 use tokio::sync::Mutex;
 use walkdir::WalkDir;
 
 use crate::config::Config;
-use crate::db::media::MediaItemType;
-use crate::db::Db;
-use crate::sql::{self, Join};
 
 use super::{ChangeType, FileSystemChange, FileType, MediaLibrary};
 

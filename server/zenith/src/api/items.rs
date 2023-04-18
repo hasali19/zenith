@@ -5,6 +5,8 @@ use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
+use db::videos::UpdateVideoUserData;
+use db::Db;
 use itertools::Itertools;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
@@ -13,12 +15,9 @@ use speq::Reflect;
 use sqlx::SqliteConnection;
 
 use crate::api::ApiResult;
-use crate::db::media::MediaItemType;
-use crate::db::videos::UpdateVideoUserData;
-use crate::db::{self, Db};
 use crate::library::MediaLibrary;
 
-use super::dto::MediaItem;
+use super::dto::{MediaItem, MediaItemType};
 use super::error::bad_request;
 use super::ext::OptionExt;
 
@@ -66,7 +65,7 @@ async fn get_items(
         } else {
             Some(&query.ids)
         },
-        item_type: query.item_type,
+        item_type: query.item_type.map(Into::into),
         parent_id: query.parent_id,
         grandparent_id: query.grandparent_id,
         collection_id: query.collection_id,
@@ -159,7 +158,7 @@ pub(super) async fn query_items(
     let mut res = vec![];
     for item in items {
         let user_data = match item.kind {
-            MediaItemType::Movie | MediaItemType::Episode => video_user_data
+            db::media::MediaItemType::Movie | db::media::MediaItemType::Episode => video_user_data
                 .remove(&item.id)
                 .unwrap_or(db::items::VideoUserData {
                     item_id: item.id,
@@ -168,13 +167,15 @@ pub(super) async fn query_items(
                     last_watched_at: None,
                 })
                 .into(),
-            MediaItemType::Show | MediaItemType::Season => collection_user_data
-                .remove(&item.id)
-                .unwrap_or(db::items::CollectionUserData {
-                    item_id: item.id,
-                    unwatched: 0,
-                })
-                .into(),
+            db::media::MediaItemType::Show | db::media::MediaItemType::Season => {
+                collection_user_data
+                    .remove(&item.id)
+                    .unwrap_or(db::items::CollectionUserData {
+                        item_id: item.id,
+                        unwatched: 0,
+                    })
+                    .into()
+            }
         };
 
         let item = MediaItem {
@@ -241,8 +242,8 @@ async fn update_user_data(
     let mut ids = vec![];
 
     match item_type {
-        MediaItemType::Movie | MediaItemType::Episode => ids.push(*id),
-        MediaItemType::Show => {
+        db::media::MediaItemType::Movie | db::media::MediaItemType::Episode => ids.push(*id),
+        db::media::MediaItemType::Show => {
             let query = db::items::Query {
                 grandparent_id: Some(*id),
                 ..Default::default()
@@ -255,7 +256,7 @@ async fn update_user_data(
                     .map(|e| e.id),
             )
         }
-        MediaItemType::Season => {
+        db::media::MediaItemType::Season => {
             let query = db::items::Query {
                 parent_id: Some(*id),
                 ..Default::default()

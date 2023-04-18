@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use crate::db::media::{MediaImage, MediaImageSrcType, MediaImageType};
+use db::media::{MediaImage, MediaImageSrcType, MediaImageType};
 
 pub fn get_image_url(value: impl AsRef<str>) -> String {
     let image = MediaImage::try_from(value.as_ref()).unwrap();

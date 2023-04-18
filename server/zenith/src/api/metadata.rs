@@ -2,13 +2,13 @@ use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
+use db::media::MetadataProvider;
+use db::Db;
 use serde::Deserialize;
 use speq::axum::post;
 use tmdb::TmdbClient;
 
 use crate::api::ApiResult;
-use crate::db::media::MetadataProvider;
-use crate::db::{self, Db};
 use crate::metadata::{self, MetadataManager};
 use crate::MediaItemType;
 

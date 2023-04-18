@@ -1,12 +1,12 @@
 use camino::Utf8Path;
+use db::sql;
+use db::streams::{NewAudioStream, NewVideoStream};
+use db::subtitles::NewSubtitle;
+use db::video_files::UpdateVideoFile;
 use eyre::eyre;
 use sqlx::SqliteConnection;
 
-use crate::db::streams::{NewAudioStream, NewVideoStream};
-use crate::db::subtitles::NewSubtitle;
-use crate::db::video_files::UpdateVideoFile;
 use crate::video_prober::VideoInfo;
-use crate::{db, sql};
 
 use super::scanner::VideoFileType;
 use super::{LibraryEvent, MediaLibrary};

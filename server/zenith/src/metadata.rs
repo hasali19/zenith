@@ -1,3 +1,6 @@
+use db::items::MediaItem;
+use db::media::{MediaImage, MediaImageSrcType, MediaImageType, MediaItemType, MetadataProvider};
+use db::Db;
 use eyre::{eyre, Context};
 use itertools::Itertools;
 use once_cell::sync::Lazy;
@@ -10,12 +13,6 @@ use tmdb::{
     VideoType,
 };
 use tokio::sync::mpsc;
-
-use crate::db::items::MediaItem;
-use crate::db::media::{
-    MediaImage, MediaImageSrcType, MediaImageType, MediaItemType, MetadataProvider,
-};
-use crate::db::{self, Db};
 
 #[derive(Debug)]
 enum Request {

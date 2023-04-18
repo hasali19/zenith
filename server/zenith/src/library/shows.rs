@@ -1,9 +1,8 @@
 use camino::Utf8Path;
+use db::media::{MediaItemType, MetadataProvider};
+use db::sql::{self, Join};
 use eyre::Context;
 use sqlx::{Connection, SqliteConnection};
-
-use crate::db::media::{MediaItemType, MetadataProvider};
-use crate::sql::{self, Join};
 
 use super::parser::EpisodePathMeta;
 use super::{LibraryEvent, MediaLibrary};

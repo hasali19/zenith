@@ -7,6 +7,7 @@ use axum::response::IntoResponse;
 use axum::Extension;
 use axum_files::{FileRequest, FileResponse};
 use camino::{Utf8Path, Utf8PathBuf};
+use db::Db;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
 use sha2::{Digest, Sha256};
@@ -14,8 +15,6 @@ use speq::axum::get;
 use speq::Reflect;
 
 use crate::config::Config;
-use crate::db::media::MediaImageType;
-use crate::db::{self, Db};
 use crate::utils;
 
 use super::ext::OptionExt;
@@ -24,6 +23,14 @@ use super::ApiResult;
 #[derive(Deserialize, Reflect)]
 pub struct ImageQuery {
     width: Option<u32>,
+}
+
+#[derive(Deserialize, Reflect)]
+#[serde(rename_all = "snake_case")]
+pub enum MediaImageType {
+    Poster,
+    Backdrop,
+    Thumbnail,
 }
 
 #[get("/items/:id/images/:type")]

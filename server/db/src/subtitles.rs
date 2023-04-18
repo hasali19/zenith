@@ -1,6 +1,4 @@
 use camino::{Utf8Path, Utf8PathBuf};
-use serde::Serialize;
-use speq::Reflect;
 use sqlx::{FromRow, SqliteConnection};
 
 pub struct NewSubtitle<'a> {
@@ -14,7 +12,7 @@ pub struct NewSubtitle<'a> {
     pub forced: bool,
 }
 
-#[derive(Serialize, Reflect, FromRow)]
+#[derive(FromRow)]
 pub struct Subtitle {
     pub id: i64,
     pub video_id: i64,

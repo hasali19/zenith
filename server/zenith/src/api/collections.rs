@@ -1,12 +1,13 @@
 use axum::extract::Path;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
+use db::Db;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use speq::axum::{delete, get, post, put};
 use speq::Reflect;
 
-use crate::{db, utils, Db};
+use crate::utils;
 
 use super::ApiResult;
 

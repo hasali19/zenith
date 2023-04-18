@@ -2,8 +2,6 @@ use std::fmt::Write;
 
 use camino::Utf8PathBuf;
 use itertools::Itertools;
-use serde::Serialize;
-use speq::Reflect;
 use sqlx::sqlite::{SqliteArguments, SqliteRow};
 use sqlx::{Acquire, Arguments, FromRow, Row, SqliteConnection};
 
@@ -12,7 +10,6 @@ use crate::sql::{self, Join};
 use super::media::{MediaImage, MediaItemType, MetadataProvider};
 use super::streams::StreamType;
 
-#[derive(Serialize, Reflect)]
 pub struct ExternalIds {
     pub tmdb: Option<i32>,
 }

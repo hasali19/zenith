@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
 use camino::Utf8PathBuf;
+use db::video_files::VideoFile;
 use pretty_assertions::assert_eq;
 use sqlx::FromRow;
 use time::macros::datetime;
 use uuid::Uuid;
 
 use crate::config::Config;
-use crate::db::video_files::VideoFile;
 use crate::library::scanner::VideoFileType;
 use crate::library::{ChangeType, FileSystemChange, FileType, MediaLibrary};
 use crate::video_prober::{Format, MockVideoProber, VideoInfo};

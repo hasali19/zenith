@@ -12,9 +12,6 @@ pub mod util;
 pub mod utils;
 pub mod video_prober;
 
-mod db;
-mod sql;
-
 pub use db::media::MediaItemType;
 pub use db::Db;
 

@@ -1,6 +1,5 @@
 use camino::Utf8Path;
-
-use crate::{db, sql};
+use db::sql;
 
 use super::MediaLibrary;
 

@@ -1,6 +1,7 @@
 pub mod collections;
 pub mod items;
 pub mod media;
+pub mod sql;
 pub mod streams;
 pub mod subtitles;
 pub mod video_files;

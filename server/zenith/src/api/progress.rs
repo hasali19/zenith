@@ -1,15 +1,15 @@
 use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use db::items::VideoUserData;
+use db::videos::UpdateVideoUserData;
+use db::Db;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
 use speq::axum::post;
 use speq::Reflect;
 
 use crate::api::ApiResult;
-use crate::db::items::VideoUserData;
-use crate::db::videos::UpdateVideoUserData;
-use crate::db::{self, Db};
 
 use super::error::bad_request;
 use super::ext::OptionExt;

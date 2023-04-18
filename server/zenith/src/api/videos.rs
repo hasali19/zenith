@@ -2,13 +2,13 @@ use axum::extract::{Extension, Path};
 use axum::response::IntoResponse;
 use axum_files::{FileRequest, FileResponse};
 use camino::Utf8Path;
+use db::Db;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
 use speq::axum::get;
 use speq::Reflect;
 
 use crate::api::ApiResult;
-use crate::db::{self, Db};
 
 use super::ext::OptionExt;
 

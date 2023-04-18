@@ -4,6 +4,9 @@ use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::{Help, SectionExt};
+use db::subtitles::{Subtitle, UpdateSubtitle};
+use db::video_files::UpdateVideoFile;
+use db::Db;
 use eyre::{eyre, Context};
 use serde::Serialize;
 use speq::Reflect;
@@ -12,9 +15,6 @@ use tokio::process::Command;
 use tokio::sync::{broadcast, RwLock, Semaphore};
 
 use crate::config::Config;
-use crate::db::subtitles::{Subtitle, UpdateSubtitle};
-use crate::db::video_files::UpdateVideoFile;
-use crate::db::{self, Db};
 use crate::ext::CommandExt;
 use crate::library::MediaLibrary;
 use crate::video_prober::{VideoInfo, VideoProber};
