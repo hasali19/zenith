@@ -133,7 +133,7 @@ class _ContentState extends ConsumerState<Content> {
                           onEpisodePressed: onEpisodePressed,
                         ),
                       SliverToBoxAdapter(
-                        child: SizedBox(height: context.mq.padding.bottom),
+                        child: SizedBox(height: context.mq.padding.bottom + 16),
                       ),
                     ],
                   ),
