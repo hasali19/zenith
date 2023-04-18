@@ -30,7 +30,25 @@ expression: "app.get(\"/movies/1\").await"
     "format": null,
     "id": 1,
     "path": "/path/to/Test Movie 1/Test Movie 1.mp4",
-    "streams": [],
+    "streams": [
+      {
+        "codec": "h264",
+        "height": 1080,
+        "id": 1,
+        "index": 0,
+        "type": "video",
+        "width": 1920
+      },
+      {
+        "channel_layout": "stereo",
+        "channels": 2,
+        "codec": "aac",
+        "id": 2,
+        "index": 1,
+        "language": "eng",
+        "type": "audio"
+      }
+    ],
     "subtitles": []
   }
 }

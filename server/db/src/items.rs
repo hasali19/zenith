@@ -357,36 +357,13 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         .fetch_all(&mut *conn)
         .await?;
 
-    let ids = items.iter().map(|item| item.id).collect_vec();
-
-    let sql = sql::select("video_file_streams")
-        .columns(STREAM_COLUMNS)
-        .condition(&format!("video_id IN ({})", sql::Placeholders(ids.len())))
-        .to_sql();
-
-    let mut streams = sqlx::query_as_with(&sql, args.clone())
-        .fetch_all(&mut *conn)
-        .await?
-        .into_iter()
-        .into_group_map_by(|stream: &Stream| stream.video_id);
-
-    let sql = sql::select("subtitles")
-        .columns(SUBTITLE_COLUMNS)
-        .condition(&format!("video_id IN ({})", sql::Placeholders(ids.len())))
-        .to_sql();
-
-    let mut subtitles = sqlx::query_as_with(&sql, args.clone())
-        .fetch_all(&mut *conn)
-        .await?
-        .into_iter()
-        .into_group_map_by(|sub: &Subtitle| sub.video_id);
-
+    let condition = format!("mg.item_id IN ({})", sql::Placeholders(items.len()));
     let sql = sql::select("genres AS g")
         .columns(&["mg.item_id, g.name"])
         .joins(&[Join::inner(
             "media_items_genres AS mg ON mg.genre_id = g.id",
         )])
-        .condition(&format!("mg.item_id IN ({})", sql::Placeholders(ids.len())))
+        .condition(&condition)
         .to_sql();
 
     let mut genres = sqlx::query_as_with::<_, (i64, String), _>(&sql, args)
@@ -403,12 +380,47 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
             }
         });
 
+    let video_ids = items
+        .iter()
+        .filter_map(|item| item.video_file.as_ref())
+        .map(|item| item.id)
+        .collect_vec();
+
+    let mut args = SqliteArguments::default();
+    for id in &video_ids {
+        args.add(*id);
+    }
+
+    let condition = format!("video_id IN ({})", sql::Placeholders(video_ids.len()));
+
+    let sql = sql::select("video_file_streams")
+        .columns(STREAM_COLUMNS)
+        .condition(&condition)
+        .to_sql();
+
+    let mut streams = sqlx::query_as_with(&sql, args.clone())
+        .fetch_all(&mut *conn)
+        .await?
+        .into_iter()
+        .into_group_map_by(|stream: &Stream| stream.video_id);
+
+    let sql = sql::select("subtitles")
+        .columns(SUBTITLE_COLUMNS)
+        .condition(&condition)
+        .to_sql();
+
+    let mut subtitles = sqlx::query_as_with(&sql, args.clone())
+        .fetch_all(&mut *conn)
+        .await?
+        .into_iter()
+        .into_group_map_by(|sub: &Subtitle| sub.video_id);
+
     for item in &mut items {
         item.genres = genres.remove(&item.id).unwrap_or_default();
 
         if let Some(video) = &mut item.video_file {
-            video.streams = streams.remove(&video.item_id).unwrap_or_default();
-            video.subtitles = subtitles.remove(&video.item_id).unwrap_or_default();
+            video.streams = streams.remove(&video.id).unwrap_or_default();
+            video.subtitles = subtitles.remove(&video.id).unwrap_or_default();
         }
     }
 

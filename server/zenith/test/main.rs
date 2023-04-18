@@ -18,6 +18,47 @@ use tracing_subscriber::{EnvFilter, Layer};
 use uuid::Uuid;
 use zenith::{Db, MediaItemType};
 
+async fn insert_video_file(
+    conn: &mut SqliteConnection,
+    item_id: i64,
+    path: &str,
+) -> eyre::Result<()> {
+    let id = sqlx::query("INSERT INTO video_files (item_id, path, duration) VALUES (?, ?, ?)")
+        .bind(item_id)
+        .bind(path)
+        .bind(100.0)
+        .execute(&mut *conn)
+        .await?
+        .last_insert_rowid();
+
+    db::streams::insert_video_stream(
+        &mut *conn,
+        &db::streams::NewVideoStream {
+            video_id: id,
+            index: 0,
+            codec_name: "h264",
+            width: 1920,
+            height: 1080,
+        },
+    )
+    .await?;
+
+    db::streams::insert_audio_stream(
+        &mut *conn,
+        &db::streams::NewAudioStream {
+            video_id: id,
+            index: 1,
+            codec_name: "aac",
+            language: Some("eng"),
+            channels: Some(2),
+            channel_layout: Some("stereo"),
+        },
+    )
+    .await?;
+
+    Ok(())
+}
+
 async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
     // Create some movies
     for i in 1..=3 {
@@ -28,12 +69,12 @@ async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
             .execute(&mut *conn)
             .await?;
 
-        sqlx::query("INSERT INTO video_files (item_id, path, duration) VALUES (?, ?, ?)")
-            .bind(i)
-            .bind(format!("/path/to/Test Movie {i}/Test Movie {i}.mp4"))
-            .bind(100.0)
-            .execute(&mut *conn)
-            .await?;
+        insert_video_file(
+            &mut *conn,
+            i,
+            &format!("/path/to/Test Movie {i}/Test Movie {i}.mp4"),
+        )
+        .await?;
     }
 
     // Create some shows
@@ -85,12 +126,7 @@ async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
             .execute(&mut *conn)
             .await?;
 
-        sqlx::query("INSERT INTO video_files (item_id, path, duration) VALUES (?, ?, ?)")
-            .bind(id)
-            .bind(format!("/path/to/Test Episode {i}"))
-            .bind(100.0)
-            .execute(&mut *conn)
-            .await?;
+        insert_video_file(&mut *conn, id, &format!("/path/to/Test Episode {i}")).await?;
     }
 
     // Create some episodes for Season 2
@@ -112,12 +148,12 @@ async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
             .execute(&mut *conn)
             .await?;
 
-        sqlx::query("INSERT INTO video_files (item_id, path, duration) VALUES (?, ?, ?)")
-            .bind(id)
-            .bind(format!("/path/to/Test Show 1/S02E{i:02}.mp4"))
-            .bind(100.0)
-            .execute(&mut *conn)
-            .await?;
+        insert_video_file(
+            &mut *conn,
+            id,
+            &format!("/path/to/Test Show 1/S02E{i:02}.mp4"),
+        )
+        .await?;
     }
 
     for id in [1, 2, 10, 11] {

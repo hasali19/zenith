@@ -41,7 +41,25 @@ expression: "app.get(\"/shows/4/episodes\").await"
       "format": null,
       "id": 4,
       "path": "/path/to/Test Episode 1",
-      "streams": [],
+      "streams": [
+        {
+          "codec": "h264",
+          "height": 1080,
+          "id": 7,
+          "index": 0,
+          "type": "video",
+          "width": 1920
+        },
+        {
+          "channel_layout": "stereo",
+          "channels": 2,
+          "codec": "aac",
+          "id": 8,
+          "index": 1,
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
       "subtitles": []
     }
   },
@@ -83,7 +101,25 @@ expression: "app.get(\"/shows/4/episodes\").await"
       "format": null,
       "id": 5,
       "path": "/path/to/Test Episode 2",
-      "streams": [],
+      "streams": [
+        {
+          "codec": "h264",
+          "height": 1080,
+          "id": 9,
+          "index": 0,
+          "type": "video",
+          "width": 1920
+        },
+        {
+          "channel_layout": "stereo",
+          "channels": 2,
+          "codec": "aac",
+          "id": 10,
+          "index": 1,
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
       "subtitles": []
     }
   },
@@ -125,7 +161,25 @@ expression: "app.get(\"/shows/4/episodes\").await"
       "format": null,
       "id": 6,
       "path": "/path/to/Test Show 1/S02E01.mp4",
-      "streams": [],
+      "streams": [
+        {
+          "codec": "h264",
+          "height": 1080,
+          "id": 11,
+          "index": 0,
+          "type": "video",
+          "width": 1920
+        },
+        {
+          "channel_layout": "stereo",
+          "channels": 2,
+          "codec": "aac",
+          "id": 12,
+          "index": 1,
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
       "subtitles": []
     }
   },
@@ -167,7 +221,25 @@ expression: "app.get(\"/shows/4/episodes\").await"
       "format": null,
       "id": 7,
       "path": "/path/to/Test Show 1/S02E02.mp4",
-      "streams": [],
+      "streams": [
+        {
+          "codec": "h264",
+          "height": 1080,
+          "id": 13,
+          "index": 0,
+          "type": "video",
+          "width": 1920
+        },
+        {
+          "channel_layout": "stereo",
+          "channels": 2,
+          "codec": "aac",
+          "id": 14,
+          "index": 1,
+          "language": "eng",
+          "type": "audio"
+        }
+      ],
       "subtitles": []
     }
   }
