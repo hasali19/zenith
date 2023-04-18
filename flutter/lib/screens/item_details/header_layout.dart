@@ -109,8 +109,6 @@ class _RenderHeaderLayout extends RenderBox
           posterData.offset + Offset(posterWidth + separation, 0);
 
       playButton.layout(rColConstraints, parentUsesSize: true);
-      playButtonData.offset =
-          titleData.offset + Offset(0, title.size.height + 24);
 
       actions.layout(
           rColConstraints.copyWith(
@@ -118,6 +116,13 @@ class _RenderHeaderLayout extends RenderBox
           parentUsesSize: true);
       actionsData.offset = titleData.offset +
           Offset(playButton.size.width + 16, title.size.height + 24);
+
+      playButtonData.offset = titleData.offset +
+          Offset(
+              0,
+              title.size.height +
+                  24 +
+                  (actions.size.height - playButton.size.height) / 2);
 
       body.layout(rColConstraints, parentUsesSize: true);
       bodyData.offset =
