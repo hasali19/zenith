@@ -551,6 +551,7 @@ class Poster extends StatelessWidget {
           ),
         if (caption != null)
           Material(
+            color: Theme.of(context).colorScheme.surfaceVariant,
             borderRadius:
                 const BorderRadius.vertical(bottom: Radius.circular(16)),
             child: Center(
