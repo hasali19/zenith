@@ -92,9 +92,9 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
           ListTile(
             leading: const Icon(Icons.aspect_ratio),
             title: const Text("Fit"),
-            onTap: () async {
-              await _showBoxFitMenu(context);
+            onTap: () {
               Navigator.pop(context);
+              _showBoxFitMenu(context);
             },
           ),
           if (_controller.supportsAudioTrackSelection &&
@@ -102,25 +102,25 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
             ListTile(
               leading: const Icon(Icons.audiotrack),
               title: const Text("Audio"),
-              onTap: () async {
-                await _showAudioMenu(context);
+              onTap: () {
                 Navigator.pop(context);
+                _showAudioMenu(context);
               },
             ),
           ListTile(
             leading: const Icon(Icons.closed_caption),
             title: const Text("Subtitles"),
-            onTap: () async {
-              await _showSubtitlesMenu(context);
+            onTap: () {
               Navigator.pop(context);
+              _showSubtitlesMenu(context);
             },
           ),
           ListTile(
             leading: const Icon(Icons.speed),
             title: const Text("Playback speed"),
-            onTap: () async {
-              await _showPlaybackSpeedMenu(context);
+            onTap: () {
               Navigator.pop(context);
+              _showPlaybackSpeedMenu(context);
             },
           ),
         ],
@@ -194,12 +194,18 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
           ListTile(
             leading: const Icon(Icons.crop_free),
             title: const Text("Cover"),
-            onTap: () => _controller.setFit(BoxFit.cover),
+            onTap: () {
+              _controller.setFit(BoxFit.cover);
+              Navigator.pop(context);
+            },
           ),
           ListTile(
             leading: const Icon(Icons.fit_screen),
             title: const Text("Contain"),
-            onTap: () => _controller.setFit(BoxFit.contain),
+            onTap: () {
+              _controller.setFit(BoxFit.contain);
+              Navigator.pop(context);
+            },
           ),
         ],
       ),
