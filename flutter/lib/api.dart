@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart';
 import 'package:zenith/http_client/http_client.dart';
 
@@ -309,6 +310,10 @@ class FixMetadataMatch {
   });
 }
 
+const _store = FlutterSecureStorage(
+  aOptions: AndroidOptions(encryptedSharedPreferences: true),
+);
+
 class ZenithApiClient {
   final Client _client = createHttpClient();
   final String _baseUrl;
@@ -320,6 +325,9 @@ class ZenithApiClient {
 
   Future<bool> isLoggedIn() async {
     if (_isLoggedIn != null) return _isLoggedIn!;
+    if (!kIsWeb) {
+      _authToken = await _store.read(key: 'auth_token');
+    }
     try {
       final res = await _get(Uri.parse('$_baseUrl/api/users/me'));
       return _isLoggedIn = res.statusCode == 200;
@@ -340,6 +348,7 @@ class ZenithApiClient {
       final cookie = Cookie.fromSetCookieValue(setCookie);
       if (cookie.name == "auth") {
         _authToken = cookie.value;
+        await _store.write(key: 'auth_token', value: _authToken);
       }
     }
 
