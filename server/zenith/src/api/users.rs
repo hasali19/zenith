@@ -5,7 +5,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use speq::axum::{get, post};
 
-use super::ApiResult;
+use super::{auth, ApiResult};
 
 #[derive(Serialize)]
 struct User {
@@ -27,6 +27,14 @@ async fn get_all(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
         .collect_vec();
 
     Ok(Json(users))
+}
+
+#[get("/users/me")]
+async fn get_authenticated_user(user: auth::User) -> ApiResult<impl IntoResponse> {
+    Ok(Json(User {
+        id: user.id,
+        username: user.username,
+    }))
 }
 
 #[derive(Deserialize)]
