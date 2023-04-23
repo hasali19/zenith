@@ -75,6 +75,13 @@ async fn _20230414222557_audio_channels(conn: &mut SqliteConnection) -> eyre::Re
     Ok(())
 }
 
+async fn _20230417123322_users(conn: &mut SqliteConnection) -> eyre::Result<()> {
+    sqlx::query(include_str!("../migrations/20230417123322_users.sql"))
+        .execute(conn)
+        .await?;
+    Ok(())
+}
+
 pub(super) fn collect(migrator: &mut super::Migrator) {
     migrator.push_migration(
         "20220809142403_initial",
@@ -130,5 +137,10 @@ pub(super) fn collect(migrator: &mut super::Migrator) {
         "20230414222557_audio_channels",
         Box::new(|conn| Box::pin(_20230414222557_audio_channels(conn))),
         [33, 132, 11, 54, 150, 106, 92, 128, 238, 133, 104, 226, 143, 66, 15, 174, 171, 253, 34, 225, 24, 201, 214, 133, 142, 247, 231, 2, 250, 131, 127, 230],
+    );
+    migrator.push_migration(
+        "20230417123322_users",
+        Box::new(|conn| Box::pin(_20230417123322_users(conn))),
+        [69, 166, 46, 62, 52, 46, 108, 211, 253, 218, 34, 156, 21, 149, 98, 106, 119, 165, 31, 141, 220, 164, 104, 249, 153, 191, 136, 218, 56, 119, 226, 242],
     );
 }

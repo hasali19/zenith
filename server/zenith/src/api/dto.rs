@@ -222,7 +222,7 @@ impl From<db::items::VideoUserData> for UserData {
         UserData::Video {
             position: user_data.position,
             is_watched: user_data.is_watched,
-            last_watched_at: user_data.last_watched_at,
+            last_watched_at: user_data.position_updated_at,
         }
     }
 }

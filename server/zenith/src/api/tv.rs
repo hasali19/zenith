@@ -8,12 +8,13 @@ use speq::axum::get;
 use crate::api::ApiResult;
 use crate::MediaItemType;
 
+use super::auth;
 use super::dto::MediaItem;
 use super::items::{query_items, query_items_by_id};
 
 #[get("/shows")]
 #[response(model = Vec<MediaItem>)]
-pub async fn get_shows(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
+pub async fn get_shows(user: auth::User, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
     let query = db::items::Query {
@@ -22,21 +23,25 @@ pub async fn get_shows(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
         ..Default::default()
     };
 
-    Ok(Json(query_items(&mut conn, query).await?))
+    Ok(Json(query_items(&mut conn, user.id, query).await?))
 }
 
 #[get("/shows/recent")]
 #[response(model = Vec<MediaItem>)]
-pub async fn get_recent_shows(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
+pub async fn get_recent_shows(user: auth::User, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
-    let ids = db::items::get_recently_updated_shows(&mut conn).await?;
-    Ok(Json(query_items_by_id(&mut conn, &ids).await?))
+    let ids = db::items::get_recently_updated_shows(&mut conn, user.id).await?;
+    Ok(Json(query_items_by_id(&mut conn, user.id, &ids).await?))
 }
 
 #[get("/shows/:id/seasons")]
 #[path(i64)]
 #[response(model = Vec<MediaItem>)]
-pub async fn get_seasons(show_id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
+pub async fn get_seasons(
+    show_id: Path<i64>,
+    user: auth::User,
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
     let query = db::items::Query {
@@ -46,7 +51,7 @@ pub async fn get_seasons(show_id: Path<i64>, db: Extension<Db>) -> ApiResult<imp
         ..Default::default()
     };
 
-    Ok(Json(query_items(&mut conn, query).await?))
+    Ok(Json(query_items(&mut conn, user.id, query).await?))
 }
 
 #[get("/shows/:id/episodes")]
@@ -54,6 +59,7 @@ pub async fn get_seasons(show_id: Path<i64>, db: Extension<Db>) -> ApiResult<imp
 #[response(model = Vec<MediaItem>)]
 pub async fn get_show_episodes(
     show_id: Path<i64>,
+    user: auth::User,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
@@ -65,13 +71,17 @@ pub async fn get_show_episodes(
         ..Default::default()
     };
 
-    Ok(Json(query_items(&mut conn, query).await?))
+    Ok(Json(query_items(&mut conn, user.id, query).await?))
 }
 
 #[get("/seasons/:id/episodes")]
 #[path(i64)]
 #[response(model = Vec<MediaItem>)]
-pub async fn get_episodes(season_id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
+pub async fn get_episodes(
+    season_id: Path<i64>,
+    user: auth::User,
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
     let query = db::items::Query {
@@ -81,5 +91,5 @@ pub async fn get_episodes(season_id: Path<i64>, db: Extension<Db>) -> ApiResult<
         ..Default::default()
     };
 
-    Ok(Json(query_items(&mut conn, query).await?))
+    Ok(Json(query_items(&mut conn, user.id, query).await?))
 }

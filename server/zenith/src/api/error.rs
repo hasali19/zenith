@@ -50,6 +50,13 @@ pub fn not_found(msg: impl ToString) -> ApiError {
     }
 }
 
+pub fn unauthorized(msg: impl ToString) -> ApiError {
+    ApiError {
+        status: StatusCode::UNAUTHORIZED,
+        inner: eyre!(msg.to_string()),
+    }
+}
+
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let mut res = Json(json!({"message": self.inner.to_string()})).into_response();

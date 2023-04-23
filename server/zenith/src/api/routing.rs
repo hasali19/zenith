@@ -7,11 +7,13 @@ use axum::{middleware, Extension, Json};
 use serde_qs::axum::QsQueryConfig;
 use tower_http::cors::{self, CorsLayer};
 
+use crate::App;
+
 use super::error::ApiError;
 
 const DOCS_INDEX: &str = include_str!("docs.html");
 
-pub fn router() -> axum::Router {
+pub fn router() -> axum::Router<App> {
     let spec = super::openapi_spec();
 
     speq::axum_router!()

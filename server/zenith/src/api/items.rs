@@ -17,6 +17,7 @@ use sqlx::SqliteConnection;
 use crate::api::ApiResult;
 use crate::library::MediaLibrary;
 
+use super::auth;
 use super::dto::{MediaItem, MediaItemType};
 use super::error::bad_request;
 use super::ext::OptionExt;
@@ -29,7 +30,6 @@ struct ItemsQuery {
     parent_id: Option<i64>,
     grandparent_id: Option<i64>,
     collection_id: Option<i64>,
-    is_watched: Option<bool>,
     #[serde(default)]
     sort_by: Vec<ItemSortField>,
     limit: Option<u32>,
@@ -49,6 +49,7 @@ enum ItemSortField {
 #[response(model = Vec<MediaItem>)]
 async fn get_items(
     #[query] QsQuery(query): QsQuery<ItemsQuery>,
+    user: auth::User,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
@@ -79,12 +80,11 @@ async fn get_items(
                 ItemSortField::CollectionIndex => db::items::SortField::CollectionIndex,
             })
             .collect_vec(),
-        is_watched: query.is_watched,
         limit: query.limit,
         offset: query.offset,
     };
 
-    Ok(Json(query_items(&mut conn, query).await?))
+    Ok(Json(query_items(&mut conn, user.id, query).await?))
 }
 
 #[derive(Deserialize, Reflect)]
@@ -96,21 +96,26 @@ struct ContinueWatchingQuery {
 #[response(model = Vec<MediaItem>)]
 async fn get_continue_watching(
     #[query] QsQuery(query): QsQuery<ContinueWatchingQuery>,
+    user: auth::User,
     Extension(db): Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let limit = query.limit.unwrap_or(10);
-    let ids = db::items::get_continue_watching(&mut conn, Some(limit)).await?;
-    Ok(Json(query_items_by_id(&mut conn, &ids).await?))
+    let ids = db::items::get_continue_watching(&mut conn, user.id, Some(limit)).await?;
+    Ok(Json(query_items_by_id(&mut conn, user.id, &ids).await?))
 }
 
 #[get("/items/:id")]
 #[path(i64)]
 #[response(model = MediaItem)]
-pub async fn get_item(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
+pub async fn get_item(
+    id: Path<i64>,
+    user: auth::User,
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     Ok(Json(
-        query_items_by_id(&mut conn, &[*id])
+        query_items_by_id(&mut conn, user.id, &[*id])
             .await?
             .into_iter()
             .next()
@@ -120,6 +125,7 @@ pub async fn get_item(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoRe
 
 pub(super) async fn query_items_by_id(
     conn: &mut SqliteConnection,
+    user_id: i64,
     ids: &[i64],
 ) -> eyre::Result<Vec<MediaItem>> {
     let query = db::items::Query {
@@ -127,7 +133,7 @@ pub(super) async fn query_items_by_id(
         ..Default::default()
     };
 
-    let mut items = query_items(conn, query)
+    let mut items = query_items(conn, user_id, query)
         .await?
         .into_iter()
         .map(|item| (item.id, item))
@@ -138,22 +144,24 @@ pub(super) async fn query_items_by_id(
 
 pub(super) async fn query_items(
     conn: &mut SqliteConnection,
+    user_id: i64,
     query: db::items::Query<'_>,
 ) -> eyre::Result<Vec<MediaItem>> {
     let items = db::items::query(&mut *conn, query).await?;
     let ids = items.iter().map(|item| item.id).collect_vec();
 
-    let mut video_user_data = db::items::get_user_data_for_videos(&mut *conn, &ids)
+    let mut video_user_data = db::items::get_user_data_for_videos(&mut *conn, user_id, &ids)
         .await?
         .into_iter()
         .map(|user_data| (user_data.item_id, user_data))
         .collect::<HashMap<_, _>>();
 
-    let mut collection_user_data = db::items::get_user_data_for_collections(&mut *conn, &ids)
-        .await?
-        .into_iter()
-        .map(|user_data| (user_data.item_id, user_data))
-        .collect::<HashMap<_, _>>();
+    let mut collection_user_data =
+        db::items::get_user_data_for_collections(&mut *conn, user_id, &ids)
+            .await?
+            .into_iter()
+            .map(|user_data| (user_data.item_id, user_data))
+            .collect::<HashMap<_, _>>();
 
     let mut res = vec![];
     for item in items {
@@ -164,7 +172,7 @@ pub(super) async fn query_items(
                     item_id: item.id,
                     is_watched: false,
                     position: 0.0,
-                    last_watched_at: None,
+                    position_updated_at: None,
                 })
                 .into(),
             db::media::MediaItemType::Show | db::media::MediaItemType::Season => {
@@ -230,6 +238,7 @@ struct VideoUserDataPatch {
 #[response(status = 200)]
 async fn update_user_data(
     id: Path<i64>,
+    user: auth::User,
     db: Extension<Db>,
     data: Json<VideoUserDataPatch>,
 ) -> ApiResult<impl IntoResponse> {
@@ -275,10 +284,10 @@ async fn update_user_data(
         let data = UpdateVideoUserData {
             is_watched: data.is_watched,
             position: data.position,
-            set_watched_at: false,
+            set_position_updated: false,
         };
 
-        db::videos::update_user_data(&mut conn, id, data).await?;
+        db::videos::update_user_data(&mut conn, id, user.id, data).await?;
     }
 
     Ok(StatusCode::OK)

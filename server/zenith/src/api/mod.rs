@@ -1,3 +1,4 @@
+mod auth;
 mod collections;
 mod dto;
 mod error;
@@ -15,6 +16,7 @@ mod server;
 mod subtitles;
 mod transcoder;
 mod tv;
+mod users;
 mod videos;
 
 use self::error::ApiError;

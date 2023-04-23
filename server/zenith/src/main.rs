@@ -7,6 +7,7 @@ use std::time::Duration;
 use axum::extract::OriginalUri;
 use axum::http::StatusCode;
 use axum::Extension;
+use axum_extra::extract::cookie::Key;
 use axum_files::{FileRequest, FileResponse};
 use camino::Utf8Path;
 use eyre::bail;
@@ -26,7 +27,7 @@ use zenith::library::{LibraryEvent, MediaLibrary};
 use zenith::metadata::MetadataManager;
 use zenith::transcoder::{self, Transcoder};
 use zenith::video_prober::Ffprobe;
-use zenith::Db;
+use zenith::{App, Db};
 
 fn init_tracing(config: &Config) {
     let fmt_layer = tracing_subscriber::fmt::layer();
@@ -162,8 +163,14 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
 
     tracing::info!("starting server at http://{addr}");
 
-    let app = axum::Router::new()
+    // TODO: Key should be persisted
+    let app = App {
+        key: Key::generate(),
+    };
+
+    let router = axum::Router::new()
         .nest("/api", zenith::api::router())
+        .with_state(app)
         .fallback_service(axum::routing::get(spa))
         .layer(TraceLayer::new_for_http())
         .layer(Extension(config))
@@ -177,7 +184,7 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
     {
         let shutdown = Notify::new();
         let server = axum::Server::bind(&addr)
-            .serve(app.into_make_service())
+            .serve(router.into_make_service())
             .with_graceful_shutdown(shutdown.notified());
 
         let ctrl_c =
