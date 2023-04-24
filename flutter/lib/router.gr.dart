@@ -15,10 +15,13 @@ part of 'router.dart';
 class _$AppRouter extends RootStackRouter {
   _$AppRouter({
     GlobalKey<NavigatorState>? navigatorKey,
-    required this.navGuard,
+    required this.serverSetupGuard,
+    required this.authGuard,
   }) : super(navigatorKey);
 
-  final NavGuard navGuard;
+  final ServerSetupGuard serverSetupGuard;
+
+  final AuthGuard authGuard;
 
   @override
   final Map<String, PageFactory> pagesMap = {
@@ -74,12 +77,6 @@ class _$AppRouter extends RootStackRouter {
         ),
       );
     },
-    SetupScreenRoute.name: (routeData) {
-      return MaterialPageX<dynamic>(
-        routeData: routeData,
-        child: const SetupScreen(),
-      );
-    },
     SettingsScreenRoute.name: (routeData) {
       return MaterialPageX<dynamic>(
         routeData: routeData,
@@ -94,6 +91,12 @@ class _$AppRouter extends RootStackRouter {
           key: args.key,
           onLogin: args.onLogin,
         ),
+      );
+    },
+    SetupScreenRoute.name: (routeData) {
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: const SetupScreen(),
       );
     },
     HomeScreenRoute.name: (routeData) {
@@ -127,7 +130,10 @@ class _$AppRouter extends RootStackRouter {
         RouteConfig(
           MainScreenRoute.name,
           path: '/',
-          guards: [navGuard],
+          guards: [
+            serverSetupGuard,
+            authGuard,
+          ],
           children: [
             RouteConfig(
               HomeScreenRoute.name,
@@ -155,30 +161,45 @@ class _$AppRouter extends RootStackRouter {
           ItemDetailsScreenRoute.name,
           path: '/items/:id',
           usesPathAsKey: true,
+          guards: [
+            serverSetupGuard,
+            authGuard,
+          ],
         ),
         RouteConfig(
           CollectionDetailsScreenRoute.name,
           path: '/collections/:id',
           usesPathAsKey: true,
+          guards: [
+            serverSetupGuard,
+            authGuard,
+          ],
         ),
         RouteConfig(
           VideoPlayerScreenRoute.name,
           path: '/player/:id',
           usesPathAsKey: true,
-        ),
-        RouteConfig(
-          SetupScreenRoute.name,
-          path: '/setup',
-          guards: [navGuard],
+          guards: [
+            serverSetupGuard,
+            authGuard,
+          ],
         ),
         RouteConfig(
           SettingsScreenRoute.name,
           path: '/settings',
+          guards: [
+            serverSetupGuard,
+            authGuard,
+          ],
         ),
         RouteConfig(
           LoginScreenRoute.name,
           path: '/login',
-          guards: [navGuard],
+          guards: [serverSetupGuard],
+        ),
+        RouteConfig(
+          SetupScreenRoute.name,
+          path: '/setup',
         ),
       ];
 }
@@ -309,18 +330,6 @@ class VideoPlayerScreenRouteArgs {
 }
 
 /// generated route for
-/// [SetupScreen]
-class SetupScreenRoute extends PageRouteInfo<void> {
-  const SetupScreenRoute()
-      : super(
-          SetupScreenRoute.name,
-          path: '/setup',
-        );
-
-  static const String name = 'SetupScreenRoute';
-}
-
-/// generated route for
 /// [SettingsScreen]
 class SettingsScreenRoute extends PageRouteInfo<void> {
   const SettingsScreenRoute()
@@ -364,6 +373,18 @@ class LoginScreenRouteArgs {
   String toString() {
     return 'LoginScreenRouteArgs{key: $key, onLogin: $onLogin}';
   }
+}
+
+/// generated route for
+/// [SetupScreen]
+class SetupScreenRoute extends PageRouteInfo<void> {
+  const SetupScreenRoute()
+      : super(
+          SetupScreenRoute.name,
+          path: '/setup',
+        );
+
+  static const String name = 'SetupScreenRoute';
 }
 
 /// generated route for

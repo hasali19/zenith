@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/main.dart';
-import 'package:zenith/preferences.dart';
 import 'package:zenith/screens/collection_details.dart';
 import 'package:zenith/screens/collections.dart';
 import 'package:zenith/screens/home.dart';
@@ -19,68 +18,85 @@ part 'router.gr.dart';
 @MaterialAutoRouter(routes: [
   AutoRoute(
     path: '/',
+    page: MainScreen,
     initial: true,
-    guards: [NavGuard],
+    guards: [ServerSetupGuard, AuthGuard],
     children: [
-      AutoRoute(
-        path: '/',
-        page: MainScreen,
-        initial: true,
-        children: [
-          AutoRoute(page: HomeScreen, initial: true),
-          AutoRoute(path: 'library/movies', page: MoviesScreen),
-          AutoRoute(path: 'library/shows', page: ShowsScreen),
-          AutoRoute(path: 'library/collections', page: CollectionsScreen),
-        ],
-      ),
-      AutoRoute(
-        path: '/items/:id',
-        page: ItemDetailsScreen,
-        usesPathAsKey: true,
-      ),
-      AutoRoute(
-        path: '/collections/:id',
-        page: CollectionDetailsScreen,
-        usesPathAsKey: true,
-      ),
-      AutoRoute(
-        path: '/player/:id',
-        page: VideoPlayerScreen,
-        usesPathAsKey: true,
-      ),
-      AutoRoute(path: '/setup', page: SetupScreen),
-      AutoRoute(path: '/settings', page: SettingsScreen),
-      AutoRoute(path: '/login', page: LoginScreen),
+      AutoRoute(page: HomeScreen, initial: true),
+      AutoRoute(path: 'library/movies', page: MoviesScreen),
+      AutoRoute(path: 'library/shows', page: ShowsScreen),
+      AutoRoute(path: 'library/collections', page: CollectionsScreen),
     ],
   ),
+  AutoRoute(
+    path: '/items/:id',
+    page: ItemDetailsScreen,
+    usesPathAsKey: true,
+    guards: [ServerSetupGuard, AuthGuard],
+  ),
+  AutoRoute(
+    path: '/collections/:id',
+    page: CollectionDetailsScreen,
+    usesPathAsKey: true,
+    guards: [ServerSetupGuard, AuthGuard],
+  ),
+  AutoRoute(
+    path: '/player/:id',
+    page: VideoPlayerScreen,
+    usesPathAsKey: true,
+    guards: [ServerSetupGuard, AuthGuard],
+  ),
+  AutoRoute(
+    path: '/settings',
+    page: SettingsScreen,
+    guards: [ServerSetupGuard, AuthGuard],
+  ),
+  AutoRoute(
+    path: '/login',
+    page: LoginScreen,
+    guards: [ServerSetupGuard],
+  ),
+  AutoRoute(path: '/setup', page: SetupScreen),
 ])
 class AppRouter extends _$AppRouter {
-  AppRouter({required NavGuard navGuard}) : super(navGuard: navGuard);
+  AppRouter({
+    required ServerSetupGuard serverSetupGuard,
+    required AuthGuard authGuard,
+  }) : super(
+          serverSetupGuard: serverSetupGuard,
+          authGuard: authGuard,
+        );
 }
 
-class NavGuard extends AutoRouteGuard {
-  Server? Function() getServer;
-  Future<bool> Function() isLoggedIn;
+class ServerSetupGuard extends AutoRouteGuard {
+  final Future<bool> Function() isServerSet;
 
-  NavGuard({required this.getServer, required this.isLoggedIn});
+  ServerSetupGuard(this.isServerSet);
 
   @override
   void onNavigation(NavigationResolver resolver, StackRouter router) async {
-    final activeServer = getServer();
-    if (activeServer == null) {
-      if (resolver.route.path == '/setup') {
-        resolver.next(true);
-      } else {
-        router.push(const SetupScreenRoute());
-      }
-      return;
+    if (await isServerSet()) {
+      return resolver.next(true);
     }
 
-    if (resolver.route.path != '/login' && !await isLoggedIn()) {
-      router.push(LoginScreenRoute(onLogin: () => resolver.next()));
-    } else {
-      resolver.next(true);
+    router.replace(const SetupScreenRoute());
+  }
+}
+
+class AuthGuard extends AutoRouteGuard {
+  final Future<bool> Function() isLoggedIn;
+
+  AuthGuard(this.isLoggedIn);
+
+  @override
+  void onNavigation(NavigationResolver resolver, StackRouter router) async {
+    if (await isLoggedIn()) {
+      return resolver.next(true);
     }
+
+    router.replace(LoginScreenRoute(
+      onLogin: () => resolver.next(),
+    ));
   }
 }
 
