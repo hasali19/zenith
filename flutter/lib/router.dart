@@ -26,6 +26,7 @@ part 'router.gr.dart';
       AutoRoute(path: 'library/movies', page: MoviesScreen),
       AutoRoute(path: 'library/shows', page: ShowsScreen),
       AutoRoute(path: 'library/collections', page: CollectionsScreen),
+      AutoRoute(path: 'settings', page: SettingsScreen),
     ],
   ),
   AutoRoute(
@@ -44,7 +45,6 @@ part 'router.gr.dart';
     usesPathAsKey: true,
   ),
   AutoRoute(path: '/setup', page: SetupScreen, guards: [SetupGuard]),
-  AutoRoute(path: '/settings', page: SettingsScreen),
 ])
 class AppRouter extends _$AppRouter {
   AppRouter({required SetupGuard setupGuard}) : super(setupGuard: setupGuard);

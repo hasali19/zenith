@@ -80,12 +80,6 @@ class _$AppRouter extends RootStackRouter {
         child: const SetupScreen(),
       );
     },
-    SettingsScreenRoute.name: (routeData) {
-      return MaterialPageX<dynamic>(
-        routeData: routeData,
-        child: const SettingsScreen(),
-      );
-    },
     HomeScreenRoute.name: (routeData) {
       return MaterialPageX<dynamic>(
         routeData: routeData,
@@ -108,6 +102,12 @@ class _$AppRouter extends RootStackRouter {
       return MaterialPageX<dynamic>(
         routeData: routeData,
         child: const CollectionsScreen(),
+      );
+    },
+    SettingsScreenRoute.name: (routeData) {
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: const SettingsScreen(),
       );
     },
   };
@@ -139,6 +139,11 @@ class _$AppRouter extends RootStackRouter {
               path: 'library/collections',
               parent: MainScreenRoute.name,
             ),
+            RouteConfig(
+              SettingsScreenRoute.name,
+              path: 'settings',
+              parent: MainScreenRoute.name,
+            ),
           ],
         ),
         RouteConfig(
@@ -160,10 +165,6 @@ class _$AppRouter extends RootStackRouter {
           SetupScreenRoute.name,
           path: '/setup',
           guards: [setupGuard],
-        ),
-        RouteConfig(
-          SettingsScreenRoute.name,
-          path: '/settings',
         ),
       ];
 }
@@ -306,18 +307,6 @@ class SetupScreenRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [SettingsScreen]
-class SettingsScreenRoute extends PageRouteInfo<void> {
-  const SettingsScreenRoute()
-      : super(
-          SettingsScreenRoute.name,
-          path: '/settings',
-        );
-
-  static const String name = 'SettingsScreenRoute';
-}
-
-/// generated route for
 /// [HomeScreen]
 class HomeScreenRoute extends PageRouteInfo<void> {
   const HomeScreenRoute()
@@ -363,4 +352,16 @@ class CollectionsScreenRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'CollectionsScreenRoute';
+}
+
+/// generated route for
+/// [SettingsScreen]
+class SettingsScreenRoute extends PageRouteInfo<void> {
+  const SettingsScreenRoute()
+      : super(
+          SettingsScreenRoute.name,
+          path: 'settings',
+        );
+
+  static const String name = 'SettingsScreenRoute';
 }

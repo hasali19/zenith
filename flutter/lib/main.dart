@@ -124,8 +124,8 @@ enum Screen {
   home,
   movies,
   shows,
+  // collections,
   settings,
-  collections,
 }
 
 class _MainScreenState extends State<MainScreen> {
@@ -158,7 +158,8 @@ class _MainScreenState extends State<MainScreen> {
         HomeScreenRoute(),
         MoviesScreenRoute(),
         ShowsScreenRoute(),
-        CollectionsScreenRoute(),
+        // CollectionsScreenRoute(),
+        SettingsScreenRoute(),
       ],
       builder: (context, child, animation) {
         final screen = _activeScreen(context.tabsRouter.activeIndex);
@@ -192,8 +193,20 @@ class _MainScreenState extends State<MainScreen> {
             appBar: AppBar(
               title: Text(_title(screen)),
             ),
-            drawer: desktop ? null : drawer,
             body: child,
+            bottomNavigationBar: NavigationBar(
+              destinations: const [
+                NavigationDestination(icon: Icon(Icons.home), label: "Home"),
+                NavigationDestination(icon: Icon(Icons.movie), label: "Movies"),
+                NavigationDestination(icon: Icon(Icons.tv), label: "Shows"),
+                NavigationDestination(
+                    icon: Icon(Icons.settings), label: "Settings"),
+              ],
+              selectedIndex: context.tabsRouter.activeIndex,
+              onDestinationSelected: (value) {
+                _navigateTo(context, _activeScreen(value));
+              },
+            ),
           );
         }
       },
@@ -211,8 +224,8 @@ class _MainScreenState extends State<MainScreen> {
       case Screen.shows:
         return "Shows";
 
-      case Screen.collections:
-        return "Collections";
+      // case Screen.collections:
+      //   return "Collections";
 
       case Screen.settings:
         return "Settings";
@@ -227,8 +240,10 @@ class _MainScreenState extends State<MainScreen> {
         return Screen.movies;
       case 2:
         return Screen.shows;
+      // case 3:
+      //   return Screen.collections;
       case 3:
-        return Screen.collections;
+        return Screen.settings;
       default:
         throw Exception("invalid tab index: $index");
     }
@@ -245,11 +260,11 @@ class _MainScreenState extends State<MainScreen> {
       case Screen.shows:
         context.tabsRouter.setActiveIndex(2);
         break;
-      case Screen.collections:
-        context.tabsRouter.setActiveIndex(3);
-        break;
+      // case Screen.collections:
+      //   context.tabsRouter.setActiveIndex(3);
+      //   break;
       case Screen.settings:
-        context.router.push(SettingsScreenRoute());
+        context.tabsRouter.setActiveIndex(3);
         break;
     }
   }
