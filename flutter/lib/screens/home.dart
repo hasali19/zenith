@@ -111,7 +111,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
-            child: Text("${snapshot.error}"),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("${snapshot.error}"),
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: OutlinedButton(
+                    onPressed: _refresh,
+                    child: const Text("Retry"),
+                  ),
+                ),
+              ],
+            ),
           );
         }
 

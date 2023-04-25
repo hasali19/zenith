@@ -26,6 +26,7 @@ part 'router.gr.dart';
       AutoRoute(path: 'library/movies', page: MoviesScreen),
       AutoRoute(path: 'library/shows', page: ShowsScreen),
       AutoRoute(path: 'library/collections', page: CollectionsScreen),
+      AutoRoute(path: 'settings', page: SettingsScreen),
     ],
   ),
   AutoRoute(
@@ -44,11 +45,6 @@ part 'router.gr.dart';
     path: '/player/:id',
     page: VideoPlayerScreen,
     usesPathAsKey: true,
-    guards: [ServerSetupGuard, AuthGuard],
-  ),
-  AutoRoute(
-    path: '/settings',
-    page: SettingsScreen,
     guards: [ServerSetupGuard, AuthGuard],
   ),
   AutoRoute(

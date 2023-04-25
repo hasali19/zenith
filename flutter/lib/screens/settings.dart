@@ -49,28 +49,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Settings")),
-      body: ListView(children: [
-        ListTile(
-          title: const Text("Version"),
-          subtitle: Text(_packageInfo?.version ?? ""),
-        ),
-        ListTile(
-          title: const Text("Build number"),
-          subtitle: Text(_packageInfo?.buildNumber ?? ""),
-        ),
-        ListTile(
-          title: const Text("Commit"),
-          subtitle: Text(Updater.revision ?? "Unknown"),
-        ),
-        ListTile(
-          title: const Text("Check for updates"),
-          onTap: () {
-            _checkForUpdates(context);
-          },
-        ),
-      ]),
-    );
+    return ListView(children: [
+      ListTile(
+        title: const Text("Version"),
+        subtitle: Text(_packageInfo?.version ?? ""),
+      ),
+      ListTile(
+        title: const Text("Build number"),
+        subtitle: Text(_packageInfo?.buildNumber ?? ""),
+      ),
+      ListTile(
+        title: const Text("Commit"),
+        subtitle: Text(Updater.revision ?? "Unknown"),
+      ),
+      ListTile(
+        title: const Text("Check for updates"),
+        onTap: () {
+          _checkForUpdates(context);
+        },
+      ),
+    ]);
   }
 }
