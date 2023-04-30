@@ -88,7 +88,7 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
         brightness: brightness,
         useMaterial3: true,
         colorSchemeSeed: Colors.deepOrange,
-        fontFamily: "Exo2",
+        fontFamily: 'Exo2',
       );
 
   ThemeData _buildThemeOverrides(BuildContext context) {
@@ -198,11 +198,11 @@ class _MainScreenState extends State<MainScreen> {
             body: child,
             bottomNavigationBar: NavigationBar(
               destinations: const [
-                NavigationDestination(icon: Icon(Icons.home), label: "Home"),
-                NavigationDestination(icon: Icon(Icons.movie), label: "Movies"),
-                NavigationDestination(icon: Icon(Icons.tv), label: "Shows"),
+                NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+                NavigationDestination(icon: Icon(Icons.movie), label: 'Movies'),
+                NavigationDestination(icon: Icon(Icons.tv), label: 'Shows'),
                 NavigationDestination(
-                    icon: Icon(Icons.settings), label: "Settings"),
+                    icon: Icon(Icons.settings), label: 'Settings'),
               ],
               selectedIndex: context.tabsRouter.activeIndex,
               onDestinationSelected: (value) {
@@ -218,19 +218,19 @@ class _MainScreenState extends State<MainScreen> {
   String _title(Screen screen) {
     switch (screen) {
       case Screen.home:
-        return "Zenith";
+        return 'Zenith';
 
       case Screen.movies:
-        return "Movies";
+        return 'Movies';
 
       case Screen.shows:
-        return "Shows";
+        return 'Shows';
 
       // case Screen.collections:
       //   return "Collections";
 
       case Screen.settings:
-        return "Settings";
+        return 'Settings';
     }
   }
 
@@ -247,7 +247,7 @@ class _MainScreenState extends State<MainScreen> {
       case 3:
         return Screen.settings;
       default:
-        throw Exception("invalid tab index: $index");
+        throw Exception('invalid tab index: $index');
     }
   }
 

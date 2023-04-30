@@ -26,7 +26,7 @@ final preferencesProvider = Provider<SharedPreferences>((ref) {
 
 final serversPrefProvider = createMapPrefProvider<List<Server>>(
   prefs: (ref) => ref.watch(preferencesProvider),
-  prefKey: "servers",
+  prefKey: 'servers',
   mapFrom: (value) {
     if (value == null) {
       return [];
@@ -39,16 +39,16 @@ final serversPrefProvider = createMapPrefProvider<List<Server>>(
 
 final serverPrefProvider = createPrefProvider<String?>(
   prefs: (ref) => ref.watch(preferencesProvider),
-  prefKey: "server",
+  prefKey: 'server',
   defaultValue: null,
 );
 
 final activeServerProvider = Provider((ref) {
-  if (kIsWeb && const bool.hasEnvironment("DEFAULT_SERVER")) {
+  if (kIsWeb && const bool.hasEnvironment('DEFAULT_SERVER')) {
     return const Server(
-      id: "default",
-      name: "web",
-      url: String.fromEnvironment("DEFAULT_SERVER"),
+      id: 'default',
+      name: 'web',
+      url: String.fromEnvironment('DEFAULT_SERVER'),
     );
   }
 

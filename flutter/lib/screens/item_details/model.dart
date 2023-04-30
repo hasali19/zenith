@@ -33,7 +33,7 @@ class ItemDetailsModel {
   }
 
   String? get playableCaption {
-    String caption = "";
+    String caption = '';
 
     if (item.type == MediaType.show) {
       final seasonEpisode = playable?.getSeasonEpisode();
@@ -44,9 +44,9 @@ class ItemDetailsModel {
 
     if (playableProgress > 0) {
       if (caption.isNotEmpty) {
-        caption += " - ";
+        caption += ' - ';
       }
-      caption += "${_formatDuration(_playableRemaining)} left";
+      caption += '${_formatDuration(_playableRemaining)} left';
     }
 
     if (caption.isNotEmpty) {
@@ -102,11 +102,11 @@ class ItemDetailsModel {
 
   String _formatDuration(double duration) {
     if (duration <= 90 * 60) {
-      return "${duration ~/ 60}m";
+      return '${duration ~/ 60}m';
     } else {
       final hours = duration ~/ 3600;
       final minutes = (duration % 3600) ~/ 60;
-      return "${hours}h ${minutes}m";
+      return '${hours}h ${minutes}m';
     }
   }
 }

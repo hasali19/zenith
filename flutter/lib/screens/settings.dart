@@ -36,9 +36,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text("No updates available"),
+        content: const Text('No updates available'),
         action: SnackBarAction(
-          label: "OK",
+          label: 'OK',
           onPressed: () {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
           },
@@ -51,19 +51,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return ListView(children: [
       ListTile(
-        title: const Text("Version"),
-        subtitle: Text(_packageInfo?.version ?? ""),
+        title: const Text('Version'),
+        subtitle: Text(_packageInfo?.version ?? ''),
       ),
       ListTile(
-        title: const Text("Build number"),
-        subtitle: Text(_packageInfo?.buildNumber ?? ""),
+        title: const Text('Build number'),
+        subtitle: Text(_packageInfo?.buildNumber ?? ''),
       ),
       ListTile(
-        title: const Text("Commit"),
-        subtitle: Text(Updater.revision ?? "Unknown"),
+        title: const Text('Commit'),
+        subtitle: Text(Updater.revision ?? 'Unknown'),
       ),
       ListTile(
-        title: const Text("Check for updates"),
+        title: const Text('Check for updates'),
         onTap: () {
           _checkForUpdates(context);
         },

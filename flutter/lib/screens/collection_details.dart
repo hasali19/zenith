@@ -50,7 +50,7 @@ class _CollectionDetailsScreenState
             builder: (context) => SafeArea(
               child: Wrap(children: [
                 ListTile(
-                  title: const Text("Remove from collection"),
+                  title: const Text('Remove from collection'),
                   onTap: () async {
                     final items = await ref
                         .read(apiProvider)

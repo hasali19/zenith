@@ -31,10 +31,39 @@ class GitReferenceObject {
       _$GitReferenceObjectFromJson(json);
 }
 
+@JsonSerializable(fieldRename: FieldRename.snake)
+class Release {
+  final List<ReleaseAsset> assets;
+
+  Release({required this.assets});
+
+  factory Release.fromJson(Map<String, dynamic> json) =>
+      _$ReleaseFromJson(json);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class ReleaseAsset {
+  final String name;
+  final String browserDownloadUrl;
+
+  ReleaseAsset({
+    required this.name,
+    required this.browserDownloadUrl,
+  });
+
+  factory ReleaseAsset.fromJson(Map<String, dynamic> json) =>
+      _$ReleaseAssetFromJson(json);
+}
+
 class GitHub {
   Future<GitReference> getGitRef(String ref) async {
     return GitReference.fromJson(await _get(Uri.parse(
         'https://api.github.com/repos/hasali19/zenith/git/ref/$ref')));
+  }
+
+  Future<Release> getRelease(String tag) async {
+    return Release.fromJson(await _get(Uri.parse(
+        'https://api.github.com/repos/hasali19/zenith/releases/tags/$tag')));
   }
 
   Future<dynamic> _get(Uri uri) async {

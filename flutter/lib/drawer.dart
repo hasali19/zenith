@@ -39,35 +39,35 @@ class AppDrawer extends ConsumerWidget {
                 onChanged: (value) {},
               ),
             ),
-          const DrawerSectionTitle(text: "General"),
+          const DrawerSectionTitle(text: 'General'),
           NavigationDrawerItem(
-            title: "Home",
+            title: 'Home',
             icon: Icons.home,
             selected: current == Screen.home,
             onTap: () => onTap(Screen.home),
           ),
-          const DrawerSectionTitle(text: "Libraries"),
+          const DrawerSectionTitle(text: 'Libraries'),
           NavigationDrawerItem(
-            title: "Movies",
+            title: 'Movies',
             icon: Icons.movie,
             selected: current == Screen.movies,
             onTap: () => onTap(Screen.movies),
           ),
           NavigationDrawerItem(
-            title: "Shows",
+            title: 'Shows',
             icon: Icons.tv,
             selected: current == Screen.shows,
             onTap: () => onTap(Screen.shows),
           ),
           const NavigationDrawerItem(
-            title: "Collections",
+            title: 'Collections',
             icon: Icons.video_collection,
             // selected: current == Screen.collections,
             // onTap: () => onTap(Screen.collections),
           ),
-          const DrawerSectionTitle(text: "System"),
+          const DrawerSectionTitle(text: 'System'),
           NavigationDrawerItem(
-            title: "Settings",
+            title: 'Settings',
             icon: Icons.settings,
             selected: current == Screen.settings,
             onTap: () => onTap(Screen.settings),
@@ -89,8 +89,8 @@ class DrawerSectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textStyle = theme.textTheme.bodyText2!;
-    final color = theme.textTheme.caption!.color;
+    final textStyle = theme.textTheme.bodyMedium!;
+    final color = theme.textTheme.bodySmall!.color;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
       child: Text(

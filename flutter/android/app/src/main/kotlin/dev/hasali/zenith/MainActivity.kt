@@ -74,6 +74,9 @@ class MainActivity : FlutterActivity() {
 
     private fun handlePlatformMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
+            "getSupportedAbis" -> {
+                result.success(Build.SUPPORTED_ABIS.toList())
+            }
             "setPipEnabled" -> {
                 val isPipModeEnabled = call.arguments as Boolean
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

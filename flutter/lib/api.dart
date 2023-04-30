@@ -89,9 +89,9 @@ class MediaItem {
       final parent = this.parent!.index.toString().padLeft(2, '0');
       if (grandparent != null) {
         final grandparent = this.grandparent!.index.toString().padLeft(2, '0');
-        seasonEpisode = "S${grandparent}E$parent";
+        seasonEpisode = 'S${grandparent}E$parent';
       } else {
-        seasonEpisode = "S$parent";
+        seasonEpisode = 'S$parent';
       }
     }
     return seasonEpisode;
@@ -152,9 +152,9 @@ abstract class StreamInfo {
 
   factory StreamInfo.fromJson(Map<String, dynamic> json) {
     switch (json['type']) {
-      case "audio":
+      case 'audio':
         return AudioStreamInfo.fromJson(json);
-      case "video":
+      case 'video':
         return VideoStreamInfo.fromJson(json);
       default:
         throw Exception("Invalid stream type: ${json['type']}");
@@ -429,7 +429,7 @@ class ZenithApiClient {
   }
 
   Future<void> deleteMediaItem(int id) async {
-    await _delete(Uri.parse("$_baseUrl/api/items/$id"));
+    await _delete(Uri.parse('$_baseUrl/api/items/$id'));
   }
 
   Future<List<MediaItem>> fetchContinueWatching() async {
@@ -437,12 +437,12 @@ class ZenithApiClient {
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((json) {
-        if (json["type"] == "movie") {
+        if (json['type'] == 'movie') {
           return MediaItem.fromJson(MediaType.movie, json);
-        } else if (json['type'] == "episode") {
+        } else if (json['type'] == 'episode') {
           return MediaItem.fromJson(MediaType.episode, json);
         } else {
-          throw Exception("Unsupported media item type");
+          throw Exception('Unsupported media item type');
         }
       }).toList();
     } else {
@@ -471,7 +471,7 @@ class ZenithApiClient {
 
   Future<Collection> createCollection(String name) async {
     final res = await _post(
-      Uri.parse("$_baseUrl/api/collections"),
+      Uri.parse('$_baseUrl/api/collections'),
       {'name': name},
     );
     if (res.statusCode == 200) {
@@ -505,41 +505,41 @@ class ZenithApiClient {
 
   Future<void> updateCollection(int id, List<int> itemIds) async {
     await _put(
-      Uri.parse("$_baseUrl/api/collections/$id"),
+      Uri.parse('$_baseUrl/api/collections/$id'),
       {'items': itemIds},
     );
   }
 
   Future<void> deleteCollection(int id) async {
-    await _delete(Uri.parse("$_baseUrl/api/collections/$id"));
+    await _delete(Uri.parse('$_baseUrl/api/collections/$id'));
   }
 
   String getVideoUrl(int id, {bool attachment = false}) {
-    var url = "$_baseUrl/api/videos/$id";
+    var url = '$_baseUrl/api/videos/$id';
     if (attachment) {
-      url += "?attachment=true";
+      url += '?attachment=true';
     }
     return url;
   }
 
   String getSubtitleUrl(int id) {
-    return "$_baseUrl/api/subtitles/$id";
+    return '$_baseUrl/api/subtitles/$id';
   }
 
   String getMediaImageUrl(int id, ImageType type, {int? width}) {
     return Uri.parse(_baseUrl).replace(
-      path: "api/items/$id/images/${type.name}",
+      path: 'api/items/$id/images/${type.name}',
       queryParameters: {if (width != null) 'width': width.toString()},
     ).toString();
   }
 
   Future updateProgress(int id, int position) async {
-    await _post(Uri.parse("$_baseUrl/api/progress/$id?position=$position"));
+    await _post(Uri.parse('$_baseUrl/api/progress/$id?position=$position'));
   }
 
   Future updateUserData(int id, VideoUserDataPatch data) async {
     await _patch(
-      Uri.parse("$_baseUrl/api/items/$id/user_data"),
+      Uri.parse('$_baseUrl/api/items/$id/user_data'),
       {
         'is_watched': data.isWatched,
         'position': data.position,
@@ -548,23 +548,23 @@ class ZenithApiClient {
   }
 
   Future<Response> _get(Uri uri) {
-    return _send(uri, "GET", null);
+    return _send(uri, 'GET', null);
   }
 
   Future<Response> _post(Uri uri, [Object? body]) {
-    return _send(uri, "POST", body);
+    return _send(uri, 'POST', body);
   }
 
   Future<Response> _put(Uri uri, [Object? body]) {
-    return _send(uri, "PUT", body);
+    return _send(uri, 'PUT', body);
   }
 
   Future<Response> _patch(Uri uri, [Object? body]) {
-    return _send(uri, "PATCH", body);
+    return _send(uri, 'PATCH', body);
   }
 
   Future<Response> _delete(Uri uri) {
-    return _send(uri, "DELETE", null);
+    return _send(uri, 'DELETE', null);
   }
 
   Future<Response> _send(Uri uri, String method, Object? body) async {

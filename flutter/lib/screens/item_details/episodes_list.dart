@@ -95,7 +95,7 @@ class _EpisodesListInnerState extends State<_EpisodesListInner> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 32),
-                Text(season.name, style: theme.textTheme.headline4),
+                Text(season.name, style: theme.textTheme.headlineMedium),
                 const SizedBox(height: 16),
               ],
             ),
@@ -168,12 +168,12 @@ class EpisodeListItem extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         TextOneLine(
-                            "${episode.parent!.index} - ${episode.name}",
+                            '${episode.parent!.index} - ${episode.name}',
                             style: context.zenithTheme.titleMedium),
                         const SizedBox(height: 8),
                         Flexible(
                           child: Text(
-                            episode.overview ?? "",
+                            episode.overview ?? '',
                             style: context.zenithTheme.bodySmall,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,

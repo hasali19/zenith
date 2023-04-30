@@ -27,3 +27,24 @@ Map<String, dynamic> _$GitReferenceObjectToJson(GitReferenceObject instance) =>
       'sha': instance.sha,
       'type': instance.type,
     };
+
+Release _$ReleaseFromJson(Map<String, dynamic> json) => Release(
+      assets: (json['assets'] as List<dynamic>)
+          .map((e) => ReleaseAsset.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+
+Map<String, dynamic> _$ReleaseToJson(Release instance) => <String, dynamic>{
+      'assets': instance.assets,
+    };
+
+ReleaseAsset _$ReleaseAssetFromJson(Map<String, dynamic> json) => ReleaseAsset(
+      name: json['name'] as String,
+      browserDownloadUrl: json['browser_download_url'] as String,
+    );
+
+Map<String, dynamic> _$ReleaseAssetToJson(ReleaseAsset instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'browser_download_url': instance.browserDownloadUrl,
+    };
