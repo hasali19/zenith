@@ -39,5 +39,6 @@ Future<void> setSystemBarsVisible(bool visible) async {
 }
 
 Future<List<String>> getSupportedAbis() async {
-  return await _channel.invokeMethod("getSupportedAbis");
+  final List<Object?> res = await _channel.invokeMethod("getSupportedAbis");
+  return res.where((v) => v != null).map((v) => v!.toString()).toList();
 }
