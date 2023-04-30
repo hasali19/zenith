@@ -54,7 +54,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     super.initState();
     _subtitles = [...widget.subtitles];
     _subtitles.sort((a, b) =>
-        (a.displayLanguage ?? "").compareTo((b.displayLanguage ?? "")));
+        (a.displayLanguage ?? '').compareTo((b.displayLanguage ?? '')));
 
     _audioTracks = [...widget.audioTracks];
     _audioTracks.sort((a, b) => a.language.compareTo(b.language));
@@ -91,7 +91,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         children: [
           ListTile(
             leading: const Icon(Icons.aspect_ratio),
-            title: const Text("Fit"),
+            title: const Text('Fit'),
             onTap: () {
               Navigator.pop(context);
               _showBoxFitMenu(context);
@@ -101,7 +101,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
               _audioTracks.length > 1)
             ListTile(
               leading: const Icon(Icons.audiotrack),
-              title: const Text("Audio"),
+              title: const Text('Audio'),
               onTap: () {
                 Navigator.pop(context);
                 _showAudioMenu(context);
@@ -109,7 +109,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
             ),
           ListTile(
             leading: const Icon(Icons.closed_caption),
-            title: const Text("Subtitles"),
+            title: const Text('Subtitles'),
             onTap: () {
               Navigator.pop(context);
               _showSubtitlesMenu(context);
@@ -117,7 +117,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
           ),
           ListTile(
             leading: const Icon(Icons.speed),
-            title: const Text("Playback speed"),
+            title: const Text('Playback speed'),
             onTap: () {
               Navigator.pop(context);
               _showPlaybackSpeedMenu(context);
@@ -165,7 +165,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
   List<Widget> _buildSubtitlesMenuItems(BuildContext context) {
     final items = [
       ListTile(
-        title: const Text("None"),
+        title: const Text('None'),
         onTap: () {
           _controller.setTextTrack(null);
           Navigator.pop(context);
@@ -175,7 +175,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
 
     for (final track in _subtitles) {
       items.add(ListTile(
-        title: Text(track.displayLanguage ?? "Unknown"),
+        title: Text(track.displayLanguage ?? 'Unknown'),
         subtitle: track.title != null ? Text(track.title!) : null,
         onTap: () {
           _controller.setTextTrack(track);
@@ -193,7 +193,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         children: [
           ListTile(
             leading: const Icon(Icons.crop_free),
-            title: const Text("Cover"),
+            title: const Text('Cover'),
             onTap: () {
               _controller.setFit(BoxFit.cover);
               Navigator.pop(context);
@@ -201,7 +201,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
           ),
           ListTile(
             leading: const Icon(Icons.fit_screen),
-            title: const Text("Contain"),
+            title: const Text('Contain'),
             onTap: () {
               _controller.setFit(BoxFit.contain);
               Navigator.pop(context);
@@ -218,7 +218,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
       (context) => Wrap(
         children: speeds
             .map((speed) => ListTile(
-                  title: Text("${speed}x"),
+                  title: Text('${speed}x'),
                   onTap: () {
                     _controller.setPlaybackSpeed(speed);
                     Navigator.pop(context);

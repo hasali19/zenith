@@ -66,7 +66,7 @@ class MediaLibraryScreen extends ConsumerWidget {
         onItemTap: onItemTap,
         onItemLongPress: onItemLongPress,
       ),
-      error: (error, stackTrace) => Center(child: Text("$error")),
+      error: (error, stackTrace) => Center(child: Text('$error')),
       loading: () => const Center(child: CircularProgressIndicator()),
     );
   }

@@ -27,8 +27,8 @@ class _UpdateDialogState extends State<UpdateDialog> {
         children: [
           Row(
             children: [
-              const Expanded(child: Text("Downloading...")),
-              Text("${_progress.toStringAsFixed(2)}M"),
+              const Expanded(child: Text('Downloading...')),
+              Text('${_progress.toStringAsFixed(2)}M'),
             ],
           ),
           const SizedBox(height: 16),
@@ -36,19 +36,19 @@ class _UpdateDialogState extends State<UpdateDialog> {
         ],
       );
     } else {
-      content = const Text("An update is available");
+      content = const Text('An update is available');
     }
 
     return AlertDialog(
-      title: const Text("Update"),
+      title: const Text('Update'),
       content: content,
       actions: [
         TextButton(
-          child: const Text("Cancel"),
+          child: const Text('Cancel'),
           onPressed: !_isUpdating ? () => Navigator.pop(context) : null,
         ),
         TextButton(
-          child: const Text("Install"),
+          child: const Text('Install'),
           onPressed: !_isUpdating ? _onApplyUpdate : null,
         ),
       ],

@@ -77,7 +77,7 @@ class HeaderContent extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
                   child: Text(
-                    model.item.genres.join(", "),
+                    model.item.genres.join(', '),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
@@ -105,7 +105,7 @@ class HeaderContent extends ConsumerWidget {
 
     final items = [
       if (seasonEpisode != null) TextSpan(text: seasonEpisode),
-      if (date != null) TextSpan(text: "${date.year}"),
+      if (date != null) TextSpan(text: '${date.year}'),
       if (duration != null) TextSpan(text: duration),
       if (ageRating != null) TextSpan(text: ageRating),
     ];
@@ -115,7 +115,7 @@ class HeaderContent extends ConsumerWidget {
       if (i > 0) {
         separated.add(const TextSpan(children: [
           WidgetSpan(child: SizedBox(width: 8)),
-          TextSpan(text: "•"),
+          TextSpan(text: '•'),
           WidgetSpan(child: SizedBox(width: 8)),
         ]));
       }
@@ -151,7 +151,7 @@ class HeaderContent extends ConsumerWidget {
                     child: Column(
                       children: const [
                         Icon(Icons.play_circle_outline),
-                        Text("Trailer"),
+                        Text('Trailer'),
                       ],
                     ),
                   ),
@@ -174,7 +174,7 @@ class HeaderContent extends ConsumerWidget {
     final playable = model.playable;
     return ElevatedButton.icon(
       icon: const Icon(Icons.play_arrow),
-      label: Text(playable?.shouldResume == true ? "Resume" : "Play"),
+      label: Text(playable?.shouldResume == true ? 'Resume' : 'Play'),
       onPressed: () {
         if (playable != null) {
           onPlayPressed(playable);
@@ -232,7 +232,7 @@ class HeaderContent extends ConsumerWidget {
             if (model.item.type == MediaType.episode) ...[
               ListTile(
                 leading: const Icon(Icons.tv),
-                title: const Text("Go to show"),
+                title: const Text('Go to show'),
                 onTap: () {
                   Navigator.pop(context);
                   onViewItemDetails(model.item.grandparent!.id);
@@ -241,7 +241,7 @@ class HeaderContent extends ConsumerWidget {
             ],
             ListTile(
               leading: const Icon(Icons.add),
-              title: const Text("Add to collection"),
+              title: const Text('Add to collection'),
               onTap: () {
                 Navigator.pop(context);
                 showDialog(
@@ -253,7 +253,7 @@ class HeaderContent extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.search),
-              title: const Text("Find match"),
+              title: const Text('Find match'),
               onTap: () async {
                 Navigator.pop(context);
                 await api.findMetadataMatch(model.item.id);
@@ -263,7 +263,7 @@ class HeaderContent extends ConsumerWidget {
             if (model.item.type == MediaType.episode)
               ListTile(
                 leading: const Icon(Icons.edit),
-                title: const Text("Fix match"),
+                title: const Text('Fix match'),
                 onTap: () async {
                   Navigator.pop(context);
                   await showDialog(
@@ -276,7 +276,7 @@ class HeaderContent extends ConsumerWidget {
               ),
             ListTile(
               leading: const Icon(Icons.refresh),
-              title: const Text("Refresh metadata"),
+              title: const Text('Refresh metadata'),
               onTap: () async {
                 Navigator.pop(context);
                 await api.refreshMetadata(model.item.id);
@@ -287,7 +287,7 @@ class HeaderContent extends ConsumerWidget {
               iconColor: Colors.red,
               textColor: Colors.red,
               leading: const Icon(Icons.delete),
-              title: const Text("Delete"),
+              title: const Text('Delete'),
               onTap: () async {
                 Navigator.pop(context);
                 showDialog(
@@ -328,7 +328,7 @@ class HeaderContent extends ConsumerWidget {
           children: [
             TableRow(
               children: [
-                Text("Video", style: bodyLarge),
+                Text('Video', style: bodyLarge),
                 const SizedBox(width: 16),
                 StreamDropdownButton<VideoStreamInfo>(
                   items:
@@ -339,7 +339,7 @@ class HeaderContent extends ConsumerWidget {
             ),
             TableRow(
               children: [
-                Text("Audio", style: bodyLarge),
+                Text('Audio', style: bodyLarge),
                 const SizedBox(width: 16),
                 StreamDropdownButton<AudioStreamInfo>(
                   items:
@@ -352,7 +352,7 @@ class HeaderContent extends ConsumerWidget {
             if (videoInfo.subtitles.isNotEmpty)
               TableRow(
                 children: [
-                  Text("Subtitles", style: bodyLarge),
+                  Text('Subtitles', style: bodyLarge),
                   const SizedBox(width: 16),
                   StreamDropdownButton<SubtitleTrack>(
                     items: videoInfo.subtitles,
@@ -361,7 +361,7 @@ class HeaderContent extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         TextOneLine(
-                            tryResolveLanguageCode(item.language ?? "Unknown")),
+                            tryResolveLanguageCode(item.language ?? 'Unknown')),
                         if (item.title != null)
                           TextOneLine(
                             item.title!,
@@ -370,7 +370,7 @@ class HeaderContent extends ConsumerWidget {
                       ],
                     ),
                     selectedItemBuilder: (context, item) => Text(
-                      tryResolveLanguageCode(item.language ?? "Unknown"),
+                      tryResolveLanguageCode(item.language ?? 'Unknown'),
                       style: bodyLarge,
                     ),
                   ),
@@ -378,14 +378,14 @@ class HeaderContent extends ConsumerWidget {
               ),
             TableRow(
               children: [
-                Text("Format", style: bodyLarge),
+                Text('Format', style: bodyLarge),
                 const SizedBox(width: 16),
                 Text(videoInfo.format),
               ],
             ),
             TableRow(
               children: [
-                Text("Path", style: bodyLarge),
+                Text('Path', style: bodyLarge),
                 const SizedBox(width: 16),
                 Text(videoInfo.path),
               ],
@@ -427,7 +427,7 @@ class _FixEpisodeMatchDialogState extends ConsumerState<FixEpisodeMatchDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Fix metadata match"),
+      title: const Text('Fix metadata match'),
       content: Row(
         // mainAxisSize: MainAxisSize.min,
         // crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -435,7 +435,7 @@ class _FixEpisodeMatchDialogState extends ConsumerState<FixEpisodeMatchDialog> {
           Flexible(
             child: TextFormField(
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Season"),
+              decoration: const InputDecoration(labelText: 'Season'),
               controller: _season,
             ),
           ),
@@ -443,7 +443,7 @@ class _FixEpisodeMatchDialogState extends ConsumerState<FixEpisodeMatchDialog> {
           Flexible(
             child: TextFormField(
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Episode"),
+              decoration: const InputDecoration(labelText: 'Episode'),
               controller: _episode,
             ),
           ),
@@ -451,11 +451,11 @@ class _FixEpisodeMatchDialogState extends ConsumerState<FixEpisodeMatchDialog> {
       ),
       actions: [
         TextButton(
-          child: const Text("Cancel"),
+          child: const Text('Cancel'),
           onPressed: () => Navigator.pop(context),
         ),
         TextButton(
-          child: const Text("Ok"),
+          child: const Text('Ok'),
           onPressed: () async {
             final season = int.parse(_season.text);
             final episode = int.parse(_episode.text);
@@ -614,7 +614,7 @@ class _OverviewState extends State<Overview> {
                 child: Material(
                   child: InkWell(
                     onTap: _controller.toggle,
-                    child: Text("More",
+                    child: Text('More',
                         style: TextStyle(color: theme.colorScheme.primary)),
                   ),
                 ),
@@ -629,7 +629,7 @@ class _OverviewState extends State<Overview> {
                 child: Material(
                   child: InkWell(
                     onTap: _controller.toggle,
-                    child: Text("Less",
+                    child: Text('Less',
                         style: TextStyle(color: theme.colorScheme.primary)),
                   ),
                 ),
@@ -697,12 +697,12 @@ class _DeleteConfirmationDialogState
     return WillPopScope(
       onWillPop: () async => !_isInProgress,
       child: AlertDialog(
-        title: const Text("Delete item"),
+        title: const Text('Delete item'),
         content: const Text(
-            "Are you sure you want to permanently delete this item. Files will be removed."),
+            'Are you sure you want to permanently delete this item. Files will be removed.'),
         actions: [
           TextButton(
-            child: const Text("Delete"),
+            child: const Text('Delete'),
             onPressed: _isInProgress
                 ? null
                 : () async {
@@ -714,7 +714,7 @@ class _DeleteConfirmationDialogState
                   },
           ),
           TextButton(
-            child: const Text("Cancel"),
+            child: const Text('Cancel'),
             onPressed: _isInProgress ? null : () => Navigator.pop(context),
           ),
         ],

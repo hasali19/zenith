@@ -20,10 +20,10 @@ class SetupScreen extends ConsumerStatefulWidget {
 class _SetupScreenState extends ConsumerState<SetupScreen> {
   final _key = GlobalKey<FormState>();
 
-  var _scheme = "http";
+  var _scheme = 'http';
   final _nameController = TextEditingController();
   final _hostController = TextEditingController();
-  final _portController = TextEditingController(text: "8000");
+  final _portController = TextEditingController(text: '8000');
 
   @override
   void dispose() {
@@ -39,7 +39,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
         children: [
           TextFormField(
             controller: _nameController,
-            decoration: const InputDecoration(hintText: "Server name"),
+            decoration: const InputDecoration(hintText: 'Server name'),
           ),
           const SizedBox(height: 8),
           Row(
@@ -49,8 +49,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                 width: 100,
                 child: DropdownButtonFormField<String>(
                   items: const [
-                    DropdownMenuItem(value: "http", child: Text("http")),
-                    DropdownMenuItem(value: "https", child: Text("https")),
+                    DropdownMenuItem(value: 'http', child: Text('http')),
+                    DropdownMenuItem(value: 'https', child: Text('https')),
                   ],
                   value: _scheme,
                   onChanged: (value) => setState(() {
@@ -65,17 +65,17 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                   controller: _hostController,
                   keyboardType: TextInputType.url,
                   decoration: const InputDecoration(
-                    hintText: "Host name or IP address",
+                    hintText: 'Host name or IP address',
                   ),
                   validator: (value) => value == null || value.isEmpty
-                      ? "This is required"
+                      ? 'This is required'
                       : null,
                 ),
               ),
               Padding(
                 padding:
                     EdgeInsets.fromLTRB(4, context.isDesktop ? 12 : 14, 4, 0),
-                child: const Text(":"),
+                child: const Text(':'),
               ),
               SizedBox(
                 width: 100,
@@ -83,9 +83,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                   controller: _portController,
                   keyboardType: TextInputType.number,
                   validator: (value) {
-                    final port = int.tryParse(value ?? "");
+                    final port = int.tryParse(value ?? '');
                     if (port == null || port < 0 || port > pow(2, 16)) {
-                      return "Invalid port number";
+                      return 'Invalid port number';
                     } else {
                       return null;
                     }
@@ -96,7 +96,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
           ),
           const SizedBox(height: 32),
           ElevatedButton(
-            child: const Text("Continue"),
+            child: const Text('Continue'),
             onPressed: () async {
               if (_key.currentState?.validate() != true) {
                 return;
@@ -141,7 +141,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add server"),
+        title: const Text('Add server'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

@@ -85,9 +85,9 @@ class MediaItem {
       final parent = this.parent!.index.toString().padLeft(2, '0');
       if (grandparent != null) {
         final grandparent = this.grandparent!.index.toString().padLeft(2, '0');
-        seasonEpisode = "S${grandparent}E$parent";
+        seasonEpisode = 'S${grandparent}E$parent';
       } else {
-        seasonEpisode = "S$parent";
+        seasonEpisode = 'S$parent';
       }
     }
     return seasonEpisode;
@@ -148,9 +148,9 @@ abstract class StreamInfo {
 
   factory StreamInfo.fromJson(Map<String, dynamic> json) {
     switch (json['type']) {
-      case "audio":
+      case 'audio':
         return AudioStreamInfo.fromJson(json);
-      case "video":
+      case 'video':
         return VideoStreamInfo.fromJson(json);
       default:
         throw Exception("Invalid stream type: ${json['type']}");
@@ -386,7 +386,7 @@ class ZenithApiClient {
   }
 
   Future<void> deleteMediaItem(int id) async {
-    await http.delete(Uri.parse("$_baseUrl/api/items/$id"));
+    await http.delete(Uri.parse('$_baseUrl/api/items/$id'));
   }
 
   Future<List<MediaItem>> fetchContinueWatching() async {
@@ -395,12 +395,12 @@ class ZenithApiClient {
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((json) {
-        if (json["type"] == "movie") {
+        if (json['type'] == 'movie') {
           return MediaItem.fromJson(MediaType.movie, json);
-        } else if (json['type'] == "episode") {
+        } else if (json['type'] == 'episode') {
           return MediaItem.fromJson(MediaType.episode, json);
         } else {
-          throw Exception("Unsupported media item type");
+          throw Exception('Unsupported media item type');
         }
       }).toList();
     } else {
@@ -431,7 +431,7 @@ class ZenithApiClient {
   Future<Collection> createCollection(String name) async {
     final json = jsonEncode({'name': name});
     final res = await http.post(
-      Uri.parse("$_baseUrl/api/collections"),
+      Uri.parse('$_baseUrl/api/collections'),
       headers: {'Content-Type': 'application/json'},
       body: utf8.encode(json),
     );
@@ -467,42 +467,42 @@ class ZenithApiClient {
   Future<void> updateCollection(int id, List<int> itemIds) async {
     final json = jsonEncode({'items': itemIds});
     await http.put(
-      Uri.parse("$_baseUrl/api/collections/$id"),
+      Uri.parse('$_baseUrl/api/collections/$id'),
       headers: {'Content-Type': 'application/json'},
       body: utf8.encode(json),
     );
   }
 
   Future<void> deleteCollection(int id) async {
-    await http.delete(Uri.parse("$_baseUrl/api/collections/$id"));
+    await http.delete(Uri.parse('$_baseUrl/api/collections/$id'));
   }
 
   String getVideoUrl(int id, {bool attachment = false}) {
-    var url = "$_baseUrl/api/videos/$id";
+    var url = '$_baseUrl/api/videos/$id';
     if (attachment) {
-      url += "?attachment=true";
+      url += '?attachment=true';
     }
     return url;
   }
 
   String getSubtitleUrl(int id) {
-    return "$_baseUrl/api/subtitles/$id";
+    return '$_baseUrl/api/subtitles/$id';
   }
 
   String getMediaImageUrl(int id, ImageType type, {int? width}) {
     return Uri.parse(_baseUrl).replace(
-      path: "api/items/$id/images/${type.name}",
+      path: 'api/items/$id/images/${type.name}',
       queryParameters: {if (width != null) 'width': width.toString()},
     ).toString();
   }
 
   Future updateProgress(int id, int position) async {
-    await http.post(Uri.parse("$_baseUrl/api/progress/$id?position=$position"));
+    await http.post(Uri.parse('$_baseUrl/api/progress/$id?position=$position'));
   }
 
   Future updateUserData(int id, VideoUserDataPatch data) async {
     await http.patch(
-      Uri.parse("$_baseUrl/api/items/$id/user_data"),
+      Uri.parse('$_baseUrl/api/items/$id/user_data'),
       headers: {
         'Content-Type': 'application/json',
       },

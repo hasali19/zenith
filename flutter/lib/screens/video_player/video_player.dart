@@ -133,7 +133,7 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
       title = widget.item.name;
       subtitle = widget.item.startDate?.year.toString();
     } else {
-      title = widget.item.getSeasonEpisode()! + ": " + widget.item.name;
+      title = widget.item.getSeasonEpisode()! + ': ' + widget.item.name;
       subtitle = widget.item.grandparent!.name;
     }
 
@@ -301,7 +301,7 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.item.getSeasonEpisode()! + ": " + widget.item.name,
+            widget.item.getSeasonEpisode()! + ': ' + widget.item.name,
             style: context.zenithTheme.titleMedium,
           ),
           Text(

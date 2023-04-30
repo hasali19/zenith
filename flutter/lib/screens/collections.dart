@@ -51,7 +51,7 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
                 iconColor: Colors.red,
                 textColor: Colors.red,
                 leading: const Icon(Icons.delete),
-                title: const Text("Delete"),
+                title: const Text('Delete'),
                 onTap: () async {
                   await ref.read(apiProvider).deleteCollection(item.id);
                   ref.invalidate(collectionsProvider);

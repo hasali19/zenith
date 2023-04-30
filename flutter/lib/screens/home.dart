@@ -99,7 +99,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             poster: api.getMediaImageUrl(item.id, ImageType.poster),
             posterFallback: posterFallback,
             title: item.name,
-            subtitle: item.startDate?.year.toString() ?? "",
+            subtitle: item.startDate?.year.toString() ?? '',
             isWatched: true, // hide new icon since they're all new
             infoSeparator: posterItemInfoSeparator,
             onTap: () => _navigateToItem(item),
@@ -114,12 +114,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("${snapshot.error}"),
+                Text('${snapshot.error}'),
                 Padding(
                   padding: const EdgeInsets.all(8),
                   child: OutlinedButton(
                     onPressed: _refresh,
-                    child: const Text("Retry"),
+                    child: const Text('Retry'),
                   ),
                 ),
               ],
@@ -147,7 +147,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               if (data.continueWatching.isNotEmpty)
                 Section<MediaItem>(
-                  title: "Continue Watching",
+                  title: 'Continue Watching',
                   titlePadding: sectionTitlePadding,
                   listSpacing: sectionListSpacing,
                   listItemWidth: thumbnailItemWidth,
@@ -160,9 +160,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     title: item.name,
                     subtitle: item.type == MediaType.episode
                         ? item.getSeasonEpisode()! +
-                            ": " +
+                            ': ' +
                             item.grandparent!.name
-                        : item.startDate?.year.toString() ?? "",
+                        : item.startDate?.year.toString() ?? '',
                     progress: (item.videoUserData?.position ?? 0) /
                         (item.videoFile?.duration ?? 1),
                     padding: thumbnailItemPadding,
@@ -171,10 +171,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               if (data.recentMovies.isNotEmpty)
                 buildPosterItemSection(
-                    data.recentMovies, "Recent Movies", Icons.movie),
+                    data.recentMovies, 'Recent Movies', Icons.movie),
               if (data.recentShows.isNotEmpty)
                 buildPosterItemSection(
-                    data.recentShows, "Recent Shows", Icons.tv),
+                    data.recentShows, 'Recent Shows', Icons.tv),
             ],
           ),
         );

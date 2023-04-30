@@ -168,12 +168,12 @@ class EpisodeListItem extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         TextOneLine(
-                            "${episode.parent!.index} - ${episode.name}",
+                            '${episode.parent!.index} - ${episode.name}',
                             style: context.zenithTheme.titleMedium),
                         const SizedBox(height: 8),
                         Flexible(
                           child: Text(
-                            episode.overview ?? "",
+                            episode.overview ?? '',
                             style: context.zenithTheme.bodySmall,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,

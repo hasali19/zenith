@@ -14,7 +14,7 @@ import 'package:zenith/screens/item_details/header.dart';
 import 'package:zenith/screens/item_details/model.dart';
 
 final transparentImage = base64Decode(
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=');
 
 class ItemDetailsScreen extends ConsumerStatefulWidget {
   final int id;
@@ -48,7 +48,7 @@ class _ItemDetailsScreenState extends ConsumerState<ItemDetailsScreen> {
         final model = ref.watch(itemDetailsModelProvider(widget.id));
         return model.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => Center(child: Text("$error")),
+          error: (error, stackTrace) => Center(child: Text('$error')),
           data: (data) => Content(
               model: data,
               onRefresh: () =>

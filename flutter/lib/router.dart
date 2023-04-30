@@ -58,8 +58,8 @@ class SetupGuard extends AutoRouteGuard {
   @override
   void onNavigation(NavigationResolver resolver, StackRouter router) {
     final activeServer = getServer();
-    if ((activeServer != null && resolver.route.path != "/setup") ||
-        (resolver.route.path == "/setup" && activeServer == null)) {
+    if ((activeServer != null && resolver.route.path != '/setup') ||
+        (resolver.route.path == '/setup' && activeServer == null)) {
       return resolver.next(true);
     }
 

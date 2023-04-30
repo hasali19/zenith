@@ -41,7 +41,7 @@ class _AddToCollectionDialogState extends ConsumerState<AddToCollectionDialog> {
   Widget build(BuildContext context) {
     final collections = ref.watch(collectionsProvider);
     return AlertDialog(
-      title: const Text("Add to collection"),
+      title: const Text('Add to collection'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -56,7 +56,7 @@ class _AddToCollectionDialogState extends ConsumerState<AddToCollectionDialog> {
                   children: const [
                     Icon(Icons.add),
                     SizedBox(width: 8),
-                    Text("Create new"),
+                    Text('Create new'),
                   ],
                 ),
               ),
@@ -76,18 +76,18 @@ class _AddToCollectionDialogState extends ConsumerState<AddToCollectionDialog> {
             TextField(
               controller: _controller,
               decoration: const InputDecoration(
-                hintText: "Name",
+                hintText: 'Name',
               ),
             ),
         ],
       ),
       actions: [
         TextButton(
-          child: const Text("Cancel"),
+          child: const Text('Cancel'),
           onPressed: () => Navigator.pop(context),
         ),
         TextButton(
-          child: const Text("Ok"),
+          child: const Text('Ok'),
           onPressed: () async {
             var selected = _selected;
             if (selected == null) {
