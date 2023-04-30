@@ -89,8 +89,8 @@ class DrawerSectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textStyle = theme.textTheme.bodyText2!;
-    final color = theme.textTheme.caption!.color;
+    final textStyle = theme.textTheme.bodyMedium!;
+    final color = theme.textTheme.bodySmall!.color;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
       child: Text(

@@ -1,6 +1,5 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:expandable/expandable.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -63,7 +62,7 @@ class HeaderContent extends ConsumerWidget {
                 InkWell(
                   child: Text(
                     model.item.grandparent!.name,
-                    style: Theme.of(context).textTheme.subtitle1,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                   onTap: () => onViewItemDetails(model.item.grandparent!.id),
                 ),
@@ -98,7 +97,7 @@ class HeaderContent extends ConsumerWidget {
 
   Widget? _buildSubtitle(BuildContext context) {
     final theme = Theme.of(context);
-    final style = theme.textTheme.subtitle1;
+    final style = theme.textTheme.titleMedium;
     final seasonEpisode = model.item.getSeasonEpisode();
     final date = model.item.startDate;
     final duration = model.formattedDuration;
