@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:zenith/github.dart';
+import 'package:zenith/platform.dart';
 
 const _gitHash = bool.hasEnvironment("GIT_COMMIT_HASH")
     ? String.fromEnvironment("GIT_COMMIT_HASH")
@@ -71,8 +71,8 @@ class _AndroidUpdate implements Update {
       apkMap[asset.name] = asset;
     }
 
-    final deviceInfo = await DeviceInfoPlugin().androidInfo;
-    final abi = deviceInfo.supportedAbis
+    var supportedAbis = await getSupportedAbis();
+    final abi = supportedAbis
         .firstWhere((abi) => apkMap.containsKey("zenith-$abi-release.apk"));
     final url = apkMap["zenith-$abi-release.apk"]?.browserDownloadUrl;
 
