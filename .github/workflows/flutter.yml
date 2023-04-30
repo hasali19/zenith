@@ -24,7 +24,7 @@ jobs:
       - run: |
           echo $ANDROID_KEYSTORE | base64 -d > keystore.jks
           export GIT_COMMIT_HASH=$(git rev-parse HEAD)
-          flutter build apk --build-number=$GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH
+          flutter build apk --build-number=$GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH --split-per-abi
         working-directory: flutter
         env:
           ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
@@ -35,7 +35,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: zenith-flutter-android
-          path: flutter/build/app/outputs/flutter-apk/app-release.apk
+          path: flutter/build/app/outputs/flutter-apk/app-*-release.apk
 
   build_web:
     runs-on: ubuntu-latest
@@ -195,8 +195,10 @@ jobs:
           cp artifacts/zenith-flutter-windows-msix/zenith.msix release_artifacts/zenith-windows.msix
           cp artifacts/zenith-flutter-windows-appinstaller/zenith.appinstaller release_artifacts/zenith-windows.appinstaller
 
-          echo "Preparing android apk"
-          cp artifacts/zenith-flutter-android/app-release.apk release_artifacts/zenith.apk
+          echo "Preparing android apks"
+          cp artifacts/zenith-flutter-android/app-arm64-v8a-release release_artifacts/zenith-arm64-v8a-release.apk
+          cp artifacts/zenith-flutter-android/app-armeabi-v7a-release release_artifacts/zenith-armeabi-v7a-release.apk
+          cp artifacts/zenith-flutter-android/app-x86_64-release release_artifacts/zenith-x86_64-release.apk
 
           echo "Preparing web zip"
           cd artifacts/zenith-flutter-web

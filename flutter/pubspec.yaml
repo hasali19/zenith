@@ -34,6 +34,7 @@ dependencies:
 
   audio_video_progress_bar: ^0.11.0
   auto_route: ^5.0.2
+  device_info_plus: ^2.2.0
   expandable: ^5.0.1
   flutter_riverpod: ^2.1.1
   freezed_annotation: ^2.2.0
@@ -50,6 +51,9 @@ dependencies:
   video_player:
     path: video_player/video_player
   wakelock: ^0.6.2
+
+dependency_overrides:
+  ffi: ^2.0.1
 
 dev_dependencies:
   flutter_test:
