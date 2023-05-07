@@ -8,6 +8,7 @@ use speq::axum::{get, post};
 
 use crate::password_utils::hash_password;
 
+use super::error::ApiError;
 use super::{auth, ApiResult};
 
 #[derive(Serialize)]
@@ -47,8 +48,20 @@ struct NewUser {
 }
 
 #[post("/users")]
-async fn create(db: Extension<Db>, Json(body): Json<NewUser>) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
+async fn create(
+    db: Extension<Db>,
+    user: Result<auth::User, ApiError>,
+    Json(body): Json<NewUser>,
+) -> ApiResult<impl IntoResponse> {
+    let mut transaction = db.begin().await?;
+
+    // Must be authenticated to create a user, unless no users exist
+    if let Err(e) = user {
+        let users = db::users::get_all(&mut transaction).await?;
+        if !users.is_empty() {
+            return Err(e);
+        }
+    }
 
     let password_hash = hash_password(&body.password).wrap_err("failed to hash password")?;
 
@@ -57,7 +70,9 @@ async fn create(db: Extension<Db>, Json(body): Json<NewUser>) -> ApiResult<impl 
         password_hash: &password_hash,
     };
 
-    let id = db::users::create(&mut conn, user).await?;
+    let id = db::users::create(&mut transaction, user).await?;
+
+    transaction.commit().await?;
 
     Ok(Json(User {
         id,
