@@ -4,6 +4,7 @@ pub mod media;
 pub mod sql;
 pub mod streams;
 pub mod subtitles;
+pub mod user_registrations;
 pub mod users;
 pub mod video_files;
 pub mod videos;

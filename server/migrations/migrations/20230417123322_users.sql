@@ -4,6 +4,12 @@ create table users (
     password_hash text not null
 ) strict;
 
+create table user_registrations (
+    id text primary key,
+    created_at integer not null,
+    expires_at integer not null
+) strict;
+
 drop table user_item_data;
 
 create table media_item_user_data (
