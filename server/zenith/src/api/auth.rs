@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use async_trait::async_trait;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request;
@@ -84,24 +86,19 @@ async fn login(
         unauthorized("invalid credentials")
     })?;
 
-    Ok(cookies.add(
-        Cookie::build("auth", user.id.to_string())
-            .same_site(SameSite::Lax)
-            .path("/")
-            .http_only(true)
-            .permanent()
-            .finish(),
-    ))
+    Ok(cookies.add(build_auth_cookie(Cow::Owned(user.id.to_string()))))
 }
 
 #[post("/auth/logout")]
 async fn logout(cookies: PrivateCookieJar) -> ApiResult<impl IntoResponse> {
-    Ok(cookies.remove(
-        Cookie::build("auth", "")
-            .same_site(SameSite::Lax)
-            .path("/")
-            .http_only(true)
-            .permanent()
-            .finish(),
-    ))
+    Ok(cookies.remove(build_auth_cookie(Cow::Borrowed(""))))
+}
+
+fn build_auth_cookie(value: Cow<str>) -> Cookie {
+    Cookie::build("auth", value)
+        .same_site(SameSite::Lax)
+        .path("/")
+        .http_only(true)
+        .permanent()
+        .finish()
 }
