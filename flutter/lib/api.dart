@@ -371,8 +371,12 @@ class ZenithApiClient {
   }
 
   Future<void> logout() async {
-    await _store.delete(key: 'auth_token');
-    _authToken = null;
+    await _post(Uri.parse('$_baseUrl/api/auth/logout'));
+    _isLoggedIn = false;
+    if (!kIsWeb) {
+      await _store.delete(key: 'auth_token');
+      _authToken = null;
+    }
   }
 
   Future<List<User>> fetchUsers() async {
