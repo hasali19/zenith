@@ -189,11 +189,18 @@ pub(super) async fn query_items(
     Ok(res)
 }
 
+#[derive(Deserialize)]
+pub struct DeleteItemQuery {
+    #[serde(default)]
+    remove_files: bool,
+}
+
 #[delete("/items/:id")]
 #[path(i64)]
 #[response(status = 200)]
 async fn delete_item(
     Path(id): Path<i64>,
+    QsQuery(query): QsQuery<DeleteItemQuery>,
     Extension(db): Extension<Db>,
     Extension(library): Extension<Arc<MediaLibrary>>,
 ) -> ApiResult<impl IntoResponse> {
@@ -207,7 +214,9 @@ async fn delete_item(
 
     for file in files {
         tracing::info!("removing file: {}", file.path);
-        tokio::fs::remove_file(&file.path).await?;
+        if query.remove_files {
+            tokio::fs::remove_file(&file.path).await?;
+        }
         library.remove_video(&file.path).await?;
     }
 
