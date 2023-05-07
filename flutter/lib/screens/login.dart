@@ -13,6 +13,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _username = TextEditingController();
+  final TextEditingController _password = TextEditingController();
 
   @override
   void dispose() {
@@ -22,9 +23,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _login() async {
     final zenith = ref.read(apiProvider);
-    if (!await zenith.login(_username.text)) {
+    if (!await zenith.login(_username.text, _password.text)) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Login failed")));
+          .showSnackBar(const SnackBar(content: Text('Login failed')));
       return;
     }
     widget.onLogin();
@@ -41,15 +42,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             padding: const EdgeInsets.all(16),
             shrinkWrap: true,
             children: [
-              Text("Login", style: textDisplaySmall),
+              Text('Login', style: textDisplaySmall),
               const SizedBox(height: 16),
               TextField(
                 controller: _username,
-                decoration: const InputDecoration(labelText: "Username"),
+                decoration: const InputDecoration(labelText: 'Username'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _password,
+                decoration: const InputDecoration(labelText: 'Password'),
+                obscureText: true,
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                child: const Text("Login"),
+                child: const Text('Login'),
                 onPressed: _login,
               ),
             ],

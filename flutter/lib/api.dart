@@ -336,17 +336,17 @@ class ZenithApiClient {
     }
   }
 
-  Future<bool> login(String username) async {
+  Future<bool> login(String username, String password) async {
     final res = await _post(
       Uri.parse('$_baseUrl/api/auth/login'),
-      {'username': username},
+      {'username': username, 'password': password},
     );
 
     if (!kIsWeb) {
       final setCookie = res.headers['set-cookie'];
       if (setCookie == null) return false;
       final cookie = Cookie.fromSetCookieValue(setCookie);
-      if (cookie.name == "auth") {
+      if (cookie.name == 'auth') {
         _authToken = cookie.value;
         await _store.write(key: 'auth_token', value: _authToken);
       }
