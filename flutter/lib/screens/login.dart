@@ -37,6 +37,11 @@ class LoginUsersScreen extends ConsumerWidget {
   }
 
   Widget _buildData(BuildContext context, List<User> data) {
+    if (data.isEmpty) {
+      context.router.replace(const LoginRegisterScreenRoute());
+      return Container();
+    }
+
     final textDisplaySmall = Theme.of(context).textTheme.displaySmall;
 
     final users = data.map(
@@ -145,6 +150,80 @@ class _LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                 ElevatedButton(
                   child: const Text('Login'),
                   onPressed: _login,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class LoginRegisterScreen extends ConsumerStatefulWidget {
+  const LoginRegisterScreen({super.key});
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _LoginRegisterScreenState();
+}
+
+class _LoginRegisterScreenState extends ConsumerState<LoginRegisterScreen> {
+  final TextEditingController _username = TextEditingController();
+  final TextEditingController _password = TextEditingController();
+
+  @override
+  void dispose() {
+    _username.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textDisplaySmall = Theme.of(context).textTheme.displaySmall;
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: ConstrainedBox(
+            constraints: BoxConstraints.loose(const Size.fromWidth(600)),
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                Text('Create User', style: textDisplaySmall),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _username,
+                  decoration: const InputDecoration(labelText: 'Username'),
+                  autofocus: true,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _password,
+                  decoration: const InputDecoration(labelText: 'Password'),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  child: const Text('Register'),
+                  onPressed: () async {
+                    final api = ref.read(apiProvider);
+
+                    final username = _username.text;
+                    final password = _password.text;
+
+                    try {
+                      await api.createUser(username, password);
+                    } catch (e) {
+                      ScaffoldMessenger.of(context)
+                        ..clearSnackBars()
+                        ..showSnackBar(const SnackBar(
+                            content: Text('Failed to create user')));
+                    }
+
+                    context.router.replace(const LoginUsersScreenRoute());
+                  },
                 ),
               ],
             ),

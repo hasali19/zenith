@@ -385,6 +385,17 @@ class ZenithApiClient {
     }
   }
 
+  Future<void> createUser(String username, String password) async {
+    final res = await _post(
+      Uri.parse('$_baseUrl/api/users'),
+      {'username': username, 'password': password},
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception('Failed to create user');
+    }
+  }
+
   Future<List<MediaItem>> fetchMovies() async {
     final res = await _get(Uri.parse('$_baseUrl/api/movies'));
     if (res.statusCode == 200) {

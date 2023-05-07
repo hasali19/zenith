@@ -54,6 +54,7 @@ part 'router.gr.dart';
     children: [
       AutoRoute(page: LoginUsersScreen, initial: true),
       AutoRoute(path: 'user', page: LoginUserScreen),
+      AutoRoute(path: 'register', page: LoginRegisterScreen),
     ],
   ),
   AutoRoute(path: '/setup', page: SetupScreen),

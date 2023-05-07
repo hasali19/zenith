@@ -138,6 +138,12 @@ class _$AppRouter extends RootStackRouter {
         ),
       );
     },
+    LoginRegisterScreenRoute.name: (routeData) {
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: const LoginRegisterScreen(),
+      );
+    },
   };
 
   @override
@@ -217,6 +223,11 @@ class _$AppRouter extends RootStackRouter {
             RouteConfig(
               LoginUserScreenRoute.name,
               path: 'user',
+              parent: LoginScreenRoute.name,
+            ),
+            RouteConfig(
+              LoginRegisterScreenRoute.name,
+              path: 'register',
               parent: LoginScreenRoute.name,
             ),
           ],
@@ -483,4 +494,16 @@ class LoginUserScreenRouteArgs {
   String toString() {
     return 'LoginUserScreenRouteArgs{key: $key, username: $username}';
   }
+}
+
+/// generated route for
+/// [LoginRegisterScreen]
+class LoginRegisterScreenRoute extends PageRouteInfo<void> {
+  const LoginRegisterScreenRoute()
+      : super(
+          LoginRegisterScreenRoute.name,
+          path: 'register',
+        );
+
+  static const String name = 'LoginRegisterScreenRoute';
 }
