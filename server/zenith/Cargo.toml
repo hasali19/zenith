@@ -12,6 +12,7 @@ path = "test/main.rs"
 harness = false
 
 [dependencies]
+argon2 = "0.5"
 async-trait = "0.1"
 bytes = "1.1"
 color-eyre = "0.6"

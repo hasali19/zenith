@@ -62,8 +62,18 @@ async fn insert_video_file(
 }
 
 async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
+    // hash of "password"
+    const PASSWORD_HASH: &str = "$argon2id$v=19$m=19456,t=2,p=1$cV946Lj8LNOX2F7ClooV3A$bZQHhEei6/LLmfpyuX2Hqupj416sfZ8/LtxmUg0FZqI";
+
     // Create a user
-    db::users::create(&mut *conn, db::users::NewUser { username: "test" }).await?;
+    db::users::create(
+        &mut *conn,
+        db::users::NewUser {
+            username: "test",
+            password_hash: PASSWORD_HASH,
+        },
+    )
+    .await?;
 
     // Create some movies
     for i in 1..=3 {
@@ -228,7 +238,8 @@ impl TestApp {
 
     async fn login(&mut self) -> HeaderValue {
         let body = json!({
-            "username": "test"
+            "username": "test",
+            "password": "password",
         });
 
         let mut res = self

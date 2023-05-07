@@ -9,6 +9,8 @@ use db::Db;
 use serde::Deserialize;
 use speq::axum::post;
 
+use crate::password_utils::verify_password;
+
 use super::error::{unauthorized, ApiError};
 use super::ApiResult;
 
@@ -62,6 +64,7 @@ where
 #[derive(Deserialize)]
 struct Credentials {
     username: String,
+    password: String,
 }
 
 #[post("/auth/login")]
@@ -75,6 +78,11 @@ async fn login(
     let user = db::users::get_by_username(&mut conn, &credentials.username)
         .await?
         .ok_or_else(|| unauthorized("invalid credentials"))?;
+
+    verify_password(&credentials.password, &user.password_hash).map_err(|e| {
+        tracing::error!("{e:?}");
+        unauthorized("invalid credentials")
+    })?;
 
     Ok(cookies.add(
         Cookie::build("auth", user.id.to_string())

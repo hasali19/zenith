@@ -1,6 +1,7 @@
 #![feature(let_chains)]
 
 mod ext;
+mod password_utils;
 
 pub mod api;
 pub mod config;

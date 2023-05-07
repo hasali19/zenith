@@ -4,17 +4,19 @@ use crate::sql;
 
 pub struct NewUser<'a> {
     pub username: &'a str,
+    pub password_hash: &'a str,
 }
 
 pub async fn create(conn: &mut SqliteConnection, user: NewUser<'_>) -> eyre::Result<i64> {
     let sql = sql::insert("users")
-        .columns(&["username"])
-        .values(&["?"])
+        .columns(&["username", "password_hash"])
+        .values(&["?", "?"])
         .returning(&["id"])
         .to_sql();
 
     let id = sqlx::query_scalar(&sql)
         .bind(user.username)
+        .bind(user.password_hash)
         .fetch_one(conn)
         .await?;
 
@@ -25,9 +27,10 @@ pub async fn create(conn: &mut SqliteConnection, user: NewUser<'_>) -> eyre::Res
 pub struct User {
     pub id: i64,
     pub username: String,
+    pub password_hash: String,
 }
 
-const SELECT_COLS: &[&str] = &["id", "username"];
+const SELECT_COLS: &[&str] = &["id", "username", "password_hash"];
 
 pub async fn get_all(conn: &mut SqliteConnection) -> eyre::Result<Vec<User>> {
     let sql = sql::select("users").columns(SELECT_COLS).to_sql();
