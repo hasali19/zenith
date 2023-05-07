@@ -93,3 +93,15 @@ async fn login(
             .finish(),
     ))
 }
+
+#[post("/auth/logout")]
+async fn logout(cookies: PrivateCookieJar) -> ApiResult<impl IntoResponse> {
+    Ok(cookies.remove(
+        Cookie::build("auth", "")
+            .same_site(SameSite::Lax)
+            .path("/")
+            .http_only(true)
+            .permanent()
+            .finish(),
+    ))
+}
