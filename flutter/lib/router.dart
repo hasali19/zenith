@@ -51,6 +51,10 @@ part 'router.gr.dart';
     path: '/login',
     page: LoginScreen,
     guards: [ServerSetupGuard],
+    children: [
+      AutoRoute(page: LoginUsersScreen, initial: true),
+      AutoRoute(path: 'user', page: LoginUserScreen),
+    ],
   ),
   AutoRoute(path: '/setup', page: SetupScreen),
 ])

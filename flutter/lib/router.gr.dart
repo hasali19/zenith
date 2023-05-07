@@ -119,6 +119,25 @@ class _$AppRouter extends RootStackRouter {
         child: const SettingsScreen(),
       );
     },
+    LoginUsersScreenRoute.name: (routeData) {
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: const LoginUsersScreen(),
+      );
+    },
+    LoginUserScreenRoute.name: (routeData) {
+      final queryParams = routeData.queryParams;
+      final args = routeData.argsAs<LoginUserScreenRouteArgs>(
+          orElse: () => LoginUserScreenRouteArgs(
+              username: queryParams.optString('username')));
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: LoginUserScreen(
+          key: args.key,
+          username: args.username,
+        ),
+      );
+    },
   };
 
   @override
@@ -189,6 +208,18 @@ class _$AppRouter extends RootStackRouter {
           LoginScreenRoute.name,
           path: '/login',
           guards: [serverSetupGuard],
+          children: [
+            RouteConfig(
+              LoginUsersScreenRoute.name,
+              path: '',
+              parent: LoginScreenRoute.name,
+            ),
+            RouteConfig(
+              LoginUserScreenRoute.name,
+              path: 'user',
+              parent: LoginScreenRoute.name,
+            ),
+          ],
         ),
         RouteConfig(
           SetupScreenRoute.name,
@@ -325,10 +356,11 @@ class VideoPlayerScreenRouteArgs {
 /// generated route for
 /// [LoginScreen]
 class LoginScreenRoute extends PageRouteInfo<void> {
-  const LoginScreenRoute()
+  const LoginScreenRoute({List<PageRouteInfo>? children})
       : super(
           LoginScreenRoute.name,
           path: '/login',
+          initialChildren: children,
         );
 
   static const String name = 'LoginScreenRoute';
@@ -404,4 +436,51 @@ class SettingsScreenRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'SettingsScreenRoute';
+}
+
+/// generated route for
+/// [LoginUsersScreen]
+class LoginUsersScreenRoute extends PageRouteInfo<void> {
+  const LoginUsersScreenRoute()
+      : super(
+          LoginUsersScreenRoute.name,
+          path: '',
+        );
+
+  static const String name = 'LoginUsersScreenRoute';
+}
+
+/// generated route for
+/// [LoginUserScreen]
+class LoginUserScreenRoute extends PageRouteInfo<LoginUserScreenRouteArgs> {
+  LoginUserScreenRoute({
+    Key? key,
+    required String? username,
+  }) : super(
+          LoginUserScreenRoute.name,
+          path: 'user',
+          args: LoginUserScreenRouteArgs(
+            key: key,
+            username: username,
+          ),
+          rawQueryParams: {'username': username},
+        );
+
+  static const String name = 'LoginUserScreenRoute';
+}
+
+class LoginUserScreenRouteArgs {
+  const LoginUserScreenRouteArgs({
+    this.key,
+    required this.username,
+  });
+
+  final Key? key;
+
+  final String? username;
+
+  @override
+  String toString() {
+    return 'LoginUserScreenRouteArgs{key: $key, username: $username}';
+  }
 }

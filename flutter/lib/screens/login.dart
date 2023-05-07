@@ -12,6 +12,84 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return const AutoRouter();
+  }
+}
+
+final _usersProvider =
+    FutureProvider.autoDispose((ref) => ref.watch(apiProvider).fetchUsers());
+
+class LoginUsersScreen extends ConsumerWidget {
+  const LoginUsersScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      body: Center(
+        child: ref.watch(_usersProvider).maybeWhen(
+              data: (data) => _buildData(context, data),
+              orElse: () => const CircularProgressIndicator(),
+            ),
+      ),
+    );
+  }
+
+  Widget _buildData(BuildContext context, List<User> data) {
+    final textDisplaySmall = Theme.of(context).textTheme.displaySmall;
+
+    final users = data.map(
+      (user) => Card(
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          leading: const Icon(Icons.account_circle),
+          title: Text(user.username),
+          onTap: () => context.router
+              .push(LoginUserScreenRoute(username: user.username)),
+        ),
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: ConstrainedBox(
+        constraints: BoxConstraints.loose(const Size.fromWidth(600)),
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Text('Login', style: textDisplaySmall, textAlign: TextAlign.center),
+            const SizedBox(height: 32),
+            ...users,
+            Card(
+              elevation: 0,
+              color: Colors.transparent,
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
+                leading: const Icon(Icons.arrow_forward),
+                title: const Text('Login manually'),
+                onTap: () =>
+                    context.router.push(LoginUserScreenRoute(username: null)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class LoginUserScreen extends ConsumerStatefulWidget {
+  final String? username;
+
+  const LoginUserScreen({super.key, @queryParam required this.username});
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _LoginUserScreenState();
+}
+
+class _LoginUserScreenState extends ConsumerState<LoginUserScreen> {
   final TextEditingController _username = TextEditingController();
   final TextEditingController _password = TextEditingController();
 
@@ -23,7 +101,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _login() async {
     final zenith = ref.read(apiProvider);
-    if (!await zenith.login(_username.text, _password.text)) {
+    final username = widget.username ?? _username.text;
+    if (!await zenith.login(username, _password.text)) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Login failed')));
       return;
@@ -35,31 +114,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final textDisplaySmall = Theme.of(context).textTheme.displaySmall;
     return Scaffold(
+      appBar: AppBar(),
       body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints.loose(const Size.fromWidth(600)),
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            shrinkWrap: true,
-            children: [
-              Text('Login', style: textDisplaySmall),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _username,
-                decoration: const InputDecoration(labelText: 'Username'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _password,
-                decoration: const InputDecoration(labelText: 'Password'),
-                obscureText: true,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                child: const Text('Login'),
-                onPressed: _login,
-              ),
-            ],
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: ConstrainedBox(
+            constraints: BoxConstraints.loose(const Size.fromWidth(600)),
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                if (widget.username == null) ...[
+                  Text('Login', style: textDisplaySmall),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _username,
+                    decoration: const InputDecoration(labelText: 'Username'),
+                    autofocus: true,
+                  ),
+                ],
+                if (widget.username != null)
+                  Text(widget.username!, style: textDisplaySmall),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _password,
+                  decoration: const InputDecoration(labelText: 'Password'),
+                  obscureText: true,
+                  autofocus: widget.username != null,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  child: const Text('Login'),
+                  onPressed: _login,
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -310,6 +310,21 @@ class FixMetadataMatch {
   });
 }
 
+class User {
+  final int id;
+  final String username;
+
+  User({
+    required this.id,
+    required this.username,
+  });
+
+  factory User.fromJson(Map<String, dynamic> json) => User(
+        id: json['id'],
+        username: json['username'],
+      );
+}
+
 const _store = FlutterSecureStorage(
   aOptions: AndroidOptions(encryptedSharedPreferences: true),
 );
@@ -358,6 +373,16 @@ class ZenithApiClient {
   Future<void> logout() async {
     await _store.delete(key: 'auth_token');
     _authToken = null;
+  }
+
+  Future<List<User>> fetchUsers() async {
+    final res = await _get(Uri.parse('$_baseUrl/api/users'));
+    if (res.statusCode == 200) {
+      final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
+      return json.map((e) => User.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to fetch users');
+    }
   }
 
   Future<List<MediaItem>> fetchMovies() async {
