@@ -38,7 +38,7 @@ class LoginUsersScreen extends ConsumerWidget {
 
   Widget _buildData(BuildContext context, List<User> data) {
     if (data.isEmpty) {
-      context.router.replace(const LoginRegisterScreenRoute());
+      context.router.replace(LoginRegisterScreenRoute(initial: true));
       return Container();
     }
 
@@ -71,10 +71,20 @@ class LoginUsersScreen extends ConsumerWidget {
               color: Colors.transparent,
               clipBehavior: Clip.antiAlias,
               child: ListTile(
-                leading: const Icon(Icons.arrow_forward),
+                leading: const Icon(Icons.login),
                 title: const Text('Login manually'),
                 onTap: () =>
                     context.router.push(LoginUserScreenRoute(username: null)),
+              ),
+            ),
+            Card(
+              elevation: 0,
+              color: Colors.transparent,
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
+                leading: const Icon(Icons.add_circle_outline),
+                title: const Text('Add user'),
+                onTap: () => context.router.push(LoginRegisterScreenRoute()),
               ),
             ),
           ],
@@ -101,6 +111,7 @@ class _LoginUserScreenState extends ConsumerState<LoginUserScreen> {
   @override
   void dispose() {
     _username.dispose();
+    _password.dispose();
     super.dispose();
   }
 
@@ -161,7 +172,14 @@ class _LoginUserScreenState extends ConsumerState<LoginUserScreen> {
 }
 
 class LoginRegisterScreen extends ConsumerStatefulWidget {
-  const LoginRegisterScreen({super.key});
+  final bool initial;
+  final String? code;
+
+  const LoginRegisterScreen({
+    super.key,
+    @queryParam this.initial = false,
+    @queryParam this.code,
+  });
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>
@@ -169,12 +187,21 @@ class LoginRegisterScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginRegisterScreenState extends ConsumerState<LoginRegisterScreen> {
+  late final TextEditingController _code;
   final TextEditingController _username = TextEditingController();
   final TextEditingController _password = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _code = TextEditingController(text: widget.code);
+  }
+
+  @override
   void dispose() {
+    _code.dispose();
     _username.dispose();
+    _password.dispose();
     super.dispose();
   }
 
@@ -193,10 +220,19 @@ class _LoginRegisterScreenState extends ConsumerState<LoginRegisterScreen> {
               children: [
                 Text('Create User', style: textDisplaySmall),
                 const SizedBox(height: 16),
+                if (!widget.initial)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: TextField(
+                      controller: _code,
+                      decoration:
+                          const InputDecoration(labelText: 'Registration code'),
+                      enabled: widget.code == null,
+                    ),
+                  ),
                 TextField(
                   controller: _username,
                   decoration: const InputDecoration(labelText: 'Username'),
-                  autofocus: true,
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -214,12 +250,14 @@ class _LoginRegisterScreenState extends ConsumerState<LoginRegisterScreen> {
                     final password = _password.text;
 
                     try {
-                      await api.createUser(username, password);
+                      await api.createUser(username, password,
+                          _code.text.isNotEmpty ? _code.text : null);
                     } catch (e) {
                       ScaffoldMessenger.of(context)
                         ..clearSnackBars()
                         ..showSnackBar(const SnackBar(
                             content: Text('Failed to create user')));
+                      return;
                     }
 
                     context.router.replace(const LoginUsersScreenRoute());

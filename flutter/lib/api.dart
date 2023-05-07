@@ -385,10 +385,11 @@ class ZenithApiClient {
     }
   }
 
-  Future<void> createUser(String username, String password) async {
+  Future<void> createUser(String username, String password,
+      [String? code]) async {
     final res = await _post(
       Uri.parse('$_baseUrl/api/users'),
-      {'username': username, 'password': password},
+      {'username': username, 'password': password, 'registration_code': code},
     );
 
     if (res.statusCode != 200) {

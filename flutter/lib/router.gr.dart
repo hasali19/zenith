@@ -139,9 +139,22 @@ class _$AppRouter extends RootStackRouter {
       );
     },
     LoginRegisterScreenRoute.name: (routeData) {
+      final queryParams = routeData.queryParams;
+      final args = routeData.argsAs<LoginRegisterScreenRouteArgs>(
+          orElse: () => LoginRegisterScreenRouteArgs(
+                initial: queryParams.getBool(
+                  'initial',
+                  false,
+                ),
+                code: queryParams.optString('code'),
+              ));
       return MaterialPageX<dynamic>(
         routeData: routeData,
-        child: const LoginRegisterScreen(),
+        child: LoginRegisterScreen(
+          key: args.key,
+          initial: args.initial,
+          code: args.code,
+        ),
       );
     },
   };
@@ -498,12 +511,44 @@ class LoginUserScreenRouteArgs {
 
 /// generated route for
 /// [LoginRegisterScreen]
-class LoginRegisterScreenRoute extends PageRouteInfo<void> {
-  const LoginRegisterScreenRoute()
-      : super(
+class LoginRegisterScreenRoute
+    extends PageRouteInfo<LoginRegisterScreenRouteArgs> {
+  LoginRegisterScreenRoute({
+    Key? key,
+    bool initial = false,
+    String? code,
+  }) : super(
           LoginRegisterScreenRoute.name,
           path: 'register',
+          args: LoginRegisterScreenRouteArgs(
+            key: key,
+            initial: initial,
+            code: code,
+          ),
+          rawQueryParams: {
+            'initial': initial,
+            'code': code,
+          },
         );
 
   static const String name = 'LoginRegisterScreenRoute';
+}
+
+class LoginRegisterScreenRouteArgs {
+  const LoginRegisterScreenRouteArgs({
+    this.key,
+    this.initial = false,
+    this.code,
+  });
+
+  final Key? key;
+
+  final bool initial;
+
+  final String? code;
+
+  @override
+  String toString() {
+    return 'LoginRegisterScreenRouteArgs{key: $key, initial: $initial, code: $code}';
+  }
 }
