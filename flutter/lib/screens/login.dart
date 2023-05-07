@@ -1,11 +1,11 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/router.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  final void Function() onLogin;
-
-  const LoginScreen({super.key, required this.onLogin});
+  const LoginScreen({super.key});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _LoginScreenState();
@@ -28,7 +28,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .showSnackBar(const SnackBar(content: Text('Login failed')));
       return;
     }
-    widget.onLogin();
+    context.router.replace(const MainScreenRoute());
   }
 
   @override

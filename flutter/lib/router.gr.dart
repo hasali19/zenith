@@ -78,13 +78,9 @@ class _$AppRouter extends RootStackRouter {
       );
     },
     LoginScreenRoute.name: (routeData) {
-      final args = routeData.argsAs<LoginScreenRouteArgs>();
       return MaterialPageX<dynamic>(
         routeData: routeData,
-        child: LoginScreen(
-          key: args.key,
-          onLogin: args.onLogin,
-        ),
+        child: const LoginScreen(),
       );
     },
     SetupScreenRoute.name: (routeData) {
@@ -328,36 +324,14 @@ class VideoPlayerScreenRouteArgs {
 
 /// generated route for
 /// [LoginScreen]
-class LoginScreenRoute extends PageRouteInfo<LoginScreenRouteArgs> {
-  LoginScreenRoute({
-    Key? key,
-    required void Function() onLogin,
-  }) : super(
+class LoginScreenRoute extends PageRouteInfo<void> {
+  const LoginScreenRoute()
+      : super(
           LoginScreenRoute.name,
           path: '/login',
-          args: LoginScreenRouteArgs(
-            key: key,
-            onLogin: onLogin,
-          ),
         );
 
   static const String name = 'LoginScreenRoute';
-}
-
-class LoginScreenRouteArgs {
-  const LoginScreenRouteArgs({
-    this.key,
-    required this.onLogin,
-  });
-
-  final Key? key;
-
-  final void Function() onLogin;
-
-  @override
-  String toString() {
-    return 'LoginScreenRouteArgs{key: $key, onLogin: $onLogin}';
-  }
 }
 
 /// generated route for

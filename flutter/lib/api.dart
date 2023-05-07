@@ -352,7 +352,12 @@ class ZenithApiClient {
       }
     }
 
-    return res.statusCode == 200;
+    return _isLoggedIn = res.statusCode == 200;
+  }
+
+  Future<void> logout() async {
+    await _store.delete(key: 'auth_token');
+    _authToken = null;
   }
 
   Future<List<MediaItem>> fetchMovies() async {

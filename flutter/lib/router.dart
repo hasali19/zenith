@@ -90,9 +90,7 @@ class AuthGuard extends AutoRouteGuard {
       return resolver.next(true);
     }
 
-    router.replace(LoginScreenRoute(
-      onLogin: () => resolver.next(),
-    ));
+    router.replace(const LoginScreenRoute());
   }
 }
 
