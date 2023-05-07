@@ -60,7 +60,7 @@ impl<'a> PathParser<'a> {
         let parent_path = path.parent()?;
         let parent_is_season = parent_path
             .file_name()
-            .map(|name| name.starts_with("Season "))
+            .map(|name| name.starts_with("Season ") || name == "Specials")
             .unwrap_or(false);
 
         let show_path = if parent_is_season {
@@ -238,6 +238,24 @@ mod tests {
                 show_path: Utf8Path::new("/media/shows/Show Name"),
                 season: 2,
                 episode: 25,
+                name: None,
+            })
+        );
+    }
+
+    #[test]
+    fn episode_with_specials_folder() {
+        let result = parser().parse_episode_path(Utf8Path::new(
+            "/media/shows/Show Name/Specials/Show Name - S00E03 - Episode Name.mkv",
+        ));
+
+        assert_eq!(
+            result,
+            Some(EpisodePathMeta {
+                show_name: "Show Name",
+                show_path: Utf8Path::new("/media/shows/Show Name"),
+                season: 0,
+                episode: 3,
                 name: None,
             })
         );
