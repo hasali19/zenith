@@ -10,7 +10,7 @@ use axum::Extension;
 use axum_extra::extract::cookie::Key;
 use axum_files::{FileRequest, FileResponse};
 use camino::Utf8Path;
-use eyre::bail;
+use eyre::{bail, Context};
 use futures::FutureExt;
 use time::OffsetDateTime;
 use tmdb::TmdbClient;
@@ -163,10 +163,10 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
 
     tracing::info!("starting server at http://{addr}");
 
-    // TODO: Key should be persisted
-    let app = App {
-        key: Key::generate(),
-    };
+    let key_path = config.paths.data.join("key");
+    let key = load_or_create_key(&key_path)?;
+
+    let app = App { key };
 
     let router = axum::Router::new()
         .nest("/api", zenith::api::router())
@@ -215,6 +215,20 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
     }
 
     Ok(())
+}
+
+fn load_or_create_key(key_path: &Utf8Path) -> eyre::Result<Key> {
+    if key_path.exists() {
+        let master_key = std::fs::read(key_path)
+            .wrap_err_with(|| format!("failed to read key file: {key_path:?}"))?;
+        Key::try_from(master_key.as_slice())
+            .wrap_err_with(|| format!("key file is invalid: {key_path:?}"))
+    } else {
+        let key = Key::generate();
+        std::fs::write(key_path, key.master())
+            .wrap_err_with(|| format!("failed to write key to file: {key_path:?}"))?;
+        Ok(key)
+    }
 }
 
 async fn spa(OriginalUri(uri): OriginalUri, file: FileRequest) -> Result<FileResponse, StatusCode> {
