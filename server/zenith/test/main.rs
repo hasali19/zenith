@@ -1,12 +1,14 @@
 mod media;
 
 use axum::body::Body;
-use axum::http::Request;
+use axum::http::{HeaderValue, Request};
 use axum::Extension;
+use axum_extra::extract::cookie::Key;
 use futures::future::LocalBoxFuture;
 use futures::Future;
+use hyper::StatusCode;
 use libtest_mimic::{Arguments, Trial};
-use serde_json::Value;
+use serde_json::{json, Value};
 use sqlx::SqliteConnection;
 use tokio::task::LocalSet;
 use tower::ServiceExt;
@@ -16,7 +18,7 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
 use uuid::Uuid;
-use zenith::{Db, MediaItemType};
+use zenith::{App, Db, MediaItemType};
 
 async fn insert_video_file(
     conn: &mut SqliteConnection,
@@ -60,6 +62,19 @@ async fn insert_video_file(
 }
 
 async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
+    // hash of "password"
+    const PASSWORD_HASH: &str = "$argon2id$v=19$m=19456,t=2,p=1$cV946Lj8LNOX2F7ClooV3A$bZQHhEei6/LLmfpyuX2Hqupj416sfZ8/LtxmUg0FZqI";
+
+    // Create a user
+    db::users::create(
+        &mut *conn,
+        db::users::NewUser {
+            username: "test",
+            password_hash: PASSWORD_HASH,
+        },
+    )
+    .await?;
+
     // Create some movies
     for i in 1..=3 {
         sqlx::query("INSERT INTO media_items (id, item_type, name) VALUES (?, ?, ?)")
@@ -158,11 +173,12 @@ async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
 
     for id in [1, 2, 10, 11] {
         let sql = "
-            INSERT INTO user_item_data (item_id, position, last_watched_at)
-            VALUES (?, ?, 1662911415)";
+            INSERT INTO media_item_user_data (item_id, user_id, position, position_updated_at)
+            VALUES (?, ?, ?, 1662911415)";
 
         sqlx::query(sql)
             .bind(id)
+            .bind(1)
             .bind(50.0)
             .execute(&mut *conn)
             .await?;
@@ -181,19 +197,31 @@ pub async fn init_test_app(db: &Db) -> axum::Router {
         .await
         .unwrap();
 
+    let app = App {
+        key: Key::generate(),
+    };
+
     zenith::api::router()
+        .with_state(app)
         .layer(TraceLayer::new_for_http())
         .layer(Extension(db.clone()))
 }
 
 impl TestApp {
-    async fn get(self, path: &str) -> Value {
+    fn router(&mut self) -> &mut axum::Router {
+        &mut self.router
+    }
+
+    async fn get(mut self, path: &str) -> Value {
+        let cookie = self.login().await;
+
         let res = self
             .router
             .oneshot(
                 Request::builder()
                     .method("GET")
                     .uri(path)
+                    .header("Cookie", &cookie)
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -206,6 +234,30 @@ impl TestApp {
 
         let body = hyper::body::to_bytes(res.into_body()).await.unwrap();
         serde_json::from_slice(&body).unwrap()
+    }
+
+    async fn login(&mut self) -> HeaderValue {
+        let body = json!({
+            "username": "test",
+            "password": "password",
+        });
+
+        let mut res = self
+            .router()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/auth/login")
+                    .header("Content-Type", "application/json")
+                    .body(Body::from(serde_json::to_vec(&body).unwrap()))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(res.status(), StatusCode::OK);
+
+        res.headers_mut().remove("Set-Cookie").unwrap()
     }
 }
 

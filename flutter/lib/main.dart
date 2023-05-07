@@ -63,7 +63,9 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
     super.initState();
     loadLanguageCodes();
     _router = AppRouter(
-      setupGuard: SetupGuard(() => ref.watch(activeServerProvider)),
+      authGuard: AuthGuard(() => ref.read(apiProvider).isLoggedIn()),
+      serverSetupGuard: ServerSetupGuard(
+          () => Future.value(ref.read(activeServerProvider) != null)),
     );
   }
 
@@ -114,10 +116,10 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
   }
 }
 
-class MainScreen extends StatefulWidget {
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
 enum Screen {
@@ -128,7 +130,7 @@ enum Screen {
   settings,
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends ConsumerState<MainScreen> {
   final _updater = Updater();
 
   @override
@@ -192,6 +194,20 @@ class _MainScreenState extends State<MainScreen> {
           return Scaffold(
             appBar: AppBar(
               title: Text(_title(screen)),
+              actions: [
+                PopupMenuButton(
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      child: const Text('Logout'),
+                      onTap: () {
+                        ref.read(apiProvider).logout();
+                        context.router.popUntilRoot();
+                        context.router.replace(const LoginScreenRoute());
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
             body: child,
             bottomNavigationBar: NavigationBar(

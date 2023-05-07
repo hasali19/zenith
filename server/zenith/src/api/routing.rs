@@ -5,13 +5,15 @@ use axum::response::{Html, IntoResponse};
 use axum::routing::get;
 use axum::{middleware, Extension, Json};
 use serde_qs::axum::QsQueryConfig;
-use tower_http::cors::{self, CorsLayer};
+use tower_http::cors::{AllowMethods, AllowOrigin, CorsLayer};
+
+use crate::App;
 
 use super::error::ApiError;
 
 const DOCS_INDEX: &str = include_str!("docs.html");
 
-pub fn router() -> axum::Router {
+pub fn router() -> axum::Router<App> {
     let spec = super::openapi_spec();
 
     speq::axum_router!()
@@ -19,8 +21,9 @@ pub fn router() -> axum::Router {
         .route("/openapi.json", get(|| async move { Json(spec) }))
         .layer(
             CorsLayer::new()
-                .allow_origin(cors::Any)
-                .allow_methods(cors::Any)
+                .allow_credentials(true)
+                .allow_origin(AllowOrigin::mirror_request())
+                .allow_methods(AllowMethods::mirror_request())
                 .allow_headers([ACCEPT, CONTENT_TYPE]),
         )
         .layer(middleware::from_fn(error_handler))

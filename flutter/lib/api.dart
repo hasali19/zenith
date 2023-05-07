@@ -1,7 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart';
+import 'package:zenith/http_client/http_client.dart';
 
 enum MediaType {
   movie,
@@ -306,13 +310,99 @@ class FixMetadataMatch {
   });
 }
 
+class User {
+  final int id;
+  final String username;
+
+  User({
+    required this.id,
+    required this.username,
+  });
+
+  factory User.fromJson(Map<String, dynamic> json) => User(
+        id: json['id'],
+        username: json['username'],
+      );
+}
+
+const _store = FlutterSecureStorage(
+  aOptions: AndroidOptions(encryptedSharedPreferences: true),
+);
+
 class ZenithApiClient {
+  final Client _client = createHttpClient();
   final String _baseUrl;
+
+  bool? _isLoggedIn;
+  String? _authToken;
 
   ZenithApiClient(this._baseUrl);
 
+  Future<bool> isLoggedIn() async {
+    if (_isLoggedIn != null) return _isLoggedIn!;
+    if (!kIsWeb) {
+      _authToken = await _store.read(key: 'auth_token');
+    }
+    try {
+      final res = await _get(Uri.parse('$_baseUrl/api/users/me'));
+      return _isLoggedIn = res.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> login(String username, String password) async {
+    final res = await _post(
+      Uri.parse('$_baseUrl/api/auth/login'),
+      {'username': username, 'password': password},
+    );
+
+    if (!kIsWeb) {
+      final setCookie = res.headers['set-cookie'];
+      if (setCookie == null) return false;
+      final cookie = Cookie.fromSetCookieValue(setCookie);
+      if (cookie.name == 'auth') {
+        _authToken = cookie.value;
+        await _store.write(key: 'auth_token', value: _authToken);
+      }
+    }
+
+    return _isLoggedIn = res.statusCode == 200;
+  }
+
+  Future<void> logout() async {
+    await _post(Uri.parse('$_baseUrl/api/auth/logout'));
+    _isLoggedIn = false;
+    if (!kIsWeb) {
+      await _store.delete(key: 'auth_token');
+      _authToken = null;
+    }
+  }
+
+  Future<List<User>> fetchUsers() async {
+    final res = await _get(Uri.parse('$_baseUrl/api/users'));
+    if (res.statusCode == 200) {
+      final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
+      return json.map((e) => User.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to fetch users');
+    }
+  }
+
+  Future<void> createUser(String username, String password,
+      [String? code]) async {
+    final res = await _post(
+      Uri.parse('$_baseUrl/api/users'),
+      {'username': username, 'password': password, 'registration_code': code},
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception('Failed to create user');
+    }
+  }
+
   Future<List<MediaItem>> fetchMovies() async {
-    final res = await http.get(Uri.parse('$_baseUrl/api/movies'));
+    final res = await _get(Uri.parse('$_baseUrl/api/movies'));
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((e) => MediaItem.fromJson(MediaType.movie, e)).toList();
@@ -322,7 +412,7 @@ class ZenithApiClient {
   }
 
   Future<List<MediaItem>> fetchRecentMovies() async {
-    final res = await http.get(Uri.parse('$_baseUrl/api/movies/recent'));
+    final res = await _get(Uri.parse('$_baseUrl/api/movies/recent'));
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((e) => MediaItem.fromJson(MediaType.movie, e)).toList();
@@ -332,7 +422,7 @@ class ZenithApiClient {
   }
 
   Future<List<MediaItem>> fetchShows() async {
-    final res = await http.get(Uri.parse('$_baseUrl/api/shows'));
+    final res = await _get(Uri.parse('$_baseUrl/api/shows'));
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((e) => MediaItem.fromJson(MediaType.show, e)).toList();
@@ -342,7 +432,7 @@ class ZenithApiClient {
   }
 
   Future<List<MediaItem>> fetchRecentShows() async {
-    final res = await http.get(Uri.parse('$_baseUrl/api/shows/recent'));
+    final res = await _get(Uri.parse('$_baseUrl/api/shows/recent'));
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((e) => MediaItem.fromJson(MediaType.show, e)).toList();
@@ -352,8 +442,7 @@ class ZenithApiClient {
   }
 
   Future<List<MediaItem>> fetchSeasons(int showId) async {
-    final res =
-        await http.get(Uri.parse('$_baseUrl/api/shows/$showId/seasons'));
+    final res = await _get(Uri.parse('$_baseUrl/api/shows/$showId/seasons'));
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((e) => MediaItem.fromJson(MediaType.season, e)).toList();
@@ -364,7 +453,7 @@ class ZenithApiClient {
 
   Future<List<MediaItem>> fetchEpisodes(int seasonId) async {
     final res =
-        await http.get(Uri.parse('$_baseUrl/api/seasons/$seasonId/episodes'));
+        await _get(Uri.parse('$_baseUrl/api/seasons/$seasonId/episodes'));
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((e) => MediaItem.fromJson(MediaType.episode, e)).toList();
@@ -374,7 +463,7 @@ class ZenithApiClient {
   }
 
   Future<MediaItem> fetchMediaItem(int id) async {
-    final res = await http.get(Uri.parse('$_baseUrl/api/items/$id'));
+    final res = await _get(Uri.parse('$_baseUrl/api/items/$id'));
     if (res.statusCode == 200) {
       final dynamic json = jsonDecode(utf8.decode(res.bodyBytes));
       final type =
@@ -386,12 +475,11 @@ class ZenithApiClient {
   }
 
   Future<void> deleteMediaItem(int id) async {
-    await http.delete(Uri.parse('$_baseUrl/api/items/$id'));
+    await _delete(Uri.parse('$_baseUrl/api/items/$id'));
   }
 
   Future<List<MediaItem>> fetchContinueWatching() async {
-    final res =
-        await http.get(Uri.parse('$_baseUrl/api/items/continue_watching'));
+    final res = await _get(Uri.parse('$_baseUrl/api/items/continue_watching'));
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((json) {
@@ -404,36 +492,33 @@ class ZenithApiClient {
         }
       }).toList();
     } else {
-      throw Exception('Failed to fetch shows');
+      throw Exception('Failed to fetch items');
     }
   }
 
   Future<void> findMetadataMatch(int id) async {
-    await http.post(Uri.parse('$_baseUrl/api/metadata/$id/find_match'));
+    await _post(Uri.parse('$_baseUrl/api/metadata/$id/find_match'));
   }
 
   Future<void> fixMetadataMatch(int id, FixMetadataMatch data) async {
-    await http.post(
+    await _post(
       Uri.parse('$_baseUrl/api/metadata/$id/set_match'),
-      headers: {'Content-Type': 'application/json'},
-      body: utf8.encode(jsonEncode({
+      {
         'tmdb_id': data.tmdbId,
         'season_number': data.season,
         'episode_number': data.episode,
-      })),
+      },
     );
   }
 
   Future<void> refreshMetadata(int id) async {
-    await http.post(Uri.parse('$_baseUrl/api/metadata/$id/refresh'));
+    await _post(Uri.parse('$_baseUrl/api/metadata/$id/refresh'));
   }
 
   Future<Collection> createCollection(String name) async {
-    final json = jsonEncode({'name': name});
-    final res = await http.post(
+    final res = await _post(
       Uri.parse('$_baseUrl/api/collections'),
-      headers: {'Content-Type': 'application/json'},
-      body: utf8.encode(json),
+      {'name': name},
     );
     if (res.statusCode == 200) {
       final dynamic json = jsonDecode(utf8.decode(res.bodyBytes));
@@ -444,7 +529,7 @@ class ZenithApiClient {
   }
 
   Future<List<Collection>> fetchCollections() async {
-    final res = await http.get(Uri.parse('$_baseUrl/api/collections'));
+    final res = await _get(Uri.parse('$_baseUrl/api/collections'));
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
       return json.map((e) => Collection.fromJson(e)).toList();
@@ -454,7 +539,7 @@ class ZenithApiClient {
   }
 
   Future<List<MediaItem>> fetchCollectionItems(int id) async {
-    final res = await http.get(Uri.parse(
+    final res = await _get(Uri.parse(
         '$_baseUrl/api/items?collection_id=$id&sort_by[]=collection_index'));
     if (res.statusCode == 200) {
       final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
@@ -465,16 +550,14 @@ class ZenithApiClient {
   }
 
   Future<void> updateCollection(int id, List<int> itemIds) async {
-    final json = jsonEncode({'items': itemIds});
-    await http.put(
+    await _put(
       Uri.parse('$_baseUrl/api/collections/$id'),
-      headers: {'Content-Type': 'application/json'},
-      body: utf8.encode(json),
+      {'items': itemIds},
     );
   }
 
   Future<void> deleteCollection(int id) async {
-    await http.delete(Uri.parse('$_baseUrl/api/collections/$id'));
+    await _delete(Uri.parse('$_baseUrl/api/collections/$id'));
   }
 
   String getVideoUrl(int id, {bool attachment = false}) {
@@ -497,20 +580,54 @@ class ZenithApiClient {
   }
 
   Future updateProgress(int id, int position) async {
-    await http.post(Uri.parse('$_baseUrl/api/progress/$id?position=$position'));
+    await _post(Uri.parse('$_baseUrl/api/progress/$id?position=$position'));
   }
 
   Future updateUserData(int id, VideoUserDataPatch data) async {
-    await http.patch(
+    await _patch(
       Uri.parse('$_baseUrl/api/items/$id/user_data'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
+      {
         'is_watched': data.isWatched,
         'position': data.position,
-      }),
+      },
     );
+  }
+
+  Future<Response> _get(Uri uri) {
+    return _send(uri, 'GET', null);
+  }
+
+  Future<Response> _post(Uri uri, [Object? body]) {
+    return _send(uri, 'POST', body);
+  }
+
+  Future<Response> _put(Uri uri, [Object? body]) {
+    return _send(uri, 'PUT', body);
+  }
+
+  Future<Response> _patch(Uri uri, [Object? body]) {
+    return _send(uri, 'PATCH', body);
+  }
+
+  Future<Response> _delete(Uri uri) {
+    return _send(uri, 'DELETE', null);
+  }
+
+  Future<Response> _send(Uri uri, String method, Object? body) async {
+    final req = Request(method, uri);
+    if (_authToken != null) {
+      req.headers['cookie'] = 'auth=$_authToken';
+    }
+    if (body != null) {
+      req.headers['content-type'] = 'application/json';
+      req.bodyBytes = utf8.encode(jsonEncode(body));
+    }
+    final res = await Response.fromStream(await _client.send(req));
+    if (res.statusCode == 401) {
+      _isLoggedIn = false;
+      _authToken = null;
+    }
+    return res;
   }
 }
 

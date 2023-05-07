@@ -101,7 +101,7 @@ pub struct VideoUserData {
     pub item_id: i64,
     pub position: f64,
     pub is_watched: bool,
-    pub last_watched_at: Option<i64>,
+    pub position_updated_at: Option<i64>,
 }
 
 #[derive(Debug)]
@@ -201,7 +201,7 @@ impl<'r> FromRow<'r, SqliteRow> for VideoUserData {
             item_id: row.try_get("item_id")?,
             position: row.try_get("position")?,
             is_watched: row.try_get("is_watched")?,
-            last_watched_at: row.try_get("last_watched_at")?,
+            position_updated_at: row.try_get("position_updated_at")?,
         })
     }
 }
@@ -275,7 +275,6 @@ pub struct Query<'a> {
     pub parent_id: Option<i64>,
     pub grandparent_id: Option<i64>,
     pub collection_id: Option<i64>,
-    pub is_watched: Option<bool>,
     pub sort_by: &'a [SortField],
     pub limit: Option<u32>,
     pub offset: Option<u32>,
@@ -294,7 +293,6 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
     let mut conditions = vec![];
     let mut joins = vec![
         Join::left("video_files AS v ON v.item_id = m.id"),
-        Join::left("user_item_data AS u ON u.item_id = m.id"),
         Join::left("media_items AS parent ON parent.id = m.parent_id"),
         Join::left("media_items AS grandparent ON grandparent.id = m.grandparent_id"),
     ];
@@ -327,11 +325,6 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         ));
         conditions.push("c.collection_id = ?".to_owned());
         args.add(id);
-    }
-
-    if let Some(is_watched) = query.is_watched {
-        conditions.push("COALESCE(u.is_watched, 0) = ?".to_owned());
-        args.add(is_watched);
     }
 
     let order_by = query
@@ -441,6 +434,7 @@ pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Me
 
 pub async fn get_continue_watching(
     conn: &mut SqliteConnection,
+    user_id: i64,
     limit: Option<u32>,
 ) -> eyre::Result<Vec<i64>> {
     // This beautiful query does two things:
@@ -448,14 +442,14 @@ pub async fn get_continue_watching(
     // - for each show, we grab the last episode that was watched; if that episode was finished, then we instead
     //   get the next episode if it exists
     let mut sql = "
-        SELECT id, last_watched_at FROM (
-            SELECT m.id AS id, u.last_watched_at AS last_watched_at FROM movies AS m
+        SELECT id, position_updated_at FROM (
+            SELECT m.id AS id, u.position_updated_at AS position_updated_at FROM movies AS m
             JOIN video_files AS v ON v.item_id = m.id
-            LEFT JOIN user_item_data AS u ON m.id = u.item_id
-            WHERE u.position > (0.05 * v.duration) AND u.position < (0.9 * v.duration) AND u.last_watched_at IS NOT NULL
+            LEFT JOIN media_item_user_data AS u ON m.id = u.item_id AND u.user_id = ?1
+            WHERE u.position > (0.05 * v.duration) AND u.position < (0.9 * v.duration) AND u.position_updated_at IS NOT NULL
         )
         UNION
-        SELECT id, last_watched_at FROM (
+        SELECT id, position_updated_at FROM (
             SELECT IIF(
                 u.position < (0.9 * v.duration),
                 -- return current episode if the position is below 'completed' threshold
@@ -471,43 +465,61 @@ pub async fn get_continue_watching(
                     ORDER BY season1.season_no, e1.episode_no
                     LIMIT 1
                 )
-            ) AS id, MAX(last_watched_at) AS last_watched_at FROM episodes AS e
+            ) AS id, MAX(position_updated_at) AS position_updated_at FROM episodes AS e
             JOIN seasons AS season ON season.id = e.season_id
             JOIN shows AS show ON show.id = season.show_id
             JOIN video_files AS v ON v.item_id = e.id
-            LEFT JOIN user_item_data AS u ON e.id = u.item_id
-            WHERE u.position > (0.05 * v.duration) AND u.last_watched_at IS NOT NULL
+            LEFT JOIN media_item_user_data AS u ON e.id = u.item_id AND u.user_id = ?1
+            WHERE u.position > (0.05 * v.duration) AND u.position_updated_at IS NOT NULL
             GROUP BY show.id
         )
         WHERE id IS NOT NULL
-        ORDER BY last_watched_at DESC
+        ORDER BY position_updated_at DESC
     ".to_owned();
 
     if let Some(limit) = limit {
         write!(sql, "LIMIT {limit}").unwrap();
     }
 
-    Ok(sqlx::query_scalar(&sql).fetch_all(&mut *conn).await?)
+    let media_ids = sqlx::query_scalar(&sql)
+        .bind(user_id)
+        .fetch_all(&mut *conn)
+        .await?;
+
+    Ok(media_ids)
 }
 
-pub async fn get_recently_added_movies(conn: &mut SqliteConnection) -> eyre::Result<Vec<i64>> {
+pub async fn get_recently_added_movies(
+    conn: &mut SqliteConnection,
+    user_id: i64,
+) -> eyre::Result<Vec<i64>> {
     let sql = sql::select("movies AS m")
         .columns(&["m.id"])
-        .joins(&[Join::left("user_item_data AS u ON u.item_id = m.id")])
+        .joins(&[Join::left(
+            "media_item_user_data AS u ON u.item_id = m.id AND u.user_id = ?1",
+        )])
         .condition("COALESCE(u.is_watched, 0) = 0")
         .order_by(&["added_at DESC", "name"])
         .limit(30)
         .to_sql();
 
-    Ok(sqlx::query_scalar(&sql).fetch_all(&mut *conn).await?)
+    let movie_ids = sqlx::query_scalar(&sql)
+        .bind(user_id)
+        .fetch_all(&mut *conn)
+        .await?;
+
+    Ok(movie_ids)
 }
 
-pub async fn get_recently_updated_shows(conn: &mut SqliteConnection) -> eyre::Result<Vec<i64>> {
+pub async fn get_recently_updated_shows(
+    conn: &mut SqliteConnection,
+    user_id: i64,
+) -> eyre::Result<Vec<i64>> {
     let condition = "
         (
             SELECT COUNT(*)
             FROM episodes AS episode
-            LEFT JOIN user_item_data AS u ON u.item_id = episode.id
+            LEFT JOIN media_item_user_data AS u ON u.item_id = episode.id AND u.user_id = ?1
             WHERE episode.show_id = s.id AND COALESCE(u.is_watched, 0) = 0
         ) > 0
     ";
@@ -523,14 +535,20 @@ pub async fn get_recently_updated_shows(conn: &mut SqliteConnection) -> eyre::Re
         .limit(30)
         .to_sql();
 
-    Ok(sqlx::query_scalar(&sql).fetch_all(conn).await?)
+    let show_ids = sqlx::query_scalar(&sql)
+        .bind(user_id)
+        .fetch_all(conn)
+        .await?;
+
+    Ok(show_ids)
 }
 
 pub async fn get_user_data_for_video(
     conn: &mut SqliteConnection,
+    user_id: i64,
     id: i64,
 ) -> eyre::Result<Option<VideoUserData>> {
-    Ok(get_user_data_for_videos(conn, &[id])
+    Ok(get_user_data_for_videos(conn, user_id, &[id])
         .await?
         .into_iter()
         .next())
@@ -538,20 +556,24 @@ pub async fn get_user_data_for_video(
 
 pub async fn get_user_data_for_videos(
     conn: &mut SqliteConnection,
+    user_id: i64,
     ids: &[i64],
 ) -> eyre::Result<Vec<VideoUserData>> {
     let mut args = SqliteArguments::default();
+    args.add(user_id);
     for index in ids {
         args.add(index);
     }
 
     let sql = sql::select("video_files AS v")
-        .joins(&[Join::left("user_item_data AS u ON u.item_id = v.item_id")])
+        .joins(&[Join::left(
+            "media_item_user_data AS u ON u.item_id = v.item_id AND u.user_id = ?",
+        )])
         .columns(&[
             "v.item_id",
             "COALESCE(position, 0.0) AS position",
             "COALESCE(is_watched, 0) AS is_watched",
-            "last_watched_at",
+            "position_updated_at",
         ])
         .condition(&format!("v.item_id IN ({})", sql::Placeholders(ids.len())))
         .to_sql();
@@ -561,17 +583,19 @@ pub async fn get_user_data_for_videos(
 
 pub async fn get_user_data_for_collections(
     conn: &mut SqliteConnection,
+    user_id: i64,
     ids: &[i64],
 ) -> eyre::Result<Vec<CollectionUserData>> {
     let mut args = SqliteArguments::default();
+    args.add(user_id);
     for index in ids {
         args.add(index);
     }
 
     let mut placeholders = String::new();
-    for i in 1..=ids.len() {
+    for i in 2..=ids.len() + 1 {
         write!(placeholders, "?{i}")?;
-        if i != ids.len() {
+        if i != ids.len() + 1 {
             write!(placeholders, ",")?;
         }
     }
@@ -580,7 +604,7 @@ pub async fn get_user_data_for_collections(
     let sql = format!("
         SELECT v.parent_id AS item_id, COUNT(*) AS unwatched
         FROM media_items AS v
-        LEFT JOIN user_item_data AS u ON u.item_id = v.id
+        LEFT JOIN media_item_user_data AS u ON u.item_id = v.id AND u.user_id = ?1
         WHERE v.id IN (SELECT item_id FROM video_files)
             AND v.parent_id IN ({placeholders})
             AND COALESCE(u.is_watched, 0) = 0
@@ -588,7 +612,7 @@ pub async fn get_user_data_for_collections(
         UNION
         SELECT v.grandparent_id AS item_id, COUNT(*) AS unwatched
         FROM media_items AS v
-        LEFT JOIN user_item_data AS u ON u.item_id = v.id
+        LEFT JOIN media_item_user_data AS u ON u.item_id = v.id AND u.user_id = ?1
         WHERE v.id IN (SELECT item_id FROM video_files)
             AND v.grandparent_id IN ({placeholders})
             AND COALESCE(u.is_watched, 0) = 0
@@ -752,7 +776,7 @@ pub async fn update_metadata(
 ///
 /// This should be called from within a transaction.
 pub async fn remove(conn: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
-    sqlx::query("DELETE FROM user_item_data WHERE item_id = ?")
+    sqlx::query("DELETE FROM media_item_user_data WHERE item_id = ?")
         .bind(id)
         .execute(&mut *conn)
         .await?;

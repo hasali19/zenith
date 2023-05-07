@@ -1,7 +1,11 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/preferences.dart';
+import 'package:zenith/router.dart';
+
+import 'api.dart';
 
 class AppDrawer extends ConsumerWidget {
   final Screen current;
@@ -71,6 +75,15 @@ class AppDrawer extends ConsumerWidget {
             icon: Icons.settings,
             selected: current == Screen.settings,
             onTap: () => onTap(Screen.settings),
+          ),
+          NavigationDrawerItem(
+            title: 'Logout',
+            icon: Icons.logout,
+            onTap: () {
+              ref.read(apiProvider).logout();
+              context.router.popUntilRoot();
+              context.router.replace(const LoginScreenRoute());
+            },
           ),
         ],
       ),

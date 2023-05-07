@@ -7,9 +7,10 @@ use std::time::Duration;
 use axum::extract::OriginalUri;
 use axum::http::StatusCode;
 use axum::Extension;
+use axum_extra::extract::cookie::Key;
 use axum_files::{FileRequest, FileResponse};
 use camino::Utf8Path;
-use eyre::bail;
+use eyre::{bail, Context};
 use futures::FutureExt;
 use time::OffsetDateTime;
 use tmdb::TmdbClient;
@@ -26,7 +27,7 @@ use zenith::library::{LibraryEvent, MediaLibrary};
 use zenith::metadata::MetadataManager;
 use zenith::transcoder::{self, Transcoder};
 use zenith::video_prober::Ffprobe;
-use zenith::Db;
+use zenith::{App, Db};
 
 fn init_tracing(config: &Config) {
     let fmt_layer = tracing_subscriber::fmt::layer();
@@ -162,8 +163,14 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
 
     tracing::info!("starting server at http://{addr}");
 
-    let app = axum::Router::new()
+    let key_path = config.paths.data.join("key");
+    let key = load_or_create_key(&key_path)?;
+
+    let app = App { key };
+
+    let router = axum::Router::new()
         .nest("/api", zenith::api::router())
+        .with_state(app)
         .fallback_service(axum::routing::get(spa))
         .layer(TraceLayer::new_for_http())
         .layer(Extension(config))
@@ -177,7 +184,7 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
     {
         let shutdown = Notify::new();
         let server = axum::Server::bind(&addr)
-            .serve(app.into_make_service())
+            .serve(router.into_make_service())
             .with_graceful_shutdown(shutdown.notified());
 
         let ctrl_c =
@@ -208,6 +215,20 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
     }
 
     Ok(())
+}
+
+fn load_or_create_key(key_path: &Utf8Path) -> eyre::Result<Key> {
+    if key_path.exists() {
+        let master_key = std::fs::read(key_path)
+            .wrap_err_with(|| format!("failed to read key file: {key_path:?}"))?;
+        Key::try_from(master_key.as_slice())
+            .wrap_err_with(|| format!("key file is invalid: {key_path:?}"))
+    } else {
+        let key = Key::generate();
+        std::fs::write(key_path, key.master())
+            .wrap_err_with(|| format!("failed to write key to file: {key_path:?}"))?;
+        Ok(key)
+    }
 }
 
 async fn spa(OriginalUri(uri): OriginalUri, file: FileRequest) -> Result<FileResponse, StatusCode> {

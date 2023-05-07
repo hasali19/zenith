@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/main.dart';
-import 'package:zenith/preferences.dart';
 import 'package:zenith/screens/collection_details.dart';
 import 'package:zenith/screens/collections.dart';
 import 'package:zenith/screens/home.dart';
 import 'package:zenith/screens/item_details/item_details.dart';
+import 'package:zenith/screens/login.dart';
 import 'package:zenith/screens/media_library.dart';
 import 'package:zenith/screens/settings.dart';
 import 'package:zenith/screens/setup.dart';
@@ -20,7 +20,7 @@ part 'router.gr.dart';
     path: '/',
     page: MainScreen,
     initial: true,
-    guards: [SetupGuard],
+    guards: [ServerSetupGuard, AuthGuard],
     children: [
       AutoRoute(page: HomeScreen, initial: true),
       AutoRoute(path: 'library/movies', page: MoviesScreen),
@@ -33,41 +33,69 @@ part 'router.gr.dart';
     path: '/items/:id',
     page: ItemDetailsScreen,
     usesPathAsKey: true,
+    guards: [ServerSetupGuard, AuthGuard],
   ),
   AutoRoute(
     path: '/collections/:id',
     page: CollectionDetailsScreen,
     usesPathAsKey: true,
+    guards: [ServerSetupGuard, AuthGuard],
   ),
   AutoRoute(
     path: '/player/:id',
     page: VideoPlayerScreen,
     usesPathAsKey: true,
+    guards: [ServerSetupGuard, AuthGuard],
   ),
-  AutoRoute(path: '/setup', page: SetupScreen, guards: [SetupGuard]),
+  AutoRoute(
+    path: '/login',
+    page: LoginScreen,
+    guards: [ServerSetupGuard],
+    children: [
+      AutoRoute(page: LoginUsersScreen, initial: true),
+      AutoRoute(path: 'user', page: LoginUserScreen),
+      AutoRoute(path: 'register', page: LoginRegisterScreen),
+    ],
+  ),
+  AutoRoute(path: '/setup', page: SetupScreen),
 ])
 class AppRouter extends _$AppRouter {
-  AppRouter({required SetupGuard setupGuard}) : super(setupGuard: setupGuard);
+  AppRouter({
+    required ServerSetupGuard serverSetupGuard,
+    required AuthGuard authGuard,
+  }) : super(
+          serverSetupGuard: serverSetupGuard,
+          authGuard: authGuard,
+        );
 }
 
-class SetupGuard extends AutoRouteGuard {
-  Server? Function() getServer;
+class ServerSetupGuard extends AutoRouteGuard {
+  final Future<bool> Function() isServerSet;
 
-  SetupGuard(this.getServer);
+  ServerSetupGuard(this.isServerSet);
 
   @override
-  void onNavigation(NavigationResolver resolver, StackRouter router) {
-    final activeServer = getServer();
-    if ((activeServer != null && resolver.route.path != '/setup') ||
-        (resolver.route.path == '/setup' && activeServer == null)) {
+  void onNavigation(NavigationResolver resolver, StackRouter router) async {
+    if (await isServerSet()) {
       return resolver.next(true);
     }
 
-    if (activeServer != null) {
-      router.push(const MainScreenRoute());
-    } else {
-      router.push(const SetupScreenRoute());
+    router.replace(const SetupScreenRoute());
+  }
+}
+
+class AuthGuard extends AutoRouteGuard {
+  final Future<bool> Function() isLoggedIn;
+
+  AuthGuard(this.isLoggedIn);
+
+  @override
+  void onNavigation(NavigationResolver resolver, StackRouter router) async {
+    if (await isLoggedIn()) {
+      return resolver.next(true);
     }
+
+    router.replace(const LoginScreenRoute());
   }
 }
 

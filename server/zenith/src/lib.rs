@@ -1,6 +1,7 @@
 #![feature(let_chains)]
 
 mod ext;
+mod password_utils;
 
 pub mod api;
 pub mod config;
@@ -12,7 +13,20 @@ pub mod util;
 pub mod utils;
 pub mod video_prober;
 
+use axum::extract::FromRef;
+use axum_extra::extract::cookie::Key;
 pub use db::media::MediaItemType;
 pub use db::Db;
 
-speq::axum_config!(());
+#[derive(Clone)]
+pub struct App {
+    pub key: Key,
+}
+
+impl FromRef<App> for Key {
+    fn from_ref(input: &App) -> Self {
+        input.key.clone()
+    }
+}
+
+speq::axum_config!(App);

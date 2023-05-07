@@ -15,10 +15,13 @@ part of 'router.dart';
 class _$AppRouter extends RootStackRouter {
   _$AppRouter({
     GlobalKey<NavigatorState>? navigatorKey,
-    required this.setupGuard,
+    required this.serverSetupGuard,
+    required this.authGuard,
   }) : super(navigatorKey);
 
-  final SetupGuard setupGuard;
+  final ServerSetupGuard serverSetupGuard;
+
+  final AuthGuard authGuard;
 
   @override
   final Map<String, PageFactory> pagesMap = {
@@ -74,6 +77,12 @@ class _$AppRouter extends RootStackRouter {
         ),
       );
     },
+    LoginScreenRoute.name: (routeData) {
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: const LoginScreen(),
+      );
+    },
     SetupScreenRoute.name: (routeData) {
       return MaterialPageX<dynamic>(
         routeData: routeData,
@@ -110,6 +119,44 @@ class _$AppRouter extends RootStackRouter {
         child: const SettingsScreen(),
       );
     },
+    LoginUsersScreenRoute.name: (routeData) {
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: const LoginUsersScreen(),
+      );
+    },
+    LoginUserScreenRoute.name: (routeData) {
+      final queryParams = routeData.queryParams;
+      final args = routeData.argsAs<LoginUserScreenRouteArgs>(
+          orElse: () => LoginUserScreenRouteArgs(
+              username: queryParams.optString('username')));
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: LoginUserScreen(
+          key: args.key,
+          username: args.username,
+        ),
+      );
+    },
+    LoginRegisterScreenRoute.name: (routeData) {
+      final queryParams = routeData.queryParams;
+      final args = routeData.argsAs<LoginRegisterScreenRouteArgs>(
+          orElse: () => LoginRegisterScreenRouteArgs(
+                initial: queryParams.getBool(
+                  'initial',
+                  false,
+                ),
+                code: queryParams.optString('code'),
+              ));
+      return MaterialPageX<dynamic>(
+        routeData: routeData,
+        child: LoginRegisterScreen(
+          key: args.key,
+          initial: args.initial,
+          code: args.code,
+        ),
+      );
+    },
   };
 
   @override
@@ -117,7 +164,10 @@ class _$AppRouter extends RootStackRouter {
         RouteConfig(
           MainScreenRoute.name,
           path: '/',
-          guards: [setupGuard],
+          guards: [
+            serverSetupGuard,
+            authGuard,
+          ],
           children: [
             RouteConfig(
               HomeScreenRoute.name,
@@ -150,21 +200,54 @@ class _$AppRouter extends RootStackRouter {
           ItemDetailsScreenRoute.name,
           path: '/items/:id',
           usesPathAsKey: true,
+          guards: [
+            serverSetupGuard,
+            authGuard,
+          ],
         ),
         RouteConfig(
           CollectionDetailsScreenRoute.name,
           path: '/collections/:id',
           usesPathAsKey: true,
+          guards: [
+            serverSetupGuard,
+            authGuard,
+          ],
         ),
         RouteConfig(
           VideoPlayerScreenRoute.name,
           path: '/player/:id',
           usesPathAsKey: true,
+          guards: [
+            serverSetupGuard,
+            authGuard,
+          ],
+        ),
+        RouteConfig(
+          LoginScreenRoute.name,
+          path: '/login',
+          guards: [serverSetupGuard],
+          children: [
+            RouteConfig(
+              LoginUsersScreenRoute.name,
+              path: '',
+              parent: LoginScreenRoute.name,
+            ),
+            RouteConfig(
+              LoginUserScreenRoute.name,
+              path: 'user',
+              parent: LoginScreenRoute.name,
+            ),
+            RouteConfig(
+              LoginRegisterScreenRoute.name,
+              path: 'register',
+              parent: LoginScreenRoute.name,
+            ),
+          ],
         ),
         RouteConfig(
           SetupScreenRoute.name,
           path: '/setup',
-          guards: [setupGuard],
         ),
       ];
 }
@@ -295,6 +378,19 @@ class VideoPlayerScreenRouteArgs {
 }
 
 /// generated route for
+/// [LoginScreen]
+class LoginScreenRoute extends PageRouteInfo<void> {
+  const LoginScreenRoute({List<PageRouteInfo>? children})
+      : super(
+          LoginScreenRoute.name,
+          path: '/login',
+          initialChildren: children,
+        );
+
+  static const String name = 'LoginScreenRoute';
+}
+
+/// generated route for
 /// [SetupScreen]
 class SetupScreenRoute extends PageRouteInfo<void> {
   const SetupScreenRoute()
@@ -364,4 +460,95 @@ class SettingsScreenRoute extends PageRouteInfo<void> {
         );
 
   static const String name = 'SettingsScreenRoute';
+}
+
+/// generated route for
+/// [LoginUsersScreen]
+class LoginUsersScreenRoute extends PageRouteInfo<void> {
+  const LoginUsersScreenRoute()
+      : super(
+          LoginUsersScreenRoute.name,
+          path: '',
+        );
+
+  static const String name = 'LoginUsersScreenRoute';
+}
+
+/// generated route for
+/// [LoginUserScreen]
+class LoginUserScreenRoute extends PageRouteInfo<LoginUserScreenRouteArgs> {
+  LoginUserScreenRoute({
+    Key? key,
+    required String? username,
+  }) : super(
+          LoginUserScreenRoute.name,
+          path: 'user',
+          args: LoginUserScreenRouteArgs(
+            key: key,
+            username: username,
+          ),
+          rawQueryParams: {'username': username},
+        );
+
+  static const String name = 'LoginUserScreenRoute';
+}
+
+class LoginUserScreenRouteArgs {
+  const LoginUserScreenRouteArgs({
+    this.key,
+    required this.username,
+  });
+
+  final Key? key;
+
+  final String? username;
+
+  @override
+  String toString() {
+    return 'LoginUserScreenRouteArgs{key: $key, username: $username}';
+  }
+}
+
+/// generated route for
+/// [LoginRegisterScreen]
+class LoginRegisterScreenRoute
+    extends PageRouteInfo<LoginRegisterScreenRouteArgs> {
+  LoginRegisterScreenRoute({
+    Key? key,
+    bool initial = false,
+    String? code,
+  }) : super(
+          LoginRegisterScreenRoute.name,
+          path: 'register',
+          args: LoginRegisterScreenRouteArgs(
+            key: key,
+            initial: initial,
+            code: code,
+          ),
+          rawQueryParams: {
+            'initial': initial,
+            'code': code,
+          },
+        );
+
+  static const String name = 'LoginRegisterScreenRoute';
+}
+
+class LoginRegisterScreenRouteArgs {
+  const LoginRegisterScreenRouteArgs({
+    this.key,
+    this.initial = false,
+    this.code,
+  });
+
+  final Key? key;
+
+  final bool initial;
+
+  final String? code;
+
+  @override
+  String toString() {
+    return 'LoginRegisterScreenRouteArgs{key: $key, initial: $initial, code: $code}';
+  }
 }

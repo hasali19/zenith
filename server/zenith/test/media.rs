@@ -31,13 +31,16 @@ test_snapshot!(
 test_snapshot!(get_continue_watching, "/items/continue_watching");
 
 #[test(with_app)]
-async fn update_progress(app: TestApp) {
+async fn update_progress(mut app: TestApp) {
+    let cookie = app.login().await;
+
     let res = app
-        .router
+        .router()
         .oneshot(
             Request::builder()
                 .method("POST")
                 .uri("/progress/1?position=100")
+                .header("Cookie", &cookie)
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -47,8 +50,8 @@ async fn update_progress(app: TestApp) {
     assert_eq!(res.status(), StatusCode::OK);
 
     let mut conn = app.db.acquire().await.unwrap();
-    let (position,): (f64,) =
-        sqlx::query_as("SELECT position FROM user_item_data WHERE item_id = 1")
+    let position: f64 =
+        sqlx::query_scalar("SELECT position FROM media_item_user_data WHERE item_id = 1")
             .fetch_one(&mut conn)
             .await
             .unwrap();
