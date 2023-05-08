@@ -4,7 +4,6 @@ use axum::{Extension, Json};
 use db::Db;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use speq::axum::{delete, get, post, put};
 use speq::Reflect;
 
 use crate::utils;
@@ -30,9 +29,8 @@ impl From<db::collections::Collection> for Collection {
     }
 }
 
-#[get("/collections")]
-#[response(model = Vec<Collection>)]
-async fn get_collections(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
+/// GET /collections
+pub async fn get_collections(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let collections = db::collections::get_all(&mut conn)
         .await?
@@ -42,10 +40,8 @@ async fn get_collections(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     Ok(Json(collections))
 }
 
-#[get("/collections/:id")]
-#[path(i64)]
-#[response(model = Collection)]
-async fn get_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
+/// GET /collections/:id
+pub async fn get_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let collection = db::collections::get(&mut conn, *id)
         .await?
@@ -54,14 +50,12 @@ async fn get_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl Into
 }
 
 #[derive(Deserialize)]
-struct NewCollection {
+pub struct NewCollection {
     name: String,
 }
 
-/// xyz
-#[post("/collections")]
-#[response(model = Collection)]
-async fn create_collection(
+/// POST /collections
+pub async fn create_collection(
     db: Extension<Db>,
     data: Json<NewCollection>,
 ) -> ApiResult<impl IntoResponse> {
@@ -71,28 +65,27 @@ async fn create_collection(
     Ok(Json(Collection::from(collection)))
 }
 
-#[delete("/collections/:id")]
-async fn delete_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
+/// DELETE /collections/:id
+pub async fn delete_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     db::collections::remove(&mut conn, *id).await?;
     Ok(())
 }
 
 #[derive(Deserialize)]
-struct UpdateCollection {
+pub struct UpdateCollection {
     meta: Option<UpdateCollectionMeta>,
     items: Option<Vec<i64>>,
 }
 
 #[derive(Deserialize)]
-struct UpdateCollectionMeta {
+pub struct UpdateCollectionMeta {
     name: String,
     overview: Option<String>,
 }
 
-#[put("/collections/:id")]
-#[response(model = Collection)]
-async fn update_collection(
+/// PUT /collections/:id
+pub async fn update_collection(
     id: Path<i64>,
     db: Extension<Db>,
     data: Json<UpdateCollection>,

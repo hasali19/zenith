@@ -3,7 +3,6 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum_files::{FileRequest, FileResponse};
 use db::Db;
-use speq::axum::{delete, get};
 
 use crate::api::error::bad_request;
 use crate::api::ApiResult;
@@ -11,10 +10,8 @@ use crate::api::ApiResult;
 use super::error::not_found;
 use super::ext::OptionExt;
 
-#[get("/subtitles/:id")]
-#[path(i64)]
-#[response(status = 200)]
-async fn get_subtitle(
+/// GET /subtitles/:id
+pub async fn get_subtitle(
     id: Path<i64>,
     file: FileRequest,
     db: Extension<Db>,
@@ -33,9 +30,7 @@ async fn get_subtitle(
     Ok(res)
 }
 
-#[delete("/subtitles/:id")]
-#[path(i64)]
-#[response(status = 200)]
+/// DELETE /subtitles/:id
 pub async fn delete_subtitle(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 

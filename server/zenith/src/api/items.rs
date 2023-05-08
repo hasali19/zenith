@@ -10,7 +10,6 @@ use db::Db;
 use itertools::Itertools;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
-use speq::axum::{delete, get, patch};
 use speq::Reflect;
 use sqlx::SqliteConnection;
 
@@ -23,7 +22,7 @@ use super::error::bad_request;
 use super::ext::OptionExt;
 
 #[derive(Debug, Deserialize, Reflect)]
-struct ItemsQuery {
+pub struct ItemsQuery {
     #[serde(default)]
     ids: Vec<i64>,
     item_type: Option<MediaItemType>,
@@ -38,17 +37,16 @@ struct ItemsQuery {
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Reflect)]
 #[serde(rename_all = "snake_case")]
-enum ItemSortField {
+pub enum ItemSortField {
     Name,
     ParentIndex,
     GrandparentIndex,
     CollectionIndex,
 }
 
-#[get("/items")]
-#[response(model = Vec<MediaItem>)]
-async fn get_items(
-    #[query] QsQuery(query): QsQuery<ItemsQuery>,
+/// GET /items
+pub async fn get_items(
+    QsQuery(query): QsQuery<ItemsQuery>,
     user: auth::User,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
@@ -88,14 +86,13 @@ async fn get_items(
 }
 
 #[derive(Deserialize, Reflect)]
-struct ContinueWatchingQuery {
+pub struct ContinueWatchingQuery {
     limit: Option<u32>,
 }
 
-#[get("/items/continue_watching")]
-#[response(model = Vec<MediaItem>)]
-async fn get_continue_watching(
-    #[query] QsQuery(query): QsQuery<ContinueWatchingQuery>,
+/// GET /items/continue_watching
+pub async fn get_continue_watching(
+    QsQuery(query): QsQuery<ContinueWatchingQuery>,
     user: auth::User,
     Extension(db): Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
@@ -105,9 +102,7 @@ async fn get_continue_watching(
     Ok(Json(query_items_by_id(&mut conn, user.id, &ids).await?))
 }
 
-#[get("/items/:id")]
-#[path(i64)]
-#[response(model = MediaItem)]
+/// GET /items/:id
 pub async fn get_item(
     id: Path<i64>,
     user: auth::User,
@@ -203,10 +198,8 @@ pub struct DeleteItemQuery {
     remove_files: bool,
 }
 
-#[delete("/items/:id")]
-#[path(i64)]
-#[response(status = 200)]
-async fn delete_item(
+/// DELETE /items/:id
+pub async fn delete_item(
     Path(id): Path<i64>,
     QsQuery(query): QsQuery<DeleteItemQuery>,
     Extension(db): Extension<Db>,
@@ -234,18 +227,15 @@ async fn delete_item(
 }
 
 #[derive(Deserialize, Reflect)]
-struct VideoUserDataPatch {
+pub struct VideoUserDataPatch {
     #[serde(default)]
     is_watched: Option<bool>,
     #[serde(default)]
     position: Option<f64>,
 }
 
-#[patch("/items/:id/user_data")]
-#[path(i64)]
-#[request(model = VideoUserDataPatch)]
-#[response(status = 200)]
-async fn update_user_data(
+/// PATCH /items/:id/user_data
+pub async fn update_user_data(
     id: Path<i64>,
     user: auth::User,
     db: Extension<Db>,

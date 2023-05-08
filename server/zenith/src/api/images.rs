@@ -11,7 +11,6 @@ use db::Db;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
 use sha2::{Digest, Sha256};
-use speq::axum::get;
 use speq::Reflect;
 
 use crate::config::Config;
@@ -33,13 +32,10 @@ pub enum MediaImageType {
     Thumbnail,
 }
 
-#[get("/items/:id/images/:type")]
-#[path(i64, MediaImageType)]
-#[response(status = 200)]
-#[response(status = 404)]
+/// GET /items/:id/images/:type
 pub async fn get_image(
     Path((id, img_type)): Path<(i64, MediaImageType)>,
-    #[query] QsQuery(query): QsQuery<ImageQuery>,
+    QsQuery(query): QsQuery<ImageQuery>,
     file: FileRequest,
     Extension(config): Extension<Arc<Config>>,
     Extension(db): Extension<Db>,

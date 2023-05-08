@@ -7,7 +7,6 @@ use camino::{Utf8Path, Utf8PathBuf};
 use db::subtitles::NewSubtitle;
 use db::Db;
 use serde::Deserialize;
-use speq::axum::post;
 use tokio::fs::File;
 use tokio::io::BufWriter;
 use tokio_stream::StreamExt;
@@ -43,8 +42,7 @@ pub struct ImportSubtitleRequestData {
 }
 
 // TODO: Support specifying multipart requests
-#[post("/import/subtitle")]
-#[response(status = 200)]
+/// POST /import/subtitle
 pub async fn import_subtitle(
     config: Extension<Arc<Config>>,
     db: Extension<Db>,

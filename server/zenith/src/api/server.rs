@@ -1,15 +1,14 @@
 use axum::body::Full;
 use axum::response::{IntoResponse, Response};
 use axum::Extension;
-use speq::axum::post;
 use time::OffsetDateTime;
 
 use crate::Db;
 
 use super::ApiResult;
 
-#[post("/server/db/backup")]
-async fn backup_db(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
+/// POST /server/db/backup
+pub async fn backup_db(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let timestamp = OffsetDateTime::now_utc().unix_timestamp();
     let content_disposition = format!("attachment; filename=\"zenith_{timestamp}.db\"");
 

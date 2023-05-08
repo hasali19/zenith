@@ -9,7 +9,6 @@ use axum_extra::extract::cookie::{Cookie, Key, SameSite};
 use axum_extra::extract::PrivateCookieJar;
 use db::Db;
 use serde::Deserialize;
-use speq::axum::post;
 
 use crate::password_utils::verify_password;
 
@@ -64,13 +63,13 @@ where
 }
 
 #[derive(Deserialize)]
-struct Credentials {
+pub struct Credentials {
     username: String,
     password: String,
 }
 
-#[post("/auth/login")]
-async fn login(
+/// POST /auth/login
+pub async fn login(
     cookies: PrivateCookieJar,
     db: Extension<Db>,
     credentials: Json<Credentials>,
@@ -89,8 +88,8 @@ async fn login(
     Ok(cookies.add(build_auth_cookie(Cow::Owned(user.id.to_string()))))
 }
 
-#[post("/auth/logout")]
-async fn logout(cookies: PrivateCookieJar) -> ApiResult<impl IntoResponse> {
+/// POST /auth/logout
+pub async fn logout(cookies: PrivateCookieJar) -> ApiResult<impl IntoResponse> {
     Ok(cookies.remove(build_auth_cookie(Cow::Borrowed(""))))
 }
 

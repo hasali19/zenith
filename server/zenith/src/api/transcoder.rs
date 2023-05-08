@@ -6,7 +6,6 @@ use axum::response::{sse, IntoResponse};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use serde_qs::axum::QsQuery;
-use speq::axum::{get, post};
 use speq::Reflect;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
@@ -20,8 +19,7 @@ struct TranscoderState {
     queue: Vec<Job>,
 }
 
-#[get("/transcoder")]
-#[response(model = TranscoderState)]
+/// GET /transcoder
 pub async fn get_state(transcoder: Extension<Arc<Transcoder>>) -> ApiResult<impl IntoResponse> {
     Ok(Json(TranscoderState {
         queue: transcoder.queue().await,
@@ -46,8 +44,7 @@ enum Event {
     Error { id: i64 },
 }
 
-#[get("/transcoder/events")]
-#[response(status = 200)]
+/// GET /transcoder/events
 pub async fn get_events(transcoder: Extension<Arc<Transcoder>>) -> ApiResult<impl IntoResponse> {
     let queue = transcoder.queue().await;
 
@@ -77,10 +74,9 @@ pub struct TranscodeParams {
     all: bool,
 }
 
-#[post("/transcoder")]
-#[response(status = 200)]
+/// POST /transcoder
 pub async fn transcode(
-    #[query] query: QsQuery<TranscodeParams>,
+    query: QsQuery<TranscodeParams>,
     transcoder: Extension<Arc<Transcoder>>,
 ) -> ApiResult<impl IntoResponse> {
     match query.video_id {

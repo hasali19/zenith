@@ -6,7 +6,6 @@ use db::videos::UpdateVideoUserData;
 use db::Db;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
-use speq::axum::post;
 use speq::Reflect;
 
 use crate::api::ApiResult;
@@ -16,16 +15,14 @@ use super::error::bad_request;
 use super::ext::OptionExt;
 
 #[derive(Deserialize, Reflect)]
-struct ProgressUpdate {
+pub struct ProgressUpdate {
     position: f64,
 }
 
-#[post("/progress/:id")]
-#[path(i64)]
-#[response(status = 200)]
-async fn update_progress(
+/// POST /progress/:id
+pub async fn update_progress(
     id: Path<i64>,
-    #[query] query: QsQuery<ProgressUpdate>,
+    query: QsQuery<ProgressUpdate>,
     user: auth::User,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {

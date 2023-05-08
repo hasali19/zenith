@@ -5,7 +5,6 @@ use camino::Utf8Path;
 use db::Db;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
-use speq::axum::get;
 use speq::Reflect;
 
 use crate::api::ApiResult;
@@ -18,12 +17,10 @@ pub struct GetVideoContentQuery {
     attachment: bool,
 }
 
-#[get("/videos/:id")]
-#[path(i64)]
-#[response(status = 200)]
+/// GET /videos/:id
 pub async fn get_video_content(
     id: Path<i64>,
-    #[query] query: QsQuery<GetVideoContentQuery>,
+    query: QsQuery<GetVideoContentQuery>,
     file: FileRequest,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {

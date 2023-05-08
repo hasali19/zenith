@@ -6,7 +6,6 @@ use db::Db;
 use eyre::Context;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use speq::axum::{get, post};
 use uuid::Uuid;
 
 use crate::password_utils::hash_password;
@@ -21,8 +20,8 @@ struct User {
     username: String,
 }
 
-#[get("/users")]
-async fn get_all(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
+/// GET /users
+pub async fn get_all(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
     let users = db::users::get_all(&mut conn)
@@ -37,8 +36,8 @@ async fn get_all(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     Ok(Json(users))
 }
 
-#[get("/users/me")]
-async fn get_authenticated_user(user: auth::User) -> ApiResult<impl IntoResponse> {
+/// GET /users/me
+pub async fn get_authenticated_user(user: auth::User) -> ApiResult<impl IntoResponse> {
     Ok(Json(User {
         id: user.id,
         username: user.username,
@@ -46,14 +45,14 @@ async fn get_authenticated_user(user: auth::User) -> ApiResult<impl IntoResponse
 }
 
 #[derive(Deserialize)]
-struct NewUser {
+pub struct NewUser {
     username: String,
     password: String,
     registration_code: Option<String>,
 }
 
-#[post("/users")]
-async fn create(
+/// POST /users
+pub async fn create(
     db: Extension<Db>,
     user: Result<auth::User, ApiError>,
     Json(body): Json<NewUser>,
@@ -111,8 +110,11 @@ struct UserRegistration {
     code: String,
 }
 
-#[post("/users/registrations")]
-async fn create_registration(_user: auth::User, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
+/// POST /users/registrations
+pub async fn create_registration(
+    _user: auth::User,
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
     let mut transaction = db.begin().await?;
 
     let id = Uuid::new_v4().to_string();

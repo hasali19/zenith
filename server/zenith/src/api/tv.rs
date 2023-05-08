@@ -3,17 +3,14 @@ use axum::response::IntoResponse;
 use axum::Json;
 use db::items::SortField;
 use db::Db;
-use speq::axum::get;
 
 use crate::api::ApiResult;
 use crate::MediaItemType;
 
 use super::auth;
-use super::dto::MediaItem;
 use super::items::{query_items, query_items_by_id};
 
-#[get("/shows")]
-#[response(model = Vec<MediaItem>)]
+/// GET /shows
 pub async fn get_shows(user: auth::User, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
@@ -26,17 +23,14 @@ pub async fn get_shows(user: auth::User, db: Extension<Db>) -> ApiResult<impl In
     Ok(Json(query_items(&mut conn, user.id, query).await?))
 }
 
-#[get("/shows/recent")]
-#[response(model = Vec<MediaItem>)]
+/// GET /shows/recent
 pub async fn get_recent_shows(user: auth::User, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let ids = db::items::get_recently_updated_shows(&mut conn, user.id).await?;
     Ok(Json(query_items_by_id(&mut conn, user.id, &ids).await?))
 }
 
-#[get("/shows/:id/seasons")]
-#[path(i64)]
-#[response(model = Vec<MediaItem>)]
+/// GET /shows/:id/seasons
 pub async fn get_seasons(
     show_id: Path<i64>,
     user: auth::User,
@@ -54,9 +48,7 @@ pub async fn get_seasons(
     Ok(Json(query_items(&mut conn, user.id, query).await?))
 }
 
-#[get("/shows/:id/episodes")]
-#[path(i64)]
-#[response(model = Vec<MediaItem>)]
+/// GET /shows/:id/episodes
 pub async fn get_show_episodes(
     show_id: Path<i64>,
     user: auth::User,
@@ -74,9 +66,7 @@ pub async fn get_show_episodes(
     Ok(Json(query_items(&mut conn, user.id, query).await?))
 }
 
-#[get("/seasons/:id/episodes")]
-#[path(i64)]
-#[response(model = Vec<MediaItem>)]
+/// GET /seasons/:id/episodes
 pub async fn get_episodes(
     season_id: Path<i64>,
     user: auth::User,

@@ -2,7 +2,6 @@ use axum::extract::{Extension, Path};
 use axum::Json;
 use db::items::SortField;
 use db::Db;
-use speq::axum::get;
 
 use crate::MediaItemType;
 
@@ -11,8 +10,7 @@ use super::ext::OptionExt;
 use super::items::{query_items, query_items_by_id};
 use super::{auth, ApiResult};
 
-#[get("/movies")]
-#[response(model = Vec<MediaItem>)]
+/// GET /movies
 pub async fn get_movies(user: auth::User, db: Extension<Db>) -> ApiResult<Json<Vec<MediaItem>>> {
     let mut conn = db.acquire().await?;
 
@@ -25,9 +23,7 @@ pub async fn get_movies(user: auth::User, db: Extension<Db>) -> ApiResult<Json<V
     Ok(Json(query_items(&mut conn, user.id, query).await?))
 }
 
-#[get("/movies/:id")]
-#[path(i64)]
-#[response(model = MediaItem)]
+/// GET /movies/:id
 pub async fn get_movie(
     id: Path<i64>,
     user: auth::User,
@@ -44,8 +40,7 @@ pub async fn get_movie(
     Ok(Json(movie))
 }
 
-#[get("/movies/recent")]
-#[response(model = Vec<MediaItem>)]
+/// GET /movies/recent
 pub async fn get_recent_movies(
     user: auth::User,
     db: Extension<Db>,

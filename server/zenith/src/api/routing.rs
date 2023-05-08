@@ -13,10 +13,14 @@ use super::error::ApiError;
 
 const DOCS_INDEX: &str = include_str!("docs.html");
 
+mod routes {
+    include!("../../router.rs");
+}
+
 pub fn router() -> axum::Router<App> {
     let spec = super::openapi_spec();
 
-    speq::axum_router!()
+    routes::router()
         .route("/", get(|| async move { Html(DOCS_INDEX) }))
         .route("/openapi.json", get(|| async move { Json(spec) }))
         .layer(

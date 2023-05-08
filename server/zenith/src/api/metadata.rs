@@ -5,7 +5,6 @@ use axum::Json;
 use db::media::MetadataProvider;
 use db::Db;
 use serde::Deserialize;
-use speq::axum::post;
 use tmdb::TmdbClient;
 
 use crate::api::ApiResult;
@@ -15,9 +14,8 @@ use crate::MediaItemType;
 use super::error;
 use super::ext::OptionExt;
 
-#[post("/metadata/match_all")]
-#[response(status = 200)]
-async fn match_all(
+/// POST /metadata/match_all
+pub async fn match_all(
     metadata: Extension<MetadataManager>,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
@@ -26,9 +24,8 @@ async fn match_all(
     Ok(())
 }
 
-#[post("/metadata/refresh_outdated")]
-#[response(status = 200)]
-async fn refresh_outdated(
+/// POST /metadata/refresh_outdated
+pub async fn refresh_outdated(
     metadata: Extension<MetadataManager>,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
@@ -37,10 +34,8 @@ async fn refresh_outdated(
     Ok(())
 }
 
-#[post("/metadata/:id/find_match")]
-#[path(i64)]
-#[response(status = 200)]
-async fn find_match(
+/// POST /metadata/:id/find_match
+pub async fn find_match(
     Path(id): Path<i64>,
     tmdb: Extension<TmdbClient>,
     db: Extension<Db>,
@@ -58,14 +53,14 @@ async fn find_match(
 }
 
 #[derive(Deserialize)]
-struct SetMetadataMatch {
+pub struct SetMetadataMatch {
     tmdb_id: Option<i32>,
     season_number: Option<i32>,
     episode_number: Option<i32>,
 }
 
-#[post("/metadata/:id/set_match")]
-async fn set_match(
+/// POST /metadata/:id/set_match
+pub async fn set_match(
     Path(id): Path<i64>,
     tmdb: Extension<TmdbClient>,
     db: Extension<Db>,
@@ -140,10 +135,8 @@ async fn set_match(
     Ok(())
 }
 
-#[post("/metadata/:id/refresh")]
-#[path(i64)]
-#[response(status = 200)]
-async fn refresh_metadata(
+/// POST /metadata/:id/refresh
+pub async fn refresh_metadata(
     Path(id): Path<i64>,
     tmdb: Extension<TmdbClient>,
     db: Extension<Db>,
