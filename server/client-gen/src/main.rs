@@ -111,6 +111,7 @@ fn gen_ts_type(type_desc: &Type) -> String {
         },
         Type::Option(inner) => format!("({} | null)", gen_ts_type(flatten_option(inner))),
         Type::Array(inner) => format!("{}[]", gen_ts_type(inner)),
+        Type::Tuple(_) => todo!(),
         Type::Map(_) => todo!(),
         Type::Id(id) => id
             .split("::")

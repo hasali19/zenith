@@ -1,8 +1,10 @@
 #![feature(let_chains)]
 
+use std::collections::HashSet;
 use std::time::Instant;
 
-use syn::{Expr, ExprLit, Lit};
+use quote::{format_ident, quote};
+use syn::{Expr, ExprLit, FnArg, Lit, Type};
 use walkdir::WalkDir;
 
 struct Route {
@@ -10,15 +12,22 @@ struct Route {
     path: String,
     method: String,
     src_file: String,
+    fn_path: syn::Path,
+    param_count: usize,
+    path_param_index: Option<usize>,
 }
 
 fn main() -> eyre::Result<()> {
     let start = Instant::now();
 
-    println!("use crate::App;");
-    println!();
-    println!("pub fn router() -> axum::Router<App> {{");
-    println!("    axum::Router::new()");
+    let mut tokens = quote! {
+        use std::borrow::Cow;
+
+        use axum::Router;
+        use axum::http::Method;
+        use axum::routing::*;
+        use speq::reflection::{Reflect, Type, TypeContext};
+    };
 
     let mut routes = vec![];
 
@@ -67,50 +76,120 @@ fn main() -> eyre::Result<()> {
                 if let Some((method, path)) = doc.first().and_then(|l| l.split_once(' ')) {
                     let method = method.to_lowercase();
                     let path = path.to_owned();
+                    let fn_path = format!("crate::{mod_path}::{fn_name}");
 
-                    println!("       .route(\"{path}\", axum::routing::{method}(crate::{mod_path}::{fn_name}))");
+                    let path_param_index =
+                        item.sig.inputs.iter().enumerate().find_map(|(i, arg)| {
+                            let FnArg::Typed(arg) = arg else {
+                            return None;
+                        };
+
+                            let Type::Path(ty) = &*arg.ty else {
+                            return None;
+                        };
+
+                            let segment = ty.path.segments.last()?;
+
+                            if segment.ident != "Path" {
+                                return None;
+                            }
+
+                            Some(i)
+                        });
 
                     routes.push(Route {
                         name: fn_name,
                         path,
                         method,
                         src_file: entry.path().to_str().unwrap().to_owned(),
+                        fn_path: syn::parse_str(&fn_path)?,
+                        param_count: item.sig.inputs.len(),
+                        path_param_index,
                     });
                 }
             }
         }
     }
 
-    println!("}}");
-    println!();
-    println!(
-        "pub fn route_specs(cx: &mut speq::reflection::TypeContext) -> Vec<speq::RouteSpec> {{"
-    );
-    println!("    vec![");
+    let mut with_fns = HashSet::new();
 
-    for route in routes {
-        let name = route.name;
-        let path = route.path;
-        let method = route.method.to_uppercase();
-        let src_file = route.src_file;
+    let route_calls = routes.iter().map(|route| {
+        let path = &route.path;
+        let method = format_ident!("{}", route.method);
+        let fn_path = &route.fn_path;
+        quote! {
+            .route(#path, #method(#fn_path))
+        }
+    });
 
-        println!(
-            "        speq::RouteSpec {{
-            name: std::borrow::Cow::Borrowed(\"{name}\"),
-            path: std::borrow::Cow::Borrowed(\"{path}\"),
-            method: axum::http::Method::{method},
-            src_file: std::borrow::Cow::Borrowed(\"{src_file}\"),
-            doc: None,
-            params: vec![],
-            query: None,
-            request: None,
-            responses: vec![],
-        }},"
-        );
+    tokens.extend(quote! {
+        pub fn router() -> Router<crate::App> {
+            Router::new() #(#route_calls)*
+        }
+    });
+
+    let route_specs = routes.iter().map(|route| {
+        let name = &route.name;
+        let path = &route.path;
+        let method = format_ident!("{}", route.method.to_uppercase());
+        let src_file = &route.src_file;
+        let fn_path = &route.fn_path;
+
+        let params = route.path_param_index.map(|index| {
+            with_fns.insert((route.param_count, index));
+            let param_count = route.param_count;
+            let parameter_type_fn = format_ident!("parameter_type_{param_count}_{index}");
+            quote! { Some(#parameter_type_fn(#fn_path, cx)) }
+        });
+
+        let params = params.unwrap_or_else(|| quote! { None });
+
+        quote! {
+            speq::RouteSpec {
+                name: Cow::Borrowed(#name),
+                path: speq::PathSpec {
+                    value: Cow::Borrowed(#path),
+                    params: #params,
+                },
+                method: Method::#method,
+                src_file: Cow::Borrowed(#src_file),
+                doc: None,
+                query: None,
+                request: None,
+                responses: vec![],
+            }
+        }
+    });
+
+    tokens.extend(quote! {
+        pub fn route_specs(cx: &mut TypeContext) -> Vec<speq::RouteSpec> {
+            vec![#(#route_specs),*]
+        }
+    });
+
+    for (params, i) in with_fns {
+        let fn_name = format_ident!("parameter_type_{params}_{i}");
+        let target_type_name = format_ident!("T{i}");
+
+        let type_params = (0..params).map(|i| format_ident!("T{i}"));
+        let target_fn_params = (0..params).map(|i| format_ident!("T{i}"));
+
+        tokens.extend(quote! {
+            fn #fn_name<#(#type_params),*, R>(
+                _: fn(#(#target_fn_params),*) -> R,
+                cx: &mut TypeContext,
+            ) -> Type
+            where
+                #target_type_name: Reflect
+            {
+                <#target_type_name as Reflect>::reflect(cx)
+            }
+        });
     }
 
-    println!("    ]");
-    println!("}}");
+    let tokens = prettyplease::unparse(&syn::parse2(tokens)?);
+
+    println!("{tokens}");
 
     let elapsed = Instant::now() - start;
     eprintln!("completed in {}ms", elapsed.as_millis());

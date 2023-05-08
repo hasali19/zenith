@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use axum::http::Method;
 use camino::Utf8Path;
 use indexmap::indexmap;
+use itertools::Itertools;
 use markdown::{Block, Span};
 use openapiv3::*;
 use speq::reflection::{
@@ -37,6 +38,7 @@ pub fn openapi_spec() -> OpenAPI {
         .fold(Default::default(), |mut paths, route| {
             let path = route
                 .path
+                .value
                 .trim_start_matches('/')
                 .split('/')
                 .map(|segment| {
@@ -121,25 +123,27 @@ fn build_route_spec(
         }
     }
 
-    for param in route.params {
-        let parameter_data = ParameterData {
-            name: param.name.into_owned(),
-            required: true,
-            deprecated: None,
-            description: None,
-            example: None,
-            examples: Default::default(),
-            explode: None,
-            extensions: Default::default(),
-            format: ParameterSchemaOrContent::Schema(type_to_schema(&param.type_desc)),
-        };
+    if let Some(params) = route.path.params {
+        for (name, type_desc) in build_path_params(params, &route.path.value) {
+            let parameter_data = ParameterData {
+                name: name.to_owned(),
+                required: true,
+                deprecated: None,
+                description: None,
+                example: None,
+                examples: Default::default(),
+                explode: None,
+                extensions: Default::default(),
+                format: ParameterSchemaOrContent::Schema(type_to_schema(&type_desc)),
+            };
 
-        operation
-            .parameters
-            .push(ReferenceOr::Item(Parameter::Path {
-                parameter_data,
-                style: PathStyle::Simple,
-            }));
+            operation
+                .parameters
+                .push(ReferenceOr::Item(Parameter::Path {
+                    parameter_data,
+                    style: PathStyle::Simple,
+                }));
+        }
     }
 
     if let Some(query) = route.query {
@@ -280,6 +284,7 @@ fn type_to_schema(type_desc: &Type) -> ReferenceOr<Schema> {
             max_items: None,
             unique_items: false,
         })),
+        Type::Tuple(_) => todo!(),
         Type::Map(_) => todo!(),
         Type::Id(id) => {
             return ReferenceOr::Reference {
@@ -425,5 +430,35 @@ fn schema_for_fields(fields: Vec<Field>) -> Schema {
             ..Default::default()
         }),
         schema_data: Default::default(),
+    }
+}
+
+pub fn build_path_params(type_desc: Type, path: &str) -> Vec<(&str, Type)> {
+    let param_names = path
+        .split('/')
+        .filter_map(|it| it.strip_prefix(':'))
+        .collect_vec();
+
+    match type_desc {
+        Type::Primitive(_) | Type::Option(_) => {
+            vec![(param_names[0], type_desc)]
+        }
+        Type::Array(type_desc) => param_names
+            .iter()
+            .map(|&name| (name, (*type_desc).clone()))
+            .collect(),
+        Type::Tuple(types) => {
+            assert_eq!(types.len(), param_names.len());
+            types
+                .into_iter()
+                .zip(param_names)
+                .map(|(type_desc, name)| (name, type_desc))
+                .collect()
+        }
+        Type::Map(type_desc) => param_names
+            .iter()
+            .map(|&name| (name, (*type_desc).clone()))
+            .collect(),
+        Type::Id(_) => todo!(),
     }
 }
