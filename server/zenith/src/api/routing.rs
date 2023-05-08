@@ -13,6 +13,7 @@ use super::error::ApiError;
 
 const DOCS_INDEX: &str = include_str!("docs.html");
 
+#[allow(clippy::needless_borrow)]
 pub mod routes {
     include!("../../router.rs");
 }

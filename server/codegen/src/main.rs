@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use std::time::Instant;
 
 use quote::{format_ident, quote};
-use syn::{Expr, ExprLit, FnArg, Lit, Type};
+use syn::{Expr, ExprLit, Lit};
 use walkdir::WalkDir;
 
 struct Route {
@@ -14,9 +14,6 @@ struct Route {
     src_file: String,
     fn_path: syn::Path,
     param_count: usize,
-    path_param_index: Option<usize>,
-    query_param_index: Option<usize>,
-    request_body_param_index: Option<usize>,
 }
 
 fn main() -> eyre::Result<()> {
@@ -28,8 +25,9 @@ fn main() -> eyre::Result<()> {
         use axum::Router;
         use axum::http::Method;
         use axum::routing::*;
-        use speq::{QuerySpec, RequestSpec};
-        use speq::reflection::{Reflect, Type, TypeContext};
+        use speq::reflection::{TypeContext};
+
+        use crate::{DefaultRouteFnParam, ActualRouteFnParam};
     };
 
     let mut routes = vec![];
@@ -81,32 +79,6 @@ fn main() -> eyre::Result<()> {
                     let path = path.to_owned();
                     let fn_path = format!("crate::{mod_path}::{fn_name}");
 
-                    let mut path_param_index = None;
-                    let mut query_param_index = None;
-                    let mut request_body_param_index = None;
-
-                    for (i, arg) in item.sig.inputs.iter().enumerate() {
-                        let FnArg::Typed(arg) = arg else {
-                            continue;
-                        };
-
-                        let Type::Path(ty) = &*arg.ty else {
-                            continue;
-                        };
-
-                        let Some(segment) = ty.path.segments.last() else {
-                            continue;
-                        };
-
-                        if segment.ident == "Path" {
-                            path_param_index = Some(i);
-                        } else if segment.ident == "Query" || segment.ident == "QsQuery" {
-                            query_param_index = Some(i);
-                        } else if segment.ident == "Json" {
-                            request_body_param_index = Some(i);
-                        }
-                    }
-
                     routes.push(Route {
                         name: fn_name,
                         path,
@@ -114,16 +86,13 @@ fn main() -> eyre::Result<()> {
                         src_file: entry.path().to_str().unwrap().to_owned(),
                         fn_path: syn::parse_str(&fn_path)?,
                         param_count: item.sig.inputs.len(),
-                        path_param_index,
-                        query_param_index,
-                        request_body_param_index,
                     });
                 }
             }
         }
     }
 
-    let mut parameter_type_fns = HashSet::new();
+    let mut arg_fns = HashSet::new();
 
     let route_calls = routes.iter().map(|route| {
         let path = &route.path;
@@ -147,88 +116,74 @@ fn main() -> eyre::Result<()> {
         let src_file = &route.src_file;
         let fn_path = &route.fn_path;
 
-        let params = if let Some(index) = route.path_param_index {
-            let param_count = route.param_count;
-            let parameter_type_fn = format_ident!("parameter_type_{param_count}_{index}");
-
-            parameter_type_fns.insert((param_count, index));
-
+        let stmts = (0..route.param_count).map(|i| {
+            let arg_fn = format_ident!("arg_{}_{i}", route.param_count);
+            arg_fns.insert((route.param_count, i));
             quote! {
-                Some(#parameter_type_fn(#fn_path, cx))
+                spec = (&#arg_fn(f)).process_spec(spec, cx);
             }
-        } else {
-            quote! { None }
-        };
-
-        let query = if let Some(index) = route.query_param_index {
-            let param_count = route.param_count;
-            let parameter_type_fn = format_ident!("parameter_type_{param_count}_{index}");
-
-            parameter_type_fns.insert((param_count, index));
-
-            quote! {
-                Some(QuerySpec {
-                    type_desc: #parameter_type_fn(#fn_path, cx),
-                })
-            }
-        } else {
-            quote! { None }
-        };
-
-        let request = if let Some(index) = route.request_body_param_index {
-            let param_count = route.param_count;
-            let parameter_type_fn = format_ident!("parameter_type_{param_count}_{index}");
-
-            parameter_type_fns.insert((param_count, index));
-
-            quote! {
-                Some(RequestSpec {
-                    type_desc: #parameter_type_fn(#fn_path, cx),
-                })
-            }
-        } else {
-            quote! { None }
-        };
+        });
 
         quote! {
-            speq::RouteSpec {
-                name: Cow::Borrowed(#name),
-                path: speq::PathSpec {
-                    value: Cow::Borrowed(#path),
-                    params: #params,
-                },
-                method: Method::#method,
-                src_file: Cow::Borrowed(#src_file),
-                doc: None,
-                query: #query,
-                request: #request,
-                responses: vec![],
+            {
+                use #fn_path as f;
+                let mut spec = default_spec(#name, #path, Method::#method, #src_file);
+                #(#stmts)*
+                spec
             }
         }
     });
+
+    let count = routes.len();
 
     tokens.extend(quote! {
         pub fn route_specs(cx: &mut TypeContext) -> Vec<speq::RouteSpec> {
-            vec![#(#route_specs),*]
+            fn default_spec(
+                name: &'static str,
+                path: &'static str,
+                method: Method,
+                src_file: &'static str,
+            ) -> speq::RouteSpec {
+                speq::RouteSpec {
+                    name: Cow::Borrowed(name),
+                    path: speq::PathSpec {
+                        value: Cow::Borrowed(path),
+                        params: None,
+                    },
+                    method,
+                    src_file: Cow::Borrowed(src_file),
+                    doc: None,
+                    query: None,
+                    request: None,
+                    responses: vec![],
+                }
+            }
+
+            let mut routes = Vec::with_capacity(#count);
+
+            #(routes.push(#route_specs);)*
+
+            routes
         }
     });
 
-    for (params, i) in parameter_type_fns {
-        let fn_name = format_ident!("parameter_type_{params}_{i}");
+    for (params, i) in arg_fns {
+        let fn_name = format_ident!("arg_{params}_{i}");
         let target_type_name = format_ident!("T{i}");
 
-        let type_params = (0..params).map(|i| format_ident!("T{i}"));
-        let target_fn_params = (0..params).map(|i| format_ident!("T{i}"));
+        let type_params = (0..params)
+            .map(|i| format_ident!("T{i}"))
+            .collect::<Vec<_>>();
+
+        let target_fn_params = (0..params)
+            .map(|i| format_ident!("T{i}"))
+            .collect::<Vec<_>>();
 
         tokens.extend(quote! {
             fn #fn_name<#(#type_params),*, R>(
                 _: fn(#(#target_fn_params),*) -> R,
-                cx: &mut TypeContext,
-            ) -> Type
-            where
-                #target_type_name: Reflect
-            {
-                <#target_type_name as Reflect>::reflect(cx)
+            ) -> std::marker::PhantomData<#target_type_name> {
+                std::marker::PhantomData
             }
         });
     }
