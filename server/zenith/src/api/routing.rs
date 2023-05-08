@@ -13,7 +13,7 @@ use super::error::ApiError;
 
 const DOCS_INDEX: &str = include_str!("docs.html");
 
-mod routes {
+pub mod routes {
     include!("../../router.rs");
 }
 

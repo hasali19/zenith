@@ -7,12 +7,19 @@ use indexmap::indexmap;
 use markdown::{Block, Span};
 use openapiv3::*;
 use speq::reflection::{
-    EnumTag, EnumVariantKind, Field, FloatWidth, PrimitiveType, Type, TypeDecl,
+    EnumTag, EnumVariantKind, Field, FloatWidth, PrimitiveType, Type, TypeContext, TypeDecl,
 };
-use speq::RouteSpec;
+use speq::{ApiSpec, RouteSpec};
+
+use super::routing;
 
 pub fn openapi_spec() -> OpenAPI {
-    let spec = speq::spec();
+    let mut tcx = TypeContext::new();
+    let routes = routing::routes::route_specs(&mut tcx);
+    let spec = ApiSpec {
+        routes,
+        types: tcx.into_types(),
+    };
 
     let mut openapi = OpenAPI {
         openapi: "3.0.0".to_owned(),

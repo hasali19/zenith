@@ -5,6 +5,13 @@ use std::time::Instant;
 use syn::{Expr, ExprLit, Lit};
 use walkdir::WalkDir;
 
+struct Route {
+    name: String,
+    path: String,
+    method: String,
+    src_file: String,
+}
+
 fn main() -> eyre::Result<()> {
     let start = Instant::now();
 
@@ -12,6 +19,8 @@ fn main() -> eyre::Result<()> {
     println!();
     println!("pub fn router() -> axum::Router<App> {{");
     println!("    axum::Router::new()");
+
+    let mut routes = vec![];
 
     for entry in WalkDir::new("server/zenith/src") {
         let Ok(entry) = entry else {
@@ -57,12 +66,50 @@ fn main() -> eyre::Result<()> {
 
                 if let Some((method, path)) = doc.first().and_then(|l| l.split_once(' ')) {
                     let method = method.to_lowercase();
+                    let path = path.to_owned();
+
                     println!("       .route(\"{path}\", axum::routing::{method}(crate::{mod_path}::{fn_name}))");
+
+                    routes.push(Route {
+                        name: fn_name,
+                        path,
+                        method,
+                        src_file: entry.path().to_str().unwrap().to_owned(),
+                    });
                 }
             }
         }
     }
 
+    println!("}}");
+    println!();
+    println!(
+        "pub fn route_specs(cx: &mut speq::reflection::TypeContext) -> Vec<speq::RouteSpec> {{"
+    );
+    println!("    vec![");
+
+    for route in routes {
+        let name = route.name;
+        let path = route.path;
+        let method = route.method.to_uppercase();
+        let src_file = route.src_file;
+
+        println!(
+            "        speq::RouteSpec {{
+            name: std::borrow::Cow::Borrowed(\"{name}\"),
+            path: std::borrow::Cow::Borrowed(\"{path}\"),
+            method: axum::http::Method::{method},
+            src_file: std::borrow::Cow::Borrowed(\"{src_file}\"),
+            doc: None,
+            params: vec![],
+            query: None,
+            request: None,
+            responses: vec![],
+        }},"
+        );
+    }
+
+    println!("    ]");
     println!("}}");
 
     let elapsed = Instant::now() - start;
