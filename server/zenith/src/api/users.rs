@@ -6,6 +6,7 @@ use db::Db;
 use eyre::Context;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use speq::Reflect;
 use uuid::Uuid;
 
 use crate::password_utils::hash_password;
@@ -44,7 +45,7 @@ pub async fn get_authenticated_user(user: auth::User) -> ApiResult<impl IntoResp
     }))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 pub struct NewUser {
     username: String,
     password: String,

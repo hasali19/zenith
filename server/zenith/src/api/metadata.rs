@@ -5,6 +5,7 @@ use axum::Json;
 use db::media::MetadataProvider;
 use db::Db;
 use serde::Deserialize;
+use speq::Reflect;
 use tmdb::TmdbClient;
 
 use crate::api::ApiResult;
@@ -52,7 +53,7 @@ pub async fn find_match(
     Ok(StatusCode::OK)
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 pub struct SetMetadataMatch {
     tmdb_id: Option<i32>,
     season_number: Option<i32>,

@@ -16,6 +16,7 @@ struct Route {
     param_count: usize,
     path_param_index: Option<usize>,
     query_param_index: Option<usize>,
+    request_body_param_index: Option<usize>,
 }
 
 fn main() -> eyre::Result<()> {
@@ -27,7 +28,7 @@ fn main() -> eyre::Result<()> {
         use axum::Router;
         use axum::http::Method;
         use axum::routing::*;
-        use speq::QuerySpec;
+        use speq::{QuerySpec, RequestSpec};
         use speq::reflection::{Reflect, Type, TypeContext};
     };
 
@@ -82,6 +83,7 @@ fn main() -> eyre::Result<()> {
 
                     let mut path_param_index = None;
                     let mut query_param_index = None;
+                    let mut request_body_param_index = None;
 
                     for (i, arg) in item.sig.inputs.iter().enumerate() {
                         let FnArg::Typed(arg) = arg else {
@@ -100,6 +102,8 @@ fn main() -> eyre::Result<()> {
                             path_param_index = Some(i);
                         } else if segment.ident == "Query" || segment.ident == "QsQuery" {
                             query_param_index = Some(i);
+                        } else if segment.ident == "Json" {
+                            request_body_param_index = Some(i);
                         }
                     }
 
@@ -112,6 +116,7 @@ fn main() -> eyre::Result<()> {
                         param_count: item.sig.inputs.len(),
                         path_param_index,
                         query_param_index,
+                        request_body_param_index,
                     });
                 }
             }
@@ -170,6 +175,21 @@ fn main() -> eyre::Result<()> {
             quote! { None }
         };
 
+        let request = if let Some(index) = route.request_body_param_index {
+            let param_count = route.param_count;
+            let parameter_type_fn = format_ident!("parameter_type_{param_count}_{index}");
+
+            parameter_type_fns.insert((param_count, index));
+
+            quote! {
+                Some(RequestSpec {
+                    type_desc: #parameter_type_fn(#fn_path, cx),
+                })
+            }
+        } else {
+            quote! { None }
+        };
+
         quote! {
             speq::RouteSpec {
                 name: Cow::Borrowed(#name),
@@ -181,7 +201,7 @@ fn main() -> eyre::Result<()> {
                 src_file: Cow::Borrowed(#src_file),
                 doc: None,
                 query: #query,
-                request: None,
+                request: #request,
                 responses: vec![],
             }
         }

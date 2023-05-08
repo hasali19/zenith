@@ -49,7 +49,7 @@ pub async fn get_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl 
     Ok(Json(collection))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 pub struct NewCollection {
     name: String,
 }
@@ -72,13 +72,13 @@ pub async fn delete_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<im
     Ok(())
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 pub struct UpdateCollection {
     meta: Option<UpdateCollectionMeta>,
     items: Option<Vec<i64>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 pub struct UpdateCollectionMeta {
     name: String,
     overview: Option<String>,

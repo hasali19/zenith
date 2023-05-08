@@ -9,6 +9,7 @@ use axum_extra::extract::cookie::{Cookie, Key, SameSite};
 use axum_extra::extract::PrivateCookieJar;
 use db::Db;
 use serde::Deserialize;
+use speq::Reflect;
 
 use crate::password_utils::verify_password;
 
@@ -62,7 +63,7 @@ where
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 pub struct Credentials {
     username: String,
     password: String,
