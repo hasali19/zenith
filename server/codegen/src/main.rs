@@ -15,6 +15,7 @@ struct Route {
     fn_path: syn::Path,
     param_count: usize,
     path_param_index: Option<usize>,
+    query_param_index: Option<usize>,
 }
 
 fn main() -> eyre::Result<()> {
@@ -26,6 +27,7 @@ fn main() -> eyre::Result<()> {
         use axum::Router;
         use axum::http::Method;
         use axum::routing::*;
+        use speq::QuerySpec;
         use speq::reflection::{Reflect, Type, TypeContext};
     };
 
@@ -78,24 +80,28 @@ fn main() -> eyre::Result<()> {
                     let path = path.to_owned();
                     let fn_path = format!("crate::{mod_path}::{fn_name}");
 
-                    let path_param_index =
-                        item.sig.inputs.iter().enumerate().find_map(|(i, arg)| {
-                            let FnArg::Typed(arg) = arg else {
-                            return None;
+                    let mut path_param_index = None;
+                    let mut query_param_index = None;
+
+                    for (i, arg) in item.sig.inputs.iter().enumerate() {
+                        let FnArg::Typed(arg) = arg else {
+                            continue;
                         };
 
-                            let Type::Path(ty) = &*arg.ty else {
-                            return None;
+                        let Type::Path(ty) = &*arg.ty else {
+                            continue;
                         };
 
-                            let segment = ty.path.segments.last()?;
+                        let Some(segment) = ty.path.segments.last() else {
+                            continue;
+                        };
 
-                            if segment.ident != "Path" {
-                                return None;
-                            }
-
-                            Some(i)
-                        });
+                        if segment.ident == "Path" {
+                            path_param_index = Some(i);
+                        } else if segment.ident == "Query" || segment.ident == "QsQuery" {
+                            query_param_index = Some(i);
+                        }
+                    }
 
                     routes.push(Route {
                         name: fn_name,
@@ -105,13 +111,14 @@ fn main() -> eyre::Result<()> {
                         fn_path: syn::parse_str(&fn_path)?,
                         param_count: item.sig.inputs.len(),
                         path_param_index,
+                        query_param_index,
                     });
                 }
             }
         }
     }
 
-    let mut with_fns = HashSet::new();
+    let mut parameter_type_fns = HashSet::new();
 
     let route_calls = routes.iter().map(|route| {
         let path = &route.path;
@@ -135,14 +142,33 @@ fn main() -> eyre::Result<()> {
         let src_file = &route.src_file;
         let fn_path = &route.fn_path;
 
-        let params = route.path_param_index.map(|index| {
-            with_fns.insert((route.param_count, index));
+        let params = if let Some(index) = route.path_param_index {
             let param_count = route.param_count;
             let parameter_type_fn = format_ident!("parameter_type_{param_count}_{index}");
-            quote! { Some(#parameter_type_fn(#fn_path, cx)) }
-        });
 
-        let params = params.unwrap_or_else(|| quote! { None });
+            parameter_type_fns.insert((param_count, index));
+
+            quote! {
+                Some(#parameter_type_fn(#fn_path, cx))
+            }
+        } else {
+            quote! { None }
+        };
+
+        let query = if let Some(index) = route.query_param_index {
+            let param_count = route.param_count;
+            let parameter_type_fn = format_ident!("parameter_type_{param_count}_{index}");
+
+            parameter_type_fns.insert((param_count, index));
+
+            quote! {
+                Some(QuerySpec {
+                    type_desc: #parameter_type_fn(#fn_path, cx),
+                })
+            }
+        } else {
+            quote! { None }
+        };
 
         quote! {
             speq::RouteSpec {
@@ -154,7 +180,7 @@ fn main() -> eyre::Result<()> {
                 method: Method::#method,
                 src_file: Cow::Borrowed(#src_file),
                 doc: None,
-                query: None,
+                query: #query,
                 request: None,
                 responses: vec![],
             }
@@ -167,7 +193,7 @@ fn main() -> eyre::Result<()> {
         }
     });
 
-    for (params, i) in with_fns {
+    for (params, i) in parameter_type_fns {
         let fn_name = format_ident!("parameter_type_{params}_{i}");
         let target_type_name = format_ident!("T{i}");
 

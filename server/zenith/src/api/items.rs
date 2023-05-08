@@ -192,7 +192,7 @@ pub(super) async fn query_items(
     Ok(res)
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 pub struct DeleteItemQuery {
     #[serde(default)]
     remove_files: bool,
