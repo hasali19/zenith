@@ -29,6 +29,6 @@ To install the MSIX package on Windows, you must first install my certificate to
 
    ![](./images/appinstaller.png)
 
-## Updates
+### Updates
 
 Windows should keep the app up to date automatically. Windows will check for updates when the app is started, and install any available updates the next time the app is launched.
