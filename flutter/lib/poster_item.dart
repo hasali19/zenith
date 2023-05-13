@@ -58,8 +58,7 @@ class PosterItem extends StatelessWidget {
                     alignment: Alignment.topRight,
                     child: Padding(
                       padding: EdgeInsets.all(8),
-                      child: Icon(Icons.new_releases,
-                          size: 20, color: Colors.amber),
+                      child: Icon(Icons.circle, size: 14, color: Colors.amber),
                     ),
                   ),
                 ),
