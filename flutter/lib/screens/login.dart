@@ -28,9 +28,11 @@ class LoginUsersScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: Center(
-        child: ref.watch(_usersProvider).maybeWhen(
+        child: ref.watch(_usersProvider).when(
               data: (data) => _buildData(context, data),
-              orElse: () => const CircularProgressIndicator(),
+              error: (error, stackTrace) => Center(
+                  child: Text('failed to load users: ${error.toString()}')),
+              loading: () => const CircularProgressIndicator(),
             ),
       ),
     );
