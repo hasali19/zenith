@@ -93,7 +93,7 @@ class _DrawerHeader extends StatelessWidget {
     return Container(
       height: height,
       padding: const EdgeInsets.all(16),
-      child: Image.asset('zenith_icon.png'),
+      child: Image.asset('assets/zenith_icon.png'),
     );
   }
 }
