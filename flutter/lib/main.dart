@@ -155,6 +155,13 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final desktop = MediaQuery.of(context).size.width > 960;
+
+    void onLogout() {
+      ref.read(apiProvider).logout();
+      context.router.popUntilRoot();
+      context.router.replace(const LoginScreenRoute());
+    }
+
     return AutoTabsRouter(
       routes: const [
         HomeScreenRoute(),
@@ -168,15 +175,16 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
         // Use a permanent navigation drawer on larger screens
 
-        final drawer = AppDrawer(
+        final drawer = MainNavigationDrawer(
           current: screen,
-          onTap: (screen) {
+          onDestinationTap: (screen) {
             if (!desktop) {
               // Close drawer
               Navigator.pop(context);
             }
             _navigateTo(context, screen);
           },
+          onLogoutTap: onLogout,
         );
 
         child = FadeTransition(opacity: animation, child: child);
@@ -196,16 +204,14 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               title: Text(_title(screen)),
               actions: [
                 PopupMenuButton(
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      child: const Text('Logout'),
-                      onTap: () {
-                        ref.read(apiProvider).logout();
-                        context.router.popUntilRoot();
-                        context.router.replace(const LoginScreenRoute());
-                      },
-                    ),
-                  ],
+                  itemBuilder: (context) {
+                    return [
+                      PopupMenuItem(
+                        child: const Text('Logout'),
+                        onTap: onLogout,
+                      ),
+                    ];
+                  },
                 ),
               ],
             ),
