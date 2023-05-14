@@ -27,7 +27,7 @@ use windows::Media::{
 use windows::Win32::Foundation::HWND;
 use windows::Win32::System::WinRT::{ISystemMediaTransportControlsInterop, RoGetActivationFactory};
 
-use dart_sdk::{
+use dart_sdk_sys::{
     Dart_CObject_Type_Dart_CObject_kArray, Dart_CObject_Type_Dart_CObject_kBool,
     Dart_CObject_Type_Dart_CObject_kDouble, Dart_CObject_Type_Dart_CObject_kInt64,
     Dart_InitializeApiDL, Dart_PostCObject_DL, _Dart_CObject, _Dart_CObject__bindgen_ty_1,

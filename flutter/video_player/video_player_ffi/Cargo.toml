@@ -9,7 +9,7 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-dart_sdk = { path = "dart_sdk" }
+dart-sdk-sys = { path = "../../crates/dart-sdk-sys" }
 mpv = { path = "mpv" }
 
 [dependencies.flutter-plugin]

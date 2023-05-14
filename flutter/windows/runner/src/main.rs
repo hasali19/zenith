@@ -27,8 +27,7 @@ fn set_window_icon(window: HWND) {
     }
 }
 
-#[no_mangle]
-extern "C" fn rust_main() {
+pub fn main() {
     let mut event_loop = EventLoop::new();
 
     let window = WindowBuilder::new()
