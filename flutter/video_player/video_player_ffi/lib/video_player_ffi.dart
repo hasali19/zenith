@@ -116,11 +116,8 @@ class VideoControllerWindows extends VideoController {
         _playing = !args["idle"];
       }
 
-      if (args.containsKey("state")) {
-        final String state = args["state"];
-        if (state == "ended") {
-          _state = VideoState.ended;
-        }
+      if (args["state"] == "ended") {
+        _state = VideoState.ended;
       }
 
       _notifyListeners();
