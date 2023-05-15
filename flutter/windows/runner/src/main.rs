@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 mod flutter_window_binding;
 mod flutter_windows;
 mod window_placement;
