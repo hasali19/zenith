@@ -4,7 +4,6 @@ use egl::ClientBuffer;
 use khronos_egl as egl;
 use libloading::Library;
 use windows::core::ComInterface;
-use windows::Win32::Foundation::HANDLE;
 use windows::Win32::Graphics::Direct3D11::ID3D11Texture2D;
 use windows::Win32::Graphics::Dxgi::IDXGIResource;
 
@@ -12,53 +11,19 @@ type EglInstance = egl::DynamicInstance<egl::EGL1_5>;
 
 pub struct EglContext {
     egl: EglInstance,
-    surface: EglSurface,
+    config: egl::Config,
+    display: egl::Display,
+    context: egl::Context,
 }
 
 unsafe impl Send for EglContext {}
+unsafe impl Sync for EglContext {}
 
 impl EglContext {
-    pub fn for_d3d11_texture(
-        texture: &ID3D11Texture2D,
-    ) -> Result<EglContext, Box<dyn std::error::Error>> {
+    pub fn new() -> Result<EglContext, Box<dyn std::error::Error>> {
         let lib = unsafe { Library::new("libEGL.dll")? };
         let egl = unsafe { EglInstance::load_required_from(lib)? };
 
-        let texture_handle = unsafe { texture.cast::<IDXGIResource>()?.GetSharedHandle()? };
-        let surface = EglSurface::new(&egl, texture_handle)?;
-
-        Ok(EglContext { egl, surface })
-    }
-
-    pub fn make_current(&self) {
-        self.egl
-            .make_current(
-                self.surface.display,
-                Some(self.surface.surface),
-                Some(self.surface.surface),
-                Some(self.surface.context),
-            )
-            .unwrap();
-    }
-
-    pub fn bind_tex_image(&self) {
-        self.egl
-            .bind_tex_image(self.surface.display, self.surface.surface, egl::BACK_BUFFER)
-            .unwrap();
-    }
-}
-
-struct EglSurface {
-    display: egl::Display,
-    context: egl::Context,
-    surface: egl::Surface,
-}
-
-impl EglSurface {
-    pub fn new(
-        egl: &EglInstance,
-        dxgi_handle: HANDLE,
-    ) -> Result<EglSurface, Box<dyn std::error::Error>> {
         let display = egl.get_platform_display(
             0x3202,
             egl::DEFAULT_DISPLAY,
@@ -86,14 +51,30 @@ impl EglSurface {
 
         egl.choose_config(display, &config_attribs, &mut configs)?;
 
+        let config = configs[0];
         let context_attribs = [egl::CONTEXT_CLIENT_VERSION, 2, egl::NONE];
-        let context = egl.create_context(display, configs[0], None, &context_attribs)?;
+        let context = egl.create_context(display, config, None, &context_attribs)?;
+
+        Ok(EglContext {
+            egl,
+            config,
+            display,
+            context,
+        })
+    }
+
+    pub fn create_surface(
+        &self,
+        texture: &ID3D11Texture2D,
+    ) -> Result<EglSurface, Box<dyn std::error::Error>> {
+        let mut desc = Default::default();
+        unsafe { texture.GetDesc(&mut desc) };
 
         let surface_attribs = [
             egl::WIDTH,
-            1920,
+            desc.Width as i32,
             egl::HEIGHT,
-            1080,
+            desc.Height as i32,
             egl::TEXTURE_TARGET,
             egl::TEXTURE_2D,
             egl::TEXTURE_FORMAT,
@@ -101,20 +82,38 @@ impl EglSurface {
             egl::NONE,
         ];
 
-        let client_buffer = unsafe { ClientBuffer::from_ptr(dxgi_handle.0 as *mut c_void) };
+        let texture_handle = unsafe { texture.cast::<IDXGIResource>()?.GetSharedHandle()? };
+        let client_buffer = unsafe { ClientBuffer::from_ptr(texture_handle.0 as *mut c_void) };
 
-        let surface = egl.create_pbuffer_from_client_buffer(
-            display,
+        let surface = self.egl.create_pbuffer_from_client_buffer(
+            self.display,
             0x3200,
             client_buffer,
-            configs[0],
+            self.config,
             &surface_attribs,
         )?;
 
-        Ok(EglSurface {
-            display,
-            context,
-            surface,
-        })
+        Ok(EglSurface(surface))
+    }
+
+    pub fn make_context_current(&self) {
+        self.egl
+            .make_current(self.display, None, None, Some(self.context))
+            .unwrap();
+    }
+
+    pub fn make_surface_current(&self, surface: &EglSurface) {
+        self.egl
+            .make_current(
+                self.display,
+                Some(surface.0),
+                Some(surface.0),
+                Some(self.context),
+            )
+            .unwrap();
     }
 }
+
+pub struct EglSurface(egl::Surface);
+
+unsafe impl Send for EglSurface {}

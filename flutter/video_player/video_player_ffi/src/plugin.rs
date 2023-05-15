@@ -157,10 +157,9 @@ impl VideoPlayerFfiPlugin {
                 mpv.set_property("video-timing-offset", cstr!("0"));
 
                 // Leaked memory will be freed by destroyVideoSurface below
-                let surface = Box::leak(Box::new(VideoSurface::new(
-                    mpv,
-                    self.texture_registrar.clone(),
-                )));
+                let surface = Box::leak(Box::new(
+                    VideoSurface::new(mpv, self.texture_registrar.clone()).unwrap(),
+                ));
 
                 reply.success(&EncodableValue::I64(surface as *const VideoSurface as i64));
             }
