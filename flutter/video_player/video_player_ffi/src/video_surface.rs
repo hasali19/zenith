@@ -40,7 +40,7 @@ impl VideoSurface {
         mpv: &MpvPlayer,
         texture_registrar: Arc<FlutterDesktopTextureRegistrar>,
     ) -> Result<VideoSurface, Box<dyn std::error::Error>> {
-        let d3d11 = Arc::new(D3d11Context::new()?);
+        let d3d11 = D3d11Context::new()?;
         let egl = Arc::new(EglContext::new()?);
 
         let (event_tx, event_rx) = mpsc::channel();
@@ -188,7 +188,7 @@ impl DisplayTexture {
 }
 
 fn register_flutter_texture(
-    d3d11: Arc<D3d11Context>,
+    d3d11: D3d11Context,
     egl: Arc<EglContext>,
     texture_registrar: &FlutterDesktopTextureRegistrar,
     video_texture: Arc<Mutex<Option<VideoTexture>>>,
