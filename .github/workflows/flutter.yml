@@ -129,13 +129,20 @@ jobs:
           lib /def:mpv.def /name:mpv-2.dll /out:mpv.lib /MACHINE:X64
           mv libmpv-2.dll mpv-2.dll
 
-      - run: |
+      - name: Download angle
+        run: |
+          wget https://github.com/hasali19/angle-build/releases/download/build-2023-04-01-23-12/angle-win64.tar.gz
+          tar -xvf angle-win64.tar.gz
+
+      - name: Fetch dart packages
+        run: |
           cd flutter
           flutter pub get
 
-      - run: |
+      - name: Build windows app
+        run: |
           $env:MPV_DIR="$(pwd)\mpv"
-          ls -r $env:MPV_DIR
+          $env:ANGLE_BIN_DIR="$(pwd)\angle-win64\bin"
           cd flutter
           $env:GIT_COMMIT_HASH=(git rev-parse HEAD)
           flutter build windows -v --build-number=$env:GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH
@@ -147,8 +154,10 @@ jobs:
 
       - uses: ilammy/msvc-dev-cmd@v1
 
-      - run: |
+      - name: Build msix package
+        run: |
           $env:MPV_DIR="$(pwd)\mpv"
+          $env:ANGLE_BIN_DIR="$(pwd)\angle-win64\bin"
           cd flutter
           $version = (cat .\pubspec.yaml | select-string -pattern '^version: (.+)').Matches[0].Groups[1].Value.Split('+')[0].Trim()
           $version = "$version.$env:GITHUB_RUN_NUMBER"
