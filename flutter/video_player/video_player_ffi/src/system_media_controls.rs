@@ -9,19 +9,9 @@ use windows::Win32::Foundation::HWND;
 use windows::Win32::System::WinRT::{ISystemMediaTransportControlsInterop, RoGetActivationFactory};
 use windows::Win32::UI::WindowsAndMessaging::{GetAncestor, GA_ROOT};
 
-struct SystemMediaControlsButtonHandler {
-    token: EventRegistrationToken,
-    handler: Box<
-        TypedEventHandler<
-            SystemMediaTransportControls,
-            SystemMediaTransportControlsButtonPressedEventArgs,
-        >,
-    >,
-}
-
 pub struct SystemMediaControls {
     controls: SystemMediaTransportControls,
-    button_handler: Option<SystemMediaControlsButtonHandler>,
+    button_handler: Option<EventRegistrationToken>,
 }
 
 impl SystemMediaControls {
@@ -31,13 +21,12 @@ impl SystemMediaControls {
             + Send
             + 'static,
     ) {
-        let handler = Box::new(TypedEventHandler::new(move |_, event: &Option<_>| {
-            f(event.as_ref().unwrap())
-        }));
+        let handler =
+            TypedEventHandler::new(move |_, event: &Option<_>| f(event.as_ref().unwrap()));
 
         let token = self.controls.ButtonPressed(&handler).unwrap();
 
-        self.button_handler = Some(SystemMediaControlsButtonHandler { token, handler })
+        self.button_handler = Some(token);
     }
 }
 
@@ -46,8 +35,7 @@ impl Drop for SystemMediaControls {
         self.controls.SetIsEnabled(false).unwrap();
 
         if let Some(handler) = self.button_handler.take() {
-            self.controls.RemoveButtonPressed(handler.token).unwrap();
-            drop(handler.handler);
+            self.controls.RemoveButtonPressed(handler).unwrap();
         }
     }
 }
