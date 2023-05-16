@@ -9,14 +9,21 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-dart-sdk-sys = { path = "../../crates/dart-sdk-sys" }
 gl = "0.14"
-khronos-egl = { version = "4.1", features = ["dynamic"] }
 libloading = "0.7"
-mpv = { path = "mpv" }
+
+[dependencies.dart-sdk-sys]
+path = "../../crates/dart-sdk-sys"
 
 [dependencies.flutter-plugin]
 path = "../../crates/flutter-plugin"
+
+[dependencies.khronos-egl]
+version = "4.1"
+features = ["dynamic"]
+
+[dependencies.mpv]
+path = "mpv"
 
 [dependencies.windows]
 version = "0.48"
