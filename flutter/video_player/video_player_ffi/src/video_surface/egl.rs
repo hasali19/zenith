@@ -1,4 +1,5 @@
 use std::ffi::c_void;
+use std::sync::Arc;
 
 use egl::ClientBuffer;
 use khronos_egl as egl;
@@ -10,7 +11,7 @@ use windows::Win32::Graphics::Dxgi::IDXGIResource;
 type EglInstance = egl::DynamicInstance<egl::EGL1_5>;
 
 pub struct EglContext {
-    egl: EglInstance,
+    egl: Arc<EglInstance>,
     config: egl::Config,
     display: egl::Display,
     context: egl::Context,
@@ -56,7 +57,7 @@ impl EglContext {
         let context = egl.create_context(display, config, None, &context_attribs)?;
 
         Ok(EglContext {
-            egl,
+            egl: Arc::new(egl),
             config,
             display,
             context,
@@ -93,7 +94,11 @@ impl EglContext {
             &surface_attribs,
         )?;
 
-        Ok(EglSurface(surface))
+        Ok(EglSurface {
+            egl: self.egl.clone(),
+            display: self.display,
+            surface,
+        })
     }
 
     pub fn make_context_current(&self) {
@@ -106,14 +111,34 @@ impl EglContext {
         self.egl
             .make_current(
                 self.display,
-                Some(surface.0),
-                Some(surface.0),
+                Some(surface.surface),
+                Some(surface.surface),
                 Some(self.context),
             )
             .unwrap();
     }
 }
 
-pub struct EglSurface(egl::Surface);
+impl Drop for EglContext {
+    fn drop(&mut self) {
+        self.egl
+            .destroy_context(self.display, self.context)
+            .unwrap();
+    }
+}
+
+pub struct EglSurface {
+    egl: Arc<EglInstance>,
+    display: egl::Display,
+    surface: egl::Surface,
+}
 
 unsafe impl Send for EglSurface {}
+
+impl Drop for EglSurface {
+    fn drop(&mut self) {
+        self.egl
+            .destroy_surface(self.display, self.surface)
+            .unwrap();
+    }
+}
