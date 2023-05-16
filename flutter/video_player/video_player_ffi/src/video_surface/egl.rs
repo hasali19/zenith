@@ -86,9 +86,10 @@ impl EglContext {
         let texture_handle = unsafe { texture.cast::<IDXGIResource>()?.GetSharedHandle()? };
         let client_buffer = unsafe { ClientBuffer::from_ptr(texture_handle.0 as *mut c_void) };
 
+        const EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE: u32 = 0x3200;
         let surface = self.egl.create_pbuffer_from_client_buffer(
             self.display,
-            0x3200,
+            EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE,
             client_buffer,
             self.config,
             &surface_attribs,
