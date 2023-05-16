@@ -130,6 +130,10 @@ jobs:
           mv libmpv-2.dll mpv-2.dll
 
       - run: |
+          cd flutter
+          flutter pub get
+
+      - run: |
           $env:MPV_DIR="$(pwd)\mpv"
           ls -r $env:MPV_DIR
           cd flutter
