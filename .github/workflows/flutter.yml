@@ -134,7 +134,7 @@ jobs:
           ls -r $env:MPV_DIR
           cd flutter
           $env:GIT_COMMIT_HASH=(git rev-parse HEAD)
-          flutter build windows --build-number=$env:GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH
+          flutter build windows -v --build-number=$env:GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH
 
       - uses: actions/upload-artifact@v3
         with:
