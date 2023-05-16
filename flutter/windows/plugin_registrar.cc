@@ -2,7 +2,6 @@
 #include <flutter_windows.h>
 
 #include "flutter/generated_plugin_registrant.h"
-#include "flutter_native_view/flutter_native_view_plugin.h"
 
 class FlutterPluginRegistry : public flutter::PluginRegistry {
  public:
@@ -21,5 +20,4 @@ extern "C" __declspec(dllexport) void register_plugins(
     FlutterDesktopEngineRef engine) {
   FlutterPluginRegistry registry(engine);
   RegisterPlugins(&registry);
-  flutternativeview::NativeViewContainer::GetInstance()->Create();
 }

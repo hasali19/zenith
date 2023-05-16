@@ -1,12 +1,13 @@
-use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::ffi::{c_void, CStr, CString};
-use std::io::Cursor;
+use std::io::{Cursor, Write};
+use std::sync::Mutex;
 
 use flutter_codec::EncodableValue;
 use flutter_windows_sys::{
     FlutterDesktopMessage, FlutterDesktopMessageResponseHandle, FlutterDesktopMessengerRef,
-    FlutterDesktopMessengerSendResponse, FlutterDesktopMessengerSetCallback,
+    FlutterDesktopMessengerSend, FlutterDesktopMessengerSendResponse,
+    FlutterDesktopMessengerSetCallback,
 };
 
 pub type FlutterDesktopMessengerCallback =
@@ -14,14 +15,48 @@ pub type FlutterDesktopMessengerCallback =
 
 pub struct FlutterDesktopMessenger {
     ptr: FlutterDesktopMessengerRef,
-    callbacks: RefCell<BTreeMap<String, FlutterDesktopMessengerCallback>>,
+    callbacks: Mutex<BTreeMap<String, FlutterDesktopMessengerCallback>>,
 }
+
+unsafe impl Send for FlutterDesktopMessenger {}
+unsafe impl Sync for FlutterDesktopMessenger {}
 
 impl FlutterDesktopMessenger {
     pub(crate) fn new(messenger: FlutterDesktopMessengerRef) -> FlutterDesktopMessenger {
         FlutterDesktopMessenger {
             ptr: messenger,
-            callbacks: RefCell::new(BTreeMap::new()),
+            callbacks: Mutex::new(BTreeMap::new()),
+        }
+    }
+
+    pub fn call(&self, channel: &str, method_name: &str, args: &EncodableValue) {
+        let channel = CString::new(channel).unwrap();
+        let mut message_bytes = vec![];
+        let mut cursor = Cursor::new(&mut message_bytes);
+        flutter_codec::write_value(&mut cursor, &EncodableValue::Str(method_name)).unwrap();
+        flutter_codec::write_value(&mut cursor, args).unwrap();
+        unsafe {
+            FlutterDesktopMessengerSend(
+                self.ptr,
+                channel.as_ptr(),
+                message_bytes.as_ptr(),
+                message_bytes.len(),
+            );
+        }
+    }
+
+    pub fn send(&self, channel: &str, message: &EncodableValue) {
+        let channel = CString::new(channel).unwrap();
+        let mut message_bytes = vec![];
+        let mut cursor = Cursor::new(&mut message_bytes);
+        flutter_codec::write_value(&mut cursor, message).unwrap();
+        unsafe {
+            FlutterDesktopMessengerSend(
+                self.ptr,
+                channel.as_ptr(),
+                message_bytes.as_ptr(),
+                message_bytes.len(),
+            );
         }
     }
 
@@ -34,7 +69,7 @@ impl FlutterDesktopMessenger {
     }
 
     fn set_callback_impl(&self, channel: &str, callback: FlutterDesktopMessengerCallback) {
-        let mut callbacks = self.callbacks.borrow_mut();
+        let mut callbacks = self.callbacks.lock().unwrap();
         callbacks.insert(channel.to_owned(), Box::new(callback));
 
         let callback = callbacks.get(channel).unwrap();
@@ -66,7 +101,7 @@ unsafe extern "C" fn messenger_callback(
     let method_name = flutter_codec::read_value(&mut cursor).unwrap();
     let method_args = flutter_codec::read_value(&mut cursor).unwrap();
 
-    let EncodableValue::String(method_name) = method_name else {
+    let EncodableValue::Str(method_name) = method_name else {
         let channel = CStr::from_ptr((*message).channel);
         let channel = channel.to_str().unwrap_or("invalid_channel");
         eprintln!("[method_call({channel})] invalid method name: {method_name:?}");
@@ -89,8 +124,10 @@ pub struct FlutterDesktopMessengerReply {
 
 impl FlutterDesktopMessengerReply {
     pub fn success(&self, value: &EncodableValue) {
-        let mut bytes = vec![0];
-        flutter_codec::write_value(&mut bytes, value).unwrap();
+        let mut bytes = vec![];
+        let mut cursor = Cursor::new(&mut bytes);
+        cursor.write_all(&[0]).unwrap();
+        flutter_codec::write_value(&mut cursor, value).unwrap();
         unsafe {
             FlutterDesktopMessengerSendResponse(
                 self.messenger,

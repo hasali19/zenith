@@ -10,6 +10,9 @@ fn main() {
 
     bindgen::builder()
         .header(mpv_dir.join("include/mpv/client.h").to_str().unwrap())
+        .header(mpv_dir.join("include/mpv/render.h").to_str().unwrap())
+        .header(mpv_dir.join("include/mpv/render_gl.h").to_str().unwrap())
+        .derive_default(true)
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         .generate()
         .unwrap()

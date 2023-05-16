@@ -1,9 +1,10 @@
 use std::collections::BTreeMap;
-use std::io;
+use std::io::{self, Seek, Write};
 
 use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
 
 type ReadCursor<'a> = std::io::Cursor<&'a [u8]>;
+type WriteCursor<'a> = std::io::Cursor<&'a mut Vec<u8>>;
 
 #[repr(u8)]
 enum EncodedType {
@@ -48,11 +49,37 @@ impl From<u8> for EncodedType {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Float64(pub f64);
+
+impl Eq for Float64 {}
+
+impl PartialOrd for Float64 {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+
+impl Ord for Float64 {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+impl From<f64> for Float64 {
+    fn from(value: f64) -> Self {
+        Float64(value)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum EncodableValue<'a> {
     Null,
     Bool(bool),
-    String(&'a str),
+    I32(i32),
+    I64(i64),
+    F64(Float64),
+    Str(&'a str),
     Map(BTreeMap<EncodableValue<'a>, EncodableValue<'a>>),
 }
 
@@ -65,8 +92,24 @@ impl<'a> EncodableValue<'a> {
         }
     }
 
+    pub fn as_i32(&self) -> Option<&i32> {
+        if let Self::I32(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_i64(&self) -> Option<&i64> {
+        if let Self::I64(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
     pub fn as_string(&self) -> Option<&'a str> {
-        if let Self::String(v) = self {
+        if let Self::Str(v) = self {
             Some(v)
         } else {
             None
@@ -90,11 +133,30 @@ fn read_size(cursor: &mut ReadCursor) -> io::Result<u32> {
     }
 }
 
+fn write_size(w: &mut impl io::Write, value: u32) -> io::Result<()> {
+    if value < 254 {
+        w.write_u8(value as u8)?;
+    } else if value <= u16::MAX.into() {
+        w.write_u8(254)?;
+        w.write_u16::<NativeEndian>(value as u16)?;
+    } else {
+        w.write_u8(255)?;
+        w.write_u32::<NativeEndian>(value)?;
+    }
+    Ok(())
+}
+
 fn read_string<'a>(cursor: &mut ReadCursor<'a>) -> io::Result<&'a str> {
     let size = read_size(cursor)?;
     let buf = &cursor.get_ref()[cursor.position() as usize..][..size as usize];
     cursor.set_position(cursor.position() + size as u64);
     std::str::from_utf8(buf).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+}
+
+fn write_string(w: &mut WriteCursor, value: &str) -> io::Result<()> {
+    write_size(w, value.len() as u32)?;
+    w.write_all(value.as_bytes())?;
+    Ok(())
 }
 
 fn read_map<'a>(
@@ -110,6 +172,18 @@ fn read_map<'a>(
     Ok(map)
 }
 
+fn write_map(
+    w: &mut WriteCursor,
+    value: &BTreeMap<EncodableValue, EncodableValue>,
+) -> io::Result<()> {
+    write_size(w, value.len() as u32)?;
+    for (k, v) in value {
+        write_value(w, k)?;
+        write_value(w, v)?;
+    }
+    Ok(())
+}
+
 pub fn read_value<'a>(cursor: &mut ReadCursor<'a>) -> io::Result<EncodableValue<'a>> {
     let encoded_type = EncodedType::from(cursor.read_u8()?);
     match encoded_type {
@@ -117,10 +191,10 @@ pub fn read_value<'a>(cursor: &mut ReadCursor<'a>) -> io::Result<EncodableValue<
         EncodedType::True => Ok(EncodableValue::Bool(true)),
         EncodedType::False => Ok(EncodableValue::Bool(false)),
         EncodedType::Int32 => todo!(),
-        EncodedType::Int64 => todo!(),
+        EncodedType::Int64 => Ok(EncodableValue::I64(cursor.read_i64::<NativeEndian>()?)),
         EncodedType::LargeInt => todo!(),
         EncodedType::Float64 => todo!(),
-        EncodedType::String => Ok(EncodableValue::String(read_string(cursor)?)),
+        EncodedType::String => Ok(EncodableValue::Str(read_string(cursor)?)),
         EncodedType::UInt8List => todo!(),
         EncodedType::Int32List => todo!(),
         EncodedType::Int64List => todo!(),
@@ -131,15 +205,52 @@ pub fn read_value<'a>(cursor: &mut ReadCursor<'a>) -> io::Result<EncodableValue<
     }
 }
 
-pub fn write_value(mut w: impl io::Write, value: &EncodableValue) -> io::Result<()> {
+pub fn write_value(w: &mut WriteCursor, value: &EncodableValue) -> io::Result<()> {
     match value {
         EncodableValue::Null => {
             w.write_u8(EncodedType::Null as u8)?;
         }
-        EncodableValue::Bool(_) => todo!(),
-        EncodableValue::String(_) => todo!(),
-        EncodableValue::Map(_) => todo!(),
+        EncodableValue::Bool(v) => {
+            if *v {
+                w.write_u8(EncodedType::True as u8)?;
+            } else {
+                w.write_u8(EncodedType::False as u8)?;
+            }
+        }
+        EncodableValue::I32(v) => {
+            w.write_u8(EncodedType::Int32 as u8)?;
+            w.write_i32::<NativeEndian>(*v)?;
+        }
+        EncodableValue::I64(v) => {
+            w.write_u8(EncodedType::Int64 as u8)?;
+            w.write_i64::<NativeEndian>(*v)?;
+        }
+        EncodableValue::F64(v) => {
+            w.write_u8(EncodedType::Float64 as u8)?;
+            align_to(w, 8)?;
+            w.write_f64::<NativeEndian>(v.0)?;
+        }
+        EncodableValue::Str(v) => {
+            w.write_u8(EncodedType::String as u8)?;
+            write_string(w, v)?;
+        }
+        EncodableValue::Map(v) => {
+            w.write_u8(EncodedType::Map as u8)?;
+            write_map(w, v)?;
+        }
     }
 
+    Ok(())
+}
+
+fn align_to(w: &mut WriteCursor, align: usize) -> io::Result<()> {
+    let m = w.stream_position()? as usize % align;
+    if m == 0 {
+        return Ok(());
+    }
+    let m = align - m;
+    for _ in 0..m {
+        w.write_u8(0)?;
+    }
     Ok(())
 }

@@ -1,21 +1,15 @@
 import 'dart:ffi';
-import 'dart:isolate';
 
 import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_native_view/flutter_native_view.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 const _channel = MethodChannel('video_player_ffi');
 
 final DynamicLibrary _lib = DynamicLibrary.open("video_player_ffi.dll");
-final int Function(int nativePort, Pointer<Void> params) ffiCreatePlayer = _lib
-    .lookup<NativeFunction<IntPtr Function(Int64, Pointer<Void>)>>(
-        "create_player")
-    .asFunction();
-final int Function(int player) ffiGetWindowHandle = _lib
-    .lookup<NativeFunction<IntPtr Function(IntPtr)>>("get_window_handle")
+final int Function(int surface) ffiGetTextureId = _lib
+    .lookup<NativeFunction<IntPtr Function(IntPtr)>>("get_texture_id")
     .asFunction();
 final void Function(int player, Pointer<Utf8> url, Pointer<Utf8> title,
         Pointer<Utf8> subtitle, double startPosition) ffiLoad =
@@ -39,31 +33,26 @@ final void Function(int player) ffiPlay =
 final void Function(int player, double position) ffiSeekTo = _lib
     .lookup<NativeFunction<Void Function(IntPtr, Double)>>("seek_to")
     .asFunction();
-final void Function(int player) ffiDestroyPlayer = _lib
-    .lookup<NativeFunction<Void Function(IntPtr)>>("destroy_player")
-    .asFunction();
 
 class VideoPlayerFfi extends VideoPlayerPlatform {
   static registerWith() {
     VideoPlayerPlatform.instance = VideoPlayerFfi();
   }
 
-  bool _flutterNativeViewInitialized = false;
   bool _isFullScreen = false;
 
   @override
   Future<VideoController> createController() async {
-    if (!_flutterNativeViewInitialized) {
-      FlutterNativeView.ensureInitialized();
-      _flutterNativeViewInitialized = true;
-    }
-    return VideoControllerWindows();
+    final int player = await _channel.invokeMethod("createPlayer");
+    final int surface =
+        await _channel.invokeMethod("createVideoSurface", {"player": player});
+    return VideoControllerWindows(player, surface);
   }
 
   @override
   Widget buildView(VideoController controller) {
     if (controller is VideoControllerWindows) {
-      return NativeView(controller: controller.c, width: 100, height: 100);
+      return Texture(textureId: controller.textureId);
     } else {
       throw ArgumentError.value(controller, "controller");
     }
@@ -76,7 +65,6 @@ class VideoPlayerFfi extends VideoPlayerPlatform {
     _isFullScreen = isFullscreen;
     await _channel
         .invokeMethod('setFullScreen', {'isFullScreen': isFullscreen});
-    await FlutterNativeView.setFullScreen(isFullscreen);
   }
 
   @override
@@ -103,44 +91,39 @@ enum PlayerMsgKind {
 }
 
 class VideoControllerWindows extends VideoController {
-  late final NativeViewController c;
-  late final int player;
+  final int player;
+  final int surface;
 
-  final port = ReceivePort();
+  late final int textureId;
 
-  VideoControllerWindows() {
-    port.listen((message) {
-      List<dynamic> values = message;
-
-      final double position = values[0];
-      final kind = PlayerMsgKind.values[values[1] - 1];
-      final dynamic data = values[2];
+  VideoControllerWindows(this.player, this.surface) {
+    _channel.setMethodCallHandler((call) async {
+      final Map<dynamic, dynamic> args = call.arguments;
+      final double position = args['position'];
 
       _lastKnownPosition = position * 1000;
       _lastKnownPositionTs = DateTime.now().millisecondsSinceEpoch;
 
-      switch (kind) {
-        case PlayerMsgKind.durationChanged:
-          _duration = data;
-          break;
-        case PlayerMsgKind.pausedChanged:
-          _paused = data;
-          break;
-        case PlayerMsgKind.idleChanged:
-          _playing = !data;
-          break;
-        case PlayerMsgKind.videoEnded:
-          _state = VideoState.ended;
-          break;
+      if (args.containsKey("duration")) {
+        _duration = args["duration"];
+      }
+
+      if (args.containsKey("paused")) {
+        _paused = args["paused"];
+      }
+
+      if (args.containsKey("idle")) {
+        _playing = !args["idle"];
+      }
+
+      if (args["state"] == "ended") {
+        _state = VideoState.ended;
       }
 
       _notifyListeners();
     });
 
-    player = ffiCreatePlayer(
-        port.sendPort.nativePort, NativeApi.initializeApiDLData);
-
-    c = NativeViewController(handle: ffiGetWindowHandle(player));
+    textureId = ffiGetTextureId(surface);
   }
 
   double _lastKnownPosition = 0;
@@ -166,8 +149,11 @@ class VideoControllerWindows extends VideoController {
 
   @override
   void dispose() {
-    ffiDestroyPlayer(player);
-    port.close();
+    Future.microtask(() async {
+      await _channel.invokeMethod("destroyVideoSurface", {"surface": surface});
+      await _channel.invokeMethod("destroyPlayer", {"player": player});
+    });
+    _channel.setMethodCallHandler(null);
   }
 
   @override

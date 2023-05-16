@@ -9,11 +9,21 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-dart-sdk-sys = { path = "../../crates/dart-sdk-sys" }
-mpv = { path = "mpv" }
+gl = "0.14"
+libloading = "0.7"
+
+[dependencies.dart-sdk-sys]
+path = "../../crates/dart-sdk-sys"
 
 [dependencies.flutter-plugin]
 path = "../../crates/flutter-plugin"
+
+[dependencies.khronos-egl]
+version = "4.1"
+features = ["dynamic"]
+
+[dependencies.mpv]
+path = "mpv"
 
 [dependencies.windows]
 version = "0.48"
@@ -21,9 +31,12 @@ features = [
     "Foundation",
     "Media",
     "Win32_Foundation",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
     "Win32_Graphics_Gdi",
     "Win32_System_LibraryLoader",
-    "Win32_System_Threading",
     "Win32_System_WinRT",
     "Win32_UI_WindowsAndMessaging",
 ]
