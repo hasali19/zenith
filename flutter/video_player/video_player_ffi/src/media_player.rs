@@ -19,6 +19,7 @@ pub enum MediaPlayerEvent {
     DurationChanged(f64),
     PauseChanged(bool),
     IdleChanged(bool),
+    SpeedChanged(f64),
     VideoEnded,
 }
 
@@ -36,6 +37,7 @@ impl MediaPlayer {
         mpv.observe_property("duration", MpvFormat::Double, 0);
         mpv.observe_property("pause", MpvFormat::Flag, 0);
         mpv.observe_property("core-idle", MpvFormat::Flag, 0);
+        mpv.observe_property("speed", MpvFormat::Double, 0);
 
         let mut controls = SystemMediaControls::new(hwnd);
 
@@ -109,6 +111,12 @@ impl MediaPlayer {
                             event_handler(position, MediaPlayerEvent::IdleChanged(*idle));
                         }
                     }
+                    "speed" => {
+                        let value = unsafe { data.cast::<f64>().as_ref() };
+                        if let Some(value) = value {
+                            event_handler(position, MediaPlayerEvent::SpeedChanged(*value));
+                        }
+                    }
                     _ => {}
                 },
                 mpv_player::Event::LogMessage { text } => {
@@ -152,6 +160,10 @@ impl MediaPlayer {
 
     pub fn seek_to(&self, position: f64) {
         self.mpv.seek(position);
+    }
+
+    pub fn set_speed(&self, speed: f64) {
+        self.mpv.set_property_async("speed", speed, 0);
     }
 
     pub fn quit(&self) {

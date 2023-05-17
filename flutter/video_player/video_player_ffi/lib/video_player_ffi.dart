@@ -33,6 +33,9 @@ final void Function(int player) ffiPlay =
 final void Function(int player, double position) ffiSeekTo = _lib
     .lookup<NativeFunction<Void Function(IntPtr, Double)>>("seek_to")
     .asFunction();
+final void Function(int player, double speed) ffiSetSpeed = _lib
+    .lookup<NativeFunction<Void Function(IntPtr, Double)>>("set_speed")
+    .asFunction();
 
 class VideoPlayerFfi extends VideoPlayerPlatform {
   static registerWith() {
@@ -116,6 +119,10 @@ class VideoControllerWindows extends VideoController {
         _playing = !args["idle"];
       }
 
+      if (args.containsKey("speed")) {
+        _playbackSpeed = args["speed"];
+      }
+
       if (args["state"] == "ended") {
         _state = VideoState.ended;
       }
@@ -129,6 +136,7 @@ class VideoControllerWindows extends VideoController {
   double _lastKnownPosition = 0;
   int _lastKnownPositionTs = DateTime.now().millisecondsSinceEpoch;
   bool _playing = false;
+  double _playbackSpeed = 1.0;
 
   @override
   bool get supportsAudioTrackSelection => true;
@@ -137,7 +145,9 @@ class VideoControllerWindows extends VideoController {
   double get position {
     var position = _lastKnownPosition;
     if (_playing) {
-      position += DateTime.now().millisecondsSinceEpoch - _lastKnownPositionTs;
+      position +=
+          (DateTime.now().millisecondsSinceEpoch - _lastKnownPositionTs) *
+              _playbackSpeed;
     }
     return position / 1000;
   }
@@ -218,7 +228,7 @@ class VideoControllerWindows extends VideoController {
 
   @override
   void setPlaybackSpeed(double speed) {
-    // TODO: implement setPlaybackSped
+    ffiSetSpeed(player, speed);
   }
 
   @override

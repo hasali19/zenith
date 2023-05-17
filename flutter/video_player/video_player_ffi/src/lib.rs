@@ -80,3 +80,8 @@ pub unsafe extern "C" fn play(player: *const MediaPlayer) {
 pub unsafe extern "C" fn seek_to(player: *const MediaPlayer, position: f64) {
     player.as_ref().unwrap().seek_to(position);
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn set_speed(player: *const MediaPlayer, speed: f64) {
+    player.as_ref().unwrap().set_speed(speed);
+}

@@ -17,7 +17,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 
 use crate::cstr;
-use crate::media_player::MediaPlayer;
+use crate::media_player::{MediaPlayer, MediaPlayerEvent};
 use crate::video_surface::VideoSurface;
 
 struct VideoPlayerFfiPlugin {
@@ -92,28 +92,34 @@ impl VideoPlayerFfiPlugin {
                             );
 
                             match event {
-                                crate::media_player::MediaPlayerEvent::DurationChanged(v) => {
+                                MediaPlayerEvent::DurationChanged(v) => {
                                     res.insert(
                                         EncodableValue::Str("duration"),
                                         EncodableValue::F64(v.into()),
                                     );
                                 }
-                                crate::media_player::MediaPlayerEvent::PauseChanged(v) => {
+                                MediaPlayerEvent::PauseChanged(v) => {
                                     res.insert(
                                         EncodableValue::Str("paused"),
                                         EncodableValue::Bool(v),
                                     );
                                 }
-                                crate::media_player::MediaPlayerEvent::IdleChanged(v) => {
+                                MediaPlayerEvent::IdleChanged(v) => {
                                     res.insert(
                                         EncodableValue::Str("idle"),
                                         EncodableValue::Bool(v),
                                     );
                                 }
-                                crate::media_player::MediaPlayerEvent::VideoEnded => {
+                                MediaPlayerEvent::VideoEnded => {
                                     res.insert(
                                         EncodableValue::Str("state"),
                                         EncodableValue::Str("ended"),
+                                    );
+                                }
+                                MediaPlayerEvent::SpeedChanged(v) => {
+                                    res.insert(
+                                        EncodableValue::Str("speed"),
+                                        EncodableValue::F64(v.into()),
                                     );
                                 }
                             }
