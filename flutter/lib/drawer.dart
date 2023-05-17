@@ -17,6 +17,7 @@ class MainNavigationDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return NavigationDrawer(
+      elevation: 0,
       selectedIndex: _screenToIndex(current),
       onDestinationSelected: (value) {
         if (value == 4) {

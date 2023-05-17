@@ -175,25 +175,17 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
         // Use a permanent navigation drawer on larger screens
 
-        final drawer = MainNavigationDrawer(
-          current: screen,
-          onDestinationTap: (screen) {
-            if (!desktop) {
-              // Close drawer
-              Navigator.pop(context);
-            }
-            _navigateTo(context, screen);
-          },
-          onLogoutTap: onLogout,
-        );
-
         child = FadeTransition(opacity: animation, child: child);
 
         if (desktop) {
           return Scaffold(
             body: Row(
               children: [
-                drawer,
+                MainNavigationDrawer(
+                  current: screen,
+                  onDestinationTap: (screen) => _navigateTo(context, screen),
+                  onLogoutTap: onLogout,
+                ),
                 Expanded(child: child),
               ],
             ),
