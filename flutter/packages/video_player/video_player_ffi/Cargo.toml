@@ -12,9 +12,6 @@ crate-type = ["cdylib"]
 gl = "0.14"
 libloading = "0.7"
 
-[dependencies.dart-sdk-sys]
-path = "../../../crates/dart-sdk-sys"
-
 [dependencies.flutter-plugin]
 path = "../../../crates/flutter-plugin"
 
