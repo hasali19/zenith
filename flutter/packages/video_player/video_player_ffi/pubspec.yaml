@@ -26,5 +26,5 @@ flutter:
     implements: video_player
     platforms:
       windows:
-        pluginClass: VideoPlayerFfiPluginCApi
+        pluginClass: VideoPlayerFfiPlugin
         dartPluginClass: VideoPlayerFfi

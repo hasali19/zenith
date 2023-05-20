@@ -21,7 +21,7 @@ macro_rules! flutter_plugin {
     ($name:ident) => {
         $crate::paste! {
             #[no_mangle]
-            pub unsafe extern "C" fn [<$name CApiRegisterWithRegistrar>](registrar_ref: $crate::FlutterDesktopPluginRegistrarRef) {
+            pub unsafe extern "C" fn [<$name RegisterWithRegistrar>](registrar_ref: $crate::FlutterDesktopPluginRegistrarRef) {
                 $crate::destruction_handler::set_registrar_destruction_handler(registrar_ref);
 
                 let registrar = $crate::registrar::FlutterDesktopPluginRegistrar::new(registrar_ref);
