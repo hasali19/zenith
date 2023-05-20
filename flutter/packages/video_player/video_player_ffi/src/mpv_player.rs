@@ -3,7 +3,7 @@ use std::ops::Deref;
 use std::os::raw::c_char;
 use std::ptr;
 
-use mpv::{
+use mpv_sys::{
     mpv_command_async, mpv_create, mpv_event_id_MPV_EVENT_AUDIO_RECONFIG,
     mpv_event_id_MPV_EVENT_CLIENT_MESSAGE, mpv_event_id_MPV_EVENT_COMMAND_REPLY,
     mpv_event_id_MPV_EVENT_END_FILE, mpv_event_id_MPV_EVENT_FILE_LOADED,

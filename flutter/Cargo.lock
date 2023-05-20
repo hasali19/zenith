@@ -579,7 +579,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mpv"
+name = "mpv-sys"
 version = "0.1.0"
 dependencies = [
  "bindgen",
@@ -1062,7 +1062,7 @@ dependencies = [
  "gl",
  "khronos-egl",
  "libloading",
- "mpv",
+ "mpv-sys",
  "windows",
 ]
 

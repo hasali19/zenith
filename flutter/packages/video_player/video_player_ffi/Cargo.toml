@@ -22,8 +22,8 @@ path = "../../../crates/flutter-plugin"
 version = "4.1"
 features = ["dynamic"]
 
-[dependencies.mpv]
-path = "mpv"
+[dependencies.mpv-sys]
+path = "../../../crates/mpv-sys"
 
 [dependencies.windows]
 version = "0.48"

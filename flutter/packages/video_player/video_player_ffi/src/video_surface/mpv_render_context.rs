@@ -1,7 +1,7 @@
 use std::ffi::{c_char, c_void, CStr};
 use std::ptr;
 
-use mpv::{
+use mpv_sys::{
     mpv_opengl_fbo, mpv_opengl_init_params, mpv_render_context, mpv_render_context_create,
     mpv_render_context_free, mpv_render_context_render, mpv_render_context_set_update_callback,
     mpv_render_context_update, mpv_render_param,
