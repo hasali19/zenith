@@ -61,18 +61,6 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
       throw ArgumentError.value(controller, "controller");
     }
   }
-
-  @override
-  bool get isWindowed => false;
-
-  @override
-  Future<void> enterFullscreen() async {}
-
-  @override
-  Future<void> exitFullscreen() async {}
-
-  @override
-  Future<void> toggleFullscreen() async {}
 }
 
 class SubtitleView extends StatelessWidget {

@@ -42,8 +42,6 @@ class VideoPlayerFfi extends VideoPlayerPlatform {
     VideoPlayerPlatform.instance = VideoPlayerFfi();
   }
 
-  bool _isFullScreen = false;
-
   @override
   Future<VideoController> createController() async {
     final int player = await _channel.invokeMethod("createPlayer");
@@ -59,30 +57,6 @@ class VideoPlayerFfi extends VideoPlayerPlatform {
     } else {
       throw ArgumentError.value(controller, "controller");
     }
-  }
-
-  @override
-  bool get isWindowed => true;
-
-  Future<void> _setFullscreen(bool isFullscreen) async {
-    _isFullScreen = isFullscreen;
-    await _channel
-        .invokeMethod('setFullScreen', {'isFullScreen': isFullscreen});
-  }
-
-  @override
-  Future<void> enterFullscreen() async {
-    await _setFullscreen(true);
-  }
-
-  @override
-  Future<void> exitFullscreen() async {
-    await _setFullscreen(false);
-  }
-
-  @override
-  Future<void> toggleFullscreen() async {
-    await _setFullscreen(!_isFullScreen);
   }
 }
 

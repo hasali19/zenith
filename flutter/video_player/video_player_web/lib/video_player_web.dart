@@ -41,28 +41,6 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
           "controller must be an instance of VideoControllerWeb");
     }
   }
-
-  @override
-  bool get isWindowed => true;
-
-  @override
-  Future<void> enterFullscreen() async {
-    await document.documentElement?.requestFullscreen();
-  }
-
-  @override
-  Future<void> exitFullscreen() async {
-    document.exitFullscreen();
-  }
-
-  @override
-  Future<void> toggleFullscreen() async {
-    if (document.fullscreenElement == null) {
-      await enterFullscreen();
-    } else {
-      await exitFullscreen();
-    }
-  }
 }
 
 class VideoControllerWeb extends VideoController {

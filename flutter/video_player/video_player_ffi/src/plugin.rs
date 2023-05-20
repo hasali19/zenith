@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
@@ -7,14 +6,8 @@ use flutter_plugin::messenger::{FlutterDesktopMessenger, FlutterDesktopMessenger
 use flutter_plugin::registrar::FlutterDesktopPluginRegistrar;
 use flutter_plugin::texture_registrar::FlutterDesktopTextureRegistrar;
 use flutter_plugin::{flutter_plugin, FlutterDesktopPlugin};
-use windows::Win32::Foundation::{HWND, RECT};
-use windows::Win32::Graphics::Gdi::{
-    GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
-};
-use windows::Win32::UI::WindowsAndMessaging::{
-    GetAncestor, GetWindowLongPtrW, GetWindowRect, SetWindowLongPtrW, SetWindowPos, GA_ROOT,
-    GWL_STYLE, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOZORDER, WS_CAPTION, WS_THICKFRAME,
-};
+use windows::Win32::Foundation::HWND;
+use windows::Win32::UI::WindowsAndMessaging::{GetAncestor, GA_ROOT};
 
 use crate::cstr;
 use crate::media_player::{MediaPlayer, MediaPlayerEvent};
@@ -23,15 +16,7 @@ use crate::video_surface::VideoSurface;
 struct VideoPlayerFfiPlugin {
     messenger: Arc<FlutterDesktopMessenger>,
     texture_registrar: Arc<FlutterDesktopTextureRegistrar>,
-    window_state: RefCell<WindowState>,
-}
-
-#[derive(Default)]
-struct WindowState {
-    hwnd: HWND,
-    is_full_screen: bool,
-    saved_style: isize,
-    saved_rect: RECT,
+    window: HWND,
 }
 
 impl FlutterDesktopPlugin for VideoPlayerFfiPlugin {
@@ -42,10 +27,7 @@ impl FlutterDesktopPlugin for VideoPlayerFfiPlugin {
         let plugin = VideoPlayerFfiPlugin {
             messenger: registrar.messenger().clone(),
             texture_registrar: registrar.texture_registrar().clone(),
-            window_state: RefCell::new(WindowState {
-                hwnd: root_window,
-                ..Default::default()
-            }),
+            window: root_window,
         };
 
         registrar
@@ -64,20 +46,8 @@ impl VideoPlayerFfiPlugin {
         reply: FlutterDesktopMessengerReply,
     ) {
         match name {
-            "setFullScreen" => {
-                let args = args.as_map().unwrap();
-                let is_full_screen = args
-                    .get(&EncodableValue::Str("isFullScreen"))
-                    .unwrap()
-                    .as_bool()
-                    .unwrap();
-
-                self.set_full_screen(is_full_screen);
-
-                reply.success(&EncodableValue::Null);
-            }
             "createPlayer" => {
-                let player = Box::new(MediaPlayer::new(self.window_state.borrow().hwnd));
+                let player = Box::new(MediaPlayer::new(self.window));
                 let player_ref = player.as_ref() as *const MediaPlayer;
 
                 std::thread::spawn({
@@ -184,59 +154,6 @@ impl VideoPlayerFfiPlugin {
                 reply.success(&EncodableValue::Null);
             }
             _ => reply.not_implemented(),
-        }
-    }
-
-    fn set_full_screen(&self, is_full_screen: bool) {
-        unsafe {
-            let mut window_state = self.window_state.borrow_mut();
-            let root_window = GetAncestor(window_state.hwnd, GA_ROOT);
-
-            if !window_state.is_full_screen {
-                window_state.saved_style = GetWindowLongPtrW(root_window, GWL_STYLE);
-                GetWindowRect(root_window, &mut window_state.saved_rect);
-            }
-
-            window_state.is_full_screen = is_full_screen;
-
-            unsafe fn get_monitor_size(window: HWND) -> RECT {
-                let mut monitor_info = MONITORINFO {
-                    cbSize: std::mem::size_of::<MONITORINFO>() as u32,
-                    ..Default::default()
-                };
-
-                GetMonitorInfoW(
-                    MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST),
-                    &mut monitor_info,
-                );
-
-                monitor_info.rcMonitor
-            }
-
-            unsafe fn set_window_rect(window: HWND, rect: &RECT) {
-                SetWindowPos(
-                    window,
-                    HWND::default(),
-                    rect.left,
-                    rect.top,
-                    rect.right - rect.left,
-                    rect.bottom - rect.top,
-                    SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED,
-                );
-            }
-
-            if window_state.is_full_screen {
-                SetWindowLongPtrW(
-                    root_window,
-                    GWL_STYLE,
-                    window_state.saved_style & !(WS_CAPTION.0 as isize | WS_THICKFRAME.0 as isize),
-                );
-                let monitor_size = get_monitor_size(root_window);
-                set_window_rect(root_window, &monitor_size);
-            } else {
-                SetWindowLongPtrW(root_window, GWL_STYLE, window_state.saved_style);
-                set_window_rect(root_window, &window_state.saved_rect);
-            }
         }
     }
 }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
+import 'package:zenith/window.dart';
 
 import 'play_pause_button.dart';
 
-class BottomControls extends StatelessWidget {
+class BottomControls extends ConsumerWidget {
   const BottomControls({
     Key? key,
     required this.seekIconSize,
@@ -20,7 +22,8 @@ class BottomControls extends StatelessWidget {
   final VoidCallback onButtonTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final window = ref.read(windowProvider);
     return Stack(
       children: [
         Align(
@@ -57,7 +60,7 @@ class BottomControls extends StatelessWidget {
             ],
           ),
         ),
-        if (VideoPlayerPlatform.instance.isWindowed)
+        if (window.isWindowed)
           Positioned(
             right: 0,
             bottom: 0,
@@ -65,7 +68,7 @@ class BottomControls extends StatelessWidget {
             child: IconButton(
               icon: const Icon(Icons.fullscreen),
               splashRadius: 20,
-              onPressed: VideoPlayerPlatform.instance.toggleFullscreen,
+              onPressed: window.toggleFullscreen,
             ),
           ),
       ],

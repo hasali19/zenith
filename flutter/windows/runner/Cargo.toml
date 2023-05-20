@@ -10,6 +10,9 @@ dirs = "5.0"
 raw-window-handle = "0.5"
 winit = "0.28"
 
+[dependencies.flutter-desktop-messenger]
+path = "../../crates/flutter-desktop-messenger"
+
 [dependencies.flutter-windows-sys]
 path = "../../crates/flutter-windows-sys"
 

@@ -11,6 +11,7 @@ import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock/wakelock.dart';
 import 'package:zenith/theme.dart';
+import 'package:zenith/window.dart';
 
 import '../../api.dart' as api;
 import '../../platform.dart' as platform;
@@ -261,6 +262,7 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
   }
 
   void _onKeyEvent(KeyEvent event) {
+    final window = ref.read(windowProvider);
     if (event is KeyUpEvent) {
       if (event.logicalKey == LogicalKeyboardKey.space) {
         _togglePaused();
@@ -271,9 +273,9 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
       } else if (!kIsWeb) {
         // Browser handles keyboard shortcuts for toggling fullscreen mode itself
         if (event.logicalKey == LogicalKeyboardKey.escape) {
-          VideoPlayerPlatform.instance.exitFullscreen();
+          window.setFullscreen(false);
         } else if (event.logicalKey == LogicalKeyboardKey.f11) {
-          VideoPlayerPlatform.instance.toggleFullscreen();
+          window.toggleFullscreen();
         }
       }
     }
@@ -362,8 +364,9 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
   }
 
   Future<bool> _onWillPop() async {
-    if (VideoPlayerPlatform.instance.isWindowed) {
-      await VideoPlayerPlatform.instance.exitFullscreen();
+    final window = ref.read(windowProvider);
+    if (window.isWindowed) {
+      await window.setFullscreen(false);
     } else {
       await platform.setExtendIntoCutout(false);
       await platform.setSystemBarsVisible(true);

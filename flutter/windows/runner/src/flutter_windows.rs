@@ -3,12 +3,14 @@ use std::ffi::CString;
 use std::mem::transmute;
 use std::ptr::null;
 
+use flutter_desktop_messenger::FlutterDesktopMessenger;
 use flutter_windows_sys::{
-    FlutterDesktopEngineCreate, FlutterDesktopEngineProperties, FlutterDesktopEngineRef,
-    FlutterDesktopEngineReloadSystemFonts, FlutterDesktopViewControllerCreate,
-    FlutterDesktopViewControllerDestroy, FlutterDesktopViewControllerGetEngine,
-    FlutterDesktopViewControllerGetView, FlutterDesktopViewControllerHandleTopLevelWindowProc,
-    FlutterDesktopViewControllerRef, FlutterDesktopViewGetHWND, FlutterDesktopViewRef,
+    FlutterDesktopEngineCreate, FlutterDesktopEngineGetMessenger, FlutterDesktopEngineProperties,
+    FlutterDesktopEngineRef, FlutterDesktopEngineReloadSystemFonts,
+    FlutterDesktopViewControllerCreate, FlutterDesktopViewControllerDestroy,
+    FlutterDesktopViewControllerGetEngine, FlutterDesktopViewControllerGetView,
+    FlutterDesktopViewControllerHandleTopLevelWindowProc, FlutterDesktopViewControllerRef,
+    FlutterDesktopViewGetHWND, FlutterDesktopViewRef,
 };
 use windows::w;
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
@@ -98,6 +100,10 @@ pub struct FlutterDesktopEngine {
 }
 
 impl FlutterDesktopEngine {
+    pub fn create_messenger(&self) -> FlutterDesktopMessenger {
+        FlutterDesktopMessenger::new(unsafe { FlutterDesktopEngineGetMessenger(self.engine) })
+    }
+
     pub fn reload_system_fonts(&self) {
         unsafe { FlutterDesktopEngineReloadSystemFonts(self.engine) };
     }

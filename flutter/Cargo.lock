@@ -343,10 +343,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "flutter-desktop-messenger"
+version = "0.1.0"
+dependencies = [
+ "flutter-codec",
+ "flutter-windows-sys",
+]
+
+[[package]]
 name = "flutter-plugin"
 version = "0.1.0"
 dependencies = [
  "flutter-codec",
+ "flutter-desktop-messenger",
  "flutter-windows-sys",
  "paste",
  "windows",
@@ -1470,6 +1479,7 @@ version = "0.1.0"
 dependencies = [
  "dirs",
  "embed-manifest",
+ "flutter-desktop-messenger",
  "flutter-windows-sys",
  "raw-window-handle",
  "windows",

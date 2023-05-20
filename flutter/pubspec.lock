@@ -1152,6 +1152,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.4"
+  windowing:
+    dependency: "direct main"
+    description:
+      path: "packages/windowing"
+      relative: true
+    source: path
+    version: "0.0.1"
   xdg_directories:
     dependency: transitive
     description:

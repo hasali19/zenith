@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:windowing/windowing.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/drawer.dart';
 import 'package:zenith/language_codes.dart';
@@ -12,40 +13,29 @@ import 'package:zenith/router.dart';
 import 'package:zenith/theme.dart';
 import 'package:zenith/update_dialog.dart';
 import 'package:zenith/updater.dart';
+import 'package:zenith/window.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   final prefs = await SharedPreferences.getInstance();
-  runApp(Bootstrap(prefs: prefs));
-}
+  final window = await WindowController.create();
 
-class Bootstrap extends StatefulWidget {
-  const Bootstrap({super.key, required this.prefs});
-
-  final SharedPreferences prefs;
-
-  @override
-  State<Bootstrap> createState() => _BootstrapState();
-}
-
-class _BootstrapState extends State<Bootstrap> {
-  @override
-  Widget build(BuildContext context) {
-    return ProviderScope(
-      overrides: [
-        preferencesProvider.overrideWithValue(widget.prefs),
-        apiProvider.overrideWith((ref) {
-          final activeServer = ref.watch(activeServerProvider);
-          if (activeServer != null) {
-            return ZenithApiClient(activeServer.url);
-          } else {
-            throw UnimplementedError();
-          }
-        }),
-      ],
-      child: const ZenithApp(),
-    );
-  }
+  runApp(ProviderScope(
+    overrides: [
+      preferencesProvider.overrideWithValue(prefs),
+      windowProvider.overrideWithValue(window),
+      apiProvider.overrideWith((ref) {
+        final activeServer = ref.watch(activeServerProvider);
+        if (activeServer != null) {
+          return ZenithApiClient(activeServer.url);
+        } else {
+          throw UnimplementedError();
+        }
+      }),
+    ],
+    child: const ZenithApp(),
+  ));
 }
 
 class ZenithApp extends ConsumerStatefulWidget {
