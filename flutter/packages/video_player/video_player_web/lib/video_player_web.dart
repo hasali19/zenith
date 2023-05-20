@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 import 'package:video_player_web/text_track_parser.dart';
 
-import "shims/dart_ui.dart" as ui;
+import 'shims/dart_ui.dart' as ui;
 
 class VideoPlayerWeb extends VideoPlayerPlatform {
   static void registerWith(Registrar registrar) {
@@ -22,12 +22,12 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
     final element = VideoElement()
       ..autoplay = true
       ..disableRemotePlayback = true
-      ..style.width = "100%"
-      ..style.height = "100%"
-      ..style.background = "black";
+      ..style.width = '100%'
+      ..style.height = '100%'
+      ..style.background = 'black';
 
     ui.platformViewRegistry
-        .registerViewFactory("videoplayer-$id", (viewId) => element);
+        .registerViewFactory('videoplayer-$id', (viewId) => element);
 
     return VideoControllerWeb(id, element);
   }
@@ -35,10 +35,10 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
   @override
   Widget buildView(VideoController controller) {
     if (controller is VideoControllerWeb) {
-      return HtmlElementView(viewType: "videoplayer-${controller.id}");
+      return HtmlElementView(viewType: 'videoplayer-${controller.id}');
     } else {
       throw ArgumentError(
-          "controller must be an instance of VideoControllerWeb");
+          'controller must be an instance of VideoControllerWeb');
     }
   }
 }
@@ -53,21 +53,21 @@ class VideoControllerWeb extends VideoController {
   TextTrack? _activeTextTrack;
 
   VideoControllerWeb(this.id, this._element) {
-    _element.addEventListener("durationchange", (event) => _notifyListeners());
-    _element.addEventListener("pause", (event) => _notifyListeners());
-    _element.addEventListener("play", (event) => _notifyListeners());
+    _element.addEventListener('durationchange', (event) => _notifyListeners());
+    _element.addEventListener('pause', (event) => _notifyListeners());
+    _element.addEventListener('play', (event) => _notifyListeners());
 
-    _element.addEventListener("playing", (event) {
+    _element.addEventListener('playing', (event) {
       _loading = false;
       _notifyListeners();
     });
 
-    _element.addEventListener("waiting", (event) {
+    _element.addEventListener('waiting', (event) {
       _loading = true;
       _notifyListeners();
     });
 
-    _element.addEventListener("ended", (event) {
+    _element.addEventListener('ended', (event) {
       _state = VideoState.ended;
       _notifyListeners();
     });
@@ -103,7 +103,7 @@ class VideoControllerWeb extends VideoController {
   @override
   void load(VideoItem item) {
     _element.src = item.url;
-    _element.crossOrigin = "anonymous";
+    _element.crossOrigin = 'anonymous';
     _element.currentTime = item.startPosition;
     _element.children.clear();
     _state = VideoState.active;
@@ -139,26 +139,26 @@ class VideoControllerWeb extends VideoController {
         final contentType = res.headers['content-type'];
 
         final TextTrackParser parser;
-        if (contentType == "text/vtt") {
+        if (contentType == 'text/vtt') {
           parser = VttParser();
-        } else if (contentType == "text/srt" ||
-            contentType == "application/x-subrip") {
+        } else if (contentType == 'text/srt' ||
+            contentType == 'application/x-subrip') {
           parser = SrtParser();
         } else {
-          window.console.error("unsupported text track format: $contentType");
+          window.console.error('unsupported text track format: $contentType');
           return;
         }
 
         final data = utf8.decode(res.bodyBytes);
         final tracks = parser.parse(data);
 
-        tt = _element.addTextTrack("subtitles");
+        tt = _element.addTextTrack('subtitles');
         for (final cue in tracks) {
           tt.addCue(cue);
         }
       }
 
-      tt.mode = "showing";
+      tt.mode = 'showing';
       _activeTextTrack = tt;
     }
   }
@@ -168,11 +168,11 @@ class VideoControllerWeb extends VideoController {
     _element.style.objectFit = () {
       switch (fit) {
         case BoxFit.cover:
-          return "cover";
+          return 'cover';
         case BoxFit.contain:
-          return "contain";
+          return 'contain';
         default:
-          return "contain";
+          return 'contain';
       }
     }();
   }

@@ -7,9 +7,9 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 const _channel = MethodChannel('video_player_ffi');
 
-final DynamicLibrary _lib = DynamicLibrary.open("video_player_ffi.dll");
+final DynamicLibrary _lib = DynamicLibrary.open('video_player_ffi.dll');
 final int Function(int surface) ffiGetTextureId = _lib
-    .lookup<NativeFunction<IntPtr Function(IntPtr)>>("get_texture_id")
+    .lookup<NativeFunction<IntPtr Function(IntPtr)>>('get_texture_id')
     .asFunction();
 final void Function(int player, Pointer<Utf8> url, Pointer<Utf8> title,
         Pointer<Utf8> subtitle, double startPosition) ffiLoad =
@@ -17,24 +17,24 @@ final void Function(int player, Pointer<Utf8> url, Pointer<Utf8> title,
         .lookup<
             NativeFunction<
                 Void Function(IntPtr, Pointer<Utf8>, Pointer<Utf8>,
-                    Pointer<Utf8>, Double)>>("load")
+                    Pointer<Utf8>, Double)>>('load')
         .asFunction();
 final void Function(int player, int index) ffiSetAudioTrack = _lib
-    .lookup<NativeFunction<Void Function(IntPtr, Int32)>>("set_audio_track")
+    .lookup<NativeFunction<Void Function(IntPtr, Int32)>>('set_audio_track')
     .asFunction();
 final void Function(int player, Pointer<Utf8> url) ffiSetSubtitleFile = _lib
     .lookup<NativeFunction<Void Function(IntPtr, Pointer<Utf8>)>>(
-        "set_subtitle_file")
+        'set_subtitle_file')
     .asFunction();
 final void Function(int player) ffiPause =
-    _lib.lookup<NativeFunction<Void Function(IntPtr)>>("pause").asFunction();
+    _lib.lookup<NativeFunction<Void Function(IntPtr)>>('pause').asFunction();
 final void Function(int player) ffiPlay =
-    _lib.lookup<NativeFunction<Void Function(IntPtr)>>("play").asFunction();
+    _lib.lookup<NativeFunction<Void Function(IntPtr)>>('play').asFunction();
 final void Function(int player, double position) ffiSeekTo = _lib
-    .lookup<NativeFunction<Void Function(IntPtr, Double)>>("seek_to")
+    .lookup<NativeFunction<Void Function(IntPtr, Double)>>('seek_to')
     .asFunction();
 final void Function(int player, double speed) ffiSetSpeed = _lib
-    .lookup<NativeFunction<Void Function(IntPtr, Double)>>("set_speed")
+    .lookup<NativeFunction<Void Function(IntPtr, Double)>>('set_speed')
     .asFunction();
 
 class VideoPlayerFfi extends VideoPlayerPlatform {
@@ -44,9 +44,9 @@ class VideoPlayerFfi extends VideoPlayerPlatform {
 
   @override
   Future<VideoController> createController() async {
-    final int player = await _channel.invokeMethod("createPlayer");
+    final int player = await _channel.invokeMethod('createPlayer');
     final int surface =
-        await _channel.invokeMethod("createVideoSurface", {"player": player});
+        await _channel.invokeMethod('createVideoSurface', {'player': player});
     return VideoControllerWindows(player, surface);
   }
 
@@ -55,7 +55,7 @@ class VideoPlayerFfi extends VideoPlayerPlatform {
     if (controller is VideoControllerWindows) {
       return Texture(textureId: controller.textureId);
     } else {
-      throw ArgumentError.value(controller, "controller");
+      throw ArgumentError.value(controller, 'controller');
     }
   }
 }
@@ -81,23 +81,23 @@ class VideoControllerWindows extends VideoController {
       _lastKnownPosition = position * 1000;
       _lastKnownPositionTs = DateTime.now().millisecondsSinceEpoch;
 
-      if (args.containsKey("duration")) {
-        _duration = args["duration"];
+      if (args.containsKey('duration')) {
+        _duration = args['duration'];
       }
 
-      if (args.containsKey("paused")) {
-        _paused = args["paused"];
+      if (args.containsKey('paused')) {
+        _paused = args['paused'];
       }
 
-      if (args.containsKey("idle")) {
-        _playing = !args["idle"];
+      if (args.containsKey('idle')) {
+        _playing = !args['idle'];
       }
 
-      if (args.containsKey("speed")) {
-        _playbackSpeed = args["speed"];
+      if (args.containsKey('speed')) {
+        _playbackSpeed = args['speed'];
       }
 
-      if (args["state"] == "ended") {
+      if (args['state'] == 'ended') {
         _state = VideoState.ended;
       }
 
@@ -134,8 +134,8 @@ class VideoControllerWindows extends VideoController {
   @override
   void dispose() {
     Future.microtask(() async {
-      await _channel.invokeMethod("destroyVideoSurface", {"surface": surface});
-      await _channel.invokeMethod("destroyPlayer", {"player": player});
+      await _channel.invokeMethod('destroyVideoSurface', {'surface': surface});
+      await _channel.invokeMethod('destroyPlayer', {'player': player});
     });
     _channel.setMethodCallHandler(null);
   }

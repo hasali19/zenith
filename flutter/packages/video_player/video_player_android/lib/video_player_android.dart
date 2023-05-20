@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
-const _methodChannel = MethodChannel("video_player_android");
-const _eventChannel = EventChannel("video_player_android/events");
+const _methodChannel = MethodChannel('video_player_android');
+const _eventChannel = EventChannel('video_player_android/events');
 
 class VideoPlayerAndroid extends VideoPlayerPlatform {
   static registerWith() {
@@ -15,7 +15,7 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
 
   @override
   Future<VideoController> createController() async {
-    final int id = await _methodChannel.invokeMethod("create");
+    final int id = await _methodChannel.invokeMethod('create');
     return _VideoController(id);
   }
 
@@ -58,7 +58,7 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
         ),
       );
     } else {
-      throw ArgumentError.value(controller, "controller");
+      throw ArgumentError.value(controller, 'controller');
     }
   }
 }
@@ -154,19 +154,19 @@ class _VideoController extends VideoController {
   @override
   set position(value) {
     _methodChannel.invokeMethod(
-        "seekTo", {"id": id, "position": (value * 1000.0).toInt()});
+        'seekTo', {'id': id, 'position': (value * 1000.0).toInt()});
   }
 
   _VideoController(this.id) {
     _subscription = _eventChannel.receiveBroadcastStream(id).listen((event) {
-      final String type = event["type"];
-      if (type == "durationChanged") {
-        final int duration = event["value"];
+      final String type = event['type'];
+      if (type == 'durationChanged') {
+        final int duration = event['value'];
         this.duration = duration.toDouble() / 1000.0;
-      } else if (type == "playWhenReadyChanged") {
-        paused = !event["value"];
-      } else if (type == "playbackStateChanged") {
-        final int state = event["value"];
+      } else if (type == 'playWhenReadyChanged') {
+        paused = !event['value'];
+      } else if (type == 'playbackStateChanged') {
+        final int state = event['value'];
         if (state == 0) {
           this.state = VideoState.idle;
         } else if (state == 1) {
@@ -174,19 +174,19 @@ class _VideoController extends VideoController {
         } else if (state == 2) {
           this.state = VideoState.ended;
         } else {
-          throw ArgumentError.value(state, "value");
+          throw ArgumentError.value(state, 'value');
         }
-      } else if (type == "isPlayingChanged") {
-        _playing = event["value"];
-      } else if (type == "aspectRatioChanged") {
-        aspectRatio.value = event["value"];
-      } else if (type == "cues") {
-        _subsController.add(event["text"]);
-      } else if (type == "playbackSpeed") {
-        _playbackSpeed = event["speed"];
+      } else if (type == 'isPlayingChanged') {
+        _playing = event['value'];
+      } else if (type == 'aspectRatioChanged') {
+        aspectRatio.value = event['value'];
+      } else if (type == 'cues') {
+        _subsController.add(event['text']);
+      } else if (type == 'playbackSpeed') {
+        _playbackSpeed = event['speed'];
       }
-      if (event.containsKey("position")) {
-        _lastKnownPosition = event["position"];
+      if (event.containsKey('position')) {
+        _lastKnownPosition = event['position'];
         _lastKnownPositionTs = DateTime.now().millisecondsSinceEpoch;
       }
       _notifyListeners();
@@ -196,46 +196,46 @@ class _VideoController extends VideoController {
   @override
   void dispose() async {
     _subscription.cancel();
-    await _methodChannel.invokeMethod("dispose", {"id": id});
+    await _methodChannel.invokeMethod('dispose', {'id': id});
   }
 
   @override
   void load(VideoItem item) async {
-    await _methodChannel.invokeMethod("load", {
-      "id": id,
-      "url": item.url,
-      "subtitles": item.subtitles
+    await _methodChannel.invokeMethod('load', {
+      'id': id,
+      'url': item.url,
+      'subtitles': item.subtitles
           .map((track) => {
-                "id": track.id,
-                "src": track.src,
-                "mimeType": track.mimeType,
-                "title": track.title,
-                "language": track.language
+                'id': track.id,
+                'src': track.src,
+                'mimeType': track.mimeType,
+                'title': track.title,
+                'language': track.language
               })
           .toList(),
-      "startPosition": (item.startPosition * 1000).toInt(),
+      'startPosition': (item.startPosition * 1000).toInt(),
     });
   }
 
   @override
   void setAudioTrack(int index) {
-    _methodChannel.invokeMethod("setAudioTrack", {"id": id, "index": index});
+    _methodChannel.invokeMethod('setAudioTrack', {'id': id, 'index': index});
   }
 
   @override
   void setTextTrack(SubtitleTrack? track) {
     _methodChannel
-        .invokeMethod("setTextTrack", {"id": id, "trackId": track?.id});
+        .invokeMethod('setTextTrack', {'id': id, 'trackId': track?.id});
   }
 
   @override
   void pause() {
-    _methodChannel.invokeListMethod("pause", {"id": id});
+    _methodChannel.invokeListMethod('pause', {'id': id});
   }
 
   @override
   void play() {
-    _methodChannel.invokeListMethod("play", {"id": id});
+    _methodChannel.invokeListMethod('play', {'id': id});
   }
 
   @override
@@ -245,7 +245,7 @@ class _VideoController extends VideoController {
 
   @override
   void setPlaybackSpeed(double speed) {
-    _methodChannel.invokeMethod("setPlaybackSpeed", {"id": id, "speed": speed});
+    _methodChannel.invokeMethod('setPlaybackSpeed', {'id': id, 'speed': speed});
   }
 
   final List<void Function()> _listeners = [];

@@ -50,10 +50,10 @@ class _AddToCollectionDialogState extends ConsumerState<AddToCollectionDialog> {
             isExpanded: true,
             value: _selected,
             items: [
-              DropdownMenuItem(
+              const DropdownMenuItem(
                 value: null,
                 child: Row(
-                  children: const [
+                  children: [
                     Icon(Icons.add),
                     SizedBox(width: 8),
                     Text('Create new'),

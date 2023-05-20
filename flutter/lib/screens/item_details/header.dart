@@ -146,10 +146,10 @@ class HeaderContent extends ConsumerWidget {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
                     child: Column(
-                      children: const [
+                      children: [
                         Icon(Icons.play_circle_outline),
                         Text('Trailer'),
                       ],
