@@ -180,3 +180,53 @@ async fn import_episode() -> eyre::Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn remove_show_with_empty_season() -> eyre::Result<()> {
+    let db = test_db().await;
+    let config: Config = serde_yaml::from_str(include_str!("config.yml"))?;
+    let video_prober = MockVideoProber::new();
+    let library = MediaLibrary::new(db.clone(), Arc::new(config), Arc::new(video_prober));
+
+    let mut conn = db.acquire().await?;
+
+    let sql = "
+        INSERT INTO media_items (item_type, name)
+        VALUES (?, ?)
+    ";
+
+    sqlx::query(sql)
+        .bind(MediaItemType::Show)
+        .bind("Show")
+        .execute(&mut conn)
+        .await?;
+
+    let sql = "
+        INSERT INTO media_items (item_type, name, parent_id, parent_index)
+        VALUES (?, ?, ?, ?)
+    ";
+
+    sqlx::query(sql)
+        .bind(MediaItemType::Season)
+        .bind("Season")
+        .bind(1)
+        .bind(1)
+        .execute(&mut conn)
+        .await?;
+
+    let item_count: i32 = sqlx::query_scalar("SELECT COUNT(*) FROM media_items")
+        .fetch_one(&mut conn)
+        .await?;
+
+    assert_eq!(item_count, 2);
+
+    library.validate_shows().await?;
+
+    let item_count: i32 = sqlx::query_scalar("SELECT COUNT(*) FROM media_items")
+        .fetch_one(&mut conn)
+        .await?;
+
+    assert_eq!(item_count, 0);
+
+    Ok(())
+}

@@ -201,12 +201,15 @@ impl MediaLibrary {
     }
 
     async fn remove_empty_collections(&self, conn: &mut SqliteConnection) -> eyre::Result<()> {
+        // Don't use a subquery here - it doesn't seem to work. e.g.
+        // SELECT * FROM media_items WHERE item_type = 3 AND id NOT IN (SELECT parent_id FROM media_items)
+        // ^ returns an empty result set despite orphan seasons existing
+
         let sql = "
-            SELECT se.id, se.parent_index, sh.name FROM media_items AS se
-            JOIN media_items AS sh ON sh.id = se.parent_id
-            WHERE se.item_type = ? AND se.id NOT IN (
-                SELECT parent_id FROM media_items
-            )
+            SELECT s.id, s.parent_index, s.name FROM media_items AS s
+            LEFT JOIN media_items AS e
+            ON s.id = e.parent_id
+            WHERE s.item_type = ? AND e.id IS NULL
         ";
 
         let seasons: Vec<(i64, u32, String)> = sqlx::query_as(sql)
@@ -221,12 +224,10 @@ impl MediaLibrary {
         }
 
         let sql = "
-            SELECT id, name FROM media_items
-            WHERE item_type = ? AND id NOT IN (
-                SELECT parent_id FROM media_items
-                UNION
-                SELECT grandparent_id FROM media_items
-            )
+            SELECT sh.id, sh.name FROM media_items AS sh
+            LEFT JOIN media_items AS se
+            ON sh.id = se.parent_id
+            WHERE sh.item_type = ? AND se.id IS NULL
         ";
 
         let shows: Vec<(i64, String)> = sqlx::query_as(sql)
