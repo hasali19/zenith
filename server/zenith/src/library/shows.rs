@@ -206,9 +206,9 @@ impl MediaLibrary {
         // ^ returns an empty result set despite orphan seasons existing
 
         let sql = "
-            SELECT s.id, s.parent_index, s.name FROM media_items AS s
-            LEFT JOIN media_items AS e
-            ON s.id = e.parent_id
+            SELECT s.id, s.parent_index, sh.name FROM media_items AS s
+            JOIN media_items AS sh ON s.parent_id = sh.id
+            LEFT JOIN media_items AS e ON s.id = e.parent_id
             WHERE s.item_type = ? AND e.id IS NULL
         ";
 
