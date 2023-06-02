@@ -1,6 +1,7 @@
 [workspace]
 members = ["server/*"]
 exclude = ["desktop", "flutter"]
+resolver = "2"
 
 [profile.dev.build-override]
 opt-level = 3
