@@ -11,13 +11,12 @@ on:
       - Cargo.toml
       - Dockerfile
     branches:
-      - '**'
+      - "**"
     tags-ignore:
-      - '*/latest'
+      - "*/latest"
 
 jobs:
-  lint_server:
-    name: Lint server
+  lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout git repo
@@ -33,8 +32,7 @@ jobs:
       - name: Run clippy
         run: cargo clippy --workspace --all-features
 
-  test_server:
-    name: Test server
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout git repo
@@ -58,8 +56,24 @@ jobs:
       - name: Run tests
         run: cargo nextest run
 
-  build_server:
-    name: Build server
+  coverage:
+    runs-on: ubuntu-latest
+    container:
+      image: xd009642/tarpaulin:develop-nightly
+      options: --security-opt seccomp=unconfined
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Generate code coverage
+        run: cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
+
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v3
+
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -96,9 +110,9 @@ jobs:
     runs-on: ubuntu-latest
     if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs:
-      - lint_server
-      - test_server
-      - build_server
+      - lint
+      - test
+      - build
     concurrency:
       group: server-deploy
       cancel-in-progress: true
@@ -150,7 +164,7 @@ jobs:
             ghcr.io/hasali19/zenith:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
-          provenance: false  # temp fix for watchtower https://github.com/containrrr/watchtower/issues/1528
+          provenance: false # temp fix for watchtower https://github.com/containrrr/watchtower/issues/1528
 
       # Temp fix
       # https://github.com/docker/build-push-action/issues/252
