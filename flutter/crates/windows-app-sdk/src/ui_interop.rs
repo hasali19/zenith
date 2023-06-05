@@ -4,7 +4,6 @@ use windows::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryW};
 use windows::Win32::UI::WindowsAndMessaging::HICON;
 use windows::{s, w};
 
-use crate::Microsoft;
 use crate::Microsoft::UI::{IconId, WindowId};
 
 // This code is ported from Microsoft.UI.Interop.h in the WindowsAppSDK nuget package and is
@@ -13,10 +12,7 @@ use crate::Microsoft::UI::{IconId, WindowId};
 pub struct WindowingInteropFns {
     GetWindowFromWindowId:
         unsafe extern "stdcall" fn(WindowId, *mut HWND) -> windows::core::HRESULT,
-    GetIconIdFromIcon: unsafe extern "stdcall" fn(
-        windows::Win32::UI::WindowsAndMessaging::HICON,
-        *mut Microsoft::UI::IconId,
-    ) -> windows::core::HRESULT,
+    GetIconIdFromIcon: unsafe extern "stdcall" fn(HICON, *mut IconId) -> windows::core::HRESULT,
 }
 
 impl WindowingInteropFns {
@@ -25,10 +21,13 @@ impl WindowingInteropFns {
             let lib = LoadLibraryW(w!("Microsoft.Internal.FrameworkUdk.dll"))?;
 
             let GetIconIdFromIcon = std::mem::transmute(
-                GetProcAddress(lib, s!("Windowing_GetIconIdFromIcon")).unwrap(),
+                GetProcAddress(lib, s!("Windowing_GetIconIdFromIcon"))
+                    .expect("Windowing_GetIconIdFromIcon not found"),
             );
+
             let GetWindowFromWindowId = std::mem::transmute(
-                GetProcAddress(lib, s!("Windowing_GetWindowFromWindowId")).unwrap(),
+                GetProcAddress(lib, s!("Windowing_GetWindowFromWindowId"))
+                    .expect("Windowing_GetWindowFromWindowId not found"),
             );
 
             Ok(WindowingInteropFns {
