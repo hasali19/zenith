@@ -36,9 +36,9 @@ class PosterItem extends StatelessWidget {
           child: Stack(
             children: [
               Positioned.fill(
-                child: Material(
+                child: Card(
                   elevation: cardTheme.elevation ?? 1,
-                  type: MaterialType.card,
+                  margin: EdgeInsets.zero,
                   clipBehavior: Clip.hardEdge,
                   shape: cardTheme.shape,
                   child: poster != null

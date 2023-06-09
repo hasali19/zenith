@@ -278,9 +278,8 @@ class ContinueWatchingCard extends StatelessWidget {
 
     return AspectRatio(
       aspectRatio: 16 / 9,
-      child: Material(
+      child: Card(
         elevation: cardTheme.elevation ?? 1,
-        type: MaterialType.card,
         clipBehavior: Clip.hardEdge,
         shape: cardTheme.shape,
         child: Ink(
