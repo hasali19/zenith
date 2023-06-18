@@ -30,11 +30,19 @@ pub struct MediaItem {
     pub trailer: Option<String>,
     pub tmdb_id: Option<i32>,
     pub imdb_id: Option<String>,
+    pub cast: Vec<CastMember>,
     pub parent: Option<Parent>,
     pub grandparent: Option<Parent>,
     pub video_file: Option<VideoFile>,
     pub metadata_provider: Option<String>,
     pub metadata_provider_key: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct CastMember {
+    pub name: String,
+    pub character: Option<String>,
+    pub profile: Option<String>,
 }
 
 #[derive(Debug)]
@@ -157,6 +165,7 @@ impl<'r> FromRow<'r, SqliteRow> for MediaItem {
             trailer: row.try_get("trailer")?,
             tmdb_id: row.try_get("tmdb_id")?,
             imdb_id: row.try_get("imdb_id")?,
+            cast: vec![],
             parent: get_parent(row, "parent_id", "parent_index", "parent_name")?,
             grandparent: get_parent(
                 row,
@@ -359,7 +368,7 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         .condition(&condition)
         .to_sql();
 
-    let mut genres = sqlx::query_as_with::<_, (i64, String), _>(&sql, args)
+    let mut genres = sqlx::query_as_with::<_, (i64, String), _>(&sql, args.clone())
         .fetch_all(&mut *conn)
         .await?
         .into_iter()
@@ -371,6 +380,37 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
             } else {
                 Some(vec![v])
             }
+        });
+
+    #[derive(FromRow)]
+    struct CastMemberRow {
+        item_id: i64,
+        name: String,
+        profile: Option<String>,
+        character: Option<String>,
+    }
+
+    let condition = format!("c.item_id IN ({})", sql::Placeholders(items.len()));
+    let sql = sql::select("cast AS c")
+        .joins(&[Join::inner("people AS p ON c.person_id = p.id")])
+        .columns(&["c.item_id", "p.name", "p.profile", "c.character"])
+        .condition(&condition)
+        .order_by(&["c.idx"])
+        .to_sql();
+
+    let mut cast = sqlx::query_as_with::<_, CastMemberRow, _>(&sql, args)
+        .fetch_all(&mut *conn)
+        .await?
+        .into_iter()
+        .into_grouping_map_by(|cast_member: &CastMemberRow| cast_member.item_id)
+        .aggregate(|acc: Option<Vec<CastMember>>, _, cast_member| {
+            let mut acc = acc.unwrap_or_default();
+            acc.push(CastMember {
+                name: cast_member.name,
+                character: cast_member.character,
+                profile: cast_member.profile,
+            });
+            Some(acc)
         });
 
     let video_ids = items
@@ -410,6 +450,7 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
 
     for item in &mut items {
         item.genres = genres.remove(&item.id).unwrap_or_default();
+        item.cast = cast.remove(&item.id).unwrap_or_default();
 
         if let Some(video) = &mut item.video_file {
             video.streams = streams.remove(&video.id).unwrap_or_default();
@@ -633,11 +674,18 @@ pub struct UpdateMetadata<'a> {
     pub thumbnail: Option<Option<MediaImage<'a>>>,
     pub age_rating: Option<Option<&'a str>>,
     pub genres: Option<&'a [&'a str]>,
+    pub cast: Option<&'a [UpdateCastMember<'a>]>,
     pub trailer: Option<Option<&'a str>>,
     pub tmdb_id: Option<Option<i32>>,
     pub imdb_id: Option<Option<&'a str>>,
     pub metadata_provider: Option<Option<MetadataProvider>>,
     pub metadata_provider_key: Option<Option<&'a str>>,
+}
+
+pub struct UpdateCastMember<'a> {
+    pub person_id: i64,
+    pub idx: u32,
+    pub character: Option<&'a str>,
 }
 
 pub async fn update_metadata(
@@ -762,6 +810,46 @@ pub async fn update_metadata(
         let sql = format!("
             DELETE FROM media_items_genres
             WHERE item_id = ? AND genre_id NOT IN ({placeholders})
+        ");
+
+        sqlx::query_with(&sql, args).execute(&mut tx).await?;
+    }
+
+    if let Some(cast) = data.cast {
+        let mut args = SqliteArguments::default();
+        let mut placeholders = String::new();
+
+        for (i, cast_member) in cast.iter().enumerate() {
+            args.add(id);
+            args.add(cast_member.person_id);
+            args.add(cast_member.idx);
+            args.add(cast_member.character);
+            placeholders += "(?, ?, ?, ?)";
+            if i < cast.len() - 1 {
+                placeholders += ",";
+            }
+        }
+
+        #[rustfmt::skip]
+        let sql = format!("
+            INSERT INTO cast (item_id, person_id, idx, character) VALUES {placeholders}
+            ON CONFLICT DO UPDATE SET
+                idx = excluded.idx,
+                character = excluded.character
+        ");
+
+        sqlx::query_with(&sql, args).execute(&mut tx).await?;
+
+        let placeholders = sql::Placeholders(cast.len());
+        let mut args = SqliteArguments::default();
+        for cast_member in cast {
+            args.add(cast_member.person_id);
+        }
+
+        #[rustfmt::skip]
+        let sql = format!("
+            DELETE FROM cast
+            WHERE item_id = ? AND person_id NOT IN ({placeholders})
         ");
 
         sqlx::query_with(&sql, args).execute(&mut tx).await?;

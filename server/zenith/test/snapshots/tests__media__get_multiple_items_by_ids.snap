@@ -6,6 +6,7 @@ expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
   {
     "age_rating": null,
     "backdrop": null,
+    "cast": [],
     "end_date": null,
     "external_ids": {
       "imdb": null,
@@ -56,6 +57,7 @@ expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
   {
     "age_rating": null,
     "backdrop": null,
+    "cast": [],
     "end_date": null,
     "external_ids": {
       "imdb": null,
@@ -78,6 +80,7 @@ expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
   {
     "age_rating": null,
     "backdrop": null,
+    "cast": [],
     "end_date": null,
     "external_ids": {
       "imdb": null,
@@ -105,6 +108,7 @@ expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
   {
     "age_rating": null,
     "backdrop": null,
+    "cast": [],
     "end_date": null,
     "external_ids": {
       "imdb": null,

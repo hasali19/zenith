@@ -80,6 +80,7 @@ pub struct MovieResponse {
     pub external_ids: ExternalIds,
     pub release_dates: MovieReleaseDatesResults,
     pub videos: VideoResults,
+    pub credits: Credits,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -112,6 +113,7 @@ pub struct TvShowResponse {
     pub external_ids: ExternalIds,
     pub content_ratings: TvShowContentRatings,
     pub videos: VideoResults,
+    pub aggregate_credits: Credits,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -134,6 +136,7 @@ pub struct TvSeasonResponse {
     pub poster_path: Option<String>,
     pub external_ids: ExternalIds,
     pub videos: VideoResults,
+    pub aggregate_credits: Credits,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -145,6 +148,7 @@ pub struct TvEpisodeResponse {
     pub external_ids: ExternalIds,
     pub images: TvEpisodeImages,
     pub videos: VideoResults,
+    pub credits: Credits,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -203,6 +207,27 @@ pub enum VideoSite {
     Unknown,
 }
 
+#[derive(Debug, serde::Deserialize)]
+pub struct Credits {
+    pub cast: Vec<CastMember>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct CastMember {
+    pub id: i32,
+    pub name: String,
+    pub profile_path: Option<String>,
+    pub character: Option<String>,
+    pub roles: Option<Vec<CastMemberRole>>,
+    pub order: u32,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct CastMemberRole {
+    pub character: Option<String>,
+    pub episode_count: i32,
+}
+
 impl TmdbClient {
     pub fn new(api_key: &str) -> Self {
         TmdbClient {
@@ -257,22 +282,28 @@ impl TmdbClient {
 
     pub async fn get_movie(&self, id: i32) -> eyre::Result<MovieResponse> {
         let mut url = self.url(&format!("movie/{id}"));
-        url.query_pairs_mut()
-            .append_pair("append_to_response", "external_ids,release_dates,videos");
+        url.query_pairs_mut().append_pair(
+            "append_to_response",
+            "external_ids,release_dates,videos,credits",
+        );
         self.get_json(url).await
     }
 
     pub async fn get_tv_show(&self, id: i32) -> eyre::Result<TvShowResponse> {
         let mut url = self.url(&format!("tv/{id}"));
-        url.query_pairs_mut()
-            .append_pair("append_to_response", "external_ids,content_ratings,videos");
+        url.query_pairs_mut().append_pair(
+            "append_to_response",
+            "external_ids,content_ratings,videos,aggregate_credits",
+        );
         self.get_json(url).await
     }
 
     pub async fn get_tv_season(&self, tv_id: i32, season: i32) -> eyre::Result<TvSeasonResponse> {
         let mut url = self.url(&format!("tv/{tv_id}/season/{season}"));
-        url.query_pairs_mut()
-            .append_pair("append_to_response", "external_ids,videos");
+        url.query_pairs_mut().append_pair(
+            "append_to_response",
+            "external_ids,videos,aggregate_credits",
+        );
         self.get_json(url).await
     }
 
@@ -285,7 +316,7 @@ impl TmdbClient {
         let path = format!("tv/{tv_id}/season/{season}/episode/{episode}");
         let mut url = self.url(&path);
         url.query_pairs_mut()
-            .append_pair("append_to_response", "external_ids,images,videos");
+            .append_pair("append_to_response", "external_ids,images,videos,credits");
         self.get_json(url).await
     }
 
@@ -297,6 +328,7 @@ impl TmdbClient {
     }
 
     async fn get_json<T: DeserializeOwned>(&self, url: Url) -> eyre::Result<T> {
+        tracing::debug!("requesting {url}");
         let res = self.client.get(url).send().await?;
         let bytes = res.error_for_status()?.bytes().await?;
         serde_json::from_slice(&bytes).wrap_err_with(|| {

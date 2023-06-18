@@ -55,6 +55,7 @@ pub struct MediaItem {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grandparent: Option<Parent>,
     pub external_ids: ExternalIds,
+    pub cast: Vec<CastMember>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub video_file: Option<VideoFile>,
     pub user_data: Option<UserData>,
@@ -71,6 +72,13 @@ pub struct Parent {
 pub struct ExternalIds {
     pub tmdb: Option<i32>,
     pub imdb: Option<String>,
+}
+
+#[derive(Serialize, Reflect)]
+pub struct CastMember {
+    pub name: String,
+    pub character: Option<String>,
+    pub profile: Option<String>,
 }
 
 #[derive(Serialize, Reflect)]
@@ -168,6 +176,15 @@ impl From<db::items::MediaItem> for MediaItem {
                 tmdb: item.tmdb_id,
                 imdb: item.imdb_id,
             },
+            cast: item
+                .cast
+                .into_iter()
+                .map(|member| CastMember {
+                    name: member.name,
+                    character: member.character,
+                    profile: member.profile.map(utils::get_image_url),
+                })
+                .collect(),
             video_file: item.video_file.map(|v| VideoFile {
                 id: v.id,
                 path: v.path,

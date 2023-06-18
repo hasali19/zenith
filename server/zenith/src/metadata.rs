@@ -1,5 +1,6 @@
 use db::items::MediaItem;
 use db::media::{MediaImage, MediaImageSrcType, MediaImageType, MediaItemType, MetadataProvider};
+use db::people::NewPerson;
 use db::Db;
 use eyre::{eyre, Context};
 use itertools::Itertools;
@@ -262,7 +263,7 @@ async fn refresh_movie_metadata(
 
     let metadata = tmdb.get_movie(key).await?;
 
-    tracing::debug!(?metadata);
+    // tracing::debug!(?metadata);
 
     let poster = metadata.poster_path.as_deref().map(|poster| MediaImage {
         img_type: MediaImageType::Poster,
@@ -307,6 +308,7 @@ async fn refresh_movie_metadata(
         });
 
     let trailer = get_trailer(&metadata.videos.results);
+    let cast = get_cast(&mut *db, &metadata.credits.cast).await?;
 
     let data = db::items::UpdateMetadata {
         name: Some(&metadata.title),
@@ -318,6 +320,7 @@ async fn refresh_movie_metadata(
         thumbnail: None,
         age_rating: Some(age_rating.as_deref()),
         genres: Some(&genres),
+        cast: Some(&cast),
         trailer: Some(trailer.as_deref()),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
@@ -344,7 +347,7 @@ async fn refresh_tv_show_metadata(
 
     let metadata = tmdb.get_tv_show(key).await?;
 
-    tracing::debug!(?metadata);
+    // tracing::debug!(?metadata);
 
     let date_fmt = format_description::parse("[year]-[month]-[day]")?;
     let first_air_date = metadata
@@ -396,6 +399,7 @@ async fn refresh_tv_show_metadata(
         });
 
     let trailer = get_trailer(&metadata.videos.results);
+    let cast = get_cast(&mut *db, &metadata.aggregate_credits.cast).await?;
 
     let data = db::items::UpdateMetadata {
         name: Some(&metadata.name),
@@ -407,6 +411,7 @@ async fn refresh_tv_show_metadata(
         backdrop: Some(backdrop),
         age_rating: Some(age_rating.as_deref()),
         genres: Some(&genres),
+        cast: Some(&cast),
         trailer: Some(trailer.as_deref()),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
@@ -460,7 +465,7 @@ async fn refresh_tv_season_metadata(
 
     let metadata = tmdb.get_tv_season(show_id, season_number).await?;
 
-    tracing::debug!(?metadata);
+    // tracing::debug!(?metadata);
 
     let poster = metadata.poster_path.as_deref().map(|poster| MediaImage {
         img_type: MediaImageType::Poster,
@@ -469,6 +474,7 @@ async fn refresh_tv_season_metadata(
     });
 
     let trailer = get_trailer(&metadata.videos.results);
+    let cast = get_cast(&mut *db, &metadata.aggregate_credits.cast).await?;
 
     let metadata_key = format!("{show_id}:{season_number}");
     let data = db::items::UpdateMetadata {
@@ -481,6 +487,7 @@ async fn refresh_tv_season_metadata(
         thumbnail: None,
         age_rating: None,
         genres: None,
+        cast: Some(&cast),
         trailer: Some(trailer.as_deref()),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
@@ -541,7 +548,7 @@ async fn refresh_tv_episode_metadata(
         .get_tv_episode(show_id, season_number, episode_number)
         .await?;
 
-    tracing::debug!(?metadata);
+    // tracing::debug!(?metadata);
 
     let thumbnail = metadata
         .images
@@ -557,6 +564,7 @@ async fn refresh_tv_episode_metadata(
     });
 
     let trailer = get_trailer(&metadata.videos.results);
+    let cast = get_cast(&mut *db, &metadata.credits.cast).await?;
 
     let metadata_key = format!("{show_id}:{season_number}:{episode_number}");
     let data = db::items::UpdateMetadata {
@@ -569,6 +577,7 @@ async fn refresh_tv_episode_metadata(
         thumbnail: Some(thumbnail),
         age_rating: None,
         genres: None,
+        cast: Some(&cast),
         trailer: Some(trailer.as_deref()),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
@@ -598,4 +607,37 @@ fn get_trailer(videos: &[Video]) -> Option<String> {
 
 fn build_youtube_url(video: &tmdb::Video) -> String {
     format!("https://www.youtube.com/watch?v={}", video.key)
+}
+
+async fn get_cast<'a>(
+    conn: &mut SqliteConnection,
+    cast: &'a [tmdb::CastMember],
+) -> eyre::Result<Vec<db::items::UpdateCastMember<'a>>> {
+    let mut updates = vec![];
+    for actor in cast {
+        let person_id = db::people::get_by_tmdb_id_or_create(
+            conn,
+            actor.id,
+            NewPerson {
+                tmdb_id: None,
+                name: &actor.name,
+                profile: actor
+                    .profile_path
+                    .as_deref()
+                    .map(|profile_path| MediaImage {
+                        img_type: MediaImageType::Profile,
+                        src_type: MediaImageSrcType::Tmdb,
+                        src: profile_path,
+                    }),
+            },
+        )
+        .await?;
+
+        updates.push(db::items::UpdateCastMember {
+            person_id,
+            idx: actor.order,
+            character: actor.character.as_deref(),
+        });
+    }
+    Ok(updates)
 }

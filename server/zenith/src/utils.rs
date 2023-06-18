@@ -12,6 +12,7 @@ pub fn get_image_url(value: impl AsRef<str>) -> String {
             MediaImageType::Poster => format!("https://image.tmdb.org/t/p/w342{src}"),
             MediaImageType::Backdrop => format!("https://image.tmdb.org/t/p/original{src}"),
             MediaImageType::Thumbnail => format!("https://image.tmdb.org/t/p/original{src}"),
+            MediaImageType::Profile => format!("https://image.tmdb.org/t/p/original{src}"),
         },
     }
 }

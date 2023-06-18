@@ -5,6 +5,7 @@ expression: "app.get(\"/movies/1\").await"
 {
   "age_rating": null,
   "backdrop": null,
+  "cast": [],
   "end_date": null,
   "external_ids": {
     "imdb": null,

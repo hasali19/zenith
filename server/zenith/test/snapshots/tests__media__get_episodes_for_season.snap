@@ -6,6 +6,7 @@ expression: "app.get(\"/seasons/7/episodes\").await"
   {
     "age_rating": null,
     "backdrop": null,
+    "cast": [],
     "end_date": null,
     "external_ids": {
       "imdb": null,
@@ -66,6 +67,7 @@ expression: "app.get(\"/seasons/7/episodes\").await"
   {
     "age_rating": null,
     "backdrop": null,
+    "cast": [],
     "end_date": null,
     "external_ids": {
       "imdb": null,

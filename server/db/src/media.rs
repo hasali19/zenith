@@ -2,6 +2,7 @@ use std::convert::TryFrom;
 
 use eyre::eyre;
 use sqlx::{SqliteConnection, Type};
+use strum::FromRepr;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Type)]
 #[repr(i32)]
@@ -18,27 +19,25 @@ impl MediaItemType {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, FromRepr)]
+#[repr(i32)]
 pub enum MediaImageType {
     Poster = 1,
     Backdrop = 2,
     Thumbnail = 3,
+    Profile = 4,
 }
 
 impl TryFrom<i32> for MediaImageType {
     type Error = ();
 
     fn try_from(value: i32) -> Result<Self, Self::Error> {
-        match value {
-            1 => Ok(MediaImageType::Poster),
-            2 => Ok(MediaImageType::Backdrop),
-            3 => Ok(MediaImageType::Thumbnail),
-            _ => Err(()),
-        }
+        MediaImageType::from_repr(value).ok_or(())
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, FromRepr)]
+#[repr(i32)]
 pub enum MediaImageSrcType {
     Local = 1,
     Tmdb = 2,
@@ -48,11 +47,7 @@ impl TryFrom<i32> for MediaImageSrcType {
     type Error = ();
 
     fn try_from(value: i32) -> Result<Self, Self::Error> {
-        match value {
-            1 => Ok(MediaImageSrcType::Local),
-            2 => Ok(MediaImageSrcType::Tmdb),
-            _ => Err(()),
-        }
+        MediaImageSrcType::from_repr(value).ok_or(())
     }
 }
 
