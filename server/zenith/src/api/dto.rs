@@ -56,6 +56,7 @@ pub struct MediaItem {
     pub grandparent: Option<Parent>,
     pub external_ids: ExternalIds,
     pub cast: Vec<CastMember>,
+    pub director: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub video_file: Option<VideoFile>,
     pub user_data: Option<UserData>,
@@ -185,6 +186,7 @@ impl From<db::items::MediaItem> for MediaItem {
                     profile: member.profile.map(utils::get_image_url),
                 })
                 .collect(),
+            director: item.director,
             video_file: item.video_file.map(|v| VideoFile {
                 id: v.id,
                 path: v.path,

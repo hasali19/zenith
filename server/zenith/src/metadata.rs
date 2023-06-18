@@ -309,6 +309,7 @@ async fn refresh_movie_metadata(
 
     let trailer = get_trailer(&metadata.videos.results);
     let cast = get_cast(&mut *db, &metadata.credits.cast).await?;
+    let crew = get_crew(&mut *db, &metadata.credits.crew).await?;
 
     let data = db::items::UpdateMetadata {
         name: Some(&metadata.title),
@@ -321,6 +322,7 @@ async fn refresh_movie_metadata(
         age_rating: Some(age_rating.as_deref()),
         genres: Some(&genres),
         cast: Some(&cast),
+        crew: Some(&crew),
         trailer: Some(trailer.as_deref()),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
@@ -400,6 +402,7 @@ async fn refresh_tv_show_metadata(
 
     let trailer = get_trailer(&metadata.videos.results);
     let cast = get_cast(&mut *db, &metadata.aggregate_credits.cast).await?;
+    let crew = get_crew(&mut *db, &metadata.aggregate_credits.crew).await?;
 
     let data = db::items::UpdateMetadata {
         name: Some(&metadata.name),
@@ -412,6 +415,7 @@ async fn refresh_tv_show_metadata(
         age_rating: Some(age_rating.as_deref()),
         genres: Some(&genres),
         cast: Some(&cast),
+        crew: Some(&crew),
         trailer: Some(trailer.as_deref()),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
@@ -475,6 +479,7 @@ async fn refresh_tv_season_metadata(
 
     let trailer = get_trailer(&metadata.videos.results);
     let cast = get_cast(&mut *db, &metadata.aggregate_credits.cast).await?;
+    let crew = get_crew(&mut *db, &metadata.aggregate_credits.crew).await?;
 
     let metadata_key = format!("{show_id}:{season_number}");
     let data = db::items::UpdateMetadata {
@@ -488,6 +493,7 @@ async fn refresh_tv_season_metadata(
         age_rating: None,
         genres: None,
         cast: Some(&cast),
+        crew: Some(&crew),
         trailer: Some(trailer.as_deref()),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
@@ -565,6 +571,7 @@ async fn refresh_tv_episode_metadata(
 
     let trailer = get_trailer(&metadata.videos.results);
     let cast = get_cast(&mut *db, &metadata.credits.cast).await?;
+    let crew = get_crew(&mut *db, &metadata.credits.crew).await?;
 
     let metadata_key = format!("{show_id}:{season_number}:{episode_number}");
     let data = db::items::UpdateMetadata {
@@ -578,6 +585,7 @@ async fn refresh_tv_episode_metadata(
         age_rating: None,
         genres: None,
         cast: Some(&cast),
+        crew: Some(&crew),
         trailer: Some(trailer.as_deref()),
         tmdb_id: Some(Some(metadata.id)),
         imdb_id: Some(metadata.external_ids.imdb_id.as_deref()),
@@ -636,8 +644,59 @@ async fn get_cast<'a>(
         updates.push(db::items::UpdateCastMember {
             person_id,
             idx: actor.order,
-            character: actor.character.as_deref(),
+            character: actor
+                .character
+                .as_deref()
+                .or_else(|| actor.roles.as_ref()?.first()?.character.as_deref()),
         });
+    }
+    Ok(updates)
+}
+
+async fn get_crew<'a>(
+    conn: &mut SqliteConnection,
+    cast: &'a [tmdb::CrewMember],
+) -> eyre::Result<Vec<db::items::UpdateCrewMember<'a>>> {
+    let mut updates = vec![];
+    for crew_member in cast {
+        let person_id = db::people::get_by_tmdb_id_or_create(
+            conn,
+            crew_member.id,
+            NewPerson {
+                tmdb_id: None,
+                name: &crew_member.name,
+                profile: crew_member
+                    .profile_path
+                    .as_deref()
+                    .map(|profile_path| MediaImage {
+                        img_type: MediaImageType::Profile,
+                        src_type: MediaImageSrcType::Tmdb,
+                        src: profile_path,
+                    }),
+            },
+        )
+        .await?;
+
+        let Some(department) = &crew_member.department else {
+            continue;
+        };
+
+        let jobs = crew_member.job.as_ref().into_iter().chain(
+            crew_member
+                .jobs
+                .as_ref()
+                .into_iter()
+                .flatten()
+                .map(|job| &job.job),
+        );
+
+        for job in jobs {
+            updates.push(db::items::UpdateCrewMember {
+                person_id,
+                department,
+                job,
+            });
+        }
     }
     Ok(updates)
 }

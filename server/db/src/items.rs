@@ -31,6 +31,7 @@ pub struct MediaItem {
     pub tmdb_id: Option<i32>,
     pub imdb_id: Option<String>,
     pub cast: Vec<CastMember>,
+    pub director: Option<String>,
     pub parent: Option<Parent>,
     pub grandparent: Option<Parent>,
     pub video_file: Option<VideoFile>,
@@ -166,6 +167,7 @@ impl<'r> FromRow<'r, SqliteRow> for MediaItem {
             tmdb_id: row.try_get("tmdb_id")?,
             imdb_id: row.try_get("imdb_id")?,
             cast: vec![],
+            director: row.try_get("director")?,
             parent: get_parent(row, "parent_id", "parent_index", "parent_name")?,
             grandparent: get_parent(
                 row,
@@ -250,6 +252,7 @@ const ITEM_COLUMNS: &[&str] = &[
     "path",
     "duration",
     "format_name",
+    "(SELECT name FROM crew JOIN people ON person_id = people.id WHERE item_id = m.id AND job = 'Director') AS director"
 ];
 
 const STREAM_COLUMNS: &[&str] = &[
@@ -675,6 +678,7 @@ pub struct UpdateMetadata<'a> {
     pub age_rating: Option<Option<&'a str>>,
     pub genres: Option<&'a [&'a str]>,
     pub cast: Option<&'a [UpdateCastMember<'a>]>,
+    pub crew: Option<&'a [UpdateCrewMember<'a>]>,
     pub trailer: Option<Option<&'a str>>,
     pub tmdb_id: Option<Option<i32>>,
     pub imdb_id: Option<Option<&'a str>>,
@@ -686,6 +690,12 @@ pub struct UpdateCastMember<'a> {
     pub person_id: i64,
     pub idx: u32,
     pub character: Option<&'a str>,
+}
+
+pub struct UpdateCrewMember<'a> {
+    pub person_id: i64,
+    pub department: &'a str,
+    pub job: &'a str,
 }
 
 pub async fn update_metadata(
@@ -851,6 +861,54 @@ pub async fn update_metadata(
             DELETE FROM cast
             WHERE item_id = ? AND person_id NOT IN ({placeholders})
         ");
+
+        sqlx::query_with(&sql, args).execute(&mut tx).await?;
+    }
+
+    if let Some(crew) = data.crew && !crew.is_empty() {
+        let mut args = SqliteArguments::default();
+        let mut placeholders = String::new();
+
+        for (i, crew_member) in crew.iter().enumerate() {
+            args.add(id);
+            args.add(crew_member.person_id);
+            args.add(crew_member.department);
+            args.add(crew_member.job);
+            placeholders += "(?, ?, ?, ?)";
+            if i < crew.len() - 1 {
+                placeholders += ",";
+            }
+        }
+
+        #[rustfmt::skip]
+        let sql = format!("
+            INSERT INTO crew (item_id, person_id, department, job) VALUES {placeholders}
+            ON CONFLICT DO UPDATE SET
+                department = excluded.department,
+                job = excluded.job
+        ");
+
+        sqlx::query_with(&sql, args).execute(&mut tx).await?;
+
+        let mut args = SqliteArguments::default();
+
+        #[rustfmt::skip]
+        let mut sql = format!("
+            DELETE FROM crew
+            WHERE item_id = ? AND (person_id, department, job) NOT IN (
+        ");
+
+        for (i, crew_member) in crew.iter().enumerate() {
+            args.add(crew_member.person_id);
+            args.add(crew_member.department);
+            args.add(crew_member.job);
+            write!(sql, "({})", sql::Placeholders(3))?;
+            if i < crew.len() - 1 {
+                sql += ",";
+            }
+        }
+
+        sql += ")";
 
         sqlx::query_with(&sql, args).execute(&mut tx).await?;
     }

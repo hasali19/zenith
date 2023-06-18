@@ -210,6 +210,7 @@ pub enum VideoSite {
 #[derive(Debug, serde::Deserialize)]
 pub struct Credits {
     pub cast: Vec<CastMember>,
+    pub crew: Vec<CrewMember>,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -225,6 +226,22 @@ pub struct CastMember {
 #[derive(Debug, serde::Deserialize)]
 pub struct CastMemberRole {
     pub character: Option<String>,
+    pub episode_count: i32,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct CrewMember {
+    pub id: i32,
+    pub name: String,
+    pub profile_path: Option<String>,
+    pub department: Option<String>,
+    pub job: Option<String>,
+    pub jobs: Option<Vec<CrewMemberJob>>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct CrewMemberJob {
+    pub job: String,
     pub episode_count: i32,
 }
 

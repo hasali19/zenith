@@ -89,6 +89,13 @@ async fn _20230618085148_cast(conn: &mut SqliteConnection) -> eyre::Result<()> {
     Ok(())
 }
 
+async fn _20230618162615_crew(conn: &mut SqliteConnection) -> eyre::Result<()> {
+    sqlx::query(include_str!("../migrations/20230618162615_crew.sql"))
+        .execute(conn)
+        .await?;
+    Ok(())
+}
+
 pub(super) fn collect(migrator: &mut super::Migrator) {
     migrator.push_migration(
         "20220809142403_initial",
@@ -154,5 +161,10 @@ pub(super) fn collect(migrator: &mut super::Migrator) {
         "20230618085148_cast",
         Box::new(|conn| Box::pin(_20230618085148_cast(conn))),
         [141, 86, 99, 131, 188, 150, 45, 46, 204, 176, 74, 32, 125, 199, 202, 253, 220, 65, 189, 171, 125, 17, 177, 116, 23, 212, 133, 200, 56, 21, 126, 143],
+    );
+    migrator.push_migration(
+        "20230618162615_crew",
+        Box::new(|conn| Box::pin(_20230618162615_crew(conn))),
+        [39, 10, 244, 79, 192, 6, 187, 207, 59, 17, 24, 248, 186, 121, 202, 231, 212, 200, 139, 169, 186, 234, 174, 240, 62, 213, 80, 244, 40, 59, 11, 141],
     );
 }

@@ -1,3 +1,5 @@
+#![feature(let_chains)]
+
 pub mod collections;
 pub mod items;
 pub mod media;
