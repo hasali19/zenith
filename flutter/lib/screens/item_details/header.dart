@@ -36,6 +36,7 @@ class HeaderContent extends ConsumerWidget {
     final api = ref.watch(apiProvider);
 
     final subtitle = _buildSubtitle(context);
+    final metaTable = _buildMetaTable();
     final overview = _buildOverview();
     final videoInfo = _buildVideoInfo(context);
 
@@ -73,14 +74,7 @@ class HeaderContent extends ConsumerWidget {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (model.item.genres.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Text(
-                    model.item.genres.join(', '),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ),
+              if (metaTable != null) metaTable,
               if (overview != null) overview,
               if (videoInfo != null) videoInfo,
             ],
@@ -128,6 +122,45 @@ class HeaderContent extends ConsumerWidget {
         style: style,
         children: separated,
       )),
+    );
+  }
+
+  Widget? _buildMetaTable() {
+    final rows = [
+      if (model.item.director != null)
+        TableRow(
+          children: [
+            const TableCell(
+                child: Text('Director', style: TextStyle(color: Colors.grey))),
+            const TableCell(child: SizedBox()),
+            TableCell(child: Text(model.item.director!)),
+          ],
+        ),
+      if (model.item.genres.isNotEmpty)
+        TableRow(
+          children: [
+            const TableCell(
+                child: Text('Genres', style: TextStyle(color: Colors.grey))),
+            const TableCell(child: SizedBox()),
+            TableCell(child: Text(model.item.genres.join(', '))),
+          ],
+        ),
+    ];
+
+    if (rows.isEmpty) {
+      return null;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Table(
+        columnWidths: const {
+          0: IntrinsicColumnWidth(),
+          1: FixedColumnWidth(16),
+          2: FlexColumnWidth(),
+        },
+        children: rows,
+      ),
     );
   }
 

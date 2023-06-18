@@ -29,6 +29,7 @@ class MediaItem {
   final List<String> genres;
   final String? ageRating;
   final String? trailer;
+  final String? director;
 
   MediaItem({
     required this.id,
@@ -45,6 +46,7 @@ class MediaItem {
     required this.genres,
     required this.ageRating,
     required this.trailer,
+    required this.director,
   });
 
   factory MediaItem.fromJson(MediaType type, Map<String, dynamic> json) {
@@ -80,6 +82,7 @@ class MediaItem {
       genres: List<String>.from(json['genres']),
       ageRating: json['age_rating'],
       trailer: json['trailer'],
+      director: json['director'],
     );
   }
 
