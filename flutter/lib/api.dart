@@ -30,6 +30,7 @@ class MediaItem {
   final String? ageRating;
   final String? trailer;
   final String? director;
+  final List<CastMember> cast;
 
   MediaItem({
     required this.id,
@@ -47,6 +48,7 @@ class MediaItem {
     required this.ageRating,
     required this.trailer,
     required this.director,
+    required this.cast,
   });
 
   factory MediaItem.fromJson(MediaType type, Map<String, dynamic> json) {
@@ -83,6 +85,9 @@ class MediaItem {
       ageRating: json['age_rating'],
       trailer: json['trailer'],
       director: json['director'],
+      cast: List<dynamic>.from(json['cast'])
+          .map((json) => CastMember.fromJson(json))
+          .toList(),
     );
   }
 
@@ -116,6 +121,23 @@ class MediaItemParent {
 
   factory MediaItemParent.fromJson(Map<String, dynamic> json) =>
       MediaItemParent(json['id'], json['index'], json['name']);
+}
+
+class CastMember {
+  final String name;
+  final String? character;
+  final String? profile;
+
+  CastMember({
+    required this.name,
+    required this.character,
+    required this.profile,
+  });
+
+  factory CastMember.fromJson(Map<String, dynamic> json) => CastMember(
+      name: json['name'],
+      character: json['character'],
+      profile: json['profile']);
 }
 
 class SubtitleTrack {
