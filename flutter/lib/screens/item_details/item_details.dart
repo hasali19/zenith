@@ -159,7 +159,7 @@ class _CastList extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDesktop = context.isDesktop;
 
-    final double itemHeight = isDesktop ? 240 : 150;
+    final double itemHeight = isDesktop ? 240 : 165;
     final double itemWidth = itemHeight / 3 * 2;
     final double itemSpacing = isDesktop ? 8 : 4;
     final double nameSize = isDesktop ? 16 : 13;
@@ -208,17 +208,36 @@ class _CastList extends StatelessWidget {
                           left: 8,
                           right: 8,
                           bottom: 8,
-                          child: Text(
-                            castMember.name,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: nameSize,
-                              color: Colors.white,
-                              shadows: const [
-                                Shadow(color: Colors.black, blurRadius: 4)
-                              ],
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                castMember.name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: nameSize,
+                                  color: Colors.white,
+                                  shadows: const [
+                                    Shadow(color: Colors.black, blurRadius: 4)
+                                  ],
+                                ),
+                              ),
+                              if (castMember.character != null &&
+                                  castMember.character!.isNotEmpty)
+                                Text(
+                                  castMember.character!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: nameSize - 2,
+                                    color: Colors.white,
+                                    shadows: const [
+                                      Shadow(color: Colors.black, blurRadius: 4)
+                                    ],
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ],
