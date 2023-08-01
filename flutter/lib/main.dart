@@ -149,7 +149,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     void onLogout() {
       ref.read(apiProvider).logout();
       context.router.popUntilRoot();
-      context.router.replace(const LoginScreenRoute());
+      context.router.replace(LoginScreenRoute(redirect: null));
     }
 
     return AutoTabsRouter(

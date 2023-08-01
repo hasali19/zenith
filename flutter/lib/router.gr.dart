@@ -78,9 +78,16 @@ class _$AppRouter extends RootStackRouter {
       );
     },
     LoginScreenRoute.name: (routeData) {
+      final queryParams = routeData.queryParams;
+      final args = routeData.argsAs<LoginScreenRouteArgs>(
+          orElse: () => LoginScreenRouteArgs(
+              redirect: queryParams.optString('redirect')));
       return MaterialPageX<dynamic>(
         routeData: routeData,
-        child: const LoginScreen(),
+        child: LoginScreen(
+          key: args.key,
+          redirect: args.redirect,
+        ),
       );
     },
     SetupScreenRoute.name: (routeData) {
@@ -379,15 +386,39 @@ class VideoPlayerScreenRouteArgs {
 
 /// generated route for
 /// [LoginScreen]
-class LoginScreenRoute extends PageRouteInfo<void> {
-  const LoginScreenRoute({List<PageRouteInfo>? children})
-      : super(
+class LoginScreenRoute extends PageRouteInfo<LoginScreenRouteArgs> {
+  LoginScreenRoute({
+    Key? key,
+    required String? redirect,
+    List<PageRouteInfo>? children,
+  }) : super(
           LoginScreenRoute.name,
           path: '/login',
+          args: LoginScreenRouteArgs(
+            key: key,
+            redirect: redirect,
+          ),
+          rawQueryParams: {'redirect': redirect},
           initialChildren: children,
         );
 
   static const String name = 'LoginScreenRoute';
+}
+
+class LoginScreenRouteArgs {
+  const LoginScreenRouteArgs({
+    this.key,
+    required this.redirect,
+  });
+
+  final Key? key;
+
+  final String? redirect;
+
+  @override
+  String toString() {
+    return 'LoginScreenRouteArgs{key: $key, redirect: $redirect}';
+  }
 }
 
 /// generated route for

@@ -5,34 +5,34 @@
 part of 'theme.dart';
 
 // **************************************************************************
-// ThemeTailorGenerator
+// TailorGenerator
 // **************************************************************************
 
 class ZenithTheme extends ThemeExtension<ZenithTheme> {
   const ZenithTheme({
-    required this.titleLarge,
-    required this.titleMedium,
     required this.bodyMedium,
     required this.bodySmall,
+    required this.titleLarge,
+    required this.titleMedium,
   });
 
-  final TextStyle titleLarge;
-  final TextStyle titleMedium;
   final TextStyle bodyMedium;
   final TextStyle bodySmall;
+  final TextStyle titleLarge;
+  final TextStyle titleMedium;
 
   static final ZenithTheme light = ZenithTheme(
-    titleLarge: _$ZenithTheme.titleLarge[0],
-    titleMedium: _$ZenithTheme.titleMedium[0],
     bodyMedium: _$ZenithTheme.bodyMedium[0],
     bodySmall: _$ZenithTheme.bodySmall[0],
+    titleLarge: _$ZenithTheme.titleLarge[0],
+    titleMedium: _$ZenithTheme.titleMedium[0],
   );
 
   static final ZenithTheme dark = ZenithTheme(
-    titleLarge: _$ZenithTheme.titleLarge[1],
-    titleMedium: _$ZenithTheme.titleMedium[1],
     bodyMedium: _$ZenithTheme.bodyMedium[1],
     bodySmall: _$ZenithTheme.bodySmall[1],
+    titleLarge: _$ZenithTheme.titleLarge[1],
+    titleMedium: _$ZenithTheme.titleMedium[1],
   );
 
   static final themes = [
@@ -42,16 +42,16 @@ class ZenithTheme extends ThemeExtension<ZenithTheme> {
 
   @override
   ZenithTheme copyWith({
-    TextStyle? titleLarge,
-    TextStyle? titleMedium,
     TextStyle? bodyMedium,
     TextStyle? bodySmall,
+    TextStyle? titleLarge,
+    TextStyle? titleMedium,
   }) {
     return ZenithTheme(
-      titleLarge: titleLarge ?? this.titleLarge,
-      titleMedium: titleMedium ?? this.titleMedium,
       bodyMedium: bodyMedium ?? this.bodyMedium,
       bodySmall: bodySmall ?? this.bodySmall,
+      titleLarge: titleLarge ?? this.titleLarge,
+      titleMedium: titleMedium ?? this.titleMedium,
     );
   }
 
@@ -59,10 +59,10 @@ class ZenithTheme extends ThemeExtension<ZenithTheme> {
   ZenithTheme lerp(ThemeExtension<ZenithTheme>? other, double t) {
     if (other is! ZenithTheme) return this;
     return ZenithTheme(
-      titleLarge: TextStyle.lerp(titleLarge, other.titleLarge, t)!,
-      titleMedium: TextStyle.lerp(titleMedium, other.titleMedium, t)!,
       bodyMedium: TextStyle.lerp(bodyMedium, other.bodyMedium, t)!,
       bodySmall: TextStyle.lerp(bodySmall, other.bodySmall, t)!,
+      titleLarge: TextStyle.lerp(titleLarge, other.titleLarge, t)!,
+      titleMedium: TextStyle.lerp(titleMedium, other.titleMedium, t)!,
     );
   }
 
@@ -72,22 +72,22 @@ class ZenithTheme extends ThemeExtension<ZenithTheme> {
         (other.runtimeType == runtimeType &&
             other is ZenithTheme &&
             const DeepCollectionEquality()
+                .equals(bodyMedium, other.bodyMedium) &&
+            const DeepCollectionEquality().equals(bodySmall, other.bodySmall) &&
+            const DeepCollectionEquality()
                 .equals(titleLarge, other.titleLarge) &&
             const DeepCollectionEquality()
-                .equals(titleMedium, other.titleMedium) &&
-            const DeepCollectionEquality()
-                .equals(bodyMedium, other.bodyMedium) &&
-            const DeepCollectionEquality().equals(bodySmall, other.bodySmall));
+                .equals(titleMedium, other.titleMedium));
   }
 
   @override
   int get hashCode {
     return Object.hash(
         runtimeType,
-        const DeepCollectionEquality().hash(titleLarge),
-        const DeepCollectionEquality().hash(titleMedium),
         const DeepCollectionEquality().hash(bodyMedium),
-        const DeepCollectionEquality().hash(bodySmall));
+        const DeepCollectionEquality().hash(bodySmall),
+        const DeepCollectionEquality().hash(titleLarge),
+        const DeepCollectionEquality().hash(titleMedium));
   }
 }
 

@@ -4,8 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/router.dart';
 
+final Provider<String?> redirectProvider = Provider((ref) => null);
+
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  final String? redirect;
+
+  const LoginScreen({super.key, @queryParam this.redirect});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _LoginScreenState();
@@ -14,7 +18,10 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
-    return const AutoRouter();
+    return ProviderScope(
+      overrides: [redirectProvider.overrideWithValue(widget.redirect)],
+      child: const AutoRouter(),
+    );
   }
 }
 
@@ -125,7 +132,13 @@ class _LoginUserScreenState extends ConsumerState<LoginUserScreen> {
           .showSnackBar(const SnackBar(content: Text('Login failed')));
       return;
     }
-    context.router.replace(const MainScreenRoute());
+
+    final redirectPath = ref.read(redirectProvider);
+    if (redirectPath != null) {
+      context.router.replaceNamed(redirectPath);
+    } else {
+      context.router.replace(const MainScreenRoute());
+    }
   }
 
   @override
