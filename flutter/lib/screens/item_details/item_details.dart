@@ -42,6 +42,7 @@ class _ItemDetailsScreenState extends ConsumerState<ItemDetailsScreen> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
       ),
