@@ -33,7 +33,7 @@ dependencies:
     sdk: flutter
 
   audio_video_progress_bar: ^0.11.0
-  auto_route: ^5.0.2
+  auto_route: ^7.8.3
   cached_network_image: ^3.2.3
   expandable: ^5.0.1
   flutter_riverpod: ^2.1.1
@@ -66,7 +66,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^1.0.0
 
-  auto_route_generator: ^5.0.2
+  auto_route_generator: ^7.3.1
   build_runner: ^2.0.0
   freezed: ^2.2.1
   json_serializable: ^6.0.0

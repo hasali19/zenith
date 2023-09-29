@@ -23,6 +23,7 @@ final _collectionsLibraryItemsProvider = Provider.autoDispose((ref) {
       .toList());
 });
 
+@RoutePage()
 class CollectionsScreen extends ConsumerStatefulWidget {
   const CollectionsScreen({super.key});
 
@@ -39,7 +40,7 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
       posterFallback: Icons.video_collection,
       onRefresh: () => ref.refresh(collectionsProvider.future),
       onItemTap: (item) async {
-        await context.router.push(CollectionDetailsScreenRoute(id: item.id));
+        await context.router.push(CollectionDetailsRoute(id: item.id));
         ref.invalidate(collectionsProvider);
       },
       onItemLongPress: (item) {

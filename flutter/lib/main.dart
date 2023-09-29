@@ -53,9 +53,8 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
     super.initState();
     loadLanguageCodes();
     _router = AppRouter(
-      authGuard: AuthGuard(() => ref.read(apiProvider).isLoggedIn()),
-      serverSetupGuard: ServerSetupGuard(
-          () => Future.value(ref.read(activeServerProvider) != null)),
+      isLoggedIn: () => ref.read(apiProvider).isLoggedIn(),
+      isServerSet: () => Future.value(ref.read(activeServerProvider) != null),
     );
   }
 
@@ -65,8 +64,7 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
       title: 'Zenith',
       theme: _buildTheme(Brightness.light),
       darkTheme: _buildTheme(Brightness.dark),
-      routerDelegate: _router.delegate(),
-      routeInformationParser: _router.defaultRouteParser(),
+      routerConfig: _router.config(),
       builder: (context, child) => Theme(
         data: _buildThemeOverrides(context),
         child: child!,
@@ -106,6 +104,7 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
   }
 }
 
+@RoutePage()
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
   @override
@@ -149,23 +148,23 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     void onLogout() {
       ref.read(apiProvider).logout();
       context.router.popUntilRoot();
-      context.router.replace(LoginScreenRoute(redirect: null));
+      context.router.replace(LoginRoute(redirect: null));
     }
 
     return AutoTabsRouter(
       routes: const [
-        HomeScreenRoute(),
-        MoviesScreenRoute(),
-        ShowsScreenRoute(),
+        HomeRoute(),
+        MoviesRoute(),
+        ShowsRoute(),
         // CollectionsScreenRoute(),
-        SettingsScreenRoute(),
+        SettingsRoute(),
       ],
-      builder: (context, child, animation) {
+      transitionBuilder: (context, child, animation) =>
+          FadeTransition(opacity: animation, child: child),
+      builder: (context, child) {
         final screen = _activeScreen(context.tabsRouter.activeIndex);
 
         // Use a permanent navigation drawer on larger screens
-
-        child = FadeTransition(opacity: animation, child: child);
 
         if (desktop) {
           return Scaffold(

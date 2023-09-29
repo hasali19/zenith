@@ -19,6 +19,7 @@ import 'ui.dart';
 import 'utils.dart';
 import 'video_progress_bar.dart';
 
+@RoutePage()
 class VideoPlayerScreen extends ConsumerStatefulWidget {
   final int id;
   final double startPosition;

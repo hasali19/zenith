@@ -17,6 +17,7 @@ import 'package:zenith/screens/item_details/model.dart';
 final transparentImage = base64Decode(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=');
 
+@RoutePage()
 class ItemDetailsScreen extends ConsumerStatefulWidget {
   final int id;
 
@@ -89,7 +90,7 @@ class _ContentState extends ConsumerState<Content> {
     }
 
     void onPlayPressed(MediaItem item) async {
-      pushRoute(VideoPlayerScreenRoute(
+      pushRoute(VideoPlayerRoute(
         id: item.id,
         startPosition:
             item.shouldResume ? item.videoUserData?.position ?? 0 : 0,
@@ -97,7 +98,7 @@ class _ContentState extends ConsumerState<Content> {
     }
 
     void onEpisodePressed(MediaItem episode) async {
-      pushRoute(ItemDetailsScreenRoute(id: episode.id));
+      pushRoute(ItemDetailsRoute(id: episode.id));
     }
 
     return RefreshIndicator(
@@ -126,7 +127,7 @@ class _ContentState extends ConsumerState<Content> {
                           refresh: () => _refresh.currentState?.show(),
                           onPlayPressed: onPlayPressed,
                           onViewItemDetails: (id) =>
-                              pushRoute(ItemDetailsScreenRoute(id: id)),
+                              pushRoute(ItemDetailsRoute(id: id)),
                         ),
                       ),
                       if (widget.model.item.cast.isNotEmpty)

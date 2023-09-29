@@ -11,6 +11,7 @@ final _collectionItemsProvider = FutureProvider.family((ref, int id) async {
   return items.map((e) => MediaLibraryItem.fromMediaItem(e, api)).toList();
 });
 
+@RoutePage()
 class CollectionDetailsScreen extends ConsumerStatefulWidget {
   final int id;
 
@@ -42,8 +43,7 @@ class _CollectionDetailsScreenState
         posterFallback: Icons.movie,
         onRefresh: () =>
             ref.refresh(_collectionItemsProvider(widget.id).future),
-        onItemTap: (item) =>
-            context.router.push(ItemDetailsScreenRoute(id: item.id)),
+        onItemTap: (item) => context.router.push(ItemDetailsRoute(id: item.id)),
         onItemLongPress: (item) {
           showModalBottomSheet(
             context: context,

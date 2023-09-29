@@ -10,6 +10,7 @@ import 'package:zenith/router.dart';
 
 const _uuid = Uuid();
 
+@RoutePage()
 class SetupScreen extends ConsumerStatefulWidget {
   const SetupScreen({super.key});
 
@@ -117,7 +118,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                   .read(serversPrefProvider.notifier)
                   .update([...servers, server]);
 
-              context.router.replace(const MainScreenRoute());
+              context.router.replace(const MainRoute());
             },
           ),
         ],

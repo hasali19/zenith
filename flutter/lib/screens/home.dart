@@ -21,6 +21,7 @@ class HomeScreenData {
   });
 }
 
+@RoutePage()
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -60,7 +61,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _navigateToItem(MediaItem item) async {
-    await context.router.push(ItemDetailsScreenRoute(id: item.id));
+    await context.router.push(ItemDetailsRoute(id: item.id));
     _refresh();
   }
 

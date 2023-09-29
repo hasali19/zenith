@@ -6,6 +6,7 @@ import 'package:zenith/router.dart';
 
 final Provider<String?> redirectProvider = Provider((ref) => null);
 
+@RoutePage()
 class LoginScreen extends ConsumerStatefulWidget {
   final String? redirect;
 
@@ -28,6 +29,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 final _usersProvider =
     FutureProvider.autoDispose((ref) => ref.watch(apiProvider).fetchUsers());
 
+@RoutePage()
 class LoginUsersScreen extends ConsumerWidget {
   const LoginUsersScreen({super.key});
 
@@ -47,7 +49,7 @@ class LoginUsersScreen extends ConsumerWidget {
 
   Widget _buildData(BuildContext context, List<User> data) {
     if (data.isEmpty) {
-      context.router.replace(LoginRegisterScreenRoute(initial: true));
+      context.router.replace(LoginRegisterRoute(initial: true));
       return Container();
     }
 
@@ -59,8 +61,8 @@ class LoginUsersScreen extends ConsumerWidget {
         child: ListTile(
           leading: const Icon(Icons.account_circle),
           title: Text(user.username),
-          onTap: () => context.router
-              .push(LoginUserScreenRoute(username: user.username)),
+          onTap: () =>
+              context.router.push(LoginUserRoute(username: user.username)),
         ),
       ),
     );
@@ -83,7 +85,7 @@ class LoginUsersScreen extends ConsumerWidget {
                 leading: const Icon(Icons.login),
                 title: const Text('Login manually'),
                 onTap: () =>
-                    context.router.push(LoginUserScreenRoute(username: null)),
+                    context.router.push(LoginUserRoute(username: null)),
               ),
             ),
             Card(
@@ -93,7 +95,7 @@ class LoginUsersScreen extends ConsumerWidget {
               child: ListTile(
                 leading: const Icon(Icons.add_circle_outline),
                 title: const Text('Add user'),
-                onTap: () => context.router.push(LoginRegisterScreenRoute()),
+                onTap: () => context.router.push(LoginRegisterRoute()),
               ),
             ),
           ],
@@ -103,6 +105,7 @@ class LoginUsersScreen extends ConsumerWidget {
   }
 }
 
+@RoutePage()
 class LoginUserScreen extends ConsumerStatefulWidget {
   final String? username;
 
@@ -137,7 +140,7 @@ class _LoginUserScreenState extends ConsumerState<LoginUserScreen> {
     if (redirectPath != null) {
       context.router.replaceNamed(redirectPath);
     } else {
-      context.router.replace(const MainScreenRoute());
+      context.router.replace(const MainRoute());
     }
   }
 
@@ -186,6 +189,7 @@ class _LoginUserScreenState extends ConsumerState<LoginUserScreen> {
   }
 }
 
+@RoutePage()
 class LoginRegisterScreen extends ConsumerStatefulWidget {
   final bool initial;
   final String? code;
@@ -275,7 +279,7 @@ class _LoginRegisterScreenState extends ConsumerState<LoginRegisterScreen> {
                       return;
                     }
 
-                    context.router.replace(const LoginUsersScreenRoute());
+                    context.router.replace(const LoginUsersRoute());
                   },
                 ),
               ],

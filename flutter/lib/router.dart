@@ -15,58 +15,61 @@ import 'package:zenith/screens/video_player.dart';
 
 part 'router.gr.dart';
 
-@MaterialAutoRouter(routes: [
-  AutoRoute(
-    path: '/',
-    page: MainScreen,
-    initial: true,
-    guards: [ServerSetupGuard, AuthGuard],
-    children: [
-      AutoRoute(page: HomeScreen, initial: true),
-      AutoRoute(path: 'library/movies', page: MoviesScreen),
-      AutoRoute(path: 'library/shows', page: ShowsScreen),
-      AutoRoute(path: 'library/collections', page: CollectionsScreen),
-      AutoRoute(path: 'settings', page: SettingsScreen),
-    ],
-  ),
-  AutoRoute(
-    path: '/items/:id',
-    page: ItemDetailsScreen,
-    usesPathAsKey: true,
-    guards: [ServerSetupGuard, AuthGuard],
-  ),
-  AutoRoute(
-    path: '/collections/:id',
-    page: CollectionDetailsScreen,
-    usesPathAsKey: true,
-    guards: [ServerSetupGuard, AuthGuard],
-  ),
-  AutoRoute(
-    path: '/player/:id',
-    page: VideoPlayerScreen,
-    usesPathAsKey: true,
-    guards: [ServerSetupGuard, AuthGuard],
-  ),
-  AutoRoute(
-    path: '/login',
-    page: LoginScreen,
-    guards: [ServerSetupGuard],
-    children: [
-      AutoRoute(page: LoginUsersScreen, initial: true),
-      AutoRoute(path: 'user', page: LoginUserScreen),
-      AutoRoute(path: 'register', page: LoginRegisterScreen),
-    ],
-  ),
-  AutoRoute(path: '/setup', page: SetupScreen),
-])
+@AutoRouterConfig()
 class AppRouter extends _$AppRouter {
-  AppRouter({
-    required ServerSetupGuard serverSetupGuard,
-    required AuthGuard authGuard,
-  }) : super(
-          serverSetupGuard: serverSetupGuard,
-          authGuard: authGuard,
-        );
+  final Future<bool> Function() isServerSet;
+  final Future<bool> Function() isLoggedIn;
+
+  AppRouter({required this.isServerSet, required this.isLoggedIn});
+
+  @override
+  RouteType get defaultRouteType => const RouteType.material();
+
+  @override
+  List<AutoRoute> get routes => [
+        AutoRoute(
+          path: '/',
+          page: MainRoute.page,
+          initial: true,
+          guards: [ServerSetupGuard(isServerSet), AuthGuard(isLoggedIn)],
+          children: [
+            AutoRoute(page: HomeRoute.page, initial: true),
+            AutoRoute(path: 'library/movies', page: MoviesRoute.page),
+            AutoRoute(path: 'library/shows', page: ShowsRoute.page),
+            AutoRoute(path: 'library/collections', page: CollectionsRoute.page),
+            AutoRoute(path: 'settings', page: SettingsRoute.page),
+          ],
+        ),
+        AutoRoute(
+          path: '/items/:id',
+          page: ItemDetailsRoute.page,
+          usesPathAsKey: true,
+          guards: [ServerSetupGuard(isServerSet), AuthGuard(isLoggedIn)],
+        ),
+        AutoRoute(
+          path: '/collections/:id',
+          page: CollectionDetailsRoute.page,
+          usesPathAsKey: true,
+          guards: [ServerSetupGuard(isServerSet), AuthGuard(isLoggedIn)],
+        ),
+        AutoRoute(
+          path: '/player/:id',
+          page: VideoPlayerRoute.page,
+          usesPathAsKey: true,
+          guards: [ServerSetupGuard(isServerSet), AuthGuard(isLoggedIn)],
+        ),
+        AutoRoute(
+          path: '/login',
+          page: LoginRoute.page,
+          guards: [ServerSetupGuard(isServerSet)],
+          children: [
+            AutoRoute(page: LoginUsersRoute.page, initial: true),
+            AutoRoute(path: 'user', page: LoginUserRoute.page),
+            AutoRoute(path: 'register', page: LoginRegisterRoute.page),
+          ],
+        ),
+        AutoRoute(path: '/setup', page: SetupRoute.page),
+      ];
 }
 
 class ServerSetupGuard extends AutoRouteGuard {
@@ -80,7 +83,7 @@ class ServerSetupGuard extends AutoRouteGuard {
       return resolver.next(true);
     }
 
-    router.replace(const SetupScreenRoute());
+    router.replace(const SetupRoute());
   }
 }
 
@@ -95,7 +98,7 @@ class AuthGuard extends AutoRouteGuard {
       return resolver.next(true);
     }
 
-    router.replace(LoginScreenRoute(redirect: resolver.route.stringMatch));
+    router.replace(LoginRoute(redirect: resolver.route.stringMatch));
   }
 }
 
@@ -105,6 +108,7 @@ final _moviesProvider = FutureProvider((ref) async {
   return movies.map((e) => MediaLibraryItem.fromMediaItem(e, api)).toList();
 });
 
+@RoutePage()
 class MoviesScreen extends ConsumerWidget {
   const MoviesScreen({Key? key}) : super(key: key);
 
@@ -114,8 +118,7 @@ class MoviesScreen extends ConsumerWidget {
       provider: _moviesProvider,
       posterFallback: Icons.movie,
       onRefresh: () => ref.refresh(_moviesProvider.future),
-      onItemTap: (item) =>
-          context.router.push(ItemDetailsScreenRoute(id: item.id)),
+      onItemTap: (item) => context.router.push(ItemDetailsRoute(id: item.id)),
     );
   }
 }
@@ -126,6 +129,7 @@ final _showsProvider = FutureProvider((ref) async {
   return shows.map((e) => MediaLibraryItem.fromMediaItem(e, api)).toList();
 });
 
+@RoutePage()
 class ShowsScreen extends ConsumerWidget {
   const ShowsScreen({Key? key}) : super(key: key);
 
@@ -135,8 +139,7 @@ class ShowsScreen extends ConsumerWidget {
       provider: _showsProvider,
       posterFallback: Icons.tv,
       onRefresh: () => ref.refresh(_showsProvider.future),
-      onItemTap: (item) =>
-          context.router.push(ItemDetailsScreenRoute(id: item.id)),
+      onItemTap: (item) => context.router.push(ItemDetailsRoute(id: item.id)),
     );
   }
 }
