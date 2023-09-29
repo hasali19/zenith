@@ -177,8 +177,8 @@ class _LoginUserScreenState extends ConsumerState<LoginUserScreen> {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  child: const Text('Login'),
                   onPressed: _login,
+                  child: const Text('Login'),
                 ),
               ],
             ),

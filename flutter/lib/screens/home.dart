@@ -160,9 +160,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         api.getMediaImageUrl(item.id, ImageType.thumbnail),
                     title: item.name,
                     subtitle: item.type == MediaType.episode
-                        ? item.getSeasonEpisode()! +
-                            ': ' +
-                            item.grandparent!.name
+                        ? '${item.getSeasonEpisode()!}: ${item.grandparent!.name}'
                         : item.startDate?.year.toString() ?? '',
                     progress: (item.videoUserData?.position ?? 0) /
                         (item.videoFile?.duration ?? 1),

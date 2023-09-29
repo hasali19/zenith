@@ -44,12 +44,12 @@ class _UpdateDialogState extends State<UpdateDialog> {
       content: content,
       actions: [
         TextButton(
-          child: const Text('Cancel'),
           onPressed: !_isUpdating ? () => Navigator.pop(context) : null,
+          child: const Text('Cancel'),
         ),
         TextButton(
-          child: const Text('Install'),
           onPressed: !_isUpdating ? _onApplyUpdate : null,
+          child: const Text('Install'),
         ),
       ],
     );

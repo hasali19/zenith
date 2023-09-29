@@ -735,7 +735,6 @@ class _DeleteConfirmationDialogState
             'Are you sure you want to permanently delete this item. Files will be removed.'),
         actions: [
           TextButton(
-            child: const Text('Delete'),
             onPressed: _isInProgress
                 ? null
                 : () async {
@@ -745,10 +744,11 @@ class _DeleteConfirmationDialogState
                     Navigator.pop(context);
                     context.router.pop();
                   },
+            child: const Text('Delete'),
           ),
           TextButton(
-            child: const Text('Cancel'),
             onPressed: _isInProgress ? null : () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
         ],
       ),

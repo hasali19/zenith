@@ -188,8 +188,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   itemBuilder: (context) {
                     return [
                       PopupMenuItem(
-                        child: const Text('Logout'),
                         onTap: onLogout,
+                        child: const Text('Logout'),
                       ),
                     ];
                   },
