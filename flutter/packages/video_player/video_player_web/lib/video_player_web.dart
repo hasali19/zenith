@@ -101,10 +101,15 @@ class VideoControllerWeb extends VideoController {
   bool _loading = true;
 
   @override
-  void load(VideoItem item) {
+  int currentItemIndex = 0;
+
+  @override
+  void load(List<VideoItem> items, int startIndex, double startPosition) {
+    // TODO: Implement playlist support for web
+    final item = items[0];
     _element.src = item.url;
     _element.crossOrigin = 'anonymous';
-    _element.currentTime = item.startPosition;
+    _element.currentTime = startPosition;
     _element.children.clear();
     _state = VideoState.active;
     _activeTextTrack = null;

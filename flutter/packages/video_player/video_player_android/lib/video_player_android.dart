@@ -133,6 +133,9 @@ class _VideoController extends VideoController {
   @override
   bool get loading => !paused && !_playing && state != VideoState.ended;
 
+  @override
+  int currentItemIndex = 0;
+
   final aspectRatio = ValueNotifier(1.0);
   final fit = ValueNotifier(BoxFit.contain);
 
@@ -184,6 +187,8 @@ class _VideoController extends VideoController {
         _subsController.add(event['text']);
       } else if (type == 'playbackSpeed') {
         _playbackSpeed = event['speed'];
+      } else if (type == 'mediaItemTransition') {
+        currentItemIndex = event['index'];
       }
       if (event.containsKey('position')) {
         _lastKnownPosition = event['position'];
@@ -200,21 +205,29 @@ class _VideoController extends VideoController {
   }
 
   @override
-  void load(VideoItem item) async {
-    await _methodChannel.invokeMethod('load', {
-      'id': id,
-      'url': item.url,
-      'subtitles': item.subtitles
-          .map((track) => {
-                'id': track.id,
-                'src': track.src,
-                'mimeType': track.mimeType,
-                'title': track.title,
-                'language': track.language
-              })
-          .toList(),
-      'startPosition': (item.startPosition * 1000).toInt(),
-    });
+  void load(List<VideoItem> items, int startIndex, double startPosition) async {
+    await _methodChannel.invokeMethod(
+      'load',
+      {
+        'id': id,
+        'items': items
+            .map((item) => ({
+                  'url': item.url,
+                  'subtitles': item.subtitles
+                      .map((track) => {
+                            'id': track.id,
+                            'src': track.src,
+                            'mimeType': track.mimeType,
+                            'title': track.title,
+                            'language': track.language
+                          })
+                      .toList(),
+                }))
+            .toList(),
+        'startIndex': startIndex,
+        'startPosition': (startPosition * 1000).toInt(),
+      },
+    );
   }
 
   @override

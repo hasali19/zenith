@@ -116,6 +116,9 @@ class VideoControllerWindows extends VideoController {
   bool get supportsAudioTrackSelection => true;
 
   @override
+  int currentItemIndex = 0;
+
+  @override
   double get position {
     var position = _lastKnownPosition;
     if (_playing) {
@@ -145,7 +148,9 @@ class VideoControllerWindows extends VideoController {
   double _duration = 0;
 
   @override
-  void load(VideoItem item) {
+  void load(List<VideoItem> items, int startIndex, double startPosition) {
+    // TODO: Implement playlist support for windows
+    final item = items[0];
     final pUrl = item.url.toNativeUtf8();
     final pTitle = item.title == null
         ? Pointer<Utf8>.fromAddress(0)
@@ -153,7 +158,7 @@ class VideoControllerWindows extends VideoController {
     final pSubtitle = item.subtitle == null
         ? Pointer<Utf8>.fromAddress(0)
         : item.subtitle!.toNativeUtf8();
-    ffiLoad(player, pUrl, pTitle, pSubtitle, item.startPosition);
+    ffiLoad(player, pUrl, pTitle, pSubtitle, startPosition);
     calloc.free(pUrl);
     calloc.free(pTitle);
     calloc.free(pSubtitle);

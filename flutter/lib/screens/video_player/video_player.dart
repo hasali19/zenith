@@ -144,12 +144,11 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
       subtitles: subtitles.map((s) => subtitleFromApi(_api, s)).toList(),
       title: title,
       subtitle: subtitle,
-      startPosition: widget.startPosition,
     );
 
     setState(() {
       _controller = controller
-        ..load(video)
+        ..load([video], 0, widget.startPosition)
         ..addListener(() {
           setState(() {
             _videoState = controller.state;

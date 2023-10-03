@@ -5,7 +5,13 @@ import android.content.Context
 import android.net.Uri
 import android.view.Surface
 import android.widget.Toast
-import androidx.media3.common.*
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.common.Player
+import androidx.media3.common.TrackGroup
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.VideoSize
 import androidx.media3.common.text.CueGroup
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
@@ -44,37 +50,46 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                         "create" -> responder.create()
                         "load" -> responder.load(
                             id = call.argument("id")!!,
-                            url = call.argument("url")!!,
-                            subtitles = call.argument<List<Map<String, Any>>>("subtitles")!!
-                                .map {
-                                    SubtitleTrack(
-                                        id = it["id"] as String,
-                                        src = it["src"] as String,
-                                        mimeType = it["mimeType"] as String,
-                                        title = it["title"] as String?,
-                                        language = it["language"] as String?,
-                                    )
-                                },
+                            items = call.argument<List<Map<String, Any>>>("items")!!.map { item ->
+                                VideoItem(
+                                    url = item.get("url") as String,
+                                    subtitles = (item["subtitles"] as List<Map<String, Any>>).map {
+                                        SubtitleTrack(
+                                            id = it["id"] as String,
+                                            src = it["src"] as String,
+                                            mimeType = it["mimeType"] as String,
+                                            title = it["title"] as String?,
+                                            language = it["language"] as String?,
+                                        )
+                                    },
+                                )
+                            },
+                            startIndex = call.argument("startIndex")!!,
                             startPosition = call.argument("startPosition")!!,
                         )
+
                         "play" -> responder.play(id = call.argument("id")!!)
                         "pause" -> responder.pause(id = call.argument("id")!!)
                         "seekTo" -> responder.seekTo(
                             id = call.argument("id")!!,
                             position = call.argument("position")!!,
                         )
+
                         "setPlaybackSpeed" -> responder.setPlaybackSpeed(
-                                id = call.argument("id")!!,
-                                speed = call.argument("speed")!!,
+                            id = call.argument("id")!!,
+                            speed = call.argument("speed")!!,
                         )
+
                         "setAudioTrack" -> responder.setAudioTrack(
                             id = call.argument("id")!!,
                             index = call.argument("index")!!,
                         )
+
                         "setTextTrack" -> responder.setTextTrack(
                             id = call.argument("id")!!,
                             trackId = call.argument("trackId"),
                         )
+
                         "dispose" -> responder.dispose(id = call.argument("id")!!)
                     }
                 }
@@ -104,6 +119,7 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                                     "value" to it.value,
                                 )
                             )
+
                             is PlayerInstance.Event.DurationChanged -> events.success(
                                 mapOf(
                                     "type" to "durationChanged",
@@ -111,6 +127,7 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                                     "position" to it.position,
                                 )
                             )
+
                             is PlayerInstance.Event.PlayWhenReadyChanged -> events.success(
                                 mapOf(
                                     "type" to "playWhenReadyChanged",
@@ -118,6 +135,7 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                                     "position" to it.position,
                                 )
                             )
+
                             is PlayerInstance.Event.PlaybackStateChanged -> events.success(
                                 mapOf(
                                     "type" to "playbackStateChanged",
@@ -125,6 +143,7 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                                     "position" to it.position,
                                 )
                             )
+
                             is PlayerInstance.Event.IsPlayingChanged -> events.success(
                                 mapOf(
                                     "type" to "isPlayingChanged",
@@ -132,22 +151,33 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                                     "position" to it.position,
                                 )
                             )
+
                             is PlayerInstance.Event.PositionDiscontinuity -> events.success(
                                 mapOf(
                                     "type" to "positionDiscontinuity",
                                     "position" to it.position,
                                 )
                             )
+
                             is PlayerInstance.Event.Cues -> events.success(
                                 mapOf(
                                     "type" to "cues",
                                     "text" to it.text,
                                 )
                             )
+
                             is PlayerInstance.Event.PlaybackSpeed -> events.success(
                                 mapOf(
                                     "type" to "playbackSpeed",
                                     "speed" to it.speed,
+                                    "position" to it.position,
+                                )
+                            )
+
+                            is PlayerInstance.Event.MediaItemTransition -> events.success(
+                                mapOf(
+                                    "type" to "mediaItemTransition",
+                                    "index" to it.index,
                                     "position" to it.position,
                                 )
                             )
@@ -194,8 +224,8 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
             result.success(texture.id())
         }
 
-        fun load(id: Long, url: String, subtitles: List<SubtitleTrack>, startPosition: Long) {
-            players[id]!!.load(url, subtitles, startPosition)
+        fun load(id: Long, items: List<VideoItem>, startIndex: Int, startPosition: Long) {
+            players[id]!!.load(items, startIndex, startPosition)
             result.success(null)
         }
 
@@ -238,6 +268,11 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
 
 private typealias EventCallback = (event: PlayerInstance.Event) -> Unit
 
+data class VideoItem(
+    val url: String,
+    val subtitles: List<SubtitleTrack>,
+)
+
 data class SubtitleTrack(
     val id: String,
     val src: String,
@@ -265,6 +300,7 @@ private class PlayerInstance(
         data class PositionDiscontinuity(val position: Long) : Event()
         data class Cues(val text: String?) : Event()
         data class PlaybackSpeed(val speed: Double, val position: Long) : Event()
+        data class MediaItemTransition(val index: Int, val position: Long) : Event()
     }
 
     private val surface = Surface(texture.surfaceTexture())
@@ -333,7 +369,21 @@ private class PlayerInstance(
             }
 
             override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
-                onEvent?.invoke(Event.PlaybackSpeed(playbackParameters.speed.toDouble(), player.currentPosition))
+                onEvent?.invoke(
+                    Event.PlaybackSpeed(
+                        playbackParameters.speed.toDouble(),
+                        player.currentPosition
+                    )
+                )
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                onEvent?.invoke(
+                    Event.MediaItemTransition(
+                        player.currentMediaItemIndex,
+                        player.currentPosition
+                    )
+                )
             }
         })
 
@@ -366,36 +416,38 @@ private class PlayerInstance(
         onEvent = callback
     }
 
-    fun load(url: String, subtitles: List<SubtitleTrack>, startPosition: Long) {
-        val mediaItem = MediaItem.Builder()
-            .setUri(url)
-            .build()
-
-        val dataSourceFactory = DefaultHttpDataSource.Factory()
-        val sources = mutableListOf(
-            DefaultMediaSourceFactory(context)
-                .createMediaSource(mediaItem)
-        )
-
-        subtitles.forEach {
-            val uri = Uri.parse(it.src)
-
-            val subtitle = MediaItem.SubtitleConfiguration.Builder(uri)
-                .setId("external:${it.id}")
-                .setMimeType(it.mimeType)
-                .setLanguage(it.language)
-                .setLabel(it.title)
+    fun load(items: List<VideoItem>, startIndex: Int, startPosition: Long) {
+        val mediaSources = items.map { item ->
+            val mediaItem = MediaItem.Builder()
+                .setUri(item.url)
                 .build()
 
-            val source = SingleSampleMediaSource.Factory(dataSourceFactory)
-                .createMediaSource(subtitle, C.TIME_UNSET)
+            val dataSourceFactory = DefaultHttpDataSource.Factory()
+            val sources = mutableListOf(
+                DefaultMediaSourceFactory(context)
+                    .createMediaSource(mediaItem)
+            )
 
-            sources.add(source)
+            item.subtitles.forEach { track ->
+                val uri = Uri.parse(track.src)
+
+                val subtitle = MediaItem.SubtitleConfiguration.Builder(uri)
+                    .setId("external:${track.id}")
+                    .setMimeType(track.mimeType)
+                    .setLanguage(track.language)
+                    .setLabel(track.title)
+                    .build()
+
+                val source = SingleSampleMediaSource.Factory(dataSourceFactory)
+                    .createMediaSource(subtitle, C.TIME_UNSET)
+
+                sources.add(source)
+            }
+
+            MergingMediaSource(*sources.toTypedArray())
         }
 
-        val mergedSource = MergingMediaSource(*sources.toTypedArray())
-
-        player.setMediaSource(mergedSource, startPosition)
+        player.setMediaSources(mediaSources, startIndex, startPosition)
         player.prepare()
         player.play()
     }

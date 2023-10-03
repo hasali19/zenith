@@ -44,14 +44,12 @@ class VideoItem {
   final String? subtitle;
   final String url;
   final List<SubtitleTrack> subtitles;
-  final double startPosition;
 
   VideoItem({
     required this.url,
     required this.subtitles,
     this.title,
     this.subtitle,
-    this.startPosition = 0,
   });
 }
 
@@ -63,8 +61,9 @@ abstract class VideoController {
   bool get paused;
   bool get loading;
   bool get supportsAudioTrackSelection;
+  int get currentItemIndex;
 
-  void load(VideoItem item);
+  void load(List<VideoItem> items, int startIndex, double startPosition);
   void play();
   void pause();
   void setAudioTrack(int index);
