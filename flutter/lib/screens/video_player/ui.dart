@@ -261,9 +261,9 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         ),
         const SizedBox(height: 8),
         BottomControls(
-          seekIconSize: seekIconSize,
           controller: _controller,
-          playPauseIconSize: playPauseIconSize,
+          primaryIconSize: playPauseIconSize,
+          secondaryIconSize: seekIconSize,
           onButtonTap: widget.onInteractionEnd,
         ),
       ],

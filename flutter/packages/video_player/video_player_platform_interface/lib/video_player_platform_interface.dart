@@ -66,6 +66,8 @@ abstract class VideoController {
   void load(List<VideoItem> items, int startIndex, double startPosition);
   void play();
   void pause();
+  void seekToNextItem();
+  void seekToPreviousItem();
   void setAudioTrack(int index);
   void setTextTrack(SubtitleTrack? track);
   void setFit(BoxFit fit);

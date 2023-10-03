@@ -127,6 +127,16 @@ class VideoControllerWeb extends VideoController {
   }
 
   @override
+  void seekToNextItem() {
+    // TODO: implement seekToNextItem
+  }
+
+  @override
+  void seekToPreviousItem() {
+    // TODO: implement seekToPreviousItem
+  }
+
+  @override
   void setAudioTrack(int index) {
     throw UnsupportedError(
         'Changing audio tracks is not supported by the web player');

@@ -252,6 +252,16 @@ class _VideoController extends VideoController {
   }
 
   @override
+  void seekToNextItem() {
+    _methodChannel.invokeListMethod('seekToNextItem', {'id': id});
+  }
+
+  @override
+  void seekToPreviousItem() {
+    _methodChannel.invokeListMethod('seekToPreviousItem', {'id': id});
+  }
+
+  @override
   void setFit(BoxFit fit) {
     this.fit.value = fit;
   }

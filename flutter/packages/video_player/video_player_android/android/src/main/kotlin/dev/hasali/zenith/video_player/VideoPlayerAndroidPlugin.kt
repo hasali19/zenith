@@ -75,6 +75,9 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                             position = call.argument("position")!!,
                         )
 
+                        "seekToNextItem" -> responder.seekToNextItem(id = call.argument("id")!!)
+                        "seekToPreviousItem" -> responder.seekToPreviousItem(id = call.argument("id")!!)
+
                         "setPlaybackSpeed" -> responder.setPlaybackSpeed(
                             id = call.argument("id")!!,
                             speed = call.argument("speed")!!,
@@ -241,6 +244,16 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
 
         fun seekTo(id: Long, position: Long) {
             players[id]!!.seekTo(position)
+            result.success(null)
+        }
+
+        fun seekToNextItem(id: Long) {
+            players[id]!!.seekToNextItem()
+            result.success(null)
+        }
+
+        fun seekToPreviousItem(id: Long) {
+            players[id]!!.seekToPreviousItem()
             result.success(null)
         }
 
@@ -462,6 +475,14 @@ private class PlayerInstance(
 
     fun seekTo(position: Long) {
         player.seekTo(position)
+    }
+
+    fun seekToNextItem() {
+        player.seekToNextMediaItem()
+    }
+
+    fun seekToPreviousItem() {
+        player.seekToPreviousMediaItem()
     }
 
     fun setPlaybackSpeed(speed: Double) {

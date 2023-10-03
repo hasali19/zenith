@@ -186,6 +186,16 @@ class VideoControllerWindows extends VideoController {
   }
 
   @override
+  void seekToNextItem() {
+    // TODO: implement seekToNextItem
+  }
+
+  @override
+  void seekToPreviousItem() {
+    // TODO: implement seekToPreviousItem
+  }
+
+  @override
   void setFit(BoxFit fit) {
     // TODO: implement setFit
   }

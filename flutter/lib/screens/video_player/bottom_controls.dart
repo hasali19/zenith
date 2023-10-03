@@ -8,16 +8,16 @@ import 'play_pause_button.dart';
 class BottomControls extends ConsumerWidget {
   const BottomControls({
     Key? key,
-    required this.seekIconSize,
     required VideoController controller,
-    required this.playPauseIconSize,
+    required this.primaryIconSize,
+    required this.secondaryIconSize,
     required this.onButtonTap,
   })  : _controller = controller,
         super(key: key);
 
-  final double seekIconSize;
   final VideoController _controller;
-  final double playPauseIconSize;
+  final double primaryIconSize;
+  final double secondaryIconSize;
 
   final VoidCallback onButtonTap;
 
@@ -30,30 +30,49 @@ class BottomControls extends ConsumerWidget {
           alignment: Alignment.center,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
+                icon: const Icon(Icons.skip_previous),
+                iconSize: secondaryIconSize,
+                onPressed: () {
+                  _controller.seekToPreviousItem();
+                  onButtonTap();
+                },
+              ),
+              const SizedBox(width: 24),
+              IconButton(
                 icon: const Icon(Icons.replay_10),
-                iconSize: seekIconSize,
+                iconSize: secondaryIconSize,
                 onPressed: () {
                   _controller.position -= 10;
                   onButtonTap();
                 },
               ),
-              const SizedBox(width: 32),
+              const SizedBox(width: 24),
               PlayPauseButton(
                 isPlaying: !_controller.paused,
-                size: playPauseIconSize,
+                size: primaryIconSize,
                 onSetPlaying: (playing) {
                   playing ? _controller.play() : _controller.pause();
                   onButtonTap();
                 },
               ),
-              const SizedBox(width: 32),
+              const SizedBox(width: 24),
               IconButton(
                 icon: const Icon(Icons.forward_30),
-                iconSize: seekIconSize,
+                iconSize: secondaryIconSize,
                 onPressed: () {
                   _controller.position += 30;
+                  onButtonTap();
+                },
+              ),
+              const SizedBox(width: 24),
+              IconButton(
+                icon: const Icon(Icons.skip_next),
+                iconSize: secondaryIconSize,
+                onPressed: () {
+                  _controller.seekToNextItem();
                   onButtonTap();
                 },
               ),
