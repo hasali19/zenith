@@ -1,3 +1,4 @@
+#![feature(let_chains)]
 #![allow(clippy::missing_safety_doc)]
 
 mod media_player;
@@ -23,30 +24,38 @@ pub unsafe extern "C" fn get_texture_id(surface: *const VideoSurface) -> i64 {
     surface.as_ref().unwrap().texture_id()
 }
 
+#[repr(C)]
+pub struct VideoItem {
+    pub url: *const i8,
+    pub title: *const i8,
+    pub subtitle: *const i8,
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn load(
     player: *const MediaPlayer,
-    url: *const i8,
-    title: *const i8,
-    subtitle: *const i8,
+    items: *const VideoItem,
+    item_count: usize,
+    start_index: u32,
     start_position: f64,
 ) {
-    let url = CStr::from_ptr(url).to_str().unwrap();
+    assert!(!items.is_null());
 
-    let title = title
-        .as_ref()
-        .map(|p| CStr::from_ptr(p))
-        .and_then(|s| s.to_str().ok());
+    let to_owned_string = |ptr| CStr::from_ptr(ptr).to_str().unwrap().to_owned();
 
-    let subtitle = subtitle
-        .as_ref()
-        .map(|p| CStr::from_ptr(p))
-        .and_then(|s| s.to_str().ok());
+    let items = std::slice::from_raw_parts(items, item_count)
+        .iter()
+        .map(|item| media_player::VideoItem {
+            url: to_owned_string(item.url),
+            title: item.title.as_ref().map(|p| to_owned_string(p)),
+            subtitle: item.subtitle.as_ref().map(|s| to_owned_string(s)),
+        })
+        .collect::<Vec<_>>();
 
     player
         .as_ref()
         .unwrap()
-        .load(url, title, subtitle, start_position);
+        .load(items, start_index, start_position);
 }
 
 #[no_mangle]
@@ -74,6 +83,16 @@ pub unsafe extern "C" fn pause(player: *const MediaPlayer) {
 #[no_mangle]
 pub unsafe extern "C" fn play(player: *const MediaPlayer) {
     player.as_ref().unwrap().set_paused(false);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn playlist_next(player: *const MediaPlayer) {
+    player.as_ref().unwrap().playlist_next();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn playlist_prev(player: *const MediaPlayer) {
+    player.as_ref().unwrap().playlist_prev();
 }
 
 #[no_mangle]

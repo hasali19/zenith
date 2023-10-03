@@ -88,7 +88,7 @@ impl MpvPlayer {
 
     pub fn load_file(&self, url: &str) {
         let url = CString::new(url).unwrap();
-        let mut args = [s!("loadfile"), url.as_ptr(), ptr::null()];
+        let mut args = [s!("loadfile"), url.as_ptr(), s!("append"), ptr::null()];
         unsafe {
             mpv_command_async(self.mpv, 0, &mut args as *mut *const c_char);
         }
@@ -97,6 +97,20 @@ impl MpvPlayer {
     pub fn add_sub_async(&self, url: &str) {
         let url = CString::new(url).unwrap();
         let mut args = [s!("sub-add"), url.as_ptr(), s!("cached"), ptr::null()];
+        unsafe {
+            mpv_command_async(self.mpv, 0, &mut args as *mut *const c_char);
+        }
+    }
+
+    pub fn playlist_next(&self) {
+        let mut args = [s!("playlist-next"), ptr::null()];
+        unsafe {
+            mpv_command_async(self.mpv, 0, &mut args as *mut *const c_char);
+        }
+    }
+
+    pub fn playlist_prev(&self) {
+        let mut args = [s!("playlist-prev"), ptr::null()];
         unsafe {
             mpv_command_async(self.mpv, 0, &mut args as *mut *const c_char);
         }
@@ -205,6 +219,15 @@ pub trait MpvSetType {
 }
 
 impl MpvSetType for i32 {
+    const FORMAT: MpvFormat = MpvFormat::Int64;
+
+    fn with_ptr<F: FnOnce(*mut c_void)>(self, f: F) {
+        let mut value = self as i64;
+        f(&mut value as *mut i64 as *mut c_void)
+    }
+}
+
+impl MpvSetType for u32 {
     const FORMAT: MpvFormat = MpvFormat::Int64;
 
     fn with_ptr<F: FnOnce(*mut c_void)>(self, f: F) {

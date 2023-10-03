@@ -92,6 +92,12 @@ impl VideoPlayerFfiPlugin {
                                         EncodableValue::F64(v.into()),
                                     );
                                 }
+                                MediaPlayerEvent::PlaylistPosChanged(v) => {
+                                    res.insert(
+                                        EncodableValue::Str("playlist-pos"),
+                                        EncodableValue::I64(v.into()),
+                                    );
+                                }
                             }
 
                             messenger.call("video_player_ffi", "event", &EncodableValue::Map(res));

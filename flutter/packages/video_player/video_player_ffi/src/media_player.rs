@@ -1,5 +1,5 @@
 use std::sync::atomic::{self, AtomicU64};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use windows::Media::SystemMediaTransportControlsButton;
 use windows::Win32::Foundation::HWND;
@@ -11,7 +11,15 @@ use crate::system_media_controls::SystemMediaControls;
 pub struct MediaPlayer {
     mpv: Arc<MpvPlayer>,
     start_position: AtomicU64,
+    playlist: Mutex<Vec<VideoItem>>,
     system_media_controls: SystemMediaControls,
+}
+
+#[derive(Debug)]
+pub struct VideoItem {
+    pub url: String,
+    pub title: Option<String>,
+    pub subtitle: Option<String>,
 }
 
 #[allow(clippy::enum_variant_names)]
@@ -20,6 +28,7 @@ pub enum MediaPlayerEvent {
     PauseChanged(bool),
     IdleChanged(bool),
     SpeedChanged(f64),
+    PlaylistPosChanged(u32),
     VideoEnded,
 }
 
@@ -38,6 +47,7 @@ impl MediaPlayer {
         mpv.observe_property("pause", MpvFormat::Flag, 0);
         mpv.observe_property("core-idle", MpvFormat::Flag, 0);
         mpv.observe_property("speed", MpvFormat::Double, 0);
+        mpv.observe_property("playlist-playing-pos", MpvFormat::Int64, 0);
 
         let mut controls = SystemMediaControls::new(hwnd);
 
@@ -61,6 +71,7 @@ impl MediaPlayer {
         MediaPlayer {
             mpv,
             start_position: AtomicU64::new(0),
+            playlist: Mutex::new(Vec::new()),
             system_media_controls: controls,
         }
     }
@@ -117,6 +128,26 @@ impl MediaPlayer {
                             event_handler(position, MediaPlayerEvent::SpeedChanged(*value));
                         }
                     }
+                    "playlist-playing-pos" => {
+                        let value = unsafe { data.cast::<i64>().as_ref() };
+                        if let Some(value) = value && *value > 0 {
+                            println!("playlist-playing-pos {value}");
+
+                            let playlist = self.playlist.lock().unwrap();
+
+                            if let Some(item) = playlist.get(*value as usize) {
+                                self.system_media_controls.update_media_display(
+                                    item.title.as_deref(),
+                                    item.subtitle.as_deref(),
+                                );
+                            }
+
+                            event_handler(
+                                position,
+                                MediaPlayerEvent::PlaylistPosChanged(*value as u32),
+                            );
+                        }
+                    }
                     _ => {}
                 },
                 mpv_player::Event::LogMessage { text } => {
@@ -127,18 +158,17 @@ impl MediaPlayer {
         }
     }
 
-    pub fn load(
-        &self,
-        url: &str,
-        title: Option<&str>,
-        subtitle: Option<&str>,
-        start_position: f64,
-    ) {
+    pub fn load(&self, items: Vec<VideoItem>, start_index: u32, start_position: f64) {
         self.start_position
             .store(start_position.to_bits(), atomic::Ordering::SeqCst);
-        self.mpv.load_file(url);
-        self.system_media_controls
-            .update_media_display(title, subtitle);
+
+        for item in &items {
+            self.mpv.load_file(&item.url);
+        }
+
+        *self.playlist.lock().unwrap() = items;
+
+        self.mpv.set_property_async("playlist-pos", start_index, 0);
     }
 
     pub fn set_audio_track(&self, index: i32) {
@@ -156,6 +186,14 @@ impl MediaPlayer {
 
     pub fn set_paused(&self, paused: bool) {
         self.mpv.set_property_async("pause", paused, 0);
+    }
+
+    pub fn playlist_next(&self) {
+        self.mpv.playlist_next();
+    }
+
+    pub fn playlist_prev(&self) {
+        self.mpv.playlist_prev();
     }
 
     pub fn seek_to(&self, position: f64) {

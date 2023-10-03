@@ -7,17 +7,23 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 
 const _channel = MethodChannel('video_player_ffi');
 
+final class FfiVideoItem extends Struct {
+  external Pointer<Utf8> url;
+  external Pointer<Utf8> title;
+  external Pointer<Utf8> subtitle;
+}
+
 final DynamicLibrary _lib = DynamicLibrary.open('video_player_ffi.dll');
 final int Function(int surface) ffiGetTextureId = _lib
     .lookup<NativeFunction<IntPtr Function(IntPtr)>>('get_texture_id')
     .asFunction();
-final void Function(int player, Pointer<Utf8> url, Pointer<Utf8> title,
-        Pointer<Utf8> subtitle, double startPosition) ffiLoad =
+final void Function(int player, Pointer<FfiVideoItem> items, int itemCount,
+        int startIndex, double startPosition) ffiLoad =
     _lib
         .lookup<
             NativeFunction<
-                Void Function(IntPtr, Pointer<Utf8>, Pointer<Utf8>,
-                    Pointer<Utf8>, Double)>>('load')
+                Void Function(IntPtr, Pointer<FfiVideoItem>, UintPtr, Uint32,
+                    Double)>>('load')
         .asFunction();
 final void Function(int player, int index) ffiSetAudioTrack = _lib
     .lookup<NativeFunction<Void Function(IntPtr, Int32)>>('set_audio_track')
@@ -30,6 +36,12 @@ final void Function(int player) ffiPause =
     _lib.lookup<NativeFunction<Void Function(IntPtr)>>('pause').asFunction();
 final void Function(int player) ffiPlay =
     _lib.lookup<NativeFunction<Void Function(IntPtr)>>('play').asFunction();
+final void Function(int player) ffiPlaylistNext = _lib
+    .lookup<NativeFunction<Void Function(IntPtr)>>('playlist_next')
+    .asFunction();
+final void Function(int player) ffiPlaylistPrev = _lib
+    .lookup<NativeFunction<Void Function(IntPtr)>>('playlist_prev')
+    .asFunction();
 final void Function(int player, double position) ffiSeekTo = _lib
     .lookup<NativeFunction<Void Function(IntPtr, Double)>>('seek_to')
     .asFunction();
@@ -97,6 +109,10 @@ class VideoControllerWindows extends VideoController {
         _playbackSpeed = args['speed'];
       }
 
+      if (args.containsKey('playlist-pos')) {
+        currentItemIndex = args['playlist-pos'];
+      }
+
       if (args['state'] == 'ended') {
         _state = VideoState.ended;
       }
@@ -149,19 +165,30 @@ class VideoControllerWindows extends VideoController {
 
   @override
   void load(List<VideoItem> items, int startIndex, double startPosition) {
-    // TODO: Implement playlist support for windows
-    final item = items[startIndex];
-    final pUrl = item.url.toNativeUtf8();
-    final pTitle = item.title == null
-        ? Pointer<Utf8>.fromAddress(0)
-        : item.title!.toNativeUtf8();
-    final pSubtitle = item.subtitle == null
-        ? Pointer<Utf8>.fromAddress(0)
-        : item.subtitle!.toNativeUtf8();
-    ffiLoad(player, pUrl, pTitle, pSubtitle, startPosition);
-    calloc.free(pUrl);
-    calloc.free(pTitle);
-    calloc.free(pSubtitle);
+    final pItems = calloc<FfiVideoItem>(items.length);
+
+    for (final (i, item) in items.indexed) {
+      final pItem = pItems[i];
+      pItem.url = item.url.toNativeUtf8();
+      pItem.title = item.title == null
+          ? Pointer<Utf8>.fromAddress(0)
+          : item.title!.toNativeUtf8();
+      pItem.subtitle = item.subtitle == null
+          ? Pointer<Utf8>.fromAddress(0)
+          : item.subtitle!.toNativeUtf8();
+    }
+
+    ffiLoad(player, pItems, items.length, startIndex, startPosition);
+
+    for (var i = 0; i < items.length; i++) {
+      final pItem = pItems[i];
+      calloc.free(pItem.url);
+      if (pItem.title.address != 0) calloc.free(pItem.title);
+      if (pItem.subtitle.address != 0) calloc.free(pItem.subtitle);
+    }
+
+    calloc.free(pItems);
+
     _state = VideoState.active;
     currentItemIndex = startIndex;
   }
@@ -187,12 +214,12 @@ class VideoControllerWindows extends VideoController {
 
   @override
   void seekToNextItem() {
-    // TODO: implement seekToNextItem
+    ffiPlaylistNext(player);
   }
 
   @override
   void seekToPreviousItem() {
-    // TODO: implement seekToPreviousItem
+    ffiPlaylistPrev(player);
   }
 
   @override
