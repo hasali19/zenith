@@ -217,39 +217,24 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   }
 
   String _title(Screen screen) {
-    switch (screen) {
-      case Screen.home:
-        return 'Zenith';
-
-      case Screen.movies:
-        return 'Movies';
-
-      case Screen.shows:
-        return 'Shows';
-
-      // case Screen.collections:
-      //   return "Collections";
-
-      case Screen.settings:
-        return 'Settings';
-    }
+    return switch (screen) {
+      Screen.home => 'Zenith',
+      Screen.movies => 'Movies',
+      Screen.shows => 'Shows',
+      // Screen.collections => 'Collections',
+      Screen.settings => 'Settings'
+    };
   }
 
   Screen _activeScreen(int index) {
-    switch (index) {
-      case 0:
-        return Screen.home;
-      case 1:
-        return Screen.movies;
-      case 2:
-        return Screen.shows;
-      // case 3:
-      //   return Screen.collections;
-      case 3:
-        return Screen.settings;
-      default:
-        throw Exception('invalid tab index: $index');
-    }
+    return switch (index) {
+      0 => Screen.home,
+      1 => Screen.movies,
+      2 => Screen.shows,
+      // 3 => Screen.collections,
+      3 => Screen.settings,
+      _ => throw Exception('invalid tab index: $index')
+    };
   }
 
   void _navigateTo(BuildContext context, Screen screen) {

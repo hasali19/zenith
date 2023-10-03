@@ -165,16 +165,10 @@ class VideoControllerWeb extends VideoController {
 
   @override
   void setFit(BoxFit fit) {
-    _element.style.objectFit = () {
-      switch (fit) {
-        case BoxFit.cover:
-          return 'cover';
-        case BoxFit.contain:
-          return 'contain';
-        default:
-          return 'contain';
-      }
-    }();
+    _element.style.objectFit = switch (fit) {
+      BoxFit.cover => 'cover',
+      BoxFit.contain || _ => 'contain',
+    };
   }
 
   @override

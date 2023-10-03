@@ -176,14 +176,11 @@ abstract class StreamInfo {
   });
 
   factory StreamInfo.fromJson(Map<String, dynamic> json) {
-    switch (json['type']) {
-      case 'audio':
-        return AudioStreamInfo.fromJson(json);
-      case 'video':
-        return VideoStreamInfo.fromJson(json);
-      default:
-        throw Exception("Invalid stream type: ${json['type']}");
-    }
+    return switch (json['type']) {
+      'audio' => AudioStreamInfo.fromJson(json),
+      'video' => VideoStreamInfo.fromJson(json),
+      _ => throw Exception("Invalid stream type: ${json['type']}"),
+    };
   }
 }
 
