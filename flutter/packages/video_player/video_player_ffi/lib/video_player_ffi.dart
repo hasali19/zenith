@@ -150,7 +150,7 @@ class VideoControllerWindows extends VideoController {
   @override
   void load(List<VideoItem> items, int startIndex, double startPosition) {
     // TODO: Implement playlist support for windows
-    final item = items[0];
+    final item = items[startIndex];
     final pUrl = item.url.toNativeUtf8();
     final pTitle = item.title == null
         ? Pointer<Utf8>.fromAddress(0)
@@ -163,6 +163,7 @@ class VideoControllerWindows extends VideoController {
     calloc.free(pTitle);
     calloc.free(pSubtitle);
     _state = VideoState.active;
+    currentItemIndex = startIndex;
   }
 
   @override

@@ -35,23 +35,38 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
 }
 
 class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
-  late Future<api.MediaItem> _item;
+  late Future<(List<api.MediaItem> items, int startIndex)> _items;
   api.ZenithApiClient get _api => ref.watch(api.apiProvider);
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _item = _api.fetchMediaItem(widget.id);
+    _items = (() async {
+      final requestedItem = await _api.fetchMediaItem(widget.id);
+
+      final playlist = switch (requestedItem.type) {
+        api.MediaType.episode =>
+          await _api.fetchShowEpisodes(requestedItem.grandparent!.id),
+        _ => [requestedItem],
+      };
+
+      int startIndex =
+          playlist.indexWhere((item) => item.id == requestedItem.id);
+
+      return (playlist, startIndex);
+    })();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<api.MediaItem>(
-      future: _item,
+    return FutureBuilder<(List<api.MediaItem>, int)>(
+      future: _items,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
+          final (items, startIndex) = snapshot.data!;
           return _VideoPlayer(
-            item: snapshot.data!,
+            items: items,
+            startIndex: startIndex,
             startPosition: widget.startPosition,
           );
         } else {
@@ -63,12 +78,14 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
 }
 
 class _VideoPlayer extends ConsumerStatefulWidget {
-  final api.MediaItem item;
+  final List<api.MediaItem> items;
+  final int startIndex;
   final double startPosition;
 
   const _VideoPlayer({
     Key? key,
-    required this.item,
+    required this.items,
+    required this.startIndex,
     required this.startPosition,
   }) : super(key: key);
 
@@ -94,8 +111,11 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
   late Timer _progressReportTimer;
   Timer? _controlsTimer;
 
+  api.MediaItem get currentItem =>
+      widget.items[_controller?.currentItemIndex ?? 0];
+
   List<api.SubtitleTrack> get subtitles =>
-      widget.item.videoFile?.subtitles ?? [];
+      currentItem.videoFile?.subtitles ?? [];
 
   @override
   void initState() {
@@ -129,26 +149,30 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
   Future<void> _initController() async {
     final controller = await VideoPlayerPlatform.instance.createController();
 
-    final String? title;
-    final String? subtitle;
-    if (widget.item.type == api.MediaType.movie) {
-      title = widget.item.name;
-      subtitle = widget.item.startDate?.year.toString();
-    } else {
-      title = '${widget.item.getSeasonEpisode()!}: ${widget.item.name}';
-      subtitle = widget.item.grandparent!.name;
-    }
+    final videos = widget.items.map((item) {
+      final String? title;
+      final String? subtitle;
+      if (item.type == api.MediaType.movie) {
+        title = item.name;
+        subtitle = item.startDate?.year.toString();
+      } else {
+        title = '${item.getSeasonEpisode()!}: ${item.name}';
+        subtitle = item.grandparent!.name;
+      }
 
-    final video = VideoItem(
-      url: _api.getVideoUrl(widget.item.videoFile!.id),
-      subtitles: subtitles.map((s) => subtitleFromApi(_api, s)).toList(),
-      title: title,
-      subtitle: subtitle,
-    );
+      return VideoItem(
+        url: _api.getVideoUrl(item.videoFile!.id),
+        subtitles: item.videoFile!.subtitles
+            .map((s) => subtitleFromApi(_api, s))
+            .toList(),
+        title: title,
+        subtitle: subtitle,
+      );
+    }).toList();
 
     setState(() {
       _controller = controller
-        ..load([video], 0, widget.startPosition)
+        ..load(videos, widget.startIndex, widget.startPosition)
         ..addListener(() {
           setState(() {
             _videoState = controller.state;
@@ -177,7 +201,7 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
       // TODO: Be smarter about progress reporting
       // - report when playback state changes, after seeking, etc
       // - maybe disable timer altogether when video is paused?
-      _api.updateProgress(widget.item.id, position);
+      _api.updateProgress(currentItem.id, position);
     }
   }
 
@@ -298,32 +322,32 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
     }
 
     final Widget title;
-    if (widget.item.type == api.MediaType.episode) {
+    if (currentItem.type == api.MediaType.episode) {
       title = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${widget.item.getSeasonEpisode()!}: ${widget.item.name}',
+            '${currentItem.getSeasonEpisode()!}: ${currentItem.name}',
             style: context.zenithTheme.titleMedium,
           ),
           Text(
-            widget.item.grandparent!.name,
+            currentItem.grandparent!.name,
             style: context.zenithTheme.bodyMedium,
           ),
         ],
       );
     } else {
-      title = Text(widget.item.name);
+      title = Text(currentItem.name);
     }
 
     return VideoPlayerUi(
       controller: _controller!,
       title: title,
-      audioTracks: widget.item.videoFile!.streams
+      audioTracks: currentItem.videoFile!.streams
           .whereType<api.AudioStreamInfo>()
           .map(audioTrackFromApi)
           .toList(),
-      subtitles: widget.item.videoFile!.subtitles
+      subtitles: currentItem.videoFile!.subtitles
           .map((s) => subtitleFromApi(_api, s))
           .toList(),
       progress: _progressController.stream,

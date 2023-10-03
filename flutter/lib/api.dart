@@ -473,6 +473,16 @@ class ZenithApiClient {
     }
   }
 
+  Future<List<MediaItem>> fetchShowEpisodes(int showId) async {
+    final res = await _get(Uri.parse('$_baseUrl/api/shows/$showId/episodes'));
+    if (res.statusCode == 200) {
+      final List<dynamic> json = jsonDecode(utf8.decode(res.bodyBytes));
+      return json.map((e) => MediaItem.fromJson(MediaType.episode, e)).toList();
+    } else {
+      throw Exception('Failed to fetch episodes');
+    }
+  }
+
   Future<List<MediaItem>> fetchEpisodes(int seasonId) async {
     final res =
         await _get(Uri.parse('$_baseUrl/api/seasons/$seasonId/episodes'));
