@@ -54,7 +54,7 @@ jobs:
         run: cargo binstall cargo-nextest --secure --no-confirm --force
 
       - name: Run tests
-        run: cargo nextest run
+        run: cargo nextest run --features mocks
 
   coverage:
     runs-on: ubuntu-latest
