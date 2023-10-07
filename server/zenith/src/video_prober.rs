@@ -91,7 +91,7 @@ pub trait VideoProber: Send + Sync {
     async fn probe(&self, path: &Utf8Path) -> eyre::Result<VideoInfo>;
 }
 
-#[async_trait::async_trait]
+#[async_trait]
 impl VideoProber for Ffprobe {
     async fn probe(&self, path: &Utf8Path) -> eyre::Result<VideoInfo> {
         Ffprobe::probe(self, path).await

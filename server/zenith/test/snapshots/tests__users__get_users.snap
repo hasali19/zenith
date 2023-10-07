@@ -1,0 +1,14 @@
+---
+source: server/zenith/test/users.rs
+expression: "app.get(\"/users\").await"
+---
+[
+  {
+    "id": 1,
+    "username": "test"
+  },
+  {
+    "id": 2,
+    "username": "test2"
+  }
+]

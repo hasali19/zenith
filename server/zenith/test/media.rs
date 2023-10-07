@@ -9,7 +9,7 @@ use crate::{with_app, TestApp};
 macro_rules! test_snapshot {
     ($name:ident, $path:expr $(,)?) => {
         #[test(with_app)]
-        async fn $name(app: TestApp) {
+        async fn $name(mut app: TestApp) {
             assert_json_snapshot!(app.get($path).await);
         }
     };

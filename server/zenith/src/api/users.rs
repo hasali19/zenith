@@ -79,12 +79,15 @@ async fn create(
                 if SystemTime::now() > expires_at {
                     return Err(bad_request("invalid registration code"));
                 }
+
+                tracing::info!("creating new user {}", body.username);
             }
             None => {
                 let users = db::users::get_all(&mut transaction).await?;
                 if !users.is_empty() {
                     return Err(e);
                 }
+                tracing::info!("creating initial user {}", body.username);
             }
         };
     }

@@ -1,4 +1,6 @@
+mod auth;
 mod media;
+mod users;
 
 use axum::body::Body;
 use axum::http::{HeaderValue, Request};
@@ -212,21 +214,21 @@ impl TestApp {
         &mut self.router
     }
 
-    async fn get(mut self, path: &str) -> Value {
+    async fn get(&mut self, path: &str) -> Value {
         let cookie = self.login().await;
+        self.req_json(
+            Request::builder()
+                .method("GET")
+                .uri(path)
+                .header("Cookie", &cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+    }
 
-        let res = self
-            .router
-            .oneshot(
-                Request::builder()
-                    .method("GET")
-                    .uri(path)
-                    .header("Cookie", &cookie)
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
+    async fn req_json(&mut self, req: Request<Body>) -> Value {
+        let res = self.router().oneshot(req).await.unwrap();
 
         if !res.status().is_success() {
             panic!("request failed with status {}", res.status());
@@ -237,9 +239,13 @@ impl TestApp {
     }
 
     async fn login(&mut self) -> HeaderValue {
+        self.login_with("test", "password").await
+    }
+
+    async fn login_with(&mut self, username: &str, password: &str) -> HeaderValue {
         let body = json!({
-            "username": "test",
-            "password": "password",
+            "username": username,
+            "password": password,
         });
 
         let mut res = self

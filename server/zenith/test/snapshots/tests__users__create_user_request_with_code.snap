@@ -1,0 +1,8 @@
+---
+source: server/zenith/test/users.rs
+expression: res
+---
+{
+  "id": 2,
+  "username": "test2"
+}
