@@ -17,7 +17,7 @@ use tokio::sync::broadcast;
 
 use std::sync::Arc;
 
-use crate::config::Config;
+use crate::config::ImportMatcher;
 use crate::video_prober::VideoProber;
 
 use self::parser::PathParser;
@@ -52,16 +52,20 @@ pub struct FileSystemChange {
 
 pub struct MediaLibrary {
     db: Db,
-    config: Arc<Config>,
+    matchers: Vec<ImportMatcher>,
     video_prober: Arc<dyn VideoProber>,
     notifier: broadcast::Sender<LibraryEvent>,
 }
 
 impl MediaLibrary {
-    pub fn new(db: Db, config: Arc<Config>, video_prober: Arc<dyn VideoProber>) -> MediaLibrary {
+    pub fn new(
+        db: Db,
+        matchers: Vec<ImportMatcher>,
+        video_prober: Arc<dyn VideoProber>,
+    ) -> MediaLibrary {
         MediaLibrary {
             db,
-            config,
+            matchers,
             video_prober,
             notifier: broadcast::channel(8).0,
         }
@@ -110,6 +114,6 @@ impl MediaLibrary {
     }
 
     fn parser(&self) -> PathParser {
-        PathParser::new(&self.config.import.matchers)
+        PathParser::new(&self.matchers)
     }
 }

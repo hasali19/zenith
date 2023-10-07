@@ -2,6 +2,8 @@ mod auth;
 mod media;
 mod users;
 
+use std::sync::Arc;
+
 use axum::body::Body;
 use axum::http::{HeaderValue, Request};
 use axum::Extension;
@@ -20,6 +22,8 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
 use uuid::Uuid;
+use zenith::library::MediaLibrary;
+use zenith::video_prober::MockVideoProber;
 use zenith::{App, Db, MediaItemType};
 
 async fn insert_video_file(
@@ -207,6 +211,11 @@ pub async fn init_test_app(db: &Db) -> axum::Router {
         .with_state(app)
         .layer(TraceLayer::new_for_http())
         .layer(Extension(db.clone()))
+        .layer(Extension(Arc::new(MediaLibrary::new(
+            db.clone(),
+            vec![],
+            Arc::new(MockVideoProber::new()),
+        ))))
 }
 
 impl TestApp {

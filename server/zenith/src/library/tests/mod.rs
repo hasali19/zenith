@@ -54,7 +54,7 @@ async fn import_movie() -> eyre::Result<()> {
         })
     });
 
-    let library = MediaLibrary::new(db.clone(), Arc::new(config), Arc::new(video_prober));
+    let library = MediaLibrary::new(db.clone(), config.import.matchers, Arc::new(video_prober));
 
     library
         .process_file_system_change(FileSystemChange {
@@ -108,7 +108,7 @@ async fn remove_movie_with_no_video_files() -> eyre::Result<()> {
     let db = test_db().await;
     let config: Config = serde_yaml::from_str(include_str!("config.yml"))?;
     let video_prober = MockVideoProber::new();
-    let library = MediaLibrary::new(db.clone(), Arc::new(config), Arc::new(video_prober));
+    let library = MediaLibrary::new(db.clone(), config.import.matchers, Arc::new(video_prober));
 
     let mut conn = db.acquire().await?;
 
@@ -159,7 +159,7 @@ async fn import_episode() -> eyre::Result<()> {
         })
     });
 
-    let library = MediaLibrary::new(db.clone(), Arc::new(config), Arc::new(video_prober));
+    let library = MediaLibrary::new(db.clone(), config.import.matchers, Arc::new(video_prober));
 
     library
         .process_file_system_change(FileSystemChange {
@@ -223,7 +223,7 @@ async fn remove_show_with_empty_season() -> eyre::Result<()> {
     let db = test_db().await;
     let config: Config = serde_yaml::from_str(include_str!("config.yml"))?;
     let video_prober = MockVideoProber::new();
-    let library = MediaLibrary::new(db.clone(), Arc::new(config), Arc::new(video_prober));
+    let library = MediaLibrary::new(db.clone(), config.import.matchers, Arc::new(video_prober));
 
     let mut conn = db.acquire().await?;
 

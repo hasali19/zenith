@@ -114,14 +114,14 @@ pub struct Import {
     pub matchers: Vec<ImportMatcher>,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 pub struct ImportMatcher {
     pub target: ImportMatcherTarget,
     #[serde(deserialize_with = "deserialize_regex")]
     pub regex: Regex,
 }
 
-#[derive(Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ImportMatcherTarget {
     Movie,

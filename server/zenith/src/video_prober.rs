@@ -85,7 +85,7 @@ impl Ffprobe {
     }
 }
 
-#[cfg_attr(test, mockall::automock)]
+#[cfg_attr(any(test, feature = "mocks"), mockall::automock)]
 #[async_trait]
 pub trait VideoProber: Send + Sync {
     async fn probe(&self, path: &Utf8Path) -> eyre::Result<VideoInfo>;

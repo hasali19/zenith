@@ -85,7 +85,7 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
 
     let library = Arc::new(MediaLibrary::new(
         db.clone(),
-        config.clone(),
+        config.import.matchers.clone(),
         video_prober.clone(),
     ));
 
