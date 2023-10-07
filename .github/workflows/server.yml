@@ -58,22 +58,32 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
-    container:
-      image: xd009642/tarpaulin:develop-nightly
-      options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           submodules: true
 
+      - name: Install cargo-binstall
+        run: |
+          wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz
+          tar -xvf cargo-binstall-x86_64-unknown-linux-musl.tgz cargo-binstall
+          mv cargo-binstall ~/.cargo/bin
+
+      - name: Install cargo-nextest
+        run: cargo binstall cargo-nextest --secure --no-confirm --force
+
+      - name: Install cargo-llvm-cov
+        run: cargo binstall cargo-llvm-cov --secure --no-confirm --force
+
       - name: Generate code coverage
-        run: cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
+        run: cargo llvm-cov nextest --features mocks --lcov --output-path lcov.info
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
 
   build:
     runs-on: ubuntu-latest
