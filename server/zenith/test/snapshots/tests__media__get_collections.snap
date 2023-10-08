@@ -1,0 +1,18 @@
+---
+source: server/zenith/test/media.rs
+expression: "app.get(\"/collections\").await"
+---
+[
+  {
+    "id": 1,
+    "name": "collection 1",
+    "overview": null,
+    "poster": null
+  },
+  {
+    "id": 2,
+    "name": "collection 2",
+    "overview": null,
+    "poster": null
+  }
+]

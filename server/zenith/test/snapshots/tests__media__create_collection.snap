@@ -1,0 +1,10 @@
+---
+source: server/zenith/test/media.rs
+expression: res
+---
+{
+  "id": 1,
+  "name": "collection 1",
+  "overview": null,
+  "poster": null
+}

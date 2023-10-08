@@ -1,0 +1,10 @@
+---
+source: server/zenith/test/media.rs
+expression: "app.get(&format!(\"/collections/{}\", collection_2.id)).await"
+---
+{
+  "id": 2,
+  "name": "collection 2",
+  "overview": null,
+  "poster": null
+}

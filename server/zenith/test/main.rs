@@ -218,6 +218,10 @@ pub async fn init_test_app(db: &Db) -> axum::Router {
         ))))
 }
 
+fn json_body(v: &impl serde::ser::Serialize) -> Body {
+    Body::from(serde_json::to_vec(v).unwrap())
+}
+
 impl TestApp {
     fn router(&mut self) -> &mut axum::Router {
         &mut self.router

@@ -5,7 +5,7 @@ use serde_json::json;
 use test_macros::test;
 use tower::ServiceExt;
 
-use crate::{with_app, TestApp};
+use crate::{json_body, with_app, TestApp};
 
 macro_rules! test_snapshot {
     ($name:ident, $path:expr $(,)?) => {
@@ -30,6 +30,183 @@ test_snapshot!(
     "/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9",
 );
 test_snapshot!(get_continue_watching, "/items/continue_watching");
+
+#[test(with_app)]
+async fn get_collections(mut app: TestApp) {
+    let mut conn = app.db.acquire().await.unwrap();
+
+    db::collections::create(
+        &mut conn,
+        db::collections::NewCollection {
+            name: "collection 1",
+        },
+    )
+    .await
+    .unwrap();
+
+    db::collections::create(
+        &mut conn,
+        db::collections::NewCollection {
+            name: "collection 2",
+        },
+    )
+    .await
+    .unwrap();
+
+    assert_json_snapshot!(app.get("/collections").await);
+}
+
+#[test(with_app)]
+async fn get_collection(mut app: TestApp) {
+    let mut conn = app.db.acquire().await.unwrap();
+
+    db::collections::create(
+        &mut conn,
+        db::collections::NewCollection {
+            name: "collection 1",
+        },
+    )
+    .await
+    .unwrap();
+
+    let collection_2 = db::collections::create(
+        &mut conn,
+        db::collections::NewCollection {
+            name: "collection 2",
+        },
+    )
+    .await
+    .unwrap();
+
+    assert_json_snapshot!(app.get(&format!("/collections/{}", collection_2.id)).await);
+}
+
+#[test(with_app)]
+async fn create_collection(mut app: TestApp) {
+    let body = json!({
+        "name": "collection 1"
+    });
+
+    let res = app
+        .req_json(
+            Request::builder()
+                .method("POST")
+                .uri("/collections")
+                .header("Content-Type", "application/json")
+                .body(json_body(&body))
+                .unwrap(),
+        )
+        .await;
+
+    assert_json_snapshot!(res);
+
+    let mut conn = app.db.acquire().await.unwrap();
+
+    let collections: Vec<String> = sqlx::query_scalar("SELECT name FROM collections")
+        .fetch_all(&mut conn)
+        .await
+        .unwrap();
+
+    assert_eq!(collections.len(), 1);
+    assert_eq!(collections[0], "collection 1");
+}
+
+#[test(with_app)]
+async fn delete_collection(mut app: TestApp) {
+    let mut conn = app.db.acquire().await.unwrap();
+
+    let collection = db::collections::create(
+        &mut conn,
+        db::collections::NewCollection {
+            name: "collection 1",
+        },
+    )
+    .await
+    .unwrap();
+
+    let res = app
+        .router()
+        .oneshot(
+            Request::builder()
+                .method("DELETE")
+                .uri(format!("/collections/{}", collection.id))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let mut conn = app.db.acquire().await.unwrap();
+
+    let collections: Vec<String> = sqlx::query_scalar("SELECT name FROM collections")
+        .fetch_all(&mut conn)
+        .await
+        .unwrap();
+
+    assert!(collections.is_empty());
+}
+
+#[test(with_app)]
+async fn update_collection(mut app: TestApp) {
+    let mut conn = app.db.acquire().await.unwrap();
+
+    let collection = db::collections::create(
+        &mut conn,
+        db::collections::NewCollection {
+            name: "collection 1",
+        },
+    )
+    .await
+    .unwrap();
+
+    let body = json!({
+        "meta": {
+            "name": "collection 2",
+            "overview": "overview of the collection",
+        },
+        "items": [1, 2],
+    });
+
+    let res = app
+        .router()
+        .oneshot(
+            Request::builder()
+                .method("PUT")
+                .uri(format!("/collections/{}", collection.id))
+                .header("Content-Type", "application/json")
+                .body(json_body(&body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let mut conn = app.db.acquire().await.unwrap();
+
+    let collections = db::collections::get_all(&mut conn).await.unwrap();
+
+    assert_eq!(collections[0].name, "collection 2");
+    assert_eq!(
+        collections[0].overview.as_deref(),
+        Some("overview of the collection")
+    );
+
+    let items = db::items::query(
+        &mut conn,
+        db::items::Query {
+            collection_id: Some(collection.id),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+
+    assert!(items.iter().any(|i| i.id == 1));
+    assert!(items.iter().any(|i| i.id == 2));
+}
 
 #[test(with_app)]
 async fn update_progress(mut app: TestApp) {
