@@ -111,6 +111,7 @@ class VideoControllerWindows extends VideoController {
 
       if (args.containsKey('playlist-pos')) {
         currentItemIndex = args['playlist-pos'];
+        _state = VideoState.active;
       }
 
       if (args['state'] == 'ended') {
