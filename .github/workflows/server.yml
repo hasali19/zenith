@@ -32,12 +32,8 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
 
-      - uses: auguwu/clippy-action@1.3.0
-        with:
-          token: ${{secrets.GITHUB_TOKEN}}
-          all-features: true
-          check-args: "--workspace"
-          deny: warnings
+      - name: Run clippy
+        run: cargo clippy --workspace --all-features -- -Dwarnings
 
   test:
     runs-on: ubuntu-latest
