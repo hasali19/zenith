@@ -37,6 +37,7 @@ jobs:
           token: ${{secrets.GITHUB_TOKEN}}
           all-features: true
           check-args: "--workspace"
+          deny: warnings
 
   test:
     runs-on: ubuntu-latest
