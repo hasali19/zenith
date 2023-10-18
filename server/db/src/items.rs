@@ -358,7 +358,7 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         .limit(query.limit)
         .to_sql();
 
-    let mut items: Vec<MediaItem> = sqlx::query_as_with(&sql, args.clone())
+    let mut items: Vec<MediaItem> = sqlx::query_as_with(&sql, (&args).clone().clone())
         .fetch_all(&mut *conn)
         .await?;
 
