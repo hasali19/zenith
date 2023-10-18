@@ -358,7 +358,7 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         .limit(query.limit)
         .to_sql();
 
-    let mut items: Vec<MediaItem> = sqlx::query_as_with(&sql, (&args).clone().clone())
+    let mut items: Vec<MediaItem> = sqlx::query_as_with(&sql, args.clone().clone())
         .fetch_all(&mut *conn)
         .await?;
 
@@ -892,11 +892,10 @@ pub async fn update_metadata(
 
         let mut args = SqliteArguments::default();
 
-        #[rustfmt::skip]
-        let mut sql = format!("
+        let mut sql = "
             DELETE FROM crew
             WHERE item_id = ? AND (person_id, department, job) NOT IN (
-        ");
+        ".to_string();
 
         for (i, crew_member) in crew.iter().enumerate() {
             args.add(crew_member.person_id);
