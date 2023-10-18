@@ -31,6 +31,8 @@ jobs:
 
       - name: Run clippy
         run: cargo clippy --workspace --all-features
+        env:
+          RUSTFLAGS: "-Dwarnings"
 
   test:
     runs-on: ubuntu-latest
