@@ -98,7 +98,11 @@ async fn update_video_info(
 
     for stream in &info.streams {
         let Some(codec_name) = stream.codec_name.as_deref() else {
-            tracing::debug!(stream.index, stream.codec_type, "stream is missing codec name");
+            tracing::debug!(
+                stream.index,
+                stream.codec_type,
+                "stream is missing codec name"
+            );
             continue;
         };
 

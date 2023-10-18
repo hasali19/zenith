@@ -15,7 +15,8 @@ impl MediaLibrary {
             season,
             episode,
             name,
-        }) = self.parser().parse_episode_path(path) else {
+        }) = self.parser().parse_episode_path(path)
+        else {
             return Ok(());
         };
 

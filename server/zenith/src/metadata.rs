@@ -256,7 +256,11 @@ async fn refresh_movie_metadata(
 ) -> eyre::Result<()> {
     tracing::info!("refreshing movie metadata");
 
-    let Some(key) = item.metadata_provider_key.as_ref().and_then(|key|key.parse().ok()) else {
+    let Some(key) = item
+        .metadata_provider_key
+        .as_ref()
+        .and_then(|key| key.parse().ok())
+    else {
         tracing::error!(?item, "movie is unmatched");
         return Err(eyre!("unmatched item"));
     };
@@ -342,14 +346,17 @@ async fn refresh_tv_show_metadata(
 ) -> eyre::Result<()> {
     tracing::info!("refreshing show metadata");
 
-    let Some(key) = item.metadata_provider_key.as_ref().and_then(|key|key.parse().ok()) else {
+    let parsed_key = item
+        .metadata_provider_key
+        .as_ref()
+        .and_then(|key| key.parse().ok());
+
+    let Some(key) = parsed_key else {
         tracing::error!(?item, "show is unmatched");
         return Err(eyre!("unmatched item"));
     };
 
     let metadata = tmdb.get_tv_show(key).await?;
-
-    // tracing::debug!(?metadata);
 
     let date_fmt = format_description::parse("[year]-[month]-[day]")?;
     let first_air_date = metadata
