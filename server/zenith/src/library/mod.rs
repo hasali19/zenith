@@ -30,14 +30,14 @@ pub enum LibraryEvent {
     VideoAdded(i64),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ChangeType {
     Added,
     Modified,
     Removed,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FileType {
     Video(VideoFileType),
     Subtitle,

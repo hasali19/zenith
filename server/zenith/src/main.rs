@@ -4,6 +4,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 
+use async_trait::async_trait;
 use axum::extract::OriginalUri;
 use axum::http::StatusCode;
 use axum::Extension;
@@ -22,8 +23,8 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
 use zenith::config::{Config, LogFormat};
-use zenith::library::scanner::LibraryScanner;
-use zenith::library::{LibraryEvent, MediaLibrary};
+use zenith::library::scanner::{LibraryScanner, VideoFileType};
+use zenith::library::{FileSystemChange, LibraryEvent, MediaLibrary};
 use zenith::metadata::MetadataManager;
 use zenith::transcoder::{self, Transcoder};
 use zenith::video_prober::Ffprobe;
@@ -77,6 +78,36 @@ async fn main() -> eyre::Result<()> {
     Ok(())
 }
 
+fn new_library_scanner(
+    db: Db,
+    config: Arc<Config>,
+    library: Arc<MediaLibrary>,
+) -> Arc<LibraryScanner> {
+    struct EventHandler(Arc<MediaLibrary>);
+
+    #[async_trait]
+    impl zenith::library::scanner::EventHandler for EventHandler {
+        async fn process_file_system_change(&self, change: FileSystemChange) -> eyre::Result<()> {
+            self.0.process_file_system_change(change).await
+        }
+
+        async fn complete_library_scan(&self) -> eyre::Result<()> {
+            self.0.validate().await
+        }
+    }
+
+    let library_paths = vec![
+        (VideoFileType::Movie, config.libraries.movies.clone()),
+        (VideoFileType::Episode, config.libraries.tv_shows.clone()),
+    ];
+
+    Arc::new(LibraryScanner::new(
+        db,
+        library_paths,
+        EventHandler(library),
+    ))
+}
+
 async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
     let db = Db::init(&config.database.path).await?;
     let tmdb = TmdbClient::new(&config.tmdb.api_key);
@@ -96,11 +127,7 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
         video_prober.clone(),
     );
 
-    let scanner = Arc::new(LibraryScanner::new(
-        db.clone(),
-        library.clone(),
-        config.clone(),
-    ));
+    let scanner = new_library_scanner(db.clone(), config.clone(), library.clone());
 
     tokio::spawn({
         let metadata = metadata.clone();

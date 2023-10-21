@@ -18,6 +18,7 @@ pub struct EpisodePathMeta<'a> {
     pub name: Option<&'a str>,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct SubtitlePathMeta<'a> {
     pub name: &'a str,
     pub lang: Option<&'a str>,
@@ -257,6 +258,91 @@ mod tests {
                 season: 0,
                 episode: 3,
                 name: None,
+            })
+        );
+    }
+
+    #[test]
+    fn subtitle_simple() {
+        let result = parser().parse_subtitle_path(Utf8Path::new(
+            "/media/shows/Show Name/Specials/Show Name - S00E03 - Episode Name.srt",
+        ));
+
+        assert_eq!(
+            result,
+            Some(SubtitlePathMeta {
+                name: "Show Name - S00E03 - Episode Name",
+                lang: None,
+                sdh: false,
+                forced: false,
+            })
+        );
+    }
+
+    #[test]
+    fn subtitle_with_language() {
+        let result = parser().parse_subtitle_path(Utf8Path::new(
+            "/media/shows/Show Name/Specials/Show Name - S00E03 - Episode Name.en.srt",
+        ));
+
+        assert_eq!(
+            result,
+            Some(SubtitlePathMeta {
+                name: "Show Name - S00E03 - Episode Name",
+                lang: Some("en"),
+                sdh: false,
+                forced: false,
+            })
+        );
+    }
+
+    #[test]
+    fn subtitle_numberd() {
+        let result = parser().parse_subtitle_path(Utf8Path::new(
+            "/media/shows/Show Name/Specials/Show Name - S00E03 - Episode Name.2.en.srt",
+        ));
+
+        assert_eq!(
+            result,
+            Some(SubtitlePathMeta {
+                name: "Show Name - S00E03 - Episode Name",
+                lang: Some("en"),
+                sdh: false,
+                forced: false,
+            })
+        );
+    }
+
+    #[test]
+    fn subtitle_forced_sdh() {
+        let result = parser().parse_subtitle_path(Utf8Path::new(
+            "/media/shows/Show Name/Specials/Show Name - S00E03 - Episode Name.forced.sdh.srt",
+        ));
+
+        assert_eq!(
+            result,
+            Some(SubtitlePathMeta {
+                name: "Show Name - S00E03 - Episode Name",
+                lang: None,
+                sdh: true,
+                forced: true,
+            })
+        );
+    }
+
+    #[test]
+    fn subtitle_with_language_sdh() {
+        let result = parser().parse_subtitle_path(Utf8Path::new(
+            "/media/shows/Show Name/Specials/Show Name - S00E03 - Episode Name.en.sdh.srt",
+        ));
+
+        assert_eq!(
+            result,
+            Some(SubtitlePathMeta {
+                name: "Show Name - S00E03 - Episode Name",
+                lang: Some("en"),
+                sdh: true,
+                forced: false,
             })
         );
     }

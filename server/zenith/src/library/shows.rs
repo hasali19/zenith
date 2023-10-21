@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use camino::Utf8Path;
 use db::media::{MediaItemType, MetadataProvider};
 use db::sql::{self, Join};
@@ -22,19 +24,15 @@ impl MediaLibrary {
 
         tracing::info!(%path, "importing episode");
 
-        let default_name;
         let name = match name {
-            Some(name) => name,
-            None => {
-                default_name = format!("S{season:02}E{episode:02}");
-                &default_name
-            }
+            Some(name) => Cow::Borrowed(name),
+            None => Cow::Owned(format!("S{season:02}E{episode:02}")),
         };
 
         let show_id = self.create_show_if_missing(show_name, show_path).await?;
         let season_id = self.create_season_if_missing(show_id, season).await?;
         let episode_id = self
-            .create_episode_if_missing(show_id, season_id, season, episode, name)
+            .create_episode_if_missing(show_id, season_id, season, episode, &name)
             .await?;
 
         self.create_video_file(path, episode_id)
