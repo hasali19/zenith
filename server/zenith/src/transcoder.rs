@@ -208,6 +208,10 @@ impl Transcoder {
 
         self.process_video(&job, &path, &info).await?;
 
+        self.cropdetect_if_required(id, &path)
+            .await
+            .wrap_err_with(|| eyre!("crop detection failed for {path}"))?;
+
         Ok(())
     }
 
@@ -365,10 +369,6 @@ impl Transcoder {
             self.update_subtitle_path(id, stream_index, &path.with_extension(""))
                 .await?;
         }
-
-        self.cropdetect_if_required(id, path)
-            .await
-            .wrap_err_with(|| eyre!("crop detection failed for {path}"))?;
 
         tracing::info!("finished processing job");
 
