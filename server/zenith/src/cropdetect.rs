@@ -35,7 +35,7 @@ impl<'a> CropDetect<'a> {
             .arg_pair("-vf", "cropdetect")
             .arg_pair("-f", "null")
             .arg("-")
-            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
             .output()
             .await?;
 
@@ -43,9 +43,9 @@ impl<'a> CropDetect<'a> {
             return Err(eyre!("ffmpeg terminated unsuccessfully: {}", output.status));
         }
 
-        let stdout = output.stdout.as_slice();
+        let stderr = output.stderr.as_slice();
 
-        stdout
+        stderr
             .lines()
             .flatten()
             .filter_map(|line| parse_log_line(&line))

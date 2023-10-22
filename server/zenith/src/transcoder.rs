@@ -212,6 +212,8 @@ impl Transcoder {
             .await
             .wrap_err_with(|| eyre!("crop detection failed for {path}"))?;
 
+        tracing::info!("finished processing job");
+
         Ok(())
     }
 
@@ -369,8 +371,6 @@ impl Transcoder {
             self.update_subtitle_path(id, stream_index, &path.with_extension(""))
                 .await?;
         }
-
-        tracing::info!("finished processing job");
 
         Ok(())
     }
