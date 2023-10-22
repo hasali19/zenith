@@ -36,6 +36,10 @@ expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
       "streams": [
         {
           "codec": "h264",
+          "crop_x1": null,
+          "crop_x2": null,
+          "crop_y1": null,
+          "crop_y2": null,
           "height": 1080,
           "id": 1,
           "index": 0,
@@ -151,6 +155,10 @@ expression: "app.get(\"/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9\").await"
       "streams": [
         {
           "codec": "h264",
+          "crop_x1": null,
+          "crop_x2": null,
+          "crop_y1": null,
+          "crop_y2": null,
           "height": 1080,
           "id": 7,
           "index": 0,

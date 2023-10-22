@@ -36,6 +36,10 @@ expression: "app.get(\"/movies\").await"
       "streams": [
         {
           "codec": "h264",
+          "crop_x1": null,
+          "crop_x2": null,
+          "crop_y1": null,
+          "crop_y2": null,
           "height": 1080,
           "id": 1,
           "index": 0,
@@ -88,6 +92,10 @@ expression: "app.get(\"/movies\").await"
       "streams": [
         {
           "codec": "h264",
+          "crop_x1": null,
+          "crop_x2": null,
+          "crop_y1": null,
+          "crop_y2": null,
           "height": 1080,
           "id": 3,
           "index": 0,
@@ -140,6 +148,10 @@ expression: "app.get(\"/movies\").await"
       "streams": [
         {
           "codec": "h264",
+          "crop_x1": null,
+          "crop_x2": null,
+          "crop_y1": null,
+          "crop_y2": null,
           "height": 1080,
           "id": 5,
           "index": 0,

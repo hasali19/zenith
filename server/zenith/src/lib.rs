@@ -1,5 +1,6 @@
 #![feature(let_chains)]
 
+mod cropdetect;
 mod ext;
 mod password_utils;
 

@@ -55,6 +55,38 @@ pub async fn insert_video_stream(
     Ok(())
 }
 
+pub struct UpdateVideoStream {
+    pub crop_x1: u32,
+    pub crop_x2: u32,
+    pub crop_y1: u32,
+    pub crop_y2: u32,
+}
+
+pub async fn update_video_stream_by_index(
+    conn: &mut SqliteConnection,
+    video_id: i64,
+    stream_index: u32,
+    stream: &UpdateVideoStream,
+) -> eyre::Result<()> {
+    let sql = sql::update("video_file_streams")
+        .columns(&["v_crop_x1", "v_crop_x2", "v_crop_y1", "v_crop_y2"])
+        .values(&["?", "?", "?", "?"])
+        .condition("video_id = ? AND stream_index = ?")
+        .to_sql();
+
+    sqlx::query(&sql)
+        .bind(stream.crop_x1)
+        .bind(stream.crop_x2)
+        .bind(stream.crop_y1)
+        .bind(stream.crop_y2)
+        .bind(video_id)
+        .bind(stream_index)
+        .execute(conn)
+        .await?;
+
+    Ok(())
+}
+
 pub struct NewAudioStream<'a> {
     pub video_id: i64,
     pub index: u32,

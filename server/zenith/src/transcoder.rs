@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::{Help, SectionExt};
+use db::streams::{StreamType, UpdateVideoStream};
 use db::subtitles::{Subtitle, UpdateSubtitle};
 use db::video_files::UpdateVideoFile;
 use db::Db;
@@ -15,6 +16,7 @@ use tokio::process::Command;
 use tokio::sync::{broadcast, RwLock, Semaphore};
 
 use crate::config::Config;
+use crate::cropdetect::CropDetect;
 use crate::ext::CommandExt;
 use crate::library::MediaLibrary;
 use crate::video_prober::{VideoInfo, VideoProber};
@@ -364,7 +366,62 @@ impl Transcoder {
                 .await?;
         }
 
+        self.cropdetect_if_required(id, path)
+            .await
+            .wrap_err_with(|| eyre!("crop detection failed for {path}"))?;
+
         tracing::info!("finished processing job");
+
+        Ok(())
+    }
+
+    async fn cropdetect_if_required(&self, id: i64, path: &Utf8Path) -> eyre::Result<()> {
+        let mut conn = self.db.acquire().await?;
+
+        let sql = "
+            SELECT stream_index
+            FROM video_file_streams
+            WHERE video_id = ? AND stream_type = ?
+                AND (v_crop_x1 IS NULL OR v_crop_x2 IS NULL OR v_crop_y1 IS NULL OR v_crop_y2 IS NULL)
+        ";
+
+        let streams: Vec<u32> = sqlx::query_scalar(sql)
+            .bind(id)
+            .bind(StreamType::Video)
+            .fetch_all(&mut conn)
+            .await?;
+
+        if streams.is_empty() {
+            return Ok(());
+        }
+
+        if streams.len() > 1 {
+            return Err(eyre!(
+                "cropdetect not currently supported for files with multiple video streams"
+            ));
+        }
+
+        for stream_index in streams {
+            tracing::info!(id, %path, stream_index, "running cropdetect for video");
+
+            let crop_result = CropDetect::new(&self.config.transcoding.ffmpeg_path)
+                .run(path.as_str())
+                .await
+                .wrap_err_with(|| eyre!("crop detection failed for stream {stream_index}"))?;
+
+            db::streams::update_video_stream_by_index(
+                &mut conn,
+                id,
+                stream_index,
+                &UpdateVideoStream {
+                    crop_x1: crop_result.x1,
+                    crop_x2: crop_result.x2,
+                    crop_y1: crop_result.y1,
+                    crop_y2: crop_result.y2,
+                },
+            )
+            .await?;
+        }
 
         Ok(())
     }

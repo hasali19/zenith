@@ -113,6 +113,10 @@ pub enum StreamProps {
 pub struct VideoStreamProps {
     pub width: u32,
     pub height: u32,
+    pub crop_x1: Option<u32>,
+    pub crop_x2: Option<u32>,
+    pub crop_y1: Option<u32>,
+    pub crop_y2: Option<u32>,
 }
 
 #[derive(Serialize, Reflect)]
@@ -204,6 +208,10 @@ impl From<db::items::MediaItem> for MediaItem {
                                 StreamProps::Video(VideoStreamProps {
                                     width: props.width,
                                     height: props.height,
+                                    crop_x1: props.crop_x1,
+                                    crop_x2: props.crop_x2,
+                                    crop_y1: props.crop_y1,
+                                    crop_y2: props.crop_y2,
                                 })
                             }
                             db::items::StreamProps::Audio(props) => {

@@ -83,6 +83,10 @@ pub enum StreamProps {
 pub struct VideoStreamProps {
     pub width: u32,
     pub height: u32,
+    pub crop_x1: Option<u32>,
+    pub crop_x2: Option<u32>,
+    pub crop_y1: Option<u32>,
+    pub crop_y2: Option<u32>,
 }
 
 #[derive(Debug)]
@@ -200,6 +204,10 @@ impl<'r> FromRow<'r, SqliteRow> for Stream {
                 StreamType::Video => StreamProps::Video(VideoStreamProps {
                     width: row.try_get("v_width")?,
                     height: row.try_get("v_height")?,
+                    crop_x1: row.try_get("v_crop_x1")?,
+                    crop_x2: row.try_get("v_crop_x2")?,
+                    crop_y1: row.try_get("v_crop_y1")?,
+                    crop_y2: row.try_get("v_crop_y2")?,
                 }),
             },
         })
@@ -263,6 +271,10 @@ const STREAM_COLUMNS: &[&str] = &[
     "codec_name",
     "v_width",
     "v_height",
+    "v_crop_x1",
+    "v_crop_x2",
+    "v_crop_y1",
+    "v_crop_y2",
     "a_language",
     "a_channels",
     "a_channel_layout",

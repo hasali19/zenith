@@ -46,6 +46,10 @@ expression: "app.get(\"/shows/4/episodes\").await"
       "streams": [
         {
           "codec": "h264",
+          "crop_x1": null,
+          "crop_x2": null,
+          "crop_y1": null,
+          "crop_y2": null,
           "height": 1080,
           "id": 7,
           "index": 0,
@@ -108,6 +112,10 @@ expression: "app.get(\"/shows/4/episodes\").await"
       "streams": [
         {
           "codec": "h264",
+          "crop_x1": null,
+          "crop_x2": null,
+          "crop_y1": null,
+          "crop_y2": null,
           "height": 1080,
           "id": 9,
           "index": 0,
@@ -170,6 +178,10 @@ expression: "app.get(\"/shows/4/episodes\").await"
       "streams": [
         {
           "codec": "h264",
+          "crop_x1": null,
+          "crop_x2": null,
+          "crop_y1": null,
+          "crop_y2": null,
           "height": 1080,
           "id": 11,
           "index": 0,
@@ -232,6 +244,10 @@ expression: "app.get(\"/shows/4/episodes\").await"
       "streams": [
         {
           "codec": "h264",
+          "crop_x1": null,
+          "crop_x2": null,
+          "crop_y1": null,
+          "crop_y2": null,
           "height": 1080,
           "id": 13,
           "index": 0,
