@@ -275,7 +275,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     final desktop = MediaQuery.of(context).isDesktop;
     final appBarPadding = desktop ? 32.0 : 0.0;
     final bottomControlsPadding = desktop
-        ? const EdgeInsets.symmetric(horizontal: 300, vertical: 48)
+        ? const EdgeInsets.symmetric(horizontal: 96, vertical: 48)
         : const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
 
     return DecoratedBox(
