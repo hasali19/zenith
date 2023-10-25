@@ -125,14 +125,14 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   void initState() {
     super.initState();
-    if (kReleaseMode) {
+    if (kReleaseMode && ref.read(enableUpdatesCheck)) {
       _checkForUpdates();
     }
   }
 
   _checkForUpdates() async {
     final update = await _updater.checkForUpdates();
-    if (update != null) {
+    if (update != null && context.mounted) {
       showDialog(
         context: context,
         barrierDismissible: false,

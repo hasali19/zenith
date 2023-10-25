@@ -67,3 +67,9 @@ final activeServerProvider = Provider((ref) {
 
   return null;
 });
+
+final enableUpdatesCheck = createPrefProvider<bool>(
+  prefs: (ref) => ref.watch(preferencesProvider),
+  prefKey: 'enableUpdatesCheck',
+  defaultValue: true,
+);
