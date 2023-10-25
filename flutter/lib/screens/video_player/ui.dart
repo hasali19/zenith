@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/screens/video_player/play_pause_button.dart';
 
 import 'bottom_controls.dart';
 import 'video_progress_bar.dart';
@@ -80,7 +81,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
       constraints: width > 600
           ? const BoxConstraints.expand(width: 600).copyWith(minHeight: 0)
           : null,
-      builder: builder,
+      builder: (context) => SafeArea(child: builder(context)),
     );
   }
 
@@ -107,14 +108,6 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
                 _showAudioMenu(context);
               },
             ),
-          ListTile(
-            leading: const Icon(Icons.closed_caption),
-            title: const Text('Subtitles'),
-            onTap: () {
-              Navigator.pop(context);
-              _showSubtitlesMenu(context);
-            },
-          ),
           ListTile(
             leading: const Icon(Icons.speed),
             title: const Text('Playback speed'),
@@ -234,21 +227,10 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
       title: widget.title,
       backgroundColor: Colors.transparent,
       elevation: 0,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.more_vert),
-          splashRadius: 20,
-          onPressed: () => _showOptionsMenu(context),
-        ),
-      ],
     );
   }
 
   Widget _buildBottomUi() {
-    final desktop = MediaQuery.of(context).isDesktop;
-    final playPauseIconSize = desktop ? 64.0 : 48.0;
-    final seekIconSize = desktop ? 32.0 : 32.0;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -261,10 +243,14 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         ),
         const SizedBox(height: 8),
         BottomControls(
-          controller: _controller,
-          primaryIconSize: playPauseIconSize,
-          secondaryIconSize: seekIconSize,
-          onButtonTap: widget.onInteractionEnd,
+          onShowCaptionsMenu: () {
+            widget.onInteractionEnd();
+            _showSubtitlesMenu(context);
+          },
+          onShowOptionsMenu: () {
+            widget.onInteractionEnd();
+            _showOptionsMenu(context);
+          },
         ),
       ],
     );
@@ -275,19 +261,22 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     final desktop = MediaQuery.of(context).isDesktop;
     final appBarPadding = desktop ? 32.0 : 0.0;
     final bottomControlsPadding = desktop
-        ? const EdgeInsets.symmetric(horizontal: 300, vertical: 48)
+        ? const EdgeInsets.symmetric(horizontal: 96, vertical: 48)
         : const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+    final primaryIconSize = desktop ? 128.0 : 64.0;
+    final secondaryIconSize = desktop ? 64.0 : 32.0;
 
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-            begin: const FractionalOffset(0, 0),
-            end: const FractionalOffset(0, 1),
-            colors: [
-              Colors.black.withOpacity(0.7),
-              Colors.transparent,
-              Colors.black.withOpacity(0.7),
-            ]),
+          begin: const FractionalOffset(0, 0),
+          end: const FractionalOffset(0, 1),
+          colors: [
+            Colors.black.withOpacity(0.7),
+            Colors.transparent,
+            Colors.black.withOpacity(0.7),
+          ],
+        ),
       ),
       child: Stack(
         children: [
@@ -301,10 +290,73 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
             ),
           ),
           if (_controller.loading)
-            const Align(
+            Align(
               alignment: Alignment.center,
-              child: CircularProgressIndicator(color: Colors.white),
+              child: SizedBox(
+                width: primaryIconSize + 16,
+                height: primaryIconSize + 16,
+                child: const CircularProgressIndicator(color: Colors.white),
+              ),
             ),
+          Align(
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.skip_previous),
+                  iconSize: secondaryIconSize,
+                  onPressed: () {
+                    _controller.seekToPreviousItem();
+                    widget.onInteractionEnd();
+                  },
+                ),
+                const SizedBox(width: 24),
+                IconButton(
+                  icon: const Icon(Icons.replay_10),
+                  iconSize: secondaryIconSize,
+                  onPressed: () {
+                    _controller.position -= 10;
+                    widget.onInteractionEnd();
+                  },
+                ),
+                const SizedBox(width: 24),
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey.withAlpha(50),
+                  ),
+                  child: PlayPauseButton(
+                    isPlaying: !_controller.paused,
+                    size: primaryIconSize,
+                    onSetPlaying: (playing) {
+                      playing ? _controller.play() : _controller.pause();
+                      widget.onInteractionEnd();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 24),
+                IconButton(
+                  icon: const Icon(Icons.forward_30),
+                  iconSize: secondaryIconSize,
+                  onPressed: () {
+                    _controller.position += 30;
+                    widget.onInteractionEnd();
+                  },
+                ),
+                const SizedBox(width: 24),
+                IconButton(
+                  icon: const Icon(Icons.skip_next),
+                  iconSize: secondaryIconSize,
+                  onPressed: () {
+                    _controller.seekToNextItem();
+                    widget.onInteractionEnd();
+                  },
+                ),
+              ],
+            ),
+          ),
           Positioned(
             bottom: 0,
             left: 0,

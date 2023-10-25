@@ -59,6 +59,16 @@ class VideoProgressBar extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text.rich(TextSpan(
+              children: [
+                TextSpan(text: _formatTime(progress)),
+                TextSpan(
+                  text: ' / ${_formatTime(total)}',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ],
+            )),
+            const SizedBox(height: 8),
             ProgressBar(
               progress: progress,
               total: total,
@@ -74,16 +84,6 @@ class VideoProgressBar extends StatelessWidget {
               onDragStart: (details) => onSeekStart(),
               onDragEnd: () => onSeekEnd(),
               onSeek: (value) => onSeek(value),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(_formatTime(progress)),
-                Text(
-                  _formatTime(total),
-                  style: textStyle.copyWith(color: Colors.white60),
-                ),
-              ],
             ),
           ],
         );
