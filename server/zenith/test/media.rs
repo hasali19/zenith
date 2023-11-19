@@ -36,7 +36,7 @@ async fn get_collections(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
 
     db::collections::create(
-        &mut conn,
+        &mut *conn,
         db::collections::NewCollection {
             name: "collection 1",
         },
@@ -45,7 +45,7 @@ async fn get_collections(mut app: TestApp) {
     .unwrap();
 
     db::collections::create(
-        &mut conn,
+        &mut *conn,
         db::collections::NewCollection {
             name: "collection 2",
         },
@@ -61,7 +61,7 @@ async fn get_collection(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
 
     db::collections::create(
-        &mut conn,
+        &mut *conn,
         db::collections::NewCollection {
             name: "collection 1",
         },
@@ -70,7 +70,7 @@ async fn get_collection(mut app: TestApp) {
     .unwrap();
 
     let collection_2 = db::collections::create(
-        &mut conn,
+        &mut *conn,
         db::collections::NewCollection {
             name: "collection 2",
         },
@@ -103,7 +103,7 @@ async fn create_collection(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
 
     let collections: Vec<String> = sqlx::query_scalar("SELECT name FROM collections")
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await
         .unwrap();
 
@@ -116,7 +116,7 @@ async fn delete_collection(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
 
     let collection = db::collections::create(
-        &mut conn,
+        &mut *conn,
         db::collections::NewCollection {
             name: "collection 1",
         },
@@ -141,7 +141,7 @@ async fn delete_collection(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
 
     let collections: Vec<String> = sqlx::query_scalar("SELECT name FROM collections")
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await
         .unwrap();
 
@@ -153,7 +153,7 @@ async fn update_collection(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
 
     let collection = db::collections::create(
-        &mut conn,
+        &mut *conn,
         db::collections::NewCollection {
             name: "collection 1",
         },
@@ -186,7 +186,7 @@ async fn update_collection(mut app: TestApp) {
 
     let mut conn = app.db.acquire().await.unwrap();
 
-    let collections = db::collections::get_all(&mut conn).await.unwrap();
+    let collections = db::collections::get_all(&mut *conn).await.unwrap();
 
     assert_eq!(collections[0].name, "collection 2");
     assert_eq!(
@@ -195,7 +195,7 @@ async fn update_collection(mut app: TestApp) {
     );
 
     let items = db::items::query(
-        &mut conn,
+        &mut *conn,
         db::items::Query {
             collection_id: Some(collection.id),
             ..Default::default()
@@ -230,7 +230,7 @@ async fn update_progress(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
     let position: f64 =
         sqlx::query_scalar("SELECT position FROM media_item_user_data WHERE item_id = 1")
-            .fetch_one(&mut conn)
+            .fetch_one(&mut *conn)
             .await
             .unwrap();
 
@@ -265,7 +265,7 @@ async fn update_user_data_for_single_movie(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
     let (position, is_watched): (f64, bool) =
         sqlx::query_as("SELECT position, is_watched FROM media_item_user_data WHERE item_id = 1")
-            .fetch_one(&mut conn)
+            .fetch_one(&mut *conn)
             .await
             .unwrap();
 
@@ -304,7 +304,7 @@ async fn update_user_data_for_show(mut app: TestApp) {
         let sql = "SELECT position, is_watched FROM media_item_user_data WHERE item_id = ?";
         let (position, is_watched): (f64, bool) = sqlx::query_as(sql)
             .bind(id)
-            .fetch_one(&mut conn)
+            .fetch_one(&mut *conn)
             .await
             .unwrap();
 
@@ -344,7 +344,7 @@ async fn update_user_data_for_season(mut app: TestApp) {
         let sql = "SELECT position, is_watched FROM media_item_user_data WHERE item_id = ?";
         let (position, is_watched): (f64, bool) = sqlx::query_as(sql)
             .bind(id)
-            .fetch_one(&mut conn)
+            .fetch_one(&mut *conn)
             .await
             .unwrap();
 
@@ -374,7 +374,7 @@ async fn delete_item(mut app: TestApp) {
 
     let mut conn = app.db.acquire().await.unwrap();
     let result: Option<i64> = sqlx::query_scalar("SELECT 1 FROM media_items WHERE id = 1")
-        .fetch_optional(&mut conn)
+        .fetch_optional(&mut *conn)
         .await
         .unwrap();
 

@@ -26,7 +26,7 @@ impl MediaLibrary {
 
         let video_id: Option<i64> = sqlx::query_scalar(&sql)
             .bind(search_path)
-            .fetch_optional(&mut transaction)
+            .fetch_optional(&mut *transaction)
             .await?;
 
         if let Some(video_id) = video_id {
@@ -44,7 +44,7 @@ impl MediaLibrary {
             };
 
             tracing::info!(%video_id, %path, "adding subtitle");
-            db::subtitles::insert(&mut transaction, &subtitle).await?;
+            db::subtitles::insert(&mut *transaction, &subtitle).await?;
         }
 
         transaction.commit().await?;
@@ -63,7 +63,7 @@ impl MediaLibrary {
 
         let res = sqlx::query("DELETE FROM subtitles WHERE path = ?")
             .bind(path)
-            .execute(&mut transaction)
+            .execute(&mut *transaction)
             .await?;
 
         if res.rows_affected() > 0 {

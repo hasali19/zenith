@@ -34,7 +34,7 @@ impl From<db::collections::Collection> for Collection {
 #[response(model = Vec<Collection>)]
 async fn get_collections(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
-    let collections = db::collections::get_all(&mut conn)
+    let collections = db::collections::get_all(&mut *conn)
         .await?
         .into_iter()
         .map(Collection::from)
@@ -47,7 +47,7 @@ async fn get_collections(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
 #[response(model = Collection)]
 async fn get_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
-    let collection = db::collections::get(&mut conn, *id)
+    let collection = db::collections::get(&mut *conn, *id)
         .await?
         .map(Collection::from);
     Ok(Json(collection))
@@ -67,14 +67,14 @@ async fn create_collection(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let data = db::collections::NewCollection { name: &data.name };
-    let collection = db::collections::create(&mut conn, data).await?;
+    let collection = db::collections::create(&mut *conn, data).await?;
     Ok(Json(Collection::from(collection)))
 }
 
 #[delete("/collections/:id")]
 async fn delete_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
-    db::collections::remove(&mut conn, *id).await?;
+    db::collections::remove(&mut *conn, *id).await?;
     Ok(())
 }
 
@@ -104,11 +104,11 @@ async fn update_collection(
             name: &meta.name,
             overview: meta.overview.as_deref(),
         };
-        db::collections::update(&mut conn, *id, data).await?;
+        db::collections::update(&mut *conn, *id, data).await?;
     }
 
     if let Some(items) = &data.items {
-        db::collections::set_items(&mut conn, *id, items).await?;
+        db::collections::set_items(&mut *conn, *id, items).await?;
     }
 
     Ok(())

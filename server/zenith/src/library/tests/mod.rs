@@ -67,7 +67,7 @@ async fn import_movie() -> eyre::Result<()> {
     let mut conn = db.acquire().await?;
 
     let media_items: Vec<MediaItem> = sqlx::query_as("SELECT * FROM media_items")
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await?;
 
     assert_eq!(media_items.len(), 1);
@@ -81,7 +81,7 @@ async fn import_movie() -> eyre::Result<()> {
     );
 
     let video_files: Vec<VideoFile> = sqlx::query_as("SELECT * FROM video_files")
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await?;
 
     assert_eq!(video_files.len(), 1);
@@ -120,11 +120,11 @@ async fn remove_movie_with_no_video_files() -> eyre::Result<()> {
     sqlx::query(sql)
         .bind(MediaItemType::Movie)
         .bind("Movie")
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await?;
 
     let item_count: i32 = sqlx::query_scalar("SELECT COUNT(*) FROM media_items")
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await?;
 
     assert_eq!(item_count, 1);
@@ -132,7 +132,7 @@ async fn remove_movie_with_no_video_files() -> eyre::Result<()> {
     library.validate_movies().await?;
 
     let item_count: i32 = sqlx::query_scalar("SELECT COUNT(*) FROM media_items")
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await?;
 
     assert_eq!(item_count, 0);
@@ -172,7 +172,7 @@ async fn import_episode() -> eyre::Result<()> {
     let mut conn = db.acquire().await?;
 
     let media_items: Vec<MediaItem> = sqlx::query_as("SELECT * FROM media_items")
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await?;
 
     let show = media_items
@@ -203,7 +203,7 @@ async fn import_episode() -> eyre::Result<()> {
     assert_eq!(episode.grandparent_index, Some(2));
 
     let video_files: Vec<VideoFile> = sqlx::query_as("SELECT * FROM video_files")
-        .fetch_all(&mut conn)
+        .fetch_all(&mut *conn)
         .await?;
 
     assert_eq!(video_files.len(), 1);
@@ -235,7 +235,7 @@ async fn remove_show_with_empty_season() -> eyre::Result<()> {
     sqlx::query(sql)
         .bind(MediaItemType::Show)
         .bind("Show")
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await?;
 
     let sql = "
@@ -248,11 +248,11 @@ async fn remove_show_with_empty_season() -> eyre::Result<()> {
         .bind("Season")
         .bind(1)
         .bind(1)
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await?;
 
     let item_count: i32 = sqlx::query_scalar("SELECT COUNT(*) FROM media_items")
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await?;
 
     assert_eq!(item_count, 2);
@@ -260,7 +260,7 @@ async fn remove_show_with_empty_season() -> eyre::Result<()> {
     library.validate_shows().await?;
 
     let item_count: i32 = sqlx::query_scalar("SELECT COUNT(*) FROM media_items")
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await?;
 
     assert_eq!(item_count, 0);

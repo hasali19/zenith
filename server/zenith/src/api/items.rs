@@ -84,7 +84,7 @@ async fn get_items(
         offset: query.offset,
     };
 
-    Ok(Json(query_items(&mut conn, user.id, query).await?))
+    Ok(Json(query_items(&mut *conn, user.id, query).await?))
 }
 
 #[derive(Deserialize, Reflect)]
@@ -101,8 +101,8 @@ async fn get_continue_watching(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     let limit = query.limit.unwrap_or(10);
-    let ids = db::items::get_continue_watching(&mut conn, user.id, Some(limit)).await?;
-    Ok(Json(query_items_by_id(&mut conn, user.id, &ids).await?))
+    let ids = db::items::get_continue_watching(&mut *conn, user.id, Some(limit)).await?;
+    Ok(Json(query_items_by_id(&mut *conn, user.id, &ids).await?))
 }
 
 #[get("/items/:id")]
@@ -115,7 +115,7 @@ pub async fn get_item(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
     Ok(Json(
-        query_items_by_id(&mut conn, user.id, &[*id])
+        query_items_by_id(&mut *conn, user.id, &[*id])
             .await?
             .into_iter()
             .next()
@@ -214,11 +214,11 @@ async fn delete_item(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
-    let item = db::items::get(&mut conn, id)
+    let item = db::items::get(&mut *conn, id)
         .await?
         .or_not_found("media item not found")?;
 
-    let files = db::video_files::get_recursive_for_item(&mut conn, item.id).await?;
+    let files = db::video_files::get_recursive_for_item(&mut *conn, item.id).await?;
 
     for file in files {
         tracing::info!("removing file: {}", file.path);
@@ -253,7 +253,7 @@ async fn update_user_data(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
-    let item_type = db::media::get_item_type(&mut conn, *id)
+    let item_type = db::media::get_item_type(&mut *conn, *id)
         .await?
         .or_not_found("media item not found")?;
 
@@ -268,7 +268,7 @@ async fn update_user_data(
             };
 
             ids.extend(
-                db::items::query(&mut conn, query)
+                db::items::query(&mut *conn, query)
                     .await?
                     .iter()
                     .map(|e| e.id),
@@ -281,7 +281,7 @@ async fn update_user_data(
             };
 
             ids.extend(
-                db::items::query(&mut conn, query)
+                db::items::query(&mut *conn, query)
                     .await?
                     .iter()
                     .map(|e| e.id),
@@ -296,7 +296,7 @@ async fn update_user_data(
             set_position_updated: false,
         };
 
-        db::videos::update_user_data(&mut conn, id, user.id, data).await?;
+        db::videos::update_user_data(&mut *conn, id, user.id, data).await?;
     }
 
     Ok(StatusCode::OK)

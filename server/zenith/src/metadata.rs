@@ -32,8 +32,8 @@ impl MetadataManager {
             while let Some(req) = receiver.recv().await {
                 let mut conn = db.acquire().await.unwrap();
                 let res = match req {
-                    Request::FindMatch(id) => find_match(&mut conn, &tmdb, id).await,
-                    Request::Refresh(id) => refresh(&mut conn, &tmdb, id).await,
+                    Request::FindMatch(id) => find_match(&mut *conn, &tmdb, id).await,
+                    Request::Refresh(id) => refresh(&mut *conn, &tmdb, id).await,
                 };
 
                 if let Err(e) = res {

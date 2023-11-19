@@ -771,7 +771,7 @@ pub async fn update_metadata(
 
     let mut tx = conn.begin().await?;
 
-    sqlx::query_with(&sql, args).execute(&mut tx).await?;
+    sqlx::query_with(&sql, args).execute(&mut *tx).await?;
 
     if let Some(genres) = data.genres {
         let genre_ids = if !genres.is_empty() {
@@ -794,7 +794,7 @@ pub async fn update_metadata(
             ");
 
             let genre_ids: Vec<i64> = sqlx::query_scalar_with(&sql, args)
-                .fetch_all(&mut tx)
+                .fetch_all(&mut *tx)
                 .await?;
 
             genre_ids
@@ -820,7 +820,7 @@ pub async fn update_metadata(
             VALUES {placeholders}
         ");
 
-        sqlx::query_with(&sql, args).execute(&mut tx).await?;
+        sqlx::query_with(&sql, args).execute(&mut *tx).await?;
 
         let placeholders = sql::Placeholders(genre_ids.len());
         let mut args = SqliteArguments::default();
@@ -834,7 +834,7 @@ pub async fn update_metadata(
             WHERE item_id = ? AND genre_id NOT IN ({placeholders})
         ");
 
-        sqlx::query_with(&sql, args).execute(&mut tx).await?;
+        sqlx::query_with(&sql, args).execute(&mut *tx).await?;
     }
 
     if let Some(cast) = data.cast {
@@ -860,7 +860,7 @@ pub async fn update_metadata(
                 character = excluded.character
         ");
 
-        sqlx::query_with(&sql, args).execute(&mut tx).await?;
+        sqlx::query_with(&sql, args).execute(&mut *tx).await?;
 
         let placeholders = sql::Placeholders(cast.len());
         let mut args = SqliteArguments::default();
@@ -874,7 +874,7 @@ pub async fn update_metadata(
             WHERE item_id = ? AND person_id NOT IN ({placeholders})
         ");
 
-        sqlx::query_with(&sql, args).execute(&mut tx).await?;
+        sqlx::query_with(&sql, args).execute(&mut *tx).await?;
     }
 
     if let Some(crew) = data.crew && !crew.is_empty() {
@@ -900,7 +900,7 @@ pub async fn update_metadata(
                 job = excluded.job
         ");
 
-        sqlx::query_with(&sql, args).execute(&mut tx).await?;
+        sqlx::query_with(&sql, args).execute(&mut *tx).await?;
 
         let mut args = SqliteArguments::default();
 
@@ -921,7 +921,7 @@ pub async fn update_metadata(
 
         sql += ")";
 
-        sqlx::query_with(&sql, args).execute(&mut tx).await?;
+        sqlx::query_with(&sql, args).execute(&mut *tx).await?;
     }
 
     tx.commit().await?;

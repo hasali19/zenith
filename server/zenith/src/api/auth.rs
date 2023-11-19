@@ -52,7 +52,7 @@ where
 
         let mut conn = db.acquire().await?;
 
-        let user = db::users::get_by_id(&mut conn, user_id)
+        let user = db::users::get_by_id(&mut *conn, user_id)
             .await?
             .ok_or_else(|| unauthorized("invalid auth token"))?;
 
@@ -77,7 +77,7 @@ async fn login(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
-    let user = db::users::get_by_username(&mut conn, &credentials.username)
+    let user = db::users::get_by_username(&mut *conn, &credentials.username)
         .await?
         .ok_or_else(|| unauthorized("invalid credentials"))?;
 

@@ -76,12 +76,12 @@ pub async fn remove(conn: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
 
     sqlx::query("DELETE FROM collections_media_items WHERE collection_id = ?")
         .bind(id)
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
 
     sqlx::query("DELETE FROM collections WHERE id = ?")
         .bind(id)
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
 
     tx.commit().await?;
@@ -101,7 +101,7 @@ pub async fn set_items(conn: &mut SqliteConnection, id: i64, items: &[i64]) -> e
             .bind(id)
             .bind(item_id)
             .bind(i as i64)
-            .execute(&mut tx)
+            .execute(&mut *tx)
             .await?;
     }
 
@@ -113,7 +113,7 @@ pub async fn set_items(conn: &mut SqliteConnection, id: i64, items: &[i64]) -> e
         WHERE collection_id = ? AND item_id NOT IN ({placeholders})
     ");
 
-    sqlx::query_with(&sql, args).execute(&mut tx).await?;
+    sqlx::query_with(&sql, args).execute(&mut *tx).await?;
 
     tx.commit().await?;
 

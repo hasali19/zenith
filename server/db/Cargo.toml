@@ -18,7 +18,7 @@ version = "1.1"
 features = ["serde1", "sqlx-sqlite"]
 
 [dependencies.sqlx]
-version = "0.6"
+version = "0.7"
 default-features = false
 features = ["macros", "runtime-tokio-rustls", "sqlite"]
 

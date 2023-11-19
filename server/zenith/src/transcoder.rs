@@ -123,7 +123,7 @@ impl Transcoder {
     pub async fn enqueue_all(&self) {
         let ids: Vec<i64> = {
             let mut conn = self.db.acquire().await.unwrap();
-            db::videos::get_all_ids(&mut conn).await.unwrap()
+            db::videos::get_all_ids(&mut *conn).await.unwrap()
         };
 
         for id in ids {
@@ -388,7 +388,7 @@ impl Transcoder {
         let streams: Vec<u32> = sqlx::query_scalar(sql)
             .bind(id)
             .bind(StreamType::Video)
-            .fetch_all(&mut conn)
+            .fetch_all(&mut *conn)
             .await?;
 
         if streams.is_empty() {
@@ -410,7 +410,7 @@ impl Transcoder {
                 .wrap_err_with(|| eyre!("crop detection failed for stream {stream_index}"))?;
 
             db::streams::update_video_stream_by_index(
-                &mut conn,
+                &mut *conn,
                 id,
                 stream_index,
                 &UpdateVideoStream {
@@ -442,7 +442,7 @@ impl Transcoder {
     async fn get_video_path(&self, id: i64) -> eyre::Result<Option<Utf8PathBuf>> {
         let mut conn = self.db.acquire().await?;
 
-        let path = db::video_files::get(&mut conn, id)
+        let path = db::video_files::get(&mut *conn, id)
             .await?
             .map(|info| info.path);
 
@@ -451,7 +451,7 @@ impl Transcoder {
 
     async fn get_video_subtitles(&self, id: i64) -> eyre::Result<Vec<Subtitle>> {
         let mut conn = self.db.acquire().await?;
-        let subtitles = db::subtitles::get_for_video(&mut conn, id).await?;
+        let subtitles = db::subtitles::get_for_video(&mut *conn, id).await?;
         Ok(subtitles)
     }
 
@@ -469,7 +469,7 @@ impl Transcoder {
             language: None,
         };
 
-        db::subtitles::update_embedded(&mut conn, video_id, stream_index, data).await?;
+        db::subtitles::update_embedded(&mut *conn, video_id, stream_index, data).await?;
 
         Ok(())
     }
@@ -484,7 +484,7 @@ impl Transcoder {
             set_scanned_at: false,
         };
 
-        db::video_files::update(&mut conn, id, data).await?;
+        db::video_files::update(&mut *conn, id, data).await?;
 
         Ok(())
     }

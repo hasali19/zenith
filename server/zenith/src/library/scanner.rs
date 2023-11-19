@@ -120,7 +120,7 @@ impl LibraryScannerImpl {
             .to_sql();
 
         let video_files: Vec<(i64, Utf8PathBuf, i64, MediaItemType)> =
-            sqlx::query_as(&sql).fetch_all(&mut conn).await?;
+            sqlx::query_as(&sql).fetch_all(&mut *conn).await?;
 
         for (id, file_path, scanned_at, item_type) in video_files {
             let video_file_type = match item_type {
@@ -163,7 +163,7 @@ impl LibraryScannerImpl {
             .condition("path IS NOT NULL")
             .to_sql();
 
-        let subtitles: Vec<Utf8PathBuf> = sqlx::query_scalar(&sql).fetch_all(&mut conn).await?;
+        let subtitles: Vec<Utf8PathBuf> = sqlx::query_scalar(&sql).fetch_all(&mut *conn).await?;
 
         for path in subtitles {
             if let Err(e) = tokio::fs::metadata(&path).await
@@ -190,7 +190,7 @@ impl LibraryScannerImpl {
 
                 let id: Option<i64> = sqlx::query_scalar(&sql)
                     .bind(&file_path)
-                    .fetch_optional(&mut conn)
+                    .fetch_optional(&mut *conn)
                     .await?;
 
                 if id.is_none() {
@@ -214,7 +214,7 @@ impl LibraryScannerImpl {
 
                 let id: Option<i64> = sqlx::query_scalar(&sql)
                     .bind(&sub_path)
-                    .fetch_optional(&mut conn)
+                    .fetch_optional(&mut *conn)
                     .await?;
 
                 if id.is_none() {
@@ -337,7 +337,7 @@ mod tests {
 
         {
             let mut conn = db.acquire().await?;
-            insert_movie(&mut conn, "Test Movie", movie_path.as_path().try_into()?).await?;
+            insert_movie(&mut *conn, "Test Movie", movie_path.as_path().try_into()?).await?;
         }
 
         tokio::fs::write(movie_path, &[]).await?;
@@ -381,8 +381,8 @@ mod tests {
         {
             let mut conn = db.acquire().await?;
             let (_, video_id) =
-                insert_movie(&mut conn, "Test Movie", movie_path.as_path().try_into()?).await?;
-            insert_subtitle(&mut conn, video_id, sub_path.as_path().try_into()?).await?;
+                insert_movie(&mut *conn, "Test Movie", movie_path.as_path().try_into()?).await?;
+            insert_subtitle(&mut *conn, video_id, sub_path.as_path().try_into()?).await?;
         }
 
         let mut event_handler = MockEventHandler::new();

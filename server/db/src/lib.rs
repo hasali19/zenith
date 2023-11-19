@@ -22,11 +22,10 @@ pub struct Db(SqlitePool);
 
 impl Db {
     pub async fn init(path: &str) -> eyre::Result<Self> {
-        let mut options = SqliteConnectOptions::new()
+        let options = SqliteConnectOptions::new()
             .filename(path)
-            .create_if_missing(true);
-
-        options.disable_statement_logging();
+            .create_if_missing(true)
+            .disable_statement_logging();
 
         let pool = SqlitePool::connect_with(options).await?;
 
@@ -53,7 +52,7 @@ impl Db {
         let path = file.path();
 
         sqlx::query(&format!("VACUUM INTO {path:?}"))
-            .execute(&mut self.acquire().await?)
+            .execute(&mut *self.acquire().await?)
             .await?;
 
         Ok(tokio::fs::read(path).await?)

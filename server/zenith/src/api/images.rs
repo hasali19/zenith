@@ -76,7 +76,7 @@ pub async fn get_image(
         },
     };
 
-    let item = db::items::get(&mut conn, id)
+    let item = db::items::get(&mut *conn, id)
         .await?
         .or_not_found("media item not found")?;
 

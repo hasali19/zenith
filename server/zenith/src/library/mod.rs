@@ -105,7 +105,7 @@ impl MediaLibrary {
         media_type: MediaItemType,
     ) -> eyre::Result<()> {
         let mut transaction = conn.begin().await?;
-        db::items::remove(&mut transaction, id).await?;
+        db::items::remove(&mut *transaction, id).await?;
         transaction.commit().await?;
         let _ = self
             .notifier

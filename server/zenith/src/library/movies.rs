@@ -45,7 +45,7 @@ impl MediaLibrary {
             .bind(name)
             .bind(year.map(|dt| dt.unix_timestamp()))
             .bind(MetadataProvider::Tmdb)
-            .fetch_one(&mut transaction)
+            .fetch_one(&mut *transaction)
             .await?;
 
         let sql = sql::insert("indexed_paths")
@@ -56,7 +56,7 @@ impl MediaLibrary {
         sqlx::query(&sql)
             .bind(movie_id)
             .bind(path.parent().unwrap())
-            .execute(&mut transaction)
+            .execute(&mut *transaction)
             .await?;
 
         transaction.commit().await?;
@@ -76,12 +76,12 @@ impl MediaLibrary {
 
         let ids: Vec<(i64, String)> = sqlx::query_as(&sql)
             .bind(MediaItemType::Movie)
-            .fetch_all(&mut conn)
+            .fetch_all(&mut *conn)
             .await?;
 
         for (id, name) in ids {
             tracing::info!(name, "removing movie");
-            self.remove_item(&mut conn, id, MediaItemType::Movie)
+            self.remove_item(&mut *conn, id, MediaItemType::Movie)
                 .await?;
         }
 
