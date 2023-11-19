@@ -164,7 +164,7 @@ jobs:
           echo "Building MSIX package version $version"
           dart run msix:create --version $version --publisher 'CN=hasali19, C=UK' --sign-msix false --build-windows false
           [System.IO.File]::WriteAllBytes("$(pwd)\cert.pfx", [Convert]::FromBase64String("${{ secrets.CODE_SIGNING_CERT_PFX }}"))
-          signtool sign /fd SHA256 /a /f "$(pwd)\cert.pfx" /p '${{ secrets.CODE_SIGNING_CERT_PASSWORD }}' .\build\windows\runner\Release\zenith.msix
+          signtool sign /fd SHA256 /a /f "$(pwd)\cert.pfx" /p '${{ secrets.CODE_SIGNING_CERT_PASSWORD }}' .\build\windows\x64\runner\Release\zenith.msix
           echo "Generating appinstaller"
           (cat windows\zenith.appinstaller) -replace '%VERSION%', $version > zenith.appinstaller
 
