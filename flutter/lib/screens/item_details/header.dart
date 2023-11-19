@@ -723,6 +723,7 @@ class _DeleteConfirmationDialog extends ConsumerStatefulWidget {
 
 class _DeleteConfirmationDialogState
     extends ConsumerState<_DeleteConfirmationDialog> {
+  bool _removeFiles = true;
   bool _isInProgress = false;
 
   @override
@@ -731,27 +732,51 @@ class _DeleteConfirmationDialogState
       onWillPop: () async => !_isInProgress,
       child: AlertDialog(
         title: const Text('Delete item'),
-        content: const Text(
-            'Are you sure you want to permanently delete this item. Files will be removed.'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+                'Are you sure you want to permanently delete this item?'),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Checkbox(
+                  value: _removeFiles,
+                  onChanged: _isInProgress ? null : _onRemoveFilesToggled,
+                ),
+                const SizedBox(width: 12),
+                const Text('Remove files'),
+              ],
+            ),
+          ],
+        ),
         actions: [
-          TextButton(
-            onPressed: _isInProgress
-                ? null
-                : () async {
-                    setState(() => _isInProgress = true);
-                    await ref.read(apiProvider).deleteMediaItem(widget.id);
-                    setState(() => _isInProgress = false);
-                    Navigator.pop(context);
-                    context.router.pop();
-                  },
-            child: const Text('Delete'),
-          ),
           TextButton(
             onPressed: _isInProgress ? null : () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
+          ElevatedButton(
+            onPressed: _isInProgress ? null : () => _onDeleteConfirmed(context),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
+  }
+
+  void _onRemoveFilesToggled(bool? value) {
+    setState(() => _removeFiles = value!);
+  }
+
+  Future<void> _onDeleteConfirmed(BuildContext context) async {
+    setState(() => _isInProgress = true);
+    await ref
+        .read(apiProvider)
+        .deleteMediaItem(widget.id, removeFiles: _removeFiles);
+    setState(() => _isInProgress = false);
+    if (context.mounted) {
+      Navigator.pop(context);
+      context.router.pop();
+    }
   }
 }
