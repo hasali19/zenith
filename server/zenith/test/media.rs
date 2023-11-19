@@ -36,7 +36,7 @@ async fn get_collections(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
 
     db::collections::create(
-        &mut *conn,
+        &mut conn,
         db::collections::NewCollection {
             name: "collection 1",
         },
@@ -45,7 +45,7 @@ async fn get_collections(mut app: TestApp) {
     .unwrap();
 
     db::collections::create(
-        &mut *conn,
+        &mut conn,
         db::collections::NewCollection {
             name: "collection 2",
         },
@@ -61,7 +61,7 @@ async fn get_collection(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
 
     db::collections::create(
-        &mut *conn,
+        &mut conn,
         db::collections::NewCollection {
             name: "collection 1",
         },
@@ -70,7 +70,7 @@ async fn get_collection(mut app: TestApp) {
     .unwrap();
 
     let collection_2 = db::collections::create(
-        &mut *conn,
+        &mut conn,
         db::collections::NewCollection {
             name: "collection 2",
         },
@@ -116,7 +116,7 @@ async fn delete_collection(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
 
     let collection = db::collections::create(
-        &mut *conn,
+        &mut conn,
         db::collections::NewCollection {
             name: "collection 1",
         },
@@ -153,7 +153,7 @@ async fn update_collection(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
 
     let collection = db::collections::create(
-        &mut *conn,
+        &mut conn,
         db::collections::NewCollection {
             name: "collection 1",
         },
@@ -186,7 +186,7 @@ async fn update_collection(mut app: TestApp) {
 
     let mut conn = app.db.acquire().await.unwrap();
 
-    let collections = db::collections::get_all(&mut *conn).await.unwrap();
+    let collections = db::collections::get_all(&mut conn).await.unwrap();
 
     assert_eq!(collections[0].name, "collection 2");
     assert_eq!(
@@ -195,7 +195,7 @@ async fn update_collection(mut app: TestApp) {
     );
 
     let items = db::items::query(
-        &mut *conn,
+        &mut conn,
         db::items::Query {
             collection_id: Some(collection.id),
             ..Default::default()

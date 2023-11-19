@@ -118,7 +118,7 @@ pub async fn import_subtitle(
         forced: data.forced,
     };
 
-    db::subtitles::insert(&mut *transaction, &subtitles).await?;
+    db::subtitles::insert(&mut transaction, &subtitles).await?;
 
     if !subtitles_dir.exists() {
         std::fs::create_dir_all(&subtitles_dir)?;

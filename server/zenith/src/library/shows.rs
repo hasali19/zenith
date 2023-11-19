@@ -44,7 +44,7 @@ impl MediaLibrary {
     async fn create_show_if_missing(&self, name: &str, path: &Utf8Path) -> eyre::Result<i64> {
         let mut conn = self.db.acquire().await?;
 
-        if let Some(id) = get_show_id_by_path(&mut *conn, path).await? {
+        if let Some(id) = get_show_id_by_path(&mut conn, path).await? {
             return Ok(id);
         }
 
@@ -93,7 +93,7 @@ impl MediaLibrary {
     ) -> eyre::Result<i64> {
         let mut conn = self.db.acquire().await?;
 
-        if let Some(id) = get_season_id(&mut *conn, show_id, season_number).await? {
+        if let Some(id) = get_season_id(&mut conn, show_id, season_number).await? {
             return Ok(id);
         }
 
@@ -136,7 +136,7 @@ impl MediaLibrary {
     ) -> eyre::Result<i64> {
         let mut conn = self.db.acquire().await?;
 
-        if let Some(id) = get_episode_id(&mut *conn, season_id, episode_number).await? {
+        if let Some(id) = get_episode_id(&mut conn, season_id, episode_number).await? {
             return Ok(id);
         }
 
@@ -192,11 +192,11 @@ impl MediaLibrary {
 
         for (id, season, episode, show_name) in episodes {
             tracing::info!(id, season, episode, show_name, "removing episode");
-            self.remove_item(&mut *conn, id, MediaItemType::Episode)
+            self.remove_item(&mut conn, id, MediaItemType::Episode)
                 .await?;
         }
 
-        self.remove_empty_collections(&mut *conn).await
+        self.remove_empty_collections(&mut conn).await
     }
 
     async fn remove_empty_collections(&self, conn: &mut SqliteConnection) -> eyre::Result<()> {

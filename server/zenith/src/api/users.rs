@@ -25,7 +25,7 @@ struct User {
 async fn get_all(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
-    let users = db::users::get_all(&mut *conn)
+    let users = db::users::get_all(&mut conn)
         .await?
         .into_iter()
         .map(|user| User {
@@ -64,7 +64,7 @@ async fn create(
     if let Err(e) = user {
         match body.registration_code {
             Some(code) => {
-                let registration = db::user_registrations::get(&mut *transaction, &code)
+                let registration = db::user_registrations::get(&mut transaction, &code)
                     .await?
                     // Reject if code is invalid
                     .or_bad_request("invalid registration code")?;
@@ -73,7 +73,7 @@ async fn create(
                     SystemTime::UNIX_EPOCH + Duration::from_secs(registration.expires_at as u64);
 
                 // Delete to prevent reuse
-                db::user_registrations::delete(&mut *transaction, &registration.id).await?;
+                db::user_registrations::delete(&mut transaction, &registration.id).await?;
 
                 // Reject if code has expired
                 if SystemTime::now() > expires_at {
@@ -83,7 +83,7 @@ async fn create(
                 tracing::info!("creating new user {}", body.username);
             }
             None => {
-                let users = db::users::get_all(&mut *transaction).await?;
+                let users = db::users::get_all(&mut transaction).await?;
                 if !users.is_empty() {
                     return Err(e);
                 }
@@ -99,7 +99,7 @@ async fn create(
         password_hash: &password_hash,
     };
 
-    let id = db::users::create(&mut *transaction, user).await?;
+    let id = db::users::create(&mut transaction, user).await?;
 
     transaction.commit().await?;
 
@@ -125,7 +125,7 @@ async fn create_registration(_user: auth::User, db: Extension<Db>) -> ApiResult<
         duration: Duration::from_secs(7 * 24 * 60 * 60),
     };
 
-    db::user_registrations::create(&mut *transaction, data).await?;
+    db::user_registrations::create(&mut transaction, data).await?;
 
     transaction.commit().await?;
 

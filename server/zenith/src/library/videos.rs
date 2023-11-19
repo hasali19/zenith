@@ -34,7 +34,7 @@ impl MediaLibrary {
         tracing::debug!(video_id, %path, "rescanning video file");
 
         let info = self.video_prober.probe(path).await?;
-        update_video_info(&mut *transaction, video_id, &info).await?;
+        update_video_info(&mut transaction, video_id, &info).await?;
 
         transaction.commit().await?;
 
@@ -44,7 +44,7 @@ impl MediaLibrary {
     pub async fn remove_video(&self, path: &Utf8Path) -> eyre::Result<()> {
         tracing::info!(%path, "removing video");
         let mut transaction = self.db.begin().await?;
-        db::video_files::remove_by_path(&mut *transaction, path).await?;
+        db::video_files::remove_by_path(&mut transaction, path).await?;
         transaction.commit().await?;
         Ok(())
     }
@@ -72,7 +72,7 @@ impl MediaLibrary {
             .fetch_one(&mut *transaction)
             .await?;
 
-        update_video_info(&mut *transaction, video_id, &info).await?;
+        update_video_info(&mut transaction, video_id, &info).await?;
 
         transaction.commit().await?;
 

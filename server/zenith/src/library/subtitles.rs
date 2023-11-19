@@ -44,7 +44,7 @@ impl MediaLibrary {
             };
 
             tracing::info!(%video_id, %path, "adding subtitle");
-            db::subtitles::insert(&mut *transaction, &subtitle).await?;
+            db::subtitles::insert(&mut transaction, &subtitle).await?;
         }
 
         transaction.commit().await?;

@@ -14,7 +14,7 @@ async fn get_users(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
 
     db::users::create(
-        &mut *conn,
+        &mut conn,
         db::users::NewUser {
             username: "test2",
             password_hash: PASSWORD_HASH,

@@ -81,7 +81,7 @@ impl MediaLibrary {
 
         for (id, name) in ids {
             tracing::info!(name, "removing movie");
-            self.remove_item(&mut *conn, id, MediaItemType::Movie)
+            self.remove_item(&mut conn, id, MediaItemType::Movie)
                 .await?;
         }
 

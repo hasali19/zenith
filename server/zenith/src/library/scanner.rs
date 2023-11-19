@@ -337,7 +337,7 @@ mod tests {
 
         {
             let mut conn = db.acquire().await?;
-            insert_movie(&mut *conn, "Test Movie", movie_path.as_path().try_into()?).await?;
+            insert_movie(&mut conn, "Test Movie", movie_path.as_path().try_into()?).await?;
         }
 
         tokio::fs::write(movie_path, &[]).await?;
@@ -381,8 +381,8 @@ mod tests {
         {
             let mut conn = db.acquire().await?;
             let (_, video_id) =
-                insert_movie(&mut *conn, "Test Movie", movie_path.as_path().try_into()?).await?;
-            insert_subtitle(&mut *conn, video_id, sub_path.as_path().try_into()?).await?;
+                insert_movie(&mut conn, "Test Movie", movie_path.as_path().try_into()?).await?;
+            insert_subtitle(&mut conn, video_id, sub_path.as_path().try_into()?).await?;
         }
 
         let mut event_handler = MockEventHandler::new();

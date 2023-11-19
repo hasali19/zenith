@@ -40,9 +40,9 @@ pub async fn migrate(pool: &SqlitePool) -> eyre::Result<()> {
 
     let mut conn = pool.acquire().await?;
 
-    init_migration_table(&mut *conn).await?;
+    init_migration_table(&mut conn).await?;
 
-    let executed_migrations = get_current_migrations(&mut *conn).await?;
+    let executed_migrations = get_current_migrations(&mut conn).await?;
 
     for (i, migration) in migrator.migrations.into_iter().enumerate() {
         if let Some(executed) = executed_migrations.get(i) {
@@ -50,7 +50,7 @@ pub async fn migrate(pool: &SqlitePool) -> eyre::Result<()> {
                 .await
                 .wrap_err_with(|| eyre!("verification failed for '{}'", migration.name))?;
         } else {
-            apply_migration(&mut *conn, &migration)
+            apply_migration(&mut conn, &migration)
                 .await
                 .wrap_err_with(|| eyre!("failed to apply migration '{}'", migration.name))?;
         }
@@ -91,8 +91,8 @@ async fn verify_migration(migration: &Migration, executed: &ExecutedMigration) -
 async fn apply_migration(conn: &mut SqliteConnection, migration: &Migration) -> eyre::Result<()> {
     tracing::info!("applying migration '{}'", migration.name);
     let mut tx = conn.begin().await?;
-    (migration.runner)(&mut *tx).await?;
-    record_migration(&mut *tx, &migration.name, &migration.hash).await?;
+    (migration.runner)(&mut tx).await?;
+    record_migration(&mut tx, &migration.name, &migration.hash).await?;
     tx.commit().await?;
     Ok(())
 }

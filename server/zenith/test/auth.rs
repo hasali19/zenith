@@ -31,7 +31,7 @@ async fn request_with_unknown_user_id_is_rejected(mut app: TestApp) {
     let mut conn = app.db.acquire().await.unwrap();
 
     db::users::create(
-        &mut *conn,
+        &mut conn,
         db::users::NewUser {
             username: "test2",
             password_hash: PASSWORD_HASH,

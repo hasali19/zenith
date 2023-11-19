@@ -21,7 +21,7 @@ async fn get_subtitle(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
-    let subtitle = db::subtitles::get_by_id(&mut *conn, *id)
+    let subtitle = db::subtitles::get_by_id(&mut conn, *id)
         .await?
         .or_not_found("subtitle not found")?;
 
@@ -39,7 +39,7 @@ async fn get_subtitle(
 pub async fn delete_subtitle(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
 
-    let subtitle = db::subtitles::get_by_id(&mut *conn, *id)
+    let subtitle = db::subtitles::get_by_id(&mut conn, *id)
         .await?
         .or_not_found("subtitle not found")?;
 
@@ -47,7 +47,7 @@ pub async fn delete_subtitle(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl
         return Err(bad_request("embedded subtitles cannot be deleted"));
     }
 
-    db::subtitles::delete(&mut *conn, *id).await?;
+    db::subtitles::delete(&mut conn, *id).await?;
 
     if let Some(path) = subtitle.path {
         tokio::fs::remove_file(path).await?;
