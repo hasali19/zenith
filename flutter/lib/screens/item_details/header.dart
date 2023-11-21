@@ -770,10 +770,20 @@ class _DeleteConfirmationDialogState
 
   Future<void> _onDeleteConfirmed(BuildContext context) async {
     setState(() => _isInProgress = true);
-    await ref
-        .read(apiProvider)
-        .deleteMediaItem(widget.id, removeFiles: _removeFiles);
-    setState(() => _isInProgress = false);
+
+    try {
+      await ref
+          .read(apiProvider)
+          .deleteMediaItem(widget.id, removeFiles: _removeFiles);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to delete media item')));
+      }
+    } finally {
+      setState(() => _isInProgress = false);
+    }
+
     if (context.mounted) {
       Navigator.pop(context);
       context.router.pop();
