@@ -507,10 +507,8 @@ class ZenithApiClient {
   }
 
   Future<void> deleteMediaItem(int id, {bool removeFiles = false}) async {
-    final uri = Uri.parse('$_baseUrl/api/items/$id');
-    if (removeFiles) {
-      uri.queryParameters['remove_files'] = 'true';
-    }
+    final uri = Uri.parse('$_baseUrl/api/items/$id')
+        .replace(queryParameters: {if (removeFiles) 'remove_files': 'true'});
     await _delete(uri);
   }
 
