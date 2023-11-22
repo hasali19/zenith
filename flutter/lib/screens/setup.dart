@@ -56,6 +56,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                   value: _scheme,
                   onChanged: (value) => setState(() {
                     _scheme = value!;
+                    if (_scheme == 'https') {
+                      _portController.text = '443';
+                    }
                   }),
                 ),
               ),
