@@ -6,6 +6,7 @@ class ItemDetailsModel {
   final List<SeasonModel> seasons;
 
   late final MediaItem? _playable;
+  late final bool isWatched;
 
   factory ItemDetailsModel(MediaItem item, List<SeasonModel> seasons) {
     return ItemDetailsModel._(item, seasons);
@@ -13,6 +14,12 @@ class ItemDetailsModel {
 
   ItemDetailsModel._(this.item, this.seasons) {
     _playable = _getPlayableItem();
+
+    if (item.type == MediaType.movie || item.type == MediaType.episode) {
+      isWatched = item.videoUserData?.isWatched ?? false;
+    } else {
+      isWatched = item.collectionUserData?.unwatched == 0;
+    }
   }
 
   MediaItem? get playable => _playable;

@@ -220,14 +220,16 @@ class HeaderContent extends ConsumerWidget {
     final isDesktop = context.isDesktop;
     final actions = <Widget>[];
 
+    actions.add(WatchedToggleButton(
+      isWatched: model.isWatched,
+      onChange: (v) {
+        api.updateUserData(model.item.id, VideoUserDataPatch(isWatched: v));
+        refresh();
+      },
+    ));
+
     if (model.item.type == MediaType.movie ||
         model.item.type == MediaType.episode) {
-      actions.add(WatchedToggleButton(
-        isWatched: model.item.videoUserData?.isWatched ?? false,
-        onChange: (v) =>
-            api.updateUserData(model.item.id, VideoUserDataPatch(isWatched: v)),
-      ));
-
       if (isDesktop) {
         actions.add(const SizedBox(width: 16));
       }
