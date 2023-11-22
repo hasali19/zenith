@@ -229,18 +229,25 @@ class _SectionState<T> extends State<Section<T>> {
   }
 
   Widget _buildContent(List<T> data) {
-    return SizedBox(
-      height: widget.listItemHeight,
-      child: ListView.separated(
+    return Container(
+      height: widget.listItemHeight + 16,
+      padding: EdgeInsets.only(left: widget.listSpacing * 2),
+      child: Scrollbar(
         controller: _scrollController,
-        padding: EdgeInsets.symmetric(horizontal: widget.listSpacing * 2),
-        separatorBuilder: (context, index) =>
-            SizedBox(width: widget.listSpacing),
-        scrollDirection: Axis.horizontal,
-        itemCount: data.length,
-        itemBuilder: (context, index) => SizedBox(
-          width: widget.listItemWidth,
-          child: widget.itemBuilder(context, data[index]),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: ListView.separated(
+            controller: _scrollController,
+            padding: EdgeInsets.only(right: widget.listSpacing * 2),
+            separatorBuilder: (context, index) =>
+                SizedBox(width: widget.listSpacing),
+            scrollDirection: Axis.horizontal,
+            itemCount: data.length,
+            itemBuilder: (context, index) => SizedBox(
+              width: widget.listItemWidth,
+              child: widget.itemBuilder(context, data[index]),
+            ),
+          ),
         ),
       ),
     );
