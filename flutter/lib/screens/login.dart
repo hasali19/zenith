@@ -130,17 +130,24 @@ class _LoginUserScreenState extends ConsumerState<LoginUserScreen> {
   void _login() async {
     final zenith = ref.read(apiProvider);
     final username = widget.username ?? _username.text;
-    if (!await zenith.login(username, _password.text)) {
+    final isLoggedIn = await zenith.login(username, _password.text);
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (!isLoggedIn) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Login failed')));
       return;
     }
 
     final redirectPath = ref.read(redirectProvider);
-    if (redirectPath != null) {
-      context.router.replaceNamed(redirectPath);
+    final redirectRoute = context.router.root.buildPageRoute(redirectPath);
+    if (redirectRoute != null) {
+      context.router.root.replace(redirectRoute);
     } else {
-      context.router.replace(const MainRoute());
+      context.router.root.replace(const MainRoute());
     }
   }
 
