@@ -53,7 +53,7 @@ class VideoItem {
   });
 }
 
-abstract class VideoController {
+abstract class VideoController implements Listenable {
   VideoState get state;
   double get position;
   set position(double value);
@@ -74,7 +74,5 @@ abstract class VideoController {
   void setTextTrack(SubtitleTrack? track);
   void setFit(BoxFit fit);
   void setPlaybackSpeed(double speed);
-  void addListener(void Function() listener);
-  void removeListener(void Function() listener);
   void dispose();
 }

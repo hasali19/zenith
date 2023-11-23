@@ -43,33 +43,32 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
   }
 }
 
-class VideoControllerWeb extends VideoController {
+class VideoControllerWeb extends VideoController with ChangeNotifier {
   final int id;
   final VideoElement _element;
-  final List<void Function()> _listeners = [];
   final Map<int, TextTrack> _textTracks = {};
 
   VideoState _state = VideoState.idle;
   TextTrack? _activeTextTrack;
 
   VideoControllerWeb(this.id, this._element) {
-    _element.addEventListener('durationchange', (event) => _notifyListeners());
-    _element.addEventListener('pause', (event) => _notifyListeners());
-    _element.addEventListener('play', (event) => _notifyListeners());
+    _element.addEventListener('durationchange', (event) => notifyListeners());
+    _element.addEventListener('pause', (event) => notifyListeners());
+    _element.addEventListener('play', (event) => notifyListeners());
 
     _element.addEventListener('playing', (event) {
       _loading = false;
-      _notifyListeners();
+      notifyListeners();
     });
 
     _element.addEventListener('waiting', (event) {
       _loading = true;
-      _notifyListeners();
+      notifyListeners();
     });
 
     _element.addEventListener('ended', (event) {
       _state = VideoState.ended;
-      _notifyListeners();
+      notifyListeners();
     });
   }
 
@@ -194,34 +193,13 @@ class VideoControllerWeb extends VideoController {
       BoxFit.contain || _ => 'contain',
     };
     _fit = fit;
-    _notifyListeners();
+    notifyListeners();
   }
 
   @override
   void setPlaybackSpeed(double speed) {
     _element.playbackRate = speed;
     _playbackSpeed = speed;
-    _notifyListeners();
-  }
-
-  @override
-  void addListener(void Function() listener) {
-    _listeners.add(listener);
-  }
-
-  @override
-  void removeListener(void Function() listener) {
-    _listeners.remove(listener);
-  }
-
-  @override
-  void dispose() {
-    _listeners.clear();
-  }
-
-  void _notifyListeners() {
-    for (final listener in _listeners) {
-      listener();
-    }
+    notifyListeners();
   }
 }

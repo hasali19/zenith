@@ -110,7 +110,7 @@ class SubtitleView extends StatelessWidget {
   }
 }
 
-class VideoControllerAndroid extends VideoController {
+class VideoControllerAndroid extends VideoController with ChangeNotifier {
   final int id;
   late StreamSubscription<dynamic> _subscription;
   final StreamController<String?> _subsController =
@@ -200,12 +200,13 @@ class VideoControllerAndroid extends VideoController {
         _lastKnownPosition = event['position'];
         _lastKnownPositionTs = DateTime.now().millisecondsSinceEpoch;
       }
-      _notifyListeners();
+      notifyListeners();
     });
   }
 
   @override
   void dispose() async {
+    super.dispose();
     _subscription.cancel();
     await _methodChannel.invokeMethod('dispose', {'id': id});
   }
@@ -270,29 +271,11 @@ class VideoControllerAndroid extends VideoController {
   @override
   void setFit(BoxFit fit) {
     _fit.value = fit;
-    _notifyListeners();
+    notifyListeners();
   }
 
   @override
   void setPlaybackSpeed(double speed) {
     _methodChannel.invokeMethod('setPlaybackSpeed', {'id': id, 'speed': speed});
-  }
-
-  final List<void Function()> _listeners = [];
-
-  @override
-  void addListener(void Function() listener) {
-    _listeners.add(listener);
-  }
-
-  @override
-  void removeListener(void Function() listener) {
-    _listeners.remove(listener);
-  }
-
-  void _notifyListeners() {
-    for (final listener in _listeners) {
-      listener();
-    }
   }
 }

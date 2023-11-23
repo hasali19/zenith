@@ -79,7 +79,7 @@ enum PlayerMsgKind {
   videoEnded,
 }
 
-class VideoControllerWindows extends VideoController {
+class VideoControllerWindows extends VideoController with ChangeNotifier {
   final int player;
   final int surface;
 
@@ -118,7 +118,7 @@ class VideoControllerWindows extends VideoController {
         _state = VideoState.ended;
       }
 
-      _notifyListeners();
+      notifyListeners();
     });
 
     textureId = ffiGetTextureId(surface);
@@ -153,6 +153,7 @@ class VideoControllerWindows extends VideoController {
 
   @override
   void dispose() {
+    super.dispose();
     Future.microtask(() async {
       await _channel.invokeMethod('destroyVideoSurface', {'surface': surface});
       await _channel.invokeMethod('destroyPlayer', {'player': player});
@@ -206,7 +207,7 @@ class VideoControllerWindows extends VideoController {
   @override
   void pause() {
     ffiPause(player);
-    _notifyListeners();
+    notifyListeners();
   }
 
   @override
@@ -216,7 +217,7 @@ class VideoControllerWindows extends VideoController {
   @override
   void play() {
     ffiPlay(player);
-    _notifyListeners();
+    notifyListeners();
   }
 
   @override
@@ -258,22 +259,4 @@ class VideoControllerWindows extends VideoController {
   @override
   VideoState get state => _state;
   VideoState _state = VideoState.idle;
-
-  final List<void Function()> _listeners = [];
-
-  @override
-  void addListener(void Function() listener) {
-    _listeners.add(listener);
-  }
-
-  @override
-  void removeListener(void Function() listener) {
-    _listeners.remove(listener);
-  }
-
-  void _notifyListeners() {
-    for (final listener in _listeners) {
-      listener();
-    }
-  }
 }
