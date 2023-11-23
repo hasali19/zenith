@@ -16,17 +16,17 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
   @override
   Future<VideoController> createController() async {
     final int id = await _methodChannel.invokeMethod('create');
-    return _VideoController(id);
+    return VideoControllerAndroid(id);
   }
 
   @override
   Widget buildView(VideoController controller) {
-    if (controller is _VideoController) {
+    if (controller is VideoControllerAndroid) {
       return ValueListenableBuilder<double>(
         valueListenable: controller.aspectRatio,
         builder: (context, aspectRatio, child) =>
             ValueListenableBuilder<BoxFit>(
-          valueListenable: controller.fit,
+          valueListenable: controller._fit,
           builder: (context, fit, child) =>
               LayoutBuilder(builder: (context, constraints) {
             var width = constraints.maxWidth;
@@ -110,7 +110,7 @@ class SubtitleView extends StatelessWidget {
   }
 }
 
-class _VideoController extends VideoController {
+class VideoControllerAndroid extends VideoController {
   final int id;
   late StreamSubscription<dynamic> _subscription;
   final StreamController<String?> _subsController =
@@ -137,7 +137,13 @@ class _VideoController extends VideoController {
   int currentItemIndex = 0;
 
   final aspectRatio = ValueNotifier(1.0);
-  final fit = ValueNotifier(BoxFit.contain);
+  final _fit = ValueNotifier(BoxFit.contain);
+
+  @override
+  BoxFit get fit => _fit.value;
+
+  @override
+  double get playbackSpeed => _playbackSpeed;
 
   bool _playing = false;
   int _lastKnownPosition = 0;
@@ -160,7 +166,7 @@ class _VideoController extends VideoController {
         'seekTo', {'id': id, 'position': (value * 1000.0).toInt()});
   }
 
-  _VideoController(this.id) {
+  VideoControllerAndroid(this.id) {
     _subscription = _eventChannel.receiveBroadcastStream(id).listen((event) {
       final String type = event['type'];
       if (type == 'durationChanged') {
@@ -206,24 +212,24 @@ class _VideoController extends VideoController {
 
   @override
   void load(List<VideoItem> items, int startIndex, double startPosition) async {
+    toSubtitleDto(track) => {
+          'id': track.id,
+          'src': track.src,
+          'mimeType': track.mimeType,
+          'title': track.title,
+          'language': track.language
+        };
+
+    toItemDto(item) => {
+          'url': item.url,
+          'subtitles': item.subtitles.map(toSubtitleDto).toList(),
+        };
+
     await _methodChannel.invokeMethod(
       'load',
       {
         'id': id,
-        'items': items
-            .map((item) => ({
-                  'url': item.url,
-                  'subtitles': item.subtitles
-                      .map((track) => {
-                            'id': track.id,
-                            'src': track.src,
-                            'mimeType': track.mimeType,
-                            'title': track.title,
-                            'language': track.language
-                          })
-                      .toList(),
-                }))
-            .toList(),
+        'items': items.map(toItemDto).toList(),
         'startIndex': startIndex,
         'startPosition': (startPosition * 1000).toInt(),
       },
@@ -263,7 +269,8 @@ class _VideoController extends VideoController {
 
   @override
   void setFit(BoxFit fit) {
-    this.fit.value = fit;
+    _fit.value = fit;
+    _notifyListeners();
   }
 
   @override

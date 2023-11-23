@@ -104,6 +104,14 @@ class VideoControllerWeb extends VideoController {
   int currentItemIndex = 0;
 
   @override
+  BoxFit get fit => _fit;
+  BoxFit _fit = BoxFit.contain;
+
+  @override
+  double get playbackSpeed => _playbackSpeed;
+  double _playbackSpeed = 1.0;
+
+  @override
   void load(List<VideoItem> items, int startIndex, double startPosition) {
     // TODO: Implement playlist support for web
     final item = items[startIndex];
@@ -185,11 +193,15 @@ class VideoControllerWeb extends VideoController {
       BoxFit.cover => 'cover',
       BoxFit.contain || _ => 'contain',
     };
+    _fit = fit;
+    _notifyListeners();
   }
 
   @override
   void setPlaybackSpeed(double speed) {
     _element.playbackRate = speed;
+    _playbackSpeed = speed;
+    _notifyListeners();
   }
 
   @override

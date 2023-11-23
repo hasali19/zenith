@@ -62,6 +62,8 @@ abstract class VideoController {
   bool get loading;
   bool get supportsAudioTrackSelection;
   int get currentItemIndex;
+  BoxFit get fit;
+  double get playbackSpeed;
 
   void load(List<VideoItem> items, int startIndex, double startPosition);
   void play();

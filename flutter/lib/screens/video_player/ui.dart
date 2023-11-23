@@ -181,44 +181,57 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
   }
 
   Future<void> _showBoxFitMenu(BuildContext context) {
+    const fits = [
+      (BoxFit.cover, 'Cover', Icons.crop_free),
+      (BoxFit.contain, 'Contain', Icons.fit_screen)
+    ];
+
+    buildListTile(e) {
+      onSetFit() {
+        _controller.setFit(e.$1);
+        Navigator.pop(context);
+      }
+
+      return ListTile(
+        leading: Icon(e.$3),
+        title: Text(e.$2),
+        onTap: _controller.fit == e.$1 ? null : onSetFit,
+        trailing: _controller.fit != e.$1 ? null : const Icon(Icons.check),
+      );
+    }
+
     return _showModalBottomSheet(
-      (context) => Wrap(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.crop_free),
-            title: const Text('Cover'),
-            onTap: () {
-              _controller.setFit(BoxFit.cover);
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.fit_screen),
-            title: const Text('Contain'),
-            onTap: () {
-              _controller.setFit(BoxFit.contain);
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
+      (context) {
+        return Wrap(
+          children: fits.map(buildListTile).toList(),
+        );
+      },
     );
   }
 
   Future<void> _showPlaybackSpeedMenu(BuildContext context) {
     const speeds = [1.0, 1.25, 1.5, 1.75, 2.0];
+
+    buildListTile(speed) {
+      onSetSpeed() {
+        _controller.setPlaybackSpeed(speed);
+        Navigator.pop(context);
+      }
+
+      return ListTile(
+        title: Text('${speed}x'),
+        onTap: _controller.playbackSpeed == speed ? null : onSetSpeed,
+        trailing:
+            _controller.playbackSpeed != speed ? null : const Icon(Icons.check),
+      );
+    }
+
     return _showModalBottomSheet(
-      (context) => Wrap(
-        children: speeds
-            .map((speed) => ListTile(
-                  title: Text('${speed}x'),
-                  onTap: () {
-                    _controller.setPlaybackSpeed(speed);
-                    Navigator.pop(context);
-                  },
-                ))
-            .toList(),
-      ),
+      (context) {
+        return Wrap(
+          children: speeds.map(buildListTile).toList(),
+        );
+      },
     );
   }
 

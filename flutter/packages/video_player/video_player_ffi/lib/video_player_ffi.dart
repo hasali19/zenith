@@ -165,6 +165,12 @@ class VideoControllerWindows extends VideoController {
   double _duration = 0;
 
   @override
+  BoxFit get fit => BoxFit.contain;
+
+  @override
+  double get playbackSpeed => _playbackSpeed;
+
+  @override
   void load(List<VideoItem> items, int startIndex, double startPosition) {
     final pItems = calloc<FfiVideoItem>(items.length);
 
