@@ -1,11 +1,11 @@
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint, unused_element
+// ignore_for_file: type=lint, unused_element, unnecessary_cast
 
 part of 'theme.dart';
 
 // **************************************************************************
-// TailorGenerator
+// TailorAnnotationsGenerator
 // **************************************************************************
 
 class ZenithTheme extends ThemeExtension<ZenithTheme> {
@@ -56,8 +56,8 @@ class ZenithTheme extends ThemeExtension<ZenithTheme> {
   }
 
   @override
-  ZenithTheme lerp(ThemeExtension<ZenithTheme>? other, double t) {
-    if (other is! ZenithTheme) return this;
+  ZenithTheme lerp(covariant ThemeExtension<ZenithTheme>? other, double t) {
+    if (other is! ZenithTheme) return this as ZenithTheme;
     return ZenithTheme(
       bodyMedium: TextStyle.lerp(bodyMedium, other.bodyMedium, t)!,
       bodySmall: TextStyle.lerp(bodySmall, other.bodySmall, t)!,
@@ -83,11 +83,12 @@ class ZenithTheme extends ThemeExtension<ZenithTheme> {
   @override
   int get hashCode {
     return Object.hash(
-        runtimeType,
-        const DeepCollectionEquality().hash(bodyMedium),
-        const DeepCollectionEquality().hash(bodySmall),
-        const DeepCollectionEquality().hash(titleLarge),
-        const DeepCollectionEquality().hash(titleMedium));
+      runtimeType.hashCode,
+      const DeepCollectionEquality().hash(bodyMedium),
+      const DeepCollectionEquality().hash(bodySmall),
+      const DeepCollectionEquality().hash(titleLarge),
+      const DeepCollectionEquality().hash(titleMedium),
+    );
   }
 }
 

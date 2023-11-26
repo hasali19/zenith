@@ -52,6 +52,19 @@ abstract class _$AppRouter extends RootStackRouter {
         ),
       );
     },
+    LoginRoute.name: (routeData) {
+      final queryParams = routeData.queryParams;
+      final args = routeData.argsAs<LoginRouteArgs>(
+          orElse: () =>
+              LoginRouteArgs(redirect: queryParams.optString('redirect')));
+      return AutoRoutePage<dynamic>(
+        routeData: routeData,
+        child: LoginPage(
+          key: args.key,
+          redirect: args.redirect,
+        ),
+      );
+    },
     LoginRegisterRoute.name: (routeData) {
       final queryParams = routeData.queryParams;
       final args = routeData.argsAs<LoginRegisterRouteArgs>(
@@ -64,23 +77,10 @@ abstract class _$AppRouter extends RootStackRouter {
               ));
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: LoginRegisterScreen(
+        child: LoginRegisterPage(
           key: args.key,
           initial: args.initial,
           code: args.code,
-        ),
-      );
-    },
-    LoginRoute.name: (routeData) {
-      final queryParams = routeData.queryParams;
-      final args = routeData.argsAs<LoginRouteArgs>(
-          orElse: () =>
-              LoginRouteArgs(redirect: queryParams.optString('redirect')));
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: LoginScreen(
-          key: args.key,
-          redirect: args.redirect,
         ),
       );
     },
@@ -91,7 +91,7 @@ abstract class _$AppRouter extends RootStackRouter {
               LoginUserRouteArgs(username: queryParams.optString('username')));
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: LoginUserScreen(
+        child: LoginUserPage(
           key: args.key,
           username: args.username,
         ),
@@ -100,7 +100,7 @@ abstract class _$AppRouter extends RootStackRouter {
     LoginUsersRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: const LoginUsersScreen(),
+        child: const LoginUsersPage(),
       );
     },
     MainRoute.name: (routeData) {
@@ -263,7 +263,45 @@ class ItemDetailsRouteArgs {
 }
 
 /// generated route for
-/// [LoginRegisterScreen]
+/// [LoginPage]
+class LoginRoute extends PageRouteInfo<LoginRouteArgs> {
+  LoginRoute({
+    Key? key,
+    String? redirect,
+    List<PageRouteInfo>? children,
+  }) : super(
+          LoginRoute.name,
+          args: LoginRouteArgs(
+            key: key,
+            redirect: redirect,
+          ),
+          rawQueryParams: {'redirect': redirect},
+          initialChildren: children,
+        );
+
+  static const String name = 'LoginRoute';
+
+  static const PageInfo<LoginRouteArgs> page = PageInfo<LoginRouteArgs>(name);
+}
+
+class LoginRouteArgs {
+  const LoginRouteArgs({
+    this.key,
+    this.redirect,
+  });
+
+  final Key? key;
+
+  final String? redirect;
+
+  @override
+  String toString() {
+    return 'LoginRouteArgs{key: $key, redirect: $redirect}';
+  }
+}
+
+/// generated route for
+/// [LoginRegisterPage]
 class LoginRegisterRoute extends PageRouteInfo<LoginRegisterRouteArgs> {
   LoginRegisterRoute({
     Key? key,
@@ -310,45 +348,7 @@ class LoginRegisterRouteArgs {
 }
 
 /// generated route for
-/// [LoginScreen]
-class LoginRoute extends PageRouteInfo<LoginRouteArgs> {
-  LoginRoute({
-    Key? key,
-    String? redirect,
-    List<PageRouteInfo>? children,
-  }) : super(
-          LoginRoute.name,
-          args: LoginRouteArgs(
-            key: key,
-            redirect: redirect,
-          ),
-          rawQueryParams: {'redirect': redirect},
-          initialChildren: children,
-        );
-
-  static const String name = 'LoginRoute';
-
-  static const PageInfo<LoginRouteArgs> page = PageInfo<LoginRouteArgs>(name);
-}
-
-class LoginRouteArgs {
-  const LoginRouteArgs({
-    this.key,
-    this.redirect,
-  });
-
-  final Key? key;
-
-  final String? redirect;
-
-  @override
-  String toString() {
-    return 'LoginRouteArgs{key: $key, redirect: $redirect}';
-  }
-}
-
-/// generated route for
-/// [LoginUserScreen]
+/// [LoginUserPage]
 class LoginUserRoute extends PageRouteInfo<LoginUserRouteArgs> {
   LoginUserRoute({
     Key? key,
@@ -387,7 +387,7 @@ class LoginUserRouteArgs {
 }
 
 /// generated route for
-/// [LoginUsersScreen]
+/// [LoginUsersPage]
 class LoginUsersRoute extends PageRouteInfo<void> {
   const LoginUsersRoute({List<PageRouteInfo>? children})
       : super(
