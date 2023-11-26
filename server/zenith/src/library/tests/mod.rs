@@ -104,6 +104,71 @@ async fn import_movie() -> eyre::Result<()> {
 }
 
 #[tokio::test]
+async fn import_movie_with_multiple_files() -> eyre::Result<()> {
+    let db = test_db().await;
+    let config: Config = serde_yaml::from_str(include_str!("config.yml"))?;
+
+    let mut video_prober = MockVideoProber::new();
+
+    video_prober.expect_probe().returning(|_path| {
+        Ok(VideoInfo {
+            format: Format {
+                duration: "1000.0".to_owned(),
+                format_name: "matroska".to_owned(),
+            },
+            streams: vec![],
+        })
+    });
+
+    let library = MediaLibrary::new(db.clone(), config.import.matchers, Arc::new(video_prober));
+
+    library
+        .process_file_system_change(FileSystemChange {
+            path: Utf8PathBuf::from("/media/movies/Movie Name (2023)/Movie Name (2023) - 720p.mkv"),
+            file_type: FileType::Video(VideoFileType::Movie),
+            change_type: ChangeType::Added,
+        })
+        .await?;
+
+    let mut conn = db.acquire().await?;
+
+    let media_items: Vec<MediaItem> = sqlx::query_as("SELECT * FROM media_items")
+        .fetch_all(&mut *conn)
+        .await?;
+
+    assert_eq!(media_items.len(), 1);
+    let original_movie = media_items.get(0).unwrap();
+
+    library
+        .process_file_system_change(FileSystemChange {
+            path: Utf8PathBuf::from(
+                "/media/movies/Movie Name (2023)/Movie Name (2023) - 1080p.mkv",
+            ),
+            file_type: FileType::Video(VideoFileType::Movie),
+            change_type: ChangeType::Added,
+        })
+        .await?;
+
+    let media_items: Vec<MediaItem> = sqlx::query_as("SELECT * FROM media_items")
+        .fetch_all(&mut *conn)
+        .await?;
+
+    assert_eq!(media_items.len(), 1);
+    let movie = media_items.get(0).unwrap();
+
+    assert_eq!(movie.id, original_movie.id);
+
+    let video_files: Vec<VideoFile> = sqlx::query_as("SELECT * FROM video_files")
+        .fetch_all(&mut *conn)
+        .await?;
+
+    assert_eq!(video_files.len(), 2);
+    assert!(video_files.iter().all(|f| f.item_id == movie.id));
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn remove_movie_with_no_video_files() -> eyre::Result<()> {
     let db = test_db().await;
     let config: Config = serde_yaml::from_str(include_str!("config.yml"))?;
