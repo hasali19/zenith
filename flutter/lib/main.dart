@@ -1,7 +1,9 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:windowing/windowing.dart';
 import 'package:zenith/api.dart';
@@ -21,6 +23,10 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final window = await WindowController.create();
 
+  if (kDebugMode) {
+    Bloc.observer = LoggerBlocObserver();
+  }
+
   runApp(ProviderScope(
     overrides: [
       preferencesProvider.overrideWithValue(prefs),
@@ -36,6 +42,21 @@ Future<void> main() async {
     ],
     child: const ZenithApp(),
   ));
+}
+
+class LoggerBlocObserver extends BlocObserver {
+  final _logger = Logger(
+    printer: PrettyPrinter(
+      methodCount: 0,
+      noBoxingByDefault: true,
+    ),
+  );
+
+  @override
+  void onChange(BlocBase bloc, Change change) {
+    super.onChange(bloc, change);
+    _logger.d('$bloc : $change');
+  }
 }
 
 class ZenithApp extends ConsumerStatefulWidget {
