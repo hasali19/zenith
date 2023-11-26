@@ -7,6 +7,7 @@ import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:windowing/windowing.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/dio_client.dart';
 import 'package:zenith/drawer.dart';
 import 'package:zenith/language_codes.dart';
 import 'package:zenith/preferences.dart';
@@ -34,7 +35,7 @@ Future<void> main() async {
       apiProvider.overrideWith((ref) {
         final activeServer = ref.watch(activeServerProvider);
         if (activeServer != null) {
-          return ZenithApiClient(activeServer.url);
+          return ZenithApiClient(createDioClient(activeServer.url));
         } else {
           throw UnimplementedError();
         }
