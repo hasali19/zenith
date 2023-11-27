@@ -15,25 +15,6 @@ abstract class _$AppRouter extends RootStackRouter {
 
   @override
   final Map<String, PageFactory> pagesMap = {
-    CollectionDetailsRoute.name: (routeData) {
-      final pathParams = routeData.inheritedPathParams;
-      final args = routeData.argsAs<CollectionDetailsRouteArgs>(
-          orElse: () =>
-              CollectionDetailsRouteArgs(id: pathParams.getInt('id')));
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: CollectionDetailsScreen(
-          key: args.key,
-          id: args.id,
-        ),
-      );
-    },
-    CollectionsRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const CollectionsScreen(),
-      );
-    },
     HomeRoute.name: (routeData) {
       return AutoRoutePage<dynamic>(
         routeData: routeData,
@@ -154,59 +135,6 @@ abstract class _$AppRouter extends RootStackRouter {
       );
     },
   };
-}
-
-/// generated route for
-/// [CollectionDetailsScreen]
-class CollectionDetailsRoute extends PageRouteInfo<CollectionDetailsRouteArgs> {
-  CollectionDetailsRoute({
-    Key? key,
-    required int id,
-    List<PageRouteInfo>? children,
-  }) : super(
-          CollectionDetailsRoute.name,
-          args: CollectionDetailsRouteArgs(
-            key: key,
-            id: id,
-          ),
-          rawPathParams: {'id': id},
-          initialChildren: children,
-        );
-
-  static const String name = 'CollectionDetailsRoute';
-
-  static const PageInfo<CollectionDetailsRouteArgs> page =
-      PageInfo<CollectionDetailsRouteArgs>(name);
-}
-
-class CollectionDetailsRouteArgs {
-  const CollectionDetailsRouteArgs({
-    this.key,
-    required this.id,
-  });
-
-  final Key? key;
-
-  final int id;
-
-  @override
-  String toString() {
-    return 'CollectionDetailsRouteArgs{key: $key, id: $id}';
-  }
-}
-
-/// generated route for
-/// [CollectionsScreen]
-class CollectionsRoute extends PageRouteInfo<void> {
-  const CollectionsRoute({List<PageRouteInfo>? children})
-      : super(
-          CollectionsRoute.name,
-          initialChildren: children,
-        );
-
-  static const String name = 'CollectionsRoute';
-
-  static const PageInfo<void> page = PageInfo<void>(name);
 }
 
 /// generated route for

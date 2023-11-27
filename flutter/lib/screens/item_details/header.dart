@@ -4,17 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/download.dart'
+    if (dart.library.html) 'package:zenith/download_web.dart';
 import 'package:zenith/language_codes.dart';
 import 'package:zenith/responsive.dart';
-import 'package:zenith/screens/item_details/add_to_collection.dart';
 import 'package:zenith/screens/item_details/header_layout.dart';
 import 'package:zenith/screens/item_details/item_details.dart';
 import 'package:zenith/screens/item_details/model.dart';
 import 'package:zenith/text_one_line.dart';
 import 'package:zenith/theme.dart';
-
-import 'package:zenith/download.dart'
-    if (dart.library.html) 'package:zenith/download_web.dart';
 
 class HeaderContent extends ConsumerWidget {
   const HeaderContent({
@@ -274,18 +272,6 @@ class HeaderContent extends ConsumerWidget {
                 },
               ),
             ],
-            ListTile(
-              leading: const Icon(Icons.add),
-              title: const Text('Add to collection'),
-              onTap: () {
-                Navigator.pop(context);
-                showDialog(
-                  context: context,
-                  builder: (context) =>
-                      AddToCollectionDialog(id: model.item.id),
-                );
-              },
-            ),
             ListTile(
               leading: const Icon(Icons.search),
               title: const Text('Find match'),

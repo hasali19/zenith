@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/routes/routes.dart';
-import 'package:zenith/screens/collection_details.dart';
-import 'package:zenith/screens/collections.dart';
 import 'package:zenith/screens/home.dart';
 import 'package:zenith/screens/item_details/item_details.dart';
 import 'package:zenith/screens/media_library.dart';
@@ -36,19 +34,12 @@ class AppRouter extends _$AppRouter {
             AutoRoute(page: HomeRoute.page, initial: true),
             AutoRoute(path: 'library/movies', page: MoviesRoute.page),
             AutoRoute(path: 'library/shows', page: ShowsRoute.page),
-            AutoRoute(path: 'library/collections', page: CollectionsRoute.page),
             AutoRoute(path: 'settings', page: SettingsRoute.page),
           ],
         ),
         AutoRoute(
           path: '/items/:id',
           page: ItemDetailsRoute.page,
-          usesPathAsKey: true,
-          guards: [ServerSetupGuard(isServerSet), AuthGuard(isLoggedIn)],
-        ),
-        AutoRoute(
-          path: '/collections/:id',
-          page: CollectionDetailsRoute.page,
           usesPathAsKey: true,
           guards: [ServerSetupGuard(isServerSet), AuthGuard(isLoggedIn)],
         ),
