@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use camino::Utf8PathBuf;
+use db::subtitles::Subtitle;
 use db::video_files::VideoFile;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -381,6 +382,133 @@ async fn remove_show_with_empty_season() -> eyre::Result<()> {
         .await?;
 
     assert_eq!(item_count, 0);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn import_subtitle() -> eyre::Result<()> {
+    let db = test_db().await;
+    let config: Config = serde_yaml::from_str(include_str!("config.yml"))?;
+
+    let mut video_prober = MockVideoProber::new();
+
+    video_prober.expect_probe().returning(|path| {
+        assert_eq!(path, "/media/shows/Show Name/S02E06.mkv");
+
+        Ok(VideoInfo {
+            format: Format {
+                duration: "1000.0".to_owned(),
+                format_name: "matroska".to_owned(),
+            },
+            streams: vec![],
+        })
+    });
+
+    let library = MediaLibrary::new(db.clone(), config.import.matchers, Arc::new(video_prober));
+
+    library
+        .process_file_system_change(FileSystemChange {
+            path: Utf8PathBuf::from("/media/shows/Show Name/S02E06.mkv"),
+            file_type: FileType::Video(VideoFileType::Episode),
+            change_type: ChangeType::Added,
+        })
+        .await?;
+
+    library
+        .process_file_system_change(FileSystemChange {
+            path: Utf8PathBuf::from("/media/shows/Show Name/S02E06.en.sdh.vtt"),
+            file_type: FileType::Subtitle,
+            change_type: ChangeType::Added,
+        })
+        .await?;
+
+    let mut conn = db.acquire().await?;
+
+    let subtitles: Vec<Subtitle> = sqlx::query_as("SELECT * FROM subtitles")
+        .fetch_all(&mut *conn)
+        .await?;
+
+    assert_eq!(subtitles.len(), 1);
+    let row = subtitles.get(0).unwrap();
+
+    assert_eq!(row.stream_index, None);
+    assert_eq!(
+        row.path,
+        Some(Utf8PathBuf::from(
+            "/media/shows/Show Name/S02E06.en.sdh.vtt"
+        ))
+    );
+    assert_eq!(
+        row.title.as_deref(),
+        Some("/media/shows/Show Name/S02E06.en.sdh.vtt")
+    );
+    assert_eq!(row.language.as_deref(), Some("en"));
+    assert_eq!(row.format.as_deref(), Some("webvtt"));
+    assert_eq!(row.sdh, true);
+    assert_eq!(row.forced, false);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn remove_subtitle_with_missing_file() -> eyre::Result<()> {
+    let db = test_db().await;
+    let config: Config = serde_yaml::from_str(include_str!("config.yml"))?;
+
+    let mut video_prober = MockVideoProber::new();
+
+    video_prober.expect_probe().returning(|path| {
+        assert_eq!(path, "/media/shows/Show Name/S02E06.mkv");
+
+        Ok(VideoInfo {
+            format: Format {
+                duration: "1000.0".to_owned(),
+                format_name: "matroska".to_owned(),
+            },
+            streams: vec![],
+        })
+    });
+
+    let library = MediaLibrary::new(db.clone(), config.import.matchers, Arc::new(video_prober));
+
+    library
+        .process_file_system_change(FileSystemChange {
+            path: Utf8PathBuf::from("/media/shows/Show Name/S02E06.mkv"),
+            file_type: FileType::Video(VideoFileType::Episode),
+            change_type: ChangeType::Added,
+        })
+        .await?;
+
+    library
+        .process_file_system_change(FileSystemChange {
+            path: Utf8PathBuf::from("/media/shows/Show Name/S02E06.en.sdh.vtt"),
+            file_type: FileType::Subtitle,
+            change_type: ChangeType::Added,
+        })
+        .await?;
+
+    let mut conn = db.acquire().await?;
+
+    let sub_count: i32 = sqlx::query_scalar("SELECT COUNT(*) FROM subtitles")
+        .fetch_one(&mut *conn)
+        .await?;
+
+    assert_eq!(sub_count, 1);
+
+    library
+        .process_file_system_change(FileSystemChange {
+            path: Utf8PathBuf::from("/media/shows/Show Name/S02E06.en.sdh.vtt"),
+            file_type: FileType::Subtitle,
+            change_type: ChangeType::Removed,
+        })
+        .await?;
+
+    let sub_count: i32 = sqlx::query_scalar("SELECT COUNT(*) FROM subtitles")
+        .fetch_one(&mut *conn)
+        .await?;
+
+    assert_eq!(sub_count, 0);
 
     Ok(())
 }
