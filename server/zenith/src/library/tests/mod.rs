@@ -1,8 +1,10 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use camino::Utf8PathBuf;
 use db::video_files::VideoFile;
 use pretty_assertions::assert_eq;
+use serde_json::json;
 use sqlx::FromRow;
 use time::macros::datetime;
 use uuid::Uuid;
@@ -10,7 +12,7 @@ use uuid::Uuid;
 use crate::config::Config;
 use crate::library::scanner::VideoFileType;
 use crate::library::{ChangeType, FileSystemChange, FileType, MediaLibrary};
-use crate::video_prober::{Format, MockVideoProber, VideoInfo};
+use crate::video_prober::{Format, MockVideoProber, Stream, StreamTags, VideoInfo};
 use crate::{Db, MediaItemType};
 
 #[derive(FromRow)]
@@ -50,7 +52,57 @@ async fn import_movie() -> eyre::Result<()> {
                 duration: "1000.0".to_owned(),
                 format_name: "matroska".to_owned(),
             },
-            streams: vec![],
+            streams: vec![
+                Stream {
+                    index: 0,
+                    codec_type: "video".to_owned(),
+                    codec_name: Some("h264".to_owned()),
+                    width: Some(1920),
+                    height: Some(1080),
+                    channels: None,
+                    channel_layout: None,
+                    tags: None,
+                    properties: HashMap::new(),
+                },
+                Stream {
+                    index: 1,
+                    codec_type: "audio".to_owned(),
+                    codec_name: Some("aac".to_owned()),
+                    width: None,
+                    height: None,
+                    channels: Some(2),
+                    channel_layout: Some("stereo".to_owned()),
+                    tags: Some(StreamTags {
+                        title: None,
+                        language: Some("eng".to_owned()),
+                    }),
+                    properties: HashMap::new(),
+                },
+                Stream {
+                    index: 1,
+                    codec_type: "subtitle".to_owned(),
+                    codec_name: Some("subrip".to_owned()),
+                    width: None,
+                    height: None,
+                    channels: None,
+                    channel_layout: None,
+                    tags: Some(StreamTags {
+                        title: Some("English (SDH)".to_owned()),
+                        language: Some("eng".to_owned()),
+                    }),
+                    properties: {
+                        let mut props = HashMap::new();
+                        props.insert(
+                            "disposition".to_owned(),
+                            json!({
+                                "hearing_impaired": 0,
+                                "forced": 0,
+                            }),
+                        );
+                        props
+                    },
+                },
+            ],
         })
     });
 
