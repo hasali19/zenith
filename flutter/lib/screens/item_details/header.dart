@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,9 +43,10 @@ class HeaderContent extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         HeaderLayout(
-          backdrop: FadeInImage.memoryNetwork(
-            placeholder: transparentImage,
-            image: api.getMediaImageUrl(model.item.id, ImageType.backdrop),
+          backdrop: FadeInImage(
+            placeholder: MemoryImage(transparentImage),
+            image: DioImage.string(
+                api.getMediaImageUrl(model.item.id, ImageType.backdrop)),
             height: 300,
             fit: BoxFit.cover,
             alignment: Alignment.topCenter,
@@ -557,9 +559,9 @@ class Poster extends StatelessWidget {
               : BorderRadius.circular(16),
           child: AspectRatio(
             aspectRatio: 2.0 / 3.0,
-            child: FadeInImage.memoryNetwork(
-              placeholder: transparentImage,
-              image: url,
+            child: FadeInImage(
+              placeholder: MemoryImage(transparentImage),
+              image: DioImage.string(url),
               fit: BoxFit.cover,
             ),
           ),

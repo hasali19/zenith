@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -35,7 +36,9 @@ Future<void> main() async {
       apiProvider.overrideWith((ref) {
         final activeServer = ref.watch(activeServerProvider);
         if (activeServer != null) {
-          return ZenithApiClient(createDioClient(activeServer.url));
+          final client = createDioClient(activeServer.url);
+          DioImage.defaultDio = client;
+          return ZenithApiClient(client);
         } else {
           throw UnimplementedError();
         }

@@ -1,3 +1,4 @@
+import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sliver_tools/sliver_tools.dart';
@@ -219,9 +220,9 @@ class EpisodeThumbnail extends StatelessWidget {
         url == null
             ? const Icon(Icons.video_file, size: 48)
             : Positioned.fill(
-                child: FadeInImage.memoryNetwork(
-                  placeholder: transparentImage,
-                  image: url!,
+                child: FadeInImage(
+                  placeholder: MemoryImage(transparentImage),
+                  image: DioImage.string(url!),
                   fit: BoxFit.cover,
                 ),
               ),

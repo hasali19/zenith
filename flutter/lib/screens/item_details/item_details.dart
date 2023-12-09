@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
@@ -265,9 +266,9 @@ class Backdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FadeInImage.memoryNetwork(
-      placeholder: transparentImage,
-      image: url,
+    return FadeInImage(
+      placeholder: MemoryImage(transparentImage),
+      image: DioImage.string(url),
       fit: BoxFit.cover,
     );
   }

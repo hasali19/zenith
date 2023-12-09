@@ -58,6 +58,7 @@ dependencies:
   wakelock_plus: ^1.1.1
   windowing:
     path: packages/windowing
+  dio_image_provider: ^0.0.2
 
 dev_dependencies:
   flutter_test:

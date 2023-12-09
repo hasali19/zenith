@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
@@ -291,7 +292,7 @@ class ContinueWatchingCard extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             image: DecorationImage(
-              image: NetworkImage(thumbnail),
+              image: DioImage.string(thumbnail),
               fit: BoxFit.cover,
               filterQuality: FilterQuality.medium,
             ),
