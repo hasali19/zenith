@@ -390,3 +390,74 @@ async fn delete_item(mut app: TestApp) {
 
     assert!(result.is_none());
 }
+
+#[test(with_app)]
+async fn import_subtitle(mut app: TestApp) {
+    let cookie = app.login().await;
+
+    let request_body = create_import_subtitle_form("subtitle content goes here").unwrap();
+    let res = app
+        .router()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/import/subtitle")
+                .header("Cookie", &cookie)
+                .header(
+                    "Content-Type",
+                    format!("multipart/form-data; boundary={}", mime::BOUNDARY),
+                )
+                .body(Body::from(request_body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let mut conn = app.db.acquire().await.unwrap();
+    let subtitles = db::subtitles::get_for_video(&mut conn, 1).await.unwrap();
+
+    assert_eq!(subtitles.len(), 1);
+
+    let subtitle = &subtitles[0];
+
+    assert_eq!(subtitle.title.as_deref(), Some("English"));
+    assert_eq!(subtitle.language.as_deref(), Some("en"));
+    assert_eq!(subtitle.sdh, false);
+    assert_eq!(subtitle.forced, true);
+
+    let path = subtitles.get(0).unwrap().path.as_deref().unwrap();
+    let contents = tokio::fs::read_to_string(path).await.unwrap();
+
+    assert_eq!(contents, "subtitle content goes here");
+}
+
+fn create_import_subtitle_form(content: &str) -> std::io::Result<Vec<u8>> {
+    use std::io::Write;
+
+    let meta = json!({
+        "video_id": 1,
+        "title": "English",
+        "language": "en",
+        "sdh": false,
+        "forced": true,
+    });
+
+    let mut data = Vec::new();
+
+    write!(data, "--{}\r\n", mime::BOUNDARY)?;
+    write!(data, "Content-Disposition: form-data; name=\"data\"\r\n")?;
+    write!(data, "\r\n")?;
+    write!(data, "{}\r\n", serde_json::to_string(&meta)?)?;
+
+    write!(data, "--{}\r\n", mime::BOUNDARY)?;
+    write!(data, "Content-Disposition: form-data; name=\"file\"\r\n")?;
+    write!(data, "Content-Type: text/vtt\r\n")?;
+    write!(data, "\r\n")?;
+    write!(data, "{content}\r\n")?;
+
+    write!(data, "--{}\r\n", mime::BOUNDARY)?;
+
+    Ok(data)
+}

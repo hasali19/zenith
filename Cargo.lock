@@ -3554,6 +3554,7 @@ dependencies = [
  "libtest-mimic",
  "markdown",
  "migrations",
+ "mime",
  "mockall",
  "notify",
  "once_cell",

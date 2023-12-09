@@ -9,13 +9,15 @@ use axum::http::{HeaderValue, Request};
 use axum::Extension;
 use axum_extra::extract::cookie::Key;
 use bytes::Buf;
+use camino::{Utf8Path, Utf8PathBuf};
 use futures::future::LocalBoxFuture;
 use futures::Future;
 use http_body_util::BodyExt;
 use hyper::StatusCode;
-use libtest_mimic::{Arguments, Trial};
+use libtest_mimic::{Arguments, Failed, Trial};
 use serde_json::{json, Value};
 use sqlx::SqliteConnection;
+use tempfile::TempDir;
 use tokio::task::LocalSet;
 use tower::ServiceExt;
 use tower_http::trace::TraceLayer;
@@ -24,6 +26,7 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
 use uuid::Uuid;
+use zenith::config::{self, Config};
 use zenith::library::MediaLibrary;
 use zenith::video_prober::MockVideoProber;
 use zenith::{App, Db, MediaItemType};
@@ -196,11 +199,12 @@ async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
 }
 
 struct TestApp {
+    _config: Arc<Config>,
     db: Db,
     router: axum::Router,
 }
 
-pub async fn init_test_app(db: &Db) -> axum::Router {
+pub async fn init_test_app(config: Arc<Config>, db: &Db) -> axum::Router {
     init_test_data(&mut db.acquire().await.unwrap())
         .await
         .unwrap();
@@ -211,6 +215,7 @@ pub async fn init_test_app(db: &Db) -> axum::Router {
 
     zenith::api::router(app)
         .layer(TraceLayer::new_for_http())
+        .layer(Extension(config))
         .layer(Extension(db.clone()))
         .layer(Extension(Arc::new(MediaLibrary::new(
             db.clone(),
@@ -281,19 +286,48 @@ impl TestApp {
     }
 }
 
-async fn with_app<F>(f: fn(TestApp) -> F)
+async fn with_app<F>(f: fn(TestApp) -> F) -> Result<(), ()>
 where
     F: Future<Output = ()> + 'static,
 {
     let id = Uuid::new_v4();
+
+    let subtitles_dir = TempDir::new().unwrap();
+
+    let config = Arc::new(Config {
+        logging: config::Logging::default(),
+        http: config::Http::default(),
+        libraries: config::Libraries {
+            movies: Utf8PathBuf::from(""),
+            tv_shows: Utf8PathBuf::from(""),
+        },
+        paths: config::Paths {
+            cache: Utf8PathBuf::from(""),
+            data: Utf8PathBuf::from(""),
+        },
+        tmdb: config::Tmdb {
+            api_key: "".to_owned(),
+        },
+        transcoding: config::Transcoding::default(),
+        database: config::Database::default(),
+        import: config::Import::default(),
+        subtitles: config::Subtitles {
+            path: Utf8Path::from_path(subtitles_dir.path())
+                .unwrap()
+                .to_owned(),
+        },
+        watcher: config::Watcher::default(),
+    });
+
     let db = Db::init(&format!("file:zenith_{id}?mode=memory&cache=shared"))
         .await
         .unwrap();
     tracing::debug!("opened db {id}");
 
     let app = TestApp {
+        _config: config.clone(),
         db: db.clone(),
-        router: init_test_app(&db).await,
+        router: init_test_app(config, &db).await,
     };
 
     let res = tokio::task::spawn_local(f(app)).await;
@@ -301,10 +335,13 @@ where
     db.close().await;
     tracing::debug!("closed db {id}");
 
-    res.unwrap();
+    res.map_err(|_| {})
 }
 
-struct TestCase(&'static str, fn() -> LocalBoxFuture<'static, ()>);
+struct TestCase(
+    &'static str,
+    fn() -> LocalBoxFuture<'static, Result<(), ()>>,
+);
 
 inventory::collect!(TestCase);
 
@@ -326,8 +363,8 @@ fn main() {
                 tokio::runtime::Builder::new_current_thread()
                     .enable_all()
                     .build()?
-                    .block_on(LocalSet::new().run_until(f()));
-                Ok(())
+                    .block_on(LocalSet::new().run_until(f()))
+                    .map_err(|_| Failed::without_message())
             })
         })
         .collect();

@@ -3,13 +3,10 @@ use std::sync::Arc;
 use axum::extract::{Extension, Multipart};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use camino::{Utf8Path, Utf8PathBuf};
 use db::subtitles::NewSubtitle;
 use db::Db;
 use serde::Deserialize;
 use speq::axum::post;
-use tokio::fs::File;
-use tokio::io::BufWriter;
 use tokio_stream::StreamExt;
 use uuid::Uuid;
 
@@ -69,8 +66,7 @@ pub async fn import_subtitle(
         serde_json::from_slice(&bytes).map_err(bad_request)?
     };
 
-    let subtitles_dir = config.subtitles.path.join(data.video_id.to_string());
-    let src_path = {
+    let subtitle_data = {
         let field = multipart
             .next_field()
             .await
@@ -81,25 +77,20 @@ pub async fn import_subtitle(
             .content_type()
             .or_bad_request("missing content type for file upload")?;
 
-        if !Utf8Path::new("data/tmp").exists() {
-            std::fs::create_dir_all("data/tmp")?;
-        }
-
-        let id = Uuid::new_v4();
-        let src_path = format!("data/tmp/{id}.vtt");
-        let file = BufWriter::new(File::create(&src_path).await?);
+        let mut out_buf = vec![];
 
         match content_type {
             // vtt subtitles can be directly written to the file
-            "text/vtt" => util::copy_stream(field, file).await?,
+            "text/vtt" => util::copy_stream(field, &mut out_buf).await?,
             // srt subtitles need to be converted first
-            "application/x-subrip" => subtitles::convert(&config, field, file).await?,
+            "application/x-subrip" => subtitles::convert(&config, field, &mut out_buf).await?,
             _ => return Err(bad_request("unsupported subtitle content-type")),
         }
 
-        Utf8PathBuf::from(src_path)
+        out_buf
     };
 
+    let subtitles_dir = config.subtitles.path.join(data.video_id.to_string());
     let dst_name = Uuid::new_v4().to_string();
     let dst_path = subtitles_dir.join(dst_name).with_extension("vtt");
     if dst_path.exists() {
@@ -121,11 +112,11 @@ pub async fn import_subtitle(
     db::subtitles::insert(&mut transaction, &subtitles).await?;
 
     if !subtitles_dir.exists() {
-        std::fs::create_dir_all(&subtitles_dir)?;
+        tokio::fs::create_dir_all(&subtitles_dir).await?;
     }
 
-    tracing::info!("copying {src_path:?} to {dst_path:?}");
-    std::fs::copy(&src_path, &dst_path)?;
+    tracing::info!("writing subtitles to {dst_path:?}");
+    tokio::fs::write(&dst_path, subtitle_data).await?;
 
     transaction.commit().await?;
 

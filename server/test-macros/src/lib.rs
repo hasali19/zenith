@@ -20,7 +20,7 @@ pub fn test(attr: TokenStream, input: TokenStream) -> TokenStream {
             #item
 
             const _: () = {
-                fn __runner() -> futures::future::LocalBoxFuture<'static, ()> {
+                fn __runner() -> futures::future::LocalBoxFuture<'static, Result<(), ()>> {
                     Box::pin(#runner(#ident))
                 }
 
@@ -32,7 +32,7 @@ pub fn test(attr: TokenStream, input: TokenStream) -> TokenStream {
             #item
 
             const _: () = {
-                fn __runner() -> futures::future::LocalBoxFuture<'static, ()> {
+                fn __runner() -> futures::future::LocalBoxFuture<'static, Result<(), ()>> {
                     Box::pin(#ident())
                 }
 
