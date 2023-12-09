@@ -1,4 +1,5 @@
-use hyper::{Body, Request, StatusCode};
+use axum::body::Body;
+use hyper::{Request, StatusCode};
 use serde_json::json;
 use test_macros::test;
 use tower::ServiceExt;

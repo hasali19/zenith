@@ -1,4 +1,4 @@
-use axum::body::Full;
+use axum::body::Body;
 use axum::response::{IntoResponse, Response};
 use axum::Extension;
 use speq::axum::post;
@@ -16,7 +16,7 @@ async fn backup_db(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let res = Response::builder()
         .header("content-type", "application/vnd.sqlite3")
         .header("content-disposition", content_disposition)
-        .body(Full::from(db.backup().await?))
+        .body(Body::from(db.backup().await?))
         .unwrap();
 
     Ok(res)

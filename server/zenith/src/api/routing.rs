@@ -1,3 +1,4 @@
+use axum::body::Body;
 use axum::http::header::{ACCEPT, CONTENT_TYPE};
 use axum::http::Request;
 use axum::middleware::Next;
@@ -30,7 +31,7 @@ pub fn router() -> axum::Router<App> {
         .layer(Extension(QsQueryConfig::new(5, false)))
 }
 
-async fn error_handler<B>(req: Request<B>, next: Next<B>) -> impl IntoResponse {
+async fn error_handler(req: Request<Body>, next: Next) -> impl IntoResponse {
     let method = req.method().clone();
     let uri = req.uri().clone();
 

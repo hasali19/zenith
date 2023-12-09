@@ -1,19 +1,22 @@
+use std::sync::Arc;
+
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use eyre::eyre;
 use serde_json::json;
 
+#[derive(Clone)]
 pub struct ApiError {
     pub status: StatusCode,
-    pub inner: eyre::Report,
+    pub inner: Arc<eyre::Report>,
 }
 
 impl From<std::io::Error> for ApiError {
     fn from(e: std::io::Error) -> Self {
         ApiError {
             status: StatusCode::INTERNAL_SERVER_ERROR,
-            inner: e.into(),
+            inner: Arc::new(e.into()),
         }
     }
 }
@@ -22,7 +25,7 @@ impl From<sqlx::Error> for ApiError {
     fn from(e: sqlx::Error) -> Self {
         ApiError {
             status: StatusCode::INTERNAL_SERVER_ERROR,
-            inner: e.into(),
+            inner: Arc::new(e.into()),
         }
     }
 }
@@ -31,7 +34,7 @@ impl From<eyre::Error> for ApiError {
     fn from(e: eyre::Error) -> Self {
         ApiError {
             status: StatusCode::INTERNAL_SERVER_ERROR,
-            inner: e,
+            inner: Arc::new(e),
         }
     }
 }
@@ -39,21 +42,21 @@ impl From<eyre::Error> for ApiError {
 pub fn bad_request(msg: impl ToString) -> ApiError {
     ApiError {
         status: StatusCode::BAD_REQUEST,
-        inner: eyre!(msg.to_string()),
+        inner: Arc::new(eyre!(msg.to_string())),
     }
 }
 
 pub fn not_found(msg: impl ToString) -> ApiError {
     ApiError {
         status: StatusCode::NOT_FOUND,
-        inner: eyre!(msg.to_string()),
+        inner: Arc::new(eyre!(msg.to_string())),
     }
 }
 
 pub fn unauthorized(msg: impl ToString) -> ApiError {
     ApiError {
         status: StatusCode::UNAUTHORIZED,
-        inner: eyre!(msg.to_string()),
+        inner: Arc::new(eyre!(msg.to_string())),
     }
 }
 

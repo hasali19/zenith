@@ -8,6 +8,7 @@ pub mod api;
 pub mod config;
 pub mod library;
 pub mod metadata;
+pub mod server;
 pub mod subtitles;
 pub mod transcoder;
 pub mod util;

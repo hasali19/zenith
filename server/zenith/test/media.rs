@@ -1,4 +1,5 @@
-use hyper::{Body, Request, StatusCode};
+use axum::body::Body;
+use hyper::{Request, StatusCode};
 use insta::assert_json_snapshot;
 use pretty_assertions::assert_eq;
 use serde_json::json;

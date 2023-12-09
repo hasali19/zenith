@@ -8,8 +8,10 @@ use axum::body::Body;
 use axum::http::{HeaderValue, Request};
 use axum::Extension;
 use axum_extra::extract::cookie::Key;
+use bytes::Buf;
 use futures::future::LocalBoxFuture;
 use futures::Future;
+use http_body_util::BodyExt;
 use hyper::StatusCode;
 use libtest_mimic::{Arguments, Trial};
 use serde_json::{json, Value};
@@ -247,8 +249,8 @@ impl TestApp {
             panic!("request failed with status {}", res.status());
         }
 
-        let body = hyper::body::to_bytes(res.into_body()).await.unwrap();
-        serde_json::from_slice(&body).unwrap()
+        let body = res.into_body().collect().await.unwrap();
+        serde_json::from_reader(body.aggregate().reader()).unwrap()
     }
 
     async fn login(&mut self) -> HeaderValue {

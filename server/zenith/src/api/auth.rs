@@ -95,10 +95,10 @@ async fn logout(cookies: PrivateCookieJar) -> ApiResult<impl IntoResponse> {
 }
 
 fn build_auth_cookie(value: Cow<str>) -> Cookie {
-    Cookie::build("auth", value)
+    Cookie::build(("auth", value))
         .same_site(SameSite::Lax)
         .path("/")
         .http_only(true)
         .permanent()
-        .finish()
+        .build()
 }

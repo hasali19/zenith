@@ -4,10 +4,11 @@ use std::path::Path;
 
 use axum::async_trait;
 use axum::body::Body;
-use axum::extract::rejection::{TypedHeaderRejection, TypedHeaderRejectionReason};
-use axum::extract::{FromRequestParts, TypedHeader};
+use axum::extract::FromRequestParts;
 use axum::http::{request, StatusCode};
 use axum::response::{IntoResponse, Response};
+use axum_extra::typed_header::{TypedHeaderRejection, TypedHeaderRejectionReason};
+use axum_extra::TypedHeader;
 use headers::{
     AcceptRanges, ContentDisposition, ContentLength, ContentRange, ContentType, Header,
     HeaderMapExt, HeaderValue, Range,
@@ -54,7 +55,9 @@ impl FileResponse {
         let mut file = tokio::fs::File::open(path).await?;
 
         let total_length = file.metadata().await?.len();
-        let range = req.range.and_then(|range| range.iter().next());
+        let range = req
+            .range
+            .and_then(|range| range.satisfiable_ranges(total_length).next());
 
         let mut res = Response::new(Body::empty());
 
@@ -87,13 +90,13 @@ impl FileResponse {
                     .typed_insert(ContentRange::bytes(range, total_length).unwrap());
 
                 *res.status_mut() = StatusCode::PARTIAL_CONTENT;
-                *res.body_mut() = Body::wrap_stream(stream);
+                *res.body_mut() = Body::from_stream(stream);
             }
             None => {
                 res.headers_mut().typed_insert(ContentLength(total_length));
 
                 *res.status_mut() = StatusCode::OK;
-                *res.body_mut() = Body::wrap_stream(FramedRead::new(file, BytesCodec::new()));
+                *res.body_mut() = Body::from_stream(FramedRead::new(file, BytesCodec::new()));
             }
         }
 

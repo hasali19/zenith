@@ -229,7 +229,9 @@ fn type_to_schema(type_desc: &Type) -> ReferenceOr<Schema> {
     use openapiv3::Type as SchemaType;
     let schema = match type_desc {
         Type::Primitive(ty) => match ty {
-            PrimitiveType::Bool => type_schema(SchemaType::Boolean {}),
+            PrimitiveType::Bool => type_schema(SchemaType::Boolean(BooleanType {
+                enumeration: vec![],
+            })),
             PrimitiveType::Int(width) => type_schema(SchemaType::Integer(IntegerType {
                 format: VariantOrUnknownOrEmpty::Unknown(format!("int{}", width.as_u8())),
                 ..Default::default()

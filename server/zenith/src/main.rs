@@ -11,11 +11,9 @@ use axum::Extension;
 use axum_extra::extract::cookie::Key;
 use axum_files::{FileRequest, FileResponse};
 use camino::Utf8Path;
-use eyre::{bail, Context};
-use futures::FutureExt;
+use eyre::Context;
 use time::OffsetDateTime;
 use tmdb::TmdbClient;
-use tokio::sync::Notify;
 use tokio::time::Instant;
 use tower_http::trace::TraceLayer;
 use tracing_error::ErrorLayer;
@@ -188,8 +186,6 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
 
     let addr = SocketAddr::from_str(&format!("{}:{}", config.http.host, config.http.port))?;
 
-    tracing::info!("starting server at http://{addr}");
-
     let key_path = config.paths.data.join("key");
     let key = load_or_create_key(&key_path)?;
 
@@ -208,31 +204,7 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
         .layer(Extension(scanner))
         .layer(Extension(tmdb));
 
-    {
-        let shutdown = Notify::new();
-        let server = axum::Server::bind(&addr)
-            .serve(router.into_make_service())
-            .with_graceful_shutdown(shutdown.notified());
-
-        let ctrl_c =
-            tokio::signal::ctrl_c().map(|r| r.expect("failed to install ctrl+c signal handler"));
-
-        tokio::pin!(server, ctrl_c);
-
-        tokio::select! {
-            _ = &mut server => bail!("server shut down unexpectedly"),
-            _ = ctrl_c => tracing::info!("shutdown triggered, waiting for open connections"),
-        }
-
-        shutdown.notify_waiters();
-
-        tokio::select! {
-            _ = &mut server => {},
-            _ = tokio::time::sleep(Duration::from_secs(3)) => {
-                tracing::warn!("server took too long to respond, forcing shutdown");
-            }
-        }
-    }
+    zenith::server::serve(&addr, router).await?;
 
     if tokio::time::timeout(Duration::from_secs(3), db.close())
         .await
