@@ -109,7 +109,7 @@ pub async fn serve(addr: &SocketAddr, app: Router) -> eyre::Result<()> {
 
     // Wait for all tasks to complete.
     debug!("waiting for {} tasks to finish", close_tx.receiver_count());
-    if let Err(_) = tokio::time::timeout(Duration::from_secs(5), close_tx.closed()).await {
+    if (tokio::time::timeout(Duration::from_secs(5), close_tx.closed()).await).is_err() {
         tracing::warn!("tasks took too long to respond, forcing shutdown");
     }
 
