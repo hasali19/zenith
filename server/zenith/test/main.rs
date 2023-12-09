@@ -209,8 +209,7 @@ pub async fn init_test_app(db: &Db) -> axum::Router {
         key: Key::generate(),
     };
 
-    zenith::api::router()
-        .with_state(app)
+    zenith::api::router(app)
         .layer(TraceLayer::new_for_http())
         .layer(Extension(db.clone()))
         .layer(Extension(Arc::new(MediaLibrary::new(

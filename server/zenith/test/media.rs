@@ -88,12 +88,15 @@ async fn create_collection(mut app: TestApp) {
         "name": "collection 1"
     });
 
+    let cookie = app.login().await;
+
     let res = app
         .req_json(
             Request::builder()
                 .method("POST")
                 .uri("/collections")
                 .header("Content-Type", "application/json")
+                .header("Cookie", cookie)
                 .body(json_body(&body))
                 .unwrap(),
         )
@@ -125,12 +128,15 @@ async fn delete_collection(mut app: TestApp) {
     .await
     .unwrap();
 
+    let cookie = app.login().await;
+
     let res = app
         .router()
         .oneshot(
             Request::builder()
                 .method("DELETE")
                 .uri(format!("/collections/{}", collection.id))
+                .header("Cookie", cookie)
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -170,6 +176,8 @@ async fn update_collection(mut app: TestApp) {
         "items": [1, 2],
     });
 
+    let cookie = app.login().await;
+
     let res = app
         .router()
         .oneshot(
@@ -177,6 +185,7 @@ async fn update_collection(mut app: TestApp) {
                 .method("PUT")
                 .uri(format!("/collections/{}", collection.id))
                 .header("Content-Type", "application/json")
+                .header("Cookie", cookie)
                 .body(json_body(&body))
                 .unwrap(),
         )
