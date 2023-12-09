@@ -17,7 +17,8 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
   int nextId = 1;
 
   @override
-  Future<VideoController> createController() async {
+  Future<VideoController> createController(
+      {Map<String, String>? headers}) async {
     final id = nextId++;
     final element = VideoElement()
       ..autoplay = true

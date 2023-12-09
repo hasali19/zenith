@@ -2,10 +2,13 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:auto_route/auto_route.dart';
+import 'package:cookie_jar/cookie_jar.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
@@ -127,12 +130,12 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
     platform.setPipEnabled(true);
     platform.setExtendIntoCutout(true);
 
-    _initController();
-
     _progressReportTimer = Timer.periodic(
         const Duration(seconds: 5), (timer) => _onProgressReporterTick());
 
     _showControls();
+
+    Future.microtask(_initController);
   }
 
   @override
@@ -147,7 +150,14 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
   }
 
   Future<void> _initController() async {
-    final controller = await VideoPlayerPlatform.instance.createController();
+    final cookies = context.read<CookieJar>();
+
+    final controller = await VideoPlayerPlatform.instance.createController(
+      headers: {
+        'Cookie': CookieManager.getCookies(
+            await cookies.loadForRequest(Uri.parse(_api.baseUrl)))
+      },
+    );
 
     final videos = widget.items.map((item) {
       final String? title;

@@ -24,6 +24,22 @@ pub unsafe extern "C" fn get_texture_id(surface: *const VideoSurface) -> i64 {
     surface.as_ref().unwrap().texture_id()
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn set_http_headers(
+    player: *const MediaPlayer,
+    headers: *const *const i8,
+    header_count: usize,
+) {
+    assert!(!headers.is_null());
+
+    let headers = std::slice::from_raw_parts(headers, header_count)
+        .iter()
+        .map(|header| CStr::from_ptr(*header))
+        .collect::<Vec<_>>();
+
+    player.as_ref().unwrap().set_http_headers(&headers);
+}
+
 #[repr(C)]
 pub struct VideoItem {
     pub url: *const i8,

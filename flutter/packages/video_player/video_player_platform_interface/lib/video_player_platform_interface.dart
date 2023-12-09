@@ -15,7 +15,7 @@ abstract class VideoPlayerPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<VideoController> createController();
+  Future<VideoController> createController({Map<String, String> headers});
   Widget buildView(VideoController controller);
 }
 

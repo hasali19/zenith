@@ -348,6 +348,8 @@ class ZenithApiClient {
 
   ZenithApiClient(this._client);
 
+  String get baseUrl => _client.options.baseUrl;
+
   Future<bool> isLoggedIn() async {
     if (_isLoggedIn != null) return _isLoggedIn!;
     try {

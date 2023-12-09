@@ -29,22 +29,27 @@ Future<void> main() async {
     Bloc.observer = LoggerBlocObserver();
   }
 
-  runApp(ProviderScope(
-    overrides: [
-      preferencesProvider.overrideWithValue(prefs),
-      windowProvider.overrideWithValue(window),
-      apiProvider.overrideWith((ref) {
-        final activeServer = ref.watch(activeServerProvider);
-        if (activeServer != null) {
-          final client = createDioClient(activeServer.url);
-          DioImage.defaultDio = client;
-          return ZenithApiClient(client);
-        } else {
-          throw UnimplementedError();
-        }
-      }),
-    ],
-    child: const ZenithApp(),
+  final cookieJar = createCookieJar();
+
+  runApp(RepositoryProvider.value(
+    value: cookieJar,
+    child: ProviderScope(
+      overrides: [
+        preferencesProvider.overrideWithValue(prefs),
+        windowProvider.overrideWithValue(window),
+        apiProvider.overrideWith((ref) {
+          final activeServer = ref.watch(activeServerProvider);
+          if (activeServer != null) {
+            final client = createDioClient(activeServer.url, cookieJar);
+            DioImage.defaultDio = client;
+            return ZenithApiClient(client);
+          } else {
+            throw UnimplementedError();
+          }
+        }),
+      ],
+      child: const ZenithApp(),
+    ),
   ));
 }
 

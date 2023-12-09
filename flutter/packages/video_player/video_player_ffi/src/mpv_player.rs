@@ -4,7 +4,7 @@ use std::os::raw::c_char;
 use std::ptr;
 
 use mpv_sys::{
-    mpv_command_async, mpv_create, mpv_event_id_MPV_EVENT_AUDIO_RECONFIG,
+    mpv_command_async, mpv_create, mpv_error, mpv_event_id_MPV_EVENT_AUDIO_RECONFIG,
     mpv_event_id_MPV_EVENT_CLIENT_MESSAGE, mpv_event_id_MPV_EVENT_COMMAND_REPLY,
     mpv_event_id_MPV_EVENT_END_FILE, mpv_event_id_MPV_EVENT_FILE_LOADED,
     mpv_event_id_MPV_EVENT_GET_PROPERTY_REPLY, mpv_event_id_MPV_EVENT_HOOK,
@@ -15,9 +15,10 @@ use mpv_sys::{
     mpv_event_id_MPV_EVENT_START_FILE, mpv_event_id_MPV_EVENT_TICK,
     mpv_event_id_MPV_EVENT_VIDEO_RECONFIG, mpv_event_log_message, mpv_event_name,
     mpv_event_property, mpv_format, mpv_format_MPV_FORMAT_DOUBLE, mpv_format_MPV_FORMAT_FLAG,
-    mpv_format_MPV_FORMAT_INT64, mpv_format_MPV_FORMAT_STRING, mpv_free, mpv_get_property,
-    mpv_handle, mpv_initialize, mpv_observe_property, mpv_request_log_messages, mpv_set_property,
-    mpv_set_property_async, mpv_terminate_destroy, mpv_wait_event,
+    mpv_format_MPV_FORMAT_INT64, mpv_format_MPV_FORMAT_NODE, mpv_format_MPV_FORMAT_NODE_ARRAY,
+    mpv_format_MPV_FORMAT_STRING, mpv_free, mpv_get_property, mpv_handle, mpv_initialize, mpv_node,
+    mpv_node__bindgen_ty_1, mpv_node_list, mpv_observe_property, mpv_request_log_messages,
+    mpv_set_property, mpv_set_property_async, mpv_terminate_destroy, mpv_wait_event,
 };
 
 macro_rules! s {
@@ -59,11 +60,11 @@ impl MpvPlayer {
         })
     }
 
-    pub fn set_property<T: MpvSetType>(&self, name: &str, value: T) {
+    pub fn set_property<T: MpvSetType>(&self, name: &str, value: T) -> mpv_error {
         let name = CString::new(name).unwrap();
         value.with_ptr(|ptr| unsafe {
-            mpv_set_property(self.mpv, name.as_ptr(), T::FORMAT as mpv_format, ptr);
-        });
+            mpv_set_property(self.mpv, name.as_ptr(), T::FORMAT as mpv_format, ptr)
+        })
     }
 
     pub fn set_property_async<T: MpvSetType>(&self, name: &str, value: T, reply_userdata: u64) {
@@ -191,6 +192,7 @@ pub enum MpvFormat {
     Double = mpv_format_MPV_FORMAT_DOUBLE,
     Flag = mpv_format_MPV_FORMAT_FLAG,
     String = mpv_format_MPV_FORMAT_STRING,
+    Node = mpv_format_MPV_FORMAT_NODE,
 }
 
 #[derive(Debug)]
@@ -215,13 +217,13 @@ impl<'a> Drop for MpvStr<'a> {
 pub trait MpvSetType {
     const FORMAT: MpvFormat;
 
-    fn with_ptr<F: FnOnce(*mut c_void)>(self, f: F);
+    fn with_ptr<T, F: FnOnce(*mut c_void) -> T>(self, f: F) -> T;
 }
 
 impl MpvSetType for i32 {
     const FORMAT: MpvFormat = MpvFormat::Int64;
 
-    fn with_ptr<F: FnOnce(*mut c_void)>(self, f: F) {
+    fn with_ptr<T, F: FnOnce(*mut c_void) -> T>(self, f: F) -> T {
         let mut value = self as i64;
         f(&mut value as *mut i64 as *mut c_void)
     }
@@ -230,7 +232,7 @@ impl MpvSetType for i32 {
 impl MpvSetType for u32 {
     const FORMAT: MpvFormat = MpvFormat::Int64;
 
-    fn with_ptr<F: FnOnce(*mut c_void)>(self, f: F) {
+    fn with_ptr<T, F: FnOnce(*mut c_void) -> T>(self, f: F) -> T {
         let mut value = self as i64;
         f(&mut value as *mut i64 as *mut c_void)
     }
@@ -239,7 +241,7 @@ impl MpvSetType for u32 {
 impl MpvSetType for i64 {
     const FORMAT: MpvFormat = MpvFormat::Int64;
 
-    fn with_ptr<F: FnOnce(*mut c_void)>(mut self, f: F) {
+    fn with_ptr<T, F: FnOnce(*mut c_void) -> T>(mut self, f: F) -> T {
         f(&mut self as *mut i64 as *mut c_void)
     }
 }
@@ -247,7 +249,7 @@ impl MpvSetType for i64 {
 impl MpvSetType for isize {
     const FORMAT: MpvFormat = MpvFormat::Int64;
 
-    fn with_ptr<F: FnOnce(*mut c_void)>(self, f: F) {
+    fn with_ptr<T, F: FnOnce(*mut c_void) -> T>(self, f: F) -> T {
         let mut value = self as i64;
         f(&mut value as *mut i64 as *mut c_void)
     }
@@ -256,7 +258,7 @@ impl MpvSetType for isize {
 impl MpvSetType for f64 {
     const FORMAT: MpvFormat = MpvFormat::Double;
 
-    fn with_ptr<F: FnOnce(*mut c_void)>(mut self, f: F) {
+    fn with_ptr<T, F: FnOnce(*mut c_void) -> T>(mut self, f: F) -> T {
         f(&mut self as *mut f64 as *mut c_void)
     }
 }
@@ -264,7 +266,7 @@ impl MpvSetType for f64 {
 impl MpvSetType for bool {
     const FORMAT: MpvFormat = MpvFormat::Flag;
 
-    fn with_ptr<F: FnOnce(*mut c_void)>(self, f: F) {
+    fn with_ptr<T, F: FnOnce(*mut c_void) -> T>(self, f: F) -> T {
         let mut value = self as i32;
         f(&mut value as *mut i32 as *mut c_void)
     }
@@ -273,7 +275,7 @@ impl MpvSetType for bool {
 impl MpvSetType for &CStr {
     const FORMAT: MpvFormat = MpvFormat::String;
 
-    fn with_ptr<F: FnOnce(*mut c_void)>(self, f: F) {
+    fn with_ptr<T, F: FnOnce(*mut c_void) -> T>(self, f: F) -> T {
         f(&mut self.as_ptr() as *mut *const c_char as *mut c_void)
     }
 }
@@ -281,8 +283,38 @@ impl MpvSetType for &CStr {
 impl<'a> MpvSetType for MpvStr<'a> {
     const FORMAT: MpvFormat = MpvFormat::String;
 
-    fn with_ptr<F: FnOnce(*mut c_void)>(self, f: F) {
+    fn with_ptr<T, F: FnOnce(*mut c_void) -> T>(self, f: F) -> T {
         self.0.with_ptr(f)
+    }
+}
+
+impl MpvSetType for &[&CStr] {
+    const FORMAT: MpvFormat = MpvFormat::Node;
+
+    fn with_ptr<T, F: FnOnce(*mut c_void) -> T>(self, f: F) -> T {
+        let mut nodes = vec![mpv_node::default(); self.len()];
+
+        for (&str, node) in self.iter().zip(nodes.iter_mut()) {
+            node.format = mpv_format_MPV_FORMAT_STRING;
+            node.u = mpv_node__bindgen_ty_1 {
+                string: str.as_ptr() as _,
+            }
+        }
+
+        let mut node_list = mpv_node_list {
+            num: self.len() as i32,
+            values: nodes.as_mut_ptr(),
+            ..Default::default()
+        };
+
+        let mut node = mpv_node {
+            format: mpv_format_MPV_FORMAT_NODE_ARRAY,
+            u: mpv_node__bindgen_ty_1 {
+                list: &mut node_list,
+            },
+        };
+
+        f(&mut node as *mut mpv_node as *mut c_void)
     }
 }
 

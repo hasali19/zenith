@@ -47,7 +47,7 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                 setMethodCallHandler { call, result ->
                     val responder = Responder(result)
                     when (call.method) {
-                        "create" -> responder.create()
+                        "create" -> responder.create(headers = call.argument<Map<String, String>>("headers"))
                         "load" -> responder.load(
                             id = call.argument("id")!!,
                             items = call.argument<List<Map<String, Any>>>("items")!!.map { item ->
@@ -220,9 +220,9 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
     }
 
     private inner class Responder(private val result: Result) {
-        fun create() {
+        fun create(headers: Map<String, String>?) {
             val texture = textureRegistry.createSurfaceTexture()
-            val player = PlayerInstance(applicationContext, texture)
+            val player = PlayerInstance(applicationContext, texture, headers ?: emptyMap())
             players[texture.id()] = player
             result.success(texture.id())
         }
@@ -296,7 +296,8 @@ data class SubtitleTrack(
 
 private class PlayerInstance(
     private val context: Context,
-    private val texture: TextureRegistry.SurfaceTextureEntry
+    private val texture: TextureRegistry.SurfaceTextureEntry,
+    private val headers: Map<String, String>,
 ) {
     enum class PlaybackState(val value: Int) {
         Idle(0),
@@ -430,14 +431,21 @@ private class PlayerInstance(
     }
 
     fun load(items: List<VideoItem>, startIndex: Int, startPosition: Long) {
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+        val dataSourceFactory = {
+            val dataSource = httpDataSourceFactory.createDataSource()
+            headers.forEach { (k, v) -> dataSource.setRequestProperty(k, v) }
+            dataSource
+        };
+
         val mediaSources = items.map { item ->
             val mediaItem = MediaItem.Builder()
                 .setUri(item.url)
                 .build()
 
-            val dataSourceFactory = DefaultHttpDataSource.Factory()
             val sources = mutableListOf(
                 DefaultMediaSourceFactory(context)
+                    .setDataSourceFactory(dataSourceFactory)
                     .createMediaSource(mediaItem)
             )
 

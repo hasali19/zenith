@@ -17,6 +17,13 @@ final DynamicLibrary _lib = DynamicLibrary.open('video_player_ffi.dll');
 final int Function(int surface) ffiGetTextureId = _lib
     .lookup<NativeFunction<IntPtr Function(IntPtr)>>('get_texture_id')
     .asFunction();
+final void Function(int player, Pointer<Pointer<Utf8>> headers, int headerCount)
+    ffiSetHttpHeaders = _lib
+        .lookup<
+            NativeFunction<
+                Void Function(IntPtr, Pointer<Pointer<Utf8>>,
+                    UintPtr)>>('set_http_headers')
+        .asFunction();
 final void Function(int player, Pointer<FfiVideoItem> items, int itemCount,
         int startIndex, double startPosition) ffiLoad =
     _lib
@@ -55,10 +62,29 @@ class VideoPlayerFfi extends VideoPlayerPlatform {
   }
 
   @override
-  Future<VideoController> createController() async {
+  Future<VideoController> createController(
+      {Map<String, String>? headers}) async {
     final int player = await _channel.invokeMethod('createPlayer');
+
+    if (headers != null) {
+      final pHeaders = calloc<Pointer<Utf8>>(headers.length);
+
+      for (final (i, MapEntry(key: name, :value)) in headers.entries.indexed) {
+        pHeaders[i] = '$name: $value'.toNativeUtf8();
+      }
+
+      ffiSetHttpHeaders(player, pHeaders, headers.length);
+
+      for (var i = 0; i < headers.length; i++) {
+        calloc.free(pHeaders[i]);
+      }
+
+      calloc.free(pHeaders);
+    }
+
     final int surface =
         await _channel.invokeMethod('createVideoSurface', {'player': player});
+
     return VideoControllerWindows(player, surface);
   }
 

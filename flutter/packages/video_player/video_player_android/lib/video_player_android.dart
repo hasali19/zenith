@@ -14,8 +14,10 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
   }
 
   @override
-  Future<VideoController> createController() async {
-    final int id = await _methodChannel.invokeMethod('create');
+  Future<VideoController> createController(
+      {Map<String, String>? headers}) async {
+    final int id =
+        await _methodChannel.invokeMethod('create', {'headers': headers});
     return VideoControllerAndroid(id);
   }
 

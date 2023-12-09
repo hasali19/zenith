@@ -1,3 +1,4 @@
+use std::ffi::CStr;
 use std::sync::atomic::{self, AtomicU64};
 use std::sync::{Arc, Mutex};
 
@@ -156,6 +157,10 @@ impl MediaPlayer {
                 _ => {}
             }
         }
+    }
+
+    pub fn set_http_headers(&self, headers: &[&CStr]) {
+        self.mpv.set_property("http-header-fields", headers);
     }
 
     pub fn load(&self, items: Vec<VideoItem>, start_index: u32, start_position: f64) {
