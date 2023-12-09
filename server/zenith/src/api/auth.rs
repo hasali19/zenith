@@ -40,7 +40,8 @@ impl<S: Send + Sync> FromRequestParts<S> for User {
 }
 
 // TODO: These should not be hardcoded here
-const IGNORED_PATHS: &[&str] = &["/auth/login"];
+const IGNORED_PATHS: &[(&str, &[Method])] =
+    &[("/auth/login", &[Method::POST]), ("/users", &[Method::GET])];
 const ALLOWED_PATHS: &[(&str, &[Method])] = &[("/users", &[Method::POST])];
 
 pub async fn middleware(
@@ -49,7 +50,10 @@ pub async fn middleware(
     mut req: Request,
     mut next: Next,
 ) -> impl IntoResponse {
-    if IGNORED_PATHS.contains(&req.uri().path()) {
+    if IGNORED_PATHS
+        .iter()
+        .any(|(p, m)| req.uri().path() == *p && m.contains(req.method()))
+    {
         return Ok(next.call(req).await);
     }
 

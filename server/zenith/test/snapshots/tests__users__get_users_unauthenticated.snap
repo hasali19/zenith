@@ -1,6 +1,6 @@
 ---
 source: server/zenith/test/users.rs
-expression: "app.get(\"/users\").await"
+expression: res
 ---
 [
   {

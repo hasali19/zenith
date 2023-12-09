@@ -8,7 +8,7 @@ use tower::ServiceExt;
 use crate::{with_app, TestApp};
 
 #[test(with_app)]
-async fn get_users(mut app: TestApp) {
+async fn get_users_unauthenticated(mut app: TestApp) {
     // hash of "password"
     const PASSWORD_HASH: &str = "$argon2id$v=19$m=19456,t=2,p=1$cV946Lj8LNOX2F7ClooV3A$bZQHhEei6/LLmfpyuX2Hqupj416sfZ8/LtxmUg0FZqI";
 
@@ -24,7 +24,17 @@ async fn get_users(mut app: TestApp) {
     .await
     .unwrap();
 
-    assert_json_snapshot!(app.get("/users").await);
+    let res = app
+        .req_json(
+            Request::builder()
+                .method("GET")
+                .uri("/users")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+
+    assert_json_snapshot!(res);
 }
 
 #[test(with_app)]
