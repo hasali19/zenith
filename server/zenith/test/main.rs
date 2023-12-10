@@ -1,5 +1,6 @@
 mod auth;
 mod media;
+mod metadata;
 mod users;
 
 use std::sync::Arc;
@@ -18,6 +19,7 @@ use libtest_mimic::{Arguments, Failed, Trial};
 use serde_json::{json, Value};
 use sqlx::SqliteConnection;
 use tempfile::TempDir;
+use tmdb::TmdbClient;
 use tokio::task::LocalSet;
 use tower::ServiceExt;
 use tower_http::trace::TraceLayer;
@@ -26,6 +28,7 @@ use tracing_subscriber::prelude::*;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
 use uuid::Uuid;
+use wiremock::MockServer;
 use zenith::config::{self, Config};
 use zenith::library::MediaLibrary;
 use zenith::video_prober::MockVideoProber;
@@ -202,26 +205,7 @@ struct TestApp {
     _config: Arc<Config>,
     db: Db,
     router: axum::Router,
-}
-
-pub async fn init_test_app(config: Arc<Config>, db: &Db) -> axum::Router {
-    init_test_data(&mut db.acquire().await.unwrap())
-        .await
-        .unwrap();
-
-    let app = App {
-        key: Key::generate(),
-    };
-
-    zenith::api::router(app)
-        .layer(TraceLayer::new_for_http())
-        .layer(Extension(config))
-        .layer(Extension(db.clone()))
-        .layer(Extension(Arc::new(MediaLibrary::new(
-            db.clone(),
-            vec![],
-            Arc::new(MockVideoProber::new()),
-        ))))
+    mock_server: MockServer,
 }
 
 fn json_body(v: &impl serde::ser::Serialize) -> Body {
@@ -324,10 +308,35 @@ where
         .unwrap();
     tracing::debug!("opened db {id}");
 
+    init_test_data(&mut db.acquire().await.unwrap())
+        .await
+        .unwrap();
+
+    let app = App {
+        key: Key::generate(),
+    };
+
+    let mock_server = MockServer::start().await;
+    let tmdb_client = TmdbClient::new(mock_server.uri(), "");
+
+    let media_library = Arc::new(MediaLibrary::new(
+        db.clone(),
+        vec![],
+        Arc::new(MockVideoProber::new()),
+    ));
+
+    let router = zenith::api::router(app)
+        .layer(TraceLayer::new_for_http())
+        .layer(Extension(config.clone()))
+        .layer(Extension(db.clone()))
+        .layer(Extension(media_library))
+        .layer(Extension(tmdb_client));
+
     let app = TestApp {
-        _config: config.clone(),
+        _config: config,
         db: db.clone(),
-        router: init_test_app(config, &db).await,
+        router,
+        mock_server,
     };
 
     let res = tokio::task::spawn_local(f(app)).await;

@@ -5,6 +5,7 @@ use url::Url;
 
 #[derive(Clone)]
 pub struct TmdbClient {
+    base_url: String,
     api_key: String,
     client: HttpClient,
 }
@@ -246,9 +247,10 @@ pub struct CrewMemberJob {
 }
 
 impl TmdbClient {
-    pub fn new(api_key: &str) -> Self {
+    pub fn new(base_url: impl Into<String>, api_key: impl Into<String>) -> Self {
         TmdbClient {
-            api_key: api_key.to_owned(),
+            base_url: base_url.into(),
+            api_key: api_key.into(),
             client: HttpClient::new(),
         }
     }
@@ -338,7 +340,7 @@ impl TmdbClient {
     }
 
     fn url(&self, path: &str) -> Url {
-        let mut url = Url::parse("https://api.themoviedb.org/3").unwrap();
+        let mut url = Url::parse(&self.base_url).unwrap();
         url.path_segments_mut().unwrap().extend(path.split('/'));
         url.query_pairs_mut().append_pair("api_key", &self.api_key);
         url

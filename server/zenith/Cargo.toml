@@ -123,6 +123,7 @@ mockall = "0.11"
 pretty_assertions = "1.3"
 test-macros = { path = "../test-macros" }
 tower = "0.4"
+wiremock = "0.5"
 
 [dev-dependencies.insta]
 version = "1.19"

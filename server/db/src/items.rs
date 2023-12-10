@@ -1,6 +1,7 @@
 use std::fmt::Write;
 
 use camino::Utf8PathBuf;
+use eyre::{eyre, Context};
 use itertools::Itertools;
 use sqlx::sqlite::{SqliteArguments, SqliteRow};
 use sqlx::{Acquire, Arguments, FromRow, Row, SqliteConnection};
@@ -820,7 +821,10 @@ pub async fn update_metadata(
             VALUES {placeholders}
         ");
 
-        sqlx::query_with(&sql, args).execute(&mut *tx).await?;
+        sqlx::query_with(&sql, args)
+            .execute(&mut *tx)
+            .await
+            .wrap_err_with(|| eyre!("query failed: {sql}"))?;
 
         let placeholders = sql::Placeholders(genre_ids.len());
         let mut args = SqliteArguments::default();
@@ -837,7 +841,7 @@ pub async fn update_metadata(
         sqlx::query_with(&sql, args).execute(&mut *tx).await?;
     }
 
-    if let Some(cast) = data.cast {
+    if let Some(cast) = data.cast && !cast.is_empty() {
         let mut args = SqliteArguments::default();
         let mut placeholders = String::new();
 
@@ -860,7 +864,10 @@ pub async fn update_metadata(
                 character = excluded.character
         ");
 
-        sqlx::query_with(&sql, args).execute(&mut *tx).await?;
+        sqlx::query_with(&sql, args)
+            .execute(&mut *tx)
+            .await
+            .wrap_err_with(|| eyre!("query failed: {sql}"))?;
 
         let placeholders = sql::Placeholders(cast.len());
         let mut args = SqliteArguments::default();

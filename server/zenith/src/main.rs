@@ -108,7 +108,7 @@ fn new_library_scanner(
 
 async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
     let db = Db::init(&config.database.path).await?;
-    let tmdb = TmdbClient::new(&config.tmdb.api_key);
+    let tmdb = TmdbClient::new("https://api.themoviedb.org/3", &config.tmdb.api_key);
     let metadata = MetadataManager::new(db.clone(), tmdb.clone());
     let video_prober = Arc::new(Ffprobe::new(&config.transcoding.ffprobe_path));
 
