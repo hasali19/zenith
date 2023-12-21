@@ -6,7 +6,8 @@
     "url": "https://github.com/hasali19/zenith",
     "version": "1.0.0",
     "versionCode": 0,
-    "packageName": "dev.hasali.zenith"
+    "packageName": "dev.hasali.zenith",
+    "icon": "https://raw.githubusercontent.com/hasali19/zenith/a13aa8bdf5056c5ec56d73f7b43a93cbecf5c6f2/flutter/assets/zenith_icon.png"
   },
   "packages": [
     {
