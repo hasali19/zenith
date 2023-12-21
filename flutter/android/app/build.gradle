@@ -76,9 +76,14 @@ android {
         versionName flutterVersionName
         resValue "string", "git_commit_hash", gitCommitHash
 
+        // When using --split-per-abi, flutter will override the versionCode for each abi variant
+        // with an offset, so each apk ends up with a different versionCode. The following will
+        // overrides flutter's override to make sure all apks have the same version.
         project.android.applicationVariants.all { variant ->
             variant.outputs.each { output ->
-                output.versionCodeOverride = flutterVersionCode.toInteger()
+                // Flutter's versions had an offset of up to 4000, so use that to ensure we can
+                // still update from a previous version.
+                output.versionCodeOverride = 4000 + flutterVersionCode.toInteger()
             }
         }
     }
