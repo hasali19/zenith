@@ -21,6 +21,11 @@ jobs:
         with:
           channel: stable
 
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+
       - run: |
           echo $ANDROID_KEYSTORE | base64 -d > keystore.jks
           export GIT_COMMIT_HASH=$(git rev-parse HEAD)
