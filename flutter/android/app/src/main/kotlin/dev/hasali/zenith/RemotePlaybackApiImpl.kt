@@ -1,0 +1,147 @@
+package dev.hasali.zenith
+
+import androidx.mediarouter.media.MediaRouteSelector
+import androidx.mediarouter.media.MediaRouter
+import dev.hasali.zenith.generated.remoteplayback.MediaRoute
+import dev.hasali.zenith.generated.remoteplayback.MediaRouterState
+import dev.hasali.zenith.generated.remoteplayback.RemotePlaybackApi
+import dev.hasali.zenith.generated.remoteplayback.RemotePlaybackEventsApi
+import dev.hasali.zenith.generated.remoteplayback.RoutesScanningMode
+
+class RemotePlaybackApiImpl(
+    private val eventsApi: RemotePlaybackEventsApi,
+    private val mediaRouter: MediaRouter,
+    private val mediaRouteSelector: MediaRouteSelector,
+) : RemotePlaybackApi {
+
+    private var activeListeners = 0
+    private var passiveListeners = 0
+    private var standardListeners = 0
+
+    private var currentCallback: MediaRouterCallback? = null
+
+    override fun getRouterState(): MediaRouterState {
+        return MediaRouterState(
+            routes = getMediaRoutes(),
+            selected = getSelectedMediaRoute(),
+        )
+    }
+
+    override fun registerRoutesListener(mode: RoutesScanningMode) {
+        when (mode) {
+            RoutesScanningMode.NONE -> standardListeners += 1
+            RoutesScanningMode.PASSIVE -> passiveListeners += 1
+            RoutesScanningMode.ACTIVE -> activeListeners += 1
+        }
+        updateCallback()
+    }
+
+    override fun unregisterRoutesListener(mode: RoutesScanningMode) {
+        when (mode) {
+            RoutesScanningMode.NONE -> standardListeners -= 1
+            RoutesScanningMode.PASSIVE -> passiveListeners -= 1
+            RoutesScanningMode.ACTIVE -> activeListeners -= 1
+        }
+        updateCallback()
+    }
+
+    private fun updateCallback() {
+        val targetMode = if (activeListeners > 0) {
+            RoutesScanningMode.ACTIVE
+        } else if (passiveListeners > 0) {
+            RoutesScanningMode.PASSIVE
+        } else if (standardListeners > 0) {
+            RoutesScanningMode.NONE
+        } else {
+            null
+        }
+
+        val flags = when (targetMode) {
+            null, RoutesScanningMode.NONE -> 0
+            RoutesScanningMode.PASSIVE -> MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY
+            RoutesScanningMode.ACTIVE -> MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN
+        }
+
+        currentCallback.let { callback ->
+            when {
+                targetMode == null -> {
+                    callback?.let { mediaRouter.removeCallback(it) }
+                    currentCallback = null
+                }
+
+                callback == null -> {
+                    currentCallback = MediaRouterCallback(targetMode).also {
+                        mediaRouter.addCallback(mediaRouteSelector, it, flags)
+                    }
+                }
+
+                callback.mode.raw < targetMode.raw -> {
+                    mediaRouter.removeCallback(callback)
+                    currentCallback = MediaRouterCallback(targetMode).also {
+                        mediaRouter.addCallback(mediaRouteSelector, it, flags)
+                    }
+                }
+            }
+        }
+    }
+
+    override fun selectRoute(id: String?) {
+        if (id == null) {
+            mediaRouter.unselect(MediaRouter.UNSELECT_REASON_DISCONNECTED)
+        } else {
+            val route = mediaRouter.routes.find { it.id == id }
+            if (route != null) {
+                mediaRouter.selectRoute(route)
+            }
+        }
+    }
+
+    private fun getMediaRoutes(): List<MediaRoute> {
+        return mediaRouter.routes
+            .filter { it.isEnabled && it.matchesSelector(mediaRouteSelector) }
+            .map { MediaRoute(id = it.id, name = it.name, description = it.description) }
+    }
+
+    private fun getSelectedMediaRoute(): MediaRoute? {
+        val route = mediaRouter.selectedRoute
+        return if (route.isEnabled && route.matchesSelector(mediaRouteSelector)) {
+            MediaRoute(id = route.id, name = route.name, description = route.description)
+        } else {
+            null
+        }
+    }
+
+    private inner class MediaRouterCallback(val mode: RoutesScanningMode) : MediaRouter.Callback() {
+        override fun onRouteAdded(router: MediaRouter, route: MediaRouter.RouteInfo) {
+            updateRoutes()
+        }
+
+        override fun onRouteChanged(router: MediaRouter, route: MediaRouter.RouteInfo) {
+            updateRoutes()
+        }
+
+        override fun onRouteRemoved(router: MediaRouter, route: MediaRouter.RouteInfo) {
+            updateRoutes()
+        }
+
+        override fun onRouteSelected(
+            router: MediaRouter,
+            route: MediaRouter.RouteInfo,
+            reason: Int
+        ) {
+            eventsApi.onSelectedMediaRouteChanged(getSelectedMediaRoute()) {}
+        }
+
+        override fun onRouteUnselected(
+            router: MediaRouter,
+            route: MediaRouter.RouteInfo,
+            reason: Int
+        ) {
+            eventsApi.onSelectedMediaRouteChanged(null) {}
+        }
+
+        fun updateRoutes() {
+            eventsApi.onRoutesChanged(getMediaRoutes()) {}
+        }
+    }
+}

@@ -74,6 +74,8 @@ dev_dependencies:
   freezed: ^2.4.1
   json_serializable: ^6.7.1
   msix: ^3.16.4
+  pigeon: ^15.0.2
+  pigeon_build_runner: ^1.1.0
   theme_tailor: ^2.0.0
 
 # For information on the generic Dart part of this file, see the
@@ -145,3 +147,19 @@ msix_config:
   identity_name: dev.hasali.zenith
   logo_path: windows/logo.png
   trim_logo: false
+
+pigeon:
+  main-input:
+    input: pigeons/
+    dart:
+      out: lib/
+    kotlin:
+      out: android/app/src/main/kotlin/dev/hasali/zenith/generated
+      package: dev.hasali.zenith.generated
+  inputs:
+    - input: remote_playback.dart
+      dart:
+        out: remote_playback_api.g.dart
+      kotlin:
+        out: RemotePlaybackApi.g.kt
+        package: .remoteplayback

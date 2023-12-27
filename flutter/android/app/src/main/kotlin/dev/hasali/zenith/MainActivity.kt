@@ -8,6 +8,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.mediarouter.media.MediaRouter
+import com.google.android.gms.cast.framework.CastContext
+import dev.hasali.zenith.generated.remoteplayback.RemotePlaybackApi
+import dev.hasali.zenith.generated.remoteplayback.RemotePlaybackEventsApi
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
@@ -41,6 +45,17 @@ class MainActivity : FlutterActivity() {
             setMethodCallHandler(this@MainActivity::handlePlatformMethodCall)
         }
 
+        val mediaRouter = MediaRouter.getInstance(this)
+        val castContext = CastContext.getSharedInstance(this)
+
+        val mediaRouterEventsApi =
+            RemotePlaybackEventsApi(flutterEngine.dartExecutor.binaryMessenger)
+
+        RemotePlaybackApi.setUp(
+            flutterEngine.dartExecutor.binaryMessenger,
+            RemotePlaybackApiImpl(mediaRouterEventsApi, mediaRouter, castContext.mergedSelector!!)
+        )
+
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
             val stableSystemBars =
                 insets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.systemBars())
@@ -68,6 +83,7 @@ class MainActivity : FlutterActivity() {
                     result.error(ex.javaClass.canonicalName!!, ex.message, null)
                 }
             }
+
             else -> result.notImplemented()
         }
     }
@@ -77,6 +93,7 @@ class MainActivity : FlutterActivity() {
             "getSupportedAbis" -> {
                 result.success(Build.SUPPORTED_ABIS.toList())
             }
+
             "setPipEnabled" -> {
                 val isPipModeEnabled = call.arguments as Boolean
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -91,9 +108,12 @@ class MainActivity : FlutterActivity() {
                             }
                             .build()
                     )
+                } else {
+                    this.isPipModeEnabled = true
                 }
                 result.success(null)
             }
+
             "setExtendIntoCutout" -> {
                 val extendIntoCutout = call.arguments as Boolean
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -107,9 +127,10 @@ class MainActivity : FlutterActivity() {
                 }
                 result.success(null)
             }
+
             "setSystemBarsVisible" -> {
                 val visible = call.arguments as Boolean
-                val controller = WindowCompat.getInsetsController(window, window.decorView)!!
+                val controller = WindowCompat.getInsetsController(window, window.decorView)
                 if (visible) {
                     controller.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
                 } else {

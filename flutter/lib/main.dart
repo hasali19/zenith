@@ -11,7 +11,9 @@ import 'package:zenith/api.dart';
 import 'package:zenith/dio_client.dart';
 import 'package:zenith/drawer.dart';
 import 'package:zenith/language_codes.dart';
+import 'package:zenith/media_route_button/media_route_button.dart';
 import 'package:zenith/preferences.dart';
+import 'package:zenith/remote_playback.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/router.dart';
 import 'package:zenith/theme.dart';
@@ -22,17 +24,20 @@ import 'package:zenith/window.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final prefs = await SharedPreferences.getInstance();
-  final window = await WindowController.create();
-
   if (kDebugMode) {
     Bloc.observer = LoggerBlocObserver();
   }
 
+  final prefs = await SharedPreferences.getInstance();
+  final window = await WindowController.create();
   final cookieJar = createCookieJar();
+  final mediaRouter = MediaRouter();
 
-  runApp(RepositoryProvider.value(
-    value: cookieJar,
+  runApp(MultiRepositoryProvider(
+    providers: [
+      RepositoryProvider.value(value: cookieJar),
+      RepositoryProvider.value(value: mediaRouter),
+    ],
     child: ProviderScope(
       overrides: [
         preferencesProvider.overrideWithValue(prefs),
@@ -214,6 +219,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             appBar: AppBar(
               title: Text(_title(screen)),
               actions: [
+                const MediaRouteButton(),
                 PopupMenuButton(
                   itemBuilder: (context) {
                     return [
