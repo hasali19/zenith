@@ -1,6 +1,6 @@
 use axum::body::Body;
 use axum::extract::Request;
-use axum::http::header::{ACCEPT, CONTENT_TYPE};
+use axum::http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE, RANGE};
 use axum::middleware::{self, Next};
 use axum::response::{Html, IntoResponse};
 use axum::routing::get;
@@ -34,7 +34,7 @@ pub fn router(state: App) -> axum::Router<()> {
                         .allow_credentials(true)
                         .allow_origin(AllowOrigin::mirror_request())
                         .allow_methods(AllowMethods::mirror_request())
-                        .allow_headers([ACCEPT, CONTENT_TYPE]),
+                        .allow_headers([ACCEPT, AUTHORIZATION, CONTENT_TYPE, RANGE]),
                 ),
         )
         .with_state(state)

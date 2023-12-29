@@ -1,21 +1,27 @@
 use std::borrow::Cow;
+use std::time::Duration;
 
 use async_trait::async_trait;
 use axum::extract::{FromRequestParts, Request};
-use axum::http::{request, Method};
+use axum::http::{request, HeaderValue, Method};
 use axum::middleware::Next;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use axum_extra::extract::PrivateCookieJar;
 use db::Db;
-use serde::Deserialize;
+use rand::distributions::Distribution;
+use rand::seq::SliceRandom;
+use rand::Rng;
+use serde::{Deserialize, Serialize};
+use serde_qs::axum::QsQuery;
 use speq::axum::post;
+use speq::Reflect;
 use tower::Service;
 
 use crate::password_utils::verify_password;
 
-use super::error::{unauthorized, ApiError};
+use super::error::{not_found, unauthorized, ApiError};
 use super::ApiResult;
 
 #[derive(Clone)]
@@ -57,7 +63,9 @@ pub async fn middleware(
         return Ok(next.call(req).await);
     }
 
-    let user = match try_extract_user(cookies, &db).await {
+    let auth_header = req.headers().get("authorization");
+
+    let user = match try_extract_user(&auth_header, cookies, &db).await {
         Ok(user) => user,
         Err(e) => {
             if ALLOWED_PATHS
@@ -79,16 +87,45 @@ pub async fn middleware(
     Ok(next.call(req).await)
 }
 
-async fn try_extract_user(cookies: PrivateCookieJar, db: &Db) -> ApiResult<User> {
-    let Some(user_id) = cookies.get("auth") else {
-        return Err(unauthorized("invalid auth token"));
-    };
+async fn try_extract_user(
+    auth_header: &Option<&HeaderValue>,
+    cookies: PrivateCookieJar,
+    db: &Db,
+) -> ApiResult<User> {
+    let user_id = match cookies.get("auth") {
+        Some(user_id) => match user_id.value().parse() {
+            Ok(user_id) => user_id,
+            Err(e) => {
+                tracing::error!("{}", e);
+                return Err(unauthorized("invalid auth token"));
+            }
+        },
+        None => {
+            if let Some(auth) = auth_header {
+                let mut conn = db.acquire().await?;
 
-    let user_id: i64 = match user_id.value().parse() {
-        Ok(user_id) => user_id,
-        Err(e) => {
-            tracing::error!("{}", e);
-            return Err(unauthorized("invalid auth token"));
+                let token = auth
+                    .to_str()
+                    .map_err(|_| unauthorized("invalid auth token"))?;
+
+                let token = db::access_tokens::get(&mut conn, token)
+                    .await?
+                    .ok_or_else(|| unauthorized("invalid auth token"))?;
+
+                if let Some(expires_at) = token.expires_at {
+                    let now = std::time::UNIX_EPOCH
+                        .elapsed()
+                        .map_err(|e| eyre::eyre!(e))?;
+
+                    if now > Duration::from_secs(expires_at as u64) {
+                        return Err(unauthorized("invalid auth token"));
+                    }
+                }
+
+                token.user_id
+            } else {
+                return Err(unauthorized("invalid auth token"));
+            }
         }
     };
 
@@ -142,4 +179,100 @@ fn build_auth_cookie(value: Cow<str>) -> Cookie {
         .http_only(true)
         .permanent()
         .build()
+}
+
+#[derive(Clone, Copy, Serialize, Deserialize, Reflect)]
+#[serde(rename_all = "snake_case")]
+enum AccessTokenOwner {
+    System,
+    User,
+}
+
+#[derive(Deserialize, Reflect)]
+struct TokenQuery {
+    owner: AccessTokenOwner,
+    name: String,
+    #[serde(default)]
+    create: bool,
+}
+
+#[derive(Serialize, Reflect)]
+struct AccessToken {
+    owner: AccessTokenOwner,
+    name: String,
+    user_id: i64,
+    token: String,
+    created_at: i64,
+    expires_at: Option<i64>,
+}
+
+const ASCII_PRINTABLE: [u8; 126 - 33 + 1] = {
+    let mut chars = [0; 126 - 33 + 1];
+    let mut i = 0;
+    while i <= 126 - 33 {
+        chars[i as usize] = i + 33;
+        i += 1;
+    }
+    chars
+};
+
+struct AsciiPrintable;
+
+impl Distribution<char> for AsciiPrintable {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> char {
+        *ASCII_PRINTABLE.choose(rng).unwrap() as char
+    }
+}
+
+#[post("/auth/token")]
+async fn get_token(
+    #[query] query: QsQuery<TokenQuery>,
+    db: Extension<Db>,
+    user: User,
+) -> ApiResult<impl IntoResponse> {
+    let mut transaction = db.begin().await?;
+
+    let owner = match query.owner {
+        AccessTokenOwner::System => db::access_tokens::AccessTokenOwner::System,
+        AccessTokenOwner::User => db::access_tokens::AccessTokenOwner::User,
+    };
+
+    let token = db::access_tokens::get_named(&mut transaction, user.id, owner, &query.name).await?;
+
+    let token = match token {
+        Some(token) => token,
+        None => {
+            if query.create {
+                let token = rand::thread_rng()
+                    .sample_iter(&AsciiPrintable)
+                    .take(32)
+                    .collect::<String>();
+
+                db::access_tokens::create(
+                    &mut transaction,
+                    db::access_tokens::NewAccessToken {
+                        user_id: user.id,
+                        owner,
+                        name: &query.name,
+                        token: &token,
+                        duration: None,
+                    },
+                )
+                .await?
+            } else {
+                return Err(not_found("token not found"));
+            }
+        }
+    };
+
+    transaction.commit().await?;
+
+    Ok(Json(AccessToken {
+        owner: query.owner,
+        name: token.name,
+        token: token.token,
+        user_id: token.user_id,
+        created_at: token.created_at,
+        expires_at: token.expires_at,
+    }))
 }
