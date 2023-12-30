@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use axum::extract::{FromRequestParts, Request};
-use axum::http::{request, HeaderValue, Method};
+use axum::http::{request, Method};
 use axum::middleware::Next;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
@@ -50,7 +50,13 @@ const IGNORED_PATHS: &[(&str, &[Method])] =
     &[("/auth/login", &[Method::POST]), ("/users", &[Method::GET])];
 const ALLOWED_PATHS: &[(&str, &[Method])] = &[("/users", &[Method::POST])];
 
+#[derive(Deserialize)]
+pub struct AuthMiddlewareQuery {
+    token: Option<String>,
+}
+
 pub async fn middleware(
+    query: QsQuery<AuthMiddlewareQuery>,
     cookies: PrivateCookieJar,
     db: Extension<Db>,
     mut req: Request,
@@ -63,9 +69,13 @@ pub async fn middleware(
         return Ok(next.call(req).await);
     }
 
-    let auth_header = req.headers().get("authorization");
+    let auth_token = req
+        .headers()
+        .get("authorization")
+        .and_then(|it| it.to_str().ok())
+        .or_else(|| query.token.as_deref());
 
-    let user = match try_extract_user(&auth_header, cookies, &db).await {
+    let user = match try_extract_user(&auth_token, cookies, &db).await {
         Ok(user) => user,
         Err(e) => {
             if ALLOWED_PATHS
@@ -88,7 +98,7 @@ pub async fn middleware(
 }
 
 async fn try_extract_user(
-    auth_header: &Option<&HeaderValue>,
+    auth_token: &Option<&str>,
     cookies: PrivateCookieJar,
     db: &Db,
 ) -> ApiResult<User> {
@@ -101,12 +111,8 @@ async fn try_extract_user(
             }
         },
         None => {
-            if let Some(auth) = auth_header {
+            if let Some(token) = auth_token {
                 let mut conn = db.acquire().await?;
-
-                let token = auth
-                    .to_str()
-                    .map_err(|_| unauthorized("invalid auth token"))?;
 
                 let token = db::access_tokens::get(&mut conn, token)
                     .await?
