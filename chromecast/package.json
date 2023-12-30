@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/chromecast-caf-receiver": "^6.0.12",
     "solid-js": "^1.8.7"
   },
   "devDependencies": {
