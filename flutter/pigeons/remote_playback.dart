@@ -1,31 +1,16 @@
 import 'package:pigeon/pigeon.dart';
 
 class MediaRoute {
-  final String id;
-  final String name;
-  final String? description;
-
-  MediaRoute({
-    required this.id,
-    required this.name,
-    required this.description,
-  });
+  late String id;
+  late String name;
+  late String? description;
+  late bool isSelected;
 }
 
 enum RoutesScanningMode {
   none,
   passive,
   active,
-}
-
-class MediaRouterState {
-  final List<MediaRoute?> routes;
-  final MediaRoute? selected;
-
-  MediaRouterState({
-    required this.selected,
-    required this.routes,
-  });
 }
 
 class MediaLoadRequestData {
@@ -81,7 +66,6 @@ class MediaSeekOptions {
 abstract class RemotePlaybackApi {
   // MediaRouter
 
-  MediaRouterState getRouterState();
   void registerRoutesListener(RoutesScanningMode mode);
   void unregisterRoutesListener(RoutesScanningMode mode);
   void selectRoute(String? id);
@@ -120,7 +104,6 @@ abstract class RemotePlaybackEventsApi {
   // MediaRouter
 
   void onRoutesChanged(List<MediaRoute> routes);
-  void onSelectedMediaRouteChanged(MediaRoute? route);
 
   // RemoteMediaClient
 

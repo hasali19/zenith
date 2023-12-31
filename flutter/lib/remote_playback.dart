@@ -14,12 +14,14 @@ class MediaRoute with _$MediaRoute {
     required String id,
     required String name,
     required String? description,
+    required bool isSelected,
   }) = _MediaRoute;
 
   factory MediaRoute._fromApi(api.MediaRoute route) => MediaRoute(
         id: route.id,
         name: route.name,
         description: route.description,
+        isSelected: route.isSelected,
       );
 }
 
@@ -56,12 +58,9 @@ class _RemotePlaybackEventsApi implements api.RemotePlaybackEventsApi {
   void onRoutesChanged(List<api.MediaRoute?> routes) {
     _mediaRouter.routes.value =
         routes.map((e) => MediaRoute._fromApi(e!)).toList();
-  }
-
-  @override
-  void onSelectedMediaRouteChanged(api.MediaRoute? route) {
-    _mediaRouter.selectedRoute.value =
-        route == null ? null : MediaRoute._fromApi(route);
+    _mediaRouter.selectedRoute.value = _mediaRouter.routes.value
+        .where((element) => element.isSelected)
+        .firstOrNull;
   }
 
   @override

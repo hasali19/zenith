@@ -19,6 +19,7 @@ mixin _$MediaRoute {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
+  bool get isSelected => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $MediaRouteCopyWith<MediaRoute> get copyWith =>
@@ -31,7 +32,7 @@ abstract class $MediaRouteCopyWith<$Res> {
           MediaRoute value, $Res Function(MediaRoute) then) =
       _$MediaRouteCopyWithImpl<$Res, MediaRoute>;
   @useResult
-  $Res call({String id, String name, String? description});
+  $Res call({String id, String name, String? description, bool isSelected});
 }
 
 /// @nodoc
@@ -50,6 +51,7 @@ class _$MediaRouteCopyWithImpl<$Res, $Val extends MediaRoute>
     Object? id = null,
     Object? name = null,
     Object? description = freezed,
+    Object? isSelected = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -64,6 +66,10 @@ class _$MediaRouteCopyWithImpl<$Res, $Val extends MediaRoute>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
+      isSelected: null == isSelected
+          ? _value.isSelected
+          : isSelected // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -76,7 +82,7 @@ abstract class _$$_MediaRouteCopyWith<$Res>
       __$$_MediaRouteCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String id, String name, String? description});
+  $Res call({String id, String name, String? description, bool isSelected});
 }
 
 /// @nodoc
@@ -93,6 +99,7 @@ class __$$_MediaRouteCopyWithImpl<$Res>
     Object? id = null,
     Object? name = null,
     Object? description = freezed,
+    Object? isSelected = null,
   }) {
     return _then(_$_MediaRoute(
       id: null == id
@@ -107,6 +114,10 @@ class __$$_MediaRouteCopyWithImpl<$Res>
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
               as String?,
+      isSelected: null == isSelected
+          ? _value.isSelected
+          : isSelected // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -115,7 +126,10 @@ class __$$_MediaRouteCopyWithImpl<$Res>
 
 class _$_MediaRoute with DiagnosticableTreeMixin implements _MediaRoute {
   const _$_MediaRoute(
-      {required this.id, required this.name, required this.description});
+      {required this.id,
+      required this.name,
+      required this.description,
+      required this.isSelected});
 
   @override
   final String id;
@@ -123,10 +137,12 @@ class _$_MediaRoute with DiagnosticableTreeMixin implements _MediaRoute {
   final String name;
   @override
   final String? description;
+  @override
+  final bool isSelected;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'MediaRoute(id: $id, name: $name, description: $description)';
+    return 'MediaRoute(id: $id, name: $name, description: $description, isSelected: $isSelected)';
   }
 
   @override
@@ -136,7 +152,8 @@ class _$_MediaRoute with DiagnosticableTreeMixin implements _MediaRoute {
       ..add(DiagnosticsProperty('type', 'MediaRoute'))
       ..add(DiagnosticsProperty('id', id))
       ..add(DiagnosticsProperty('name', name))
-      ..add(DiagnosticsProperty('description', description));
+      ..add(DiagnosticsProperty('description', description))
+      ..add(DiagnosticsProperty('isSelected', isSelected));
   }
 
   @override
@@ -147,11 +164,14 @@ class _$_MediaRoute with DiagnosticableTreeMixin implements _MediaRoute {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
-                other.description == description));
+                other.description == description) &&
+            (identical(other.isSelected, isSelected) ||
+                other.isSelected == isSelected));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, description);
+  int get hashCode =>
+      Object.hash(runtimeType, id, name, description, isSelected);
 
   @JsonKey(ignore: true)
   @override
@@ -164,7 +184,8 @@ abstract class _MediaRoute implements MediaRoute {
   const factory _MediaRoute(
       {required final String id,
       required final String name,
-      required final String? description}) = _$_MediaRoute;
+      required final String? description,
+      required final bool isSelected}) = _$_MediaRoute;
 
   @override
   String get id;
@@ -172,6 +193,8 @@ abstract class _MediaRoute implements MediaRoute {
   String get name;
   @override
   String? get description;
+  @override
+  bool get isSelected;
   @override
   @JsonKey(ignore: true)
   _$$_MediaRouteCopyWith<_$_MediaRoute> get copyWith =>

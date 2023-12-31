@@ -12,7 +12,6 @@ import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.common.images.WebImage
 import dev.hasali.zenith.generated.remoteplayback.MediaLoadRequestData
 import dev.hasali.zenith.generated.remoteplayback.MediaRoute
-import dev.hasali.zenith.generated.remoteplayback.MediaRouterState
 import dev.hasali.zenith.generated.remoteplayback.MediaSeekOptions
 import dev.hasali.zenith.generated.remoteplayback.MediaType
 import dev.hasali.zenith.generated.remoteplayback.RemotePlaybackApi
@@ -32,13 +31,6 @@ class RemotePlaybackApiImpl(
     private var standardListeners = 0
 
     private var currentCallback: MediaRouterCallback? = null
-
-    override fun getRouterState(): MediaRouterState {
-        return MediaRouterState(
-            routes = getMediaRoutes(),
-            selected = getSelectedMediaRoute(),
-        )
-    }
 
     override fun registerRoutesListener(mode: RoutesScanningMode) {
         when (mode) {
@@ -204,16 +196,14 @@ class RemotePlaybackApiImpl(
     private fun getMediaRoutes(): List<MediaRoute> {
         return mediaRouter.routes
             .filter { it.isEnabled && it.matchesSelector(mediaRouteSelector) }
-            .map { MediaRoute(id = it.id, name = it.name, description = it.description) }
-    }
-
-    private fun getSelectedMediaRoute(): MediaRoute? {
-        val route = mediaRouter.selectedRoute
-        return if (route.isEnabled && route.matchesSelector(mediaRouteSelector)) {
-            MediaRoute(id = route.id, name = route.name, description = route.description)
-        } else {
-            null
-        }
+            .map {
+                MediaRoute(
+                    id = it.id,
+                    name = it.name,
+                    description = it.description,
+                    isSelected = it.isSelected,
+                )
+            }
     }
 
     private inner class MediaRouterCallback(val mode: RoutesScanningMode) : MediaRouter.Callback() {
@@ -227,22 +217,6 @@ class RemotePlaybackApiImpl(
 
         override fun onRouteRemoved(router: MediaRouter, route: MediaRouter.RouteInfo) {
             updateRoutes()
-        }
-
-        override fun onRouteSelected(
-            router: MediaRouter,
-            route: MediaRouter.RouteInfo,
-            reason: Int
-        ) {
-            eventsApi.onSelectedMediaRouteChanged(getSelectedMediaRoute()) {}
-        }
-
-        override fun onRouteUnselected(
-            router: MediaRouter,
-            route: MediaRouter.RouteInfo,
-            reason: Int
-        ) {
-            eventsApi.onSelectedMediaRouteChanged(null) {}
         }
 
         fun updateRoutes() {

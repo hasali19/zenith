@@ -16,6 +16,7 @@ import com.google.android.gms.cast.MediaStatus.PLAYER_STATE_PAUSED
 import com.google.android.gms.cast.MediaStatus.PLAYER_STATE_PLAYING
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
+import com.google.android.gms.cast.framework.CastState
 import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import dev.hasali.zenith.generated.remoteplayback.MediaInfo
 import dev.hasali.zenith.generated.remoteplayback.MediaStatus
@@ -106,6 +107,10 @@ class MainActivity : FlutterActivity() {
             }
 
             override fun onSessionStarted(session: CastSession, sessionId: String) {
+                session.remoteMediaClient!!.registerCallback(remoteClientCallback)
+            }
+
+            override fun onSessionResumed(session: CastSession, wasSuspended: Boolean) {
                 session.remoteMediaClient!!.registerCallback(remoteClientCallback)
             }
         }

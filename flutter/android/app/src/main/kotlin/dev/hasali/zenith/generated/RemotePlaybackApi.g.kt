@@ -100,7 +100,8 @@ enum class PlayerState(val raw: Int) {
 data class MediaRoute (
   val id: String,
   val name: String,
-  val description: String? = null
+  val description: String? = null,
+  val isSelected: Boolean
 
 ) {
   companion object {
@@ -109,7 +110,8 @@ data class MediaRoute (
       val id = list[0] as String
       val name = list[1] as String
       val description = list[2] as String?
-      return MediaRoute(id, name, description)
+      val isSelected = list[3] as Boolean
+      return MediaRoute(id, name, description, isSelected)
     }
   }
   fun toList(): List<Any?> {
@@ -117,30 +119,7 @@ data class MediaRoute (
       id,
       name,
       description,
-    )
-  }
-}
-
-/** Generated class from Pigeon that represents data sent in messages. */
-data class MediaRouterState (
-  val routes: List<MediaRoute?>,
-  val selected: MediaRoute? = null
-
-) {
-  companion object {
-    @Suppress("UNCHECKED_CAST")
-    fun fromList(list: List<Any?>): MediaRouterState {
-      val routes = list[0] as List<MediaRoute?>
-      val selected: MediaRoute? = (list[1] as List<Any?>?)?.let {
-        MediaRoute.fromList(it)
-      }
-      return MediaRouterState(routes, selected)
-    }
-  }
-  fun toList(): List<Any?> {
-    return listOf<Any?>(
-      routes,
-      selected?.toList(),
+      isSelected,
     )
   }
 }
@@ -350,21 +329,6 @@ private object RemotePlaybackApiCodec : StandardMessageCodec() {
       }
       132.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          MediaRoute.fromList(it)
-        }
-      }
-      133.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let {
-          MediaRoute.fromList(it)
-        }
-      }
-      134.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let {
-          MediaRouterState.fromList(it)
-        }
-      }
-      135.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let {
           MediaSeekOptions.fromList(it)
         }
       }
@@ -389,20 +353,8 @@ private object RemotePlaybackApiCodec : StandardMessageCodec() {
         stream.write(131)
         writeValue(stream, value.toList())
       }
-      is MediaRoute -> {
-        stream.write(132)
-        writeValue(stream, value.toList())
-      }
-      is MediaRoute -> {
-        stream.write(133)
-        writeValue(stream, value.toList())
-      }
-      is MediaRouterState -> {
-        stream.write(134)
-        writeValue(stream, value.toList())
-      }
       is MediaSeekOptions -> {
-        stream.write(135)
+        stream.write(132)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -412,7 +364,6 @@ private object RemotePlaybackApiCodec : StandardMessageCodec() {
 
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface RemotePlaybackApi {
-  fun getRouterState(): MediaRouterState
   fun registerRoutesListener(mode: RoutesScanningMode)
   fun unregisterRoutesListener(mode: RoutesScanningMode)
   fun selectRoute(id: String?)
@@ -430,22 +381,6 @@ interface RemotePlaybackApi {
     /** Sets up an instance of `RemotePlaybackApi` to handle messages through the `binaryMessenger`. */
     @Suppress("UNCHECKED_CAST")
     fun setUp(binaryMessenger: BinaryMessenger, api: RemotePlaybackApi?) {
-      run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.zenith.RemotePlaybackApi.getRouterState", codec)
-        if (api != null) {
-          channel.setMessageHandler { _, reply ->
-            var wrapped: List<Any?>
-            try {
-              wrapped = listOf<Any?>(api.getRouterState())
-            } catch (exception: Throwable) {
-              wrapped = wrapError(exception)
-            }
-            reply.reply(wrapped)
-          }
-        } else {
-          channel.setMessageHandler(null)
-        }
-      }
       run {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.zenith.RemotePlaybackApi.registerRoutesListener", codec)
         if (api != null) {
@@ -613,11 +548,6 @@ private object RemotePlaybackEventsApiCodec : StandardMessageCodec() {
       }
       130.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          MediaRoute.fromList(it)
-        }
-      }
-      131.toByte() -> {
-        return (readValue(buffer) as? List<Any?>)?.let {
           MediaStatus.fromList(it)
         }
       }
@@ -634,12 +564,8 @@ private object RemotePlaybackEventsApiCodec : StandardMessageCodec() {
         stream.write(129)
         writeValue(stream, value.toList())
       }
-      is MediaRoute -> {
-        stream.write(130)
-        writeValue(stream, value.toList())
-      }
       is MediaStatus -> {
-        stream.write(131)
+        stream.write(130)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -660,21 +586,6 @@ class RemotePlaybackEventsApi(private val binaryMessenger: BinaryMessenger) {
     val channelName = "dev.flutter.pigeon.zenith.RemotePlaybackEventsApi.onRoutesChanged"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(routesArg)) {
-      if (it is List<*>) {
-        if (it.size > 1) {
-          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
-        } else {
-          callback(Result.success(Unit))
-        }
-      } else {
-        callback(Result.failure(createConnectionError(channelName)))
-      } 
-    }
-  }
-  fun onSelectedMediaRouteChanged(routeArg: MediaRoute?, callback: (Result<Unit>) -> Unit) {
-    val channelName = "dev.flutter.pigeon.zenith.RemotePlaybackEventsApi.onSelectedMediaRouteChanged"
-    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
-    channel.send(listOf(routeArg)) {
       if (it is List<*>) {
         if (it.size > 1) {
           callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
