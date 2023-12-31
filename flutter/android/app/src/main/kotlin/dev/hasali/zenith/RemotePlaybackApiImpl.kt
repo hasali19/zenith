@@ -47,6 +47,7 @@ class RemotePlaybackApiImpl(
             RoutesScanningMode.ACTIVE -> activeListeners += 1
         }
         updateCallback()
+        currentCallback?.updateRoutes()
     }
 
     override fun unregisterRoutesListener(mode: RoutesScanningMode) {
@@ -173,13 +174,15 @@ class RemotePlaybackApiImpl(
 
                 callback == null -> {
                     currentCallback = MediaRouterCallback(targetMode).also {
+                        it.updateRoutes()
                         mediaRouter.addCallback(mediaRouteSelector, it, flags)
                     }
                 }
 
-                callback.mode.raw < targetMode.raw -> {
+                callback.mode.raw != targetMode.raw -> {
                     mediaRouter.removeCallback(callback)
                     currentCallback = MediaRouterCallback(targetMode).also {
+                        it.updateRoutes()
                         mediaRouter.addCallback(mediaRouteSelector, it, flags)
                     }
                 }
