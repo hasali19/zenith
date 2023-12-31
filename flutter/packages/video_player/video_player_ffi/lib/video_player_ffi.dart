@@ -111,13 +111,12 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
 
   late final int textureId;
 
+  final _positionHandler = MediaPositionHandler();
+
   VideoControllerWindows(this.player, this.surface) {
     _channel.setMethodCallHandler((call) async {
       final Map<dynamic, dynamic> args = call.arguments;
       final double position = args['position'];
-
-      _lastKnownPosition = position * 1000;
-      _lastKnownPositionTs = DateTime.now().millisecondsSinceEpoch;
 
       if (args.containsKey('duration')) {
         _duration = args['duration'];
@@ -144,14 +143,18 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
         _state = VideoState.ended;
       }
 
+      _positionHandler.update(
+        positionMs: (position * 1000).toInt(),
+        isPlaying: _playing,
+        speed: _playbackSpeed,
+      );
+
       notifyListeners();
     });
 
     textureId = ffiGetTextureId(surface);
   }
 
-  double _lastKnownPosition = 0;
-  int _lastKnownPositionTs = DateTime.now().millisecondsSinceEpoch;
   bool _playing = false;
   double _playbackSpeed = 1.0;
 
@@ -162,15 +165,7 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
   int currentItemIndex = 0;
 
   @override
-  double get position {
-    var position = _lastKnownPosition;
-    if (_playing) {
-      position +=
-          (DateTime.now().millisecondsSinceEpoch - _lastKnownPositionTs) *
-              _playbackSpeed;
-    }
-    return position / 1000;
-  }
+  double get position => _positionHandler.positionMs / 1000;
 
   @override
   set position(value) {

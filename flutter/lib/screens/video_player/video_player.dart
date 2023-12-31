@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:auto_route/auto_route.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -13,12 +14,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:zenith/api.dart';
+import 'package:zenith/api.dart' as api;
+import 'package:zenith/remote_playback.dart';
+import 'package:zenith/remote_playback_api.g.dart';
+import 'package:zenith/screens/item_details/item_details.dart';
 import 'package:zenith/screens/video_player/video_player_cubit.dart';
 import 'package:zenith/theme.dart';
 import 'package:zenith/window.dart';
 
-import '../../api.dart' as api;
 import '../../platform.dart' as platform;
 import 'ui.dart';
 import 'utils.dart';
@@ -38,45 +41,217 @@ class VideoPlayerScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return BlocProvider(
-      create: (context) =>
-          VideoPlayerCubit(ref.watch(apiProvider))..loadPlaylist(id),
+      create: (context) => VideoPlayerCubit(
+        ref.read(api.apiProvider),
+        context.read<MediaRouter>(),
+      )..loadPlaylist(id),
       child: BlocBuilder<VideoPlayerCubit, VideoPlayerState>(
         builder: (context, state) {
           if (state.playlist == null) {
             return const Center(child: CircularProgressIndicator());
           }
           final Playlist(:items, start: startIndex) = state.playlist!;
-          return _VideoPlayer(
-            items: items,
-            startIndex: startIndex,
-            startPosition: startPosition,
-          );
+          return switch (state.location) {
+            PlaybackLocation.local => _LocalVideoPlayer(
+                items: items,
+                startIndex: startIndex,
+                startPosition: startPosition,
+              ),
+            PlaybackLocation.remote => _RemoteVideoPlayer(
+                items: items,
+                startIndex: startIndex,
+                startPosition: startPosition,
+              ),
+          };
         },
       ),
     );
   }
 }
 
-class _VideoPlayer extends ConsumerStatefulWidget {
+class _RemoteVideoPlayer extends ConsumerStatefulWidget {
   final List<api.MediaItem> items;
   final int startIndex;
   final double startPosition;
 
-  const _VideoPlayer({
-    Key? key,
+  const _RemoteVideoPlayer({
     required this.items,
     required this.startIndex,
     required this.startPosition,
-  }) : super(key: key);
+  });
 
   @override
-  ConsumerState<_VideoPlayer> createState() {
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _RemoteVideoPlayerState();
+}
+
+class _RemoteVideoPlayerState extends ConsumerState<_RemoteVideoPlayer> {
+  late final api.ZenithApiClient _api;
+  late final RemotePlaybackApi _remote;
+  late final MediaRouter _mediaRouter;
+
+  late final Stream<VideoProgressData> _progress;
+
+  final _positionHandler = MediaPositionHandler();
+
+  api.MediaItem get item => widget.items[widget.startIndex];
+
+  @override
+  void initState() {
+    super.initState();
+    _api = ref.read(api.apiProvider);
+    _remote = RemotePlaybackApi();
+    _mediaRouter = context.read<MediaRouter>();
+
+    _progress = Stream.periodic(
+      const Duration(milliseconds: 500),
+      (count) => VideoProgressData(
+        total: Duration(
+            milliseconds:
+                _mediaRouter.mediaStatus.value?.mediaInfo.streamDuration ??
+                    _positionHandler.positionMs.toInt()),
+        progress: Duration(milliseconds: _positionHandler.positionMs.toInt()),
+      ),
+    );
+
+    _mediaRouter.mediaStatus.addListener(_onMediaStatusUpdated);
+
+    _loadMedia();
+  }
+
+  @override
+  void dispose() {
+    _mediaRouter.mediaStatus.removeListener(_onMediaStatusUpdated);
+    super.dispose();
+  }
+
+  void _loadMedia() async {
+    final token = await _api.getAccessToken(api.AccessTokenOwner.system, 'cast',
+        create: true);
+
+    String withToken(String url) {
+      final uri = Uri.parse(url);
+      var params = {...uri.queryParameters, 'token': token.token};
+      return uri.replace(queryParameters: params).toString();
+    }
+
+    await _remote.load(MediaLoadRequestData(
+      mediaInfo: MediaLoadInfo(
+        url: withToken(_api.getVideoUrl(item.videoFile!.id)),
+        metadata: MediaMetadata(
+          mediaType: switch (item.type) {
+            api.MediaType.movie => MediaType.movie,
+            api.MediaType.episode => MediaType.tvShow,
+            _ => throw Error(),
+          },
+          title: item.name,
+          seriesTitle: item.grandparent?.name,
+          seasonNumber: item.grandparent?.index,
+          episodeNumber: item.parent?.index,
+          poster: MediaMetadataImage(
+            url:
+                withToken(_api.getMediaImageUrl(item.id, api.ImageType.poster)),
+            width: 0,
+            height: 0,
+          ),
+          backdrop: MediaMetadataImage(
+            url: withToken(
+                _api.getMediaImageUrl(item.id, api.ImageType.backdrop)),
+            width: 0,
+            height: 0,
+          ),
+        ),
+      ),
+    ));
+  }
+
+  void _onMediaStatusUpdated() {
+    final mediaStatus = _mediaRouter.mediaStatus.value;
+    if (mediaStatus == null) return;
+
+    _positionHandler.update(
+      positionMs: mediaStatus.streamPosition,
+      isPlaying: mediaStatus.playerState == PlayerState.playing,
+      speed: mediaStatus.playbackRate,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: FadeInImage(
+              placeholder: MemoryImage(transparentImage),
+              image: DioImage.string(
+                  _api.getMediaImageUrl(item.id, api.ImageType.backdrop)),
+              fit: BoxFit.cover,
+            ),
+          ),
+          ValueListenableBuilder(
+            valueListenable: _mediaRouter.mediaStatus,
+            builder: (context, mediaStatus, child) => VideoPlayerUi(
+              title: _MediaTitle(item: item),
+              audioTracks: const [],
+              subtitles: const [],
+              progress: _progress,
+              isAudioTrackSelectionSupported: false,
+              fit: BoxFit.cover,
+              playbackSpeed: 1.0,
+              isLoading: mediaStatus?.playerState == PlayerState.loading ||
+                  mediaStatus?.playerState == PlayerState.buffering,
+              isPaused: mediaStatus?.playerState == PlayerState.paused,
+              onInteractionStart: () {},
+              onInteractionEnd: () {},
+              onAudioTrackSelected: (index) {},
+              onTextTrackSelected: (track) {},
+              onFitSelected: (fit) {},
+              onPlaybackSpeedSelected: _remote.setPlaybackRate,
+              onSeek: (position) {
+                _remote.seek(MediaSeekOptions(
+                  position: (position * 1000).toInt(),
+                  resumeState: ResumeState.unchanged,
+                ));
+              },
+              onSeekDelta: (delta) {
+                _remote.seek(MediaSeekOptions(
+                  position:
+                      (_positionHandler.positionMs + delta * 1000).toInt(),
+                  resumeState: ResumeState.unchanged,
+                ));
+              },
+              onSeekToPrevious: () {},
+              onSeekToNext: () {},
+              onSetPaused: (isPaused) =>
+                  isPaused ? _remote.pause() : _remote.play(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LocalVideoPlayer extends ConsumerStatefulWidget {
+  final List<api.MediaItem> items;
+  final int startIndex;
+  final double startPosition;
+
+  const _LocalVideoPlayer({
+    required this.items,
+    required this.startIndex,
+    required this.startPosition,
+  });
+
+  @override
+  ConsumerState<_LocalVideoPlayer> createState() {
     return _VideoPlayerState();
   }
 }
 
-class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
-  api.ZenithApiClient get _api => ref.watch(api.apiProvider);
+class _VideoPlayerState extends ConsumerState<_LocalVideoPlayer> {
+  api.ZenithApiClient get _api => ref.read(api.apiProvider);
 
   late FocusNode _focusNode;
 
@@ -303,29 +478,10 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
       return const SizedBox.expand();
     }
 
-    final Widget title;
-    if (currentItem.type == api.MediaType.episode) {
-      title = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${currentItem.getSeasonEpisode()!}: ${currentItem.name}',
-            style: context.zenithTheme.titleMedium,
-          ),
-          Text(
-            currentItem.grandparent!.name,
-            style: context.zenithTheme.bodyMedium,
-          ),
-        ],
-      );
-    } else {
-      title = Text(currentItem.name);
-    }
-
     return ListenableBuilder(
       listenable: _controller!,
       builder: (context, child) => VideoPlayerUi(
-        title: title,
+        title: _MediaTitle(item: currentItem),
         audioTracks: currentItem.videoFile!.streams
             .whereType<api.AudioStreamInfo>()
             .map(audioTrackFromApi)
@@ -400,6 +556,33 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
       await platform.setSystemBarsVisible(true);
     }
     return true;
+  }
+}
+
+class _MediaTitle extends StatelessWidget {
+  final api.MediaItem item;
+
+  const _MediaTitle({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    if (item.type == api.MediaType.episode) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${item.getSeasonEpisode()!}: ${item.name}',
+            style: context.zenithTheme.titleMedium,
+          ),
+          Text(
+            item.grandparent!.name,
+            style: context.zenithTheme.bodyMedium,
+          ),
+        ],
+      );
+    } else {
+      return Text(item.name);
+    }
   }
 }
 

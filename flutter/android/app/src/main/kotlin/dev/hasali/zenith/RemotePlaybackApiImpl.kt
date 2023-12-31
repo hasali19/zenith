@@ -1,17 +1,30 @@
 package dev.hasali.zenith
 
+import android.net.Uri
 import androidx.mediarouter.media.MediaRouteSelector
 import androidx.mediarouter.media.MediaRouter
+import com.google.android.gms.cast.MediaInfo
+import com.google.android.gms.cast.MediaMetadata
+import com.google.android.gms.cast.MediaSeekOptions.RESUME_STATE_PAUSE
+import com.google.android.gms.cast.MediaSeekOptions.RESUME_STATE_PLAY
+import com.google.android.gms.cast.MediaSeekOptions.RESUME_STATE_UNCHANGED
+import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.common.images.WebImage
+import dev.hasali.zenith.generated.remoteplayback.MediaLoadRequestData
 import dev.hasali.zenith.generated.remoteplayback.MediaRoute
 import dev.hasali.zenith.generated.remoteplayback.MediaRouterState
+import dev.hasali.zenith.generated.remoteplayback.MediaSeekOptions
+import dev.hasali.zenith.generated.remoteplayback.MediaType
 import dev.hasali.zenith.generated.remoteplayback.RemotePlaybackApi
 import dev.hasali.zenith.generated.remoteplayback.RemotePlaybackEventsApi
+import dev.hasali.zenith.generated.remoteplayback.ResumeState
 import dev.hasali.zenith.generated.remoteplayback.RoutesScanningMode
 
 class RemotePlaybackApiImpl(
     private val eventsApi: RemotePlaybackEventsApi,
     private val mediaRouter: MediaRouter,
     private val mediaRouteSelector: MediaRouteSelector,
+    private val castContext: CastContext,
 ) : RemotePlaybackApi {
 
     private var activeListeners = 0
@@ -43,6 +56,95 @@ class RemotePlaybackApiImpl(
             RoutesScanningMode.ACTIVE -> activeListeners -= 1
         }
         updateCallback()
+    }
+
+    override fun load(loadRequestData: MediaLoadRequestData) {
+        val session = castContext.sessionManager.currentCastSession ?: return
+        val client = session.remoteMediaClient ?: return
+        client.load(com.google.android.gms.cast.MediaLoadRequestData.Builder()
+            .apply {
+                loadRequestData.mediaInfo?.let { mediaInfo ->
+                    setMediaInfo(MediaInfo.Builder(mediaInfo.url)
+                        .apply {
+                            mediaInfo.metadata?.let { metadata ->
+                                val mediaType = when (metadata.mediaType) {
+                                    MediaType.MOVIE -> MediaMetadata.MEDIA_TYPE_MOVIE
+                                    MediaType.TVSHOW -> MediaMetadata.MEDIA_TYPE_TV_SHOW
+                                }
+
+                                setMetadata(MediaMetadata(mediaType).apply {
+                                    metadata.title?.let {
+                                        putString(MediaMetadata.KEY_TITLE, it)
+                                    }
+
+                                    metadata.seriesTitle?.let {
+                                        putString(MediaMetadata.KEY_SERIES_TITLE, it)
+                                    }
+
+                                    metadata.seasonNumber?.let {
+                                        putInt(MediaMetadata.KEY_SEASON_NUMBER, it.toInt())
+                                    }
+
+                                    metadata.episodeNumber?.let {
+                                        putInt(MediaMetadata.KEY_EPISODE_NUMBER, it.toInt())
+                                    }
+
+                                    for (image in listOf(
+                                        metadata.poster,
+                                        metadata.backdrop
+                                    )) {
+                                        image?.let {
+                                            addImage(
+                                                WebImage(
+                                                    Uri.parse(it.url),
+                                                    it.width.toInt(),
+                                                    it.height.toInt()
+                                                )
+                                            )
+                                        }
+                                    }
+                                })
+                            }
+                        }
+                        .build())
+                }
+            }
+            .build())
+    }
+
+    override fun play() {
+        val session = castContext.sessionManager.currentCastSession ?: return
+        val client = session.remoteMediaClient ?: return
+        client.play()
+    }
+
+    override fun pause() {
+        val session = castContext.sessionManager.currentCastSession ?: return
+        val client = session.remoteMediaClient ?: return
+        client.pause()
+    }
+
+    override fun seek(options: MediaSeekOptions) {
+        val session = castContext.sessionManager.currentCastSession ?: return
+        val client = session.remoteMediaClient ?: return
+        client.seek(
+            com.google.android.gms.cast.MediaSeekOptions.Builder()
+                .setPosition(options.position)
+                .setResumeState(
+                    when (options.resumeState) {
+                        ResumeState.PAUSE -> RESUME_STATE_PAUSE
+                        ResumeState.PLAY -> RESUME_STATE_PLAY
+                        ResumeState.UNCHANGED -> RESUME_STATE_UNCHANGED
+                    }
+                )
+                .build()
+        )
+    }
+
+    override fun setPlaybackRate(playbackRate: Double) {
+        val session = castContext.sessionManager.currentCastSession ?: return
+        val client = session.remoteMediaClient ?: return
+        client.setPlaybackRate(playbackRate)
     }
 
     private fun updateCallback() {

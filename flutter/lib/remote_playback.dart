@@ -30,6 +30,7 @@ final api.RemotePlaybackApi _api = api.RemotePlaybackApi();
 class MediaRouter {
   final routes = ValueNotifier<List<MediaRoute>>([]);
   final selectedRoute = ValueNotifier<MediaRoute?>(null);
+  final mediaStatus = ValueNotifier<api.MediaStatus?>(null);
 
   MediaRouter() {
     api.RemotePlaybackEventsApi.setup(_RemotePlaybackEventsApi(this));
@@ -61,5 +62,10 @@ class _RemotePlaybackEventsApi implements api.RemotePlaybackEventsApi {
   void onSelectedMediaRouteChanged(api.MediaRoute? route) {
     _mediaRouter.selectedRoute.value =
         route == null ? null : MediaRoute._fromApi(route);
+  }
+
+  @override
+  void onStatusUpdated(api.MediaStatus status) {
+    _mediaRouter.mediaStatus.value = status;
   }
 }

@@ -78,6 +78,13 @@ dev_dependencies:
   pigeon_build_runner: ^1.1.0
   theme_tailor: ^2.0.0
 
+dependency_overrides:
+  pigeon_build_core:
+    git:
+      url: https://github.com/hasali19/pigeon_build_runner.git
+      ref: fix-windows-paths
+      path: packages/pigeon_build_core
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

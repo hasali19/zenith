@@ -9,7 +9,17 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.mediarouter.media.MediaRouter
+import com.google.android.gms.cast.MediaStatus.PLAYER_STATE_BUFFERING
+import com.google.android.gms.cast.MediaStatus.PLAYER_STATE_IDLE
+import com.google.android.gms.cast.MediaStatus.PLAYER_STATE_LOADING
+import com.google.android.gms.cast.MediaStatus.PLAYER_STATE_PAUSED
+import com.google.android.gms.cast.MediaStatus.PLAYER_STATE_PLAYING
 import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastSession
+import com.google.android.gms.cast.framework.media.RemoteMediaClient
+import dev.hasali.zenith.generated.remoteplayback.MediaInfo
+import dev.hasali.zenith.generated.remoteplayback.MediaStatus
+import dev.hasali.zenith.generated.remoteplayback.PlayerState
 import dev.hasali.zenith.generated.remoteplayback.RemotePlaybackApi
 import dev.hasali.zenith.generated.remoteplayback.RemotePlaybackEventsApi
 import io.flutter.embedding.android.FlutterActivity
@@ -53,7 +63,56 @@ class MainActivity : FlutterActivity() {
 
         RemotePlaybackApi.setUp(
             flutterEngine.dartExecutor.binaryMessenger,
-            RemotePlaybackApiImpl(mediaRouterEventsApi, mediaRouter, castContext.mergedSelector!!)
+            RemotePlaybackApiImpl(
+                mediaRouterEventsApi,
+                mediaRouter,
+                castContext.mergedSelector!!,
+                castContext
+            )
+        )
+
+        val remoteClientCallback = object : RemoteMediaClient.Callback() {
+            override fun onStatusUpdated() {
+                val session = castContext.sessionManager.currentCastSession ?: return
+                val client = session.remoteMediaClient ?: return
+                val status = client.mediaStatus ?: return
+                val mediaInfo = status.mediaInfo ?: return
+
+                val playerState = when (status.playerState) {
+                    PLAYER_STATE_IDLE -> PlayerState.IDLE
+                    PLAYER_STATE_BUFFERING -> PlayerState.BUFFERING
+                    PLAYER_STATE_LOADING -> PlayerState.LOADING
+                    PLAYER_STATE_PAUSED -> PlayerState.PAUSED
+                    PLAYER_STATE_PLAYING -> PlayerState.PLAYING
+                    else -> PlayerState.UNKNOWN
+                }
+
+                mediaRouterEventsApi.onStatusUpdated(
+                    MediaStatus(
+                        playerState = playerState,
+                        mediaInfo = MediaInfo(
+                            streamDuration = mediaInfo.streamDuration,
+                        ),
+                        streamPosition = status.streamPosition,
+                        playbackRate = status.playbackRate,
+                    )
+                ) {}
+            }
+        }
+
+        val sessionManagerListener = object : CastSessionManagerListener() {
+            override fun onSessionEnding(session: CastSession) {
+                session.remoteMediaClient!!.unregisterCallback(remoteClientCallback)
+            }
+
+            override fun onSessionStarted(session: CastSession, sessionId: String) {
+                session.remoteMediaClient!!.registerCallback(remoteClientCallback)
+            }
+        }
+
+        castContext.sessionManager.addSessionManagerListener(
+            sessionManagerListener,
+            CastSession::class.java
         )
 
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->

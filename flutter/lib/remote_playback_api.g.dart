@@ -31,6 +31,26 @@ enum RoutesScanningMode {
   active,
 }
 
+enum MediaType {
+  movie,
+  tvShow,
+}
+
+enum ResumeState {
+  pause,
+  play,
+  unchanged,
+}
+
+enum PlayerState {
+  idle,
+  buffering,
+  loading,
+  paused,
+  playing,
+  unknown,
+}
+
 class MediaRoute {
   MediaRoute({
     required this.id,
@@ -90,18 +110,253 @@ class MediaRouterState {
   }
 }
 
+class MediaLoadRequestData {
+  MediaLoadRequestData({
+    this.mediaInfo,
+  });
+
+  MediaLoadInfo? mediaInfo;
+
+  Object encode() {
+    return <Object?>[
+      mediaInfo?.encode(),
+    ];
+  }
+
+  static MediaLoadRequestData decode(Object result) {
+    result as List<Object?>;
+    return MediaLoadRequestData(
+      mediaInfo: result[0] != null
+          ? MediaLoadInfo.decode(result[0]! as List<Object?>)
+          : null,
+    );
+  }
+}
+
+class MediaLoadInfo {
+  MediaLoadInfo({
+    required this.url,
+    this.metadata,
+  });
+
+  String url;
+
+  MediaMetadata? metadata;
+
+  Object encode() {
+    return <Object?>[
+      url,
+      metadata?.encode(),
+    ];
+  }
+
+  static MediaLoadInfo decode(Object result) {
+    result as List<Object?>;
+    return MediaLoadInfo(
+      url: result[0]! as String,
+      metadata: result[1] != null
+          ? MediaMetadata.decode(result[1]! as List<Object?>)
+          : null,
+    );
+  }
+}
+
+class MediaMetadata {
+  MediaMetadata({
+    required this.mediaType,
+    this.title,
+    this.seriesTitle,
+    this.seasonNumber,
+    this.episodeNumber,
+    this.poster,
+    this.backdrop,
+  });
+
+  MediaType mediaType;
+
+  String? title;
+
+  String? seriesTitle;
+
+  int? seasonNumber;
+
+  int? episodeNumber;
+
+  MediaMetadataImage? poster;
+
+  MediaMetadataImage? backdrop;
+
+  Object encode() {
+    return <Object?>[
+      mediaType.index,
+      title,
+      seriesTitle,
+      seasonNumber,
+      episodeNumber,
+      poster?.encode(),
+      backdrop?.encode(),
+    ];
+  }
+
+  static MediaMetadata decode(Object result) {
+    result as List<Object?>;
+    return MediaMetadata(
+      mediaType: MediaType.values[result[0]! as int],
+      title: result[1] as String?,
+      seriesTitle: result[2] as String?,
+      seasonNumber: result[3] as int?,
+      episodeNumber: result[4] as int?,
+      poster: result[5] != null
+          ? MediaMetadataImage.decode(result[5]! as List<Object?>)
+          : null,
+      backdrop: result[6] != null
+          ? MediaMetadataImage.decode(result[6]! as List<Object?>)
+          : null,
+    );
+  }
+}
+
+class MediaMetadataImage {
+  MediaMetadataImage({
+    required this.url,
+    required this.width,
+    required this.height,
+  });
+
+  String url;
+
+  int width;
+
+  int height;
+
+  Object encode() {
+    return <Object?>[
+      url,
+      width,
+      height,
+    ];
+  }
+
+  static MediaMetadataImage decode(Object result) {
+    result as List<Object?>;
+    return MediaMetadataImage(
+      url: result[0]! as String,
+      width: result[1]! as int,
+      height: result[2]! as int,
+    );
+  }
+}
+
+class MediaSeekOptions {
+  MediaSeekOptions({
+    required this.position,
+    required this.resumeState,
+  });
+
+  int position;
+
+  ResumeState resumeState;
+
+  Object encode() {
+    return <Object?>[
+      position,
+      resumeState.index,
+    ];
+  }
+
+  static MediaSeekOptions decode(Object result) {
+    result as List<Object?>;
+    return MediaSeekOptions(
+      position: result[0]! as int,
+      resumeState: ResumeState.values[result[1]! as int],
+    );
+  }
+}
+
+class MediaStatus {
+  MediaStatus({
+    required this.playerState,
+    required this.mediaInfo,
+    required this.streamPosition,
+    required this.playbackRate,
+  });
+
+  PlayerState playerState;
+
+  MediaInfo mediaInfo;
+
+  int streamPosition;
+
+  double playbackRate;
+
+  Object encode() {
+    return <Object?>[
+      playerState.index,
+      mediaInfo.encode(),
+      streamPosition,
+      playbackRate,
+    ];
+  }
+
+  static MediaStatus decode(Object result) {
+    result as List<Object?>;
+    return MediaStatus(
+      playerState: PlayerState.values[result[0]! as int],
+      mediaInfo: MediaInfo.decode(result[1]! as List<Object?>),
+      streamPosition: result[2]! as int,
+      playbackRate: result[3]! as double,
+    );
+  }
+}
+
+class MediaInfo {
+  MediaInfo({
+    required this.streamDuration,
+  });
+
+  int streamDuration;
+
+  Object encode() {
+    return <Object?>[
+      streamDuration,
+    ];
+  }
+
+  static MediaInfo decode(Object result) {
+    result as List<Object?>;
+    return MediaInfo(
+      streamDuration: result[0]! as int,
+    );
+  }
+}
+
 class _RemotePlaybackApiCodec extends StandardMessageCodec {
   const _RemotePlaybackApiCodec();
   @override
   void writeValue(WriteBuffer buffer, Object? value) {
-    if (value is MediaRoute) {
+    if (value is MediaLoadInfo) {
       buffer.putUint8(128);
       writeValue(buffer, value.encode());
-    } else if (value is MediaRoute) {
+    } else if (value is MediaLoadRequestData) {
       buffer.putUint8(129);
       writeValue(buffer, value.encode());
-    } else if (value is MediaRouterState) {
+    } else if (value is MediaMetadata) {
       buffer.putUint8(130);
+      writeValue(buffer, value.encode());
+    } else if (value is MediaMetadataImage) {
+      buffer.putUint8(131);
+      writeValue(buffer, value.encode());
+    } else if (value is MediaRoute) {
+      buffer.putUint8(132);
+      writeValue(buffer, value.encode());
+    } else if (value is MediaRoute) {
+      buffer.putUint8(133);
+      writeValue(buffer, value.encode());
+    } else if (value is MediaRouterState) {
+      buffer.putUint8(134);
+      writeValue(buffer, value.encode());
+    } else if (value is MediaSeekOptions) {
+      buffer.putUint8(135);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -112,11 +367,21 @@ class _RemotePlaybackApiCodec extends StandardMessageCodec {
   Object? readValueOfType(int type, ReadBuffer buffer) {
     switch (type) {
       case 128: 
-        return MediaRoute.decode(readValue(buffer)!);
+        return MediaLoadInfo.decode(readValue(buffer)!);
       case 129: 
-        return MediaRoute.decode(readValue(buffer)!);
+        return MediaLoadRequestData.decode(readValue(buffer)!);
       case 130: 
+        return MediaMetadata.decode(readValue(buffer)!);
+      case 131: 
+        return MediaMetadataImage.decode(readValue(buffer)!);
+      case 132: 
+        return MediaRoute.decode(readValue(buffer)!);
+      case 133: 
+        return MediaRoute.decode(readValue(buffer)!);
+      case 134: 
         return MediaRouterState.decode(readValue(buffer)!);
+      case 135: 
+        return MediaSeekOptions.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -225,17 +490,133 @@ class RemotePlaybackApi {
       return;
     }
   }
+
+  Future<void> load(MediaLoadRequestData loadRequestData) async {
+    const String __pigeon_channelName = 'dev.flutter.pigeon.zenith.RemotePlaybackApi.load';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[loadRequestData]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
+
+  Future<void> play() async {
+    const String __pigeon_channelName = 'dev.flutter.pigeon.zenith.RemotePlaybackApi.play';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(null) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
+
+  Future<void> pause() async {
+    const String __pigeon_channelName = 'dev.flutter.pigeon.zenith.RemotePlaybackApi.pause';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(null) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
+
+  Future<void> seek(MediaSeekOptions options) async {
+    const String __pigeon_channelName = 'dev.flutter.pigeon.zenith.RemotePlaybackApi.seek';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[options]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
+
+  Future<void> setPlaybackRate(double playbackRate) async {
+    const String __pigeon_channelName = 'dev.flutter.pigeon.zenith.RemotePlaybackApi.setPlaybackRate';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(<Object?>[playbackRate]) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
 }
 
 class _RemotePlaybackEventsApiCodec extends StandardMessageCodec {
   const _RemotePlaybackEventsApiCodec();
   @override
   void writeValue(WriteBuffer buffer, Object? value) {
-    if (value is MediaRoute) {
+    if (value is MediaInfo) {
       buffer.putUint8(128);
       writeValue(buffer, value.encode());
     } else if (value is MediaRoute) {
       buffer.putUint8(129);
+      writeValue(buffer, value.encode());
+    } else if (value is MediaRoute) {
+      buffer.putUint8(130);
+      writeValue(buffer, value.encode());
+    } else if (value is MediaStatus) {
+      buffer.putUint8(131);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -246,9 +627,13 @@ class _RemotePlaybackEventsApiCodec extends StandardMessageCodec {
   Object? readValueOfType(int type, ReadBuffer buffer) {
     switch (type) {
       case 128: 
-        return MediaRoute.decode(readValue(buffer)!);
+        return MediaInfo.decode(readValue(buffer)!);
       case 129: 
         return MediaRoute.decode(readValue(buffer)!);
+      case 130: 
+        return MediaRoute.decode(readValue(buffer)!);
+      case 131: 
+        return MediaStatus.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -261,6 +646,8 @@ abstract class RemotePlaybackEventsApi {
   void onRoutesChanged(List<MediaRoute?> routes);
 
   void onSelectedMediaRouteChanged(MediaRoute? route);
+
+  void onStatusUpdated(MediaStatus status);
 
   static void setup(RemotePlaybackEventsApi? api, {BinaryMessenger? binaryMessenger}) {
     {
@@ -302,6 +689,31 @@ abstract class RemotePlaybackEventsApi {
           final MediaRoute? arg_route = (args[0] as MediaRoute?);
           try {
             api.onSelectedMediaRouteChanged(arg_route);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }          catch (e) {
+            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
+    {
+      final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.zenith.RemotePlaybackEventsApi.onStatusUpdated', pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        __pigeon_channel.setMessageHandler(null);
+      } else {
+        __pigeon_channel.setMessageHandler((Object? message) async {
+          assert(message != null,
+          'Argument for dev.flutter.pigeon.zenith.RemotePlaybackEventsApi.onStatusUpdated was null.');
+          final List<Object?> args = (message as List<Object?>?)!;
+          final MediaStatus? arg_status = (args[0] as MediaStatus?);
+          assert(arg_status != null,
+              'Argument for dev.flutter.pigeon.zenith.RemotePlaybackEventsApi.onStatusUpdated was null, expected non-null MediaStatus.');
+          try {
+            api.onStatusUpdated(arg_status!);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);

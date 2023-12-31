@@ -1,5 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'api.freezed.dart';
+part 'api.g.dart';
 
 enum MediaType {
   movie,
@@ -341,6 +345,23 @@ class User {
       );
 }
 
+enum AccessTokenOwner {
+  system,
+  user,
+}
+
+@freezed
+class AccessToken with _$AccessToken {
+  factory AccessToken({
+    required AccessTokenOwner owner,
+    required String name,
+    required String token,
+  }) = _AccessToken;
+
+  factory AccessToken.fromJson(Map<String, Object?> json) =>
+      _$AccessTokenFromJson(json);
+}
+
 class ZenithApiClient {
   final Dio _client;
 
@@ -600,6 +621,20 @@ class ZenithApiClient {
         'position': data.position,
       },
     );
+  }
+
+  Future<AccessToken> getAccessToken(AccessTokenOwner owner, String name,
+      {bool create = false}) async {
+    final res = await _client.post('/api/auth/token', queryParameters: {
+      'owner': owner.name,
+      'name': name,
+      'create': create,
+    });
+    if (res.statusCode == 200) {
+      return AccessToken.fromJson(res.data);
+    } else {
+      throw Exception('Failed to get token');
+    }
   }
 }
 

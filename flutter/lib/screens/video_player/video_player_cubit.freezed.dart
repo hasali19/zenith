@@ -157,6 +157,7 @@ abstract class _Playlist implements Playlist {
 
 /// @nodoc
 mixin _$VideoPlayerState {
+  PlaybackLocation get location => throw _privateConstructorUsedError;
   Playlist? get playlist => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
@@ -170,7 +171,7 @@ abstract class $VideoPlayerStateCopyWith<$Res> {
           VideoPlayerState value, $Res Function(VideoPlayerState) then) =
       _$VideoPlayerStateCopyWithImpl<$Res, VideoPlayerState>;
   @useResult
-  $Res call({Playlist? playlist});
+  $Res call({PlaybackLocation location, Playlist? playlist});
 
   $PlaylistCopyWith<$Res>? get playlist;
 }
@@ -188,9 +189,14 @@ class _$VideoPlayerStateCopyWithImpl<$Res, $Val extends VideoPlayerState>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? location = null,
     Object? playlist = freezed,
   }) {
     return _then(_value.copyWith(
+      location: null == location
+          ? _value.location
+          : location // ignore: cast_nullable_to_non_nullable
+              as PlaybackLocation,
       playlist: freezed == playlist
           ? _value.playlist
           : playlist // ignore: cast_nullable_to_non_nullable
@@ -219,7 +225,7 @@ abstract class _$$_VideoPlayerStateCopyWith<$Res>
       __$$_VideoPlayerStateCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({Playlist? playlist});
+  $Res call({PlaybackLocation location, Playlist? playlist});
 
   @override
   $PlaylistCopyWith<$Res>? get playlist;
@@ -236,9 +242,14 @@ class __$$_VideoPlayerStateCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? location = null,
     Object? playlist = freezed,
   }) {
     return _then(_$_VideoPlayerState(
+      location: null == location
+          ? _value.location
+          : location // ignore: cast_nullable_to_non_nullable
+              as PlaybackLocation,
       playlist: freezed == playlist
           ? _value.playlist
           : playlist // ignore: cast_nullable_to_non_nullable
@@ -250,14 +261,16 @@ class __$$_VideoPlayerStateCopyWithImpl<$Res>
 /// @nodoc
 
 class _$_VideoPlayerState implements _VideoPlayerState {
-  _$_VideoPlayerState({this.playlist});
+  _$_VideoPlayerState({required this.location, this.playlist});
 
+  @override
+  final PlaybackLocation location;
   @override
   final Playlist? playlist;
 
   @override
   String toString() {
-    return 'VideoPlayerState(playlist: $playlist)';
+    return 'VideoPlayerState(location: $location, playlist: $playlist)';
   }
 
   @override
@@ -265,12 +278,14 @@ class _$_VideoPlayerState implements _VideoPlayerState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_VideoPlayerState &&
+            (identical(other.location, location) ||
+                other.location == location) &&
             (identical(other.playlist, playlist) ||
                 other.playlist == playlist));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, playlist);
+  int get hashCode => Object.hash(runtimeType, location, playlist);
 
   @JsonKey(ignore: true)
   @override
@@ -280,8 +295,12 @@ class _$_VideoPlayerState implements _VideoPlayerState {
 }
 
 abstract class _VideoPlayerState implements VideoPlayerState {
-  factory _VideoPlayerState({final Playlist? playlist}) = _$_VideoPlayerState;
+  factory _VideoPlayerState(
+      {required final PlaybackLocation location,
+      final Playlist? playlist}) = _$_VideoPlayerState;
 
+  @override
+  PlaybackLocation get location;
   @override
   Playlist? get playlist;
   @override

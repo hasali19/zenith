@@ -761,12 +761,13 @@ packages:
     source: hosted
     version: "1.1.0"
   pigeon_build_core:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: pigeon_build_core
-      sha256: "52cce22126cabf93051d780e8c5b151ac208e42a5023fed023865832ab50c4a8"
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/pigeon_build_core"
+      ref: fix-windows-paths
+      resolved-ref: e26092e1cfa23336f4528792b2ccddcab63ce0f9
+      url: "https://github.com/hasali19/pigeon_build_runner.git"
+    source: git
     version: "1.1.0"
   pigeon_build_runner:
     dependency: "direct dev"

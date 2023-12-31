@@ -118,6 +118,8 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   final StreamController<String?> _subsController =
       StreamController.broadcast();
 
+  final _positionHandler = MediaPositionHandler();
+
   double _playbackSpeed = 1.0;
 
   @override
@@ -148,19 +150,9 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   double get playbackSpeed => _playbackSpeed;
 
   bool _playing = false;
-  int _lastKnownPosition = 0;
-  int _lastKnownPositionTs = DateTime.now().millisecondsSinceEpoch;
 
   @override
-  double get position {
-    double position = _lastKnownPosition.toDouble();
-    if (_playing) {
-      position +=
-          (DateTime.now().millisecondsSinceEpoch - _lastKnownPositionTs) *
-              _playbackSpeed;
-    }
-    return position / 1000.0;
-  }
+  double get position => _positionHandler.positionMs / 1000;
 
   @override
   set position(value) {
@@ -199,8 +191,11 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
         currentItemIndex = event['index'];
       }
       if (event.containsKey('position')) {
-        _lastKnownPosition = event['position'];
-        _lastKnownPositionTs = DateTime.now().millisecondsSinceEpoch;
+        _positionHandler.update(
+          positionMs: event['position'],
+          isPlaying: _playing,
+          speed: _playbackSpeed,
+        );
       }
       notifyListeners();
     });
