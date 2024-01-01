@@ -13,6 +13,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:zenith/api.dart';
+import 'package:zenith/screens/video_player/video_player_cubit.dart';
 import 'package:zenith/theme.dart';
 import 'package:zenith/window.dart';
 
@@ -23,7 +25,7 @@ import 'utils.dart';
 import 'video_progress_bar.dart';
 
 @RoutePage()
-class VideoPlayerScreen extends ConsumerStatefulWidget {
+class VideoPlayerScreen extends ConsumerWidget {
   final int id;
   final double startPosition;
 
@@ -34,48 +36,23 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
   }) : super(key: key);
 
   @override
-  ConsumerState<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
-}
-
-class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
-  late Future<(List<api.MediaItem> items, int startIndex)> _items;
-  api.ZenithApiClient get _api => ref.watch(api.apiProvider);
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _items = (() async {
-      final requestedItem = await _api.fetchMediaItem(widget.id);
-
-      final playlist = switch (requestedItem.type) {
-        api.MediaType.episode =>
-          await _api.fetchShowEpisodes(requestedItem.grandparent!.id),
-        _ => [requestedItem],
-      };
-
-      int startIndex =
-          playlist.indexWhere((item) => item.id == requestedItem.id);
-
-      return (playlist, startIndex);
-    })();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<(List<api.MediaItem>, int)>(
-      future: _items,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          final (items, startIndex) = snapshot.data!;
+  Widget build(BuildContext context, WidgetRef ref) {
+    return BlocProvider(
+      create: (context) =>
+          VideoPlayerCubit(ref.watch(apiProvider))..loadPlaylist(id),
+      child: BlocBuilder<VideoPlayerCubit, VideoPlayerState>(
+        builder: (context, state) {
+          if (state.playlist == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final Playlist(:items, start: startIndex) = state.playlist!;
           return _VideoPlayer(
             items: items,
             startIndex: startIndex,
-            startPosition: widget.startPosition,
+            startPosition: startPosition,
           );
-        } else {
-          return const Center(child: CircularProgressIndicator());
-        }
-      },
+        },
+      ),
     );
   }
 }
@@ -345,22 +322,41 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
       title = Text(currentItem.name);
     }
 
-    return VideoPlayerUi(
-      controller: _controller!,
-      title: title,
-      audioTracks: currentItem.videoFile!.streams
-          .whereType<api.AudioStreamInfo>()
-          .map(audioTrackFromApi)
-          .toList(),
-      subtitles: currentItem.videoFile!.subtitles
-          .map((s) => subtitleFromApi(_api, s))
-          .toList(),
-      progress: () => VideoProgressData(
-        total: Duration(seconds: _controller!.duration.toInt()),
-        progress: Duration(seconds: _controller!.position.toInt()),
+    return ListenableBuilder(
+      listenable: _controller!,
+      builder: (context, child) => VideoPlayerUi(
+        title: title,
+        audioTracks: currentItem.videoFile!.streams
+            .whereType<api.AudioStreamInfo>()
+            .map(audioTrackFromApi)
+            .toList(),
+        subtitles: currentItem.videoFile!.subtitles
+            .map((s) => subtitleFromApi(_api, s))
+            .toList(),
+        progress: () => VideoProgressData(
+          total: Duration(seconds: _controller!.duration.toInt()),
+          progress: Duration(seconds: _controller!.position.toInt()),
+        ),
+        isAudioTrackSelectionSupported:
+            _controller!.supportsAudioTrackSelection,
+        fit: _controller!.fit,
+        playbackSpeed: _controller!.playbackSpeed,
+        isLoading: _controller!.loading,
+        isPaused: _controller!.paused,
+        onInteractionStart: _disableAutoHideControls,
+        onInteractionEnd: _resetControlsTimer,
+        onAudioTrackSelected: (index) => _controller!.setAudioTrack(index),
+        onTextTrackSelected: (track) => _controller!.setTextTrack(track),
+        onFitSelected: (fit) => _controller!.setFit(fit),
+        onPlaybackSpeedSelected: (speed) =>
+            _controller!.setPlaybackSpeed(speed),
+        onSeek: (position) => _controller!.position = position,
+        onSeekDelta: (delta) => _controller!.position += delta,
+        onSeekToPrevious: () => _controller!.seekToPreviousItem(),
+        onSeekToNext: () => _controller!.seekToNextItem(),
+        onSetPaused: (isPaused) =>
+            isPaused ? _controller!.pause() : _controller!.play(),
       ),
-      onInteractionStart: _disableAutoHideControls,
-      onInteractionEnd: _resetControlsTimer,
     );
   }
 
