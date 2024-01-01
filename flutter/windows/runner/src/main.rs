@@ -5,15 +5,15 @@ mod flutter_windows;
 mod window_placement;
 
 use flutter_desktop_messenger::codec::EncodableValue;
-use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
+use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::WindowsAndMessaging::{LoadIconW, SendMessageW, ICON_SMALL, WM_SETICON};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, WindowEvent};
-use winit::event_loop::{ControlFlow, EventLoop};
-use winit::platform::run_return::EventLoopExtRunReturn;
+use winit::event_loop::EventLoop;
+use winit::platform::run_on_demand::EventLoopExtRunOnDemand;
 use winit::window::{Fullscreen, WindowBuilder};
 
 use crate::flutter_window_binding::FlutterWindowBinding;
@@ -31,7 +31,7 @@ fn set_window_icon(window: HWND) {
 }
 
 pub fn main() {
-    let mut event_loop = EventLoop::new();
+    let mut event_loop = EventLoop::new().unwrap();
 
     let window = WindowBuilder::new()
         .with_title("Zenith")
@@ -41,8 +41,8 @@ pub fn main() {
         .build(&event_loop)
         .unwrap();
 
-    let window_handle = match window.raw_window_handle() {
-        RawWindowHandle::Win32(handle) => HWND(handle.hwnd as isize),
+    let window_handle = match window.window_handle().unwrap().as_raw() {
+        RawWindowHandle::Win32(handle) => HWND(handle.hwnd.get()),
         _ => unreachable!(),
     };
 
@@ -84,17 +84,17 @@ pub fn main() {
 
     let _binding = FlutterWindowBinding::new(&view_controller, window_handle);
 
-    event_loop.run_return(move |event, _, control_flow| {
-        *control_flow = ControlFlow::Wait;
-
-        if let Event::WindowEvent {
-            window_id: _,
-            event: WindowEvent::CloseRequested,
-        } = event
-        {
-            *control_flow = ControlFlow::Exit;
-        }
-    });
+    event_loop
+        .run_on_demand(|event, t| {
+            if let Event::WindowEvent {
+                window_id: _,
+                event: WindowEvent::CloseRequested,
+            } = event
+            {
+                t.exit();
+            }
+        })
+        .unwrap();
 
     if let Err(e) = window_placement::try_save(&window_placement_path, window_handle) {
         eprintln!("failed to save window placement state: {e}");

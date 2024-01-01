@@ -52,9 +52,9 @@ impl D3d11Context {
                 Quality: 0,
             },
             Usage: D3D11_USAGE_DEFAULT,
-            BindFlags: D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-            CPUAccessFlags: D3D11_CPU_ACCESS_FLAG::default(),
-            MiscFlags: D3D11_RESOURCE_MISC_SHARED,
+            BindFlags: (D3D11_BIND_RENDER_TARGET.0 | D3D11_BIND_SHADER_RESOURCE.0) as u32,
+            CPUAccessFlags: D3D11_CPU_ACCESS_FLAG::default().0 as u32,
+            MiscFlags: D3D11_RESOURCE_MISC_SHARED.0 as u32,
         };
 
         let mut texture = None;

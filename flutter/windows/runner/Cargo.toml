@@ -7,8 +7,8 @@ edition = "2021"
 
 [dependencies]
 dirs = "5.0"
-raw-window-handle = "0.5"
-winit = "0.28"
+raw-window-handle = "0.6"
+winit = "0.29"
 
 [dependencies.flutter-desktop-messenger]
 path = "../../crates/flutter-desktop-messenger"
@@ -17,7 +17,7 @@ path = "../../crates/flutter-desktop-messenger"
 path = "../../crates/flutter-windows-sys"
 
 [dependencies.windows]
-version = "0.48"
+version = "0.52"
 features = [
     "Win32_Foundation",
     "Win32_System_LibraryLoader",

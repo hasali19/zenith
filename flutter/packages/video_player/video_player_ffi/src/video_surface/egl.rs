@@ -25,11 +25,13 @@ impl EglContext {
         let lib = unsafe { Library::new("libEGL.dll")? };
         let egl = unsafe { EglInstance::load_required_from(lib)? };
 
-        let display = egl.get_platform_display(
-            0x3202,
-            egl::DEFAULT_DISPLAY,
-            &[0x3203, 0x3208, 0x320f, 1, 0x3038],
-        )?;
+        let display = unsafe {
+            egl.get_platform_display(
+                0x3202,
+                egl::DEFAULT_DISPLAY,
+                &[0x3203, 0x3208, 0x320f, 1, 0x3038],
+            )?
+        };
 
         egl.initialize(display)?;
 

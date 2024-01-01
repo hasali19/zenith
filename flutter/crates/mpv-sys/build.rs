@@ -13,7 +13,7 @@ fn main() {
         .header(mpv_dir.join("include/mpv/render.h").to_str().unwrap())
         .header(mpv_dir.join("include/mpv/render_gl.h").to_str().unwrap())
         .derive_default(true)
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .generate()
         .unwrap()
         .write_to_file(PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs"))

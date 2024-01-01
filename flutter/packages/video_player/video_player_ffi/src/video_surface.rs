@@ -2,7 +2,7 @@ mod d3d11;
 mod egl;
 mod mpv_render_context;
 
-use std::ffi::CStr;
+use std::ffi::{c_void, CStr};
 use std::ptr;
 use std::sync::{mpsc, Arc, Mutex};
 
@@ -249,13 +249,7 @@ fn create_mpv_render_context(
     let gl_lib = unsafe { Library::new("libGLESv2.dll") }?;
 
     let loader = |s: &str| unsafe {
-        gl_lib
-            .get::<unsafe extern "C" fn()>(s.as_bytes())
-            .unwrap()
-            .into_raw()
-            .into_raw()
-            .cast_const()
-            .cast()
+        *gl_lib.get::<unsafe extern "C" fn()>(s.as_bytes()).unwrap() as *const c_void
     };
 
     gl::Finish::load_with(loader);
@@ -263,12 +257,9 @@ fn create_mpv_render_context(
     egl.make_context_current();
 
     let get_proc_address = Box::new(move |name: &CStr| unsafe {
-        gl_lib
+        *gl_lib
             .get::<unsafe extern "C" fn()>(name.to_bytes_with_nul())
-            .unwrap()
-            .into_raw()
-            .into_raw()
-            .cast()
+            .unwrap() as *mut c_void
     });
 
     Ok(MpvRenderContext::new(

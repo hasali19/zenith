@@ -10,20 +10,20 @@ crate-type = ["cdylib"]
 
 [dependencies]
 gl = "0.14"
-libloading = "0.7"
+libloading = "0.8"
 
 [dependencies.flutter-plugin]
 path = "../../../crates/flutter-plugin"
 
 [dependencies.khronos-egl]
-version = "4.1"
+version = "6.0"
 features = ["dynamic"]
 
 [dependencies.mpv-sys]
 path = "../../../crates/mpv-sys"
 
 [dependencies.windows]
-version = "0.48"
+version = "0.52"
 features = [
     "Foundation",
     "Media",

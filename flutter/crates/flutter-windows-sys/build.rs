@@ -1,4 +1,3 @@
-use bindgen::CargoCallbacks;
 use which::which;
 
 fn main() {
@@ -9,7 +8,7 @@ fn main() {
     let bindings = bindgen::builder()
         .header(header.to_str().unwrap())
         .allowlist_function(r"Flutter\w+")
-        .parse_callbacks(Box::new(CargoCallbacks))
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .generate()
         .unwrap();
 

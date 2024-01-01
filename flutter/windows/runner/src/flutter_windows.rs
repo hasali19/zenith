@@ -12,7 +12,7 @@ use flutter_windows_sys::{
     FlutterDesktopViewControllerHandleTopLevelWindowProc, FlutterDesktopViewControllerRef,
     FlutterDesktopViewGetHWND, FlutterDesktopViewRef,
 };
-use windows::w;
+use windows::core::w;
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
 
 pub struct FlutterDesktopViewController {

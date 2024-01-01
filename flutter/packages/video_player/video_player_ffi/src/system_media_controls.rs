@@ -1,5 +1,4 @@
-use windows::core::HSTRING;
-use windows::h;
+use windows::core::{h, HSTRING};
 use windows::Foundation::{EventRegistrationToken, TypedEventHandler};
 use windows::Media::{
     MediaPlaybackStatus, MediaPlaybackType, SystemMediaTransportControls,
