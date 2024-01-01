@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/media_route_button/media_route_button.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/router.dart';
 import 'package:zenith/screens/item_details/episodes_list.dart';
@@ -47,6 +48,7 @@ class _ItemDetailsScreenState extends ConsumerState<ItemDetailsScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
+        actions: const [MediaRouteButton()],
       ),
       body: Consumer(builder: (context, ref, child) {
         final model = ref.watch(itemDetailsModelProvider(widget.id));
