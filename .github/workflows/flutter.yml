@@ -125,14 +125,9 @@ jobs:
 
       - name: Download mpv
         run: |
-          wget https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-v3-20230122-git-92a6f2d.7z/download
+          wget https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-v3-20231231-git-abc2a74.7z/download
           7z x download -ompv
           cd mpv
-          $exports = get-content mpv.def
-          echo "EXPORTS" > mpv.def
-          echo $exports >> mpv.def
-          lib /def:mpv.def /name:mpv-2.dll /out:mpv.lib /MACHINE:X64
-          mv libmpv-2.dll mpv-2.dll
 
       - name: Download angle
         run: |

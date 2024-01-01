@@ -32,7 +32,7 @@ add_dependencies(_cargo-build_video_player_ffi flutter flutter_assemble)
 # external build triggered from this build file.
 set(video_player_ffi_bundled_libraries
   $<TARGET_FILE:video_player_ffi-shared>
-  $ENV{MPV_DIR}/mpv-2.dll
+  $ENV{MPV_DIR}/libmpv-2.dll
   $ENV{ANGLE_BIN_DIR}/libEGL.dll
   $ENV{ANGLE_BIN_DIR}/libGLESv2.dll
   PARENT_SCOPE

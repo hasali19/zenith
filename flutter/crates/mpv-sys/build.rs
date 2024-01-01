@@ -6,9 +6,8 @@ fn main() {
 
     println!("cargo:rerun-if-env-changed=MPV_DIR");
     println!("cargo:rustc-link-search={}", mpv_dir.display());
-    println!("cargo:rustc-link-lib=dylib=mpv");
 
-    bindgen::builder()
+    let bindings = bindgen::builder()
         .header(mpv_dir.join("include/mpv/client.h").to_str().unwrap())
         .header(mpv_dir.join("include/mpv/render.h").to_str().unwrap())
         .header(mpv_dir.join("include/mpv/render_gl.h").to_str().unwrap())
@@ -16,6 +15,14 @@ fn main() {
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .generate()
         .unwrap()
-        .write_to_file(PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs"))
-        .unwrap();
+        .to_string();
+
+    let bindings = bindings.replace(
+        "extern \"C\" {",
+        "#[link(name = \"libmpv-2\", kind = \"raw-dylib\")] extern \"C\" {",
+    );
+
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs");
+
+    std::fs::write(out_path, bindings).unwrap();
 }
