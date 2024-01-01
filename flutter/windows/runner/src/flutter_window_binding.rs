@@ -1,11 +1,14 @@
-use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
+use std::ptr;
+
+use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
 use windows::Win32::UI::Input::KeyboardAndMouse::SetFocus;
 use windows::Win32::UI::Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass};
 use windows::Win32::UI::WindowsAndMessaging::{
-    GetClientRect, MoveWindow, SetParent, WM_ACTIVATE, WM_FONTCHANGE, WM_SIZE,
+    GetClientRect, MoveWindow, SetParent, MINMAXINFO, WM_ACTIVATE, WM_FONTCHANGE, WM_GETMINMAXINFO,
+    WM_SIZE,
 };
 
-use crate::flutter_windows::FlutterDesktopViewController;
+use crate::flutter_view_controller::FlutterDesktopViewController;
 
 pub struct FlutterWindowBinding<'a> {
     window: HWND,
@@ -93,6 +96,12 @@ unsafe extern "system" fn subclass_proc(
             return LRESULT(0);
         }
         WM_FONTCHANGE => view_controller.engine().reload_system_fonts(),
+        WM_GETMINMAXINFO => {
+            let out_ptr = lparam.0 as *mut MINMAXINFO;
+            let min_track_size_ptr = ptr::addr_of_mut!((*out_ptr).ptMinTrackSize);
+            ptr::write(min_track_size_ptr, POINT { x: 300, y: 300 });
+            return LRESULT(0);
+        }
         _ => {}
     }
 

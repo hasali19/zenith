@@ -29,6 +29,8 @@ pub fn try_save(path: &Path, window: HWND) -> io::Result<()> {
 
         GetWindowPlacement(window, &mut placement);
 
+        println!("{placement:?}");
+
         &slice::from_raw_parts(
             &placement as *const WINDOWPLACEMENT as *const u8,
             placement.length as usize,
