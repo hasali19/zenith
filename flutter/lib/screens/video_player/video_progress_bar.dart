@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:zenith/theme.dart';
@@ -9,8 +11,8 @@ class VideoProgressData {
   VideoProgressData({required this.total, required this.progress});
 }
 
-class VideoProgressBar extends StatelessWidget {
-  final Stream<VideoProgressData> stream;
+class VideoProgressBar extends StatefulWidget {
+  final VideoProgressData Function() progress;
 
   final void Function(Duration) onSeek;
   final void Function() onSeekStart;
@@ -18,11 +20,44 @@ class VideoProgressBar extends StatelessWidget {
 
   const VideoProgressBar({
     Key? key,
-    required this.stream,
+    required this.progress,
     required this.onSeek,
     required this.onSeekStart,
     required this.onSeekEnd,
   }) : super(key: key);
+
+  @override
+  State<VideoProgressBar> createState() => _VideoProgressBarState();
+}
+
+class _VideoProgressBarState extends State<VideoProgressBar> {
+  late final Timer _timer;
+
+  VideoProgressData _progress =
+      VideoProgressData(total: Duration.zero, progress: Duration.zero);
+
+  @override
+  void initState() {
+    super.initState();
+    _progress = widget.progress();
+    _timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      setState(() {
+        _progress = widget.progress();
+      });
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant VideoProgressBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _progress = widget.progress();
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
 
   String _formatSegment(int value) {
     return value.toString().padLeft(2, '0');
@@ -48,46 +83,43 @@ class VideoProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final textStyle =
         context.zenithTheme.bodyMedium.copyWith(color: Colors.white);
-    return StreamBuilder<VideoProgressData>(
-      stream: stream,
-      builder: (context, snapshot) {
-        final data = snapshot.data;
-        final total = data?.total ?? Duration.zero;
-        final progress = total > Duration.zero
-            ? (data?.progress ?? Duration.zero)
-            : Duration.zero;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final total = _progress.total;
+    final progress = total > Duration.zero ? _progress.progress : Duration.zero;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text.rich(TextSpan(
           children: [
-            Text.rich(TextSpan(
-              children: [
-                TextSpan(text: _formatTime(progress)),
-                TextSpan(
-                  text: ' / ${_formatTime(total)}',
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              ],
-            )),
-            const SizedBox(height: 8),
-            ProgressBar(
-              progress: progress,
-              total: total,
-              buffered: progress,
-              barHeight: 4,
-              progressBarColor: Colors.white,
-              baseBarColor: Colors.white.withOpacity(0.24),
-              thumbColor: Colors.white,
-              thumbRadius: 7,
-              thumbGlowRadius: 25,
-              timeLabelTextStyle: textStyle,
-              timeLabelLocation: TimeLabelLocation.none,
-              onDragStart: (details) => onSeekStart(),
-              onDragEnd: () => onSeekEnd(),
-              onSeek: (value) => onSeek(value),
+            TextSpan(text: _formatTime(progress)),
+            TextSpan(
+              text: ' / ${_formatTime(total)}',
+              style: const TextStyle(color: Colors.grey),
             ),
           ],
-        );
-      },
+        )),
+        const SizedBox(height: 8),
+        ProgressBar(
+          progress: progress,
+          total: total,
+          buffered: progress,
+          barHeight: 4,
+          progressBarColor: Colors.white,
+          baseBarColor: Colors.white.withOpacity(0.24),
+          thumbColor: Colors.white,
+          thumbRadius: 7,
+          thumbGlowRadius: 25,
+          timeLabelTextStyle: textStyle,
+          timeLabelLocation: TimeLabelLocation.none,
+          onDragStart: (details) => widget.onSeekStart(),
+          onDragEnd: () => widget.onSeekEnd(),
+          onSeek: (value) {
+            setState(() {
+              _progress = VideoProgressData(total: total, progress: value);
+            });
+            widget.onSeek(value);
+          },
+        ),
+      ],
     );
   }
 }

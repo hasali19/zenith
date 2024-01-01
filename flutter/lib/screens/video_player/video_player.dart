@@ -109,8 +109,6 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
   bool _isPaused = false;
   VideoState _videoState = VideoState.idle;
 
-  final _progressController = ProgressController();
-
   late Timer _progressReportTimer;
   Timer? _controlsTimer;
 
@@ -144,7 +142,6 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
     WakelockPlus.disable();
     _controlsTimer?.cancel();
     _progressReportTimer.cancel();
-    _progressController.dispose();
     _controller?.dispose();
     platform.setPipEnabled(false);
   }
@@ -195,8 +192,6 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
           }
         });
     });
-
-    _progressController.init(controller);
   }
 
   void _onProgressReporterTick() {
@@ -360,7 +355,10 @@ class _VideoPlayerState extends ConsumerState<_VideoPlayer> {
       subtitles: currentItem.videoFile!.subtitles
           .map((s) => subtitleFromApi(_api, s))
           .toList(),
-      progress: _progressController.stream,
+      progress: () => VideoProgressData(
+        total: Duration(seconds: _controller!.duration.toInt()),
+        progress: Duration(seconds: _controller!.position.toInt()),
+      ),
       onInteractionStart: _disableAutoHideControls,
       onInteractionEnd: _resetControlsTimer,
     );

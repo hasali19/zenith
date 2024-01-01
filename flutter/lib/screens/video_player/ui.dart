@@ -24,7 +24,7 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
   final Widget title;
   final List<AudioTrack> audioTracks;
   final List<SubtitleTrack> subtitles;
-  final Stream<VideoProgressData> progress;
+  final VideoProgressData Function() progress;
 
   final void Function() onInteractionStart;
   final void Function() onInteractionEnd;
@@ -248,7 +248,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         VideoProgressBar(
-          stream: widget.progress,
+          progress: widget.progress,
           onSeek: (position) =>
               _controller.position = position.inSeconds.toDouble(),
           onSeekStart: widget.onInteractionStart,
