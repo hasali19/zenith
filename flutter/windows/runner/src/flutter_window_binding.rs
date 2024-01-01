@@ -24,7 +24,7 @@ impl<'a> FlutterWindowBinding<'a> {
             SetParent(view_window, window);
 
             let mut rect = RECT::default();
-            GetClientRect(window, &mut rect);
+            GetClientRect(window, &mut rect).unwrap();
 
             MoveWindow(
                 view_window,
@@ -33,7 +33,8 @@ impl<'a> FlutterWindowBinding<'a> {
                 rect.right - rect.left,
                 rect.bottom - rect.top,
                 true,
-            );
+            )
+            .unwrap();
 
             SetFocus(view_window);
 
@@ -77,7 +78,7 @@ unsafe extern "system" fn subclass_proc(
     match umsg {
         WM_SIZE => {
             let mut rect = RECT::default();
-            GetClientRect(hwnd, &mut rect);
+            GetClientRect(hwnd, &mut rect).unwrap();
             MoveWindow(
                 view_controller.view().hwnd(),
                 rect.left,
@@ -85,7 +86,8 @@ unsafe extern "system" fn subclass_proc(
                 rect.right - rect.left,
                 rect.bottom - rect.top,
                 true,
-            );
+            )
+            .unwrap();
             return LRESULT(0);
         }
         WM_ACTIVATE => {

@@ -15,7 +15,7 @@ pub fn try_restore(path: &Path, window: HWND) -> io::Result<()> {
     }
 
     let placement = unsafe { bytes.align_to::<WINDOWPLACEMENT>().1[0] };
-    unsafe { SetWindowPlacement(window, &placement) };
+    unsafe { SetWindowPlacement(window, &placement)? };
 
     Ok(())
 }
@@ -27,7 +27,7 @@ pub fn try_save(path: &Path, window: HWND) -> io::Result<()> {
             ..Default::default()
         };
 
-        GetWindowPlacement(window, &mut placement);
+        GetWindowPlacement(window, &mut placement)?;
 
         &slice::from_raw_parts(
             &placement as *const WINDOWPLACEMENT as *const u8,
