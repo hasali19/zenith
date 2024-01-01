@@ -14,7 +14,8 @@ class MediaRouteButtonCubit extends Cubit<MediaRouteButtonState> {
   final MediaRouter _mediaRouter;
 
   MediaRouteButtonCubit(this._mediaRouter)
-      : super(MediaRouteButtonState(isConnected: false)) {
+      : super(MediaRouteButtonState(
+            isConnected: _mediaRouter.selectedRoute.value != null)) {
     _mediaRouter.startRouteScanning(RoutesScanningMode.none);
     _mediaRouter.selectedRoute.addListener(_onSelectedRouteChanged);
   }
