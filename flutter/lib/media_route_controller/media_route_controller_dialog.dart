@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,6 +20,8 @@ class MediaRouteControllerDialog extends ConsumerStatefulWidget {
       _MediaRouteControllerDialogState();
 }
 
+typedef _VideoProgress = ({Duration total, Duration progress});
+
 class _MediaRouteControllerDialogState
     extends ConsumerState<MediaRouteControllerDialog> {
   late final MediaRouter _mediaRouter;
@@ -31,26 +35,36 @@ class _MediaRouteControllerDialogState
     _mediaRouter = context.read<MediaRouter>();
     _mediaRouter.mediaStatus.addListener(_onMediaStatusUpdated);
 
-    _progress = Stream.periodic(
-      const Duration(milliseconds: 500),
-      (count) {
-        return (
-          total: Duration(
-              milliseconds:
-                  _mediaRouter.mediaStatus.value?.mediaInfo?.streamDuration ??
-                      _positionHandler.positionMs.toInt()),
-          progress: Duration(milliseconds: _positionHandler.positionMs.toInt()),
-        );
-      },
-    );
-
     _onMediaStatusUpdated();
+
+    _progress = _createProgressStream();
   }
 
   @override
   void dispose() {
     _mediaRouter.mediaStatus.removeListener(_onMediaStatusUpdated);
     super.dispose();
+  }
+
+  Stream<_VideoProgress> _createProgressStream() {
+    _VideoProgress getProgress() {
+      final positionMs = _positionHandler.positionMs.toInt();
+      final durationMs =
+          _mediaRouter.mediaStatus.value?.mediaInfo?.streamDuration ??
+              positionMs;
+      return (
+        total: Duration(milliseconds: durationMs),
+        progress: Duration(milliseconds: positionMs),
+      );
+    }
+
+    final controller = StreamController<_VideoProgress>();
+
+    controller.add(getProgress());
+    controller.addStream(Stream.periodic(
+        const Duration(milliseconds: 500), (count) => getProgress()));
+
+    return controller.stream;
   }
 
   void _onMediaStatusUpdated() {
