@@ -32,7 +32,7 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
 
-  audio_video_progress_bar: ^0.11.0
+  audio_video_progress_bar: ^2.0.1
   auto_route: ^7.8.3
   cached_network_image: ^3.3.0
   cookie_jar: ^4.0.8
@@ -45,7 +45,7 @@ dependencies:
   freezed_annotation: ^2.3.0
   json_annotation: ^4.8.1
   logger: ^2.0.2+1
-  package_info_plus: ^4.1.0
+  package_info_plus: ^5.0.1
   shared_preferences: ^2.0.15
   shared_preferences_riverpod: ^0.3.0
   sized_context: ^1.0.0+1
@@ -69,7 +69,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.3
+  flutter_lints: ^3.0.1
 
   auto_route_generator: ^7.3.1
   build_runner: ^2.0.0
