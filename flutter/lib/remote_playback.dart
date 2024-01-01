@@ -64,7 +64,7 @@ class _RemotePlaybackEventsApi implements api.RemotePlaybackEventsApi {
   }
 
   @override
-  void onStatusUpdated(api.MediaStatus status) {
+  void onStatusUpdated(api.MediaStatus? status) {
     _mediaRouter.mediaStatus.value = status;
   }
 }

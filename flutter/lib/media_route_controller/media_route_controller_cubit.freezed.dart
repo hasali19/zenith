@@ -17,6 +17,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$MediaRouteControllerState {
   MediaRoute? get route => throw _privateConstructorUsedError;
+  api.MediaStatus? get mediaStatus => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $MediaRouteControllerStateCopyWith<MediaRouteControllerState> get copyWith =>
@@ -29,7 +30,7 @@ abstract class $MediaRouteControllerStateCopyWith<$Res> {
           $Res Function(MediaRouteControllerState) then) =
       _$MediaRouteControllerStateCopyWithImpl<$Res, MediaRouteControllerState>;
   @useResult
-  $Res call({MediaRoute? route});
+  $Res call({MediaRoute? route, api.MediaStatus? mediaStatus});
 
   $MediaRouteCopyWith<$Res>? get route;
 }
@@ -49,12 +50,17 @@ class _$MediaRouteControllerStateCopyWithImpl<$Res,
   @override
   $Res call({
     Object? route = freezed,
+    Object? mediaStatus = freezed,
   }) {
     return _then(_value.copyWith(
       route: freezed == route
           ? _value.route
           : route // ignore: cast_nullable_to_non_nullable
               as MediaRoute?,
+      mediaStatus: freezed == mediaStatus
+          ? _value.mediaStatus
+          : mediaStatus // ignore: cast_nullable_to_non_nullable
+              as api.MediaStatus?,
     ) as $Val);
   }
 
@@ -80,7 +86,7 @@ abstract class _$$_MediaRouteControllerStateCopyWith<$Res>
       __$$_MediaRouteControllerStateCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({MediaRoute? route});
+  $Res call({MediaRoute? route, api.MediaStatus? mediaStatus});
 
   @override
   $MediaRouteCopyWith<$Res>? get route;
@@ -100,12 +106,17 @@ class __$$_MediaRouteControllerStateCopyWithImpl<$Res>
   @override
   $Res call({
     Object? route = freezed,
+    Object? mediaStatus = freezed,
   }) {
     return _then(_$_MediaRouteControllerState(
       route: freezed == route
           ? _value.route
           : route // ignore: cast_nullable_to_non_nullable
               as MediaRoute?,
+      mediaStatus: freezed == mediaStatus
+          ? _value.mediaStatus
+          : mediaStatus // ignore: cast_nullable_to_non_nullable
+              as api.MediaStatus?,
     ));
   }
 }
@@ -113,14 +124,17 @@ class __$$_MediaRouteControllerStateCopyWithImpl<$Res>
 /// @nodoc
 
 class _$_MediaRouteControllerState implements _MediaRouteControllerState {
-  _$_MediaRouteControllerState({required this.route});
+  _$_MediaRouteControllerState(
+      {required this.route, required this.mediaStatus});
 
   @override
   final MediaRoute? route;
+  @override
+  final api.MediaStatus? mediaStatus;
 
   @override
   String toString() {
-    return 'MediaRouteControllerState(route: $route)';
+    return 'MediaRouteControllerState(route: $route, mediaStatus: $mediaStatus)';
   }
 
   @override
@@ -128,11 +142,13 @@ class _$_MediaRouteControllerState implements _MediaRouteControllerState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_MediaRouteControllerState &&
-            (identical(other.route, route) || other.route == route));
+            (identical(other.route, route) || other.route == route) &&
+            (identical(other.mediaStatus, mediaStatus) ||
+                other.mediaStatus == mediaStatus));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, route);
+  int get hashCode => Object.hash(runtimeType, route, mediaStatus);
 
   @JsonKey(ignore: true)
   @override
@@ -143,11 +159,15 @@ class _$_MediaRouteControllerState implements _MediaRouteControllerState {
 }
 
 abstract class _MediaRouteControllerState implements MediaRouteControllerState {
-  factory _MediaRouteControllerState({required final MediaRoute? route}) =
+  factory _MediaRouteControllerState(
+          {required final MediaRoute? route,
+          required final api.MediaStatus? mediaStatus}) =
       _$_MediaRouteControllerState;
 
   @override
   MediaRoute? get route;
+  @override
+  api.MediaStatus? get mediaStatus;
   @override
   @JsonKey(ignore: true)
   _$$_MediaRouteControllerStateCopyWith<_$_MediaRouteControllerState>

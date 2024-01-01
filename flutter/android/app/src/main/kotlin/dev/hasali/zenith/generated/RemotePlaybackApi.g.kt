@@ -60,7 +60,8 @@ enum class RoutesScanningMode(val raw: Int) {
 
 enum class MediaType(val raw: Int) {
   MOVIE(0),
-  TVSHOW(1);
+  TVSHOW(1),
+  UNKNOWN(2);
 
   companion object {
     fun ofRaw(raw: Int): MediaType? {
@@ -260,7 +261,7 @@ data class MediaSeekOptions (
 /** Generated class from Pigeon that represents data sent in messages. */
 data class MediaStatus (
   val playerState: PlayerState,
-  val mediaInfo: MediaInfo,
+  val mediaInfo: MediaInfo? = null,
   val streamPosition: Long,
   val playbackRate: Double
 
@@ -269,7 +270,9 @@ data class MediaStatus (
     @Suppress("UNCHECKED_CAST")
     fun fromList(list: List<Any?>): MediaStatus {
       val playerState = PlayerState.ofRaw(list[0] as Int)!!
-      val mediaInfo = MediaInfo.fromList(list[1] as List<Any?>)
+      val mediaInfo: MediaInfo? = (list[1] as List<Any?>?)?.let {
+        MediaInfo.fromList(it)
+      }
       val streamPosition = list[2].let { if (it is Int) it.toLong() else it as Long }
       val playbackRate = list[3] as Double
       return MediaStatus(playerState, mediaInfo, streamPosition, playbackRate)
@@ -278,7 +281,7 @@ data class MediaStatus (
   fun toList(): List<Any?> {
     return listOf<Any?>(
       playerState.raw,
-      mediaInfo.toList(),
+      mediaInfo?.toList(),
       streamPosition,
       playbackRate,
     )
@@ -287,19 +290,24 @@ data class MediaStatus (
 
 /** Generated class from Pigeon that represents data sent in messages. */
 data class MediaInfo (
-  val streamDuration: Long
+  val streamDuration: Long,
+  val metadata: MediaMetadata? = null
 
 ) {
   companion object {
     @Suppress("UNCHECKED_CAST")
     fun fromList(list: List<Any?>): MediaInfo {
       val streamDuration = list[0].let { if (it is Int) it.toLong() else it as Long }
-      return MediaInfo(streamDuration)
+      val metadata: MediaMetadata? = (list[1] as List<Any?>?)?.let {
+        MediaMetadata.fromList(it)
+      }
+      return MediaInfo(streamDuration, metadata)
     }
   }
   fun toList(): List<Any?> {
     return listOf<Any?>(
       streamDuration,
+      metadata?.toList(),
     )
   }
 }
@@ -372,6 +380,7 @@ interface RemotePlaybackApi {
   fun pause()
   fun seek(options: MediaSeekOptions)
   fun setPlaybackRate(playbackRate: Double)
+  fun stop()
 
   companion object {
     /** The codec used by RemotePlaybackApi. */
@@ -529,6 +538,23 @@ interface RemotePlaybackApi {
           channel.setMessageHandler(null)
         }
       }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.zenith.RemotePlaybackApi.stop", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            var wrapped: List<Any?>
+            try {
+              api.stop()
+              wrapped = listOf<Any?>(null)
+            } catch (exception: Throwable) {
+              wrapped = wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
     }
   }
 }
@@ -543,10 +569,20 @@ private object RemotePlaybackEventsApiCodec : StandardMessageCodec() {
       }
       129.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          MediaRoute.fromList(it)
+          MediaMetadata.fromList(it)
         }
       }
       130.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          MediaMetadataImage.fromList(it)
+        }
+      }
+      131.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          MediaRoute.fromList(it)
+        }
+      }
+      132.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           MediaStatus.fromList(it)
         }
@@ -560,12 +596,20 @@ private object RemotePlaybackEventsApiCodec : StandardMessageCodec() {
         stream.write(128)
         writeValue(stream, value.toList())
       }
-      is MediaRoute -> {
+      is MediaMetadata -> {
         stream.write(129)
         writeValue(stream, value.toList())
       }
-      is MediaStatus -> {
+      is MediaMetadataImage -> {
         stream.write(130)
+        writeValue(stream, value.toList())
+      }
+      is MediaRoute -> {
+        stream.write(131)
+        writeValue(stream, value.toList())
+      }
+      is MediaStatus -> {
+        stream.write(132)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -597,7 +641,7 @@ class RemotePlaybackEventsApi(private val binaryMessenger: BinaryMessenger) {
       } 
     }
   }
-  fun onStatusUpdated(statusArg: MediaStatus, callback: (Result<Unit>) -> Unit) {
+  fun onStatusUpdated(statusArg: MediaStatus?, callback: (Result<Unit>) -> Unit) {
     val channelName = "dev.flutter.pigeon.zenith.RemotePlaybackEventsApi.onStatusUpdated"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(statusArg)) {

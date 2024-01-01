@@ -34,6 +34,7 @@ enum RoutesScanningMode {
 enum MediaType {
   movie,
   tvShow,
+  unknown,
 }
 
 enum ResumeState {
@@ -253,14 +254,14 @@ class MediaSeekOptions {
 class MediaStatus {
   MediaStatus({
     required this.playerState,
-    required this.mediaInfo,
+    this.mediaInfo,
     required this.streamPosition,
     required this.playbackRate,
   });
 
   PlayerState playerState;
 
-  MediaInfo mediaInfo;
+  MediaInfo? mediaInfo;
 
   int streamPosition;
 
@@ -269,7 +270,7 @@ class MediaStatus {
   Object encode() {
     return <Object?>[
       playerState.index,
-      mediaInfo.encode(),
+      mediaInfo?.encode(),
       streamPosition,
       playbackRate,
     ];
@@ -279,7 +280,9 @@ class MediaStatus {
     result as List<Object?>;
     return MediaStatus(
       playerState: PlayerState.values[result[0]! as int],
-      mediaInfo: MediaInfo.decode(result[1]! as List<Object?>),
+      mediaInfo: result[1] != null
+          ? MediaInfo.decode(result[1]! as List<Object?>)
+          : null,
       streamPosition: result[2]! as int,
       playbackRate: result[3]! as double,
     );
@@ -289,13 +292,17 @@ class MediaStatus {
 class MediaInfo {
   MediaInfo({
     required this.streamDuration,
+    this.metadata,
   });
 
   int streamDuration;
 
+  MediaMetadata? metadata;
+
   Object encode() {
     return <Object?>[
       streamDuration,
+      metadata?.encode(),
     ];
   }
 
@@ -303,6 +310,9 @@ class MediaInfo {
     result as List<Object?>;
     return MediaInfo(
       streamDuration: result[0]! as int,
+      metadata: result[1] != null
+          ? MediaMetadata.decode(result[1]! as List<Object?>)
+          : null,
     );
   }
 }
@@ -535,6 +545,28 @@ class RemotePlaybackApi {
       return;
     }
   }
+
+  Future<void> stop() async {
+    const String __pigeon_channelName = 'dev.flutter.pigeon.zenith.RemotePlaybackApi.stop';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(null) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
 }
 
 class _RemotePlaybackEventsApiCodec extends StandardMessageCodec {
@@ -544,11 +576,17 @@ class _RemotePlaybackEventsApiCodec extends StandardMessageCodec {
     if (value is MediaInfo) {
       buffer.putUint8(128);
       writeValue(buffer, value.encode());
-    } else if (value is MediaRoute) {
+    } else if (value is MediaMetadata) {
       buffer.putUint8(129);
       writeValue(buffer, value.encode());
-    } else if (value is MediaStatus) {
+    } else if (value is MediaMetadataImage) {
       buffer.putUint8(130);
+      writeValue(buffer, value.encode());
+    } else if (value is MediaRoute) {
+      buffer.putUint8(131);
+      writeValue(buffer, value.encode());
+    } else if (value is MediaStatus) {
+      buffer.putUint8(132);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -561,8 +599,12 @@ class _RemotePlaybackEventsApiCodec extends StandardMessageCodec {
       case 128: 
         return MediaInfo.decode(readValue(buffer)!);
       case 129: 
-        return MediaRoute.decode(readValue(buffer)!);
+        return MediaMetadata.decode(readValue(buffer)!);
       case 130: 
+        return MediaMetadataImage.decode(readValue(buffer)!);
+      case 131: 
+        return MediaRoute.decode(readValue(buffer)!);
+      case 132: 
         return MediaStatus.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -575,7 +617,7 @@ abstract class RemotePlaybackEventsApi {
 
   void onRoutesChanged(List<MediaRoute?> routes);
 
-  void onStatusUpdated(MediaStatus status);
+  void onStatusUpdated(MediaStatus? status);
 
   static void setup(RemotePlaybackEventsApi? api, {BinaryMessenger? binaryMessenger}) {
     {
@@ -615,10 +657,8 @@ abstract class RemotePlaybackEventsApi {
           'Argument for dev.flutter.pigeon.zenith.RemotePlaybackEventsApi.onStatusUpdated was null.');
           final List<Object?> args = (message as List<Object?>?)!;
           final MediaStatus? arg_status = (args[0] as MediaStatus?);
-          assert(arg_status != null,
-              'Argument for dev.flutter.pigeon.zenith.RemotePlaybackEventsApi.onStatusUpdated was null, expected non-null MediaStatus.');
           try {
-            api.onStatusUpdated(arg_status!);
+            api.onStatusUpdated(arg_status);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);

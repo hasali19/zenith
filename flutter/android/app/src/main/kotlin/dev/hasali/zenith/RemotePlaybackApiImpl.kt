@@ -63,6 +63,7 @@ class RemotePlaybackApiImpl(
                                 val mediaType = when (metadata.mediaType) {
                                     MediaType.MOVIE -> MediaMetadata.MEDIA_TYPE_MOVIE
                                     MediaType.TVSHOW -> MediaMetadata.MEDIA_TYPE_TV_SHOW
+                                    else -> MediaMetadata.MEDIA_TYPE_GENERIC
                                 }
 
                                 setMetadata(MediaMetadata(mediaType).apply {
@@ -138,6 +139,12 @@ class RemotePlaybackApiImpl(
         val session = castContext.sessionManager.currentCastSession ?: return
         val client = session.remoteMediaClient ?: return
         client.setPlaybackRate(playbackRate)
+    }
+
+    override fun stop() {
+        val session = castContext.sessionManager.currentCastSession ?: return
+        val client = session.remoteMediaClient ?: return
+        client.stop()
     }
 
     private fun updateCallback() {

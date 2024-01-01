@@ -39,6 +39,7 @@ class MediaMetadata {
 enum MediaType {
   movie,
   tvShow,
+  unknown,
 }
 
 class MediaMetadataImage {
@@ -77,6 +78,7 @@ abstract class RemotePlaybackApi {
   void pause();
   void seek(MediaSeekOptions options);
   void setPlaybackRate(double playbackRate);
+  void stop();
 }
 
 enum PlayerState {
@@ -90,13 +92,14 @@ enum PlayerState {
 
 class MediaStatus {
   late PlayerState playerState;
-  late MediaInfo mediaInfo;
+  late MediaInfo? mediaInfo;
   late int streamPosition;
   late double playbackRate;
 }
 
 class MediaInfo {
   late int streamDuration;
+  MediaMetadata? metadata;
 }
 
 @FlutterApi()
@@ -107,5 +110,5 @@ abstract class RemotePlaybackEventsApi {
 
   // RemoteMediaClient
 
-  void onStatusUpdated(MediaStatus status);
+  void onStatusUpdated(MediaStatus? status);
 }

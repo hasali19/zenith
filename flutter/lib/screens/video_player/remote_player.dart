@@ -107,7 +107,7 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
     return VideoProgressData(
       total: Duration(
           milliseconds:
-              _mediaRouter.mediaStatus.value?.mediaInfo.streamDuration ??
+              _mediaRouter.mediaStatus.value?.mediaInfo?.streamDuration ??
                   _positionHandler.positionMs.toInt()),
       progress: Duration(milliseconds: _positionHandler.positionMs.toInt()),
     );

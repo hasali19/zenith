@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:zenith/format_utils.dart';
 
 part 'api.freezed.dart';
 part 'api.g.dart';
@@ -90,17 +91,14 @@ class MediaItem {
   }
 
   String? getSeasonEpisode() {
-    String? seasonEpisode;
     if (parent != null) {
-      final parent = this.parent!.index.toString().padLeft(2, '0');
       if (grandparent != null) {
-        final grandparent = this.grandparent!.index.toString().padLeft(2, '0');
-        seasonEpisode = 'S${grandparent}E$parent';
+        return formatSeasonEpisode(grandparent!.index, parent!.index);
       } else {
-        seasonEpisode = 'S$parent';
+        return formatSeason(parent!.index);
       }
     }
-    return seasonEpisode;
+    return null;
   }
 
   bool get shouldResume {
