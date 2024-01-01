@@ -23,6 +23,7 @@ class MediaRouteButtonCubit extends Cubit<MediaRouteButtonState> {
   @override
   Future<void> close() {
     _mediaRouter.stopRoutesScanning(RoutesScanningMode.none);
+    _mediaRouter.selectedRoute.removeListener(_onSelectedRouteChanged);
     return super.close();
   }
 
