@@ -8,6 +8,7 @@ import 'package:zenith/remote_playback.dart';
 import 'package:zenith/remote_playback_api.g.dart';
 import 'package:zenith/screens/video_player/media_title.dart';
 import 'package:zenith/screens/video_player/ui.dart';
+import 'package:zenith/screens/video_player/utils.dart';
 import 'package:zenith/screens/video_player/video_progress_bar.dart';
 
 class RemoteVideoPlayer extends ConsumerStatefulWidget {
@@ -65,6 +66,18 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
     await _remote.load(MediaLoadRequestData(
       mediaInfo: MediaLoadInfo(
         url: withToken(_api.getVideoUrl(item.videoFile!.id)),
+        mediaTracks: item.videoFile?.subtitles
+            .map(
+              (track) => MediaTrack(
+                trackId: track.id,
+                type: MediaTrackType.text,
+                contentId: withToken(_api.getSubtitleUrl(track.id)),
+                subtype: MediaTrackSubtype.subtitles,
+                name: track.title,
+                language: track.language,
+              ),
+            )
+            .toList(),
         metadata: MediaMetadata(
           mediaType: switch (item.type) {
             api.MediaType.movie => MediaType.movie,
@@ -128,7 +141,9 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
             builder: (context, mediaStatus, child) => VideoPlayerUi(
               title: MediaTitle(item: item),
               audioTracks: const [],
-              subtitles: const [],
+              subtitles: item.videoFile!.subtitles
+                  .map((s) => subtitleFromApi(_api, s))
+                  .toList(),
               progress: _getProgress,
               isAudioTrackSelectionSupported: false,
               fit: BoxFit.cover,
@@ -139,7 +154,10 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
               onInteractionStart: () {},
               onInteractionEnd: () {},
               onAudioTrackSelected: (index) {},
-              onTextTrackSelected: (track) {},
+              onTextTrackSelected: (track) {
+                _remote.setActiveMediaTracks(
+                    [if (track != null) int.parse(track.id)]);
+              },
               onFitSelected: (fit) {},
               onPlaybackSpeedSelected: _remote.setPlaybackRate,
               onSeek: (position) {

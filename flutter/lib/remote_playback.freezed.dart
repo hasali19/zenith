@@ -75,22 +75,22 @@ class _$MediaRouteCopyWithImpl<$Res, $Val extends MediaRoute>
 }
 
 /// @nodoc
-abstract class _$$_MediaRouteCopyWith<$Res>
+abstract class _$$MediaRouteImplCopyWith<$Res>
     implements $MediaRouteCopyWith<$Res> {
-  factory _$$_MediaRouteCopyWith(
-          _$_MediaRoute value, $Res Function(_$_MediaRoute) then) =
-      __$$_MediaRouteCopyWithImpl<$Res>;
+  factory _$$MediaRouteImplCopyWith(
+          _$MediaRouteImpl value, $Res Function(_$MediaRouteImpl) then) =
+      __$$MediaRouteImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String id, String name, String? description, bool isSelected});
 }
 
 /// @nodoc
-class __$$_MediaRouteCopyWithImpl<$Res>
-    extends _$MediaRouteCopyWithImpl<$Res, _$_MediaRoute>
-    implements _$$_MediaRouteCopyWith<$Res> {
-  __$$_MediaRouteCopyWithImpl(
-      _$_MediaRoute _value, $Res Function(_$_MediaRoute) _then)
+class __$$MediaRouteImplCopyWithImpl<$Res>
+    extends _$MediaRouteCopyWithImpl<$Res, _$MediaRouteImpl>
+    implements _$$MediaRouteImplCopyWith<$Res> {
+  __$$MediaRouteImplCopyWithImpl(
+      _$MediaRouteImpl _value, $Res Function(_$MediaRouteImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -101,7 +101,7 @@ class __$$_MediaRouteCopyWithImpl<$Res>
     Object? description = freezed,
     Object? isSelected = null,
   }) {
-    return _then(_$_MediaRoute(
+    return _then(_$MediaRouteImpl(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
@@ -124,8 +124,8 @@ class __$$_MediaRouteCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_MediaRoute with DiagnosticableTreeMixin implements _MediaRoute {
-  const _$_MediaRoute(
+class _$MediaRouteImpl with DiagnosticableTreeMixin implements _MediaRoute {
+  const _$MediaRouteImpl(
       {required this.id,
       required this.name,
       required this.description,
@@ -157,10 +157,10 @@ class _$_MediaRoute with DiagnosticableTreeMixin implements _MediaRoute {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_MediaRoute &&
+            other is _$MediaRouteImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
@@ -176,8 +176,8 @@ class _$_MediaRoute with DiagnosticableTreeMixin implements _MediaRoute {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_MediaRouteCopyWith<_$_MediaRoute> get copyWith =>
-      __$$_MediaRouteCopyWithImpl<_$_MediaRoute>(this, _$identity);
+  _$$MediaRouteImplCopyWith<_$MediaRouteImpl> get copyWith =>
+      __$$MediaRouteImplCopyWithImpl<_$MediaRouteImpl>(this, _$identity);
 }
 
 abstract class _MediaRoute implements MediaRoute {
@@ -185,7 +185,7 @@ abstract class _MediaRoute implements MediaRoute {
       {required final String id,
       required final String name,
       required final String? description,
-      required final bool isSelected}) = _$_MediaRoute;
+      required final bool isSelected}) = _$MediaRouteImpl;
 
   @override
   String get id;
@@ -197,6 +197,6 @@ abstract class _MediaRoute implements MediaRoute {
   bool get isSelected;
   @override
   @JsonKey(ignore: true)
-  _$$_MediaRouteCopyWith<_$_MediaRoute> get copyWith =>
+  _$$MediaRouteImplCopyWith<_$MediaRouteImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

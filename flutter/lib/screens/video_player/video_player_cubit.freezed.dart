@@ -62,21 +62,22 @@ class _$PlaylistCopyWithImpl<$Res, $Val extends Playlist>
 }
 
 /// @nodoc
-abstract class _$$_PlaylistCopyWith<$Res> implements $PlaylistCopyWith<$Res> {
-  factory _$$_PlaylistCopyWith(
-          _$_Playlist value, $Res Function(_$_Playlist) then) =
-      __$$_PlaylistCopyWithImpl<$Res>;
+abstract class _$$PlaylistImplCopyWith<$Res>
+    implements $PlaylistCopyWith<$Res> {
+  factory _$$PlaylistImplCopyWith(
+          _$PlaylistImpl value, $Res Function(_$PlaylistImpl) then) =
+      __$$PlaylistImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({List<MediaItem> items, int start});
 }
 
 /// @nodoc
-class __$$_PlaylistCopyWithImpl<$Res>
-    extends _$PlaylistCopyWithImpl<$Res, _$_Playlist>
-    implements _$$_PlaylistCopyWith<$Res> {
-  __$$_PlaylistCopyWithImpl(
-      _$_Playlist _value, $Res Function(_$_Playlist) _then)
+class __$$PlaylistImplCopyWithImpl<$Res>
+    extends _$PlaylistCopyWithImpl<$Res, _$PlaylistImpl>
+    implements _$$PlaylistImplCopyWith<$Res> {
+  __$$PlaylistImplCopyWithImpl(
+      _$PlaylistImpl _value, $Res Function(_$PlaylistImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -85,7 +86,7 @@ class __$$_PlaylistCopyWithImpl<$Res>
     Object? items = null,
     Object? start = null,
   }) {
-    return _then(_$_Playlist(
+    return _then(_$PlaylistImpl(
       items: null == items
           ? _value._items
           : items // ignore: cast_nullable_to_non_nullable
@@ -100,8 +101,8 @@ class __$$_PlaylistCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_Playlist implements _Playlist {
-  _$_Playlist({required final List<MediaItem> items, required this.start})
+class _$PlaylistImpl implements _Playlist {
+  _$PlaylistImpl({required final List<MediaItem> items, required this.start})
       : _items = items;
 
   final List<MediaItem> _items;
@@ -121,10 +122,10 @@ class _$_Playlist implements _Playlist {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_Playlist &&
+            other is _$PlaylistImpl &&
             const DeepCollectionEquality().equals(other._items, _items) &&
             (identical(other.start, start) || other.start == start));
   }
@@ -136,14 +137,14 @@ class _$_Playlist implements _Playlist {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_PlaylistCopyWith<_$_Playlist> get copyWith =>
-      __$$_PlaylistCopyWithImpl<_$_Playlist>(this, _$identity);
+  _$$PlaylistImplCopyWith<_$PlaylistImpl> get copyWith =>
+      __$$PlaylistImplCopyWithImpl<_$PlaylistImpl>(this, _$identity);
 }
 
 abstract class _Playlist implements Playlist {
   factory _Playlist(
       {required final List<MediaItem> items,
-      required final int start}) = _$_Playlist;
+      required final int start}) = _$PlaylistImpl;
 
   @override
   List<MediaItem> get items;
@@ -151,7 +152,7 @@ abstract class _Playlist implements Playlist {
   int get start;
   @override
   @JsonKey(ignore: true)
-  _$$_PlaylistCopyWith<_$_Playlist> get copyWith =>
+  _$$PlaylistImplCopyWith<_$PlaylistImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -218,11 +219,11 @@ class _$VideoPlayerStateCopyWithImpl<$Res, $Val extends VideoPlayerState>
 }
 
 /// @nodoc
-abstract class _$$_VideoPlayerStateCopyWith<$Res>
+abstract class _$$VideoPlayerStateImplCopyWith<$Res>
     implements $VideoPlayerStateCopyWith<$Res> {
-  factory _$$_VideoPlayerStateCopyWith(
-          _$_VideoPlayerState value, $Res Function(_$_VideoPlayerState) then) =
-      __$$_VideoPlayerStateCopyWithImpl<$Res>;
+  factory _$$VideoPlayerStateImplCopyWith(_$VideoPlayerStateImpl value,
+          $Res Function(_$VideoPlayerStateImpl) then) =
+      __$$VideoPlayerStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({PlaybackLocation location, Playlist? playlist});
@@ -232,11 +233,11 @@ abstract class _$$_VideoPlayerStateCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$_VideoPlayerStateCopyWithImpl<$Res>
-    extends _$VideoPlayerStateCopyWithImpl<$Res, _$_VideoPlayerState>
-    implements _$$_VideoPlayerStateCopyWith<$Res> {
-  __$$_VideoPlayerStateCopyWithImpl(
-      _$_VideoPlayerState _value, $Res Function(_$_VideoPlayerState) _then)
+class __$$VideoPlayerStateImplCopyWithImpl<$Res>
+    extends _$VideoPlayerStateCopyWithImpl<$Res, _$VideoPlayerStateImpl>
+    implements _$$VideoPlayerStateImplCopyWith<$Res> {
+  __$$VideoPlayerStateImplCopyWithImpl(_$VideoPlayerStateImpl _value,
+      $Res Function(_$VideoPlayerStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -245,7 +246,7 @@ class __$$_VideoPlayerStateCopyWithImpl<$Res>
     Object? location = null,
     Object? playlist = freezed,
   }) {
-    return _then(_$_VideoPlayerState(
+    return _then(_$VideoPlayerStateImpl(
       location: null == location
           ? _value.location
           : location // ignore: cast_nullable_to_non_nullable
@@ -260,8 +261,8 @@ class __$$_VideoPlayerStateCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_VideoPlayerState implements _VideoPlayerState {
-  _$_VideoPlayerState({required this.location, this.playlist});
+class _$VideoPlayerStateImpl implements _VideoPlayerState {
+  _$VideoPlayerStateImpl({required this.location, this.playlist});
 
   @override
   final PlaybackLocation location;
@@ -274,10 +275,10 @@ class _$_VideoPlayerState implements _VideoPlayerState {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_VideoPlayerState &&
+            other is _$VideoPlayerStateImpl &&
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.playlist, playlist) ||
@@ -290,14 +291,15 @@ class _$_VideoPlayerState implements _VideoPlayerState {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_VideoPlayerStateCopyWith<_$_VideoPlayerState> get copyWith =>
-      __$$_VideoPlayerStateCopyWithImpl<_$_VideoPlayerState>(this, _$identity);
+  _$$VideoPlayerStateImplCopyWith<_$VideoPlayerStateImpl> get copyWith =>
+      __$$VideoPlayerStateImplCopyWithImpl<_$VideoPlayerStateImpl>(
+          this, _$identity);
 }
 
 abstract class _VideoPlayerState implements VideoPlayerState {
   factory _VideoPlayerState(
       {required final PlaybackLocation location,
-      final Playlist? playlist}) = _$_VideoPlayerState;
+      final Playlist? playlist}) = _$VideoPlayerStateImpl;
 
   @override
   PlaybackLocation get location;
@@ -305,6 +307,6 @@ abstract class _VideoPlayerState implements VideoPlayerState {
   Playlist? get playlist;
   @override
   @JsonKey(ignore: true)
-  _$$_VideoPlayerStateCopyWith<_$_VideoPlayerState> get copyWith =>
+  _$$VideoPlayerStateImplCopyWith<_$VideoPlayerStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

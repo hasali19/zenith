@@ -58,22 +58,24 @@ class _$MediaRouteButtonStateCopyWithImpl<$Res,
 }
 
 /// @nodoc
-abstract class _$$_MediaRouteButtonStateCopyWith<$Res>
+abstract class _$$MediaRouteButtonStateImplCopyWith<$Res>
     implements $MediaRouteButtonStateCopyWith<$Res> {
-  factory _$$_MediaRouteButtonStateCopyWith(_$_MediaRouteButtonState value,
-          $Res Function(_$_MediaRouteButtonState) then) =
-      __$$_MediaRouteButtonStateCopyWithImpl<$Res>;
+  factory _$$MediaRouteButtonStateImplCopyWith(
+          _$MediaRouteButtonStateImpl value,
+          $Res Function(_$MediaRouteButtonStateImpl) then) =
+      __$$MediaRouteButtonStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({bool isConnected});
 }
 
 /// @nodoc
-class __$$_MediaRouteButtonStateCopyWithImpl<$Res>
-    extends _$MediaRouteButtonStateCopyWithImpl<$Res, _$_MediaRouteButtonState>
-    implements _$$_MediaRouteButtonStateCopyWith<$Res> {
-  __$$_MediaRouteButtonStateCopyWithImpl(_$_MediaRouteButtonState _value,
-      $Res Function(_$_MediaRouteButtonState) _then)
+class __$$MediaRouteButtonStateImplCopyWithImpl<$Res>
+    extends _$MediaRouteButtonStateCopyWithImpl<$Res,
+        _$MediaRouteButtonStateImpl>
+    implements _$$MediaRouteButtonStateImplCopyWith<$Res> {
+  __$$MediaRouteButtonStateImplCopyWithImpl(_$MediaRouteButtonStateImpl _value,
+      $Res Function(_$MediaRouteButtonStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -81,7 +83,7 @@ class __$$_MediaRouteButtonStateCopyWithImpl<$Res>
   $Res call({
     Object? isConnected = null,
   }) {
-    return _then(_$_MediaRouteButtonState(
+    return _then(_$MediaRouteButtonStateImpl(
       isConnected: null == isConnected
           ? _value.isConnected
           : isConnected // ignore: cast_nullable_to_non_nullable
@@ -92,8 +94,8 @@ class __$$_MediaRouteButtonStateCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_MediaRouteButtonState implements _MediaRouteButtonState {
-  _$_MediaRouteButtonState({required this.isConnected});
+class _$MediaRouteButtonStateImpl implements _MediaRouteButtonState {
+  _$MediaRouteButtonStateImpl({required this.isConnected});
 
   @override
   final bool isConnected;
@@ -104,10 +106,10 @@ class _$_MediaRouteButtonState implements _MediaRouteButtonState {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_MediaRouteButtonState &&
+            other is _$MediaRouteButtonStateImpl &&
             (identical(other.isConnected, isConnected) ||
                 other.isConnected == isConnected));
   }
@@ -118,19 +120,19 @@ class _$_MediaRouteButtonState implements _MediaRouteButtonState {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_MediaRouteButtonStateCopyWith<_$_MediaRouteButtonState> get copyWith =>
-      __$$_MediaRouteButtonStateCopyWithImpl<_$_MediaRouteButtonState>(
-          this, _$identity);
+  _$$MediaRouteButtonStateImplCopyWith<_$MediaRouteButtonStateImpl>
+      get copyWith => __$$MediaRouteButtonStateImplCopyWithImpl<
+          _$MediaRouteButtonStateImpl>(this, _$identity);
 }
 
 abstract class _MediaRouteButtonState implements MediaRouteButtonState {
   factory _MediaRouteButtonState({required final bool isConnected}) =
-      _$_MediaRouteButtonState;
+      _$MediaRouteButtonStateImpl;
 
   @override
   bool get isConnected;
   @override
   @JsonKey(ignore: true)
-  _$$_MediaRouteButtonStateCopyWith<_$_MediaRouteButtonState> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$MediaRouteButtonStateImplCopyWith<_$MediaRouteButtonStateImpl>
+      get copyWith => throw _privateConstructorUsedError;
 }

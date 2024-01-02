@@ -19,9 +19,27 @@ class MediaLoadRequestData {
 
 class MediaLoadInfo {
   String url;
+  List<MediaTrack?>? mediaTracks;
   MediaMetadata? metadata;
 
   MediaLoadInfo(this.url);
+}
+
+enum MediaTrackType {
+  text,
+}
+
+enum MediaTrackSubtype {
+  subtitles,
+}
+
+class MediaTrack {
+  late int trackId;
+  late MediaTrackType type;
+  late String contentId;
+  MediaTrackSubtype? subtype;
+  String? name;
+  String? language;
 }
 
 class MediaMetadata {
@@ -74,6 +92,7 @@ abstract class RemotePlaybackApi {
   // RemoteMediaClient
 
   void load(MediaLoadRequestData loadRequestData);
+  void setActiveMediaTracks(List<int> trackIds);
   void play();
   void pause();
   void seek(MediaSeekOptions options);

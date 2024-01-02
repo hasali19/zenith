@@ -74,22 +74,22 @@ class _$AccessTokenCopyWithImpl<$Res, $Val extends AccessToken>
 }
 
 /// @nodoc
-abstract class _$$_AccessTokenCopyWith<$Res>
+abstract class _$$AccessTokenImplCopyWith<$Res>
     implements $AccessTokenCopyWith<$Res> {
-  factory _$$_AccessTokenCopyWith(
-          _$_AccessToken value, $Res Function(_$_AccessToken) then) =
-      __$$_AccessTokenCopyWithImpl<$Res>;
+  factory _$$AccessTokenImplCopyWith(
+          _$AccessTokenImpl value, $Res Function(_$AccessTokenImpl) then) =
+      __$$AccessTokenImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({AccessTokenOwner owner, String name, String token});
 }
 
 /// @nodoc
-class __$$_AccessTokenCopyWithImpl<$Res>
-    extends _$AccessTokenCopyWithImpl<$Res, _$_AccessToken>
-    implements _$$_AccessTokenCopyWith<$Res> {
-  __$$_AccessTokenCopyWithImpl(
-      _$_AccessToken _value, $Res Function(_$_AccessToken) _then)
+class __$$AccessTokenImplCopyWithImpl<$Res>
+    extends _$AccessTokenCopyWithImpl<$Res, _$AccessTokenImpl>
+    implements _$$AccessTokenImplCopyWith<$Res> {
+  __$$AccessTokenImplCopyWithImpl(
+      _$AccessTokenImpl _value, $Res Function(_$AccessTokenImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -99,7 +99,7 @@ class __$$_AccessTokenCopyWithImpl<$Res>
     Object? name = null,
     Object? token = null,
   }) {
-    return _then(_$_AccessToken(
+    return _then(_$AccessTokenImpl(
       owner: null == owner
           ? _value.owner
           : owner // ignore: cast_nullable_to_non_nullable
@@ -118,12 +118,12 @@ class __$$_AccessTokenCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_AccessToken implements _AccessToken {
-  _$_AccessToken(
+class _$AccessTokenImpl implements _AccessToken {
+  _$AccessTokenImpl(
       {required this.owner, required this.name, required this.token});
 
-  factory _$_AccessToken.fromJson(Map<String, dynamic> json) =>
-      _$$_AccessTokenFromJson(json);
+  factory _$AccessTokenImpl.fromJson(Map<String, dynamic> json) =>
+      _$$AccessTokenImplFromJson(json);
 
   @override
   final AccessTokenOwner owner;
@@ -138,10 +138,10 @@ class _$_AccessToken implements _AccessToken {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_AccessToken &&
+            other is _$AccessTokenImpl &&
             (identical(other.owner, owner) || other.owner == owner) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.token, token) || other.token == token));
@@ -154,12 +154,12 @@ class _$_AccessToken implements _AccessToken {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_AccessTokenCopyWith<_$_AccessToken> get copyWith =>
-      __$$_AccessTokenCopyWithImpl<_$_AccessToken>(this, _$identity);
+  _$$AccessTokenImplCopyWith<_$AccessTokenImpl> get copyWith =>
+      __$$AccessTokenImplCopyWithImpl<_$AccessTokenImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_AccessTokenToJson(
+    return _$$AccessTokenImplToJson(
       this,
     );
   }
@@ -169,10 +169,10 @@ abstract class _AccessToken implements AccessToken {
   factory _AccessToken(
       {required final AccessTokenOwner owner,
       required final String name,
-      required final String token}) = _$_AccessToken;
+      required final String token}) = _$AccessTokenImpl;
 
   factory _AccessToken.fromJson(Map<String, dynamic> json) =
-      _$_AccessToken.fromJson;
+      _$AccessTokenImpl.fromJson;
 
   @override
   AccessTokenOwner get owner;
@@ -182,6 +182,6 @@ abstract class _AccessToken implements AccessToken {
   String get token;
   @override
   @JsonKey(ignore: true)
-  _$$_AccessTokenCopyWith<_$_AccessToken> get copyWith =>
+  _$$AccessTokenImplCopyWith<_$AccessTokenImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

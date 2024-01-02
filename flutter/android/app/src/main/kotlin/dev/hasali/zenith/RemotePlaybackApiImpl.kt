@@ -8,11 +8,14 @@ import com.google.android.gms.cast.MediaMetadata
 import com.google.android.gms.cast.MediaSeekOptions.RESUME_STATE_PAUSE
 import com.google.android.gms.cast.MediaSeekOptions.RESUME_STATE_PLAY
 import com.google.android.gms.cast.MediaSeekOptions.RESUME_STATE_UNCHANGED
+import com.google.android.gms.cast.MediaTrack
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.common.images.WebImage
 import dev.hasali.zenith.generated.remoteplayback.MediaLoadRequestData
 import dev.hasali.zenith.generated.remoteplayback.MediaRoute
 import dev.hasali.zenith.generated.remoteplayback.MediaSeekOptions
+import dev.hasali.zenith.generated.remoteplayback.MediaTrackSubtype
+import dev.hasali.zenith.generated.remoteplayback.MediaTrackType
 import dev.hasali.zenith.generated.remoteplayback.MediaType
 import dev.hasali.zenith.generated.remoteplayback.RemotePlaybackApi
 import dev.hasali.zenith.generated.remoteplayback.RemotePlaybackEventsApi
@@ -58,7 +61,27 @@ class RemotePlaybackApiImpl(
             .apply {
                 loadRequestData.mediaInfo?.let { mediaInfo ->
                     setMediaInfo(MediaInfo.Builder(mediaInfo.url)
+                        .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
                         .apply {
+                            setMediaTracks(
+                                mediaInfo.mediaTracks?.filterNotNull()?.map { track ->
+                                    val type = when (track.type) {
+                                        MediaTrackType.TEXT -> MediaTrack.TYPE_TEXT
+                                    }
+
+                                    MediaTrack.Builder(track.trackId, type)
+                                        .setContentId(track.contentId)
+                                        .setSubtype(when (track.subtype) {
+                                            null -> MediaTrack.SUBTYPE_NONE
+                                            MediaTrackSubtype.SUBTITLES -> MediaTrack.SUBTYPE_SUBTITLES
+                                        })
+                                        .setName(track.name)
+                                        .setLanguage(track.language)
+                                        .setContentType("text/vtt")
+                                        .build()
+                                }
+                            )
+
                             mediaInfo.metadata?.let { metadata ->
                                 val mediaType = when (metadata.mediaType) {
                                     MediaType.MOVIE -> MediaMetadata.MEDIA_TYPE_MOVIE
@@ -104,6 +127,12 @@ class RemotePlaybackApiImpl(
                 }
             }
             .build())
+    }
+
+    override fun setActiveMediaTracks(trackIds: List<Long>) {
+        val session = castContext.sessionManager.currentCastSession ?: return
+        val client = session.remoteMediaClient ?: return
+        client.setActiveMediaTracks(trackIds.toLongArray())
     }
 
     override fun play() {

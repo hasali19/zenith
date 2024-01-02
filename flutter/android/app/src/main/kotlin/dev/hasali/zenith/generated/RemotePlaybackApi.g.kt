@@ -58,6 +58,26 @@ enum class RoutesScanningMode(val raw: Int) {
   }
 }
 
+enum class MediaTrackType(val raw: Int) {
+  TEXT(0);
+
+  companion object {
+    fun ofRaw(raw: Int): MediaTrackType? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
+enum class MediaTrackSubtype(val raw: Int) {
+  SUBTITLES(0);
+
+  companion object {
+    fun ofRaw(raw: Int): MediaTrackSubtype? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
 enum class MediaType(val raw: Int) {
   MOVIE(0),
   TVSHOW(1),
@@ -149,6 +169,7 @@ data class MediaLoadRequestData (
 /** Generated class from Pigeon that represents data sent in messages. */
 data class MediaLoadInfo (
   val url: String,
+  val mediaTracks: List<MediaTrack?>? = null,
   val metadata: MediaMetadata? = null
 
 ) {
@@ -156,16 +177,54 @@ data class MediaLoadInfo (
     @Suppress("UNCHECKED_CAST")
     fun fromList(list: List<Any?>): MediaLoadInfo {
       val url = list[0] as String
-      val metadata: MediaMetadata? = (list[1] as List<Any?>?)?.let {
+      val mediaTracks = list[1] as List<MediaTrack?>?
+      val metadata: MediaMetadata? = (list[2] as List<Any?>?)?.let {
         MediaMetadata.fromList(it)
       }
-      return MediaLoadInfo(url, metadata)
+      return MediaLoadInfo(url, mediaTracks, metadata)
     }
   }
   fun toList(): List<Any?> {
     return listOf<Any?>(
       url,
+      mediaTracks,
       metadata?.toList(),
+    )
+  }
+}
+
+/** Generated class from Pigeon that represents data sent in messages. */
+data class MediaTrack (
+  val trackId: Long,
+  val type: MediaTrackType,
+  val contentId: String,
+  val subtype: MediaTrackSubtype? = null,
+  val name: String? = null,
+  val language: String? = null
+
+) {
+  companion object {
+    @Suppress("UNCHECKED_CAST")
+    fun fromList(list: List<Any?>): MediaTrack {
+      val trackId = list[0].let { if (it is Int) it.toLong() else it as Long }
+      val type = MediaTrackType.ofRaw(list[1] as Int)!!
+      val contentId = list[2] as String
+      val subtype: MediaTrackSubtype? = (list[3] as Int?)?.let {
+        MediaTrackSubtype.ofRaw(it)
+      }
+      val name = list[4] as String?
+      val language = list[5] as String?
+      return MediaTrack(trackId, type, contentId, subtype, name, language)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf<Any?>(
+      trackId,
+      type.raw,
+      contentId,
+      subtype?.raw,
+      name,
+      language,
     )
   }
 }
@@ -340,6 +399,11 @@ private object RemotePlaybackApiCodec : StandardMessageCodec() {
           MediaSeekOptions.fromList(it)
         }
       }
+      133.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          MediaTrack.fromList(it)
+        }
+      }
       else -> super.readValueOfType(type, buffer)
     }
   }
@@ -365,6 +429,10 @@ private object RemotePlaybackApiCodec : StandardMessageCodec() {
         stream.write(132)
         writeValue(stream, value.toList())
       }
+      is MediaTrack -> {
+        stream.write(133)
+        writeValue(stream, value.toList())
+      }
       else -> super.writeValue(stream, value)
     }
   }
@@ -376,6 +444,7 @@ interface RemotePlaybackApi {
   fun unregisterRoutesListener(mode: RoutesScanningMode)
   fun selectRoute(id: String?)
   fun load(loadRequestData: MediaLoadRequestData)
+  fun setActiveMediaTracks(trackIds: List<Long>)
   fun play()
   fun pause()
   fun seek(options: MediaSeekOptions)
@@ -456,6 +525,25 @@ interface RemotePlaybackApi {
             var wrapped: List<Any?>
             try {
               api.load(loadRequestDataArg)
+              wrapped = listOf<Any?>(null)
+            } catch (exception: Throwable) {
+              wrapped = wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.zenith.RemotePlaybackApi.setActiveMediaTracks", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val trackIdsArg = args[0] as List<Long>
+            var wrapped: List<Any?>
+            try {
+              api.setActiveMediaTracks(trackIdsArg)
               wrapped = listOf<Any?>(null)
             } catch (exception: Throwable) {
               wrapped = wrapError(exception)

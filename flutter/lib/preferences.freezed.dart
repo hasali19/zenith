@@ -72,19 +72,21 @@ class _$ServerCopyWithImpl<$Res, $Val extends Server>
 }
 
 /// @nodoc
-abstract class _$$_ServerCopyWith<$Res> implements $ServerCopyWith<$Res> {
-  factory _$$_ServerCopyWith(_$_Server value, $Res Function(_$_Server) then) =
-      __$$_ServerCopyWithImpl<$Res>;
+abstract class _$$ServerImplCopyWith<$Res> implements $ServerCopyWith<$Res> {
+  factory _$$ServerImplCopyWith(
+          _$ServerImpl value, $Res Function(_$ServerImpl) then) =
+      __$$ServerImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({String id, String? name, String url});
 }
 
 /// @nodoc
-class __$$_ServerCopyWithImpl<$Res>
-    extends _$ServerCopyWithImpl<$Res, _$_Server>
-    implements _$$_ServerCopyWith<$Res> {
-  __$$_ServerCopyWithImpl(_$_Server _value, $Res Function(_$_Server) _then)
+class __$$ServerImplCopyWithImpl<$Res>
+    extends _$ServerCopyWithImpl<$Res, _$ServerImpl>
+    implements _$$ServerImplCopyWith<$Res> {
+  __$$ServerImplCopyWithImpl(
+      _$ServerImpl _value, $Res Function(_$ServerImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -94,7 +96,7 @@ class __$$_ServerCopyWithImpl<$Res>
     Object? name = freezed,
     Object? url = null,
   }) {
-    return _then(_$_Server(
+    return _then(_$ServerImpl(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
@@ -113,11 +115,11 @@ class __$$_ServerCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_Server with DiagnosticableTreeMixin implements _Server {
-  const _$_Server({required this.id, required this.name, required this.url});
+class _$ServerImpl with DiagnosticableTreeMixin implements _Server {
+  const _$ServerImpl({required this.id, required this.name, required this.url});
 
-  factory _$_Server.fromJson(Map<String, dynamic> json) =>
-      _$$_ServerFromJson(json);
+  factory _$ServerImpl.fromJson(Map<String, dynamic> json) =>
+      _$$ServerImplFromJson(json);
 
   @override
   final String id;
@@ -142,10 +144,10 @@ class _$_Server with DiagnosticableTreeMixin implements _Server {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_Server &&
+            other is _$ServerImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.url, url) || other.url == url));
@@ -158,12 +160,12 @@ class _$_Server with DiagnosticableTreeMixin implements _Server {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_ServerCopyWith<_$_Server> get copyWith =>
-      __$$_ServerCopyWithImpl<_$_Server>(this, _$identity);
+  _$$ServerImplCopyWith<_$ServerImpl> get copyWith =>
+      __$$ServerImplCopyWithImpl<_$ServerImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_ServerToJson(
+    return _$$ServerImplToJson(
       this,
     );
   }
@@ -173,9 +175,9 @@ abstract class _Server implements Server {
   const factory _Server(
       {required final String id,
       required final String? name,
-      required final String url}) = _$_Server;
+      required final String url}) = _$ServerImpl;
 
-  factory _Server.fromJson(Map<String, dynamic> json) = _$_Server.fromJson;
+  factory _Server.fromJson(Map<String, dynamic> json) = _$ServerImpl.fromJson;
 
   @override
   String get id;
@@ -185,6 +187,6 @@ abstract class _Server implements Server {
   String get url;
   @override
   @JsonKey(ignore: true)
-  _$$_ServerCopyWith<_$_Server> get copyWith =>
+  _$$ServerImplCopyWith<_$ServerImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

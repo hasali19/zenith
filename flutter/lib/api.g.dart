@@ -6,14 +6,14 @@ part of 'api.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$_AccessToken _$$_AccessTokenFromJson(Map<String, dynamic> json) =>
-    _$_AccessToken(
+_$AccessTokenImpl _$$AccessTokenImplFromJson(Map<String, dynamic> json) =>
+    _$AccessTokenImpl(
       owner: $enumDecode(_$AccessTokenOwnerEnumMap, json['owner']),
       name: json['name'] as String,
       token: json['token'] as String,
     );
 
-Map<String, dynamic> _$$_AccessTokenToJson(_$_AccessToken instance) =>
+Map<String, dynamic> _$$AccessTokenImplToJson(_$AccessTokenImpl instance) =>
     <String, dynamic>{
       'owner': _$AccessTokenOwnerEnumMap[instance.owner]!,
       'name': instance.name,

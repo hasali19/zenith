@@ -70,23 +70,25 @@ class _$MediaRouteChooserStateCopyWithImpl<$Res,
 }
 
 /// @nodoc
-abstract class _$$_MediaRouteChooserStateCopyWith<$Res>
+abstract class _$$MediaRouteChooserStateImplCopyWith<$Res>
     implements $MediaRouteChooserStateCopyWith<$Res> {
-  factory _$$_MediaRouteChooserStateCopyWith(_$_MediaRouteChooserState value,
-          $Res Function(_$_MediaRouteChooserState) then) =
-      __$$_MediaRouteChooserStateCopyWithImpl<$Res>;
+  factory _$$MediaRouteChooserStateImplCopyWith(
+          _$MediaRouteChooserStateImpl value,
+          $Res Function(_$MediaRouteChooserStateImpl) then) =
+      __$$MediaRouteChooserStateImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call({List<MediaRoute> routes, String? requestedId, bool isConnected});
 }
 
 /// @nodoc
-class __$$_MediaRouteChooserStateCopyWithImpl<$Res>
+class __$$MediaRouteChooserStateImplCopyWithImpl<$Res>
     extends _$MediaRouteChooserStateCopyWithImpl<$Res,
-        _$_MediaRouteChooserState>
-    implements _$$_MediaRouteChooserStateCopyWith<$Res> {
-  __$$_MediaRouteChooserStateCopyWithImpl(_$_MediaRouteChooserState _value,
-      $Res Function(_$_MediaRouteChooserState) _then)
+        _$MediaRouteChooserStateImpl>
+    implements _$$MediaRouteChooserStateImplCopyWith<$Res> {
+  __$$MediaRouteChooserStateImplCopyWithImpl(
+      _$MediaRouteChooserStateImpl _value,
+      $Res Function(_$MediaRouteChooserStateImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -96,7 +98,7 @@ class __$$_MediaRouteChooserStateCopyWithImpl<$Res>
     Object? requestedId = freezed,
     Object? isConnected = null,
   }) {
-    return _then(_$_MediaRouteChooserState(
+    return _then(_$MediaRouteChooserStateImpl(
       routes: null == routes
           ? _value._routes
           : routes // ignore: cast_nullable_to_non_nullable
@@ -115,8 +117,8 @@ class __$$_MediaRouteChooserStateCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$_MediaRouteChooserState implements _MediaRouteChooserState {
-  _$_MediaRouteChooserState(
+class _$MediaRouteChooserStateImpl implements _MediaRouteChooserState {
+  _$MediaRouteChooserStateImpl(
       {required final List<MediaRoute> routes,
       required this.requestedId,
       required this.isConnected})
@@ -141,10 +143,10 @@ class _$_MediaRouteChooserState implements _MediaRouteChooserState {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$_MediaRouteChooserState &&
+            other is _$MediaRouteChooserStateImpl &&
             const DeepCollectionEquality().equals(other._routes, _routes) &&
             (identical(other.requestedId, requestedId) ||
                 other.requestedId == requestedId) &&
@@ -159,16 +161,16 @@ class _$_MediaRouteChooserState implements _MediaRouteChooserState {
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_MediaRouteChooserStateCopyWith<_$_MediaRouteChooserState> get copyWith =>
-      __$$_MediaRouteChooserStateCopyWithImpl<_$_MediaRouteChooserState>(
-          this, _$identity);
+  _$$MediaRouteChooserStateImplCopyWith<_$MediaRouteChooserStateImpl>
+      get copyWith => __$$MediaRouteChooserStateImplCopyWithImpl<
+          _$MediaRouteChooserStateImpl>(this, _$identity);
 }
 
 abstract class _MediaRouteChooserState implements MediaRouteChooserState {
   factory _MediaRouteChooserState(
       {required final List<MediaRoute> routes,
       required final String? requestedId,
-      required final bool isConnected}) = _$_MediaRouteChooserState;
+      required final bool isConnected}) = _$MediaRouteChooserStateImpl;
 
   @override
   List<MediaRoute> get routes;
@@ -178,6 +180,6 @@ abstract class _MediaRouteChooserState implements MediaRouteChooserState {
   bool get isConnected;
   @override
   @JsonKey(ignore: true)
-  _$$_MediaRouteChooserStateCopyWith<_$_MediaRouteChooserState> get copyWith =>
-      throw _privateConstructorUsedError;
+  _$$MediaRouteChooserStateImplCopyWith<_$MediaRouteChooserStateImpl>
+      get copyWith => throw _privateConstructorUsedError;
 }

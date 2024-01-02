@@ -5,11 +5,13 @@ import 'package:zenith/remote_playback_api.g.dart' as api;
 
 part 'media_route_controller_cubit.freezed.dart';
 
+typedef ApiMediaStatus = api.MediaStatus;
+
 @freezed
 class MediaRouteControllerState with _$MediaRouteControllerState {
   factory MediaRouteControllerState({
     required MediaRoute? route,
-    required api.MediaStatus? mediaStatus,
+    required ApiMediaStatus? mediaStatus,
   }) = _MediaRouteControllerState;
 }
 
