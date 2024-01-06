@@ -43,6 +43,37 @@ async fn get_authenticated_user(mut app: TestApp) {
 }
 
 #[test(with_app)]
+async fn get_authenticated_user_with_auth_header(mut app: TestApp) {
+    let mut conn = app.db.acquire().await.unwrap();
+
+    db::access_tokens::create(
+        &mut conn,
+        db::access_tokens::NewAccessToken {
+            owner: db::access_tokens::AccessTokenOwner::System,
+            name: "cast",
+            user_id: 1,
+            token: "Super secure token",
+            duration: None,
+        },
+    )
+    .await
+    .unwrap();
+
+    let res = app
+        .req_json(
+            Request::builder()
+                .method("GET")
+                .uri("/users")
+                .header("Authorization", "Super secure token")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+
+    assert_json_snapshot!(res);
+}
+
+#[test(with_app)]
 async fn create_user_request_authenticated(mut app: TestApp) {
     let cookie = app.login().await;
 

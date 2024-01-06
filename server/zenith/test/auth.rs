@@ -1,3 +1,4 @@
+use assert_json_diff::assert_json_include;
 use axum::body::Body;
 use hyper::{Request, StatusCode};
 use serde_json::json;
@@ -176,4 +177,46 @@ async fn logout_removes_auth_cookie(mut app: TestApp) {
         .to_str()
         .unwrap()
         .starts_with("auth=;"));
+}
+
+#[test(with_app)]
+async fn get_nonexistent_token_creates_a_token(mut app: TestApp) {
+    let cookie = app.login().await;
+
+    let res = app
+        .req_json(
+            Request::builder()
+                .method("POST")
+                .uri("/auth/token?owner=system&name=cast&create=true")
+                .header("Cookie", &cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await;
+
+    assert_json_include!(actual: res, expected: json!({
+        "name": "cast",
+        "owner": "system",
+    }));
+
+    let mut conn = app.db.acquire().await.unwrap();
+    let token = db::access_tokens::get_named(
+        &mut conn,
+        1,
+        db::access_tokens::AccessTokenOwner::System,
+        "cast",
+    )
+    .await
+    .unwrap()
+    .unwrap();
+
+    assert_eq!(
+        token.token,
+        res.as_object()
+            .unwrap()
+            .get("token")
+            .unwrap()
+            .as_str()
+            .unwrap()
+    );
 }

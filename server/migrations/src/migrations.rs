@@ -103,6 +103,13 @@ async fn _20231022143554_video_crop(conn: &mut SqliteConnection) -> eyre::Result
     Ok(())
 }
 
+async fn _20231228161701_access_tokens(conn: &mut SqliteConnection) -> eyre::Result<()> {
+    sqlx::query(include_str!("../migrations/20231228161701_access_tokens.sql"))
+        .execute(conn)
+        .await?;
+    Ok(())
+}
+
 pub(super) fn collect(migrator: &mut super::Migrator) {
     migrator.push_migration(
         "20220809142403_initial",
@@ -178,5 +185,10 @@ pub(super) fn collect(migrator: &mut super::Migrator) {
         "20231022143554_video_crop",
         Box::new(|conn| Box::pin(_20231022143554_video_crop(conn))),
         [25, 67, 9, 0, 19, 77, 83, 103, 28, 27, 38, 195, 170, 234, 8, 82, 114, 182, 84, 173, 143, 8, 108, 97, 83, 41, 191, 88, 61, 199, 88, 107],
+    );
+    migrator.push_migration(
+        "20231228161701_access_tokens",
+        Box::new(|conn| Box::pin(_20231228161701_access_tokens(conn))),
+        [228, 50, 183, 70, 106, 104, 7, 139, 186, 192, 51, 153, 24, 112, 117, 237, 200, 152, 181, 128, 144, 152, 178, 234, 190, 17, 71, 112, 87, 158, 113, 150],
     );
 }

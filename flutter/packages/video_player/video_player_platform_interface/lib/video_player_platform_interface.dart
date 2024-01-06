@@ -55,6 +55,7 @@ class VideoItem {
 
 abstract class VideoController implements Listenable {
   VideoState get state;
+  // TODO: Should this return int milliseconds instead?
   double get position;
   set position(double value);
   double get duration;
@@ -75,4 +76,33 @@ abstract class VideoController implements Listenable {
   void setFit(BoxFit fit);
   void setPlaybackSpeed(double speed);
   void dispose();
+}
+
+class MediaPositionHandler {
+  int _lastKnownPositionMs = 0;
+  DateTime _lastKnownPositionTime = DateTime.now();
+
+  double _playbackSpeed = 1.0;
+  bool _isPlaying = false;
+
+  double get positionMs {
+    double position = _lastKnownPositionMs.toDouble();
+    if (_isPlaying) {
+      final msSinceLastPosition =
+          DateTime.now().difference(_lastKnownPositionTime).inMilliseconds;
+      position += msSinceLastPosition.toDouble() * _playbackSpeed;
+    }
+    return position;
+  }
+
+  void update({
+    required int positionMs,
+    required bool isPlaying,
+    required double speed,
+  }) {
+    _lastKnownPositionMs = positionMs;
+    _lastKnownPositionTime = DateTime.now();
+    _isPlaying = isPlaying;
+    _playbackSpeed = speed;
+  }
 }

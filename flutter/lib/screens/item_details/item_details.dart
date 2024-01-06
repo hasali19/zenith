@@ -3,12 +3,14 @@ import 'dart:ui';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cast_framework/cast_framework.dart' show CastFrameworkPlatform;
 import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/media_route_button/media_route_button.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/router.dart';
 import 'package:zenith/screens/item_details/episodes_list.dart';
@@ -47,6 +49,10 @@ class _ItemDetailsScreenState extends ConsumerState<ItemDetailsScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
+        actions: [
+          if (CastFrameworkPlatform.instance.isSupported)
+            const MediaRouteButton()
+        ],
       ),
       body: Consumer(builder: (context, ref, child) {
         final model = ref.watch(itemDetailsModelProvider(widget.id));

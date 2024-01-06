@@ -68,6 +68,7 @@ class MainActivity : FlutterActivity() {
                     result.error(ex.javaClass.canonicalName!!, ex.message, null)
                 }
             }
+
             else -> result.notImplemented()
         }
     }
@@ -77,6 +78,7 @@ class MainActivity : FlutterActivity() {
             "getSupportedAbis" -> {
                 result.success(Build.SUPPORTED_ABIS.toList())
             }
+
             "setPipEnabled" -> {
                 val isPipModeEnabled = call.arguments as Boolean
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -91,9 +93,12 @@ class MainActivity : FlutterActivity() {
                             }
                             .build()
                     )
+                } else {
+                    this.isPipModeEnabled = true
                 }
                 result.success(null)
             }
+
             "setExtendIntoCutout" -> {
                 val extendIntoCutout = call.arguments as Boolean
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -107,9 +112,10 @@ class MainActivity : FlutterActivity() {
                 }
                 result.success(null)
             }
+
             "setSystemBarsVisible" -> {
                 val visible = call.arguments as Boolean
-                val controller = WindowCompat.getInsetsController(window, window.decorView)!!
+                val controller = WindowCompat.getInsetsController(window, window.decorView)
                 if (visible) {
                     controller.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
                 } else {

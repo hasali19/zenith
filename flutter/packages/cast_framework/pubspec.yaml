@@ -1,0 +1,45 @@
+name: cast_framework
+description: "A new Flutter plugin project."
+version: 0.0.1
+homepage:
+
+environment:
+  sdk: ">=3.2.3 <4.0.0"
+  flutter: ">=3.3.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_platform_interface: ^2.0.2
+
+dev_dependencies:
+  build_runner: ^2.0.0
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  pigeon: ^15.0.2
+  pigeon_build_runner: ^1.1.0
+
+dependency_overrides:
+  pigeon_build_core:
+    git:
+      url: https://github.com/hasali19/pigeon_build_runner.git
+      ref: fix-windows-paths
+      path: packages/pigeon_build_core
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: dev.hasali.zenith.cast_framework
+        pluginClass: CastFrameworkPlugin
+        dartPluginClass: CastFrameworkAndroid
+
+pigeon:
+  inputs:
+    - input: pigeons/cast.dart
+      dart:
+        out: lib/src/cast_api.g.dart
+      kotlin:
+        out: android/src/main/kotlin/dev/hasali/zenith/cast_framework/pigeon/CastApi.g.kt
+        package: dev.hasali.zenith.cast_framework.pigeon

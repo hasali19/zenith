@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 
 class PlayPauseButton extends StatefulWidget {
   final bool isPlaying;
-  final double size;
+  final double? size;
 
   final void Function(bool playing) onSetPlaying;
 
   const PlayPauseButton({
     Key? key,
     required this.isPlaying,
-    required this.size,
     required this.onSetPlaying,
+    this.size,
   }) : super(key: key);
 
   @override

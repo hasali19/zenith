@@ -20,24 +20,50 @@ class AudioTrack {
 }
 
 class VideoPlayerUi extends ConsumerStatefulWidget {
-  final VideoController controller;
   final Widget title;
   final List<AudioTrack> audioTracks;
   final List<SubtitleTrack> subtitles;
   final VideoProgressData Function() progress;
+  final bool isAudioTrackSelectionSupported;
+  final BoxFit fit;
+  final double playbackSpeed;
+  final bool isLoading;
+  final bool isPaused;
 
   final void Function() onInteractionStart;
   final void Function() onInteractionEnd;
+  final void Function(int index) onAudioTrackSelected;
+  final void Function(SubtitleTrack? track) onTextTrackSelected;
+  final void Function(BoxFit fit) onFitSelected;
+  final void Function(double speed) onPlaybackSpeedSelected;
+  final void Function(double position) onSeek;
+  final void Function(double delta) onSeekDelta;
+  final void Function() onSeekToPrevious;
+  final void Function() onSeekToNext;
+  final void Function(bool isPaused) onSetPaused;
 
   const VideoPlayerUi({
     Key? key,
-    required this.controller,
     required this.title,
     required this.audioTracks,
     required this.subtitles,
     required this.progress,
+    required this.isAudioTrackSelectionSupported,
+    required this.fit,
+    required this.playbackSpeed,
+    required this.isLoading,
+    required this.isPaused,
     required this.onInteractionStart,
     required this.onInteractionEnd,
+    required this.onAudioTrackSelected,
+    required this.onTextTrackSelected,
+    required this.onFitSelected,
+    required this.onPlaybackSpeedSelected,
+    required this.onSeek,
+    required this.onSeekDelta,
+    required this.onSeekToPrevious,
+    required this.onSeekToNext,
+    required this.onSetPaused,
   }) : super(key: key);
 
   @override
@@ -45,7 +71,7 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
 }
 
 class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
-  VideoController get _controller => widget.controller;
+  // VideoController get _controller => widget.controller;
 
   late final List<SubtitleTrack> _subtitles;
   late final List<AudioTrack> _audioTracks;
@@ -59,18 +85,6 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
 
     _audioTracks = [...widget.audioTracks];
     _audioTracks.sort((a, b) => a.language.compareTo(b.language));
-
-    _controller.addListener(_listener);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _controller.removeListener(_listener);
-  }
-
-  void _listener() {
-    setState(() {});
   }
 
   Future<void> _showModalBottomSheet(
@@ -98,8 +112,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
               _showBoxFitMenu(context);
             },
           ),
-          if (_controller.supportsAudioTrackSelection &&
-              _audioTracks.length > 1)
+          if (widget.isAudioTrackSelectionSupported && _audioTracks.length > 1)
             ListTile(
               leading: const Icon(Icons.audiotrack),
               title: const Text('Audio'),
@@ -138,7 +151,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         title: Text(track.language),
         subtitle: Text(track.codec),
         onTap: () {
-          _controller.setAudioTrack(track.index);
+          widget.onAudioTrackSelected(track.index);
           Navigator.pop(context);
         },
       ));
@@ -160,7 +173,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
       ListTile(
         title: const Text('None'),
         onTap: () {
-          _controller.setTextTrack(null);
+          widget.onTextTrackSelected(null);
           Navigator.pop(context);
         },
       )
@@ -171,7 +184,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         title: Text(track.displayLanguage ?? 'Unknown'),
         subtitle: track.title != null ? Text(track.title!) : null,
         onTap: () {
-          _controller.setTextTrack(track);
+          widget.onTextTrackSelected(track);
           Navigator.pop(context);
         },
       ));
@@ -188,15 +201,15 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
 
     buildListTile(e) {
       onSetFit() {
-        _controller.setFit(e.$1);
+        widget.onFitSelected(e.$1);
         Navigator.pop(context);
       }
 
       return ListTile(
         leading: Icon(e.$3),
         title: Text(e.$2),
-        onTap: _controller.fit == e.$1 ? null : onSetFit,
-        trailing: _controller.fit != e.$1 ? null : const Icon(Icons.check),
+        onTap: widget.fit == e.$1 ? null : onSetFit,
+        trailing: widget.fit != e.$1 ? null : const Icon(Icons.check),
       );
     }
 
@@ -214,15 +227,15 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
 
     buildListTile(speed) {
       onSetSpeed() {
-        _controller.setPlaybackSpeed(speed);
+        widget.onPlaybackSpeedSelected(speed);
         Navigator.pop(context);
       }
 
       return ListTile(
         title: Text('${speed}x'),
-        onTap: _controller.playbackSpeed == speed ? null : onSetSpeed,
+        onTap: widget.playbackSpeed == speed ? null : onSetSpeed,
         trailing:
-            _controller.playbackSpeed != speed ? null : const Icon(Icons.check),
+            widget.playbackSpeed != speed ? null : const Icon(Icons.check),
       );
     }
 
@@ -249,8 +262,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
       children: [
         VideoProgressBar(
           progress: widget.progress,
-          onSeek: (position) =>
-              _controller.position = position.inSeconds.toDouble(),
+          onSeek: (position) => widget.onSeek(position.inSeconds.toDouble()),
           onSeekStart: widget.onInteractionStart,
           onSeekEnd: widget.onInteractionEnd,
         ),
@@ -302,7 +314,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
               child: _buildAppBar(),
             ),
           ),
-          if (_controller.loading)
+          if (widget.isLoading)
             Align(
               alignment: Alignment.center,
               child: SizedBox(
@@ -321,7 +333,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
                   icon: const Icon(Icons.skip_previous),
                   iconSize: secondaryIconSize,
                   onPressed: () {
-                    _controller.seekToPreviousItem();
+                    widget.onSeekToPrevious();
                     widget.onInteractionEnd();
                   },
                 ),
@@ -330,7 +342,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
                   icon: const Icon(Icons.replay_10),
                   iconSize: secondaryIconSize,
                   onPressed: () {
-                    _controller.position -= 10;
+                    widget.onSeekDelta(-10);
                     widget.onInteractionEnd();
                   },
                 ),
@@ -341,10 +353,10 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
                     color: Colors.grey.withAlpha(50),
                   ),
                   child: PlayPauseButton(
-                    isPlaying: !_controller.paused,
+                    isPlaying: !widget.isPaused,
                     size: primaryIconSize,
                     onSetPlaying: (playing) {
-                      playing ? _controller.play() : _controller.pause();
+                      widget.onSetPaused(!playing);
                       widget.onInteractionEnd();
                     },
                   ),
@@ -354,7 +366,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
                   icon: const Icon(Icons.forward_30),
                   iconSize: secondaryIconSize,
                   onPressed: () {
-                    _controller.position += 30;
+                    widget.onSeekDelta(30);
                     widget.onInteractionEnd();
                   },
                 ),
@@ -363,7 +375,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
                   icon: const Icon(Icons.skip_next),
                   iconSize: secondaryIconSize,
                   onPressed: () {
-                    _controller.seekToNextItem();
+                    widget.onSeekToNext();
                     widget.onInteractionEnd();
                   },
                 ),
