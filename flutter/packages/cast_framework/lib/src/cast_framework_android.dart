@@ -7,24 +7,25 @@ final _api = cast.CastApi();
 
 class AndroidCastFramework extends CastFrameworkPlatform {
   final _mediaRouter = _MediaRouter();
+  final _remoteMediaClient = _RemoteMediaClient();
 
-  @override
-  MediaRouter get mediaRouter => _mediaRouter;
-}
-
-class _MediaRouter implements MediaRouter {
-  _MediaRouter() {
+  AndroidCastFramework() {
     cast.CastEventsApi.setup(_RemotePlaybackEventsApi(this));
   }
 
+  @override
+  MediaRouter get mediaRouter => _mediaRouter;
+
+  @override
+  RemoteMediaClient get remoteMediaClient => _remoteMediaClient;
+}
+
+class _MediaRouter implements MediaRouter {
   @override
   final routes = ValueNotifier<List<cast.MediaRoute>>([]);
 
   @override
   final selectedRoute = ValueNotifier<cast.MediaRoute?>(null);
-
-  @override
-  final mediaStatus = ValueNotifier<cast.MediaStatus?>(null);
 
   @override
   Future<void> startRouteScanning(cast.RoutesScanningMode mode) async =>
@@ -38,21 +39,61 @@ class _MediaRouter implements MediaRouter {
   Future<void> selectRoute(String? id) async => await _api.selectRoute(id);
 }
 
-class _RemotePlaybackEventsApi implements cast.CastEventsApi {
-  final _MediaRouter _mediaRouter;
+class _RemoteMediaClient implements RemoteMediaClient {
+  @override
+  final mediaStatus = ValueNotifier<cast.MediaStatus?>(null);
 
-  _RemotePlaybackEventsApi(this._mediaRouter);
+  @override
+  void load(cast.MediaLoadRequestData request) {
+    _api.load(request);
+  }
+
+  @override
+  void pause() {
+    _api.pause();
+  }
+
+  @override
+  void play() {
+    _api.play();
+  }
+
+  @override
+  void seek(cast.MediaSeekOptions options) {
+    _api.seek(options);
+  }
+
+  @override
+  void setActiveMediaTracks(List<int> trackIds) {
+    _api.setActiveMediaTracks(trackIds);
+  }
+
+  @override
+  void setPlaybackRate(double playbackRate) {
+    _api.setPlaybackRate(playbackRate);
+  }
+
+  @override
+  void stop() {
+    _api.stop();
+  }
+}
+
+class _RemotePlaybackEventsApi implements cast.CastEventsApi {
+  final AndroidCastFramework _plugin;
+
+  _RemotePlaybackEventsApi(this._plugin);
 
   @override
   void onRoutesChanged(List<cast.MediaRoute?> routes) {
-    _mediaRouter.routes.value = routes.map((route) => route!).toList();
-    _mediaRouter.selectedRoute.value = _mediaRouter.routes.value
+    _plugin.mediaRouter.routes.value = routes.map((route) => route!).toList();
+    _plugin.mediaRouter.selectedRoute.value = _plugin.mediaRouter.routes.value
         .where((route) => route.isSelected)
         .firstOrNull;
   }
 
   @override
   void onStatusUpdated(cast.MediaStatus? status) {
-    _mediaRouter.mediaStatus.value = status;
+    _plugin.remoteMediaClient.mediaStatus.value = status;
   }
 }

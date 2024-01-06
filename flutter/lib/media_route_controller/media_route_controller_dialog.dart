@@ -23,7 +23,9 @@ typedef _VideoProgress = ({Duration total, Duration progress});
 
 class _MediaRouteControllerDialogState
     extends ConsumerState<MediaRouteControllerDialog> {
-  late final MediaRouter _mediaRouter;
+  final RemoteMediaClient _client =
+      CastFrameworkPlatform.instance.remoteMediaClient;
+
   late final Stream<({Duration total, Duration progress})> _progress;
 
   final _positionHandler = MediaPositionHandler();
@@ -31,8 +33,7 @@ class _MediaRouteControllerDialogState
   @override
   void initState() {
     super.initState();
-    _mediaRouter = context.read<MediaRouter>();
-    _mediaRouter.mediaStatus.addListener(_onMediaStatusUpdated);
+    _client.mediaStatus.addListener(_onMediaStatusUpdated);
 
     _onMediaStatusUpdated();
 
@@ -41,7 +42,7 @@ class _MediaRouteControllerDialogState
 
   @override
   void dispose() {
-    _mediaRouter.mediaStatus.removeListener(_onMediaStatusUpdated);
+    _client.mediaStatus.removeListener(_onMediaStatusUpdated);
     super.dispose();
   }
 
@@ -49,8 +50,7 @@ class _MediaRouteControllerDialogState
     _VideoProgress getProgress() {
       final positionMs = _positionHandler.positionMs.toInt();
       final durationMs =
-          _mediaRouter.mediaStatus.value?.mediaInfo?.streamDuration ??
-              positionMs;
+          _client.mediaStatus.value?.mediaInfo?.streamDuration ?? positionMs;
       return (
         total: Duration(milliseconds: durationMs),
         progress: Duration(milliseconds: positionMs),
@@ -67,7 +67,7 @@ class _MediaRouteControllerDialogState
   }
 
   void _onMediaStatusUpdated() {
-    final mediaStatus = _mediaRouter.mediaStatus.value;
+    final mediaStatus = _client.mediaStatus.value;
     if (mediaStatus == null) return;
 
     _positionHandler.update(
@@ -80,8 +80,7 @@ class _MediaRouteControllerDialogState
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          MediaRouteControllerCubit(context.read<MediaRouter>()),
+      create: (context) => MediaRouteControllerCubit(),
       child: BlocConsumer<MediaRouteControllerCubit, MediaRouteControllerState>(
         listenWhen: (previous, current) => previous.route != null,
         listener: (context, state) {
@@ -138,7 +137,7 @@ class _MediaRouteControllerDialogState
                         thumbRadius: 7,
                         thumbGlowRadius: 25,
                         timeLabelLocation: TimeLabelLocation.none,
-                        onSeek: (value) => CastApi().seek(MediaSeekOptions(
+                        onSeek: (value) => _client.seek(MediaSeekOptions(
                           position: value.inMilliseconds,
                           resumeState: ResumeState.unchanged,
                         )),
@@ -156,16 +155,16 @@ class _MediaRouteControllerDialogState
                               mediaStatus.playerState != PlayerState.paused,
                           onSetPlaying: (playing) {
                             if (mediaStatus.playerState != PlayerState.paused) {
-                              CastApi().pause();
+                              _client.pause();
                             } else {
-                              CastApi().play();
+                              _client.play();
                             }
                           },
                         ),
                         IconButton(
                           icon: const Icon(Icons.stop),
                           onPressed: () {
-                            CastApi().stop();
+                            _client.stop();
                           },
                         ),
                       ],

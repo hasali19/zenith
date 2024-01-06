@@ -27,9 +27,10 @@ class RemoteVideoPlayer extends ConsumerStatefulWidget {
 }
 
 class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
+  final RemoteMediaClient _client =
+      CastFrameworkPlatform.instance.remoteMediaClient;
+
   late final api.ZenithApiClient _api;
-  late final CastApi _remote;
-  late final MediaRouter _mediaRouter;
 
   final _positionHandler = MediaPositionHandler();
 
@@ -39,15 +40,13 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
   void initState() {
     super.initState();
     _api = ref.read(api.apiProvider);
-    _remote = CastApi();
-    _mediaRouter = CastFrameworkPlatform.instance.mediaRouter;
-    _mediaRouter.mediaStatus.addListener(_onMediaStatusUpdated);
+    _client.mediaStatus.addListener(_onMediaStatusUpdated);
     _loadMedia();
   }
 
   @override
   void dispose() {
-    _mediaRouter.mediaStatus.removeListener(_onMediaStatusUpdated);
+    _client.mediaStatus.removeListener(_onMediaStatusUpdated);
     super.dispose();
   }
 
@@ -61,7 +60,7 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
       return uri.replace(queryParameters: params).toString();
     }
 
-    await _remote.load(MediaLoadRequestData(
+    _client.load(MediaLoadRequestData(
       mediaInfo: MediaLoadInfo(
         url: withToken(_api.getVideoUrl(item.videoFile!.id)),
         mediaTracks: item.videoFile?.subtitles
@@ -104,7 +103,7 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
   }
 
   void _onMediaStatusUpdated() {
-    final mediaStatus = _mediaRouter.mediaStatus.value;
+    final mediaStatus = _client.mediaStatus.value;
     if (mediaStatus == null) return;
 
     _positionHandler.update(
@@ -117,9 +116,8 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
   VideoProgressData _getProgress() {
     return VideoProgressData(
       total: Duration(
-          milliseconds:
-              _mediaRouter.mediaStatus.value?.mediaInfo?.streamDuration ??
-                  _positionHandler.positionMs.toInt()),
+          milliseconds: _client.mediaStatus.value?.mediaInfo?.streamDuration ??
+              _positionHandler.positionMs.toInt()),
       progress: Duration(milliseconds: _positionHandler.positionMs.toInt()),
     );
   }
@@ -135,7 +133,7 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
             ),
           ),
           ValueListenableBuilder(
-            valueListenable: _mediaRouter.mediaStatus,
+            valueListenable: _client.mediaStatus,
             builder: (context, mediaStatus, child) => VideoPlayerUi(
               title: MediaTitle(item: item),
               audioTracks: const [],
@@ -153,19 +151,19 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
               onInteractionEnd: () {},
               onAudioTrackSelected: (index) {},
               onTextTrackSelected: (track) {
-                _remote.setActiveMediaTracks(
+                _client.setActiveMediaTracks(
                     [if (track != null) int.parse(track.id)]);
               },
               onFitSelected: (fit) {},
-              onPlaybackSpeedSelected: _remote.setPlaybackRate,
+              onPlaybackSpeedSelected: _client.setPlaybackRate,
               onSeek: (position) {
-                _remote.seek(MediaSeekOptions(
+                _client.seek(MediaSeekOptions(
                   position: (position * 1000).toInt(),
                   resumeState: ResumeState.unchanged,
                 ));
               },
               onSeekDelta: (delta) {
-                _remote.seek(MediaSeekOptions(
+                _client.seek(MediaSeekOptions(
                   position:
                       (_positionHandler.positionMs + delta * 1000).toInt(),
                   resumeState: ResumeState.unchanged,
@@ -174,7 +172,7 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
               onSeekToPrevious: () {},
               onSeekToNext: () {},
               onSetPaused: (isPaused) =>
-                  isPaused ? _remote.pause() : _remote.play(),
+                  isPaused ? _client.pause() : _client.play(),
             ),
           ),
         ],

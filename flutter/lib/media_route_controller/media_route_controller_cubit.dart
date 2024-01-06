@@ -15,15 +15,20 @@ class MediaRouteControllerState with _$MediaRouteControllerState {
 }
 
 class MediaRouteControllerCubit extends Cubit<MediaRouteControllerState> {
-  final cast.MediaRouter _mediaRouter;
+  final cast.MediaRouter _mediaRouter =
+      cast.CastFrameworkPlatform.instance.mediaRouter;
+  final cast.RemoteMediaClient _client =
+      cast.CastFrameworkPlatform.instance.remoteMediaClient;
 
-  MediaRouteControllerCubit(this._mediaRouter)
+  MediaRouteControllerCubit()
       : super(MediaRouteControllerState(
-          route: _mediaRouter.selectedRoute.value,
-          mediaStatus: _mediaRouter.mediaStatus.value,
+          route: cast
+              .CastFrameworkPlatform.instance.mediaRouter.selectedRoute.value,
+          mediaStatus: cast.CastFrameworkPlatform.instance.remoteMediaClient
+              .mediaStatus.value,
         )) {
     _mediaRouter.selectedRoute.addListener(_onSelectedRouteChanged);
-    _mediaRouter.mediaStatus.addListener(_onMediaStatusChanged);
+    _client.mediaStatus.addListener(_onMediaStatusChanged);
     Future.microtask(
         () => _mediaRouter.startRouteScanning(cast.RoutesScanningMode.none));
   }
@@ -33,7 +38,7 @@ class MediaRouteControllerCubit extends Cubit<MediaRouteControllerState> {
   }
 
   void _onMediaStatusChanged() {
-    emit(state.copyWith(mediaStatus: _mediaRouter.mediaStatus.value));
+    emit(state.copyWith(mediaStatus: _client.mediaStatus.value));
   }
 
   void deselectRoute() async {
@@ -43,7 +48,7 @@ class MediaRouteControllerCubit extends Cubit<MediaRouteControllerState> {
   @override
   Future<void> close() async {
     _mediaRouter.selectedRoute.removeListener(_onSelectedRouteChanged);
-    _mediaRouter.mediaStatus.removeListener(_onMediaStatusChanged);
+    _client.mediaStatus.removeListener(_onMediaStatusChanged);
     await _mediaRouter.stopRouteScanning(cast.RoutesScanningMode.none);
     return super.close();
   }

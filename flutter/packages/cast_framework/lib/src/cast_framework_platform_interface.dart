@@ -18,14 +18,26 @@ abstract class CastFrameworkPlatform extends PlatformInterface {
   }
 
   MediaRouter get mediaRouter;
+  RemoteMediaClient get remoteMediaClient;
 }
 
 abstract interface class MediaRouter {
   ValueNotifier<List<MediaRoute>> get routes;
   ValueNotifier<MediaRoute?> get selectedRoute;
-  ValueNotifier<MediaStatus?> get mediaStatus;
 
   Future<void> startRouteScanning(RoutesScanningMode mode);
   Future<void> stopRouteScanning(RoutesScanningMode mode);
   Future<void> selectRoute(String? id);
+}
+
+abstract interface class RemoteMediaClient {
+  ValueNotifier<MediaStatus?> get mediaStatus;
+
+  void load(MediaLoadRequestData request);
+  void play();
+  void pause();
+  void stop();
+  void seek(MediaSeekOptions options);
+  void setActiveMediaTracks(List<int> trackIds);
+  void setPlaybackRate(double playbackRate);
 }
