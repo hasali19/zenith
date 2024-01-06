@@ -33,6 +33,7 @@ flutter:
       android:
         package: dev.hasali.zenith.cast_framework
         pluginClass: CastFrameworkPlugin
+        dartPluginClass: CastFrameworkAndroid
 
 pigeon:
   inputs:

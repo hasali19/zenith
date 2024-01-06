@@ -5,19 +5,34 @@ import 'cast_api.g.dart' as cast;
 
 final _api = cast.CastApi();
 
-class AndroidCastFramework extends CastFrameworkPlatform {
+class CastFrameworkAndroid extends CastFrameworkPlatform {
+  static registerWith() {
+    CastFrameworkPlatform.instance = CastFrameworkAndroid();
+  }
+
+  bool _isInit = false;
+
   final _mediaRouter = _MediaRouter();
   final _remoteMediaClient = _RemoteMediaClient();
 
-  AndroidCastFramework() {
-    cast.CastEventsApi.setup(_RemotePlaybackEventsApi(this));
+  @override
+  MediaRouter get mediaRouter {
+    _ensureInitialized();
+    return _mediaRouter;
   }
 
   @override
-  MediaRouter get mediaRouter => _mediaRouter;
+  RemoteMediaClient get remoteMediaClient {
+    _ensureInitialized();
+    return _remoteMediaClient;
+  }
 
-  @override
-  RemoteMediaClient get remoteMediaClient => _remoteMediaClient;
+  void _ensureInitialized() {
+    if (!_isInit) {
+      cast.CastEventsApi.setup(_RemotePlaybackEventsApi(this));
+      _isInit = true;
+    }
+  }
 }
 
 class _MediaRouter implements MediaRouter {
@@ -80,7 +95,7 @@ class _RemoteMediaClient implements RemoteMediaClient {
 }
 
 class _RemotePlaybackEventsApi implements cast.CastEventsApi {
-  final AndroidCastFramework _plugin;
+  final CastFrameworkAndroid _plugin;
 
   _RemotePlaybackEventsApi(this._plugin);
 
