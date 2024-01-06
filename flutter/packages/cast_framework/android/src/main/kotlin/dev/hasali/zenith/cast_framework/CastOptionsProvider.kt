@@ -1,4 +1,4 @@
-package dev.hasali.zenith
+package dev.hasali.zenith.cast_framework
 
 import android.content.Context
 import com.google.android.gms.cast.CastMediaControlIntent
