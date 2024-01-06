@@ -1,7 +1,7 @@
-import 'package:cast_framework/src/cast_framework_platform_interface.dart';
 import 'package:flutter/foundation.dart';
 
 import 'cast_api.g.dart' as cast;
+import 'cast_framework_platform_interface.dart';
 
 final _api = cast.CastApi();
 
@@ -14,6 +14,9 @@ class CastFrameworkAndroid extends CastFrameworkPlatform {
 
   final _mediaRouter = _MediaRouter();
   final _remoteMediaClient = _RemoteMediaClient();
+
+  @override
+  bool get isSupported => true;
 
   @override
   MediaRouter get mediaRouter {
