@@ -1,11 +1,9 @@
 import 'package:cast_framework/cast_framework.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import 'package:zenith/api.dart' as api;
 import 'package:zenith/fade_in_image.dart';
-import 'package:zenith/remote_playback.dart';
 import 'package:zenith/screens/video_player/media_title.dart';
 import 'package:zenith/screens/video_player/ui.dart';
 import 'package:zenith/screens/video_player/utils.dart';
@@ -42,7 +40,7 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
     super.initState();
     _api = ref.read(api.apiProvider);
     _remote = CastApi();
-    _mediaRouter = context.read<MediaRouter>();
+    _mediaRouter = CastFrameworkPlatform.instance.mediaRouter;
     _mediaRouter.mediaStatus.addListener(_onMediaStatusUpdated);
     _loadMedia();
   }

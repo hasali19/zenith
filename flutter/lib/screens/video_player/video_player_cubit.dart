@@ -1,7 +1,7 @@
+import 'package:cast_framework/cast_framework.dart' as cast;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:zenith/api.dart';
-import 'package:zenith/remote_playback.dart';
 
 part 'video_player_cubit.freezed.dart';
 
@@ -29,9 +29,11 @@ class VideoPlayerState with _$VideoPlayerState {
 class VideoPlayerCubit extends Cubit<VideoPlayerState> {
   final ZenithApiClient _api;
 
-  VideoPlayerCubit(this._api, final MediaRouter mediaRouter)
+  VideoPlayerCubit(this._api)
       : super(VideoPlayerState(
-          location: mediaRouter.selectedRoute.value == null
+          location: cast.CastFrameworkPlatform.instance.mediaRouter
+                      .selectedRoute.value ==
+                  null
               ? PlaybackLocation.local
               : PlaybackLocation.remote,
         ));

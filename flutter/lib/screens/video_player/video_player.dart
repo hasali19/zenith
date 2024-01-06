@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/api.dart' as api;
-import 'package:zenith/remote_playback.dart';
 import 'package:zenith/screens/video_player/local_player.dart';
 import 'package:zenith/screens/video_player/remote_player.dart';
 import 'package:zenith/screens/video_player/video_player_cubit.dart';
@@ -14,18 +13,16 @@ class VideoPlayerScreen extends ConsumerWidget {
   final double startPosition;
 
   const VideoPlayerScreen({
-    Key? key,
+    super.key,
     @pathParam required this.id,
     @queryParam this.startPosition = 0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return BlocProvider(
-      create: (context) => VideoPlayerCubit(
-        ref.read(api.apiProvider),
-        context.read<MediaRouter>(),
-      )..loadPlaylist(id),
+      create: (context) =>
+          VideoPlayerCubit(ref.read(api.apiProvider))..loadPlaylist(id),
       child: BlocBuilder<VideoPlayerCubit, VideoPlayerState>(
         builder: (context, state) {
           if (state.playlist == null) {

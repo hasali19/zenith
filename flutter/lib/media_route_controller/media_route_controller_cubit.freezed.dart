@@ -16,7 +16,7 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$MediaRouteControllerState {
-  MediaRoute? get route => throw _privateConstructorUsedError;
+  cast.MediaRoute? get route => throw _privateConstructorUsedError;
   cast.MediaStatus? get mediaStatus => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
@@ -30,9 +30,7 @@ abstract class $MediaRouteControllerStateCopyWith<$Res> {
           $Res Function(MediaRouteControllerState) then) =
       _$MediaRouteControllerStateCopyWithImpl<$Res, MediaRouteControllerState>;
   @useResult
-  $Res call({MediaRoute? route, cast.MediaStatus? mediaStatus});
-
-  $MediaRouteCopyWith<$Res>? get route;
+  $Res call({cast.MediaRoute? route, cast.MediaStatus? mediaStatus});
 }
 
 /// @nodoc
@@ -56,24 +54,12 @@ class _$MediaRouteControllerStateCopyWithImpl<$Res,
       route: freezed == route
           ? _value.route
           : route // ignore: cast_nullable_to_non_nullable
-              as MediaRoute?,
+              as cast.MediaRoute?,
       mediaStatus: freezed == mediaStatus
           ? _value.mediaStatus
           : mediaStatus // ignore: cast_nullable_to_non_nullable
               as cast.MediaStatus?,
     ) as $Val);
-  }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $MediaRouteCopyWith<$Res>? get route {
-    if (_value.route == null) {
-      return null;
-    }
-
-    return $MediaRouteCopyWith<$Res>(_value.route!, (value) {
-      return _then(_value.copyWith(route: value) as $Val);
-    });
   }
 }
 
@@ -86,10 +72,7 @@ abstract class _$$MediaRouteControllerStateImplCopyWith<$Res>
       __$$MediaRouteControllerStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({MediaRoute? route, cast.MediaStatus? mediaStatus});
-
-  @override
-  $MediaRouteCopyWith<$Res>? get route;
+  $Res call({cast.MediaRoute? route, cast.MediaStatus? mediaStatus});
 }
 
 /// @nodoc
@@ -112,7 +95,7 @@ class __$$MediaRouteControllerStateImplCopyWithImpl<$Res>
       route: freezed == route
           ? _value.route
           : route // ignore: cast_nullable_to_non_nullable
-              as MediaRoute?,
+              as cast.MediaRoute?,
       mediaStatus: freezed == mediaStatus
           ? _value.mediaStatus
           : mediaStatus // ignore: cast_nullable_to_non_nullable
@@ -128,7 +111,7 @@ class _$MediaRouteControllerStateImpl implements _MediaRouteControllerState {
       {required this.route, required this.mediaStatus});
 
   @override
-  final MediaRoute? route;
+  final cast.MediaRoute? route;
   @override
   final cast.MediaStatus? mediaStatus;
 
@@ -160,12 +143,12 @@ class _$MediaRouteControllerStateImpl implements _MediaRouteControllerState {
 
 abstract class _MediaRouteControllerState implements MediaRouteControllerState {
   factory _MediaRouteControllerState(
-          {required final MediaRoute? route,
+          {required final cast.MediaRoute? route,
           required final cast.MediaStatus? mediaStatus}) =
       _$MediaRouteControllerStateImpl;
 
   @override
-  MediaRoute? get route;
+  cast.MediaRoute? get route;
   @override
   cast.MediaStatus? get mediaStatus;
   @override

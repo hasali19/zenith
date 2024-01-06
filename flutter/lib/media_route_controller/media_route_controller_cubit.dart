@@ -1,7 +1,6 @@
 import 'package:cast_framework/cast_framework.dart' as cast;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:zenith/remote_playback.dart';
 
 part 'media_route_controller_cubit.freezed.dart';
 
@@ -10,13 +9,13 @@ typedef CastMediaStatus = cast.MediaStatus;
 @freezed
 class MediaRouteControllerState with _$MediaRouteControllerState {
   factory MediaRouteControllerState({
-    required MediaRoute? route,
+    required cast.MediaRoute? route,
     required CastMediaStatus? mediaStatus,
   }) = _MediaRouteControllerState;
 }
 
 class MediaRouteControllerCubit extends Cubit<MediaRouteControllerState> {
-  final MediaRouter _mediaRouter;
+  final cast.MediaRouter _mediaRouter;
 
   MediaRouteControllerCubit(this._mediaRouter)
       : super(MediaRouteControllerState(
@@ -26,7 +25,7 @@ class MediaRouteControllerCubit extends Cubit<MediaRouteControllerState> {
     _mediaRouter.selectedRoute.addListener(_onSelectedRouteChanged);
     _mediaRouter.mediaStatus.addListener(_onMediaStatusChanged);
     Future.microtask(
-        () => _mediaRouter.startRouteScanning(RoutesScanningMode.none));
+        () => _mediaRouter.startRouteScanning(cast.RoutesScanningMode.none));
   }
 
   void _onSelectedRouteChanged() {
@@ -45,7 +44,7 @@ class MediaRouteControllerCubit extends Cubit<MediaRouteControllerState> {
   Future<void> close() async {
     _mediaRouter.selectedRoute.removeListener(_onSelectedRouteChanged);
     _mediaRouter.mediaStatus.removeListener(_onMediaStatusChanged);
-    await _mediaRouter.stopRoutesScanning(RoutesScanningMode.none);
+    await _mediaRouter.stopRouteScanning(cast.RoutesScanningMode.none);
     return super.close();
   }
 }

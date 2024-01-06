@@ -1,7 +1,7 @@
+import 'package:cast_framework/cast_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zenith/media_route_chooser/media_route_chooser_cubit.dart';
-import 'package:zenith/remote_playback.dart';
 
 class MediaRouteChooserDialog extends StatelessWidget {
   const MediaRouteChooserDialog({super.key});
@@ -9,7 +9,7 @@ class MediaRouteChooserDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => MediaRouteChooserCubit(context.read<MediaRouter>()),
+      create: (context) => MediaRouteChooserCubit(),
       child: BlocConsumer<MediaRouteChooserCubit, MediaRouteChooserState>(
         listenWhen: (previous, current) => !previous.isConnected,
         listener: (context, state) {

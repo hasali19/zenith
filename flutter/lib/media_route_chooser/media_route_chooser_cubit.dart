@@ -1,6 +1,6 @@
+import 'package:cast_framework/cast_framework.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:zenith/remote_playback.dart';
 
 part 'media_route_chooser_cubit.freezed.dart';
 
@@ -24,8 +24,9 @@ class MediaRouteChooserState with _$MediaRouteChooserState {
 class MediaRouteChooserCubit extends Cubit<MediaRouteChooserState> {
   final MediaRouter _mediaRouter;
 
-  MediaRouteChooserCubit(this._mediaRouter)
-      : super(MediaRouteChooserState.initial()) {
+  MediaRouteChooserCubit()
+      : _mediaRouter = CastFrameworkPlatform.instance.mediaRouter,
+        super(MediaRouteChooserState.initial()) {
     _mediaRouter.routes.addListener(_onRoutesChanged);
     _mediaRouter.selectedRoute.addListener(_onSelectedRouteChanged);
     Future.microtask(
@@ -34,7 +35,7 @@ class MediaRouteChooserCubit extends Cubit<MediaRouteChooserState> {
 
   @override
   Future<void> close() async {
-    await _mediaRouter.stopRoutesScanning(RoutesScanningMode.active);
+    await _mediaRouter.stopRouteScanning(RoutesScanningMode.active);
     _mediaRouter.routes.removeListener(_onRoutesChanged);
     _mediaRouter.selectedRoute.removeListener(_onSelectedRouteChanged);
     return super.close();

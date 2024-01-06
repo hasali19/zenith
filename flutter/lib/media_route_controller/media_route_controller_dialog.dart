@@ -9,7 +9,6 @@ import 'package:video_player/video_player.dart';
 import 'package:zenith/fade_in_image.dart';
 import 'package:zenith/format_utils.dart';
 import 'package:zenith/media_route_controller/media_route_controller_cubit.dart';
-import 'package:zenith/remote_playback.dart';
 import 'package:zenith/screens/video_player/play_pause_button.dart';
 
 class MediaRouteControllerDialog extends ConsumerStatefulWidget {
