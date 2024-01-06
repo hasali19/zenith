@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:cast_framework/cast_framework.dart';
 import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -23,18 +24,17 @@ import 'package:zenith/window.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  final prefs = await SharedPreferences.getInstance();
+  final window = await WindowController.create();
+
   if (kDebugMode) {
     Bloc.observer = LoggerBlocObserver();
   }
 
-  final prefs = await SharedPreferences.getInstance();
-  final window = await WindowController.create();
   final cookieJar = createCookieJar();
 
-  runApp(MultiRepositoryProvider(
-    providers: [
-      RepositoryProvider.value(value: cookieJar),
-    ],
+  runApp(RepositoryProvider.value(
+    value: cookieJar,
     child: ProviderScope(
       overrides: [
         preferencesProvider.overrideWithValue(prefs),
@@ -216,7 +216,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             appBar: AppBar(
               title: Text(_title(screen)),
               actions: [
-                const MediaRouteButton(),
+                if (CastFrameworkPlatform.instance.isSupported)
+                  const MediaRouteButton(),
                 PopupMenuButton(
                   itemBuilder: (context) {
                     return [

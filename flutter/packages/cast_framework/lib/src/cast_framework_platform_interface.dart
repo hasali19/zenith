@@ -8,17 +8,26 @@ abstract class CastFrameworkPlatform extends PlatformInterface {
 
   static final Object _token = Object();
 
-  static CastFrameworkPlatform? _instance;
+  static CastFrameworkPlatform _instance = _CastFrameworkUnsupported();
 
-  static CastFrameworkPlatform get instance => _instance!;
+  static CastFrameworkPlatform get instance => _instance;
 
   static set instance(CastFrameworkPlatform instance) {
     PlatformInterface.verifyToken(instance, _token);
     _instance = instance;
   }
 
+  bool get isSupported => false;
   MediaRouter get mediaRouter;
   RemoteMediaClient get remoteMediaClient;
+}
+
+class _CastFrameworkUnsupported extends CastFrameworkPlatform {
+  @override
+  MediaRouter get mediaRouter => throw UnimplementedError();
+
+  @override
+  RemoteMediaClient get remoteMediaClient => throw UnimplementedError();
 }
 
 abstract interface class MediaRouter {

@@ -26,16 +26,22 @@ class VideoPlayerState with _$VideoPlayerState {
   }) = _VideoPlayerState;
 }
 
+PlaybackLocation _getPlaybackLocation() {
+  final castPlugin = cast.CastFrameworkPlatform.instance;
+  if (castPlugin.isSupported &&
+      castPlugin.mediaRouter.selectedRoute.value != null) {
+    return PlaybackLocation.remote;
+  } else {
+    return PlaybackLocation.local;
+  }
+}
+
 class VideoPlayerCubit extends Cubit<VideoPlayerState> {
   final ZenithApiClient _api;
 
   VideoPlayerCubit(this._api)
       : super(VideoPlayerState(
-          location: cast.CastFrameworkPlatform.instance.mediaRouter
-                      .selectedRoute.value ==
-                  null
-              ? PlaybackLocation.local
-              : PlaybackLocation.remote,
+          location: _getPlaybackLocation(),
         ));
 
   void loadPlaylist(int id) async {
