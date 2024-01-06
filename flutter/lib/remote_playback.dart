@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:cast_framework/cast_framework.dart' as cast;
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:zenith/remote_playback_api.g.dart' as api;
 
-export 'remote_playback_api.g.dart' show RoutesScanningMode;
+export 'package:cast_framework/cast_framework.dart' show RoutesScanningMode;
 
 part 'remote_playback.freezed.dart';
 
@@ -17,7 +17,7 @@ class MediaRoute with _$MediaRoute {
     required bool isSelected,
   }) = _MediaRoute;
 
-  factory MediaRoute._fromApi(api.MediaRoute route) => MediaRoute(
+  factory MediaRoute._fromApi(cast.MediaRoute route) => MediaRoute(
         id: route.id,
         name: route.name,
         description: route.description,
@@ -27,35 +27,35 @@ class MediaRoute with _$MediaRoute {
 
 typedef MediaRoutesListener = void Function(List<MediaRoute> routes);
 
-final api.RemotePlaybackApi _api = api.RemotePlaybackApi();
+final cast.CastApi _api = cast.CastApi();
 
 class MediaRouter {
   final routes = ValueNotifier<List<MediaRoute>>([]);
   final selectedRoute = ValueNotifier<MediaRoute?>(null);
-  final mediaStatus = ValueNotifier<api.MediaStatus?>(null);
+  final mediaStatus = ValueNotifier<cast.MediaStatus?>(null);
 
   MediaRouter() {
-    api.RemotePlaybackEventsApi.setup(_RemotePlaybackEventsApi(this));
+    cast.CastEventsApi.setup(_RemotePlaybackEventsApi(this));
   }
 
-  Future<void> startRouteScanning(api.RoutesScanningMode mode) async {
+  Future<void> startRouteScanning(cast.RoutesScanningMode mode) async {
     await _api.registerRoutesListener(mode);
   }
 
-  Future<void> stopRoutesScanning(api.RoutesScanningMode mode) async {
+  Future<void> stopRoutesScanning(cast.RoutesScanningMode mode) async {
     await _api.unregisterRoutesListener(mode);
   }
 
   Future<void> selectRoute(String? id) => _api.selectRoute(id);
 }
 
-class _RemotePlaybackEventsApi implements api.RemotePlaybackEventsApi {
+class _RemotePlaybackEventsApi implements cast.CastEventsApi {
   final MediaRouter _mediaRouter;
 
   _RemotePlaybackEventsApi(this._mediaRouter);
 
   @override
-  void onRoutesChanged(List<api.MediaRoute?> routes) {
+  void onRoutesChanged(List<cast.MediaRoute?> routes) {
     _mediaRouter.routes.value =
         routes.map((e) => MediaRoute._fromApi(e!)).toList();
     _mediaRouter.selectedRoute.value = _mediaRouter.routes.value
@@ -64,7 +64,7 @@ class _RemotePlaybackEventsApi implements api.RemotePlaybackEventsApi {
   }
 
   @override
-  void onStatusUpdated(api.MediaStatus? status) {
+  void onStatusUpdated(cast.MediaStatus? status) {
     _mediaRouter.mediaStatus.value = status;
   }
 }

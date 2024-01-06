@@ -1,4 +1,4 @@
-package dev.hasali.zenith
+package dev.hasali.zenith.cast_framework
 
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener

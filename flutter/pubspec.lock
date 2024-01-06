@@ -751,39 +751,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.2"
-  pigeon:
-    dependency: "direct dev"
-    description:
-      name: pigeon
-      sha256: "614d9926d887e8486b487de19d0ea082b7e91228f9e7e6ba86837daf5d6e71cb"
-      url: "https://pub.dev"
-    source: hosted
-    version: "15.0.2"
-  pigeon_build_config:
-    dependency: transitive
-    description:
-      name: pigeon_build_config
-      sha256: f9ba97db46ed6dc2a4221679ab320fda6da9b7cc930a1951b801b7a6e0f9662b
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.0"
-  pigeon_build_core:
-    dependency: "direct overridden"
-    description:
-      path: "packages/pigeon_build_core"
-      ref: fix-windows-paths
-      resolved-ref: e26092e1cfa23336f4528792b2ccddcab63ce0f9
-      url: "https://github.com/hasali19/pigeon_build_runner.git"
-    source: git
-    version: "1.1.0"
-  pigeon_build_runner:
-    dependency: "direct dev"
-    description:
-      name: pigeon_build_runner
-      sha256: d47aa82cb7b4ee09fe389b561cb150613f7140c1a81f082d5599d620a82c231f
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.1.0"
   platform:
     dependency: transitive
     description:
@@ -840,14 +807,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.3"
-  recase:
-    dependency: transitive
-    description:
-      name: recase
-      sha256: e4eb4ec2dcdee52dcf99cb4ceabaffc631d7424ee55e56f280bc039737f89213
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.1.0"
   riverpod:
     dependency: transitive
     description:
@@ -864,14 +823,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.27.7"
-  scratch_space:
-    dependency: transitive
-    description:
-      name: scratch_space
-      sha256: "8510fbff458d733a58fc427057d1ac86303b376d609d6e1bc43f240aad9aa445"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.2"
   shared_preferences:
     dependency: "direct main"
     description:

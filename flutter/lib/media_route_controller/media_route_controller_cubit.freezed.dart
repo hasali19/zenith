@@ -17,7 +17,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$MediaRouteControllerState {
   MediaRoute? get route => throw _privateConstructorUsedError;
-  ApiMediaStatus? get mediaStatus => throw _privateConstructorUsedError;
+  cast.MediaStatus? get mediaStatus => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $MediaRouteControllerStateCopyWith<MediaRouteControllerState> get copyWith =>
@@ -30,7 +30,7 @@ abstract class $MediaRouteControllerStateCopyWith<$Res> {
           $Res Function(MediaRouteControllerState) then) =
       _$MediaRouteControllerStateCopyWithImpl<$Res, MediaRouteControllerState>;
   @useResult
-  $Res call({MediaRoute? route, ApiMediaStatus? mediaStatus});
+  $Res call({MediaRoute? route, cast.MediaStatus? mediaStatus});
 
   $MediaRouteCopyWith<$Res>? get route;
 }
@@ -60,7 +60,7 @@ class _$MediaRouteControllerStateCopyWithImpl<$Res,
       mediaStatus: freezed == mediaStatus
           ? _value.mediaStatus
           : mediaStatus // ignore: cast_nullable_to_non_nullable
-              as ApiMediaStatus?,
+              as cast.MediaStatus?,
     ) as $Val);
   }
 
@@ -86,7 +86,7 @@ abstract class _$$MediaRouteControllerStateImplCopyWith<$Res>
       __$$MediaRouteControllerStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({MediaRoute? route, ApiMediaStatus? mediaStatus});
+  $Res call({MediaRoute? route, cast.MediaStatus? mediaStatus});
 
   @override
   $MediaRouteCopyWith<$Res>? get route;
@@ -116,7 +116,7 @@ class __$$MediaRouteControllerStateImplCopyWithImpl<$Res>
       mediaStatus: freezed == mediaStatus
           ? _value.mediaStatus
           : mediaStatus // ignore: cast_nullable_to_non_nullable
-              as ApiMediaStatus?,
+              as cast.MediaStatus?,
     ));
   }
 }
@@ -130,7 +130,7 @@ class _$MediaRouteControllerStateImpl implements _MediaRouteControllerState {
   @override
   final MediaRoute? route;
   @override
-  final ApiMediaStatus? mediaStatus;
+  final cast.MediaStatus? mediaStatus;
 
   @override
   String toString() {
@@ -143,13 +143,12 @@ class _$MediaRouteControllerStateImpl implements _MediaRouteControllerState {
         (other.runtimeType == runtimeType &&
             other is _$MediaRouteControllerStateImpl &&
             (identical(other.route, route) || other.route == route) &&
-            const DeepCollectionEquality()
-                .equals(other.mediaStatus, mediaStatus));
+            (identical(other.mediaStatus, mediaStatus) ||
+                other.mediaStatus == mediaStatus));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, route, const DeepCollectionEquality().hash(mediaStatus));
+  int get hashCode => Object.hash(runtimeType, route, mediaStatus);
 
   @JsonKey(ignore: true)
   @override
@@ -162,13 +161,13 @@ class _$MediaRouteControllerStateImpl implements _MediaRouteControllerState {
 abstract class _MediaRouteControllerState implements MediaRouteControllerState {
   factory _MediaRouteControllerState(
           {required final MediaRoute? route,
-          required final ApiMediaStatus? mediaStatus}) =
+          required final cast.MediaStatus? mediaStatus}) =
       _$MediaRouteControllerStateImpl;
 
   @override
   MediaRoute? get route;
   @override
-  ApiMediaStatus? get mediaStatus;
+  cast.MediaStatus? get mediaStatus;
   @override
   @JsonKey(ignore: true)
   _$$MediaRouteControllerStateImplCopyWith<_$MediaRouteControllerStateImpl>

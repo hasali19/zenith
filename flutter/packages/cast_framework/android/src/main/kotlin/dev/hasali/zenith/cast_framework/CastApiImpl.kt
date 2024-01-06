@@ -1,4 +1,4 @@
-package dev.hasali.zenith
+package dev.hasali.zenith.cast_framework
 
 import android.net.Uri
 import androidx.mediarouter.media.MediaRouteSelector
@@ -11,23 +11,23 @@ import com.google.android.gms.cast.MediaSeekOptions.RESUME_STATE_UNCHANGED
 import com.google.android.gms.cast.MediaTrack
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.common.images.WebImage
-import dev.hasali.zenith.generated.remoteplayback.MediaLoadRequestData
-import dev.hasali.zenith.generated.remoteplayback.MediaRoute
-import dev.hasali.zenith.generated.remoteplayback.MediaSeekOptions
-import dev.hasali.zenith.generated.remoteplayback.MediaTrackSubtype
-import dev.hasali.zenith.generated.remoteplayback.MediaTrackType
-import dev.hasali.zenith.generated.remoteplayback.MediaType
-import dev.hasali.zenith.generated.remoteplayback.RemotePlaybackApi
-import dev.hasali.zenith.generated.remoteplayback.RemotePlaybackEventsApi
-import dev.hasali.zenith.generated.remoteplayback.ResumeState
-import dev.hasali.zenith.generated.remoteplayback.RoutesScanningMode
+import dev.hasali.zenith.cast_framework.pigeon.CastApi
+import dev.hasali.zenith.cast_framework.pigeon.CastEventsApi
+import dev.hasali.zenith.cast_framework.pigeon.MediaLoadRequestData
+import dev.hasali.zenith.cast_framework.pigeon.MediaRoute
+import dev.hasali.zenith.cast_framework.pigeon.MediaSeekOptions
+import dev.hasali.zenith.cast_framework.pigeon.MediaTrackSubtype
+import dev.hasali.zenith.cast_framework.pigeon.MediaTrackType
+import dev.hasali.zenith.cast_framework.pigeon.MediaType
+import dev.hasali.zenith.cast_framework.pigeon.ResumeState
+import dev.hasali.zenith.cast_framework.pigeon.RoutesScanningMode
 
-class RemotePlaybackApiImpl(
-    private val eventsApi: RemotePlaybackEventsApi,
+class CastApiImpl(
+    private val eventsApi: CastEventsApi,
     private val mediaRouter: MediaRouter,
     private val mediaRouteSelector: MediaRouteSelector,
     private val castContext: CastContext,
-) : RemotePlaybackApi {
+) : CastApi {
 
     private var activeListeners = 0
     private var passiveListeners = 0
@@ -71,10 +71,12 @@ class RemotePlaybackApiImpl(
 
                                     MediaTrack.Builder(track.trackId, type)
                                         .setContentId(track.contentId)
-                                        .setSubtype(when (track.subtype) {
-                                            null -> MediaTrack.SUBTYPE_NONE
-                                            MediaTrackSubtype.SUBTITLES -> MediaTrack.SUBTYPE_SUBTITLES
-                                        })
+                                        .setSubtype(
+                                            when (track.subtype) {
+                                                null -> MediaTrack.SUBTYPE_NONE
+                                                MediaTrackSubtype.SUBTITLES -> MediaTrack.SUBTYPE_SUBTITLES
+                                            }
+                                        )
                                         .setName(track.name)
                                         .setLanguage(track.language)
                                         .setContentType("text/vtt")

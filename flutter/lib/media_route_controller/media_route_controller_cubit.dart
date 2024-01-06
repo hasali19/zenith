@@ -1,17 +1,17 @@
+import 'package:cast_framework/cast_framework.dart' as cast;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:zenith/remote_playback.dart';
-import 'package:zenith/remote_playback_api.g.dart' as api;
 
 part 'media_route_controller_cubit.freezed.dart';
 
-typedef ApiMediaStatus = api.MediaStatus;
+typedef CastMediaStatus = cast.MediaStatus;
 
 @freezed
 class MediaRouteControllerState with _$MediaRouteControllerState {
   factory MediaRouteControllerState({
     required MediaRoute? route,
-    required ApiMediaStatus? mediaStatus,
+    required CastMediaStatus? mediaStatus,
   }) = _MediaRouteControllerState;
 }
 

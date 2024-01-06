@@ -82,7 +82,7 @@ class MediaSeekOptions {
 }
 
 @HostApi()
-abstract class RemotePlaybackApi {
+abstract class CastApi {
   // MediaRouter
 
   void registerRoutesListener(RoutesScanningMode mode);
@@ -122,7 +122,7 @@ class MediaInfo {
 }
 
 @FlutterApi()
-abstract class RemotePlaybackEventsApi {
+abstract class CastEventsApi {
   // MediaRouter
 
   void onRoutesChanged(List<MediaRoute> routes);

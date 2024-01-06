@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
+import 'package:cast_framework/cast_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +10,6 @@ import 'package:zenith/fade_in_image.dart';
 import 'package:zenith/format_utils.dart';
 import 'package:zenith/media_route_controller/media_route_controller_cubit.dart';
 import 'package:zenith/remote_playback.dart';
-import 'package:zenith/remote_playback_api.g.dart';
 import 'package:zenith/screens/video_player/play_pause_button.dart';
 
 class MediaRouteControllerDialog extends ConsumerStatefulWidget {
@@ -139,8 +139,7 @@ class _MediaRouteControllerDialogState
                         thumbRadius: 7,
                         thumbGlowRadius: 25,
                         timeLabelLocation: TimeLabelLocation.none,
-                        onSeek: (value) =>
-                            RemotePlaybackApi().seek(MediaSeekOptions(
+                        onSeek: (value) => CastApi().seek(MediaSeekOptions(
                           position: value.inMilliseconds,
                           resumeState: ResumeState.unchanged,
                         )),
@@ -158,16 +157,16 @@ class _MediaRouteControllerDialogState
                               mediaStatus.playerState != PlayerState.paused,
                           onSetPlaying: (playing) {
                             if (mediaStatus.playerState != PlayerState.paused) {
-                              RemotePlaybackApi().pause();
+                              CastApi().pause();
                             } else {
-                              RemotePlaybackApi().play();
+                              CastApi().play();
                             }
                           },
                         ),
                         IconButton(
                           icon: const Icon(Icons.stop),
                           onPressed: () {
-                            RemotePlaybackApi().stop();
+                            CastApi().stop();
                           },
                         ),
                       ],
