@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/screens/video_player/play_pause_button.dart';
@@ -71,8 +72,6 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
 }
 
 class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
-  // VideoController get _controller => widget.controller;
-
   late final List<SubtitleTrack> _subtitles;
   late final List<AudioTrack> _audioTracks;
 
@@ -88,14 +87,16 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
   }
 
   Future<void> _showModalBottomSheet(
-      Widget Function(BuildContext context) builder) {
+      Widget Function(BuildContext context) builder,
+      {bool safeArea = true}) {
     final width = MediaQuery.of(context).size.width;
     return showModalBottomSheet<void>(
       context: context,
       constraints: width > 600
           ? const BoxConstraints.expand(width: 600).copyWith(minHeight: 0)
           : null,
-      builder: (context) => SafeArea(child: builder(context)),
+      builder: (context) =>
+          safeArea ? SafeArea(child: builder(context)) : builder(context),
     );
   }
 
@@ -163,8 +164,10 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
   Future<void> _showSubtitlesMenu(BuildContext context) {
     return _showModalBottomSheet(
       (context) => ListView(
+        padding: context.mq.padding,
         children: _buildSubtitlesMenuItems(context),
       ),
+      safeArea: false,
     );
   }
 
