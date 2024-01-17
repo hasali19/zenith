@@ -81,22 +81,25 @@ class _VideoProgressBarState extends State<VideoProgressBar> {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle =
-        context.zenithTheme.bodyMedium.copyWith(color: Colors.white);
     final total = _progress.total;
     final progress = total > Duration.zero ? _progress.progress : Duration.zero;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text.rich(TextSpan(
-          children: [
-            TextSpan(text: _formatTime(progress)),
-            TextSpan(
-              text: ' / ${_formatTime(total)}',
-              style: const TextStyle(color: Colors.grey),
-            ),
-          ],
-        )),
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: _formatTime(progress),
+                style: const TextStyle(color: Colors.white),
+              ),
+              TextSpan(
+                text: ' / ${_formatTime(total)}',
+                style: const TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 8),
         ProgressBar(
           progress: progress,
@@ -108,7 +111,6 @@ class _VideoProgressBarState extends State<VideoProgressBar> {
           thumbColor: Colors.white,
           thumbRadius: 7,
           thumbGlowRadius: 25,
-          timeLabelTextStyle: textStyle,
           timeLabelLocation: TimeLabelLocation.none,
           onDragStart: (details) => widget.onSeekStart(),
           onDragEnd: () => widget.onSeekEnd(),

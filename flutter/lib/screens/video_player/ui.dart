@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/screens/video_player/play_pause_button.dart';
+import 'package:zenith/themes.dart';
 
 import 'bottom_controls.dart';
 import 'video_progress_bar.dart';
@@ -44,7 +46,7 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
   final void Function(bool isPaused) onSetPaused;
 
   const VideoPlayerUi({
-    Key? key,
+    super.key,
     required this.title,
     required this.audioTracks,
     required this.subtitles,
@@ -65,7 +67,7 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
     required this.onSeekToPrevious,
     required this.onSeekToNext,
     required this.onSetPaused,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<VideoPlayerUi> createState() => _VideoPlayerUiState();
@@ -294,109 +296,112 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     final primaryIconSize = desktop ? 128.0 : 64.0;
     final secondaryIconSize = desktop ? 64.0 : 32.0;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: const FractionalOffset(0, 0),
-          end: const FractionalOffset(0, 1),
-          colors: [
-            Colors.black.withOpacity(0.7),
-            Colors.transparent,
-            Colors.black.withOpacity(0.7),
-          ],
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Padding(
-              padding: EdgeInsets.all(appBarPadding),
-              child: _buildAppBar(),
-            ),
+    return Theme(
+      data: context.read<Themes>().dark,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: const FractionalOffset(0, 0),
+            end: const FractionalOffset(0, 1),
+            colors: [
+              Colors.black.withOpacity(0.7),
+              Colors.transparent,
+              Colors.black.withOpacity(0.7),
+            ],
           ),
-          if (widget.isLoading)
-            Align(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: primaryIconSize + 16,
-                height: primaryIconSize + 16,
-                child: const CircularProgressIndicator(color: Colors.white),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Padding(
+                padding: EdgeInsets.all(appBarPadding),
+                child: _buildAppBar(),
               ),
             ),
-          Align(
-            alignment: Alignment.center,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.skip_previous),
-                  iconSize: secondaryIconSize,
-                  onPressed: () {
-                    widget.onSeekToPrevious();
-                    widget.onInteractionEnd();
-                  },
+            if (widget.isLoading)
+              Align(
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: primaryIconSize + 16,
+                  height: primaryIconSize + 16,
+                  child: const CircularProgressIndicator(color: Colors.white),
                 ),
-                const SizedBox(width: 24),
-                IconButton(
-                  icon: const Icon(Icons.replay_10),
-                  iconSize: secondaryIconSize,
-                  onPressed: () {
-                    widget.onSeekDelta(-10);
-                    widget.onInteractionEnd();
-                  },
-                ),
-                const SizedBox(width: 24),
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.grey.withAlpha(50),
-                  ),
-                  child: PlayPauseButton(
-                    isPlaying: !widget.isPaused,
-                    size: primaryIconSize,
-                    onSetPlaying: (playing) {
-                      widget.onSetPaused(!playing);
+              ),
+            Align(
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.skip_previous),
+                    iconSize: secondaryIconSize,
+                    onPressed: () {
+                      widget.onSeekToPrevious();
                       widget.onInteractionEnd();
                     },
                   ),
-                ),
-                const SizedBox(width: 24),
-                IconButton(
-                  icon: const Icon(Icons.forward_30),
-                  iconSize: secondaryIconSize,
-                  onPressed: () {
-                    widget.onSeekDelta(30);
-                    widget.onInteractionEnd();
-                  },
-                ),
-                const SizedBox(width: 24),
-                IconButton(
-                  icon: const Icon(Icons.skip_next),
-                  iconSize: secondaryIconSize,
-                  onPressed: () {
-                    widget.onSeekToNext();
-                    widget.onInteractionEnd();
-                  },
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              child: Padding(
-                padding: bottomControlsPadding,
-                child: _buildBottomUi(),
+                  const SizedBox(width: 24),
+                  IconButton(
+                    icon: const Icon(Icons.replay_10),
+                    iconSize: secondaryIconSize,
+                    onPressed: () {
+                      widget.onSeekDelta(-10);
+                      widget.onInteractionEnd();
+                    },
+                  ),
+                  const SizedBox(width: 24),
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey.withAlpha(50),
+                    ),
+                    child: PlayPauseButton(
+                      isPlaying: !widget.isPaused,
+                      size: primaryIconSize,
+                      onSetPlaying: (playing) {
+                        widget.onSetPaused(!playing);
+                        widget.onInteractionEnd();
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  IconButton(
+                    icon: const Icon(Icons.forward_30),
+                    iconSize: secondaryIconSize,
+                    onPressed: () {
+                      widget.onSeekDelta(30);
+                      widget.onInteractionEnd();
+                    },
+                  ),
+                  const SizedBox(width: 24),
+                  IconButton(
+                    icon: const Icon(Icons.skip_next),
+                    iconSize: secondaryIconSize,
+                    onPressed: () {
+                      widget.onSeekToNext();
+                      widget.onInteractionEnd();
+                    },
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: bottomControlsPadding,
+                  child: _buildBottomUi(),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

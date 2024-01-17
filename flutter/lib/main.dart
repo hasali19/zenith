@@ -17,6 +17,7 @@ import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/router.dart';
 import 'package:zenith/theme.dart';
+import 'package:zenith/themes.dart';
 import 'package:zenith/update_dialog.dart';
 import 'package:zenith/updater.dart';
 import 'package:zenith/window.dart';
@@ -92,43 +93,42 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
 
   @override
   Widget build(BuildContext context) {
+    final lightTheme = _buildTheme(context, Brightness.light);
+    final darkTheme = _buildTheme(context, Brightness.dark);
     return MaterialApp.router(
       title: 'Zenith',
-      theme: _buildTheme(Brightness.light),
-      darkTheme: _buildTheme(Brightness.dark),
+      theme: lightTheme,
+      darkTheme: darkTheme,
       routerConfig: _router.config(),
-      builder: (context, child) => Theme(
-        data: _buildThemeOverrides(context),
-        child: child!,
+      builder: (context, child) => RepositoryProvider.value(
+        value: Themes(lightTheme, darkTheme),
+        child: child,
       ),
     );
   }
 
-  ThemeData _buildTheme(Brightness brightness) => ThemeData(
-        brightness: brightness,
-        useMaterial3: true,
-        colorSchemeSeed: Colors.deepOrange,
-        fontFamily: 'Exo2',
-      );
-
-  ThemeData _buildThemeOverrides(BuildContext context) {
-    final theme = Theme.of(context);
+  ThemeData _buildTheme(BuildContext context, Brightness brightness) {
     final isDesktop = context.isDesktop;
-    return theme.copyWith(
-      cardTheme: theme.cardTheme.copyWith(
+    final defaults = ThemeData();
+    return ThemeData(
+      brightness: brightness,
+      useMaterial3: true,
+      colorSchemeSeed: Colors.deepOrange,
+      fontFamily: 'Exo2',
+      cardTheme: defaults.cardTheme.copyWith(
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
       ),
       extensions: [
         ZenithTheme(
-          titleLarge: theme.textTheme.titleLarge!
+          titleLarge: defaults.textTheme.titleLarge!
               .copyWith(fontSize: isDesktop ? 36 : 22),
-          titleMedium: theme.textTheme.titleMedium!
+          titleMedium: defaults.textTheme.titleMedium!
               .copyWith(fontSize: isDesktop ? 22 : 16),
-          bodySmall: theme.textTheme.bodySmall!
+          bodySmall: defaults.textTheme.bodySmall!
               .copyWith(fontSize: isDesktop ? 14 : 12),
-          bodyMedium: theme.textTheme.bodyMedium!
+          bodyMedium: defaults.textTheme.bodyMedium!
               .copyWith(fontSize: isDesktop ? 16 : 14),
         ),
       ],
