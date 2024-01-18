@@ -109,26 +109,26 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
 
   ThemeData _buildTheme(BuildContext context, Brightness brightness) {
     final isDesktop = context.isDesktop;
-    final defaults = ThemeData();
-    return ThemeData(
+    final baseTheme = ThemeData(
       brightness: brightness,
-      useMaterial3: true,
       colorSchemeSeed: Colors.deepOrange,
       fontFamily: 'Exo2',
-      cardTheme: defaults.cardTheme.copyWith(
+    );
+    return baseTheme.copyWith(
+      cardTheme: baseTheme.cardTheme.copyWith(
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
       ),
       extensions: [
         ZenithTheme(
-          titleLarge: defaults.textTheme.titleLarge!
+          titleLarge: baseTheme.textTheme.titleLarge!
               .copyWith(fontSize: isDesktop ? 36 : 22),
-          titleMedium: defaults.textTheme.titleMedium!
+          titleMedium: baseTheme.textTheme.titleMedium!
               .copyWith(fontSize: isDesktop ? 22 : 16),
-          bodySmall: defaults.textTheme.bodySmall!
+          bodySmall: baseTheme.textTheme.bodySmall!
               .copyWith(fontSize: isDesktop ? 14 : 12),
-          bodyMedium: defaults.textTheme.bodyMedium!
+          bodyMedium: baseTheme.textTheme.bodyMedium!
               .copyWith(fontSize: isDesktop ? 16 : 14),
         ),
       ],
