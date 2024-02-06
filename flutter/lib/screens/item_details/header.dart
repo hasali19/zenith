@@ -17,12 +17,12 @@ import 'package:zenith/theme.dart';
 
 class HeaderContent extends ConsumerWidget {
   const HeaderContent({
-    Key? key,
+    super.key,
     required this.model,
     required this.refresh,
     required this.onPlayPressed,
     required this.onViewItemDetails,
-  }) : super(key: key);
+  });
 
   final ItemDetailsModel model;
   final void Function() refresh;
@@ -237,7 +237,8 @@ class HeaderContent extends ConsumerWidget {
       actions.add(IconButton(
         icon: const Icon(Icons.download),
         onPressed: () {
-          downloadFile(api.getVideoUrl(model.item.id, attachment: true));
+          downloadFile(
+              api.getVideoUrl(model.item.videoFile!.id, attachment: true));
         },
       ));
 
