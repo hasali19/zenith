@@ -2,17 +2,16 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:zenith/api.dart' as api;
+import 'package:zenith/cookies.dart';
 import 'package:zenith/platform.dart' as platform;
 import 'package:zenith/screens/video_player/media_title.dart';
 import 'package:zenith/screens/video_player/ui.dart';
@@ -87,7 +86,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
   }
 
   Future<void> _initController() async {
-    final cookies = context.read<CookieJar>();
+    final cookies = ref.read(cookieJarProvider);
 
     final controller = await VideoPlayerPlatform.instance.createController(
       headers: {

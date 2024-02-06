@@ -80,7 +80,7 @@ class HeaderContent extends ConsumerWidget {
             ],
           ),
           playButton: _buildPlayButton(),
-          actions: Row(children: _buildActionsItems(context, api)),
+          actions: Row(children: _buildActionsItems(context, ref, api)),
           posterWidth: isDesktop ? 300 : 150,
           padding: isDesktop ? 128 : 16,
           separation: isDesktop ? 48 : 16,
@@ -216,7 +216,8 @@ class HeaderContent extends ConsumerWidget {
     );
   }
 
-  List<Widget> _buildActionsItems(BuildContext context, ZenithApiClient api) {
+  List<Widget> _buildActionsItems(
+      BuildContext context, WidgetRef ref, ZenithApiClient api) {
     final isDesktop = context.isDesktop;
     final actions = <Widget>[];
 
@@ -237,7 +238,7 @@ class HeaderContent extends ConsumerWidget {
       actions.add(IconButton(
         icon: const Icon(Icons.download),
         onPressed: () {
-          downloadFile(
+          ref.read(zenithDownloaderProvider).downloadFile(
               api.getVideoUrl(model.item.videoFile!.id, attachment: true));
         },
       ));

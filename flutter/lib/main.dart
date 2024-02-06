@@ -9,6 +9,7 @@ import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:windowing/windowing.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/cookies.dart';
 import 'package:zenith/dio_client.dart';
 import 'package:zenith/drawer.dart';
 import 'package:zenith/language_codes.dart';
@@ -32,27 +33,23 @@ Future<void> main() async {
     Bloc.observer = LoggerBlocObserver();
   }
 
-  final cookieJar = createCookieJar();
-
-  runApp(RepositoryProvider.value(
-    value: cookieJar,
-    child: ProviderScope(
-      overrides: [
-        preferencesProvider.overrideWithValue(prefs),
-        windowProvider.overrideWithValue(window),
-        apiProvider.overrideWith((ref) {
-          final activeServer = ref.watch(activeServerProvider);
-          if (activeServer != null) {
-            final client = createDioClient(activeServer.url, cookieJar);
-            DioImage.defaultDio = client;
-            return ZenithApiClient(client);
-          } else {
-            throw UnimplementedError();
-          }
-        }),
-      ],
-      child: const ZenithApp(),
-    ),
+  runApp(ProviderScope(
+    overrides: [
+      preferencesProvider.overrideWithValue(prefs),
+      windowProvider.overrideWithValue(window),
+      apiProvider.overrideWith((ref) {
+        final activeServer = ref.watch(activeServerProvider);
+        if (activeServer != null) {
+          final client =
+              createDioClient(activeServer.url, ref.watch(cookieJarProvider));
+          DioImage.defaultDio = client;
+          return ZenithApiClient(client);
+        } else {
+          throw UnimplementedError();
+        }
+      }),
+    ],
+    child: const ZenithApp(),
   ));
 }
 
