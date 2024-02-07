@@ -93,7 +93,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: ./deploy/Dockerfile.web
+          file: ./docker/Dockerfile.web
           platforms: linux/amd64,linux/arm64
           build-args: BUILD_PATH=zenith-flutter-web
           push: true
