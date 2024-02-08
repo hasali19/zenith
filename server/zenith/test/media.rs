@@ -1,8 +1,14 @@
+use std::io::Read;
+
 use axum::body::Body;
+use bytes::Buf;
+use camino::Utf8Path;
+use http_body_util::BodyExt;
 use hyper::{Request, StatusCode};
 use insta::assert_json_snapshot;
 use pretty_assertions::assert_eq;
 use serde_json::json;
+use tempfile::NamedTempFile;
 use test_macros::test;
 use tower::ServiceExt;
 
@@ -431,6 +437,101 @@ async fn import_subtitle(mut app: TestApp) {
     let contents = tokio::fs::read_to_string(path).await.unwrap();
 
     assert_eq!(contents, "subtitle content goes here");
+}
+
+#[test(with_app)]
+async fn get_subtitle_content(mut app: TestApp) {
+    let cookie = app.login().await;
+
+    let mut conn = app.db.acquire().await.unwrap();
+
+    let sub_file = NamedTempFile::new().unwrap();
+    tokio::fs::write(sub_file.path(), "subtitle content goes here")
+        .await
+        .unwrap();
+
+    let id = db::subtitles::insert(
+        &mut conn,
+        &db::subtitles::NewSubtitle {
+            video_id: 1,
+            title: Some("English"),
+            language: Some("en"),
+            stream_index: None,
+            format: Some("srt"),
+            sdh: false,
+            forced: true,
+            path: Some(Utf8Path::from_path(sub_file.path()).unwrap()),
+        },
+    )
+    .await
+    .unwrap();
+
+    let res = app
+        .router()
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri(format!("/subtitles/{id}"))
+                .header("Cookie", &cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    let body = res.into_body().collect().await.unwrap().aggregate();
+    let mut contents = String::new();
+    body.reader().read_to_string(&mut contents).unwrap();
+
+    assert_eq!(contents, "subtitle content goes here");
+}
+
+#[test(with_app)]
+async fn delete_subtitle(mut app: TestApp) {
+    let cookie = app.login().await;
+
+    let mut conn = app.db.acquire().await.unwrap();
+
+    let sub_file = NamedTempFile::new().unwrap();
+    tokio::fs::write(sub_file.path(), "subtitle content goes here")
+        .await
+        .unwrap();
+
+    let id = db::subtitles::insert(
+        &mut conn,
+        &db::subtitles::NewSubtitle {
+            video_id: 1,
+            title: Some("English"),
+            language: Some("en"),
+            stream_index: None,
+            format: Some("srt"),
+            sdh: false,
+            forced: true,
+            path: Some(Utf8Path::from_path(sub_file.path()).unwrap()),
+        },
+    )
+    .await
+    .unwrap();
+
+    let res = app
+        .router()
+        .oneshot(
+            Request::builder()
+                .method("DELETE")
+                .uri(format!("/subtitles/{id}"))
+                .header("Cookie", &cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert!(res.status().is_success());
+    assert!(!sub_file.path().exists());
+
+    let row = db::subtitles::get_by_id(&mut conn, id).await.unwrap();
+
+    assert!(row.is_none());
 }
 
 fn create_import_subtitle_form(content: &str) -> std::io::Result<Vec<u8>> {

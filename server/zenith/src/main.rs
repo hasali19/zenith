@@ -54,9 +54,10 @@ fn init_tracing(config: &Config) {
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
+    color_eyre::install()?;
+
     let config = Arc::new(Config::load("config.yml")?);
 
-    color_eyre::install()?;
     init_tracing(&config);
 
     match std::env::args().nth(1).as_deref().unwrap_or("serve") {

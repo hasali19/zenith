@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::BufReader;
 
 use camino::{Utf8Path, Utf8PathBuf};
+use eyre::{eyre, Context};
 use regex::Regex;
 use serde::de::Visitor;
 use serde::{Deserialize, Deserializer};
@@ -142,7 +143,8 @@ pub struct Watcher {
 
 impl Config {
     pub fn load(path: &str) -> eyre::Result<Self> {
-        let file = File::open(path)?;
+        let file =
+            File::open(path).wrap_err_with(|| eyre!("failed to read config file: {path}"))?;
         let reader = BufReader::new(file);
         Ok(serde_yaml::from_reader(reader)?)
     }
