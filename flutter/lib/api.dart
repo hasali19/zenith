@@ -360,6 +360,8 @@ class AccessToken with _$AccessToken {
       _$AccessTokenFromJson(json);
 }
 
+enum SubtitleFormat { webvtt }
+
 class ZenithApiClient {
   final Dio _client;
 
@@ -596,8 +598,12 @@ class ZenithApiClient {
     return url;
   }
 
-  String getSubtitleUrl(int id) {
-    return '${_client.options.baseUrl}/api/subtitles/$id';
+  String getSubtitleUrl(int id, {SubtitleFormat? format}) {
+    var url = '${_client.options.baseUrl}/api/subtitles/$id';
+    if (format != null) {
+      url += '?format=${format.name}';
+    }
+    return url;
   }
 
   String getMediaImageUrl(int id, ImageType type, {int? width}) {

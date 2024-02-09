@@ -68,7 +68,8 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
               (track) => MediaTrack(
                 trackId: track.id,
                 type: MediaTrackType.text,
-                contentId: withToken(_api.getSubtitleUrl(track.id)),
+                contentId: withToken(_api.getSubtitleUrl(track.id,
+                    format: api.SubtitleFormat.webvtt)),
                 subtype: MediaTrackSubtype.subtitles,
                 name: track.title,
                 language: track.language,
