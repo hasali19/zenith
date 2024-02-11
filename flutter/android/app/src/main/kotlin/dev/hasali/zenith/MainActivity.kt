@@ -1,6 +1,8 @@
 package dev.hasali.zenith
 
 import android.app.PictureInPictureParams
+import android.content.ComponentName
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
 import android.view.WindowManager
@@ -22,6 +24,9 @@ class MainActivity : FlutterActivity() {
     private lateinit var platformChannel: MethodChannel
 
     private var isPipModeEnabled = false
+    private var nextInstallId = 424242
+
+    private val pendingInstalls = mutableMapOf<Int, (resultCode: Int) -> Unit>()
 
     object Channels {
         const val Updater = "zenith.hasali.dev/updater"
@@ -58,6 +63,37 @@ class MainActivity : FlutterActivity() {
 
     private fun handleUpdaterMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
+            "useLunaUpdater" -> {
+                val installerPackageName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    val installSource =
+                        context.packageManager.getInstallSourceInfo(packageName)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        installSource.updateOwnerPackageName
+                    } else {
+                        installSource.installingPackageName
+                    }
+                } else {
+                    @Suppress("DEPRECATION")
+                    context.packageManager.getInstallerPackageName(packageName)
+                }
+
+                result.success(installerPackageName == "dev.hasali.luna")
+            }
+
+            "installWithLuna" -> {
+                val intent = Intent().apply {
+                    component =
+                        ComponentName("dev.hasali.luna", "dev.hasali.luna.InAppUpdateActivity")
+                    putExtra("packageName", packageName)
+                }
+
+                val id = nextInstallId++
+                pendingInstalls[id] = {
+                    result.success(id)
+                }
+                startActivityForResult(intent, id)
+            }
+
             "install" -> {
                 try {
                     val url: String = call.argument("url")
@@ -70,6 +106,14 @@ class MainActivity : FlutterActivity() {
             }
 
             else -> result.notImplemented()
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        val pendingInstallCallback = pendingInstalls.remove(requestCode)
+        if (pendingInstallCallback != null) {
+            pendingInstallCallback(resultCode)
         }
     }
 

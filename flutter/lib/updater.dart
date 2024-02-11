@@ -28,6 +28,7 @@ abstract class Updater {
 typedef ProgressHandler = void Function(double progress);
 
 abstract class Update {
+  bool get showCustomUpdateUi;
   Future<void> install(ProgressHandler onProgress);
 }
 
@@ -37,6 +38,8 @@ class _StubUpdater implements Updater {
     return null;
   }
 }
+
+const _platform = MethodChannel('zenith.hasali.dev/updater');
 
 class _AndroidUpdater implements Updater {
   @override
@@ -52,15 +55,27 @@ class _AndroidUpdater implements Updater {
       return null;
     }
 
-    return _AndroidUpdate();
+    final bool useLunaUpdater = await _platform.invokeMethod('useLunaUpdater');
+
+    return _AndroidUpdate(useLunaUpdater);
   }
 }
 
 class _AndroidUpdate implements Update {
-  static const _platform = MethodChannel('zenith.hasali.dev/updater');
+  final bool _useLunaUpdater;
+
+  const _AndroidUpdate(this._useLunaUpdater);
+
+  @override
+  bool get showCustomUpdateUi => !_useLunaUpdater;
 
   @override
   Future<void> install(ProgressHandler onProgress) async {
+    if (_useLunaUpdater) {
+      await _platform.invokeMethod('installWithLuna');
+      return;
+    }
+
     final github = GitHub();
     final release = await github.getRelease('flutter/latest');
     final apkAssets =

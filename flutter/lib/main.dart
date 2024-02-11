@@ -179,11 +179,15 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   _checkForUpdates() async {
     final update = await _updater.checkForUpdates();
     if (update != null && context.mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => UpdateDialog(update: update),
-      );
+      if (update.showCustomUpdateUi) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => UpdateDialog(update: update),
+        );
+      } else {
+        await update.install((progress) {});
+      }
     }
   }
 
