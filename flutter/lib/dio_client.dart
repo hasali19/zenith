@@ -7,6 +7,8 @@ Dio createDioClient(String baseUrl, CookieJar cookieJar) {
   final dio = Dio(BaseOptions(
     baseUrl: baseUrl,
     extra: {'withCredentials': true},
+    validateStatus: (status) =>
+        status != null && (status >= 200 && status < 300) || status == 401,
   ));
 
   if (!kIsWeb) {
