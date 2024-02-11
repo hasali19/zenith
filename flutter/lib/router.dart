@@ -16,7 +16,7 @@ part 'router.gr.dart';
 @AutoRouterConfig()
 class AppRouter extends _$AppRouter {
   final Future<bool> Function() isServerSet;
-  final Future<bool> Function() isLoggedIn;
+  final Future<bool?> Function() isLoggedIn;
 
   AppRouter({required this.isServerSet, required this.isLoggedIn});
 
@@ -79,13 +79,13 @@ class ServerSetupGuard extends AutoRouteGuard {
 }
 
 class AuthGuard extends AutoRouteGuard {
-  final Future<bool> Function() isLoggedIn;
+  final Future<bool?> Function() isLoggedIn;
 
   AuthGuard(this.isLoggedIn);
 
   @override
   void onNavigation(NavigationResolver resolver, StackRouter router) async {
-    if (await isLoggedIn()) {
+    if (await isLoggedIn() != false) {
       return resolver.next(true);
     }
 

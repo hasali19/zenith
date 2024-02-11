@@ -1,7 +1,10 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:dio_image_provider/dio_image_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/poster_item.dart';
@@ -10,16 +13,33 @@ import 'package:zenith/router.dart';
 import 'package:zenith/text_one_line.dart';
 import 'package:zenith/theme.dart';
 
-class HomeScreenData {
-  List<MediaItem> continueWatching;
-  List<MediaItem> recentMovies;
-  List<MediaItem> recentShows;
+part 'home.freezed.dart';
+part 'home.g.dart';
 
-  HomeScreenData({
-    required this.continueWatching,
-    required this.recentMovies,
-    required this.recentShows,
-  });
+@freezed
+class HomeScreenData with _$HomeScreenData {
+  factory HomeScreenData({
+    required List<MediaItem> continueWatching,
+    required List<MediaItem> recentMovies,
+    required List<MediaItem> recentShows,
+  }) = _HomeScreenData;
+}
+
+@riverpod
+Future<HomeScreenData> _state(_StateRef ref) async {
+  final api = ref.watch(apiProvider);
+
+  final results = await Future.wait([
+    api.fetchContinueWatching(),
+    api.fetchRecentMovies(),
+    api.fetchRecentShows(),
+  ]);
+
+  return HomeScreenData(
+    continueWatching: results[0],
+    recentMovies: results[1],
+    recentShows: results[2],
+  );
 }
 
 @RoutePage()
@@ -33,37 +53,16 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _scrollController = ScrollController();
 
-  late Future<HomeScreenData> _data;
-
   ZenithApiClient get api => ref.watch(apiProvider);
 
   @override
   void initState() {
     super.initState();
-    _refresh();
-  }
-
-  void _refresh() {
-    setState(() {
-      _data = Future(() async {
-        final results = await Future.wait([
-          api.fetchContinueWatching(),
-          api.fetchRecentMovies(),
-          api.fetchRecentShows(),
-        ]);
-
-        return HomeScreenData(
-          continueWatching: results[0],
-          recentMovies: results[1],
-          recentShows: results[2],
-        );
-      });
-    });
   }
 
   void _navigateToItem(MediaItem item) async {
     await context.router.push(ItemDetailsRoute(id: item.id));
-    _refresh();
+    ref.invalidate(_stateProvider);
   }
 
   @override
@@ -108,77 +107,61 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         );
 
-    return FutureBuilder<HomeScreenData>(
-      future: _data,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('${snapshot.error}'),
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: OutlinedButton(
-                    onPressed: _refresh,
-                    child: const Text('Retry'),
-                  ),
-                ),
-              ],
+    final state = ref.watch(_stateProvider);
+    return state.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      error: (error, stackTrace) => Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Failed to load data from server'),
+            TextButton(
+              onPressed: () => ref.invalidate(_stateProvider),
+              child: const Text('Retry'),
             ),
-          );
-        }
-
-        if (!snapshot.hasData) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-
-        final data = snapshot.data!;
-        return RefreshIndicator(
-          triggerMode: RefreshIndicatorTriggerMode.anywhere,
-          onRefresh: () async {
-            _refresh();
-            await _data;
-          },
-          child: ListView(
-            controller: _scrollController,
-            padding:
-                const EdgeInsets.symmetric(vertical: 16) + context.mq.padding,
-            children: [
-              if (data.continueWatching.isNotEmpty)
-                Section<MediaItem>(
-                  title: 'Continue Watching',
-                  titlePadding: sectionTitlePadding,
-                  listSpacing: sectionListSpacing,
-                  listItemWidth: thumbnailItemWidth,
-                  listItemHeight: thumbnailItemHeight,
-                  endPadding: sectionEndPadding,
-                  items: data.continueWatching,
-                  itemBuilder: (context, item) => ContinueWatchingCard(
-                    thumbnail:
-                        api.getMediaImageUrl(item.id, ImageType.thumbnail),
-                    title: item.name,
-                    subtitle: item.type == MediaType.episode
-                        ? '${item.getSeasonEpisode()!}: ${item.grandparent!.name}'
-                        : item.startDate?.year.toString() ?? '',
-                    progress: (item.videoUserData?.position ?? 0) /
-                        (item.videoFile?.duration ?? 1),
-                    padding: thumbnailItemPadding,
-                    onTap: () => _navigateToItem(item),
-                  ),
+          ],
+        ),
+      ),
+      data: (data) => RefreshIndicator(
+        triggerMode: RefreshIndicatorTriggerMode.anywhere,
+        onRefresh: () => ref.refresh(_stateProvider.future),
+        child: ListView(
+          controller: _scrollController,
+          padding:
+              const EdgeInsets.symmetric(vertical: 16) + context.mq.padding,
+          children: [
+            if (data.continueWatching.isNotEmpty)
+              Section<MediaItem>(
+                title: 'Continue Watching',
+                titlePadding: sectionTitlePadding,
+                listSpacing: sectionListSpacing,
+                listItemWidth: thumbnailItemWidth,
+                listItemHeight: thumbnailItemHeight,
+                endPadding: sectionEndPadding,
+                items: data.continueWatching,
+                itemBuilder: (context, item) => ContinueWatchingCard(
+                  thumbnail: api.getMediaImageUrl(item.id, ImageType.thumbnail),
+                  title: item.name,
+                  subtitle: item.type == MediaType.episode
+                      ? '${item.getSeasonEpisode()!}: ${item.grandparent!.name}'
+                      : item.startDate?.year.toString() ?? '',
+                  progress: (item.videoUserData?.position ?? 0) /
+                      (item.videoFile?.duration ?? 1),
+                  padding: thumbnailItemPadding,
+                  onTap: () => _navigateToItem(item),
                 ),
-              if (data.recentMovies.isNotEmpty)
-                buildPosterItemSection(
-                    data.recentMovies, 'Recent Movies', Icons.movie),
-              if (data.recentShows.isNotEmpty)
-                buildPosterItemSection(
-                    data.recentShows, 'Recent Shows', Icons.tv),
-            ],
-          ),
-        );
-      },
+              ),
+            if (data.recentMovies.isNotEmpty)
+              buildPosterItemSection(
+                  data.recentMovies, 'Recent Movies', Icons.movie),
+            if (data.recentShows.isNotEmpty)
+              buildPosterItemSection(
+                  data.recentShows, 'Recent Shows', Icons.tv),
+          ],
+        ),
+      ),
     );
   }
 }

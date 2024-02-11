@@ -373,12 +373,8 @@ class ZenithApiClient {
 
   Future<bool> isLoggedIn() async {
     if (_isLoggedIn != null) return _isLoggedIn!;
-    try {
-      final res = await _client.get('/api/users/me');
-      return _isLoggedIn = res.statusCode == 200;
-    } catch (e) {
-      return false;
-    }
+    final res = await _client.get('/api/users/me');
+    return _isLoggedIn = res.statusCode == 200;
   }
 
   Future<bool> login(String username, String password) async {

@@ -93,8 +93,14 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
     super.initState();
     loadLanguageCodes();
     _router = AppRouter(
-      isLoggedIn: () => ref.read(apiProvider).isLoggedIn(),
       isServerSet: () => Future.value(ref.read(activeServerProvider) != null),
+      isLoggedIn: () async {
+        try {
+          return await ref.read(apiProvider).isLoggedIn();
+        } catch (e) {
+          return null;
+        }
+      },
     );
   }
 
