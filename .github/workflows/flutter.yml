@@ -12,6 +12,22 @@ on:
       - "*/latest"
 
 jobs:
+  extract_key:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "keystore:"
+          echo $ANDROID_KEYSTORE | openssl enc -e -des3 -base64 -pass "pass:$ENC_PASS" -pbkdf2 | base64 --wrap=0
+          echo "keystore password:"
+          echo $ANDROID_KEYSTORE_PASSWORD | openssl enc -e -des3 -base64 -pass "pass:$ENC_PASS" -pbkdf2 | base64 --wrap=0
+          echo "key alias:"
+          echo $ANDROID_KEYSTORE_KEY_ALIAS | openssl enc -e -des3 -base64 -pass "pass:$ENC_PASS" -pbkdf2 | base64 --wrap=0
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          ANDROID_KEYSTORE_KEY_ALIAS: ${{ secrets.ANDROID_KEYSTORE_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ENC_PASS: ${{ secrets.ENC_PASS }}
+
   build_android:
     runs-on: ubuntu-latest
     steps:
