@@ -3,7 +3,6 @@ import 'package:cast_framework/cast_framework.dart';
 import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,11 +28,10 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final window = await WindowController.create();
 
-  if (kDebugMode) {
-    Bloc.observer = LoggerBlocObserver();
-  }
-
   runApp(ProviderScope(
+    observers: [
+      if (kDebugMode) _LoggingProviderObserver(),
+    ],
     overrides: [
       preferencesProvider.overrideWithValue(prefs),
       windowProvider.overrideWithValue(window),
@@ -53,7 +51,7 @@ Future<void> main() async {
   ));
 }
 
-class LoggerBlocObserver extends BlocObserver {
+class _LoggingProviderObserver extends ProviderObserver {
   final _logger = Logger(
     printer: PrettyPrinter(
       methodCount: 0,
@@ -62,9 +60,21 @@ class LoggerBlocObserver extends BlocObserver {
   );
 
   @override
-  void onChange(BlocBase bloc, Change change) {
-    super.onChange(bloc, change);
-    _logger.d('$bloc : $change');
+  void didAddProvider(ProviderBase<Object?> provider, Object? value,
+      ProviderContainer container) {
+    _logger.d('created ${provider.name} : $value');
+  }
+
+  @override
+  void didUpdateProvider(ProviderBase<Object?> provider, Object? previousValue,
+      Object? newValue, ProviderContainer container) {
+    _logger.d('updated ${provider.name} : $newValue');
+  }
+
+  @override
+  void didDisposeProvider(
+      ProviderBase<Object?> provider, ProviderContainer container) {
+    _logger.d('disposed ${provider.name}');
   }
 }
 
@@ -92,14 +102,15 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
   Widget build(BuildContext context) {
     final lightTheme = _buildTheme(context, Brightness.light);
     final darkTheme = _buildTheme(context, Brightness.dark);
-    return MaterialApp.router(
-      title: 'Zenith',
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      routerConfig: _router.config(),
-      builder: (context, child) => RepositoryProvider.value(
-        value: Themes(lightTheme, darkTheme),
-        child: child,
+    return ProviderScope(
+      overrides: [
+        themesProvider.overrideWithValue(Themes(lightTheme, darkTheme)),
+      ],
+      child: MaterialApp.router(
+        title: 'Zenith',
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        routerConfig: _router.config(),
       ),
     );
   }

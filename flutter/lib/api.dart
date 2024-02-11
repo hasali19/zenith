@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/format_utils.dart';
 
 part 'api.freezed.dart';
@@ -642,5 +642,7 @@ class ZenithApiClient {
   }
 }
 
-final apiProvider =
-    Provider<ZenithApiClient>((ref) => throw UnimplementedError());
+@Riverpod(keepAlive: true)
+ZenithApiClient api(ApiRef ref) {
+  throw UnimplementedError();
+}

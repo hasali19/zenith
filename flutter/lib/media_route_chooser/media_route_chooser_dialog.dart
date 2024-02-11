@@ -1,33 +1,30 @@
 import 'package:cast_framework/cast_framework.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:zenith/media_route_chooser/media_route_chooser_cubit.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zenith/media_route_chooser/media_route_chooser_controller.dart';
 
-class MediaRouteChooserDialog extends StatelessWidget {
+class MediaRouteChooserDialog extends ConsumerWidget {
   const MediaRouteChooserDialog({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => MediaRouteChooserCubit(),
-      child: BlocConsumer<MediaRouteChooserCubit, MediaRouteChooserState>(
-        listenWhen: (previous, current) => !previous.isConnected,
-        listener: (context, state) {
-          if (state.isConnected) {
-            Navigator.pop(context);
-          }
-        },
-        builder: (context, state) => AlertDialog(
-          title: const Text('Cast'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: _buildRouteList(
-                state,
-                context,
-                (route) =>
-                    context.read<MediaRouteChooserCubit>().selectRoute(route)),
-          ),
-        ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(mediaRouteChooserControllerProvider, (previous, next) {
+      if ((previous == null || !previous.isConnected) && next.isConnected) {
+        Navigator.pop(context);
+      }
+    });
+
+    final state = ref.watch(mediaRouteChooserControllerProvider);
+    return AlertDialog(
+      title: const Text('Cast'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: _buildRouteList(
+            state,
+            context,
+            (route) => ref
+                .read(mediaRouteChooserControllerProvider.notifier)
+                .selectRoute(route)),
       ),
     );
   }

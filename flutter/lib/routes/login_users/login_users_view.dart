@@ -1,10 +1,18 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/router.dart';
-import 'package:zenith/routes/login_users/login_users_cubit.dart';
-import 'package:zenith/routes/login_users/login_users_state.dart';
+
+part 'login_users_view.g.dart';
+
+@riverpod
+Future<List<User>> _users(_UsersRef ref) async {
+  final api = ref.watch(apiProvider);
+  return await api.fetchUsers();
+}
 
 class LoginUsersView extends StatelessWidget {
   const LoginUsersView({super.key});
@@ -14,34 +22,37 @@ class LoginUsersView extends StatelessWidget {
     return ScaffoldMessenger(
       child: Scaffold(
         body: Center(
-          child: BlocConsumer<LoginUsersCubit, LoginUsersState>(
-            listener: (context, state) {
-              if (state case LoginUsersSuccess(users: [])) {
-                context.router.replace(LoginRegisterRoute(initial: true));
-              } else if (state case LoginUsersFailure()) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: const Text('Failed to retrieve users list'),
-                  behavior: SnackBarBehavior.floating,
-                  duration: const Duration(days: 365),
-                  action: SnackBarAction(
-                    label: 'Retry',
-                    onPressed: () {
-                      context.read<LoginUsersCubit>().refresh();
-                    },
-                  ),
-                ));
-              }
-            },
-            builder: (context, state) {
-              return switch (state) {
-                LoginUsersInitial() ||
-                LoginUsersLoading() ||
-                LoginUsersSuccess(users: []) =>
-                  const CircularProgressIndicator(),
-                LoginUsersSuccess(:final users) =>
-                  _buildSuccess(context, users),
-                LoginUsersFailure() => _buildSuccess(context, []),
-              };
+          child: Consumer(
+            builder: (context, ref, child) {
+              final users = ref.watch(_usersProvider);
+
+              ref.listen(_usersProvider, (previous, next) {
+                if ((previous == null || !previous.hasError) && next.hasError) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: const Text('Failed to retrieve users list'),
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(days: 365),
+                    action: SnackBarAction(
+                      label: 'Retry',
+                      onPressed: () {
+                        ref.invalidate(_usersProvider);
+                      },
+                    ),
+                  ));
+                }
+
+                if (next case AsyncData(value: [])) {
+                  context.router.replace(LoginRegisterRoute(initial: true));
+                }
+              });
+
+              return users.when(
+                data: (data) =>
+                    _buildSuccess(context, data, users.isRefreshing),
+                error: (error, stackTrace) =>
+                    _buildSuccess(context, [], users.isRefreshing),
+                loading: () => const CircularProgressIndicator(),
+              );
             },
           ),
         ),
@@ -49,7 +60,8 @@ class LoginUsersView extends StatelessWidget {
     );
   }
 
-  Widget _buildSuccess(BuildContext context, List<User> data) {
+  Widget _buildSuccess(
+      BuildContext context, List<User> data, bool isRefreshing) {
     final textDisplaySmall = Theme.of(context).textTheme.displaySmall;
     final users = data.map(
       (user) => _UserListCard(
@@ -68,7 +80,8 @@ class LoginUsersView extends StatelessWidget {
           shrinkWrap: true,
           children: [
             Text('Login', style: textDisplaySmall, textAlign: TextAlign.center),
-            const SizedBox(height: 32),
+            const Gap(32),
+            if (isRefreshing) const LinearProgressIndicator(),
             ...users,
             _UserListCard(
               elevated: false,

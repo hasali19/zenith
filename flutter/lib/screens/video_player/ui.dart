@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
@@ -297,7 +296,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     final secondaryIconSize = desktop ? 64.0 : 32.0;
 
     return Theme(
-      data: context.read<Themes>().dark,
+      data: ref.watch(themesProvider).dark,
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(

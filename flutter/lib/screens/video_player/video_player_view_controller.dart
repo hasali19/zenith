@@ -1,9 +1,10 @@
 import 'package:cast_framework/cast_framework.dart' as cast;
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/api.dart';
 
-part 'video_player_cubit.freezed.dart';
+part 'video_player_view_controller.freezed.dart';
+part 'video_player_view_controller.g.dart';
 
 @freezed
 class Playlist with _$Playlist {
@@ -36,27 +37,24 @@ PlaybackLocation _getPlaybackLocation() {
   }
 }
 
-class VideoPlayerCubit extends Cubit<VideoPlayerState> {
-  final ZenithApiClient _api;
+@riverpod
+class VideoPlayerViewController extends _$VideoPlayerViewController {
+  @override
+  Future<VideoPlayerState> build(int id) async {
+    final api = ref.watch(apiProvider);
 
-  VideoPlayerCubit(this._api)
-      : super(VideoPlayerState(
-          location: _getPlaybackLocation(),
-        ));
-
-  void loadPlaylist(int id) async {
-    final requestedItem = await _api.fetchMediaItem(id);
-
+    final requestedItem = await api.fetchMediaItem(id);
     final playlist = switch (requestedItem.type) {
       MediaType.episode =>
-        await _api.fetchShowEpisodes(requestedItem.grandparent!.id),
+        await api.fetchShowEpisodes(requestedItem.grandparent!.id),
       _ => [requestedItem],
     };
 
     int startIndex = playlist.indexWhere((item) => item.id == requestedItem.id);
 
-    emit(state.copyWith(
+    return VideoPlayerState(
+      location: _getPlaybackLocation(),
       playlist: Playlist(items: playlist, start: startIndex),
-    ));
+    );
   }
 }
