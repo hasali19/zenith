@@ -14,7 +14,7 @@ class LoginUsersCubit extends Cubit<LoginUsersState> {
       final users = await _api.fetchUsers();
       emit(LoginUsersSuccess(users));
     } catch (e) {
-      addError(e);
+      emit(LoginUsersFailure());
     }
   }
 }

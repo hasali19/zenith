@@ -11,23 +11,39 @@ class LoginUsersView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: BlocConsumer<LoginUsersCubit, LoginUsersState>(
-          listener: (context, state) {
-            if (state case LoginUsersSuccess(users: [])) {
-              context.router.replace(LoginRegisterRoute(initial: true));
-            }
-          },
-          builder: (context, state) {
-            return switch (state) {
-              LoginUsersInitial() ||
-              LoginUsersLoading() ||
-              LoginUsersSuccess(users: []) =>
-                const CircularProgressIndicator(),
-              LoginUsersSuccess(:final users) => _buildSuccess(context, users),
-            };
-          },
+    return ScaffoldMessenger(
+      child: Scaffold(
+        body: Center(
+          child: BlocConsumer<LoginUsersCubit, LoginUsersState>(
+            listener: (context, state) {
+              if (state case LoginUsersSuccess(users: [])) {
+                context.router.replace(LoginRegisterRoute(initial: true));
+              } else if (state case LoginUsersFailure()) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: const Text('Failed to retrieve users list'),
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(days: 365),
+                  action: SnackBarAction(
+                    label: 'Retry',
+                    onPressed: () {
+                      context.read<LoginUsersCubit>().refresh();
+                    },
+                  ),
+                ));
+              }
+            },
+            builder: (context, state) {
+              return switch (state) {
+                LoginUsersInitial() ||
+                LoginUsersLoading() ||
+                LoginUsersSuccess(users: []) =>
+                  const CircularProgressIndicator(),
+                LoginUsersSuccess(:final users) =>
+                  _buildSuccess(context, users),
+                LoginUsersFailure() => _buildSuccess(context, []),
+              };
+            },
+          ),
         ),
       ),
     );

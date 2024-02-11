@@ -11,3 +11,5 @@ final class LoginUsersSuccess extends LoginUsersState {
 
   LoginUsersSuccess(this.users);
 }
+
+final class LoginUsersFailure extends LoginUsersState {}
