@@ -44,10 +44,10 @@ final serverPrefProvider = createPrefProvider<String?>(
 );
 
 final activeServerProvider = Provider((ref) {
-  if (kIsWeb && const bool.hasEnvironment('DEFAULT_SERVER')) {
+  if ((kDebugMode || kIsWeb) && const bool.hasEnvironment('DEFAULT_SERVER')) {
     return const Server(
       id: 'default',
-      name: 'web',
+      name: 'default',
       url: String.fromEnvironment('DEFAULT_SERVER'),
     );
   }
