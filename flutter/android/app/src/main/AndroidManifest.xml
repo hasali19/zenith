@@ -2,6 +2,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <queries>
         <!-- Android 11 only makes certain apps on the system visible to your app. This list includes
@@ -43,6 +44,7 @@
             </intent-filter>
         </activity>
         <receiver android:name=".InstallReceiver" />
+        <receiver android:name=".DownloadWorker$NotificationActionBroadcastReceiver" />
         <meta-data
             android:name="GIT_COMMIT_HASH"
             android:value="@string/git_commit_hash" />

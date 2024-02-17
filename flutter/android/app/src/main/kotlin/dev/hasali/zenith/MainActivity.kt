@@ -5,15 +5,22 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
+import android.os.Bundle
 import android.view.WindowManager
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import java.util.UUID
 import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
@@ -22,6 +29,7 @@ class MainActivity : FlutterActivity() {
 
     private lateinit var updaterChannel: MethodChannel
     private lateinit var platformChannel: MethodChannel
+    private lateinit var downloaderChannel: MethodChannel
 
     private var isPipModeEnabled = false
     private var nextInstallId = 424242
@@ -31,6 +39,12 @@ class MainActivity : FlutterActivity() {
     object Channels {
         const val Updater = "zenith.hasali.dev/updater"
         const val Platform = "zenith.hasali.dev/platform"
+        const val Downloader = "zenith.hasali.dev/downloader"
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        NotificationChannels.createAll(this)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -38,12 +52,16 @@ class MainActivity : FlutterActivity() {
 
         val messenger = flutterEngine.dartExecutor.binaryMessenger
 
-        updaterChannel = MethodChannel(messenger, Channels.Updater).apply {
-            setMethodCallHandler(this@MainActivity::handleUpdaterMethodCall)
+        updaterChannel = MethodChannel(messenger, Channels.Updater).also {
+            it.setMethodCallHandler(::handleUpdaterMethodCall)
         }
 
-        platformChannel = MethodChannel(messenger, Channels.Platform).apply {
-            setMethodCallHandler(this@MainActivity::handlePlatformMethodCall)
+        platformChannel = MethodChannel(messenger, Channels.Platform).also {
+            it.setMethodCallHandler(::handlePlatformMethodCall)
+        }
+
+        downloaderChannel = MethodChannel(messenger, Channels.Downloader).also {
+            it.setMethodCallHandler(::handleDownloaderMethodCall)
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
@@ -169,6 +187,43 @@ class MainActivity : FlutterActivity() {
                 }
                 result.success(null)
             }
+
+            else -> result.notImplemented()
+        }
+    }
+
+    private fun handleDownloaderMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        when (call.method) {
+            "enqueue" -> {
+                val uri = call.argument<String>("uri")!!
+                val cookies = call.argument<String>("cookies")
+                val filename = call.argument<String>("filename")!!
+
+                val id = UUID.randomUUID()
+
+                val constraints = Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.UNMETERED)
+                    .build()
+
+                val inputData = Data.Builder()
+                    .putString("uri", uri)
+                    .putString("cookies", cookies)
+                    .putString("filename", filename)
+                    .build()
+
+                val request = OneTimeWorkRequestBuilder<DownloadWorker>()
+                    .setId(id)
+                    .setConstraints(constraints)
+                    .setInputData(inputData)
+                    .build()
+
+                WorkManager.getInstance(this)
+                    .enqueue(request)
+
+                DownloadWorker.showStartingNotification(this, id, filename)
+            }
+
+            else -> result.notImplemented()
         }
     }
 

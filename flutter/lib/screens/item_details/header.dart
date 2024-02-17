@@ -238,8 +238,13 @@ class HeaderContent extends ConsumerWidget {
       actions.add(IconButton(
         icon: const Icon(Icons.download),
         onPressed: () {
+          final videoFile = model.item.videoFile!;
+          final name = videoFile.path.split('/').last;
           ref.read(zenithDownloaderProvider).downloadFile(
-              api.getVideoUrl(model.item.videoFile!.id, attachment: true));
+                context,
+                url: api.getVideoUrl(videoFile.id, attachment: true),
+                filename: name,
+              );
         },
       ));
 
