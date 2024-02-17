@@ -16,10 +16,9 @@ object NotificationChannels {
         val notificationManager = NotificationManagerCompat.from(context)
 
         val channel =
-            NotificationChannelCompat.Builder(Downloads, NotificationManagerCompat.IMPORTANCE_DEFAULT)
+            NotificationChannelCompat.Builder(Downloads, NotificationManagerCompat.IMPORTANCE_LOW)
                 .setName("Downloads")
                 .setShowBadge(true)
-                .setVibrationEnabled(false)
                 .build()
 
         notificationManager.createNotificationChannel(channel)
