@@ -19,6 +19,7 @@ object NotificationChannels {
             NotificationChannelCompat.Builder(Downloads, NotificationManagerCompat.IMPORTANCE_DEFAULT)
                 .setName("Downloads")
                 .setShowBadge(true)
+                .setVibrationEnabled(false)
                 .build()
 
         notificationManager.createNotificationChannel(channel)
