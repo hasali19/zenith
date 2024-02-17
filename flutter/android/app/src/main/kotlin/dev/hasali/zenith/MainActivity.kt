@@ -86,7 +86,7 @@ class MainActivity : FlutterActivity() {
                     val installSource =
                         context.packageManager.getInstallSourceInfo(packageName)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        installSource.updateOwnerPackageName
+                        installSource.updateOwnerPackageName ?: installSource.installingPackageName
                     } else {
                         installSource.installingPackageName
                     }
