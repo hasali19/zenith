@@ -266,12 +266,29 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             ),
             body: child,
             bottomNavigationBar: NavigationBar(
-              destinations: const [
-                NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-                NavigationDestination(icon: Icon(Icons.movie), label: 'Movies'),
-                NavigationDestination(icon: Icon(Icons.tv), label: 'Shows'),
+              destinations: [
                 NavigationDestination(
-                    icon: Icon(Icons.settings), label: 'Settings'),
+                  icon: Icon(
+                      screen == Screen.home ? Icons.home : Icons.home_outlined),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(screen == Screen.movies
+                      ? Icons.movie
+                      : Icons.movie_outlined),
+                  label: 'Movies',
+                ),
+                NavigationDestination(
+                  icon: Icon(
+                      screen == Screen.shows ? Icons.tv : Icons.tv_outlined),
+                  label: 'Shows',
+                ),
+                NavigationDestination(
+                  icon: Icon(screen == Screen.settings
+                      ? Icons.settings
+                      : Icons.settings_outlined),
+                  label: 'Settings',
+                ),
               ],
               selectedIndex: context.tabsRouter.activeIndex,
               onDestinationSelected: (value) {
