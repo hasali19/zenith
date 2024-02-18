@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:cast_framework/cast_framework.dart';
 import 'package:dio_image_provider/dio_image_provider.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -106,26 +107,41 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
 
   @override
   Widget build(BuildContext context) {
-    final lightTheme = _buildTheme(context, Brightness.light);
-    final darkTheme = _buildTheme(context, Brightness.dark);
-    return ProviderScope(
-      overrides: [
-        themesProvider.overrideWithValue(Themes(lightTheme, darkTheme)),
-      ],
-      child: MaterialApp.router(
-        title: 'Zenith',
-        theme: lightTheme,
-        darkTheme: darkTheme,
-        routerConfig: _router.config(),
-      ),
-    );
+    final useDynamicColor = ref.watch(enableDynamicColor);
+    return DynamicColorBuilder(builder: (light, dark) {
+      final lightTheme = _buildTheme(
+          context, Brightness.light, useDynamicColor ? light : null);
+      final darkTheme =
+          _buildTheme(context, Brightness.dark, useDynamicColor ? dark : null);
+      return ProviderScope(
+        overrides: [
+          themesProvider.overrideWithValue(Themes(lightTheme, darkTheme)),
+        ],
+        child: MaterialApp.router(
+          title: 'Zenith',
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: switch (ref.watch(themeMode)) {
+            AppThemeMode.light => ThemeMode.light,
+            AppThemeMode.dark => ThemeMode.dark,
+            AppThemeMode.system => ThemeMode.system,
+          },
+          routerConfig: _router.config(),
+        ),
+      );
+    });
   }
 
-  ThemeData _buildTheme(BuildContext context, Brightness brightness) {
+  ThemeData _buildTheme(
+      BuildContext context, Brightness brightness, ColorScheme? colorScheme) {
     final isDesktop = context.isDesktop;
     final baseTheme = ThemeData(
       brightness: brightness,
-      colorSchemeSeed: Colors.deepOrange,
+      colorScheme: colorScheme ??
+          ColorScheme.fromSeed(
+            seedColor: Colors.deepOrange,
+            brightness: brightness,
+          ),
       fontFamily: 'Exo2',
     );
     return baseTheme.copyWith(

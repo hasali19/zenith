@@ -73,3 +73,34 @@ final enableUpdatesCheck = createPrefProvider<bool>(
   prefKey: 'enableUpdatesCheck',
   defaultValue: true,
 );
+
+enum AppThemeMode {
+  light,
+  dark,
+  system,
+}
+
+extension AppThemeModeExt on AppThemeMode {
+  String get label => switch (this) {
+        AppThemeMode.light => 'Light',
+        AppThemeMode.dark => 'Dark',
+        AppThemeMode.system => 'System default',
+      };
+}
+
+final themeMode = createMapPrefProvider<AppThemeMode>(
+  prefs: (ref) => ref.watch(preferencesProvider),
+  prefKey: 'themeMode',
+  mapFrom: (value) =>
+      AppThemeMode.values
+          .where((element) => element.name == value)
+          .firstOrNull ??
+      AppThemeMode.system,
+  mapTo: (value) => value.name,
+);
+
+final enableDynamicColor = createPrefProvider<bool>(
+  prefs: (ref) => ref.watch(preferencesProvider),
+  prefKey: 'enableDynamicColor',
+  defaultValue: true,
+);

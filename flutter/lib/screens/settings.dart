@@ -55,6 +55,65 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     return ListView(children: [
       ListTile(
+        title: const Text('Theme'),
+        subtitle: Text(ref.watch(themeMode).label),
+        onTap: () async {
+          var selected = ref.read(themeMode);
+          final updated = await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Choose theme'),
+              content: StatefulBuilder(builder: (context, setState) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: AppThemeMode.values
+                      .map(
+                        (value) => RadioListTile(
+                          contentPadding: EdgeInsets.zero,
+                          value: value,
+                          title: Text(value.label),
+                          groupValue: selected,
+                          onChanged: (value) {
+                            setState(() {
+                              if (value != null) {
+                                selected = value;
+                              }
+                            });
+                          },
+                        ),
+                      )
+                      .toList(),
+                );
+              }),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, selected),
+                  child: const Text('Confirm'),
+                ),
+              ],
+            ),
+          );
+
+          if (updated != null) {
+            ref.read(themeMode.notifier).update(updated);
+          }
+        },
+      ),
+      CheckboxListTile(
+        title: const Text('Use system colour scheme'),
+        value: ref.watch(enableDynamicColor),
+        onChanged: (value) {
+          if (value != null) {
+            ref.read(enableDynamicColor.notifier).update(value);
+          }
+        },
+      ),
+      const Divider(),
+      ListTile(
         title: const Text('Version'),
         subtitle: Text(_packageInfo?.version ?? ''),
       ),

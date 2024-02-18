@@ -9,7 +9,7 @@ class Themes {
   const Themes(this.light, this.dark);
 }
 
-@riverpod
+@Riverpod(dependencies: [])
 Themes themes(ThemesRef ref) {
   throw UnimplementedError();
 }
