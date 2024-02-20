@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
+import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/screens/video_player/play_pause_button.dart';
 import 'package:zenith/themes.dart';
@@ -295,6 +296,9 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     final primaryIconSize = desktop ? 128.0 : 64.0;
     final secondaryIconSize = desktop ? 64.0 : 32.0;
 
+    final fastForwardDuration = ref.watch(fastForwardDurationProvider);
+    final rewindDuration = ref.watch(rewindDurationProvider);
+
     return Theme(
       data: ref.watch(themesProvider).dark,
       child: DecoratedBox(
@@ -345,10 +349,14 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
                   ),
                   const SizedBox(width: 24),
                   IconButton(
-                    icon: const Icon(Icons.replay_10),
+                    icon: Icon(switch (rewindDuration) {
+                      PlayerSeekPresetDuration.d5 => Icons.replay_5,
+                      PlayerSeekPresetDuration.d10 => Icons.replay_10,
+                      PlayerSeekPresetDuration.d30 => Icons.replay_30,
+                    }),
                     iconSize: secondaryIconSize,
                     onPressed: () {
-                      widget.onSeekDelta(-10);
+                      widget.onSeekDelta(-rewindDuration.value.toDouble());
                       widget.onInteractionEnd();
                     },
                   ),
@@ -369,10 +377,14 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
                   ),
                   const SizedBox(width: 24),
                   IconButton(
-                    icon: const Icon(Icons.forward_30),
+                    icon: Icon(switch (fastForwardDuration) {
+                      PlayerSeekPresetDuration.d5 => Icons.forward_5,
+                      PlayerSeekPresetDuration.d10 => Icons.forward_10,
+                      PlayerSeekPresetDuration.d30 => Icons.forward_30,
+                    }),
                     iconSize: secondaryIconSize,
                     onPressed: () {
-                      widget.onSeekDelta(30);
+                      widget.onSeekDelta(fastForwardDuration.value.toDouble());
                       widget.onInteractionEnd();
                     },
                   ),

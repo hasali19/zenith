@@ -104,3 +104,40 @@ final enableDynamicColor = createPrefProvider<bool>(
   prefKey: 'enableDynamicColor',
   defaultValue: true,
 );
+
+enum PlayerSeekPresetDuration {
+  d5,
+  d10,
+  d30,
+}
+
+extension PlayerSeekPresetDurationExt on PlayerSeekPresetDuration {
+  int get value => switch (this) {
+        PlayerSeekPresetDuration.d5 => 5,
+        PlayerSeekPresetDuration.d10 => 10,
+        PlayerSeekPresetDuration.d30 => 30,
+      };
+}
+
+final fastForwardDurationProvider =
+    createMapPrefProvider<PlayerSeekPresetDuration>(
+  prefs: (ref) => ref.watch(preferencesProvider),
+  prefKey: 'fastForwardDuration',
+  mapFrom: (v) =>
+      PlayerSeekPresetDuration.values
+          .where((element) => element.name == v)
+          .firstOrNull ??
+      PlayerSeekPresetDuration.d30,
+  mapTo: (v) => v.name,
+);
+
+final rewindDurationProvider = createMapPrefProvider<PlayerSeekPresetDuration>(
+  prefs: (ref) => ref.watch(preferencesProvider),
+  prefKey: 'rewindDuration',
+  mapFrom: (v) =>
+      PlayerSeekPresetDuration.values
+          .where((element) => element.name == v)
+          .firstOrNull ??
+      PlayerSeekPresetDuration.d10,
+  mapTo: (v) => v.name,
+);

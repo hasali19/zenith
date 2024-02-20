@@ -8,7 +8,7 @@ import 'package:zenith/updater.dart';
 
 @RoutePage()
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({Key? key}) : super(key: key);
+  const SettingsScreen({super.key});
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -32,6 +32,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   _checkForUpdates(BuildContext context) async {
     final update = await _updater.checkForUpdates();
+    if (!context.mounted) return;
     if (update != null) {
       showDialog(
         context: context,
@@ -54,6 +55,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return ListView(children: [
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+        child: Text(
+          'Appearance',
+          style: TextStyle(color: Theme.of(context).colorScheme.primary),
+        ),
+      ),
       ListTile(
         title: const Text('Theme'),
         subtitle: Text(ref.watch(themeMode).label),
@@ -109,6 +117,60 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         onChanged: (value) {
           if (value != null) {
             ref.read(enableDynamicColor.notifier).update(value);
+          }
+        },
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+        child: Text(
+          'Player',
+          style: TextStyle(color: Theme.of(context).colorScheme.primary),
+        ),
+      ),
+      ListTile(
+        title: const Text('Fast forward duration'),
+        subtitle:
+            Text('${ref.watch(fastForwardDurationProvider).value} seconds'),
+        onTap: () async {
+          final duration = await showModalBottomSheet<PlayerSeekPresetDuration>(
+            context: context,
+            clipBehavior: Clip.antiAlias,
+            builder: (context) => SafeArea(
+              child: Wrap(
+                children: PlayerSeekPresetDuration.values
+                    .map((e) => ListTile(
+                          title: Text('${e.value} seconds'),
+                          onTap: () => Navigator.pop(context, e),
+                        ))
+                    .toList(),
+              ),
+            ),
+          );
+          if (duration != null) {
+            ref.read(fastForwardDurationProvider.notifier).update(duration);
+          }
+        },
+      ),
+      ListTile(
+        title: const Text('Rewind duration'),
+        subtitle: Text('${ref.watch(rewindDurationProvider).value} seconds'),
+        onTap: () async {
+          final duration = await showModalBottomSheet<PlayerSeekPresetDuration>(
+            context: context,
+            clipBehavior: Clip.antiAlias,
+            builder: (context) => SafeArea(
+              child: Wrap(
+                children: PlayerSeekPresetDuration.values
+                    .map((e) => ListTile(
+                          title: Text('${e.value} seconds'),
+                          onTap: () => Navigator.pop(context, e),
+                        ))
+                    .toList(),
+              ),
+            ),
+          );
+          if (duration != null) {
+            ref.read(rewindDurationProvider.notifier).update(duration);
           }
         },
       ),
