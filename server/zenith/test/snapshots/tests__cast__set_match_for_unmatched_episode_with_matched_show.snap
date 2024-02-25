@@ -1,0 +1,8 @@
+---
+source: server/zenith/test/cast.rs
+assertion_line: 8
+expression: "app.get(\"/cast/config\").await"
+---
+{
+  "app_id": "app123"
+}

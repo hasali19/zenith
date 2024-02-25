@@ -27,6 +27,8 @@ pub struct Config {
     pub subtitles: Subtitles,
     #[serde(default)]
     pub watcher: Watcher,
+    #[serde(default)]
+    pub cast: Cast,
 }
 
 #[derive(Default, Deserialize)]
@@ -139,6 +141,11 @@ pub struct Subtitles {
 pub struct Watcher {
     #[serde(default = "Watcher::default_enabled")]
     pub enabled: bool,
+}
+
+#[derive(Default, Deserialize)]
+pub struct Cast {
+    pub app_id: Option<String>,
 }
 
 impl Config {

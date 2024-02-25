@@ -1,8 +1,10 @@
 mod auth;
+mod cast;
 mod media;
 mod metadata;
 mod users;
 
+use std::io::Read;
 use std::sync::Arc;
 
 use axum::body::Body;
@@ -231,14 +233,29 @@ impl TestApp {
     }
 
     async fn req_json(&mut self, req: Request<Body>) -> Value {
-        let res = self.router().oneshot(req).await.unwrap();
+        let mut res = self.router().oneshot(req).await.unwrap();
+        let body = res.body_mut().collect().await.unwrap();
+        let mut bytes = Vec::new();
+        body.aggregate().reader().read_to_end(&mut bytes).unwrap();
 
         if !res.status().is_success() {
-            panic!("request failed with status {}", res.status());
+            if bytes.is_empty() {
+                panic!("request failed with status {}: <empty>", res.status());
+            }
+
+            if let Ok(json) = serde_json::from_slice::<serde_json::Value>(&bytes) {
+                panic!(
+                    "request failed with status {}:\n{}",
+                    res.status(),
+                    serde_json::to_string_pretty(&json).unwrap()
+                );
+            }
+
+            let text = String::from_utf8(bytes).unwrap();
+            panic!("request failed with status {}:\n{}", res.status(), text);
         }
 
-        let body = res.into_body().collect().await.unwrap();
-        serde_json::from_reader(body.aggregate().reader()).unwrap()
+        serde_json::from_reader(bytes.reader()).unwrap()
     }
 
     async fn login(&mut self) -> HeaderValue {
@@ -301,6 +318,9 @@ where
                 .to_owned(),
         },
         watcher: config::Watcher::default(),
+        cast: config::Cast {
+            app_id: Some("app123".to_owned()),
+        },
     });
 
     let db = Db::init(&format!("file:zenith_{id}?mode=memory&cache=shared"))
