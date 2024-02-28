@@ -5,16 +5,21 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use axum::body::Body;
 use axum::extract::OriginalUri;
-use axum::http::StatusCode;
+use axum::http::uri::PathAndQuery;
+use axum::http::{Request, StatusCode, Uri};
 use axum::Extension;
 use axum_extra::extract::cookie::Key;
+use axum_extra::routing::RouterExt;
 use axum_files::{FileRequest, FileResponse};
 use camino::Utf8Path;
 use eyre::Context;
 use time::OffsetDateTime;
 use tmdb::TmdbClient;
 use tokio::time::Instant;
+use tower::ServiceExt;
+use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::prelude::*;
@@ -192,8 +197,12 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
 
     let app = App { key };
 
+    let chromecast_assets_service =
+        static_dir_service("chromecast-web-receiver", "/chromecast-receiver");
     let router = axum::Router::new()
         .nest("/api", zenith::api::router(app.clone()))
+        .route_service_with_tsr("/chromecast-receiver", chromecast_assets_service.clone())
+        .route_service("/chromecast-receiver/*path", chromecast_assets_service)
         .fallback_service(axum::routing::get(spa))
         .layer(TraceLayer::new_for_http())
         .layer(Extension(config))
@@ -228,6 +237,33 @@ fn load_or_create_key(key_path: &Utf8Path) -> eyre::Result<Key> {
             .wrap_err_with(|| format!("failed to write key to file: {key_path:?}"))?;
         Ok(key)
     }
+}
+
+fn static_dir_service(
+    path: &str,
+    prefix: &'static str,
+) -> tower::util::MapRequest<ServeDir, impl FnMut(Request<Body>) -> Request<Body> + Clone> {
+    ServeDir::new(path).map_request(move |mut req: Request<Body>| {
+        let uri = std::mem::take(req.uri_mut());
+        let mut uri_parts = uri.into_parts();
+
+        if let Some(path_and_query) = &mut uri_parts.path_and_query {
+            let mut path = path_and_query
+                .path()
+                .strip_prefix(prefix)
+                .unwrap_or(path_and_query.path());
+
+            if path.is_empty() {
+                path = "index.html";
+            }
+
+            uri_parts.path_and_query = PathAndQuery::try_from(path).ok();
+        }
+
+        *req.uri_mut() = Uri::from_parts(uri_parts).unwrap();
+
+        req
+    })
 }
 
 async fn spa(OriginalUri(uri): OriginalUri, file: FileRequest) -> Result<FileResponse, StatusCode> {

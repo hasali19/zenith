@@ -6,10 +6,10 @@ on:
     paths:
       - .github/workflows/server.yml
       - server/**
-      - web/**
+      - chromecast/**
       - Cargo.lock
       - Cargo.toml
-      - Dockerfile
+      - docker/Dockerfile.server
     branches:
       - "**"
     tags-ignore:
@@ -120,6 +120,26 @@ jobs:
           name: zenith-${{ matrix.target }}
           path: target/${{ matrix.target }}/release/zenith
 
+  build_chromecast_receiver:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Build chromecast web receiver
+        working-directory: chromecast
+        run: |
+          npm install
+          npm run build -- --base=/chromecast-receiver/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: zenith-chromecast-web-receiver
+          path: chromecast/dist
+
   deploy:
     name: Deploy docker image
     runs-on: ubuntu-latest
@@ -128,6 +148,7 @@ jobs:
       - lint
       - test
       - build
+      - build_chromecast_receiver
     concurrency:
       group: server-deploy
       cancel-in-progress: true

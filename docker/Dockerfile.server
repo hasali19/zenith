@@ -4,4 +4,5 @@ WORKDIR app
 RUN apk --no-cache add ffmpeg
 COPY artifacts/$TARGETPLATFORM/zenith /usr/local/bin/zenith
 RUN chmod +x /usr/local/bin/zenith
+COPY artifacts/zenith-chromecast-web-receiver /app/chromecast-web-receiver
 CMD ["/usr/local/bin/zenith"]
