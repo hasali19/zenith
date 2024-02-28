@@ -6,7 +6,7 @@ part of 'themes.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$themesHash() => r'6c3f6ad0b48e1f785e52a53c97b88d496c4f157d';
+String _$themesHash() => r'591a5db5df935383ef75da03b3935a1a7946aa1e';
 
 /// See also [themes].
 @ProviderFor(themes)
@@ -15,8 +15,8 @@ final themesProvider = AutoDisposeProvider<Themes>.internal(
   name: r'themesProvider',
   debugGetCreateSourceHash:
       const bool.fromEnvironment('dart.vm.product') ? null : _$themesHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
+  dependencies: const <ProviderOrFamily>[],
+  allTransitiveDependencies: const <ProviderOrFamily>{},
 );
 
 typedef ThemesRef = AutoDisposeProviderRef<Themes>;
