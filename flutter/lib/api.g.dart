@@ -25,6 +25,16 @@ const _$AccessTokenOwnerEnumMap = {
   AccessTokenOwner.user: 'user',
 };
 
+_$CastConfigImpl _$$CastConfigImplFromJson(Map<String, dynamic> json) =>
+    _$CastConfigImpl(
+      appId: json['app_id'] as String?,
+    );
+
+Map<String, dynamic> _$$CastConfigImplToJson(_$CastConfigImpl instance) =>
+    <String, dynamic>{
+      'app_id': instance.appId,
+    };
+
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************

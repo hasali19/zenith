@@ -34,6 +34,7 @@ abstract interface class MediaRouter {
   ValueNotifier<List<MediaRoute>> get routes;
   ValueNotifier<MediaRoute?> get selectedRoute;
 
+  Future<void> init({required String receiverAppId});
   Future<void> startRouteScanning(RoutesScanningMode mode);
   Future<void> stopRouteScanning(RoutesScanningMode mode);
   Future<void> selectRoute(String? id);

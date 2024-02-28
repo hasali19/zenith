@@ -185,3 +185,145 @@ abstract class _AccessToken implements AccessToken {
   _$$AccessTokenImplCopyWith<_$AccessTokenImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+CastConfig _$CastConfigFromJson(Map<String, dynamic> json) {
+  return _CastConfig.fromJson(json);
+}
+
+/// @nodoc
+mixin _$CastConfig {
+// ignore: invalid_annotation_target
+  @JsonKey(name: 'app_id')
+  String? get appId => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $CastConfigCopyWith<CastConfig> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $CastConfigCopyWith<$Res> {
+  factory $CastConfigCopyWith(
+          CastConfig value, $Res Function(CastConfig) then) =
+      _$CastConfigCopyWithImpl<$Res, CastConfig>;
+  @useResult
+  $Res call({@JsonKey(name: 'app_id') String? appId});
+}
+
+/// @nodoc
+class _$CastConfigCopyWithImpl<$Res, $Val extends CastConfig>
+    implements $CastConfigCopyWith<$Res> {
+  _$CastConfigCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? appId = freezed,
+  }) {
+    return _then(_value.copyWith(
+      appId: freezed == appId
+          ? _value.appId
+          : appId // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$CastConfigImplCopyWith<$Res>
+    implements $CastConfigCopyWith<$Res> {
+  factory _$$CastConfigImplCopyWith(
+          _$CastConfigImpl value, $Res Function(_$CastConfigImpl) then) =
+      __$$CastConfigImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({@JsonKey(name: 'app_id') String? appId});
+}
+
+/// @nodoc
+class __$$CastConfigImplCopyWithImpl<$Res>
+    extends _$CastConfigCopyWithImpl<$Res, _$CastConfigImpl>
+    implements _$$CastConfigImplCopyWith<$Res> {
+  __$$CastConfigImplCopyWithImpl(
+      _$CastConfigImpl _value, $Res Function(_$CastConfigImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? appId = freezed,
+  }) {
+    return _then(_$CastConfigImpl(
+      appId: freezed == appId
+          ? _value.appId
+          : appId // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$CastConfigImpl implements _CastConfig {
+  _$CastConfigImpl({@JsonKey(name: 'app_id') required this.appId});
+
+  factory _$CastConfigImpl.fromJson(Map<String, dynamic> json) =>
+      _$$CastConfigImplFromJson(json);
+
+// ignore: invalid_annotation_target
+  @override
+  @JsonKey(name: 'app_id')
+  final String? appId;
+
+  @override
+  String toString() {
+    return 'CastConfig(appId: $appId)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$CastConfigImpl &&
+            (identical(other.appId, appId) || other.appId == appId));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, appId);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$CastConfigImplCopyWith<_$CastConfigImpl> get copyWith =>
+      __$$CastConfigImplCopyWithImpl<_$CastConfigImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$CastConfigImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _CastConfig implements CastConfig {
+  factory _CastConfig({@JsonKey(name: 'app_id') required final String? appId}) =
+      _$CastConfigImpl;
+
+  factory _CastConfig.fromJson(Map<String, dynamic> json) =
+      _$CastConfigImpl.fromJson;
+
+  @override // ignore: invalid_annotation_target
+  @JsonKey(name: 'app_id')
+  String? get appId;
+  @override
+  @JsonKey(ignore: true)
+  _$$CastConfigImplCopyWith<_$CastConfigImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}

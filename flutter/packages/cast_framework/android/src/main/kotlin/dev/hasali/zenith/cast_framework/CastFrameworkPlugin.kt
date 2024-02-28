@@ -38,7 +38,6 @@ class CastFrameworkPlugin : FlutterPlugin {
             CastApiImpl(
                 mediaRouterEventsApi,
                 mediaRouter,
-                castContext.mergedSelector!!,
                 castContext
             )
         )

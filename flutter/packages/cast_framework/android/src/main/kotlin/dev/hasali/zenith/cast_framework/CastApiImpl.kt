@@ -25,7 +25,6 @@ import dev.hasali.zenith.cast_framework.pigeon.RoutesScanningMode
 class CastApiImpl(
     private val eventsApi: CastEventsApi,
     private val mediaRouter: MediaRouter,
-    private val mediaRouteSelector: MediaRouteSelector,
     private val castContext: CastContext,
 ) : CastApi {
 
@@ -34,6 +33,13 @@ class CastApiImpl(
     private var standardListeners = 0
 
     private var currentCallback: MediaRouterCallback? = null
+    private var mediaRouteSelector = castContext.mergedSelector!!
+
+    override fun init(receiverAppId: String) {
+        castContext.setReceiverApplicationId(receiverAppId)
+        mediaRouteSelector = castContext.mergedSelector!!
+        updateCallback(true)
+    }
 
     override fun registerRoutesListener(mode: RoutesScanningMode) {
         when (mode) {
@@ -41,7 +47,7 @@ class CastApiImpl(
             RoutesScanningMode.PASSIVE -> passiveListeners += 1
             RoutesScanningMode.ACTIVE -> activeListeners += 1
         }
-        updateCallback()
+        updateCallback(false)
         currentCallback?.updateRoutes()
     }
 
@@ -51,7 +57,7 @@ class CastApiImpl(
             RoutesScanningMode.PASSIVE -> passiveListeners -= 1
             RoutesScanningMode.ACTIVE -> activeListeners -= 1
         }
-        updateCallback()
+        updateCallback(false)
     }
 
     override fun load(loadRequestData: MediaLoadRequestData) {
@@ -178,7 +184,7 @@ class CastApiImpl(
         client.stop()
     }
 
-    private fun updateCallback() {
+    private fun updateCallback(force: Boolean) {
         val targetMode = if (activeListeners > 0) {
             RoutesScanningMode.ACTIVE
         } else if (passiveListeners > 0) {
@@ -209,7 +215,7 @@ class CastApiImpl(
                     }
                 }
 
-                callback.mode.raw != targetMode.raw -> {
+                callback.mode.raw != targetMode.raw || force -> {
                     mediaRouter.removeCallback(callback)
                     currentCallback = MediaRouterCallback(targetMode).also {
                         it.updateRoutes()

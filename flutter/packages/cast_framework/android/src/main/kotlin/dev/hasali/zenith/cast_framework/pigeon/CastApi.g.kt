@@ -440,6 +440,7 @@ private object CastApiCodec : StandardMessageCodec() {
 
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface CastApi {
+  fun init(receiverAppId: String)
   fun registerRoutesListener(mode: RoutesScanningMode)
   fun unregisterRoutesListener(mode: RoutesScanningMode)
   fun selectRoute(id: String?)
@@ -459,6 +460,25 @@ interface CastApi {
     /** Sets up an instance of `CastApi` to handle messages through the `binaryMessenger`. */
     @Suppress("UNCHECKED_CAST")
     fun setUp(binaryMessenger: BinaryMessenger, api: CastApi?) {
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.cast_framework.CastApi.init", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val receiverAppIdArg = args[0] as String
+            var wrapped: List<Any?>
+            try {
+              api.init(receiverAppIdArg)
+              wrapped = listOf<Any?>(null)
+            } catch (exception: Throwable) {
+              wrapped = wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
       run {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.cast_framework.CastApi.registerRoutesListener", codec)
         if (api != null) {

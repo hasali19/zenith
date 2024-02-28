@@ -362,18 +362,41 @@ class AccessToken with _$AccessToken {
 
 enum SubtitleFormat { webvtt }
 
+@freezed
+class CastConfig with _$CastConfig {
+  factory CastConfig({
+    // ignore: invalid_annotation_target
+    @JsonKey(name: 'app_id') required String? appId,
+  }) = _CastConfig;
+
+  factory CastConfig.fromJson(Map<String, Object?> json) =>
+      _$CastConfigFromJson(json);
+}
+
+final class AuthenticationObserver {
+  void Function()? onLoggedIn;
+  void Function()? onLoggedOut;
+
+  AuthenticationObserver({this.onLoggedIn, this.onLoggedOut});
+}
+
 class ZenithApiClient {
   final Dio _client;
+  final AuthenticationObserver _authObserver;
 
   bool? _isLoggedIn;
 
-  ZenithApiClient(this._client);
+  ZenithApiClient(this._client, {AuthenticationObserver? authObserver})
+      : _authObserver = authObserver ?? AuthenticationObserver();
 
   String get baseUrl => _client.options.baseUrl;
 
   Future<bool> isLoggedIn() async {
     if (_isLoggedIn != null) return _isLoggedIn!;
     final res = await _client.get('/api/users/me');
+    if (res.statusCode == 200) {
+      _authObserver.onLoggedIn?.call();
+    }
     return _isLoggedIn = res.statusCode == 200;
   }
 
@@ -382,13 +405,16 @@ class ZenithApiClient {
       '/api/auth/login',
       data: {'username': username, 'password': password},
     );
-
+    if (res.statusCode == 200) {
+      _authObserver.onLoggedIn?.call();
+    }
     return _isLoggedIn = res.statusCode == 200;
   }
 
   Future<void> logout() async {
     await _client.post('/api/auth/logout');
     _isLoggedIn = false;
+    _authObserver.onLoggedOut?.call();
   }
 
   Future<List<User>> fetchUsers() async {
@@ -634,6 +660,15 @@ class ZenithApiClient {
       return AccessToken.fromJson(res.data);
     } else {
       throw Exception('Failed to get token');
+    }
+  }
+
+  Future<CastConfig> fetchCastConfig() async {
+    final res = await _client.get('/api/cast/config');
+    if (res.statusCode == 200) {
+      return CastConfig.fromJson(res.data);
+    } else {
+      throw Exception('Failed to get cast config');
     }
   }
 }

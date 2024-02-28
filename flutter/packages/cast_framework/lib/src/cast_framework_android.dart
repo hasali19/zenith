@@ -46,6 +46,10 @@ class _MediaRouter implements MediaRouter {
   final selectedRoute = ValueNotifier<cast.MediaRoute?>(null);
 
   @override
+  Future<void> init({required String receiverAppId}) async =>
+      await _api.init(receiverAppId);
+
+  @override
   Future<void> startRouteScanning(cast.RoutesScanningMode mode) async =>
       await _api.registerRoutesListener(mode);
 

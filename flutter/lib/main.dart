@@ -23,6 +23,8 @@ import 'package:zenith/update_dialog.dart';
 import 'package:zenith/updater.dart';
 import 'package:zenith/window.dart';
 
+final _authStateProvider = StateProvider((ref) => false);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -42,7 +44,15 @@ Future<void> main() async {
           final client =
               createDioClient(activeServer.url, ref.watch(cookieJarProvider));
           DioImage.defaultDio = client;
-          return ZenithApiClient(client);
+          return ZenithApiClient(
+            client,
+            authObserver: AuthenticationObserver(
+              onLoggedIn: () =>
+                  ref.read(_authStateProvider.notifier).state = true,
+              onLoggedOut: () =>
+                  ref.read(_authStateProvider.notifier).state = false,
+            ),
+          );
         } else {
           throw UnimplementedError();
         }
@@ -107,6 +117,18 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(_authStateProvider, (previous, next) async {
+      if (previous != true && next) {
+        final api = ref.read(apiProvider);
+        final castConfig = await api.fetchCastConfig();
+        final castReceiverAppId = castConfig.appId;
+        if (castReceiverAppId != null) {
+          await CastFrameworkPlatform.instance.mediaRouter
+              .init(receiverAppId: castReceiverAppId);
+        }
+      }
+    });
+
     final useDynamicColor = ref.watch(enableDynamicColor);
     return DynamicColorBuilder(builder: (light, dark) {
       final lightTheme = _buildTheme(

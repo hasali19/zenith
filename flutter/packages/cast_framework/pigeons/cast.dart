@@ -83,6 +83,8 @@ class MediaSeekOptions {
 
 @HostApi()
 abstract class CastApi {
+  void init(String receiverAppId);
+
   // MediaRouter
 
   void registerRoutesListener(RoutesScanningMode mode);
