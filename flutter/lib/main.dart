@@ -117,17 +117,19 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(_authStateProvider, (previous, next) async {
-      if (previous != true && next) {
-        final api = ref.read(apiProvider);
-        final castConfig = await api.fetchCastConfig();
-        final castReceiverAppId = castConfig.appId;
-        if (castReceiverAppId != null) {
-          await CastFrameworkPlatform.instance.mediaRouter
-              .init(receiverAppId: castReceiverAppId);
+    if (CastFrameworkPlatform.instance.isSupported) {
+      ref.listen(_authStateProvider, (previous, next) async {
+        if (previous != true && next) {
+          final api = ref.read(apiProvider);
+          final castConfig = await api.fetchCastConfig();
+          final castReceiverAppId = castConfig.appId;
+          if (castReceiverAppId != null) {
+            await CastFrameworkPlatform.instance.mediaRouter
+                .init(receiverAppId: castReceiverAppId);
+          }
         }
-      }
-    });
+      });
+    }
 
     final useDynamicColor = ref.watch(enableDynamicColor);
     return DynamicColorBuilder(builder: (light, dark) {
