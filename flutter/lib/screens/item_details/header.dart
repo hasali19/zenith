@@ -642,6 +642,7 @@ class _OverviewState extends State<Overview> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Material(
+                  type: MaterialType.transparency,
                   child: InkWell(
                     onTap: _controller.toggle,
                     child: Text('More',
@@ -657,6 +658,7 @@ class _OverviewState extends State<Overview> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Material(
+                  type: MaterialType.transparency,
                   child: InkWell(
                     onTap: _controller.toggle,
                     child: Text('Less',
