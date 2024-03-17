@@ -23,7 +23,7 @@ default-features = false
 features = ["macros", "runtime-tokio-rustls", "sqlite"]
 
 [dependencies.strum]
-version = "0.25"
+version = "0.26"
 features = ["derive"]
 
 [dependencies.tokio]
