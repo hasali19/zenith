@@ -15,121 +15,80 @@ harness = false
 mocks = ["dep:mockall"]
 
 [dependencies]
-argon2 = "0.5"
-async-trait = "0.1"
-bytes = "1.1"
-color-eyre = "0.6"
-eyre = "0.6"
-futures = "0.3"
-hyper = "1.0"
-indexmap = "2.1"
-itertools = "0.12"
-markdown = "0.3"
-mockall = { version = "0.12", optional = true }
-once_cell = "1.13"
-openapiv3 = "2.0"
-rand = "0.8"
-regex = "1.6"
-serde_json = "1.0"
-serde_yaml = "0.9"
-sha2 = "0.10"
-tempfile = "3.3"
-thiserror = "1.0"
-tokio-util = "0.7"
-tower = "0.4"
-tracing = "0.1"
-tracing-error = "0.2"
-walkdir = "2.3"
-
+argon2 = { workspace = true }
+async-trait = { workspace = true }
+axum = { workspace = true, features = [
+    "json",
+    "http1",
+    "multipart",
+    "original-uri",
+    "tokio",
+    "tower-log",
+] }
+axum-extra = { workspace = true, features = ["cookie-private"] }
 axum-files = { path = "../axum-files" }
+bytes = { workspace = true }
+camino = { workspace = true, features = ["serde1", "sqlx-sqlite"] }
+color-eyre = { workspace = true }
 db = { path = "../db" }
+eyre = { workspace = true }
+futures = { workspace = true }
+hyper = { workspace = true }
+hyper-util = { workspace = true }
+indexmap = { workspace = true }
+itertools = { workspace = true }
+markdown = { workspace = true }
 migrations = { path = "../migrations" }
+mockall = { workspace = true, optional = true }
+notify = { workspace = true }
+once_cell = { workspace = true }
+openapiv3 = { workspace = true }
+rand = { workspace = true }
+regex = { workspace = true }
+reqwest = { workspace = true, features = ["json", "rustls-tls"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+serde_qs = { workspace = true, features = ["axum"] }
+serde_yaml = { workspace = true }
+sha2 = { workspace = true }
+speq = { workspace = true, features = ["axum", "camino", "serde_qs_axum"] }
+sqlx = { workspace = true, features = [
+    "macros",
+    "runtime-tokio-rustls",
+    "sqlite",
+] }
+tempfile = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true, features = ["parsing"] }
 tmdb = { path = "../tmdb" }
-
-[dependencies.axum]
-version = "0.7"
-default-features = false
-features = ["json", "http1", "multipart", "original-uri", "tokio", "tower-log"]
-
-[dependencies.axum-extra]
-version = "0.9"
-features = ["cookie-private"]
-
-[dependencies.camino]
-version = "1.1"
-features = ["serde1", "sqlx-sqlite"]
-
-[dependencies.hyper-util]
-version = "0.1"
-
-[dependencies.notify]
-version = "6.1"
-default-features = false
-
-[dependencies.reqwest]
-version = "0.11"
-default-features = false
-features = ["json", "rustls-tls"]
-
-[dependencies.serde]
-version = "1.0"
-features = ["derive"]
-
-[dependencies.serde_qs]
-git = "https://github.com/Wicpar/serde_qs"
-rev = "76265b2"
-features = ["axum"]
-
-[dependencies.speq]
-git = "https://github.com/hasali19/speq"
-rev = "d7263383c1f25fd80e517cfe7a6f514576e46220"
-features = ["axum", "camino", "serde_qs_axum"]
-
-[dependencies.sqlx]
-version = "0.7"
-default-features = false
-features = ["macros", "runtime-tokio-rustls", "sqlite"]
-
-[dependencies.time]
-version = "0.3"
-features = ["parsing"]
-
-[dependencies.tokio]
-version = "1.20"
-features = ["macros", "fs", "io-util", "process", "rt-multi-thread", "signal"]
-
-[dependencies.tokio-stream]
-version = "0.1"
-features = ["sync"]
-
-[dependencies.tower-http]
-version = "0.5"
-features = ["cors", "fs", "trace"]
-
-[dependencies.tracing-subscriber]
-version = "0.3"
-features = ["env-filter"]
-
-[dependencies.uuid]
-version = "1.1"
-features = ["v4"]
+tokio = { workspace = true, features = [
+    "macros",
+    "fs",
+    "io-util",
+    "process",
+    "rt-multi-thread",
+    "signal",
+] }
+tokio-stream = { workspace = true, features = ["sync"] }
+tower-http = { workspace = true, features = ["cors", "fs", "trace"] }
+tokio-util = { workspace = true }
+tower = { workspace = true }
+tracing = { workspace = true }
+tracing-error = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+uuid = { workspace = true, features = ["v4"] }
+walkdir = { workspace = true }
 
 [dev-dependencies]
-assert-json-diff = "2.0"
-http-body-util = "0.1"
-inventory = "0.3"
-libtest-mimic = "0.7"
-mime = "0.3"
-mockall = "0.12"
-pretty_assertions = "1.3"
+assert-json-diff = { workspace = true }
+http-body-util = { workspace = true }
+insta = { workspace = true, features = ["json"] }
+inventory = { workspace = true }
+libtest-mimic = { workspace = true }
+mime = { workspace = true }
+mockall = { workspace = true }
+pretty_assertions = { workspace = true }
 test-macros = { path = "../test-macros" }
-tower = "0.4"
-wiremock = "0.6"
-
-[dev-dependencies.insta]
-version = "1.19"
-features = ["json"]
-
-[dev-dependencies.time]
-version = "0.3"
-features = ["macros"]
+time = { workspace = true, features = ["macros"] }
+tower = { workspace = true }
+wiremock = { workspace = true }

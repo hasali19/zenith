@@ -6,26 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-eyre = "0.6"
-itertools = "0.12"
-tempfile = "3.5"
-tracing = "0.1"
-
+camino = { workspace = true, features = ["serde1", "sqlx-sqlite"] }
+eyre = { workspace = true }
+itertools = { workspace = true }
 migrations = { path = "../migrations" }
-
-[dependencies.camino]
-version = "1.1"
-features = ["serde1", "sqlx-sqlite"]
-
-[dependencies.sqlx]
-version = "0.7"
-default-features = false
-features = ["macros", "runtime-tokio-rustls", "sqlite"]
-
-[dependencies.strum]
-version = "0.26"
-features = ["derive"]
-
-[dependencies.tokio]
-version = "1.20"
-features = ["fs"]
+sqlx = { workspace = true, features = [
+    "macros",
+    "runtime-tokio-rustls",
+    "sqlite",
+] }
+tempfile = { workspace = true }
+tokio = { workspace = true, features = ["fs"] }
+tracing = { workspace = true }
+strum = { workspace = true, features = ["derive"] }
