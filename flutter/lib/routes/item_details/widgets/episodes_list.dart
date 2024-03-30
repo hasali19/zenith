@@ -1,53 +1,29 @@
-import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sliver_tools/sliver_tools.dart';
+import 'package:zenith/fade_in_image.dart';
 import 'package:zenith/responsive.dart';
-import 'package:zenith/screens/item_details/item_details.dart';
-import 'package:zenith/screens/item_details/model.dart';
+import 'package:zenith/routes/item_details/item_details_state.dart';
 import 'package:zenith/text_one_line.dart';
 import 'package:zenith/theme.dart';
 
-import '../../api.dart' as api;
-
-class Season {
-  final api.MediaItem data;
-  final List<api.MediaItem> episodes;
-
-  Season({
-    required this.data,
-    required this.episodes,
-  });
-}
-
-Future<List<Season>> fetchSeasons(
-    api.ZenithApiClient zenith, int showId) async {
-  final seasons = <Season>[];
-  for (final season in await zenith.fetchSeasons(showId)) {
-    final episodes = await zenith.fetchEpisodes(season.id);
-    seasons.add(Season(data: season, episodes: episodes));
-  }
-  return seasons;
-}
-
-class EpisodesList extends ConsumerWidget {
-  final ItemDetailsModel model;
-  final void Function(api.MediaItem) onEpisodePressed;
+class EpisodesList extends StatelessWidget {
+  final List<EpisodeGroupState> groups;
+  final void Function(EpisodeState) onEpisodePressed;
 
   const EpisodesList({
-    Key? key,
-    required this.model,
+    super.key,
+    required this.groups,
     required this.onEpisodePressed,
-  }) : super(key: key);
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).isDesktop;
     return MultiSliver(
       children: [
-        for (final season in model.seasons)
+        for (final group in groups)
           _EpisodesListInner(
-            season: season,
+            group: group,
             onEpisodePressed: onEpisodePressed,
           ),
         SliverToBoxAdapter(
@@ -59,14 +35,13 @@ class EpisodesList extends ConsumerWidget {
 }
 
 class _EpisodesListInner extends StatefulWidget {
-  final SeasonModel season;
-  final void Function(api.MediaItem) onEpisodePressed;
+  final EpisodeGroupState group;
+  final void Function(EpisodeState) onEpisodePressed;
 
   const _EpisodesListInner({
-    Key? key,
-    required this.season,
+    required this.group,
     required this.onEpisodePressed,
-  }) : super(key: key);
+  });
 
   @override
   State<_EpisodesListInner> createState() => _EpisodesListInnerState();
@@ -75,8 +50,8 @@ class _EpisodesListInner extends StatefulWidget {
 class _EpisodesListInnerState extends State<_EpisodesListInner> {
   final controller = ScrollController();
 
-  api.MediaItem get season => widget.season.item;
-  List<api.MediaItem> get episodes => widget.season.episodes;
+  EpisodeGroupState get _group => widget.group;
+  List<EpisodeState> get _episodes => widget.group.episodes;
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +71,7 @@ class _EpisodesListInnerState extends State<_EpisodesListInner> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 32),
-                Text(season.name, style: theme.textTheme.headlineMedium),
+                Text(_group.name, style: theme.textTheme.headlineMedium),
                 const SizedBox(height: 16),
               ],
             ),
@@ -114,12 +89,12 @@ class _EpisodesListInnerState extends State<_EpisodesListInner> {
                   (thumbnailWidth * (9.0 / 16.0) + 16),
             ),
             delegate: SliverChildBuilderDelegate(
-              (context, index) => EpisodeListItem(
-                episode: episodes[index],
+              (context, index) => _EpisodeListItem(
+                episode: _episodes[index],
                 width: thumbnailWidth,
-                onPressed: () => widget.onEpisodePressed(episodes[index]),
+                onPressed: () => widget.onEpisodePressed(_episodes[index]),
               ),
-              childCount: episodes.length,
+              childCount: _episodes.length,
             ),
           ),
         ),
@@ -128,21 +103,19 @@ class _EpisodesListInnerState extends State<_EpisodesListInner> {
   }
 }
 
-class EpisodeListItem extends ConsumerWidget {
-  const EpisodeListItem({
-    Key? key,
+class _EpisodeListItem extends StatelessWidget {
+  const _EpisodeListItem({
     required this.episode,
     required this.width,
     required this.onPressed,
-  }) : super(key: key);
+  });
 
-  final api.MediaItem episode;
+  final EpisodeState episode;
   final double width;
   final void Function() onPressed;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final zenith = ref.watch(api.apiProvider);
+  Widget build(BuildContext context) {
     final height = width * (9.0 / 16.0);
     return SizedBox(
       height: height + 16,
@@ -156,10 +129,9 @@ class EpisodeListItem extends ConsumerWidget {
                   SizedBox(
                     width: width,
                     height: height,
-                    child: EpisodeThumbnail(
-                      url: zenith.getMediaImageUrl(
-                          episode.id, api.ImageType.thumbnail),
-                      isWatched: episode.videoUserData?.isWatched ?? false,
+                    child: _EpisodeThumbnail(
+                      url: episode.thumbnailUrl,
+                      isWatched: episode.isWatched,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -168,8 +140,7 @@ class EpisodeListItem extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TextOneLine(
-                            '${episode.parent!.index} - ${episode.name}',
+                        TextOneLine(episode.title,
                             style: context.zenithTheme.titleMedium),
                         const SizedBox(height: 8),
                         Flexible(
@@ -199,15 +170,14 @@ class EpisodeListItem extends ConsumerWidget {
   }
 }
 
-class EpisodeThumbnail extends StatelessWidget {
+class _EpisodeThumbnail extends StatelessWidget {
   final String? url;
   final bool isWatched;
 
-  const EpisodeThumbnail({
-    Key? key,
+  const _EpisodeThumbnail({
     required this.url,
     required this.isWatched,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -220,11 +190,7 @@ class EpisodeThumbnail extends StatelessWidget {
         url == null
             ? const Icon(Icons.video_file, size: 48)
             : Positioned.fill(
-                child: FadeInImage(
-                  placeholder: MemoryImage(transparentImage),
-                  image: DioImage.string(url!),
-                  fit: BoxFit.cover,
-                ),
+                child: ZenithFadeInImage.dio(url: url!),
               ),
         if (isWatched)
           Container(

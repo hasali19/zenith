@@ -8,18 +8,27 @@ final _transparentImage = base64Decode(
 
 class ZenithFadeInImage extends StatelessWidget {
   final ImageProvider<Object> image;
+  final double? width;
+  final double? height;
   final BoxFit fit;
+  final AlignmentGeometry alignment;
 
   const ZenithFadeInImage({
     super.key,
     required this.image,
+    this.width,
+    this.height,
     this.fit = BoxFit.cover,
+    this.alignment = Alignment.center,
   });
 
   ZenithFadeInImage.dio({
     super.key,
     required String url,
+    this.width,
+    this.height,
     this.fit = BoxFit.cover,
+    this.alignment = Alignment.center,
   }) : image = DioImage.string(url);
 
   @override
@@ -27,7 +36,10 @@ class ZenithFadeInImage extends StatelessWidget {
     return FadeInImage(
       placeholder: MemoryImage(_transparentImage),
       image: image,
+      width: width,
+      height: height,
       fit: fit,
+      alignment: alignment,
     );
   }
 }

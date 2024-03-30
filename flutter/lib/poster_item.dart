@@ -1,6 +1,5 @@
-import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:zenith/screens/item_details/item_details.dart';
+import 'package:zenith/fade_in_image.dart';
 import 'package:zenith/text_one_line.dart';
 import 'package:zenith/theme.dart';
 
@@ -43,11 +42,7 @@ class PosterItem extends StatelessWidget {
                   clipBehavior: Clip.hardEdge,
                   shape: cardTheme.shape,
                   child: poster != null
-                      ? FadeInImage(
-                          placeholder: MemoryImage(transparentImage),
-                          image: DioImage.string(poster!),
-                          fit: BoxFit.cover,
-                        )
+                      ? ZenithFadeInImage.dio(url: poster!)
                       : Center(
                           child: Icon(posterFallback, size: 40),
                         ),

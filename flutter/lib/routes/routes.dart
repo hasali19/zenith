@@ -1,3 +1,4 @@
+export 'item_details/item_details_page.dart';
 export 'login/login_page.dart';
 export 'login_register/login_register_page.dart';
 export 'login_user/login_user_page.dart';

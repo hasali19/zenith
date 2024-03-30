@@ -1,5 +1,3 @@
-import 'package:auto_route/auto_route.dart';
-import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,32 +5,38 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/download.dart'
     if (dart.library.html) 'package:zenith/download_web.dart';
+import 'package:zenith/fade_in_image.dart';
 import 'package:zenith/language_codes.dart';
 import 'package:zenith/responsive.dart';
-import 'package:zenith/screens/item_details/header_layout.dart';
-import 'package:zenith/screens/item_details/item_details.dart';
-import 'package:zenith/screens/item_details/model.dart';
+import 'package:zenith/routes/item_details/item_details_controller.dart';
+import 'package:zenith/routes/item_details/item_details_state.dart';
+import 'package:zenith/routes/item_details/widgets/header_layout.dart';
 import 'package:zenith/text_one_line.dart';
 import 'package:zenith/theme.dart';
 
 class HeaderContent extends ConsumerWidget {
   const HeaderContent({
     super.key,
-    required this.model,
-    required this.refresh,
+    required this.state,
     required this.onPlayPressed,
-    required this.onViewItemDetails,
+    required this.onChildItemPressed,
+    required this.onFindMetadataMatch,
+    required this.onFixEpisodeMatch,
+    required this.onRefreshMetadata,
+    required this.onDelete,
   });
 
-  final ItemDetailsModel model;
-  final void Function() refresh;
-  final void Function(MediaItem item) onPlayPressed;
-  final void Function(int id) onViewItemDetails;
+  final ItemDetailsState state;
+  final void Function() onPlayPressed;
+  final void Function(int id) onChildItemPressed;
+  final void Function() onFindMetadataMatch;
+  final void Function() onFixEpisodeMatch;
+  final void Function() onRefreshMetadata;
+  final void Function() onDelete;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDesktop = MediaQuery.of(context).isDesktop;
-    final api = ref.watch(apiProvider);
 
     final subtitle = _buildSubtitle(context);
     final metaTable = _buildMetaTable();
@@ -43,31 +47,28 @@ class HeaderContent extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         HeaderLayout(
-          backdrop: FadeInImage(
-            placeholder: MemoryImage(transparentImage),
-            image: DioImage.string(
-                api.getMediaImageUrl(model.item.id, ImageType.backdrop)),
+          backdrop: ZenithFadeInImage.dio(
+            url: state.backdropUrl,
             height: 300,
-            fit: BoxFit.cover,
             alignment: Alignment.topCenter,
           ),
           poster: Poster(
-            url: api.getMediaImageUrl(model.item.id, ImageType.poster),
-            progress: model.playableProgress,
-            caption: model.playableCaption,
+            url: state.posterUrl,
+            progress: state.playable?.progress,
+            caption: state.playable?.caption,
           ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (model.item.grandparent != null)
+              if (state.item.grandparent != null)
                 InkWell(
                   child: Text(
-                    model.item.grandparent!.name,
+                    state.item.grandparent!.name,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  onTap: () => onViewItemDetails(model.item.grandparent!.id),
+                  onTap: () => onChildItemPressed(state.item.grandparent!.id),
                 ),
-              Text(model.item.name, style: context.zenithTheme.titleLarge),
+              Text(state.item.name, style: context.zenithTheme.titleLarge),
               if (subtitle != null) subtitle,
             ],
           ),
@@ -80,7 +81,7 @@ class HeaderContent extends ConsumerWidget {
             ],
           ),
           playButton: _buildPlayButton(),
-          actions: Row(children: _buildActionsItems(context, ref, api)),
+          actions: Row(children: _buildActionsItems(context, ref)),
           posterWidth: isDesktop ? 300 : 150,
           padding: isDesktop ? 128 : 16,
           separation: isDesktop ? 48 : 16,
@@ -92,10 +93,10 @@ class HeaderContent extends ConsumerWidget {
   Widget? _buildSubtitle(BuildContext context) {
     final theme = Theme.of(context);
     final style = theme.textTheme.titleMedium;
-    final seasonEpisode = model.item.getSeasonEpisode();
-    final date = model.item.startDate;
-    final duration = model.formattedDuration;
-    final ageRating = model.item.ageRating;
+    final seasonEpisode = state.item.getSeasonEpisode();
+    final date = state.item.startDate;
+    final duration = state.durationText;
+    final ageRating = state.item.ageRating;
 
     final items = [
       if (seasonEpisode != null) TextSpan(text: seasonEpisode),
@@ -127,22 +128,22 @@ class HeaderContent extends ConsumerWidget {
 
   Widget? _buildMetaTable() {
     final rows = [
-      if (model.item.director != null)
+      if (state.item.director != null)
         TableRow(
           children: [
             const TableCell(
                 child: Text('Director', style: TextStyle(color: Colors.grey))),
             const TableCell(child: SizedBox()),
-            TableCell(child: Text(model.item.director!)),
+            TableCell(child: Text(state.item.director!)),
           ],
         ),
-      if (model.item.genres.isNotEmpty)
+      if (state.item.genres.isNotEmpty)
         TableRow(
           children: [
             const TableCell(
                 child: Text('Genres', style: TextStyle(color: Colors.grey))),
             const TableCell(child: SizedBox()),
-            TableCell(child: Text(model.item.genres.join(', '))),
+            TableCell(child: Text(state.item.genres.join(', '))),
           ],
         ),
     ];
@@ -165,8 +166,8 @@ class HeaderContent extends ConsumerWidget {
   }
 
   Widget? _buildOverview() {
-    final overview = model.item.overview;
-    final trailer = model.item.trailer;
+    final overview = state.item.overview;
+    final trailer = state.item.trailer;
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 960),
       child: Column(
@@ -189,7 +190,7 @@ class HeaderContent extends ConsumerWidget {
                     ),
                   ),
                   onTap: () {
-                    final trailer = model.item.trailer;
+                    final trailer = state.item.trailer;
                     if (trailer != null) {
                       launchUrl(Uri.parse(trailer),
                           mode: LaunchMode.externalApplication);
@@ -204,33 +205,29 @@ class HeaderContent extends ConsumerWidget {
   }
 
   Widget _buildPlayButton() {
-    final playable = model.playable;
+    final playable = state.playable;
     return ElevatedButton.icon(
       icon: const Icon(Icons.play_arrow),
       label: Text(playable?.shouldResume == true ? 'Resume' : 'Play'),
-      onPressed: () {
-        if (playable != null) {
-          onPlayPressed(playable);
-        }
-      },
+      onPressed: playable == null ? null : onPlayPressed,
     );
   }
 
-  List<Widget> _buildActionsItems(
-      BuildContext context, WidgetRef ref, ZenithApiClient api) {
+  List<Widget> _buildActionsItems(BuildContext context, WidgetRef ref) {
     final isDesktop = context.isDesktop;
     final actions = <Widget>[];
 
     actions.add(WatchedToggleButton(
-      isWatched: model.isWatched,
+      isWatched: state.isWatched,
       onChange: (v) {
-        api.updateUserData(model.item.id, VideoUserDataPatch(isWatched: v));
-        refresh();
+        ref
+            .read(itemDetailsControllerProvider(state.item.id).notifier)
+            .setIsWatched(v);
       },
     ));
 
-    if (model.item.type == MediaType.movie ||
-        model.item.type == MediaType.episode) {
+    final videoDownloadUrl = state.videoDownloadUrl;
+    if (videoDownloadUrl != null) {
       if (isDesktop) {
         actions.add(const SizedBox(width: 16));
       }
@@ -238,11 +235,11 @@ class HeaderContent extends ConsumerWidget {
       actions.add(IconButton(
         icon: const Icon(Icons.download),
         onPressed: () {
-          final videoFile = model.item.videoFile!;
+          final videoFile = state.item.videoFile!;
           final name = videoFile.path.split('/').last;
           ref.read(zenithDownloaderProvider).downloadFile(
                 context,
-                url: api.getVideoUrl(videoFile.id, attachment: true),
+                url: videoDownloadUrl,
                 filename: name,
               );
         },
@@ -255,86 +252,77 @@ class HeaderContent extends ConsumerWidget {
 
     actions.add(IconButton(
       icon: const Icon(Icons.more_vert),
-      onPressed: () => _showOptionsMenu(context, api),
+      onPressed: () => _showOptionsMenu(context),
     ));
 
     return actions;
   }
 
-  void _showOptionsMenu(BuildContext context, ZenithApiClient api) {
+  void _showOptionsMenu(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     showModalBottomSheet(
       context: context,
       constraints: width > 600
           ? const BoxConstraints.expand(width: 600).copyWith(minHeight: 0)
           : null,
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            if (model.item.type == MediaType.episode) ...[
+      builder: (context) => Consumer(
+        builder: (context, ref, child) => SafeArea(
+          child: Wrap(
+            children: [
+              if (state.item.type == MediaType.episode) ...[
+                ListTile(
+                  leading: const Icon(Icons.tv),
+                  title: const Text('Go to show'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onChildItemPressed(state.item.grandparent!.id);
+                  },
+                ),
+              ],
               ListTile(
-                leading: const Icon(Icons.tv),
-                title: const Text('Go to show'),
-                onTap: () {
+                leading: const Icon(Icons.search),
+                title: const Text('Find match'),
+                onTap: () async {
                   Navigator.pop(context);
-                  onViewItemDetails(model.item.grandparent!.id);
+                  onFindMetadataMatch();
+                },
+              ),
+              if (state.item.type == MediaType.episode)
+                ListTile(
+                  leading: const Icon(Icons.edit),
+                  title: const Text('Fix match'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    onFixEpisodeMatch();
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.refresh),
+                title: const Text('Refresh metadata'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  onRefreshMetadata();
+                },
+              ),
+              ListTile(
+                iconColor: Colors.red,
+                textColor: Colors.red,
+                leading: const Icon(Icons.delete),
+                title: const Text('Delete'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  onDelete();
                 },
               ),
             ],
-            ListTile(
-              leading: const Icon(Icons.search),
-              title: const Text('Find match'),
-              onTap: () async {
-                Navigator.pop(context);
-                await api.findMetadataMatch(model.item.id);
-                refresh();
-              },
-            ),
-            if (model.item.type == MediaType.episode)
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Fix match'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await showDialog(
-                    context: context,
-                    builder: (context) =>
-                        FixEpisodeMatchDialog(item: model.item),
-                  );
-                  refresh();
-                },
-              ),
-            ListTile(
-              leading: const Icon(Icons.refresh),
-              title: const Text('Refresh metadata'),
-              onTap: () async {
-                Navigator.pop(context);
-                await api.refreshMetadata(model.item.id);
-                refresh();
-              },
-            ),
-            ListTile(
-              iconColor: Colors.red,
-              textColor: Colors.red,
-              leading: const Icon(Icons.delete),
-              title: const Text('Delete'),
-              onTap: () async {
-                Navigator.pop(context);
-                showDialog(
-                  context: context,
-                  builder: (context) =>
-                      _DeleteConfirmationDialog(id: model.item.id),
-                );
-              },
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
   Widget? _buildVideoInfo(BuildContext context) {
-    final videoInfo = model.item.videoFile;
+    final videoInfo = state.item.videoFile;
     if (videoInfo == null) {
       return null;
     }
@@ -427,93 +415,15 @@ class HeaderContent extends ConsumerWidget {
   }
 }
 
-class FixEpisodeMatchDialog extends ConsumerStatefulWidget {
-  final MediaItem item;
-
-  const FixEpisodeMatchDialog({
-    Key? key,
-    required this.item,
-  }) : super(key: key);
-
-  @override
-  ConsumerState<FixEpisodeMatchDialog> createState() =>
-      _FixEpisodeMatchDialogState();
-}
-
-class _FixEpisodeMatchDialogState extends ConsumerState<FixEpisodeMatchDialog> {
-  late TextEditingController _season;
-
-  late TextEditingController _episode;
-
-  @override
-  void initState() {
-    super.initState();
-    _season =
-        TextEditingController(text: widget.item.grandparent!.index.toString());
-    _episode =
-        TextEditingController(text: widget.item.parent!.index.toString());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Fix metadata match'),
-      content: Row(
-        // mainAxisSize: MainAxisSize.min,
-        // crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Flexible(
-            child: TextFormField(
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Season'),
-              controller: _season,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Flexible(
-            child: TextFormField(
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Episode'),
-              controller: _episode,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          child: const Text('Cancel'),
-          onPressed: () => Navigator.pop(context),
-        ),
-        TextButton(
-          child: const Text('Ok'),
-          onPressed: () async {
-            final season = int.parse(_season.text);
-            final episode = int.parse(_episode.text);
-
-            await ref.read(apiProvider).fixMetadataMatch(
-                widget.item.id,
-                FixMetadataMatch(
-                  season: season,
-                  episode: episode,
-                ));
-
-            Navigator.pop(context);
-          },
-        ),
-      ],
-    );
-  }
-}
-
 class WatchedToggleButton extends StatefulWidget {
   final bool isWatched;
   final void Function(bool isWatched) onChange;
 
   const WatchedToggleButton({
-    Key? key,
+    super.key,
     required this.isWatched,
     required this.onChange,
-  }) : super(key: key);
+  });
 
   @override
   State<WatchedToggleButton> createState() => _WatchedToggleButtonState();
@@ -545,15 +455,15 @@ class _WatchedToggleButtonState extends State<WatchedToggleButton> {
 
 class Poster extends StatelessWidget {
   final String url;
-  final double progress;
+  final double? progress;
   final String? caption;
 
   const Poster({
-    Key? key,
+    super.key,
     required this.url,
     required this.progress,
     required this.caption,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -566,14 +476,10 @@ class Poster extends StatelessWidget {
               : BorderRadius.circular(16),
           child: AspectRatio(
             aspectRatio: 2.0 / 3.0,
-            child: FadeInImage(
-              placeholder: MemoryImage(transparentImage),
-              image: DioImage.string(url),
-              fit: BoxFit.cover,
-            ),
+            child: ZenithFadeInImage.dio(url: url),
           ),
         ),
-        if (progress > 0)
+        if (progress != null)
           LinearProgressIndicator(
             value: progress,
             backgroundColor: Colors.white,
@@ -602,9 +508,9 @@ class Overview extends StatefulWidget {
   final String text;
 
   const Overview({
-    Key? key,
+    super.key,
     required this.text,
-  }) : super(key: key);
+  });
 
   @override
   State<Overview> createState() => _OverviewState();
@@ -707,85 +613,5 @@ class StreamDropdownButton<T> extends StatelessWidget {
               items.map((e) => selectedItemBuilder!(context, e)).toList())
           : null,
     );
-  }
-}
-
-class _DeleteConfirmationDialog extends ConsumerStatefulWidget {
-  final int id;
-
-  const _DeleteConfirmationDialog({required this.id});
-
-  @override
-  ConsumerState<ConsumerStatefulWidget> createState() =>
-      _DeleteConfirmationDialogState();
-}
-
-class _DeleteConfirmationDialogState
-    extends ConsumerState<_DeleteConfirmationDialog> {
-  bool _removeFiles = true;
-  bool _isInProgress = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async => !_isInProgress,
-      child: AlertDialog(
-        title: const Text('Delete item'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-                'Are you sure you want to permanently delete this item?'),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Checkbox(
-                  value: _removeFiles,
-                  onChanged: _isInProgress ? null : _onRemoveFilesToggled,
-                ),
-                const SizedBox(width: 12),
-                const Text('Remove files'),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: _isInProgress ? null : () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: _isInProgress ? null : () => _onDeleteConfirmed(context),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _onRemoveFilesToggled(bool? value) {
-    setState(() => _removeFiles = value!);
-  }
-
-  Future<void> _onDeleteConfirmed(BuildContext context) async {
-    setState(() => _isInProgress = true);
-
-    try {
-      await ref
-          .read(apiProvider)
-          .deleteMediaItem(widget.id, removeFiles: _removeFiles);
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to delete media item')));
-      }
-    } finally {
-      setState(() => _isInProgress = false);
-    }
-
-    if (context.mounted) {
-      Navigator.pop(context);
-      context.router.pop();
-    }
   }
 }

@@ -27,7 +27,7 @@ abstract class _$AppRouter extends RootStackRouter {
           orElse: () => ItemDetailsRouteArgs(id: pathParams.getInt('id')));
       return AutoRoutePage<dynamic>(
         routeData: routeData,
-        child: ItemDetailsScreen(
+        child: ItemDetailsPage(
           key: args.key,
           id: args.id,
         ),
@@ -152,7 +152,7 @@ class HomeRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
-/// [ItemDetailsScreen]
+/// [ItemDetailsPage]
 class ItemDetailsRoute extends PageRouteInfo<ItemDetailsRouteArgs> {
   ItemDetailsRoute({
     Key? key,

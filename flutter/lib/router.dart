@@ -5,7 +5,6 @@ import 'package:zenith/api.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/routes/routes.dart';
 import 'package:zenith/screens/home.dart';
-import 'package:zenith/screens/item_details/item_details.dart';
 import 'package:zenith/screens/media_library.dart';
 import 'package:zenith/screens/settings.dart';
 import 'package:zenith/screens/setup.dart';
