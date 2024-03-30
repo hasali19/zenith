@@ -15,7 +15,7 @@ jobs:
   check_generated_code:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
@@ -31,13 +31,13 @@ jobs:
   build_android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
 
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
@@ -53,7 +53,7 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEYSTORE_PATH: ../../keystore.jks
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: zenith-flutter-android
           path: flutter/build/app/outputs/flutter-apk/app-*-release.apk
@@ -61,7 +61,7 @@ jobs:
   build_web:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
@@ -72,7 +72,7 @@ jobs:
           flutter build web --web-renderer canvaskit --build-number=$GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH --dart-define=DEFAULT_SERVER=
         working-directory: flutter
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: zenith-flutter-web
           path: flutter/build/web
@@ -85,29 +85,29 @@ jobs:
       - build_web
     steps:
       - name: Checkout git repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: zenith-flutter-web
           path: zenith-flutter-web
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
 
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./docker/Dockerfile.web
@@ -122,7 +122,7 @@ jobs:
   build_windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
@@ -164,7 +164,7 @@ jobs:
           $env:GIT_COMMIT_HASH=(git rev-parse HEAD)
           flutter build windows -v --build-number=$env:GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: zenith-flutter-windows
           path: flutter/build/windows/x64/runner/Release
@@ -185,12 +185,12 @@ jobs:
           echo "Generating appinstaller"
           (cat windows\zenith.appinstaller) -replace '%VERSION%', $version > zenith.appinstaller
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: zenith-flutter-windows-msix
           path: flutter/build/windows/x64/runner/Release/zenith.msix
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: zenith-flutter-windows-appinstaller
           path: flutter/zenith.appinstaller
@@ -207,9 +207,9 @@ jobs:
       group: flutter-release
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: artifacts
 
