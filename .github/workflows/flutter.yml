@@ -12,6 +12,22 @@ on:
       - "*/latest"
 
 jobs:
+  check_generated_code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: dart run build_runner build --delete-conflicting-outputs
+        working-directory: flutter
+
+      - uses: infotroph/tree-is-clean@v1
+        with:
+          check_untracked: true
+
   build_android:
     runs-on: ubuntu-latest
     steps:
@@ -65,6 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
     needs:
+      - check_generated_code
       - build_web
     steps:
       - name: Checkout git repo
@@ -182,6 +199,7 @@ jobs:
     runs-on: ubuntu-latest
     if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
     needs:
+      - check_generated_code
       - build_android
       - build_web
       - build_windows
