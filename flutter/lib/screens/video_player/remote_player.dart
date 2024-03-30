@@ -31,16 +31,18 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
       CastFrameworkPlatform.instance.remoteMediaClient;
 
   late final api.ZenithApiClient _api;
+  late int _currentItemIndex;
 
   final _positionHandler = MediaPositionHandler();
 
-  api.MediaItem get item => widget.items[widget.startIndex];
+  api.MediaItem get item => widget.items[_currentItemIndex];
 
   @override
   void initState() {
     super.initState();
     _api = ref.read(api.apiProvider);
     _client.mediaStatus.addListener(_onMediaStatusUpdated);
+    _currentItemIndex = widget.startIndex;
     _loadMedia();
   }
 
@@ -61,44 +63,54 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
     }
 
     _client.load(MediaLoadRequestData(
-      mediaInfo: MediaLoadInfo(
-        url: withToken(_api.getVideoUrl(item.videoFile!.id)),
-        mediaTracks: item.videoFile?.subtitles
+      queueData: MediaQueueData(
+        items: widget.items
             .map(
-              (track) => MediaTrack(
-                trackId: track.id,
-                type: MediaTrackType.text,
-                contentId: withToken(_api.getSubtitleUrl(track.id,
-                    format: api.SubtitleFormat.webvtt)),
-                subtype: MediaTrackSubtype.subtitles,
-                name: track.title,
-                language: track.language,
+              (item) => MediaQueueItem(
+                mediaInfo: MediaInfo(
+                  url: withToken(_api.getVideoUrl(item.videoFile!.id)),
+                  mediaTracks: item.videoFile?.subtitles
+                      .map(
+                        (track) => MediaTrack(
+                          trackId: track.id,
+                          type: MediaTrackType.text,
+                          contentId: withToken(_api.getSubtitleUrl(track.id,
+                              format: api.SubtitleFormat.webvtt)),
+                          subtype: MediaTrackSubtype.subtitles,
+                          name: track.title,
+                          language: track.language,
+                        ),
+                      )
+                      .toList(),
+                  metadata: MediaMetadata(
+                    mediaType: switch (item.type) {
+                      api.MediaType.movie => MediaType.movie,
+                      api.MediaType.episode => MediaType.tvShow,
+                      _ => throw Error(),
+                    },
+                    title: item.name,
+                    seriesTitle: item.grandparent?.name,
+                    seasonNumber: item.grandparent?.index,
+                    episodeNumber: item.parent?.index,
+                    poster: MediaMetadataImage(
+                      url: withToken(
+                          _api.getMediaImageUrl(item.id, api.ImageType.poster)),
+                      width: 0,
+                      height: 0,
+                    ),
+                    backdrop: MediaMetadataImage(
+                      url: withToken(_api.getMediaImageUrl(
+                          item.id, api.ImageType.backdrop)),
+                      width: 0,
+                      height: 0,
+                    ),
+                  ),
+                ),
+                autoPlay: true,
               ),
             )
             .toList(),
-        metadata: MediaMetadata(
-          mediaType: switch (item.type) {
-            api.MediaType.movie => MediaType.movie,
-            api.MediaType.episode => MediaType.tvShow,
-            _ => throw Error(),
-          },
-          title: item.name,
-          seriesTitle: item.grandparent?.name,
-          seasonNumber: item.grandparent?.index,
-          episodeNumber: item.parent?.index,
-          poster: MediaMetadataImage(
-            url:
-                withToken(_api.getMediaImageUrl(item.id, api.ImageType.poster)),
-            width: 0,
-            height: 0,
-          ),
-          backdrop: MediaMetadataImage(
-            url: withToken(
-                _api.getMediaImageUrl(item.id, api.ImageType.backdrop)),
-            width: 0,
-            height: 0,
-          ),
-        ),
+        startIndex: widget.startIndex,
       ),
     ));
   }
@@ -112,6 +124,11 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
       isPlaying: mediaStatus.playerState == PlayerState.playing,
       speed: mediaStatus.playbackRate,
     );
+
+    final index = mediaStatus.currentItemIndex;
+    if (index != null) {
+      _currentItemIndex = index;
+    }
   }
 
   VideoProgressData _getProgress() {
@@ -170,8 +187,8 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
                   resumeState: ResumeState.unchanged,
                 ));
               },
-              onSeekToPrevious: () {},
-              onSeekToNext: () {},
+              onSeekToPrevious: _client.queuePrev,
+              onSeekToNext: _client.queueNext,
               onSetPaused: (isPaused) =>
                   isPaused ? _client.pause() : _client.play(),
             ),

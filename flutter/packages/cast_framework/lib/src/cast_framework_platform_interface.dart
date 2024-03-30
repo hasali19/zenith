@@ -48,6 +48,8 @@ abstract interface class RemoteMediaClient {
   void pause();
   void stop();
   void seek(MediaSeekOptions options);
+  void queueNext();
+  void queuePrev();
   void setActiveMediaTracks(List<int> trackIds);
   void setPlaybackRate(double playbackRate);
 }

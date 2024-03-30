@@ -14,15 +14,35 @@ enum RoutesScanningMode {
 }
 
 class MediaLoadRequestData {
-  MediaLoadInfo? mediaInfo;
+  MediaInfo? mediaInfo;
+  MediaQueueData? queueData;
 }
 
-class MediaLoadInfo {
-  String url;
+class MediaInfo {
+  String? url;
   List<MediaTrack?>? mediaTracks;
   MediaMetadata? metadata;
+  int? streamDuration;
+}
 
-  MediaLoadInfo(this.url);
+class MediaQueueData {
+  List<MediaQueueItem?>? items;
+  int? startIndex;
+  MediaQueueType? queueType;
+}
+
+class MediaQueueItem {
+  MediaInfo? mediaInfo;
+  List<int?>? activeTrackIds;
+  bool? autoPlay;
+  double? startTime;
+}
+
+enum MediaQueueType {
+  generic,
+  tvSeries,
+  videoPlaylist,
+  movie,
 }
 
 enum MediaTrackType {
@@ -98,6 +118,8 @@ abstract class CastApi {
   void play();
   void pause();
   void seek(MediaSeekOptions options);
+  void queueNext();
+  void queuePrev();
   void setPlaybackRate(double playbackRate);
   void stop();
 }
@@ -116,11 +138,7 @@ class MediaStatus {
   late MediaInfo? mediaInfo;
   late int streamPosition;
   late double playbackRate;
-}
-
-class MediaInfo {
-  late int streamDuration;
-  MediaMetadata? metadata;
+  late int? currentItemIndex;
 }
 
 @FlutterApi()

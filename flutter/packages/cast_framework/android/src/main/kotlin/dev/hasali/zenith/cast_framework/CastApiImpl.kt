@@ -1,10 +1,11 @@
 package dev.hasali.zenith.cast_framework
 
 import android.net.Uri
-import androidx.mediarouter.media.MediaRouteSelector
 import androidx.mediarouter.media.MediaRouter
 import com.google.android.gms.cast.MediaInfo
 import com.google.android.gms.cast.MediaMetadata
+import com.google.android.gms.cast.MediaQueueData
+import com.google.android.gms.cast.MediaQueueItem
 import com.google.android.gms.cast.MediaSeekOptions.RESUME_STATE_PAUSE
 import com.google.android.gms.cast.MediaSeekOptions.RESUME_STATE_PLAY
 import com.google.android.gms.cast.MediaSeekOptions.RESUME_STATE_UNCHANGED
@@ -14,6 +15,7 @@ import com.google.android.gms.common.images.WebImage
 import dev.hasali.zenith.cast_framework.pigeon.CastApi
 import dev.hasali.zenith.cast_framework.pigeon.CastEventsApi
 import dev.hasali.zenith.cast_framework.pigeon.MediaLoadRequestData
+import dev.hasali.zenith.cast_framework.pigeon.MediaQueueType
 import dev.hasali.zenith.cast_framework.pigeon.MediaRoute
 import dev.hasali.zenith.cast_framework.pigeon.MediaSeekOptions
 import dev.hasali.zenith.cast_framework.pigeon.MediaTrackSubtype
@@ -21,6 +23,7 @@ import dev.hasali.zenith.cast_framework.pigeon.MediaTrackType
 import dev.hasali.zenith.cast_framework.pigeon.MediaType
 import dev.hasali.zenith.cast_framework.pigeon.ResumeState
 import dev.hasali.zenith.cast_framework.pigeon.RoutesScanningMode
+import org.json.JSONObject
 
 class CastApiImpl(
     private val eventsApi: CastEventsApi,
@@ -63,78 +66,138 @@ class CastApiImpl(
     override fun load(loadRequestData: MediaLoadRequestData) {
         val session = castContext.sessionManager.currentCastSession ?: return
         val client = session.remoteMediaClient ?: return
-        client.load(com.google.android.gms.cast.MediaLoadRequestData.Builder()
-            .apply {
-                loadRequestData.mediaInfo?.let { mediaInfo ->
-                    setMediaInfo(MediaInfo.Builder(mediaInfo.url)
-                        .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
-                        .apply {
-                            setMediaTracks(
-                                mediaInfo.mediaTracks?.filterNotNull()?.map { track ->
-                                    val type = when (track.type) {
-                                        MediaTrackType.TEXT -> MediaTrack.TYPE_TEXT
-                                    }
+        val request = com.google.android.gms.cast.MediaLoadRequestData.Builder().run {
+            loadRequestData.mediaInfo?.let { mediaInfo ->
+                setMediaInfo(mediaInfo.toCastMediaInfo())
+            }
 
-                                    MediaTrack.Builder(track.trackId, type)
-                                        .setContentId(track.contentId)
-                                        .setSubtype(
-                                            when (track.subtype) {
-                                                null -> MediaTrack.SUBTYPE_NONE
-                                                MediaTrackSubtype.SUBTITLES -> MediaTrack.SUBTYPE_SUBTITLES
+            loadRequestData.queueData?.let { queueData ->
+                setQueueData(
+                    MediaQueueData.Builder().run {
+                        println("Queuing items ${queueData.items}")
+
+                        queueData.items?.let { queueItems ->
+                            val castItems =
+                                queueItems.filterNotNull().withIndex().map { (i, queueItem) ->
+                                    MediaQueueItem.Builder(queueItem.mediaInfo!!.toCastMediaInfo())
+                                        .apply {
+                                            queueItem.autoPlay?.let { autoPlay ->
+                                                setAutoplay(autoPlay)
                                             }
-                                        )
-                                        .setName(track.name)
-                                        .setLanguage(track.language)
-                                        .setContentType("text/vtt")
+
+                                            queueItem.startTime?.let { startTime ->
+                                                setStartTime(startTime)
+                                            }
+
+                                            queueItem.activeTrackIds?.let { activeTrackIds ->
+                                                setActiveTrackIds(
+                                                    activeTrackIds.filterNotNull().toLongArray()
+                                                )
+                                            }
+
+                                            setCustomData(JSONObject().apply {
+                                                put("index", i)
+                                            })
+                                        }
                                         .build()
                                 }
-                            )
 
-                            mediaInfo.metadata?.let { metadata ->
-                                val mediaType = when (metadata.mediaType) {
-                                    MediaType.MOVIE -> MediaMetadata.MEDIA_TYPE_MOVIE
-                                    MediaType.TVSHOW -> MediaMetadata.MEDIA_TYPE_TV_SHOW
-                                    else -> MediaMetadata.MEDIA_TYPE_GENERIC
+                            setItems(castItems)
+                        }
+
+                        queueData.queueType?.let { queueType ->
+                            setQueueType(
+                                when (queueType) {
+                                    MediaQueueType.GENERIC -> MediaQueueData.MEDIA_QUEUE_TYPE_GENERIC
+                                    MediaQueueType.TVSERIES -> MediaQueueData.MEDIA_QUEUE_TYPE_TV_SERIES
+                                    MediaQueueType.VIDEOPLAYLIST -> MediaQueueData.MEDIA_QUEUE_TYPE_VIDEO_PLAYLIST
+                                    MediaQueueType.MOVIE -> MediaQueueData.MEDIA_QUEUE_TYPE_MOVIE
                                 }
+                            )
+                        }
 
-                                setMetadata(MediaMetadata(mediaType).apply {
-                                    metadata.title?.let {
-                                        putString(MediaMetadata.KEY_TITLE, it)
-                                    }
+                        queueData.startIndex?.let { startIndex ->
+                            setStartIndex(startIndex.toInt())
+                        }
 
-                                    metadata.seriesTitle?.let {
-                                        putString(MediaMetadata.KEY_SERIES_TITLE, it)
-                                    }
+                        build()
+                    }
+                )
+            }
 
-                                    metadata.seasonNumber?.let {
-                                        putInt(MediaMetadata.KEY_SEASON_NUMBER, it.toInt())
-                                    }
+            build()
+        }
 
-                                    metadata.episodeNumber?.let {
-                                        putInt(MediaMetadata.KEY_EPISODE_NUMBER, it.toInt())
-                                    }
+        client.load(request)
+    }
 
-                                    for (image in listOf(
-                                        metadata.poster,
-                                        metadata.backdrop
-                                    )) {
-                                        image?.let {
-                                            addImage(
-                                                WebImage(
-                                                    Uri.parse(it.url),
-                                                    it.width.toInt(),
-                                                    it.height.toInt()
-                                                )
-                                            )
-                                        }
-                                    }
-                                })
+    private fun dev.hasali.zenith.cast_framework.pigeon.MediaInfo.toCastMediaInfo(): MediaInfo {
+        return MediaInfo.Builder(url!!)
+            .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
+            .apply {
+                setMediaTracks(
+                    mediaTracks?.filterNotNull()?.map { track ->
+                        val type = when (track.type) {
+                            MediaTrackType.TEXT -> MediaTrack.TYPE_TEXT
+                        }
+
+                        MediaTrack.Builder(track.trackId, type)
+                            .setContentId(track.contentId)
+                            .setSubtype(
+                                when (track.subtype) {
+                                    null -> MediaTrack.SUBTYPE_NONE
+                                    MediaTrackSubtype.SUBTITLES -> MediaTrack.SUBTYPE_SUBTITLES
+                                }
+                            )
+                            .setName(track.name)
+                            .setLanguage(track.language)
+                            .setContentType("text/vtt")
+                            .build()
+                    }
+                )
+
+                metadata?.let { metadata ->
+                    val mediaType = when (metadata.mediaType) {
+                        MediaType.MOVIE -> MediaMetadata.MEDIA_TYPE_MOVIE
+                        MediaType.TVSHOW -> MediaMetadata.MEDIA_TYPE_TV_SHOW
+                        else -> MediaMetadata.MEDIA_TYPE_GENERIC
+                    }
+
+                    setMetadata(MediaMetadata(mediaType).apply {
+                        metadata.title?.let {
+                            putString(MediaMetadata.KEY_TITLE, it)
+                        }
+
+                        metadata.seriesTitle?.let {
+                            putString(MediaMetadata.KEY_SERIES_TITLE, it)
+                        }
+
+                        metadata.seasonNumber?.let {
+                            putInt(MediaMetadata.KEY_SEASON_NUMBER, it.toInt())
+                        }
+
+                        metadata.episodeNumber?.let {
+                            putInt(MediaMetadata.KEY_EPISODE_NUMBER, it.toInt())
+                        }
+
+                        for (image in listOf(
+                            metadata.poster,
+                            metadata.backdrop
+                        )) {
+                            image?.let {
+                                addImage(
+                                    WebImage(
+                                        Uri.parse(it.url),
+                                        it.width.toInt(),
+                                        it.height.toInt()
+                                    )
+                                )
                             }
                         }
-                        .build())
+                    })
                 }
             }
-            .build())
+            .build()
     }
 
     override fun setActiveMediaTracks(trackIds: List<Long>) {
@@ -170,6 +233,18 @@ class CastApiImpl(
                 )
                 .build()
         )
+    }
+
+    override fun queueNext() {
+        val session = castContext.sessionManager.currentCastSession ?: return
+        val client = session.remoteMediaClient ?: return
+        client.queueNext(null)
+    }
+
+    override fun queuePrev() {
+        val session = castContext.sessionManager.currentCastSession ?: return
+        val client = session.remoteMediaClient ?: return
+        client.queuePrev(null)
     }
 
     override fun setPlaybackRate(playbackRate: Double) {

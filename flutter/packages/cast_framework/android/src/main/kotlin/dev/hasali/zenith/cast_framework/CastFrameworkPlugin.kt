@@ -108,6 +108,8 @@ class CastFrameworkPlugin : FlutterPlugin {
                         },
                         streamPosition = status.streamPosition,
                         playbackRate = status.playbackRate,
+                        currentItemIndex = status.getItemById(status.currentItemId)?.customData
+                            ?.getInt("index")?.toLong(),
                     )
                 ) {}
             }
@@ -119,15 +121,15 @@ class CastFrameworkPlugin : FlutterPlugin {
 
         val sessionManagerListener = object : CastSessionManagerListener() {
             override fun onSessionEnding(session: CastSession) {
-                session.remoteMediaClient!!.unregisterCallback(remoteClientCallback)
+                session.remoteMediaClient?.unregisterCallback(remoteClientCallback)
             }
 
             override fun onSessionStarted(session: CastSession, sessionId: String) {
-                session.remoteMediaClient!!.registerCallback(remoteClientCallback)
+                session.remoteMediaClient?.registerCallback(remoteClientCallback)
             }
 
             override fun onSessionResumed(session: CastSession, wasSuspended: Boolean) {
-                session.remoteMediaClient!!.registerCallback(remoteClientCallback)
+                session.remoteMediaClient?.registerCallback(remoteClientCallback)
             }
         }
 

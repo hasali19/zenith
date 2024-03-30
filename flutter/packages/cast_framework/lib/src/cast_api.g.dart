@@ -31,6 +31,13 @@ enum RoutesScanningMode {
   active,
 }
 
+enum MediaQueueType {
+  generic,
+  tvSeries,
+  videoPlaylist,
+  movie,
+}
+
 enum MediaTrackType {
   text,
 }
@@ -99,13 +106,17 @@ class MediaRoute {
 class MediaLoadRequestData {
   MediaLoadRequestData({
     this.mediaInfo,
+    this.queueData,
   });
 
-  MediaLoadInfo? mediaInfo;
+  MediaInfo? mediaInfo;
+
+  MediaQueueData? queueData;
 
   Object encode() {
     return <Object?>[
       mediaInfo?.encode(),
+      queueData?.encode(),
     ];
   }
 
@@ -113,41 +124,120 @@ class MediaLoadRequestData {
     result as List<Object?>;
     return MediaLoadRequestData(
       mediaInfo: result[0] != null
-          ? MediaLoadInfo.decode(result[0]! as List<Object?>)
+          ? MediaInfo.decode(result[0]! as List<Object?>)
+          : null,
+      queueData: result[1] != null
+          ? MediaQueueData.decode(result[1]! as List<Object?>)
           : null,
     );
   }
 }
 
-class MediaLoadInfo {
-  MediaLoadInfo({
-    required this.url,
+class MediaInfo {
+  MediaInfo({
+    this.url,
     this.mediaTracks,
     this.metadata,
+    this.streamDuration,
   });
 
-  String url;
+  String? url;
 
   List<MediaTrack?>? mediaTracks;
 
   MediaMetadata? metadata;
+
+  int? streamDuration;
 
   Object encode() {
     return <Object?>[
       url,
       mediaTracks,
       metadata?.encode(),
+      streamDuration,
     ];
   }
 
-  static MediaLoadInfo decode(Object result) {
+  static MediaInfo decode(Object result) {
     result as List<Object?>;
-    return MediaLoadInfo(
-      url: result[0]! as String,
+    return MediaInfo(
+      url: result[0] as String?,
       mediaTracks: (result[1] as List<Object?>?)?.cast<MediaTrack?>(),
       metadata: result[2] != null
           ? MediaMetadata.decode(result[2]! as List<Object?>)
           : null,
+      streamDuration: result[3] as int?,
+    );
+  }
+}
+
+class MediaQueueData {
+  MediaQueueData({
+    this.items,
+    this.startIndex,
+    this.queueType,
+  });
+
+  List<MediaQueueItem?>? items;
+
+  int? startIndex;
+
+  MediaQueueType? queueType;
+
+  Object encode() {
+    return <Object?>[
+      items,
+      startIndex,
+      queueType?.index,
+    ];
+  }
+
+  static MediaQueueData decode(Object result) {
+    result as List<Object?>;
+    return MediaQueueData(
+      items: (result[0] as List<Object?>?)?.cast<MediaQueueItem?>(),
+      startIndex: result[1] as int?,
+      queueType: result[2] != null
+          ? MediaQueueType.values[result[2]! as int]
+          : null,
+    );
+  }
+}
+
+class MediaQueueItem {
+  MediaQueueItem({
+    this.mediaInfo,
+    this.activeTrackIds,
+    this.autoPlay,
+    this.startTime,
+  });
+
+  MediaInfo? mediaInfo;
+
+  List<int?>? activeTrackIds;
+
+  bool? autoPlay;
+
+  double? startTime;
+
+  Object encode() {
+    return <Object?>[
+      mediaInfo?.encode(),
+      activeTrackIds,
+      autoPlay,
+      startTime,
+    ];
+  }
+
+  static MediaQueueItem decode(Object result) {
+    result as List<Object?>;
+    return MediaQueueItem(
+      mediaInfo: result[0] != null
+          ? MediaInfo.decode(result[0]! as List<Object?>)
+          : null,
+      activeTrackIds: (result[1] as List<Object?>?)?.cast<int?>(),
+      autoPlay: result[2] as bool?,
+      startTime: result[3] as double?,
     );
   }
 }
@@ -318,6 +408,7 @@ class MediaStatus {
     this.mediaInfo,
     required this.streamPosition,
     required this.playbackRate,
+    this.currentItemIndex,
   });
 
   PlayerState playerState;
@@ -328,12 +419,15 @@ class MediaStatus {
 
   double playbackRate;
 
+  int? currentItemIndex;
+
   Object encode() {
     return <Object?>[
       playerState.index,
       mediaInfo?.encode(),
       streamPosition,
       playbackRate,
+      currentItemIndex,
     ];
   }
 
@@ -346,34 +440,7 @@ class MediaStatus {
           : null,
       streamPosition: result[2]! as int,
       playbackRate: result[3]! as double,
-    );
-  }
-}
-
-class MediaInfo {
-  MediaInfo({
-    required this.streamDuration,
-    this.metadata,
-  });
-
-  int streamDuration;
-
-  MediaMetadata? metadata;
-
-  Object encode() {
-    return <Object?>[
-      streamDuration,
-      metadata?.encode(),
-    ];
-  }
-
-  static MediaInfo decode(Object result) {
-    result as List<Object?>;
-    return MediaInfo(
-      streamDuration: result[0]! as int,
-      metadata: result[1] != null
-          ? MediaMetadata.decode(result[1]! as List<Object?>)
-          : null,
+      currentItemIndex: result[4] as int?,
     );
   }
 }
@@ -382,7 +449,7 @@ class _CastApiCodec extends StandardMessageCodec {
   const _CastApiCodec();
   @override
   void writeValue(WriteBuffer buffer, Object? value) {
-    if (value is MediaLoadInfo) {
+    if (value is MediaInfo) {
       buffer.putUint8(128);
       writeValue(buffer, value.encode());
     } else if (value is MediaLoadRequestData) {
@@ -394,11 +461,17 @@ class _CastApiCodec extends StandardMessageCodec {
     } else if (value is MediaMetadataImage) {
       buffer.putUint8(131);
       writeValue(buffer, value.encode());
-    } else if (value is MediaSeekOptions) {
+    } else if (value is MediaQueueData) {
       buffer.putUint8(132);
       writeValue(buffer, value.encode());
-    } else if (value is MediaTrack) {
+    } else if (value is MediaQueueItem) {
       buffer.putUint8(133);
+      writeValue(buffer, value.encode());
+    } else if (value is MediaSeekOptions) {
+      buffer.putUint8(134);
+      writeValue(buffer, value.encode());
+    } else if (value is MediaTrack) {
+      buffer.putUint8(135);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -409,7 +482,7 @@ class _CastApiCodec extends StandardMessageCodec {
   Object? readValueOfType(int type, ReadBuffer buffer) {
     switch (type) {
       case 128: 
-        return MediaLoadInfo.decode(readValue(buffer)!);
+        return MediaInfo.decode(readValue(buffer)!);
       case 129: 
         return MediaLoadRequestData.decode(readValue(buffer)!);
       case 130: 
@@ -417,8 +490,12 @@ class _CastApiCodec extends StandardMessageCodec {
       case 131: 
         return MediaMetadataImage.decode(readValue(buffer)!);
       case 132: 
-        return MediaSeekOptions.decode(readValue(buffer)!);
+        return MediaQueueData.decode(readValue(buffer)!);
       case 133: 
+        return MediaQueueItem.decode(readValue(buffer)!);
+      case 134: 
+        return MediaSeekOptions.decode(readValue(buffer)!);
+      case 135: 
         return MediaTrack.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -634,6 +711,50 @@ class CastApi {
     }
   }
 
+  Future<void> queueNext() async {
+    const String __pigeon_channelName = 'dev.flutter.pigeon.cast_framework.CastApi.queueNext';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(null) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
+
+  Future<void> queuePrev() async {
+    const String __pigeon_channelName = 'dev.flutter.pigeon.cast_framework.CastApi.queuePrev';
+    final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
+      __pigeon_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: __pigeon_binaryMessenger,
+    );
+    final List<Object?>? __pigeon_replyList =
+        await __pigeon_channel.send(null) as List<Object?>?;
+    if (__pigeon_replyList == null) {
+      throw _createConnectionError(__pigeon_channelName);
+    } else if (__pigeon_replyList.length > 1) {
+      throw PlatformException(
+        code: __pigeon_replyList[0]! as String,
+        message: __pigeon_replyList[1] as String?,
+        details: __pigeon_replyList[2],
+      );
+    } else {
+      return;
+    }
+  }
+
   Future<void> setPlaybackRate(double playbackRate) async {
     const String __pigeon_channelName = 'dev.flutter.pigeon.cast_framework.CastApi.setPlaybackRate';
     final BasicMessageChannel<Object?> __pigeon_channel = BasicMessageChannel<Object?>(
@@ -698,6 +819,9 @@ class _CastEventsApiCodec extends StandardMessageCodec {
     } else if (value is MediaStatus) {
       buffer.putUint8(132);
       writeValue(buffer, value.encode());
+    } else if (value is MediaTrack) {
+      buffer.putUint8(133);
+      writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
     }
@@ -716,6 +840,8 @@ class _CastEventsApiCodec extends StandardMessageCodec {
         return MediaRoute.decode(readValue(buffer)!);
       case 132: 
         return MediaStatus.decode(readValue(buffer)!);
+      case 133: 
+        return MediaTrack.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }

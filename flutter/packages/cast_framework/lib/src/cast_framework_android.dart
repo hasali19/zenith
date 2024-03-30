@@ -86,6 +86,16 @@ class _RemoteMediaClient implements RemoteMediaClient {
   }
 
   @override
+  void queueNext() {
+    _api.queueNext();
+  }
+
+  @override
+  void queuePrev() {
+    _api.queuePrev();
+  }
+
+  @override
   void setActiveMediaTracks(List<int> trackIds) {
     _api.setActiveMediaTracks(trackIds);
   }

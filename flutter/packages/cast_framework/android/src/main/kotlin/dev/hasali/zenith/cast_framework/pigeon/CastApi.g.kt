@@ -58,6 +58,19 @@ enum class RoutesScanningMode(val raw: Int) {
   }
 }
 
+enum class MediaQueueType(val raw: Int) {
+  GENERIC(0),
+  TVSERIES(1),
+  VIDEOPLAYLIST(2),
+  MOVIE(3);
+
+  companion object {
+    fun ofRaw(raw: Int): MediaQueueType? {
+      return values().firstOrNull { it.raw == raw }
+    }
+  }
+}
+
 enum class MediaTrackType(val raw: Int) {
   TEXT(0);
 
@@ -147,41 +160,48 @@ data class MediaRoute (
 
 /** Generated class from Pigeon that represents data sent in messages. */
 data class MediaLoadRequestData (
-  val mediaInfo: MediaLoadInfo? = null
+  val mediaInfo: MediaInfo? = null,
+  val queueData: MediaQueueData? = null
 
 ) {
   companion object {
     @Suppress("UNCHECKED_CAST")
     fun fromList(list: List<Any?>): MediaLoadRequestData {
-      val mediaInfo: MediaLoadInfo? = (list[0] as List<Any?>?)?.let {
-        MediaLoadInfo.fromList(it)
+      val mediaInfo: MediaInfo? = (list[0] as List<Any?>?)?.let {
+        MediaInfo.fromList(it)
       }
-      return MediaLoadRequestData(mediaInfo)
+      val queueData: MediaQueueData? = (list[1] as List<Any?>?)?.let {
+        MediaQueueData.fromList(it)
+      }
+      return MediaLoadRequestData(mediaInfo, queueData)
     }
   }
   fun toList(): List<Any?> {
     return listOf<Any?>(
       mediaInfo?.toList(),
+      queueData?.toList(),
     )
   }
 }
 
 /** Generated class from Pigeon that represents data sent in messages. */
-data class MediaLoadInfo (
-  val url: String,
+data class MediaInfo (
+  val url: String? = null,
   val mediaTracks: List<MediaTrack?>? = null,
-  val metadata: MediaMetadata? = null
+  val metadata: MediaMetadata? = null,
+  val streamDuration: Long? = null
 
 ) {
   companion object {
     @Suppress("UNCHECKED_CAST")
-    fun fromList(list: List<Any?>): MediaLoadInfo {
-      val url = list[0] as String
+    fun fromList(list: List<Any?>): MediaInfo {
+      val url = list[0] as String?
       val mediaTracks = list[1] as List<MediaTrack?>?
       val metadata: MediaMetadata? = (list[2] as List<Any?>?)?.let {
         MediaMetadata.fromList(it)
       }
-      return MediaLoadInfo(url, mediaTracks, metadata)
+      val streamDuration = list[3].let { if (it is Int) it.toLong() else it as Long? }
+      return MediaInfo(url, mediaTracks, metadata, streamDuration)
     }
   }
   fun toList(): List<Any?> {
@@ -189,6 +209,64 @@ data class MediaLoadInfo (
       url,
       mediaTracks,
       metadata?.toList(),
+      streamDuration,
+    )
+  }
+}
+
+/** Generated class from Pigeon that represents data sent in messages. */
+data class MediaQueueData (
+  val items: List<MediaQueueItem?>? = null,
+  val startIndex: Long? = null,
+  val queueType: MediaQueueType? = null
+
+) {
+  companion object {
+    @Suppress("UNCHECKED_CAST")
+    fun fromList(list: List<Any?>): MediaQueueData {
+      val items = list[0] as List<MediaQueueItem?>?
+      val startIndex = list[1].let { if (it is Int) it.toLong() else it as Long? }
+      val queueType: MediaQueueType? = (list[2] as Int?)?.let {
+        MediaQueueType.ofRaw(it)
+      }
+      return MediaQueueData(items, startIndex, queueType)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf<Any?>(
+      items,
+      startIndex,
+      queueType?.raw,
+    )
+  }
+}
+
+/** Generated class from Pigeon that represents data sent in messages. */
+data class MediaQueueItem (
+  val mediaInfo: MediaInfo? = null,
+  val activeTrackIds: List<Long?>? = null,
+  val autoPlay: Boolean? = null,
+  val startTime: Double? = null
+
+) {
+  companion object {
+    @Suppress("UNCHECKED_CAST")
+    fun fromList(list: List<Any?>): MediaQueueItem {
+      val mediaInfo: MediaInfo? = (list[0] as List<Any?>?)?.let {
+        MediaInfo.fromList(it)
+      }
+      val activeTrackIds = list[1] as List<Long?>?
+      val autoPlay = list[2] as Boolean?
+      val startTime = list[3] as Double?
+      return MediaQueueItem(mediaInfo, activeTrackIds, autoPlay, startTime)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf<Any?>(
+      mediaInfo?.toList(),
+      activeTrackIds,
+      autoPlay,
+      startTime,
     )
   }
 }
@@ -322,7 +400,8 @@ data class MediaStatus (
   val playerState: PlayerState,
   val mediaInfo: MediaInfo? = null,
   val streamPosition: Long,
-  val playbackRate: Double
+  val playbackRate: Double,
+  val currentItemIndex: Long? = null
 
 ) {
   companion object {
@@ -334,7 +413,8 @@ data class MediaStatus (
       }
       val streamPosition = list[2].let { if (it is Int) it.toLong() else it as Long }
       val playbackRate = list[3] as Double
-      return MediaStatus(playerState, mediaInfo, streamPosition, playbackRate)
+      val currentItemIndex = list[4].let { if (it is Int) it.toLong() else it as Long? }
+      return MediaStatus(playerState, mediaInfo, streamPosition, playbackRate, currentItemIndex)
     }
   }
   fun toList(): List<Any?> {
@@ -343,30 +423,7 @@ data class MediaStatus (
       mediaInfo?.toList(),
       streamPosition,
       playbackRate,
-    )
-  }
-}
-
-/** Generated class from Pigeon that represents data sent in messages. */
-data class MediaInfo (
-  val streamDuration: Long,
-  val metadata: MediaMetadata? = null
-
-) {
-  companion object {
-    @Suppress("UNCHECKED_CAST")
-    fun fromList(list: List<Any?>): MediaInfo {
-      val streamDuration = list[0].let { if (it is Int) it.toLong() else it as Long }
-      val metadata: MediaMetadata? = (list[1] as List<Any?>?)?.let {
-        MediaMetadata.fromList(it)
-      }
-      return MediaInfo(streamDuration, metadata)
-    }
-  }
-  fun toList(): List<Any?> {
-    return listOf<Any?>(
-      streamDuration,
-      metadata?.toList(),
+      currentItemIndex,
     )
   }
 }
@@ -376,7 +433,7 @@ private object CastApiCodec : StandardMessageCodec() {
     return when (type) {
       128.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          MediaLoadInfo.fromList(it)
+          MediaInfo.fromList(it)
         }
       }
       129.toByte() -> {
@@ -396,10 +453,20 @@ private object CastApiCodec : StandardMessageCodec() {
       }
       132.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          MediaSeekOptions.fromList(it)
+          MediaQueueData.fromList(it)
         }
       }
       133.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          MediaQueueItem.fromList(it)
+        }
+      }
+      134.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          MediaSeekOptions.fromList(it)
+        }
+      }
+      135.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           MediaTrack.fromList(it)
         }
@@ -409,7 +476,7 @@ private object CastApiCodec : StandardMessageCodec() {
   }
   override fun writeValue(stream: ByteArrayOutputStream, value: Any?)   {
     when (value) {
-      is MediaLoadInfo -> {
+      is MediaInfo -> {
         stream.write(128)
         writeValue(stream, value.toList())
       }
@@ -425,12 +492,20 @@ private object CastApiCodec : StandardMessageCodec() {
         stream.write(131)
         writeValue(stream, value.toList())
       }
-      is MediaSeekOptions -> {
+      is MediaQueueData -> {
         stream.write(132)
         writeValue(stream, value.toList())
       }
-      is MediaTrack -> {
+      is MediaQueueItem -> {
         stream.write(133)
+        writeValue(stream, value.toList())
+      }
+      is MediaSeekOptions -> {
+        stream.write(134)
+        writeValue(stream, value.toList())
+      }
+      is MediaTrack -> {
+        stream.write(135)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -449,6 +524,8 @@ interface CastApi {
   fun play()
   fun pause()
   fun seek(options: MediaSeekOptions)
+  fun queueNext()
+  fun queuePrev()
   fun setPlaybackRate(playbackRate: Double)
   fun stop()
 
@@ -628,6 +705,40 @@ interface CastApi {
         }
       }
       run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.cast_framework.CastApi.queueNext", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            var wrapped: List<Any?>
+            try {
+              api.queueNext()
+              wrapped = listOf<Any?>(null)
+            } catch (exception: Throwable) {
+              wrapped = wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.cast_framework.CastApi.queuePrev", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            var wrapped: List<Any?>
+            try {
+              api.queuePrev()
+              wrapped = listOf<Any?>(null)
+            } catch (exception: Throwable) {
+              wrapped = wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.cast_framework.CastApi.setPlaybackRate", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
@@ -695,6 +806,11 @@ private object CastEventsApiCodec : StandardMessageCodec() {
           MediaStatus.fromList(it)
         }
       }
+      133.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          MediaTrack.fromList(it)
+        }
+      }
       else -> super.readValueOfType(type, buffer)
     }
   }
@@ -718,6 +834,10 @@ private object CastEventsApiCodec : StandardMessageCodec() {
       }
       is MediaStatus -> {
         stream.write(132)
+        writeValue(stream, value.toList())
+      }
+      is MediaTrack -> {
+        stream.write(133)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
