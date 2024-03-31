@@ -138,8 +138,9 @@ PlayableState? _getPlayableForItem(
     id: playable.id,
     progress: currentProgress,
     caption: caption,
-    shouldResume: item.shouldResume,
-    playPosition: item.shouldResume ? item.videoUserData?.position ?? 0 : 0,
+    shouldResume: playable.shouldResume,
+    playPosition:
+        playable.shouldResume ? playable.videoUserData?.position ?? 0 : 0,
   );
 }
 
