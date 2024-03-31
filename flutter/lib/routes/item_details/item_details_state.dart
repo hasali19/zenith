@@ -21,7 +21,7 @@ class ItemDetailsState with _$ItemDetailsState {
 class PlayableState with _$PlayableState {
   factory PlayableState({
     required int id,
-    required double progress,
+    required double? progress,
     required String? caption,
     required bool shouldResume,
     required double playPosition,

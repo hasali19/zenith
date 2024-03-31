@@ -101,7 +101,7 @@ PlayableState? _getPlayableForItem(
     if (progress > 0.05 && progress < 0.9) {
       return progress;
     }
-    return 0.0;
+    return null;
   }();
 
   final remainingProgress = () {
@@ -120,7 +120,7 @@ PlayableState? _getPlayableForItem(
       }
     }
 
-    if (currentProgress > 0) {
+    if ((currentProgress ?? 0) > 0) {
       if (caption.isNotEmpty) {
         caption += ' - ';
       }

@@ -318,7 +318,7 @@ abstract class _ItemDetailsState implements ItemDetailsState {
 /// @nodoc
 mixin _$PlayableState {
   int get id => throw _privateConstructorUsedError;
-  double get progress => throw _privateConstructorUsedError;
+  double? get progress => throw _privateConstructorUsedError;
   String? get caption => throw _privateConstructorUsedError;
   bool get shouldResume => throw _privateConstructorUsedError;
   double get playPosition => throw _privateConstructorUsedError;
@@ -336,7 +336,7 @@ abstract class $PlayableStateCopyWith<$Res> {
   @useResult
   $Res call(
       {int id,
-      double progress,
+      double? progress,
       String? caption,
       bool shouldResume,
       double playPosition});
@@ -356,7 +356,7 @@ class _$PlayableStateCopyWithImpl<$Res, $Val extends PlayableState>
   @override
   $Res call({
     Object? id = null,
-    Object? progress = null,
+    Object? progress = freezed,
     Object? caption = freezed,
     Object? shouldResume = null,
     Object? playPosition = null,
@@ -366,10 +366,10 @@ class _$PlayableStateCopyWithImpl<$Res, $Val extends PlayableState>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
-      progress: null == progress
+      progress: freezed == progress
           ? _value.progress
           : progress // ignore: cast_nullable_to_non_nullable
-              as double,
+              as double?,
       caption: freezed == caption
           ? _value.caption
           : caption // ignore: cast_nullable_to_non_nullable
@@ -396,7 +396,7 @@ abstract class _$$PlayableStateImplCopyWith<$Res>
   @useResult
   $Res call(
       {int id,
-      double progress,
+      double? progress,
       String? caption,
       bool shouldResume,
       double playPosition});
@@ -414,7 +414,7 @@ class __$$PlayableStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? progress = null,
+    Object? progress = freezed,
     Object? caption = freezed,
     Object? shouldResume = null,
     Object? playPosition = null,
@@ -424,10 +424,10 @@ class __$$PlayableStateImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
-      progress: null == progress
+      progress: freezed == progress
           ? _value.progress
           : progress // ignore: cast_nullable_to_non_nullable
-              as double,
+              as double?,
       caption: freezed == caption
           ? _value.caption
           : caption // ignore: cast_nullable_to_non_nullable
@@ -457,7 +457,7 @@ class _$PlayableStateImpl implements _PlayableState {
   @override
   final int id;
   @override
-  final double progress;
+  final double? progress;
   @override
   final String? caption;
   @override
@@ -499,7 +499,7 @@ class _$PlayableStateImpl implements _PlayableState {
 abstract class _PlayableState implements PlayableState {
   factory _PlayableState(
       {required final int id,
-      required final double progress,
+      required final double? progress,
       required final String? caption,
       required final bool shouldResume,
       required final double playPosition}) = _$PlayableStateImpl;
@@ -507,7 +507,7 @@ abstract class _PlayableState implements PlayableState {
   @override
   int get id;
   @override
-  double get progress;
+  double? get progress;
   @override
   String? get caption;
   @override
