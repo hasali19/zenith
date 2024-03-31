@@ -249,8 +249,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         // CollectionsScreenRoute(),
         SettingsRoute(),
       ],
-      transitionBuilder: (context, child, animation) =>
-          FadeTransition(opacity: animation, child: child),
+      transitionBuilder: (context, child, animation) => child,
       builder: (context, child) {
         final screen = _activeScreen(context.tabsRouter.activeIndex);
 
