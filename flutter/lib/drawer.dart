@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
 import 'package:zenith/main.dart';
 
 class MainNavigationDrawer extends ConsumerWidget {
@@ -8,16 +9,16 @@ class MainNavigationDrawer extends ConsumerWidget {
   final void Function() onLogoutTap;
 
   const MainNavigationDrawer({
-    Key? key,
+    super.key,
     required this.current,
     required this.onDestinationTap,
     required this.onLogoutTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return NavigationDrawer(
-      elevation: 0,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       selectedIndex: _screenToIndex(current),
       onDestinationSelected: (value) {
         if (value == 4) {
@@ -27,11 +28,7 @@ class MainNavigationDrawer extends ConsumerWidget {
         }
       },
       children: const [
-        _DrawerHeader(height: 160),
-        Padding(
-          padding: EdgeInsets.fromLTRB(28, 16, 28, 10),
-          child: Divider(),
-        ),
+        Gap(16),
         NavigationDrawerDestination(
           icon: Icon(Icons.home),
           label: Text('Home'),
@@ -81,20 +78,5 @@ class MainNavigationDrawer extends ConsumerWidget {
       Screen.shows => 2,
       Screen.settings => 3,
     };
-  }
-}
-
-class _DrawerHeader extends StatelessWidget {
-  final double height;
-
-  const _DrawerHeader({required this.height});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      padding: const EdgeInsets.all(16),
-      child: Image.asset('assets/zenith_icon.png'),
-    );
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:gap/gap.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:zenith/api.dart';
@@ -69,11 +70,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final desktop = MediaQuery.of(context).isDesktop;
 
-    final sectionTitlePadding = desktop
-        ? const EdgeInsets.fromLTRB(64, 16, 64, 16)
-        : const EdgeInsets.fromLTRB(16, 8, 16, 8);
-    final sectionListSpacing = desktop ? 32.0 : 8.0;
-    final sectionEndPadding = desktop ? 32.0 : 16.0;
+    final sectionTitlePadding =
+        EdgeInsets.symmetric(horizontal: desktop ? 32 : 16, vertical: 12);
+    final sectionListSpacing = desktop ? 16.0 : 8.0;
+    const sectionEndPadding = 0.0;
 
     final thumbnailItemWidth = desktop ? 440.0 : 268.0;
     final thumbnailItemHeight = thumbnailItemWidth / (16 / 9);
@@ -213,23 +213,28 @@ class _SectionState<T> extends State<Section<T>> {
   }
 
   Widget _buildContent(List<T> data) {
-    return Container(
-      height: widget.listItemHeight + 16,
-      padding: EdgeInsets.only(left: widget.listSpacing * 2),
-      child: Scrollbar(
-        controller: _scrollController,
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: ListView.separated(
-            controller: _scrollController,
-            padding: EdgeInsets.only(right: widget.listSpacing * 2),
-            separatorBuilder: (context, index) =>
-                SizedBox(width: widget.listSpacing),
-            scrollDirection: Axis.horizontal,
-            itemCount: data.length,
-            itemBuilder: (context, index) => SizedBox(
-              width: widget.listItemWidth,
-              child: widget.itemBuilder(context, data[index]),
+    const scrollbarHeight = 16.0;
+    return SizedBox(
+      height: widget.listItemHeight + scrollbarHeight,
+      child: ScrollbarTheme(
+        data: ScrollbarTheme.of(context).copyWith(
+          mainAxisMargin: widget.listSpacing * 2,
+        ),
+        child: Scrollbar(
+          controller: _scrollController,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: scrollbarHeight),
+            child: ListView.separated(
+              controller: _scrollController,
+              padding: EdgeInsets.symmetric(horizontal: widget.listSpacing * 2),
+              separatorBuilder: (context, index) =>
+                  SizedBox(width: widget.listSpacing),
+              scrollDirection: Axis.horizontal,
+              itemCount: data.length,
+              itemBuilder: (context, index) => SizedBox(
+                width: widget.listItemWidth,
+                child: widget.itemBuilder(context, data[index]),
+              ),
             ),
           ),
         ),
@@ -269,6 +274,7 @@ class ContinueWatchingCard extends StatelessWidget {
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: Card(
+        margin: EdgeInsets.zero,
         elevation: cardTheme.elevation ?? 1,
         clipBehavior: Clip.hardEdge,
         shape: cardTheme.shape,
@@ -292,7 +298,7 @@ class ContinueWatchingCard extends StatelessWidget {
                   TextOneLine(title, style: titleStyle),
                   TextOneLine(subtitle, style: subtitleStyle),
                   if (progress > 0.05 && progress < 0.9) ...[
-                    const SizedBox(height: 8),
+                    const Gap(8),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(

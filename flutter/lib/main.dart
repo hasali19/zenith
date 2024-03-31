@@ -256,25 +256,28 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         // Use a permanent navigation drawer on larger screens
 
         if (desktop) {
-          return Scaffold(
-            body: Row(
-              children: [
-                MainNavigationDrawer(
-                  current: screen,
-                  onDestinationTap: (screen) => _navigateTo(context, screen),
-                  onLogoutTap: onLogout,
-                ),
-                Expanded(child: child),
-              ],
-            ),
+          child = Row(
+            children: [
+              MainNavigationDrawer(
+                current: screen,
+                onDestinationTap: (screen) => _navigateTo(context, screen),
+                onLogoutTap: onLogout,
+              ),
+              Expanded(child: child),
+            ],
           );
-        } else {
-          return Scaffold(
-            appBar: AppBar(
-              title: Text(_title(screen)),
-              actions: [
-                if (CastFrameworkPlatform.instance.isSupported)
-                  const MediaRouteButton(),
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(_title(screen)),
+            elevation: desktop ? 3 : null,
+            backgroundColor:
+                desktop ? Theme.of(context).colorScheme.surfaceContainer : null,
+            actions: [
+              if (CastFrameworkPlatform.instance.isSupported)
+                const MediaRouteButton(),
+              if (!desktop)
                 PopupMenuButton(
                   itemBuilder: (context) {
                     return [
@@ -285,41 +288,44 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                     ];
                   },
                 ),
-              ],
-            ),
-            body: child,
-            bottomNavigationBar: NavigationBar(
-              destinations: [
-                NavigationDestination(
-                  icon: Icon(
-                      screen == Screen.home ? Icons.home : Icons.home_outlined),
-                  label: 'Home',
-                ),
-                NavigationDestination(
-                  icon: Icon(screen == Screen.movies
-                      ? Icons.movie
-                      : Icons.movie_outlined),
-                  label: 'Movies',
-                ),
-                NavigationDestination(
-                  icon: Icon(
-                      screen == Screen.shows ? Icons.tv : Icons.tv_outlined),
-                  label: 'Shows',
-                ),
-                NavigationDestination(
-                  icon: Icon(screen == Screen.settings
-                      ? Icons.settings
-                      : Icons.settings_outlined),
-                  label: 'Settings',
-                ),
-              ],
-              selectedIndex: context.tabsRouter.activeIndex,
-              onDestinationSelected: (value) {
-                _navigateTo(context, _activeScreen(value));
-              },
-            ),
-          );
-        }
+            ],
+          ),
+          body: child,
+          bottomNavigationBar: switch (desktop) {
+            true => null,
+            false => NavigationBar(
+                destinations: [
+                  NavigationDestination(
+                    icon: Icon(screen == Screen.home
+                        ? Icons.home
+                        : Icons.home_outlined),
+                    label: 'Home',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(screen == Screen.movies
+                        ? Icons.movie
+                        : Icons.movie_outlined),
+                    label: 'Movies',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(
+                        screen == Screen.shows ? Icons.tv : Icons.tv_outlined),
+                    label: 'Shows',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(screen == Screen.settings
+                        ? Icons.settings
+                        : Icons.settings_outlined),
+                    label: 'Settings',
+                  ),
+                ],
+                selectedIndex: context.tabsRouter.activeIndex,
+                onDestinationSelected: (value) {
+                  _navigateTo(context, _activeScreen(value));
+                },
+              ),
+          },
+        );
       },
     );
   }

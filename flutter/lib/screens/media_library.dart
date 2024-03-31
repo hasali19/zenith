@@ -95,8 +95,8 @@ class MediaItemGrid extends StatelessWidget {
     final desktop = MediaQuery.of(context).isDesktop;
     return LayoutBuilder(builder: ((context, constraints) {
       final maxColWidth = desktop ? 240.0 : 150.0;
-      final gridPadding = desktop ? 64.0 : 4.0;
-      final itemSpacing = desktop ? 16.0 : 4.0;
+      final gridPadding = desktop ? 24.0 : 12.0;
+      final itemSpacing = desktop ? 16.0 : 8.0;
 
       final gridWidth = constraints.maxWidth - gridPadding * 2;
       final cols = (gridWidth / (maxColWidth + itemSpacing * 2)).ceil();
@@ -119,7 +119,7 @@ class MediaItemGrid extends StatelessWidget {
               final item = items[i];
               columns.add(Container(
                 width: colWidth,
-                padding: EdgeInsets.all(itemSpacing),
+                padding: EdgeInsets.all(itemSpacing / 2),
                 child: PosterItem(
                   infoSeparator: infoTopPadding,
                   poster: item.poster,
@@ -135,7 +135,10 @@ class MediaItemGrid extends StatelessWidget {
               ));
             }
 
-            return Row(children: columns);
+            return Padding(
+              padding: EdgeInsets.symmetric(vertical: itemSpacing / 2),
+              child: Row(children: columns),
+            );
           },
         ),
       );
