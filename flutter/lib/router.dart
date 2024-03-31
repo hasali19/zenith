@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/api.dart';
@@ -60,6 +61,30 @@ class AppRouter extends _$AppRouter {
         ),
         AutoRoute(path: '/setup', page: SetupRoute.page),
       ];
+
+  @override
+  RouterConfig<UrlState> config({
+    DeepLinkBuilder? deepLinkBuilder,
+    String? navRestorationScopeId,
+    WidgetBuilder? placeholder,
+    NavigatorObserversBuilder navigatorObservers =
+        AutoRouterDelegate.defaultNavigatorObserversBuilder,
+    bool includePrefixMatches = !kIsWeb,
+    bool Function(String? location)? neglectWhen,
+    bool rebuildStackOnDeepLink = false,
+    Listenable? reevaluateListenable,
+  }) {
+    return super.config(
+      deepLinkBuilder: deepLinkBuilder,
+      navRestorationScopeId: navRestorationScopeId,
+      placeholder: placeholder,
+      navigatorObservers: () => [_routeObserver, ...navigatorObservers()],
+      includePrefixMatches: includePrefixMatches,
+      neglectWhen: neglectWhen,
+      rebuildStackOnDeepLink: rebuildStackOnDeepLink,
+      reevaluateListenable: reevaluateListenable,
+    );
+  }
 }
 
 class ServerSetupGuard extends AutoRouteGuard {
@@ -131,5 +156,53 @@ class ShowsScreen extends ConsumerWidget {
       onRefresh: () => ref.refresh(_showsProvider.future),
       onItemTap: (item) => context.router.push(ItemDetailsRoute(id: item.id)),
     );
+  }
+}
+
+class RouteListener extends StatefulWidget {
+  final Widget child;
+
+  final void Function()? didPushNext;
+  final void Function()? didPopNext;
+
+  const RouteListener({
+    super.key,
+    this.didPushNext,
+    this.didPopNext,
+    required this.child,
+  });
+
+  @override
+  State<RouteListener> createState() => _RouteListenerState();
+}
+
+final _routeObserver = AutoRouteObserver();
+
+class _RouteListenerState extends State<RouteListener> with AutoRouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _routeObserver.subscribe(this, context.routeData);
+  }
+
+  @override
+  void dispose() {
+    _routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+
+  @override
+  void didPushNext() {
+    widget.didPushNext?.call();
+  }
+
+  @override
+  void didPopNext() {
+    widget.didPopNext?.call();
   }
 }
