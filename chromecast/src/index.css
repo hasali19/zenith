@@ -1,5 +1,5 @@
 cast-media-player {
-    --logo-image: url('../zenith_full_dark.png');
+    --logo-image: url('/chromecast-receiver/zenith_full_dark.png');
     --logo-size: calc(100vw - 70%) auto;
     --splash-image: var(--logo-image);
     --splash-size: var(--logo-size);
