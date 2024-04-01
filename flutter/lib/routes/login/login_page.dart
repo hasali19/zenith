@@ -13,7 +13,7 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ProviderScope(
       overrides: [loginRedirectPathProvider.overrideWithValue(redirect)],
-      child: const AutoRouter(),
+      child: const AutoRouter(inheritNavigatorObservers: false),
     );
   }
 }
