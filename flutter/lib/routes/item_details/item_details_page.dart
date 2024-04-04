@@ -1,15 +1,14 @@
 import 'dart:ui';
 
-import 'package:auto_route/auto_route.dart';
 import 'package:cast_framework/cast_framework.dart' show CastFrameworkPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 import 'package:zenith/fade_in_image.dart';
+import 'package:zenith/main.dart';
 import 'package:zenith/media_route_button/media_route_button.dart';
 import 'package:zenith/responsive.dart';
-import 'package:zenith/router.dart';
 import 'package:zenith/routes/item_details/item_details_controller.dart';
 import 'package:zenith/routes/item_details/item_details_state.dart';
 import 'package:zenith/routes/item_details/widgets/delete_confirmation_dialog.dart';
@@ -19,14 +18,10 @@ import 'package:zenith/routes/item_details/widgets/header.dart';
 
 import 'widgets/cast_list.dart';
 
-@RoutePage()
 class ItemDetailsPage extends ConsumerWidget {
   final int id;
 
-  const ItemDetailsPage({
-    super.key,
-    @pathParam required this.id,
-  });
+  const ItemDetailsPage({super.key, required this.id});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -85,70 +80,65 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
         return;
       }
 
-      context.router.push(VideoPlayerRoute(
-        id: item.id,
-        startPosition: item.playPosition,
-      ));
+      ref.read(routerProvider).push(VideoPlayerRoute(
+            id: item.id,
+            startPosition: item.playPosition,
+          ));
     }
 
     void onEpisodePressed(EpisodeState episode) async {
-      context.router.push(ItemDetailsRoute(id: episode.id));
+      ref.read(routerProvider).push(ItemDetailsRoute(id: episode.id));
     }
 
-    return RouteListener(
-      didPopNext: () {
-        _refresh.currentState?.show();
-      },
-      child: RefreshIndicator(
-        key: _refresh,
-        onRefresh: widget.onRefresh,
-        triggerMode: RefreshIndicatorTriggerMode.anywhere,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (isDesktop)
-              ZenithFadeInImage.dio(
-                url: widget.state.backdropUrl,
-              ),
-            _BackdropBlur(
-              child: CustomScrollView(
-                slivers: [
-                  SliverCrossAxisPadded(
-                    paddingStart: context.mq.padding.left,
-                    paddingEnd: context.mq.padding.right,
-                    child: MultiSliver(
-                      children: [
-                        SliverToBoxAdapter(
-                          child: HeaderContent(
-                            state: widget.state,
-                            onPlayPressed: onPlayPressed,
-                            onChildItemPressed: (id) =>
-                                context.router.push(ItemDetailsRoute(id: id)),
-                            onFindMetadataMatch: _onFindMetadataMatch,
-                            onFixEpisodeMatch: _onFixEpisodeMatch,
-                            onRefreshMetadata: _onRefreshMetadata,
-                            onDelete: _onDelete,
-                          ),
-                        ),
-                        if (widget.state.item.cast.isNotEmpty)
-                          CastList(cast: widget.state.item.cast),
-                        if (widget.state.seasons.isNotEmpty)
-                          EpisodesList(
-                            groups: widget.state.seasons,
-                            onEpisodePressed: onEpisodePressed,
-                          ),
-                        SliverToBoxAdapter(
-                          child:
-                              SizedBox(height: context.mq.padding.bottom + 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+    return RefreshIndicator(
+      key: _refresh,
+      onRefresh: widget.onRefresh,
+      triggerMode: RefreshIndicatorTriggerMode.anywhere,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (isDesktop)
+            ZenithFadeInImage.dio(
+              url: widget.state.backdropUrl,
             ),
-          ],
-        ),
+          _BackdropBlur(
+            child: CustomScrollView(
+              slivers: [
+                SliverCrossAxisPadded(
+                  paddingStart: context.mq.padding.left,
+                  paddingEnd: context.mq.padding.right,
+                  child: MultiSliver(
+                    children: [
+                      SliverToBoxAdapter(
+                        child: HeaderContent(
+                          state: widget.state,
+                          onPlayPressed: onPlayPressed,
+                          onChildItemPressed: (id) => ref
+                              .read(routerProvider)
+                              .push(ItemDetailsRoute(id: id)),
+                          onFindMetadataMatch: _onFindMetadataMatch,
+                          onFixEpisodeMatch: _onFixEpisodeMatch,
+                          onRefreshMetadata: _onRefreshMetadata,
+                          onDelete: _onDelete,
+                        ),
+                      ),
+                      if (widget.state.item.cast.isNotEmpty)
+                        CastList(cast: widget.state.item.cast),
+                      if (widget.state.seasons.isNotEmpty)
+                        EpisodesList(
+                          groups: widget.state.seasons,
+                          onEpisodePressed: onEpisodePressed,
+                        ),
+                      SliverToBoxAdapter(
+                        child: SizedBox(height: context.mq.padding.bottom + 16),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -184,7 +174,7 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
     );
 
     if (result == true && context.mounted) {
-      context.router.pop();
+      ref.read(routerProvider).pop();
     }
   }
 }

@@ -1,16 +1,14 @@
 import 'dart:math';
 
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import 'package:zenith/main.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
-import 'package:zenith/router.dart';
 
 const _uuid = Uuid();
 
-@RoutePage()
 class SetupScreen extends ConsumerStatefulWidget {
   const SetupScreen({super.key});
 
@@ -121,7 +119,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                   .read(serversPrefProvider.notifier)
                   .update([...servers, server]);
 
-              context.router.replace(const MainRoute());
+              ref.read(routerProvider).replace(const MainRoute());
             },
           ),
         ],

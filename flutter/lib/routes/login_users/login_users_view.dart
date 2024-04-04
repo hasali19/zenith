@@ -1,10 +1,8 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/api.dart';
-import 'package:zenith/router.dart';
 
 part 'login_users_view.g.dart';
 
@@ -42,7 +40,7 @@ class LoginUsersView extends StatelessWidget {
                 }
 
                 if (next case AsyncData(value: [])) {
-                  context.router.replace(LoginRegisterRoute(initial: true));
+                  // context.router.replace(LoginRegisterRoute(initial: true));
                 }
               });
 
@@ -68,8 +66,9 @@ class LoginUsersView extends StatelessWidget {
         elevated: true,
         icon: Icons.account_circle,
         text: user.username,
-        onTap: () =>
-            context.router.push(LoginUserRoute(username: user.username)),
+        onTap: () {
+          // context.router.push(LoginUserRoute(username: user.username));
+        },
       ),
     );
     return Padding(
@@ -87,13 +86,17 @@ class LoginUsersView extends StatelessWidget {
               elevated: false,
               icon: Icons.login,
               text: 'Login manually',
-              onTap: () => context.router.push(LoginUserRoute(username: null)),
+              onTap: () {
+                // context.router.push(LoginUserRoute(username: null));
+              },
             ),
             _UserListCard(
               elevated: false,
               icon: Icons.add_circle_outline,
               text: 'Add user',
-              onTap: () => context.router.push(LoginRegisterRoute()),
+              onTap: () {
+                // context.router.push(LoginRegisterRoute());
+              },
             ),
           ],
         ),

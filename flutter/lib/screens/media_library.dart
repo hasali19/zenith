@@ -4,17 +4,60 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/main.dart';
 import 'package:zenith/poster_item.dart';
 import 'package:zenith/responsive.dart';
 
-class MediaLibraryItem {
+final _moviesProvider = FutureProvider((ref) async {
+  final api = ref.watch(apiProvider);
+  final movies = await api.fetchMovies();
+  return movies.map((e) => _MediaLibraryItem.fromMediaItem(e, api)).toList();
+});
+
+class MoviesScreen extends ConsumerWidget {
+  const MoviesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return _MediaLibraryScreen(
+      provider: _moviesProvider,
+      posterFallback: Icons.movie,
+      onRefresh: () => ref.refresh(_moviesProvider.future),
+      onItemTap: (item) =>
+          ref.read(routerProvider).push(ItemDetailsRoute(id: item.id)),
+    );
+  }
+}
+
+final _showsProvider = FutureProvider((ref) async {
+  final api = ref.watch(apiProvider);
+  final shows = await api.fetchShows();
+  return shows.map((e) => _MediaLibraryItem.fromMediaItem(e, api)).toList();
+});
+
+class ShowsScreen extends ConsumerWidget {
+  const ShowsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return _MediaLibraryScreen(
+      provider: _showsProvider,
+      posterFallback: Icons.tv,
+      onRefresh: () => ref.refresh(_showsProvider.future),
+      onItemTap: (item) =>
+          ref.read(routerProvider).push(ItemDetailsRoute(id: item.id)),
+    );
+  }
+}
+
+class _MediaLibraryItem {
   final int id;
   final String title;
   final String? subtitle;
   final String? poster;
   final bool isWatched;
 
-  MediaLibraryItem({
+  _MediaLibraryItem({
     required this.id,
     required this.title,
     required this.subtitle,
@@ -22,9 +65,9 @@ class MediaLibraryItem {
     required this.isWatched,
   });
 
-  factory MediaLibraryItem.fromMediaItem(
+  factory _MediaLibraryItem.fromMediaItem(
           MediaItem item, ZenithApiClient client) =>
-      MediaLibraryItem(
+      _MediaLibraryItem(
         id: item.id,
         title: item.name,
         subtitle: item.startDate?.year.toString(),
@@ -39,32 +82,28 @@ class MediaLibraryItem {
       );
 }
 
-class MediaLibraryScreen extends ConsumerWidget {
-  final ProviderBase<AsyncValue<List<MediaLibraryItem>>> provider;
+class _MediaLibraryScreen extends ConsumerWidget {
+  final ProviderBase<AsyncValue<List<_MediaLibraryItem>>> provider;
   final IconData posterFallback;
   final Future<void> Function() onRefresh;
-  final void Function(MediaLibraryItem item) onItemTap;
-  final void Function(MediaLibraryItem item)? onItemLongPress;
+  final void Function(_MediaLibraryItem item) onItemTap;
 
-  const MediaLibraryScreen({
-    super.key,
+  const _MediaLibraryScreen({
     required this.provider,
     required this.posterFallback,
     required this.onRefresh,
     required this.onItemTap,
-    this.onItemLongPress,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final items = ref.watch(provider);
     return items.when(
-      data: (data) => MediaItemGrid(
+      data: (data) => _MediaItemGrid(
         items: data,
         posterFallback: posterFallback,
         onRefresh: onRefresh,
         onItemTap: onItemTap,
-        onItemLongPress: onItemLongPress,
       ),
       error: (error, stackTrace) => Center(child: Text('$error')),
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -72,22 +111,19 @@ class MediaLibraryScreen extends ConsumerWidget {
   }
 }
 
-class MediaItemGrid extends StatelessWidget {
-  final List<MediaLibraryItem> items;
+class _MediaItemGrid extends StatelessWidget {
+  final List<_MediaLibraryItem> items;
   final IconData posterFallback;
   final Future<void> Function() onRefresh;
-  final void Function(MediaLibraryItem item) onItemTap;
-  final void Function(MediaLibraryItem item)? onItemLongPress;
+  final void Function(_MediaLibraryItem item) onItemTap;
 
   final ScrollController _scrollController = ScrollController();
 
-  MediaItemGrid({
-    super.key,
+  _MediaItemGrid({
     required this.items,
     required this.posterFallback,
     required this.onRefresh,
     required this.onItemTap,
-    this.onItemLongPress,
   });
 
   @override
@@ -128,9 +164,6 @@ class MediaItemGrid extends StatelessWidget {
                   subtitle: item.subtitle,
                   isWatched: item.isWatched,
                   onTap: () => onItemTap(item),
-                  onLongPress: onItemLongPress != null
-                      ? () => onItemLongPress!(item)
-                      : null,
                 ),
               ));
             }
