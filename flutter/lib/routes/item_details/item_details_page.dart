@@ -9,6 +9,7 @@ import 'package:zenith/fade_in_image.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/media_route_button/media_route_button.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/router/stack_router.dart';
 import 'package:zenith/routes/item_details/item_details_controller.dart';
 import 'package:zenith/routes/item_details/item_details_state.dart';
 import 'package:zenith/routes/item_details/widgets/delete_confirmation_dialog.dart';
@@ -80,14 +81,15 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
         return;
       }
 
-      ref.read(routerProvider).push(VideoPlayerRoute(
-            id: item.id,
-            startPosition: item.playPosition,
-          ));
+      StackRouter.of<PrimaryRoute>(context).push(VideoPlayerRoute(
+        id: item.id,
+        startPosition: item.playPosition,
+      ));
     }
 
     void onEpisodePressed(EpisodeState episode) async {
-      ref.read(routerProvider).push(ItemDetailsRoute(id: episode.id));
+      StackRouter.of<PrimaryRoute>(context)
+          .push(ItemDetailsRoute(id: episode.id));
     }
 
     return RefreshIndicator(
@@ -113,9 +115,9 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
                         child: HeaderContent(
                           state: widget.state,
                           onPlayPressed: onPlayPressed,
-                          onChildItemPressed: (id) => ref
-                              .read(routerProvider)
-                              .push(ItemDetailsRoute(id: id)),
+                          onChildItemPressed: (id) =>
+                              StackRouter.of<PrimaryRoute>(context)
+                                  .push(ItemDetailsRoute(id: id)),
                           onFindMetadataMatch: _onFindMetadataMatch,
                           onFixEpisodeMatch: _onFixEpisodeMatch,
                           onRefreshMetadata: _onRefreshMetadata,
@@ -174,7 +176,7 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
     );
 
     if (result == true && context.mounted) {
-      ref.read(routerProvider).pop();
+      StackRouter.of<PrimaryRoute>(context).pop();
     }
   }
 }

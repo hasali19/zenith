@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/router/stack_router.dart';
 
 const _uuid = Uuid();
 
@@ -119,7 +120,10 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                   .read(serversPrefProvider.notifier)
                   .update([...servers, server]);
 
-              ref.read(routerProvider).replace(const MainRoute());
+              if (context.mounted) {
+                StackRouter.of<PrimaryRoute>(context)
+                    .replace(const MainRoute());
+              }
             },
           ),
         ],

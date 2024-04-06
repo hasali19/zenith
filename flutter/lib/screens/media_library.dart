@@ -7,6 +7,7 @@ import 'package:zenith/api.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/poster_item.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/router/stack_router.dart';
 
 final _moviesProvider = FutureProvider((ref) async {
   final api = ref.watch(apiProvider);
@@ -23,8 +24,8 @@ class MoviesScreen extends ConsumerWidget {
       provider: _moviesProvider,
       posterFallback: Icons.movie,
       onRefresh: () => ref.refresh(_moviesProvider.future),
-      onItemTap: (item) =>
-          ref.read(routerProvider).push(ItemDetailsRoute(id: item.id)),
+      onItemTap: (item) => StackRouter.of<PrimaryRoute>(context)
+          .push(ItemDetailsRoute(id: item.id)),
     );
   }
 }
@@ -44,8 +45,8 @@ class ShowsScreen extends ConsumerWidget {
       provider: _showsProvider,
       posterFallback: Icons.tv,
       onRefresh: () => ref.refresh(_showsProvider.future),
-      onItemTap: (item) =>
-          ref.read(routerProvider).push(ItemDetailsRoute(id: item.id)),
+      onItemTap: (item) => StackRouter.of<PrimaryRoute>(context)
+          .push(ItemDetailsRoute(id: item.id)),
     );
   }
 }

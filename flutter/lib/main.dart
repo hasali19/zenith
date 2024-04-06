@@ -15,6 +15,7 @@ import 'package:zenith/language_codes.dart';
 import 'package:zenith/media_route_button/media_route_button.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/router/stack_router.dart';
 import 'package:zenith/routes/routes.dart';
 import 'package:zenith/screens/home.dart';
 import 'package:zenith/screens/media_library.dart';
@@ -30,13 +31,13 @@ final _authStateProvider = StateProvider((ref) => false);
 
 class RouteConfig {}
 
-abstract class ZenithRouter {
-  PrimaryRoute get currentRoute;
+abstract class StackRouterController<T> {
+  T get currentRoute;
 
-  void push(PrimaryRoute route);
+  void push(T route);
   void pop();
-  void replace(PrimaryRoute route);
-  void replaceAll(PrimaryRoute route);
+  void replace(T route);
+  void replaceAll(T route);
 }
 
 sealed class PrimaryRoute {
@@ -67,92 +68,47 @@ class LoginRoute extends PrimaryRoute {
 }
 
 class ZenithRouterDelegate extends RouterDelegate<RouteConfig>
-    with ChangeNotifier, PopNavigatorRouterDelegateMixin<RouteConfig>
-    implements ZenithRouter {
-  final _routes = <PrimaryRoute>[
-    const MainRoute(),
-  ];
-
+    with ChangeNotifier, PopNavigatorRouterDelegateMixin<RouteConfig> {
   @override
   final navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   Widget build(BuildContext context) {
-    return Navigator(
-      key: navigatorKey,
-      pages: _routes.map((route) => _buildPage(route)).toList(),
-      onPopPage: (route, result) {
-        if (!route.didPop(result)) {
-          return false;
-        }
-        if (route.settings.arguments is PrimaryRoute) {
-          _routes.remove(route.settings.arguments);
-        }
-        route.onPopInvoked(true);
-        return true;
+    return StackRouter<PrimaryRoute>(
+      navigatorKey: navigatorKey,
+      initial: const MainRoute(),
+      buildPage: (route) {
+        return switch (route) {
+          MainRoute() => MaterialPage(
+              key: ValueKey(route),
+              arguments: route,
+              child: const MainScreen(),
+            ),
+          ItemDetailsRoute(:final id) => MaterialPage(
+              key: ValueKey(route),
+              arguments: route,
+              child: ItemDetailsPage(id: id),
+            ),
+          VideoPlayerRoute(
+            :final id,
+            :final startPosition,
+          ) =>
+            MaterialPage(
+              key: ValueKey(route),
+              arguments: route,
+              child: VideoPlayerScreen(
+                id: id,
+                startPosition: startPosition,
+              ),
+            ),
+          LoginRoute(:final redirect) => MaterialPage(
+              key: ValueKey(route),
+              arguments: route,
+              child: LoginPage(redirect: redirect),
+            ),
+        };
       },
     );
-  }
-
-  @override
-  PrimaryRoute get currentRoute => _routes.last;
-
-  @override
-  void push(PrimaryRoute route) {
-    _routes.add(route);
-    notifyListeners();
-  }
-
-  @override
-  void pop() {
-    _routes.removeLast();
-    notifyListeners();
-  }
-
-  @override
-  void replace(PrimaryRoute route) {
-    _routes.removeLast();
-    _routes.add(route);
-    notifyListeners();
-  }
-
-  @override
-  void replaceAll(PrimaryRoute route) {
-    _routes.clear();
-    _routes.add(route);
-    notifyListeners();
-  }
-
-  Page _buildPage(PrimaryRoute route) {
-    return switch (route) {
-      MainRoute() => MaterialPage(
-          key: ValueKey(route),
-          arguments: route,
-          child: const MainScreen(),
-        ),
-      ItemDetailsRoute(:final id) => MaterialPage(
-          key: ValueKey(route),
-          arguments: route,
-          child: ItemDetailsPage(id: id),
-        ),
-      VideoPlayerRoute(
-        :final id,
-        :final startPosition,
-      ) =>
-        MaterialPage(
-          key: ValueKey(route),
-          arguments: route,
-          child: VideoPlayerScreen(
-            id: id,
-            startPosition: startPosition,
-          ),
-        ),
-      LoginRoute(:final redirect) => MaterialPage(
-          key: ValueKey(route),
-          arguments: route,
-          child: LoginPage(redirect: redirect),
-        ),
-    };
   }
 
   @override
@@ -162,13 +118,7 @@ class ZenithRouterDelegate extends RouterDelegate<RouteConfig>
   }
 }
 
-final _routerDelegateProvider =
-    ChangeNotifierProvider((ref) => ZenithRouterDelegate());
-final routerProvider = Provider<ZenithRouter>((ref) {
-  var watch = ref.watch(_routerDelegateProvider);
-  print('changed: ${watch._routes}');
-  return watch;
-});
+final _routerDelegateProvider = Provider((ref) => ZenithRouterDelegate());
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -371,7 +321,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
     void onLogout() {
       ref.read(apiProvider).logout();
-      ref.read(routerProvider).replaceAll(const LoginRoute(redirect: null));
+      StackRouter.of<PrimaryRoute>(context)
+          .replaceAll(const LoginRoute(redirect: null));
     }
 
     final index = switch (_screen) {

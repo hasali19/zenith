@@ -10,6 +10,7 @@ import 'package:zenith/api.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/poster_item.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/router/stack_router.dart';
 import 'package:zenith/text_one_line.dart';
 import 'package:zenith/theme.dart';
 
@@ -55,7 +56,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   ZenithApiClient get api => ref.watch(apiProvider);
 
   void _navigateToItem(MediaItem item) async {
-    ref.read(routerProvider).push(ItemDetailsRoute(id: item.id));
+    StackRouter.of<PrimaryRoute>(context).push(ItemDetailsRoute(id: item.id));
   }
 
   @override
