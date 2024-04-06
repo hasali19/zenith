@@ -15,6 +15,7 @@ import 'package:zenith/language_codes.dart';
 import 'package:zenith/media_route_button/media_route_button.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/router/router_delegate.dart';
 import 'package:zenith/router/stack_router.dart';
 import 'package:zenith/routes/routes.dart';
 import 'package:zenith/screens/home.dart';
@@ -28,8 +29,6 @@ import 'package:zenith/updater.dart';
 import 'package:zenith/window.dart';
 
 final _authStateProvider = StateProvider((ref) => false);
-
-class RouteConfig {}
 
 abstract class StackRouterController<T> {
   T get currentRoute;
@@ -67,58 +66,42 @@ class LoginRoute extends PrimaryRoute {
   const LoginRoute({required this.redirect});
 }
 
-class ZenithRouterDelegate extends RouterDelegate<RouteConfig>
-    with ChangeNotifier, PopNavigatorRouterDelegateMixin<RouteConfig> {
-  @override
-  final navigatorKey = GlobalKey<NavigatorState>();
-
-  @override
-  Widget build(BuildContext context) {
-    return StackRouter<PrimaryRoute>(
-      navigatorKey: navigatorKey,
-      initial: const MainRoute(),
-      buildPage: (route) {
-        return switch (route) {
-          MainRoute() => MaterialPage(
-              key: ValueKey(route),
-              arguments: route,
-              child: const MainScreen(),
+final _routerDelegateProvider = Provider(
+  (ref) => ZenithRouterDelegate<PrimaryRoute>(
+    initial: const MainRoute(),
+    buildPage: (route) {
+      return switch (route) {
+        MainRoute() => MaterialPage(
+            key: ValueKey(route),
+            arguments: route,
+            child: const MainScreen(),
+          ),
+        ItemDetailsRoute(:final id) => MaterialPage(
+            key: ValueKey(route),
+            arguments: route,
+            child: ItemDetailsPage(id: id),
+          ),
+        VideoPlayerRoute(
+          :final id,
+          :final startPosition,
+        ) =>
+          MaterialPage(
+            key: ValueKey(route),
+            arguments: route,
+            child: VideoPlayerScreen(
+              id: id,
+              startPosition: startPosition,
             ),
-          ItemDetailsRoute(:final id) => MaterialPage(
-              key: ValueKey(route),
-              arguments: route,
-              child: ItemDetailsPage(id: id),
-            ),
-          VideoPlayerRoute(
-            :final id,
-            :final startPosition,
-          ) =>
-            MaterialPage(
-              key: ValueKey(route),
-              arguments: route,
-              child: VideoPlayerScreen(
-                id: id,
-                startPosition: startPosition,
-              ),
-            ),
-          LoginRoute(:final redirect) => MaterialPage(
-              key: ValueKey(route),
-              arguments: route,
-              child: LoginPage(redirect: redirect),
-            ),
-        };
-      },
-    );
-  }
-
-  @override
-  Future<void> setNewRoutePath(RouteConfig configuration) {
-    // TODO: implement setNewRoutePath
-    throw UnimplementedError();
-  }
-}
-
-final _routerDelegateProvider = Provider((ref) => ZenithRouterDelegate());
+          ),
+        LoginRoute(:final redirect) => MaterialPage(
+            key: ValueKey(route),
+            arguments: route,
+            child: LoginPage(redirect: redirect),
+          ),
+      };
+    },
+  ),
+);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
