@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:zenith/main.dart';
+import 'package:zenith/router/pop_scope.dart';
 
 class StackRouter<T> extends StatefulWidget {
   final T initial;
-  final GlobalKey<NavigatorState>? navigatorKey;
   final Page<T> Function(T route) buildPage;
 
   const StackRouter({
     super.key,
-    this.navigatorKey,
     required this.initial,
     required this.buildPage,
   });
@@ -19,12 +18,16 @@ class StackRouter<T> extends StatefulWidget {
   }
 
   @override
-  State<StackRouter<T>> createState() => _StackRouterState<T>();
+  State<StackRouter<T>> createState() => StackRouterState<T>();
 }
 
-class _StackRouterState<T> extends State<StackRouter<T>>
-    implements StackRouterController<T> {
+class StackRouterState<T> extends State<StackRouter<T>>
+    implements StackRouterController<T>, PopHandler, PopController {
   final List<T> _stack = [];
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  final List<PopHandler> _popHandlers = [];
+
+  PopController? _popController;
 
   @override
   void initState() {
@@ -33,22 +36,39 @@ class _StackRouterState<T> extends State<StackRouter<T>>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _popController?.removePopHandler(this);
+    _popController = PopController.maybeOf(context);
+    _popController?.addPopHandler(this);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _popController?.removePopHandler(this);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return _StackRouterScope(
       controller: this,
-      child: Navigator(
-        key: widget.navigatorKey,
-        pages: _stack.map(widget.buildPage).toList(),
-        onPopPage: (route, result) {
-          if (!route.didPop(result)) {
-            return false;
-          }
-          if (route.settings.arguments is T) {
-            _stack.remove(route.settings.arguments);
-          }
-          route.onPopInvoked(true);
-          return true;
-        },
+      child: PopControllerScope(
+        controller: this,
+        child: Navigator(
+          key: _navigatorKey,
+          pages: _stack.map(widget.buildPage).toList(),
+          onPopPage: (route, result) {
+            if (!route.didPop(result)) {
+              return false;
+            }
+            if (route.settings.arguments is T) {
+              _stack.remove(route.settings.arguments);
+            }
+            route.onPopInvoked(true);
+            return true;
+          },
+        ),
       ),
     );
   }
@@ -61,6 +81,22 @@ class _StackRouterState<T> extends State<StackRouter<T>>
     setState(() {
       _stack.removeLast();
     });
+  }
+
+  @override
+  bool maybePopTop() {
+    for (final handler in _popHandlers) {
+      if (handler.maybePopTop()) {
+        return true;
+      }
+    }
+
+    if (_navigatorKey.currentState?.canPop() ?? false) {
+      _navigatorKey.currentState?.pop();
+      return true;
+    }
+
+    return false;
   }
 
   @override
@@ -84,6 +120,16 @@ class _StackRouterState<T> extends State<StackRouter<T>>
       _stack.clear();
       _stack.add(route);
     });
+  }
+
+  @override
+  void addPopHandler(PopHandler handler) {
+    _popHandlers.add(handler);
+  }
+
+  @override
+  void removePopHandler(PopHandler handler) {
+    _popHandlers.remove(handler);
   }
 }
 

@@ -21,8 +21,14 @@ class LoginPage extends StatelessWidget {
         initial: const LoginUsersRoute(),
         buildPage: (route) {
           return switch (route) {
-            LoginUsersRoute() => const MaterialPage(child: LoginUsersPage()),
+            LoginUsersRoute() => MaterialPage(
+                key: ValueKey(route),
+                arguments: route,
+                child: const LoginUsersPage(),
+              ),
             LoginUserRoute() => MaterialPage(
+                key: ValueKey(route),
+                arguments: route,
                 child: LoginUserPage(
                   username: route.username,
                   onSuccess: () {
@@ -39,6 +45,8 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
             LoginRegisterRoute() => MaterialPage(
+                key: ValueKey(route),
+                arguments: route,
                 child: LoginRegisterPage(initial: route.initial),
               ),
           };
