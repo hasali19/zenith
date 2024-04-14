@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/router/pop_scope.dart';
+import 'package:zenith/router/router_controller.dart';
 
 class StackRouter<T> extends StatefulWidget {
   final T initial;
   final Page<T> Function(T route) buildPage;
+  final String Function(T route) mapToLocation;
 
   const StackRouter({
     super.key,
     required this.initial,
     required this.buildPage,
+    required this.mapToLocation,
   });
 
   static StackRouterController<T> of<T>(BuildContext context) {
@@ -64,6 +67,7 @@ class StackRouterState<T> extends State<StackRouter<T>>
             }
             if (route.settings.arguments is T) {
               _stack.remove(route.settings.arguments);
+              _updateRouterLocation();
             }
             route.onPopInvoked(true);
             return true;
@@ -81,6 +85,7 @@ class StackRouterState<T> extends State<StackRouter<T>>
     setState(() {
       _stack.removeLast();
     });
+    _updateRouterLocation();
   }
 
   @override
@@ -104,6 +109,7 @@ class StackRouterState<T> extends State<StackRouter<T>>
     setState(() {
       _stack.add(route);
     });
+    _updateRouterLocation();
   }
 
   @override
@@ -112,6 +118,7 @@ class StackRouterState<T> extends State<StackRouter<T>>
       _stack.removeLast();
       _stack.add(route);
     });
+    _updateRouterLocation();
   }
 
   @override
@@ -120,6 +127,7 @@ class StackRouterState<T> extends State<StackRouter<T>>
       _stack.clear();
       _stack.add(route);
     });
+    _updateRouterLocation();
   }
 
   @override
@@ -130,6 +138,11 @@ class StackRouterState<T> extends State<StackRouter<T>>
   @override
   void removePopHandler(PopHandler handler) {
     _popHandlers.remove(handler);
+  }
+
+  void _updateRouterLocation() {
+    RouterController.of(context)
+        .updateLocation(widget.mapToLocation(currentRoute));
   }
 }
 

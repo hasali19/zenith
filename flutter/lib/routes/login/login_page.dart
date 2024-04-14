@@ -51,6 +51,12 @@ class LoginPage extends StatelessWidget {
               ),
           };
         },
+        mapToLocation: (route) => switch (route) {
+          LoginUsersRoute() => '/login',
+          LoginUserRoute(:final username) => '/login/$username',
+          LoginRegisterRoute(:final initial) =>
+            '/login/register?initial=$initial',
+        },
       ),
     );
   }

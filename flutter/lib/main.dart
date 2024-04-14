@@ -15,6 +15,8 @@ import 'package:zenith/language_codes.dart';
 import 'package:zenith/media_route_button/media_route_button.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/router/route_information_parser.dart';
+import 'package:zenith/router/router_controller.dart';
 import 'package:zenith/router/router_delegate.dart';
 import 'package:zenith/router/stack_router.dart';
 import 'package:zenith/routes/routes.dart';
@@ -112,6 +114,14 @@ final _routerDelegateProvider = Provider(
             ),
         };
       },
+      mapToLocation: (route) => switch (route) {
+        MainRoute() => '/',
+        ItemDetailsRoute(:final id) => '/items/$id',
+        VideoPlayerRoute(:final id, :final startPosition) =>
+          '/player/$id?startPosition=$startPosition',
+        LoginRoute() => '/login',
+        SetupRoute() => '/setup',
+      },
     );
   },
 );
@@ -126,9 +136,8 @@ Future<void> main() async {
       if (kDebugMode) _LoggingProviderObserver(),
     ],
     overrides: [
-      if (kReleaseMode)
-        preferencesProvider
-            .overrideWithValue(await SharedPreferences.getInstance()),
+      preferencesProvider
+          .overrideWithValue(await SharedPreferences.getInstance()),
       windowProvider.overrideWithValue(window),
       apiProvider.overrideWith((ref) {
         final activeServer = ref.watch(activeServerProvider);
@@ -231,6 +240,7 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
             AppThemeMode.system => ThemeMode.system,
           },
           routerDelegate: ref.watch(_routerDelegateProvider),
+          routeInformationParser: ZenithRouteInformationParser(),
         ),
       );
     });
@@ -449,6 +459,13 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   void _navigateTo(BuildContext context, Screen screen) {
     setState(() {
       _screen = screen;
+    });
+
+    RouterController.of(context).updateLocation(switch (screen) {
+      Screen.home => '/',
+      Screen.movies => '/movies',
+      Screen.shows => '/shows',
+      Screen.settings => '/settings',
     });
   }
 }

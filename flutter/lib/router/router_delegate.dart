@@ -1,32 +1,46 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:zenith/router/pop_scope.dart';
+import 'package:zenith/router/router_controller.dart';
 import 'package:zenith/router/stack_router.dart';
 
-class RouteConfig {}
+class RouteConfig {
+  final String location;
+
+  const RouteConfig(this.location);
+}
 
 class ZenithRouterDelegate<T> extends RouterDelegate<RouteConfig>
     with ChangeNotifier
-    implements PopController {
+    implements RouterController, PopController {
   final T initial;
   final Page<T> Function(T route) buildPage;
+  final String Function(T route) mapToLocation;
 
-  final _navigatorKey = GlobalKey<StackRouterState>();
   final _popHandlers = <PopHandler>[];
+
+  RouteConfig? _config;
 
   ZenithRouterDelegate({
     required this.initial,
     required this.buildPage,
+    required this.mapToLocation,
   });
 
   @override
+  RouteConfig? get currentConfiguration => _config;
+
+  @override
   Widget build(BuildContext context) {
-    return PopControllerScope(
+    return RouterControllerScope(
       controller: this,
-      child: StackRouter<T>(
-        key: _navigatorKey,
-        initial: initial,
-        buildPage: buildPage,
+      child: PopControllerScope(
+        controller: this,
+        child: StackRouter<T>(
+          initial: initial,
+          buildPage: buildPage,
+          mapToLocation: mapToLocation,
+        ),
       ),
     );
   }
@@ -44,7 +58,13 @@ class ZenithRouterDelegate<T> extends RouterDelegate<RouteConfig>
   @override
   Future<void> setNewRoutePath(RouteConfig configuration) {
     // TODO: implement setNewRoutePath
-    throw UnimplementedError();
+    return SynchronousFuture(null);
+  }
+
+  @override
+  void updateLocation(String location) {
+    _config = RouteConfig(location);
+    notifyListeners();
   }
 
   @override
