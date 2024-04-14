@@ -21,6 +21,7 @@ import 'package:zenith/routes/routes.dart';
 import 'package:zenith/screens/home.dart';
 import 'package:zenith/screens/media_library.dart';
 import 'package:zenith/screens/settings.dart';
+import 'package:zenith/screens/setup.dart';
 import 'package:zenith/screens/video_player/video_player.dart';
 import 'package:zenith/theme.dart';
 import 'package:zenith/themes.dart';
@@ -66,47 +67,58 @@ class LoginRoute extends PrimaryRoute {
   const LoginRoute({required this.redirect});
 }
 
+class SetupRoute extends PrimaryRoute {
+  const SetupRoute();
+}
+
 final _routerDelegateProvider = Provider(
-  (ref) => ZenithRouterDelegate<PrimaryRoute>(
-    initial: const MainRoute(),
-    buildPage: (route) {
-      return switch (route) {
-        MainRoute() => MaterialPage(
-            key: ValueKey(route),
-            arguments: route,
-            child: const MainScreen(),
-          ),
-        ItemDetailsRoute(:final id) => MaterialPage(
-            key: ValueKey(route),
-            arguments: route,
-            child: ItemDetailsPage(id: id),
-          ),
-        VideoPlayerRoute(
-          :final id,
-          :final startPosition,
-        ) =>
-          MaterialPage(
-            key: ValueKey(route),
-            arguments: route,
-            child: VideoPlayerScreen(
-              id: id,
-              startPosition: startPosition,
+  (ref) {
+    final activeServer = ref.read(activeServerProvider);
+    return ZenithRouterDelegate<PrimaryRoute>(
+      initial: activeServer == null ? const SetupRoute() : const MainRoute(),
+      buildPage: (route) {
+        return switch (route) {
+          MainRoute() => MaterialPage(
+              key: ValueKey(route),
+              arguments: route,
+              child: const MainScreen(),
             ),
-          ),
-        LoginRoute(:final redirect) => MaterialPage(
-            key: ValueKey(route),
-            arguments: route,
-            child: LoginPage(redirect: redirect),
-          ),
-      };
-    },
-  ),
+          ItemDetailsRoute(:final id) => MaterialPage(
+              key: ValueKey(route),
+              arguments: route,
+              child: ItemDetailsPage(id: id),
+            ),
+          VideoPlayerRoute(
+            :final id,
+            :final startPosition,
+          ) =>
+            MaterialPage(
+              key: ValueKey(route),
+              arguments: route,
+              child: VideoPlayerScreen(
+                id: id,
+                startPosition: startPosition,
+              ),
+            ),
+          LoginRoute(:final redirect) => MaterialPage(
+              key: ValueKey(route),
+              arguments: route,
+              child: LoginPage(redirect: redirect),
+            ),
+          SetupRoute() => MaterialPage(
+              key: ValueKey(route),
+              arguments: route,
+              child: const SetupScreen(),
+            ),
+        };
+      },
+    );
+  },
 );
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final prefs = await SharedPreferences.getInstance();
   final window = await WindowController.create();
 
   runApp(ProviderScope(
@@ -114,7 +126,9 @@ Future<void> main() async {
       if (kDebugMode) _LoggingProviderObserver(),
     ],
     overrides: [
-      preferencesProvider.overrideWithValue(prefs),
+      if (kReleaseMode)
+        preferencesProvider
+            .overrideWithValue(await SharedPreferences.getInstance()),
       windowProvider.overrideWithValue(window),
       apiProvider.overrideWith((ref) {
         final activeServer = ref.watch(activeServerProvider);
@@ -278,12 +292,28 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   void initState() {
     super.initState();
+
     if (kReleaseMode && ref.read(enableUpdatesCheck)) {
       _checkForUpdates();
     }
+
+    Future.microtask(() async {
+      if (await _isLoggedIn() == false && mounted) {
+        StackRouter.of<PrimaryRoute>(context)
+            .replace(const LoginRoute(redirect: null));
+      }
+    });
   }
 
-  _checkForUpdates() async {
+  Future<bool?> _isLoggedIn() async {
+    try {
+      return await ref.read(apiProvider).isLoggedIn();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> _checkForUpdates() async {
     final update = await _updater.checkForUpdates();
     if (update != null && mounted) {
       if (update.showCustomUpdateUi) {

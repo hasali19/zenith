@@ -122,7 +122,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
               if (context.mounted) {
                 StackRouter.of<PrimaryRoute>(context)
-                    .replace(const MainRoute());
+                    .replace(const LoginRoute(redirect: null));
               }
             },
           ),
