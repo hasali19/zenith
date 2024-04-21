@@ -79,76 +79,75 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).isDesktop;
 
+    void pushRoute(route) async {
+      await context.router.push(route);
+      _refresh.currentState?.show();
+    }
+
     void onPlayPressed() async {
       final item = widget.state.playable;
       if (item == null) {
         return;
       }
 
-      context.router.push(VideoPlayerRoute(
+      pushRoute(VideoPlayerRoute(
         id: item.id,
         startPosition: item.playPosition,
       ));
     }
 
     void onEpisodePressed(EpisodeState episode) async {
-      context.router.push(ItemDetailsRoute(id: episode.id));
+      pushRoute(ItemDetailsRoute(id: episode.id));
     }
 
-    return RouteListener(
-      didPopNext: () {
-        _refresh.currentState?.show();
-      },
-      child: RefreshIndicator(
-        key: _refresh,
-        onRefresh: widget.onRefresh,
-        triggerMode: RefreshIndicatorTriggerMode.anywhere,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (isDesktop)
-              ZenithFadeInImage.dio(
-                url: widget.state.backdropUrl,
-              ),
-            _BackdropBlur(
-              child: CustomScrollView(
-                slivers: [
-                  SliverCrossAxisPadded(
-                    paddingStart: context.mq.padding.left,
-                    paddingEnd: context.mq.padding.right,
-                    child: MultiSliver(
-                      children: [
-                        SliverToBoxAdapter(
-                          child: HeaderContent(
-                            state: widget.state,
-                            onPlayPressed: onPlayPressed,
-                            onChildItemPressed: (id) =>
-                                context.router.push(ItemDetailsRoute(id: id)),
-                            onFindMetadataMatch: _onFindMetadataMatch,
-                            onFixEpisodeMatch: _onFixEpisodeMatch,
-                            onRefreshMetadata: _onRefreshMetadata,
-                            onDelete: _onDelete,
-                          ),
-                        ),
-                        if (widget.state.item.cast.isNotEmpty)
-                          CastList(cast: widget.state.item.cast),
-                        if (widget.state.seasons.isNotEmpty)
-                          EpisodesList(
-                            groups: widget.state.seasons,
-                            onEpisodePressed: onEpisodePressed,
-                          ),
-                        SliverToBoxAdapter(
-                          child:
-                              SizedBox(height: context.mq.padding.bottom + 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+    return RefreshIndicator(
+      key: _refresh,
+      onRefresh: widget.onRefresh,
+      triggerMode: RefreshIndicatorTriggerMode.anywhere,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (isDesktop)
+            ZenithFadeInImage.dio(
+              url: widget.state.backdropUrl,
             ),
-          ],
-        ),
+          _BackdropBlur(
+            child: CustomScrollView(
+              slivers: [
+                SliverCrossAxisPadded(
+                  paddingStart: context.mq.padding.left,
+                  paddingEnd: context.mq.padding.right,
+                  child: MultiSliver(
+                    children: [
+                      SliverToBoxAdapter(
+                        child: HeaderContent(
+                          state: widget.state,
+                          onPlayPressed: onPlayPressed,
+                          onChildItemPressed: (id) =>
+                              pushRoute(ItemDetailsRoute(id: id)),
+                          onFindMetadataMatch: _onFindMetadataMatch,
+                          onFixEpisodeMatch: _onFixEpisodeMatch,
+                          onRefreshMetadata: _onRefreshMetadata,
+                          onDelete: _onDelete,
+                        ),
+                      ),
+                      if (widget.state.item.cast.isNotEmpty)
+                        CastList(cast: widget.state.item.cast),
+                      if (widget.state.seasons.isNotEmpty)
+                        EpisodesList(
+                          groups: widget.state.seasons,
+                          onEpisodePressed: onEpisodePressed,
+                        ),
+                      SliverToBoxAdapter(
+                        child: SizedBox(height: context.mq.padding.bottom + 16),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
