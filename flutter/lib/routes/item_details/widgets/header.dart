@@ -394,20 +394,6 @@ class HeaderContent extends ConsumerWidget {
                   ),
                 ],
               ),
-            TableRow(
-              children: [
-                Text('Format', style: bodyLarge),
-                const SizedBox(width: 16),
-                Text(videoInfo.format),
-              ],
-            ),
-            TableRow(
-              children: [
-                Text('Path', style: bodyLarge),
-                const SizedBox(width: 16),
-                Text(videoInfo.path),
-              ],
-            ),
           ],
         ),
       ),

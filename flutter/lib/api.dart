@@ -183,14 +183,22 @@ abstract class StreamInfo {
 class VideoStreamInfo extends StreamInfo {
   final int width;
   final int height;
+  final int? cropX1;
+  final int? cropX2;
+  final int? cropY1;
+  final int? cropY2;
 
   const VideoStreamInfo({
-    required int id,
-    required int index,
-    required String codec,
+    required super.id,
+    required super.index,
+    required super.codec,
     required this.width,
     required this.height,
-  }) : super(id: id, index: index, codec: codec);
+    required this.cropX1,
+    required this.cropX2,
+    required this.cropY1,
+    required this.cropY2,
+  });
 
   factory VideoStreamInfo.fromJson(Map<String, dynamic> json) {
     return VideoStreamInfo(
@@ -199,6 +207,10 @@ class VideoStreamInfo extends StreamInfo {
       codec: json['codec'],
       width: json['width'],
       height: json['height'],
+      cropX1: json['crop_x1'],
+      cropX2: json['crop_x2'],
+      cropY1: json['crop_y1'],
+      cropY2: json['crop_y2'],
     );
   }
 }
