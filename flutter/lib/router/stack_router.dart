@@ -3,17 +3,18 @@ import 'package:flutter/widgets.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/router/pop_scope.dart';
 import 'package:zenith/router/router_controller.dart';
+import 'package:zenith/router/router_delegate.dart';
 
 class StackRouter<T> extends StatefulWidget {
-  final T initial;
+  final List<T> Function(RouteConfig location) onSetLocation;
   final Page<T> Function(T route) buildPage;
-  final String Function(T route) mapToLocation;
+  final String Function(T route) buildLocation;
 
   const StackRouter({
     super.key,
-    required this.initial,
+    required this.onSetLocation,
     required this.buildPage,
-    required this.mapToLocation,
+    required this.buildLocation,
   });
 
   static StackRouterController<T> of<T>(BuildContext context) {
@@ -30,17 +31,17 @@ class StackRouterState<T> extends State<StackRouter<T>>
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   final List<PopHandler> _popHandlers = [];
 
+  RouterController? _routerController;
   PopController? _popController;
-
-  @override
-  void initState() {
-    super.initState();
-    _stack.add(widget.initial);
-  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
+    _routerController?.removeLocationListener(_onLocationChanged);
+    _routerController = RouterController.of(context);
+    _routerController?.addLocationListener(_onLocationChanged);
+
     _popController?.removePopHandler(this);
     _popController = PopController.maybeOf(context);
     _popController?.addPopHandler(this);
@@ -49,7 +50,15 @@ class StackRouterState<T> extends State<StackRouter<T>>
   @override
   void dispose() {
     super.dispose();
+    _routerController?.removeLocationListener(_onLocationChanged);
     _popController?.removePopHandler(this);
+  }
+
+  void _onLocationChanged(RouteConfig location) {
+    setState(() {
+      _stack.clear();
+      _stack.addAll(widget.onSetLocation(location));
+    });
   }
 
   @override
@@ -142,7 +151,7 @@ class StackRouterState<T> extends State<StackRouter<T>>
 
   void _updateRouterLocation() {
     RouterController.of(context)
-        .updateLocation(widget.mapToLocation(currentRoute));
+        .updateLocation(widget.buildLocation(currentRoute));
   }
 }
 

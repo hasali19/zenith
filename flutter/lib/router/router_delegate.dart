@@ -13,18 +13,19 @@ class RouteConfig {
 class ZenithRouterDelegate<T> extends RouterDelegate<RouteConfig>
     with ChangeNotifier
     implements RouterController, PopController {
-  final T initial;
+  final List<T> Function(RouteConfig location) onSetLocation;
   final Page<T> Function(T route) buildPage;
-  final String Function(T route) mapToLocation;
+  final String Function(T route) buildLocation;
 
+  final _locationListeners = <LocationListener>[];
   final _popHandlers = <PopHandler>[];
 
   RouteConfig? _config;
 
   ZenithRouterDelegate({
-    required this.initial,
+    required this.onSetLocation,
     required this.buildPage,
-    required this.mapToLocation,
+    required this.buildLocation,
   });
 
   @override
@@ -37,9 +38,9 @@ class ZenithRouterDelegate<T> extends RouterDelegate<RouteConfig>
       child: PopControllerScope(
         controller: this,
         child: StackRouter<T>(
-          initial: initial,
+          onSetLocation: onSetLocation,
           buildPage: buildPage,
-          mapToLocation: mapToLocation,
+          buildLocation: buildLocation,
         ),
       ),
     );
@@ -57,7 +58,10 @@ class ZenithRouterDelegate<T> extends RouterDelegate<RouteConfig>
 
   @override
   Future<void> setNewRoutePath(RouteConfig configuration) {
-    // TODO: implement setNewRoutePath
+    _config = configuration;
+    for (final listener in _locationListeners) {
+      listener(configuration);
+    }
     return SynchronousFuture(null);
   }
 
@@ -65,6 +69,30 @@ class ZenithRouterDelegate<T> extends RouterDelegate<RouteConfig>
   void updateLocation(String location) {
     _config = RouteConfig(location);
     notifyListeners();
+  }
+
+  /// Regisers a listener to be invoked when the operating system updates the
+  /// current location.
+  ///
+  /// Upon registration, this will be invoked immediately with the current
+  /// location.
+  @override
+  void addLocationListener(LocationListener listener) {
+    _locationListeners.add(listener);
+
+    final currentConfig = _config;
+    if (currentConfig != null) {
+      listener(currentConfig);
+    }
+  }
+
+  /// Unregisters a location listener.
+  ///
+  /// See also:
+  /// * [addLocationListener]
+  @override
+  void removeLocationListener(LocationListener listener) {
+    _locationListeners.remove(listener);
   }
 
   @override

@@ -18,7 +18,13 @@ class LoginPage extends StatelessWidget {
     return ProviderScope(
       overrides: [loginRedirectPathProvider.overrideWithValue(redirect)],
       child: StackRouter<LoginSubRoute>(
-        initial: const LoginUsersRoute(),
+        onSetLocation: (location) => const [LoginUsersRoute()],
+        buildLocation: (route) => switch (route) {
+          LoginUsersRoute() => '/login',
+          LoginUserRoute(:final username) => '/login/$username',
+          LoginRegisterRoute(:final initial) =>
+            '/login/register?initial=$initial',
+        },
         buildPage: (route) {
           return switch (route) {
             LoginUsersRoute() => MaterialPage(
@@ -50,12 +56,6 @@ class LoginPage extends StatelessWidget {
                 child: LoginRegisterPage(initial: route.initial),
               ),
           };
-        },
-        mapToLocation: (route) => switch (route) {
-          LoginUsersRoute() => '/login',
-          LoginUserRoute(:final username) => '/login/$username',
-          LoginRegisterRoute(:final initial) =>
-            '/login/register?initial=$initial',
         },
       ),
     );

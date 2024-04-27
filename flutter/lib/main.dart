@@ -77,7 +77,25 @@ final _routerDelegateProvider = Provider(
   (ref) {
     final activeServer = ref.read(activeServerProvider);
     return ZenithRouterDelegate<PrimaryRoute>(
-      initial: activeServer == null ? const SetupRoute() : const MainRoute(),
+      onSetLocation: (location) {
+        if (activeServer == null) {
+          return const [SetupRoute()];
+        }
+
+        final match = RegExp(r'/items/(\d+)').matchAsPrefix(location.location);
+        return [
+          const MainRoute(),
+          if (match != null) ItemDetailsRoute(id: int.parse(match.group(1)!)),
+        ];
+      },
+      buildLocation: (route) => switch (route) {
+        MainRoute() => '/',
+        ItemDetailsRoute(:final id) => '/items/$id',
+        VideoPlayerRoute(:final id, :final startPosition) =>
+          '/player/$id?startPosition=$startPosition',
+        LoginRoute() => '/login',
+        SetupRoute() => '/setup',
+      },
       buildPage: (route) {
         return switch (route) {
           MainRoute() => MaterialPage(
@@ -113,14 +131,6 @@ final _routerDelegateProvider = Provider(
               child: const SetupScreen(),
             ),
         };
-      },
-      mapToLocation: (route) => switch (route) {
-        MainRoute() => '/',
-        ItemDetailsRoute(:final id) => '/items/$id',
-        VideoPlayerRoute(:final id, :final startPosition) =>
-          '/player/$id?startPosition=$startPosition',
-        LoginRoute() => '/login',
-        SetupRoute() => '/setup',
       },
     );
   },
@@ -174,19 +184,19 @@ class _LoggingProviderObserver extends ProviderObserver {
   @override
   void didAddProvider(ProviderBase<Object?> provider, Object? value,
       ProviderContainer container) {
-    // _logger.d('created ${provider.name} : $value');
+    _logger.d('created ${provider.name} : $value');
   }
 
   @override
   void didUpdateProvider(ProviderBase<Object?> provider, Object? previousValue,
       Object? newValue, ProviderContainer container) {
-    // _logger.d('updated ${provider.name} : $newValue');
+    _logger.d('updated ${provider.name} : $newValue');
   }
 
   @override
   void didDisposeProvider(
       ProviderBase<Object?> provider, ProviderContainer container) {
-    // _logger.d('disposed ${provider.name}');
+    _logger.d('disposed ${provider.name}');
   }
 }
 
@@ -297,6 +307,7 @@ enum Screen {
 class _MainScreenState extends ConsumerState<MainScreen> {
   final _updater = Updater();
 
+  RouterController? _routerController;
   Screen _screen = Screen.home;
 
   @override
@@ -313,6 +324,20 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             .replace(const LoginRoute(redirect: null));
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _routerController?.removeLocationListener(_onLocationChanged);
+    _routerController = RouterController.of(context);
+    _routerController?.addLocationListener(_onLocationChanged);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _routerController?.removeLocationListener(_onLocationChanged);
   }
 
   Future<bool?> _isLoggedIn() async {
@@ -335,6 +360,21 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       } else {
         await update.install((progress) {});
       }
+    }
+  }
+
+  void _onLocationChanged(RouteConfig location) {
+    final screen = switch (location.location) {
+      '/' => Screen.home,
+      '/movies' => Screen.movies,
+      '/shows' => Screen.shows,
+      '/settings' => Screen.settings,
+      _ => null,
+    };
+    if (screen != null) {
+      setState(() {
+        _screen = screen;
+      });
     }
   }
 
