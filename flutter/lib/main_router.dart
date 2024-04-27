@@ -20,13 +20,10 @@ class MainRouter extends ZenithRouter {
             if (activeServer == null) {
               return const [SetupRoute()];
             }
-
-            final match =
-                RegExp(r'/items/(\d+)').matchAsPrefix(location.location);
             return [
               const MainRoute(),
-              if (match != null)
-                ItemDetailsRoute(id: int.parse(match.group(1)!)),
+              if (location.uri.path.startsWith('/items/'))
+                ItemDetailsRoute(id: int.parse(location.pathSegments[1])),
             ];
           },
           buildLocation: (route) => switch (route) {

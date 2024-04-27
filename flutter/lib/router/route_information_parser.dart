@@ -2,19 +2,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:zenith/router/router_delegate.dart';
 
-class ZenithRouteInformationParser extends RouteInformationParser<RouteConfig> {
+class ZenithRouteInformationParser
+    extends RouteInformationParser<RouteLocation> {
   @override
-  Future<RouteConfig> parseRouteInformation(RouteInformation routeInformation) {
+  Future<RouteLocation> parseRouteInformation(
+      RouteInformation routeInformation) {
     final uri = routeInformation.uri;
-    var location = uri.path;
-    if (uri.hasQuery) {
-      location += '?${uri.query}';
-    }
-    return SynchronousFuture(RouteConfig(location));
+    return SynchronousFuture(RouteLocation.uri(uri));
   }
 
   @override
-  RouteInformation? restoreRouteInformation(RouteConfig configuration) {
-    return RouteInformation(uri: Uri.parse(configuration.location));
+  RouteInformation? restoreRouteInformation(RouteLocation configuration) {
+    return RouteInformation(uri: configuration.uri);
   }
 }

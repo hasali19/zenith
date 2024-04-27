@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:zenith/router/router_delegate.dart';
 
-typedef LocationListener = void Function(RouteConfig location);
+typedef LocationListener = void Function(RouteLocation location);
 
 abstract interface class RouterController {
   void updateLocation(String location);

@@ -6,7 +6,7 @@ import 'package:zenith/router/router_controller.dart';
 import 'package:zenith/router/router_delegate.dart';
 
 class StackRouter<T> extends StatefulWidget {
-  final List<T> Function(RouteConfig location) onSetLocation;
+  final List<T> Function(RouteLocation location) onSetLocation;
   final Page<dynamic> Function(T route) buildPage;
   final String Function(T route) buildLocation;
 
@@ -54,7 +54,7 @@ class StackRouterState<T> extends State<StackRouter<T>>
     _popController?.removePopHandler(this);
   }
 
-  void _onLocationChanged(RouteConfig location) {
+  void _onLocationChanged(RouteLocation location) {
     setState(() {
       _stack.clear();
       _stack.addAll(widget.onSetLocation(location));

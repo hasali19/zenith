@@ -3,13 +3,24 @@ import 'package:flutter/widgets.dart';
 import 'package:zenith/router/pop_scope.dart';
 import 'package:zenith/router/router_controller.dart';
 
-class RouteConfig {
-  final String location;
+class RouteLocation {
+  final Uri uri;
+  final List<String> pathSegments;
 
-  const RouteConfig(this.location);
+  const RouteLocation({required this.uri, required this.pathSegments});
+
+  factory RouteLocation.uri(Uri uri) {
+    final start = uri.path.startsWith('/') ? 1 : 0;
+    final end =
+        uri.path.length - (uri.path != '/' && uri.path.endsWith('/') ? 1 : 0);
+    return RouteLocation(
+      uri: uri,
+      pathSegments: uri.path.substring(start, end).split('/'),
+    );
+  }
 }
 
-class ZenithRouterDelegate extends RouterDelegate<RouteConfig>
+class ZenithRouterDelegate extends RouterDelegate<RouteLocation>
     with ChangeNotifier
     implements RouterController, PopController {
   final Widget Function(BuildContext context) builder;
@@ -17,12 +28,12 @@ class ZenithRouterDelegate extends RouterDelegate<RouteConfig>
   final _locationListeners = <LocationListener>[];
   final _popHandlers = <PopHandler>[];
 
-  RouteConfig? _config;
+  RouteLocation? _config;
 
   ZenithRouterDelegate({required this.builder});
 
   @override
-  RouteConfig? get currentConfiguration => _config;
+  RouteLocation? get currentConfiguration => _config;
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +57,7 @@ class ZenithRouterDelegate extends RouterDelegate<RouteConfig>
   }
 
   @override
-  Future<void> setNewRoutePath(RouteConfig configuration) {
+  Future<void> setNewRoutePath(RouteLocation configuration) {
     _config = configuration;
     for (final listener in _locationListeners) {
       listener(configuration);
@@ -56,7 +67,7 @@ class ZenithRouterDelegate extends RouterDelegate<RouteConfig>
 
   @override
   void updateLocation(String location) {
-    _config = RouteConfig(location);
+    _config = RouteLocation.uri(Uri.parse(location));
     notifyListeners();
   }
 

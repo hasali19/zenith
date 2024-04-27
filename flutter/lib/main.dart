@@ -185,7 +185,8 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
             AppThemeMode.dark => ThemeMode.dark,
             AppThemeMode.system => ThemeMode.system,
           },
-          routerConfig: _router.config(),
+          routerDelegate: _router.routerDelegate,
+          routeInformationParser: _router.routeInformationParser,
         ),
       );
     });
@@ -298,8 +299,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     }
   }
 
-  void _onLocationChanged(RouteConfig location) {
-    final screen = switch (location.location) {
+  void _onLocationChanged(RouteLocation location) {
+    final screen = switch (location.uri.path) {
       '/' => Screen.home,
       '/movies' => Screen.movies,
       '/shows' => Screen.shows,
