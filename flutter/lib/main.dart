@@ -76,62 +76,65 @@ class SetupRoute extends PrimaryRoute {
 final _routerDelegateProvider = Provider(
   (ref) {
     final activeServer = ref.read(activeServerProvider);
-    return ZenithRouterDelegate<PrimaryRoute>(
-      onSetLocation: (location) {
-        if (activeServer == null) {
-          return const [SetupRoute()];
-        }
+    return ZenithRouterDelegate(
+      builder: (context) => StackRouter<PrimaryRoute>(
+        onSetLocation: (location) {
+          if (activeServer == null) {
+            return const [SetupRoute()];
+          }
 
-        final match = RegExp(r'/items/(\d+)').matchAsPrefix(location.location);
-        return [
-          const MainRoute(),
-          if (match != null) ItemDetailsRoute(id: int.parse(match.group(1)!)),
-        ];
-      },
-      buildLocation: (route) => switch (route) {
-        MainRoute() => '/',
-        ItemDetailsRoute(:final id) => '/items/$id',
-        VideoPlayerRoute(:final id, :final startPosition) =>
-          '/player/$id?startPosition=$startPosition',
-        LoginRoute() => '/login',
-        SetupRoute() => '/setup',
-      },
-      buildPage: (route) {
-        return switch (route) {
-          MainRoute() => MaterialPage(
-              key: ValueKey(route),
-              arguments: route,
-              child: const MainScreen(),
-            ),
-          ItemDetailsRoute(:final id) => MaterialPage(
-              key: ValueKey(route),
-              arguments: route,
-              child: ItemDetailsPage(id: id),
-            ),
-          VideoPlayerRoute(
-            :final id,
-            :final startPosition,
-          ) =>
-            MaterialPage(
-              key: ValueKey(route),
-              arguments: route,
-              child: VideoPlayerScreen(
-                id: id,
-                startPosition: startPosition,
+          final match =
+              RegExp(r'/items/(\d+)').matchAsPrefix(location.location);
+          return [
+            const MainRoute(),
+            if (match != null) ItemDetailsRoute(id: int.parse(match.group(1)!)),
+          ];
+        },
+        buildLocation: (route) => switch (route) {
+          MainRoute() => '/',
+          ItemDetailsRoute(:final id) => '/items/$id',
+          VideoPlayerRoute(:final id, :final startPosition) =>
+            '/player/$id?startPosition=$startPosition',
+          LoginRoute() => '/login',
+          SetupRoute() => '/setup',
+        },
+        buildPage: (route) {
+          return switch (route) {
+            MainRoute() => MaterialPage(
+                key: ValueKey(route),
+                arguments: route,
+                child: const MainScreen(),
               ),
-            ),
-          LoginRoute(:final redirect) => MaterialPage(
-              key: ValueKey(route),
-              arguments: route,
-              child: LoginPage(redirect: redirect),
-            ),
-          SetupRoute() => MaterialPage(
-              key: ValueKey(route),
-              arguments: route,
-              child: const SetupScreen(),
-            ),
-        };
-      },
+            ItemDetailsRoute(:final id) => MaterialPage(
+                key: ValueKey(route),
+                arguments: route,
+                child: ItemDetailsPage(id: id),
+              ),
+            VideoPlayerRoute(
+              :final id,
+              :final startPosition,
+            ) =>
+              MaterialPage(
+                key: ValueKey(route),
+                arguments: route,
+                child: VideoPlayerScreen(
+                  id: id,
+                  startPosition: startPosition,
+                ),
+              ),
+            LoginRoute(:final redirect) => MaterialPage(
+                key: ValueKey(route),
+                arguments: route,
+                child: LoginPage(redirect: redirect),
+              ),
+            SetupRoute() => MaterialPage(
+                key: ValueKey(route),
+                arguments: route,
+                child: const SetupScreen(),
+              ),
+          };
+        },
+      ),
     );
   },
 );

@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:zenith/router/pop_scope.dart';
 import 'package:zenith/router/router_controller.dart';
-import 'package:zenith/router/stack_router.dart';
 
 class RouteConfig {
   final String location;
@@ -10,23 +9,17 @@ class RouteConfig {
   const RouteConfig(this.location);
 }
 
-class ZenithRouterDelegate<T> extends RouterDelegate<RouteConfig>
+class ZenithRouterDelegate extends RouterDelegate<RouteConfig>
     with ChangeNotifier
     implements RouterController, PopController {
-  final List<T> Function(RouteConfig location) onSetLocation;
-  final Page<T> Function(T route) buildPage;
-  final String Function(T route) buildLocation;
+  final Widget Function(BuildContext context) builder;
 
   final _locationListeners = <LocationListener>[];
   final _popHandlers = <PopHandler>[];
 
   RouteConfig? _config;
 
-  ZenithRouterDelegate({
-    required this.onSetLocation,
-    required this.buildPage,
-    required this.buildLocation,
-  });
+  ZenithRouterDelegate({required this.builder});
 
   @override
   RouteConfig? get currentConfiguration => _config;
@@ -37,11 +30,7 @@ class ZenithRouterDelegate<T> extends RouterDelegate<RouteConfig>
       controller: this,
       child: PopControllerScope(
         controller: this,
-        child: StackRouter<T>(
-          onSetLocation: onSetLocation,
-          buildPage: buildPage,
-          buildLocation: buildLocation,
-        ),
+        child: builder(context),
       ),
     );
   }
