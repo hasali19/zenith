@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/preferences.dart';
+import 'package:zenith/router/page.dart';
 import 'package:zenith/router/router.dart';
 import 'package:zenith/router/stack_router.dart';
 import 'package:zenith/routes/routes.dart';
@@ -37,40 +38,19 @@ class MainRouter extends ZenithRouter {
             SetupRoute() => '/setup',
           },
           buildPage: (route) {
-            return switch (route) {
-              MainRoute() => MaterialPage(
-                  key: ValueKey(route),
-                  arguments: route,
-                  child: const MainScreen(),
-                ),
-              ItemDetailsRoute(:final id) => MaterialPage(
-                  key: ValueKey(route),
-                  arguments: route,
-                  child: ItemDetailsPage(id: id),
-                ),
-              VideoPlayerRoute(
-                :final id,
-                :final startPosition,
-              ) =>
-                MaterialPage(
-                  key: ValueKey(route),
-                  arguments: route,
-                  child: VideoPlayerScreen(
+            return ZenithPage(
+              route: route,
+              child: switch (route) {
+                MainRoute() => const MainScreen(),
+                ItemDetailsRoute(:final id) => ItemDetailsPage(id: id),
+                VideoPlayerRoute(:final id) => VideoPlayerScreen(
                     id: id,
-                    startPosition: startPosition,
+                    startPosition: route.startPosition,
                   ),
-                ),
-              LoginRoute(:final redirect) => MaterialPage(
-                  key: ValueKey(route),
-                  arguments: route,
-                  child: LoginPage(redirect: redirect),
-                ),
-              SetupRoute() => MaterialPage(
-                  key: ValueKey(route),
-                  arguments: route,
-                  child: const SetupScreen(),
-                ),
-            };
+                LoginRoute(:final redirect) => LoginPage(redirect: redirect),
+                SetupRoute() => const SetupScreen(),
+              },
+            );
           },
         );
       },

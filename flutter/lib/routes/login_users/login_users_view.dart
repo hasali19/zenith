@@ -4,7 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/router/stack_router.dart';
-import 'package:zenith/routes/login/router.dart';
+import 'package:zenith/routes/login/routes.dart';
 
 part 'login_users_view.g.dart';
 

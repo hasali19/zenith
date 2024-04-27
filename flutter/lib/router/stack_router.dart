@@ -7,7 +7,7 @@ import 'package:zenith/router/router_delegate.dart';
 
 class StackRouter<T> extends StatefulWidget {
   final List<T> Function(RouteConfig location) onSetLocation;
-  final Page<T> Function(T route) buildPage;
+  final Page<dynamic> Function(T route) buildPage;
   final String Function(T route) buildLocation;
 
   const StackRouter({

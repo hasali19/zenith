@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/main.dart';
+import 'package:zenith/router/page.dart';
 import 'package:zenith/router/stack_router.dart';
 import 'package:zenith/routes/login/login_controller.dart';
-import 'package:zenith/routes/login/router.dart';
+import 'package:zenith/routes/login/routes.dart';
 import 'package:zenith/routes/login_register/login_register_page.dart';
 import 'package:zenith/routes/login_user/login_user_page.dart';
 import 'package:zenith/routes/login_users/login_users_page.dart';
@@ -26,16 +27,11 @@ class LoginPage extends StatelessWidget {
             '/login/register?initial=$initial',
         },
         buildPage: (route) {
-          return switch (route) {
-            LoginUsersRoute() => MaterialPage(
-                key: ValueKey(route),
-                arguments: route,
-                child: const LoginUsersPage(),
-              ),
-            LoginUserRoute() => MaterialPage(
-                key: ValueKey(route),
-                arguments: route,
-                child: LoginUserPage(
+          return ZenithPage(
+            route: route,
+            child: switch (route) {
+              LoginUsersRoute() => const LoginUsersPage(),
+              LoginUserRoute() => LoginUserPage(
                   username: route.username,
                   onSuccess: () {
                     // final redirectPath = ref.read(loginRedirectPathProvider);
@@ -49,13 +45,9 @@ class LoginPage extends StatelessWidget {
                         .replace(const MainRoute());
                   },
                 ),
-              ),
-            LoginRegisterRoute() => MaterialPage(
-                key: ValueKey(route),
-                arguments: route,
-                child: LoginRegisterPage(initial: route.initial),
-              ),
-          };
+              LoginRegisterRoute() => LoginRegisterPage(initial: route.initial),
+            },
+          );
         },
       ),
     );
