@@ -1,13 +1,13 @@
 import 'dart:convert';
-import 'dart:html';
+import 'dart:js_interop';
+import 'dart:ui_web';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:http/http.dart' as http;
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 import 'package:video_player_web/text_track_parser.dart';
-
-import 'shims/dart_ui.dart' as ui;
+import 'package:web/web.dart';
 
 class VideoPlayerWeb extends VideoPlayerPlatform {
   static void registerWith(Registrar registrar) {
@@ -20,15 +20,16 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
   Future<VideoController> createController(
       {Map<String, String>? headers}) async {
     final id = nextId++;
-    final element = VideoElement()
+    final element = document.createElement('video') as HTMLVideoElement
       ..autoplay = true
-      ..disableRemotePlayback = true
       ..style.width = '100%'
       ..style.height = '100%'
       ..style.background = 'black';
 
-    ui.platformViewRegistry
-        .registerViewFactory('videoplayer-$id', (viewId) => element);
+    element.setAttribute('disableRemotePlayback', 'true');
+
+    platformViewRegistry.registerViewFactory(
+        'videoplayer-$id', (viewId) => element);
 
     return VideoControllerWeb(id, element);
   }
@@ -46,28 +47,29 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
 
 class VideoControllerWeb extends VideoController with ChangeNotifier {
   final int id;
-  final VideoElement _element;
+  final HTMLVideoElement _element;
   final Map<int, TextTrack> _textTracks = {};
 
   VideoState _state = VideoState.idle;
   TextTrack? _activeTextTrack;
 
   VideoControllerWeb(this.id, this._element) {
-    _element.addEventListener('durationchange', (event) => notifyListeners());
-    _element.addEventListener('pause', (event) => notifyListeners());
-    _element.addEventListener('play', (event) => notifyListeners());
+    _element.addEventListener(
+        'durationchange', ((event) => notifyListeners()).toJS);
+    _element.onPause.listen((event) => notifyListeners());
+    _element.onPlay.listen((event) => notifyListeners());
 
-    _element.addEventListener('playing', (event) {
+    _element.onPlaying.listen((event) {
       _loading = false;
       notifyListeners();
     });
 
-    _element.addEventListener('waiting', (event) {
+    _element.onWaiting.listen((event) {
       _loading = true;
       notifyListeners();
     });
 
-    _element.addEventListener('ended', (event) {
+    _element.onEnded.listen((event) {
       _state = VideoState.ended;
       notifyListeners();
     });
@@ -118,7 +120,11 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
     _element.src = item.url;
     _element.crossOrigin = 'anonymous';
     _element.currentTime = startPosition;
-    _element.children.clear();
+
+    while (_element.firstChild != null) {
+      _element.removeChild(_element.firstChild!);
+    }
+
     _state = VideoState.active;
     _activeTextTrack = null;
     currentItemIndex = startIndex;
@@ -169,7 +175,7 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
             contentType == 'application/x-subrip') {
           parser = SrtParser();
         } else {
-          window.console.error('unsupported text track format: $contentType');
+          console.error('unsupported text track format: $contentType'.toJS);
           return;
         }
 

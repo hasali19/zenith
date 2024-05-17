@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/download.dart'
-    if (dart.library.html) 'package:zenith/download_web.dart';
+    if (dart.library.js_interop) 'package:zenith/download_web.dart';
 import 'package:zenith/fade_in_image.dart';
 import 'package:zenith/language_codes.dart';
 import 'package:zenith/responsive.dart';
