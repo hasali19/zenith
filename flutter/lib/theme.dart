@@ -3,10 +3,18 @@ import 'package:theme_tailor_annotation/theme_tailor_annotation.dart';
 
 part 'theme.tailor.dart';
 
-@Tailor(themeGetter: ThemeGetter.onBuildContext)
-class _$ZenithTheme {
-  static List<TextStyle> titleLarge = [];
-  static List<TextStyle> titleMedium = [];
-  static List<TextStyle> bodyMedium = [];
-  static List<TextStyle> bodySmall = [];
+@TailorMixin(themeGetter: ThemeGetter.onBuildContext)
+class ZenithTheme extends ThemeExtension<ZenithTheme>
+    with _$ZenithThemeTailorMixin {
+  final TextStyle titleLarge;
+  final TextStyle titleMedium;
+  final TextStyle bodyMedium;
+  final TextStyle bodySmall;
+
+  const ZenithTheme({
+    required this.titleLarge,
+    required this.titleMedium,
+    required this.bodyMedium,
+    required this.bodySmall,
+  });
 }

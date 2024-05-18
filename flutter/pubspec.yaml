@@ -57,7 +57,7 @@ dependencies:
   shared_preferences_riverpod: ^0.3.0
   sized_context: ^1.0.0+1
   sliver_tools: ^0.2.8
-  theme_tailor_annotation: ^2.0.0
+  theme_tailor_annotation: ^3.0.1
   url_launcher: ^6.1.8
   uuid: ^4.1.0
   video_player:
@@ -86,7 +86,7 @@ dev_dependencies:
   msix: ^3.16.4
   riverpod_generator: ^2.3.11
   riverpod_lint: ^2.3.9
-  theme_tailor: ^2.0.0
+  theme_tailor: ^3.0.1
 
 dependency_overrides:
   flutter_secure_storage_web:
