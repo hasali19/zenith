@@ -4,10 +4,10 @@ import 'package:zenith/window.dart';
 
 class BottomControls extends ConsumerWidget {
   const BottomControls({
-    Key? key,
+    super.key,
     required this.onShowCaptionsMenu,
     required this.onShowOptionsMenu,
-  }) : super(key: key);
+  });
 
   final VoidCallback onShowCaptionsMenu;
   final VoidCallback onShowOptionsMenu;

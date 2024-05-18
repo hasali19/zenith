@@ -325,8 +325,8 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
           : _buildPlayer(_controller!),
     );
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      onPopInvoked: _onPopInvoked,
       child: Scaffold(
         backgroundColor: Colors.black,
         body: content,
@@ -334,7 +334,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     );
   }
 
-  Future<bool> _onWillPop() async {
+  Future<void> _onPopInvoked(bool didPop) async {
     final window = ref.read(windowProvider);
     if (window.isWindowed) {
       await window.setFullscreen(false);
@@ -342,6 +342,5 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
       await platform.setExtendIntoCutout(false);
       await platform.setSystemBarsVisible(true);
     }
-    return true;
   }
 }

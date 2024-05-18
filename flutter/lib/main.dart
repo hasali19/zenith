@@ -90,7 +90,7 @@ class _LoggingProviderObserver extends ProviderObserver {
 }
 
 class ZenithApp extends ConsumerStatefulWidget {
-  const ZenithApp({Key? key}) : super(key: key);
+  const ZenithApp({super.key});
 
   @override
   ConsumerState<ZenithApp> createState() => _ZenithAppState();
@@ -192,7 +192,8 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
 
 @RoutePage()
 class MainScreen extends ConsumerStatefulWidget {
-  const MainScreen({Key? key}) : super(key: key);
+  const MainScreen({super.key});
+
   @override
   ConsumerState<MainScreen> createState() => _MainScreenState();
 }
@@ -219,7 +220,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   _checkForUpdates() async {
     final update = await _updater.checkForUpdates();
     if (update != null && context.mounted) {
-      if (update.showCustomUpdateUi) {
+      if (update.showCustomUpdateUi && mounted) {
         showDialog(
           context: context,
           barrierDismissible: false,

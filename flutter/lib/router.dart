@@ -100,7 +100,7 @@ final _moviesProvider = FutureProvider((ref) async {
 
 @RoutePage()
 class MoviesScreen extends ConsumerWidget {
-  const MoviesScreen({Key? key}) : super(key: key);
+  const MoviesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -121,7 +121,7 @@ final _showsProvider = FutureProvider((ref) async {
 
 @RoutePage()
 class ShowsScreen extends ConsumerWidget {
-  const ShowsScreen({Key? key}) : super(key: key);
+  const ShowsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

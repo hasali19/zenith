@@ -185,12 +185,12 @@ class VideoStreamInfo extends StreamInfo {
   final int height;
 
   const VideoStreamInfo({
-    required int id,
-    required int index,
-    required String codec,
+    required super.id,
+    required super.index,
+    required super.codec,
     required this.width,
     required this.height,
-  }) : super(id: id, index: index, codec: codec);
+  });
 
   factory VideoStreamInfo.fromJson(Map<String, dynamic> json) {
     return VideoStreamInfo(
@@ -207,11 +207,11 @@ class AudioStreamInfo extends StreamInfo {
   final String? language;
 
   const AudioStreamInfo({
-    required int id,
-    required int index,
-    required String codec,
+    required super.id,
+    required super.index,
+    required super.codec,
     required this.language,
-  }) : super(id: id, index: index, codec: codec);
+  });
 
   factory AudioStreamInfo.fromJson(Map<String, dynamic> json) {
     return AudioStreamInfo(

@@ -183,7 +183,7 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
     );
 
     if (result == true && context.mounted) {
-      context.router.pop();
+      context.router.maybePop();
     }
   }
 }

@@ -45,7 +45,7 @@ Future<HomeScreenData> _state(_StateRef ref) async {
 
 @RoutePage()
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -177,7 +177,7 @@ class Section<T> extends StatefulWidget {
   final Widget Function(BuildContext context, T item) itemBuilder;
 
   const Section({
-    Key? key,
+    super.key,
     required this.title,
     required this.items,
     required this.itemBuilder,
@@ -186,7 +186,7 @@ class Section<T> extends StatefulWidget {
     required this.listItemWidth,
     required this.listItemHeight,
     required this.endPadding,
-  }) : super(key: key);
+  });
 
   @override
   State<Section<T>> createState() => _SectionState<T>();
@@ -252,14 +252,14 @@ class ContinueWatchingCard extends StatelessWidget {
   final void Function() onTap;
 
   const ContinueWatchingCard({
-    Key? key,
+    super.key,
     required this.thumbnail,
     required this.title,
     required this.subtitle,
     required this.progress,
     required this.padding,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

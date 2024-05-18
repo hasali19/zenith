@@ -121,7 +121,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                   .read(serversPrefProvider.notifier)
                   .update([...servers, server]);
 
-              context.router.replace(const MainRoute());
+              if (context.mounted) {
+                context.router.replace(const MainRoute());
+              }
             },
           ),
         ],

@@ -7,11 +7,11 @@ class PlayPauseButton extends StatefulWidget {
   final void Function(bool playing) onSetPlaying;
 
   const PlayPauseButton({
-    Key? key,
+    super.key,
     required this.isPlaying,
     required this.onSetPlaying,
     this.size,
-  }) : super(key: key);
+  });
 
   @override
   State<PlayPauseButton> createState() => _PlayPauseButtonState();

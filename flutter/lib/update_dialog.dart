@@ -3,9 +3,9 @@ import 'package:zenith/updater.dart';
 
 class UpdateDialog extends StatefulWidget {
   const UpdateDialog({
-    Key? key,
+    super.key,
     required this.update,
-  }) : super(key: key);
+  });
 
   final Update update;
 

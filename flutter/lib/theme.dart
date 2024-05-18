@@ -6,9 +6,13 @@ part 'theme.tailor.dart';
 @TailorMixin(themeGetter: ThemeGetter.onBuildContext)
 class ZenithTheme extends ThemeExtension<ZenithTheme>
     with _$ZenithThemeTailorMixin {
+  @override
   final TextStyle titleLarge;
+  @override
   final TextStyle titleMedium;
+  @override
   final TextStyle bodyMedium;
+  @override
   final TextStyle bodySmall;
 
   const ZenithTheme({
