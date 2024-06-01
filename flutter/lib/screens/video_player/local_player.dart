@@ -200,14 +200,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: _toggleControls,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: child,
-            ),
-            child: _buildUi(),
-          ),
+          child: _buildUi(),
         )
       ],
     );
@@ -304,10 +297,16 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     return ValueListenableBuilder(
       valueListenable: platform.isInPipMode,
       builder: (context, isInPipMode, child) {
-        if (!shouldShowControls || isInPipMode) {
-          return const SizedBox.expand();
-        }
-        return content;
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+          child: shouldShowControls && !isInPipMode
+              ? content
+              : const SizedBox.expand(),
+        );
       },
     );
   }
