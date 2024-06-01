@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
@@ -139,10 +138,20 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
   }
 
   Future<void> _showAudioMenu(BuildContext context) {
-    return _showModalBottomSheet(
-      (context) => ListView(
-        children: _buildAudioMenuItems(context),
-      ),
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          builder: (context, scrollController) {
+            return ListView(
+              controller: scrollController,
+              children: _buildAudioMenuItems(context),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -164,12 +173,20 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
   }
 
   Future<void> _showSubtitlesMenu(BuildContext context) {
-    return _showModalBottomSheet(
-      (context) => ListView(
-        padding: context.mq.padding,
-        children: _buildSubtitlesMenuItems(context),
-      ),
-      safeArea: false,
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          builder: (context, scrollController) {
+            return ListView(
+              controller: scrollController,
+              children: _buildSubtitlesMenuItems(context),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -244,10 +261,18 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
       );
     }
 
-    return _showModalBottomSheet(
-      (context) {
-        return Wrap(
-          children: speeds.map(buildListTile).toList(),
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          builder: (context, scrollController) {
+            return ListView(
+              controller: scrollController,
+              children: speeds.map(buildListTile).toList(),
+            );
+          },
         );
       },
     );
