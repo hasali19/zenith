@@ -303,7 +303,8 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
             opacity: animation,
             child: child,
           ),
-          child: shouldShowControls && !isInPipMode
+          child: (shouldShowControls && !isInPipMode) ||
+                  ModalRoute.of(context)?.isCurrent == false
               ? content
               : const SizedBox.expand(),
         );
