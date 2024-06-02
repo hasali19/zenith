@@ -298,14 +298,14 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         ),
         const SizedBox(height: 8),
         BottomControls(
-          onShowCaptionsMenu: () {
-            widget.onInteractionEnd();
-            _showSubtitlesMenu(context);
-          },
+          subtitles: _subtitles,
+          onSubtitleTrackSelected: widget.onTextTrackSelected,
           onShowOptionsMenu: () {
             widget.onInteractionEnd();
             _showOptionsMenu(context);
           },
+          onInteractionStart: widget.onInteractionStart,
+          onInteractionEnd: widget.onInteractionEnd,
         ),
       ],
     );
