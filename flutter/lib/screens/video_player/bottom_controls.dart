@@ -121,16 +121,19 @@ class _SubtitleMenuButton extends StatelessWidget {
           onPressed: () => onSubtitleTrackSelected(null),
         ),
         ...subtitles.map((track) => MenuItemButton(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(track.displayLanguage ?? 'Unknown'),
-                  if (track.title != null)
-                    Text(
-                      track.title!,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                ],
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 150),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(track.displayLanguage ?? 'Unknown'),
+                    if (track.title != null)
+                      Text(
+                        track.title!,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                  ],
+                ),
               ),
               onPressed: () => onSubtitleTrackSelected(track),
             ))
