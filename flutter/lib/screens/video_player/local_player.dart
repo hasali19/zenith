@@ -13,6 +13,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:zenith/api.dart' as api;
 import 'package:zenith/cookies.dart';
 import 'package:zenith/platform.dart' as platform;
+import 'package:zenith/preferences.dart';
 import 'package:zenith/screens/video_player/media_title.dart';
 import 'package:zenith/screens/video_player/ui.dart';
 import 'package:zenith/screens/video_player/utils.dart';
@@ -288,7 +289,13 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
         onSeek: (position) => _controller!.position = position,
         onSeekDelta: (delta) => _controller!.position += delta,
         onSeekToPrevious: () => _controller!.seekToPreviousItem(),
-        onSeekToNext: () => _controller!.seekToNextItem(),
+        onSeekToNext: () {
+          if (ref.read(setWatchedOnSkipProvider)) {
+            _api.updateUserData(
+                currentItem.id, api.VideoUserDataPatch(isWatched: true));
+          }
+          _controller!.seekToNextItem();
+        },
         onSetPaused: (isPaused) =>
             isPaused ? _controller!.pause() : _controller!.play(),
       ),

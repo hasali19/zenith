@@ -141,3 +141,9 @@ final rewindDurationProvider = createMapPrefProvider<PlayerSeekPresetDuration>(
       PlayerSeekPresetDuration.d10,
   mapTo: (v) => v.name,
 );
+
+final setWatchedOnSkipProvider = createPrefProvider<bool>(
+  prefs: (ref) => ref.watch(preferencesProvider),
+  prefKey: 'player.setWatchedOnSkip',
+  defaultValue: kReleaseMode,
+);

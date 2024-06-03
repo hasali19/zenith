@@ -175,6 +175,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             }
           },
         ),
+        CheckboxListTile(
+          title: const Text('Set watched on skip'),
+          subtitle: const Text(
+              'When skipping forward in the playlist, mark the current video as watched'),
+          value: ref.watch(setWatchedOnSkipProvider),
+          onChanged: (value) {
+            if (value != null) {
+              ref.read(setWatchedOnSkipProvider.notifier).update(value);
+            }
+          },
+        ),
         const Divider(),
         ListTile(
           title: const Text('Version'),
