@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
-import 'package:zenith/update_dialog.dart';
 import 'package:zenith/updater.dart';
 
 @RoutePage()
@@ -31,15 +30,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }();
   }
 
-  _checkForUpdates(BuildContext context) async {
+  Future<void> _checkForUpdates(BuildContext context) async {
     final update = await _updater.checkForUpdates();
     if (!context.mounted) return;
     if (update != null) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => UpdateDialog(update: update),
-      );
+      await update.install();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: const Text('No updates available'),

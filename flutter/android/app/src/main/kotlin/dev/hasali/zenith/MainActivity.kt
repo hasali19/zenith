@@ -81,23 +81,6 @@ class MainActivity : FlutterActivity() {
 
     private fun handleUpdaterMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
-            "useLunaUpdater" -> {
-                val installerPackageName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    val installSource =
-                        context.packageManager.getInstallSourceInfo(packageName)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        installSource.updateOwnerPackageName ?: installSource.installingPackageName
-                    } else {
-                        installSource.installingPackageName
-                    }
-                } else {
-                    @Suppress("DEPRECATION")
-                    context.packageManager.getInstallerPackageName(packageName)
-                }
-
-                result.success(installerPackageName == "dev.hasali.luna")
-            }
-
             "installWithLuna" -> {
                 val intent = Intent().apply {
                     component =
@@ -110,17 +93,6 @@ class MainActivity : FlutterActivity() {
                     result.success(id)
                 }
                 startActivityForResult(intent, id)
-            }
-
-            "install" -> {
-                try {
-                    val url: String = call.argument("url")
-                        ?: return result.error("missing_param", "url is required", null)
-                    install(url)
-                    result.success(null)
-                } catch (ex: Exception) {
-                    result.error(ex.javaClass.canonicalName!!, ex.message, null)
-                }
             }
 
             else -> result.notImplemented()
@@ -224,17 +196,6 @@ class MainActivity : FlutterActivity() {
             }
 
             else -> result.notImplemented()
-        }
-    }
-
-    private fun install(url: String) {
-        executor.execute {
-            AppUpdater(this)
-                .downloadAndInstall(url) {
-                    runOnUiThread {
-                        updaterChannel.invokeMethod("install/onProgress", it)
-                    }
-                }
         }
     }
 
