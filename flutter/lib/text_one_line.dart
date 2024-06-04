@@ -13,32 +13,19 @@ import 'package:flutter/material.dart';
 ///
 class TextOneLine extends Text {
   const TextOneLine(
-    String data, {
-    Key? key,
-    TextStyle? style,
-    StrutStyle? strutStyle,
-    TextAlign? textAlign,
-    TextDirection? textDirection,
-    Locale? locale,
-    TextOverflow? overflow = TextOverflow.fade,
-    double? textScaleFactor,
-    String? semanticsLabel,
-    TextWidthBasis textWidthBasis = TextWidthBasis.parent,
-    TextHeightBehavior? textHeightBehavior,
+    super.data, {
+    super.key,
+    super.style,
+    super.strutStyle,
+    super.textAlign,
+    super.textDirection,
+    super.locale,
+    super.overflow = TextOverflow.fade,
+    super.semanticsLabel,
+    TextWidthBasis super.textWidthBasis = TextWidthBasis.parent,
+    super.textHeightBehavior,
   }) : super(
-          data,
-          key: key,
-          style: style,
-          strutStyle: strutStyle,
-          textAlign: textAlign,
-          textDirection: textDirection,
-          locale: locale,
           softWrap: false,
-          overflow: overflow,
-          textScaleFactor: textScaleFactor,
           maxLines: 1,
-          semanticsLabel: semanticsLabel,
-          textWidthBasis: textWidthBasis,
-          textHeightBehavior: textHeightBehavior,
         );
 }

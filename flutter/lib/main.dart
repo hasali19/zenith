@@ -24,7 +24,6 @@ import 'package:zenith/screens/media_library.dart';
 import 'package:zenith/screens/settings.dart';
 import 'package:zenith/theme.dart';
 import 'package:zenith/themes.dart';
-import 'package:zenith/update_dialog.dart';
 import 'package:zenith/updater.dart';
 import 'package:zenith/window.dart';
 
@@ -287,15 +286,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   Future<void> _checkForUpdates() async {
     final update = await _updater.checkForUpdates();
     if (update != null && mounted) {
-      if (update.showCustomUpdateUi) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => UpdateDialog(update: update),
-        );
-      } else {
-        await update.install((progress) {});
-      }
+      await update.install();
     }
   }
 

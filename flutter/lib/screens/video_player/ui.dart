@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
@@ -139,10 +138,20 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
   }
 
   Future<void> _showAudioMenu(BuildContext context) {
-    return _showModalBottomSheet(
-      (context) => ListView(
-        children: _buildAudioMenuItems(context),
-      ),
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          builder: (context, scrollController) {
+            return ListView(
+              controller: scrollController,
+              children: _buildAudioMenuItems(context),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -164,12 +173,20 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
   }
 
   Future<void> _showSubtitlesMenu(BuildContext context) {
-    return _showModalBottomSheet(
-      (context) => ListView(
-        padding: context.mq.padding,
-        children: _buildSubtitlesMenuItems(context),
-      ),
-      safeArea: false,
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          builder: (context, scrollController) {
+            return ListView(
+              controller: scrollController,
+              children: _buildSubtitlesMenuItems(context),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -244,10 +261,18 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
       );
     }
 
-    return _showModalBottomSheet(
-      (context) {
-        return Wrap(
-          children: speeds.map(buildListTile).toList(),
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          builder: (context, scrollController) {
+            return ListView(
+              controller: scrollController,
+              children: speeds.map(buildListTile).toList(),
+            );
+          },
         );
       },
     );
@@ -273,14 +298,14 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         ),
         const SizedBox(height: 8),
         BottomControls(
-          onShowCaptionsMenu: () {
-            widget.onInteractionEnd();
-            _showSubtitlesMenu(context);
-          },
+          subtitles: _subtitles,
+          onSubtitleTrackSelected: widget.onTextTrackSelected,
           onShowOptionsMenu: () {
             widget.onInteractionEnd();
             _showOptionsMenu(context);
           },
+          onInteractionStart: widget.onInteractionStart,
+          onInteractionEnd: widget.onInteractionEnd,
         ),
       ],
     );
@@ -293,11 +318,6 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     final bottomControlsPadding = desktop
         ? const EdgeInsets.symmetric(horizontal: 96, vertical: 48)
         : const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
-    final primaryIconSize = desktop ? 128.0 : 64.0;
-    final secondaryIconSize = desktop ? 64.0 : 32.0;
-
-    final fastForwardDuration = ref.watch(fastForwardDurationProvider);
-    final rewindDuration = ref.watch(rewindDurationProvider);
 
     return Theme(
       data: ref.watch(themesProvider).dark,
@@ -324,80 +344,27 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
                 child: _buildAppBar(),
               ),
             ),
-            if (widget.isLoading)
-              Align(
-                alignment: Alignment.center,
-                child: SizedBox(
-                  width: primaryIconSize + 16,
-                  height: primaryIconSize + 16,
-                  child: const CircularProgressIndicator(color: Colors.white),
-                ),
-              ),
             Align(
               alignment: Alignment.center,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.skip_previous),
-                    iconSize: secondaryIconSize,
-                    onPressed: () {
-                      widget.onSeekToPrevious();
-                      widget.onInteractionEnd();
-                    },
-                  ),
-                  const SizedBox(width: 24),
-                  IconButton(
-                    icon: Icon(switch (rewindDuration) {
-                      PlayerSeekPresetDuration.d5 => Icons.replay_5,
-                      PlayerSeekPresetDuration.d10 => Icons.replay_10,
-                      PlayerSeekPresetDuration.d30 => Icons.replay_30,
-                    }),
-                    iconSize: secondaryIconSize,
-                    onPressed: () {
-                      widget.onSeekDelta(-rewindDuration.value.toDouble());
-                      widget.onInteractionEnd();
-                    },
-                  ),
-                  const SizedBox(width: 24),
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.grey.withAlpha(50),
-                    ),
-                    child: PlayPauseButton(
-                      isPlaying: !widget.isPaused,
-                      size: primaryIconSize,
-                      onSetPlaying: (playing) {
-                        widget.onSetPaused(!playing);
-                        widget.onInteractionEnd();
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  IconButton(
-                    icon: Icon(switch (fastForwardDuration) {
-                      PlayerSeekPresetDuration.d5 => Icons.forward_5,
-                      PlayerSeekPresetDuration.d10 => Icons.forward_10,
-                      PlayerSeekPresetDuration.d30 => Icons.forward_30,
-                    }),
-                    iconSize: secondaryIconSize,
-                    onPressed: () {
-                      widget.onSeekDelta(fastForwardDuration.value.toDouble());
-                      widget.onInteractionEnd();
-                    },
-                  ),
-                  const SizedBox(width: 24),
-                  IconButton(
-                    icon: const Icon(Icons.skip_next),
-                    iconSize: secondaryIconSize,
-                    onPressed: () {
-                      widget.onSeekToNext();
-                      widget.onInteractionEnd();
-                    },
-                  ),
-                ],
+              child: _CenterControls(
+                isLoading: widget.isLoading,
+                isPaused: widget.isPaused,
+                onSetPaused: (paused) {
+                  widget.onSetPaused(paused);
+                  widget.onInteractionEnd();
+                },
+                onSeekDelta: (delta) {
+                  widget.onSeekDelta(delta);
+                  widget.onInteractionEnd();
+                },
+                onSkipPrevious: () {
+                  widget.onSeekToPrevious();
+                  widget.onInteractionEnd();
+                },
+                onSkipNext: () {
+                  widget.onSeekToNext();
+                  widget.onInteractionEnd();
+                },
               ),
             ),
             Positioned(
@@ -414,6 +381,94 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _CenterControls extends ConsumerWidget {
+  final bool isLoading;
+  final bool isPaused;
+  final void Function(bool paused) onSetPaused;
+  final void Function(double delta) onSeekDelta;
+  final void Function() onSkipPrevious;
+  final void Function() onSkipNext;
+
+  const _CenterControls({
+    required this.isLoading,
+    required this.isPaused,
+    required this.onSetPaused,
+    required this.onSeekDelta,
+    required this.onSkipPrevious,
+    required this.onSkipNext,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final desktop = MediaQuery.of(context).isDesktop;
+    final primaryIconSize = desktop ? 128.0 : 64.0;
+    final secondaryIconSize = desktop ? 64.0 : 32.0;
+
+    final fastForwardDuration = ref.watch(fastForwardDurationProvider);
+    final rewindDuration = ref.watch(rewindDurationProvider);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.skip_previous),
+          iconSize: secondaryIconSize,
+          onPressed: onSkipPrevious,
+        ),
+        const SizedBox(width: 24),
+        IconButton(
+          icon: Icon(switch (rewindDuration) {
+            PlayerSeekPresetDuration.d5 => Icons.replay_5,
+            PlayerSeekPresetDuration.d10 => Icons.replay_10,
+            PlayerSeekPresetDuration.d30 => Icons.replay_30,
+          }),
+          iconSize: secondaryIconSize,
+          onPressed: () => onSeekDelta(-rewindDuration.value.toDouble()),
+        ),
+        const SizedBox(width: 24),
+        Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey.withAlpha(50),
+              ),
+              child: PlayPauseButton(
+                isPlaying: !isPaused,
+                size: primaryIconSize,
+                onSetPlaying: (playing) => onSetPaused(!playing),
+              ),
+            ),
+            if (isLoading)
+              SizedBox(
+                width: primaryIconSize + 16,
+                height: primaryIconSize + 16,
+                child: const CircularProgressIndicator(color: Colors.white),
+              )
+          ],
+        ),
+        const SizedBox(width: 24),
+        IconButton(
+          icon: Icon(switch (fastForwardDuration) {
+            PlayerSeekPresetDuration.d5 => Icons.forward_5,
+            PlayerSeekPresetDuration.d10 => Icons.forward_10,
+            PlayerSeekPresetDuration.d30 => Icons.forward_30,
+          }),
+          iconSize: secondaryIconSize,
+          onPressed: () => onSeekDelta(fastForwardDuration.value.toDouble()),
+        ),
+        const SizedBox(width: 24),
+        IconButton(
+          icon: const Icon(Icons.skip_next),
+          iconSize: secondaryIconSize,
+          onPressed: onSkipNext,
+        ),
+      ],
     );
   }
 }

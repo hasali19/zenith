@@ -3,7 +3,6 @@ package dev.hasali.zenith.video_player
 import android.app.Activity
 import android.content.Context
 import android.net.Uri
-import android.view.Surface
 import android.widget.Toast
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -27,6 +26,7 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.view.TextureRegistry
+import io.flutter.view.TextureRegistry.SurfaceProducer
 
 /** VideoPlayerAndroidPlugin */
 class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
@@ -53,15 +53,17 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                             items = call.argument<List<Map<String, Any>>>("items")!!.map { item ->
                                 VideoItem(
                                     url = item.get("url") as String,
-                                    subtitles = (item["subtitles"] as List<Map<String, Any>>).map {
-                                        SubtitleTrack(
-                                            id = it["id"] as String,
-                                            src = it["src"] as String,
-                                            mimeType = it["mimeType"] as String,
-                                            title = it["title"] as String?,
-                                            language = it["language"] as String?,
-                                        )
-                                    },
+                                    subtitles = (item["subtitles"] as List<*>)
+                                        .map { it as Map<*, *> }
+                                        .map {
+                                            SubtitleTrack(
+                                                id = it["id"] as String,
+                                                src = it["src"] as String,
+                                                mimeType = it["mimeType"] as String,
+                                                title = it["title"] as String?,
+                                                language = it["language"] as String?,
+                                            )
+                                        },
                                 )
                             },
                             startIndex = call.argument("startIndex")!!,
@@ -221,10 +223,10 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
 
     private inner class Responder(private val result: Result) {
         fun create(headers: Map<String, String>?) {
-            val texture = textureRegistry.createSurfaceTexture()
-            val player = PlayerInstance(applicationContext, texture, headers ?: emptyMap())
-            players[texture.id()] = player
-            result.success(texture.id())
+            val surfaceProducer = textureRegistry.createSurfaceProducer()
+            val player = PlayerInstance(applicationContext, surfaceProducer, headers ?: emptyMap())
+            players[surfaceProducer.id()] = player
+            result.success(surfaceProducer.id())
         }
 
         fun load(id: Long, items: List<VideoItem>, startIndex: Int, startPosition: Long) {
@@ -296,7 +298,7 @@ data class SubtitleTrack(
 
 private class PlayerInstance(
     private val context: Context,
-    private val texture: TextureRegistry.SurfaceTextureEntry,
+    private val surfaceProducer: SurfaceProducer,
     private val headers: Map<String, String>,
 ) {
     enum class PlaybackState(val value: Int) {
@@ -317,7 +319,6 @@ private class PlayerInstance(
         data class MediaItemTransition(val index: Int, val position: Long) : Event()
     }
 
-    private val surface = Surface(texture.surfaceTexture())
     private val trackSelector = DefaultTrackSelector(context)
     private val player = ExoPlayer.Builder(context)
         .setTrackSelector(trackSelector)
@@ -333,7 +334,7 @@ private class PlayerInstance(
     private var onEvent: EventCallback? = null
 
     init {
-        player.setVideoSurface(surface)
+        player.setVideoSurface(surfaceProducer.surface)
         player.addListener(object : Player.Listener {
             override fun onVideoSizeChanged(videoSize: VideoSize) {
                 val aspectRatio = if (videoSize.width == 0 || videoSize.height == 0) {
@@ -543,7 +544,6 @@ private class PlayerInstance(
     fun release() {
         session.release()
         player.release()
-        surface.release()
-        texture.release()
+        surfaceProducer.release()
     }
 }

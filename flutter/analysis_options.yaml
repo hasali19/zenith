@@ -29,5 +29,8 @@ linter:
     prefer_single_quotes: true
 
 analyzer:
+  exclude:
+    - "**/*.freezed.dart"
+    - "**/*.g.dart"
   plugins:
     - custom_lint

@@ -23,7 +23,7 @@ class HeaderLayout extends MultiChildRenderObjectWidget {
 
   @override
   RenderObject createRenderObject(BuildContext context) {
-    return _RenderHeaderLayout(
+    return RenderHeaderLayout(
       posterWidth: posterWidth,
       padding: padding,
       separation: separation,
@@ -32,7 +32,7 @@ class HeaderLayout extends MultiChildRenderObjectWidget {
 
   @override
   void updateRenderObject(
-      BuildContext context, covariant _RenderHeaderLayout renderObject) {
+      BuildContext context, covariant RenderHeaderLayout renderObject) {
     renderObject
       ..posterWidth = posterWidth
       ..padding = padding
@@ -45,7 +45,7 @@ class _HeaderChild extends ContainerBoxParentData<RenderBox>
   bool visible = true;
 }
 
-class _RenderHeaderLayout extends RenderBox
+class RenderHeaderLayout extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, _HeaderChild>,
         RenderBoxContainerDefaultsMixin<RenderBox, _HeaderChild> {
@@ -53,7 +53,7 @@ class _RenderHeaderLayout extends RenderBox
   double padding;
   double separation;
 
-  _RenderHeaderLayout({
+  RenderHeaderLayout({
     required this.posterWidth,
     required this.padding,
     required this.separation,

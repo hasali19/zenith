@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
-import 'package:zenith/update_dialog.dart';
 import 'package:zenith/updater.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -29,15 +28,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }();
   }
 
-  _checkForUpdates(BuildContext context) async {
+  Future<void> _checkForUpdates(BuildContext context) async {
     final update = await _updater.checkForUpdates();
     if (!context.mounted) return;
     if (update != null) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => UpdateDialog(update: update),
-      );
+      await update.install();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: const Text('No updates available'),
@@ -175,6 +170,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             );
             if (duration != null) {
               ref.read(rewindDurationProvider.notifier).update(duration);
+            }
+          },
+        ),
+        CheckboxListTile(
+          title: const Text('Set watched on skip'),
+          subtitle: const Text(
+              'When skipping forward in the playlist, mark the current video as watched'),
+          value: ref.watch(setWatchedOnSkipProvider),
+          onChanged: (value) {
+            if (value != null) {
+              ref.read(setWatchedOnSkipProvider.notifier).update(value);
             }
           },
         ),

@@ -13,6 +13,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:zenith/api.dart' as api;
 import 'package:zenith/cookies.dart';
 import 'package:zenith/platform.dart' as platform;
+import 'package:zenith/preferences.dart';
 import 'package:zenith/screens/video_player/media_title.dart';
 import 'package:zenith/screens/video_player/ui.dart';
 import 'package:zenith/screens/video_player/utils.dart';
@@ -56,6 +57,9 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
 
   List<api.SubtitleTrack> get subtitles =>
       currentItem.videoFile?.subtitles ?? [];
+
+  bool get shouldShowControls =>
+      _shouldShowControls || _videoState == VideoState.ended;
 
   @override
   void initState() {
@@ -189,41 +193,34 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
   }
 
   Widget _buildPlayer(VideoController controller) {
+    final content = Stack(
+      children: [
+        Positioned.fill(
+          child: VideoPlayerPlatform.instance.buildView(_controller!),
+        ),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _toggleControls,
+          child: _buildUi(),
+        )
+      ],
+    );
+
     return KeyboardListener(
       focusNode: _focusNode,
       autofocus: true,
       onKeyEvent: _onKeyEvent,
-      child: Listener(
-        behavior: HitTestBehavior.opaque,
-        onPointerHover: (e) {
-          if (e.kind == PointerDeviceKind.mouse) {
-            _showControls();
-          }
-        },
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: VideoPlayerPlatform.instance.buildView(_controller!),
-            ),
-            ValueListenableBuilder<bool>(
-              valueListenable: platform.isInPipMode,
-              builder: (context, isInPipMode, child) {
-                if (isInPipMode) return const SizedBox.expand();
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: _toggleControls,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    ),
-                    child: _buildUi(),
-                  ),
-                );
-              },
-            )
-          ],
+      child: MouseRegion(
+        cursor:
+            shouldShowControls ? MouseCursor.defer : SystemMouseCursors.none,
+        child: Listener(
+          behavior: HitTestBehavior.opaque,
+          onPointerHover: (e) {
+            if (e.kind == PointerDeviceKind.mouse) {
+              _showControls();
+            }
+          },
+          child: content,
         ),
       ),
     );
@@ -261,11 +258,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
   }
 
   Widget _buildUi() {
-    if (!_shouldShowControls && _videoState != VideoState.ended) {
-      return const SizedBox.expand();
-    }
-
-    return ListenableBuilder(
+    final content = ListenableBuilder(
       listenable: _controller!,
       builder: (context, child) => VideoPlayerUi(
         title: MediaTitle(item: currentItem),
@@ -296,10 +289,33 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
         onSeek: (position) => _controller!.position = position,
         onSeekDelta: (delta) => _controller!.position += delta,
         onSeekToPrevious: () => _controller!.seekToPreviousItem(),
-        onSeekToNext: () => _controller!.seekToNextItem(),
+        onSeekToNext: () {
+          if (ref.read(setWatchedOnSkipProvider)) {
+            _api.updateUserData(
+                currentItem.id, api.VideoUserDataPatch(isWatched: true));
+          }
+          _controller!.seekToNextItem();
+        },
         onSetPaused: (isPaused) =>
             isPaused ? _controller!.pause() : _controller!.play(),
       ),
+    );
+
+    return ValueListenableBuilder(
+      valueListenable: platform.isInPipMode,
+      builder: (context, isInPipMode, child) {
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+          child: (shouldShowControls && !isInPipMode) ||
+                  ModalRoute.of(context)?.isCurrent == false
+              ? content
+              : const SizedBox.expand(),
+        );
+      },
     );
   }
 
@@ -325,8 +341,8 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
           : _buildPlayer(_controller!),
     );
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      onPopInvoked: _onPopInvoked,
       child: Scaffold(
         backgroundColor: Colors.black,
         body: content,
@@ -334,7 +350,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     );
   }
 
-  Future<bool> _onWillPop() async {
+  Future<void> _onPopInvoked(bool didPop) async {
     final window = ref.read(windowProvider);
     if (window.isWindowed) {
       await window.setFullscreen(false);
@@ -342,6 +358,5 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
       await platform.setExtendIntoCutout(false);
       await platform.setSystemBarsVisible(true);
     }
-    return true;
   }
 }

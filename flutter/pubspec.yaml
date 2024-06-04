@@ -45,7 +45,7 @@ dependencies:
       path: packages/dynamic_color
   expandable: ^5.0.1
   flutter_riverpod: ^2.4.1
-  flutter_secure_storage: ^9.0.0
+  flutter_secure_storage: ^9.2.1
   freezed_annotation: ^2.3.0
   gap: ^3.0.1
   json_annotation: ^4.8.1
@@ -57,12 +57,13 @@ dependencies:
   shared_preferences_riverpod: ^0.3.0
   sized_context: ^1.0.0+1
   sliver_tools: ^0.2.8
-  theme_tailor_annotation: ^2.0.0
+  theme_tailor_annotation: ^3.0.1
   url_launcher: ^6.1.8
   uuid: ^4.1.0
   video_player:
     path: packages/video_player/video_player
   wakelock_plus: ^1.2.1
+  web: ^0.5.1
   windowing:
     path: packages/windowing
 
@@ -85,7 +86,18 @@ dev_dependencies:
   msix: ^3.16.4
   riverpod_generator: ^2.3.11
   riverpod_lint: ^2.3.9
-  theme_tailor: ^2.0.0
+  theme_tailor: ^3.0.1
+
+dependency_overrides:
+  flutter_secure_storage_web:
+    git:
+      url: https://github.com/mogol/flutter_secure_storage.git
+      path: flutter_secure_storage_web
+  permission_handler_html:
+    git:
+      url: https://github.com/raldhafiri/flutter-permission-handler.git
+      ref: main
+      path: permission_handler_html
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

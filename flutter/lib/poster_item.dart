@@ -14,7 +14,7 @@ class PosterItem extends StatelessWidget {
   final void Function()? onLongPress;
 
   const PosterItem({
-    Key? key,
+    super.key,
     required this.poster,
     required this.posterFallback,
     required this.title,
@@ -23,7 +23,7 @@ class PosterItem extends StatelessWidget {
     required this.infoSeparator,
     required this.onTap,
     this.onLongPress,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

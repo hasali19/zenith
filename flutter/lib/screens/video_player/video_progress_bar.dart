@@ -18,12 +18,12 @@ class VideoProgressBar extends StatefulWidget {
   final void Function() onSeekEnd;
 
   const VideoProgressBar({
-    Key? key,
+    super.key,
     required this.progress,
     required this.onSeek,
     required this.onSeekStart,
     required this.onSeekEnd,
-  }) : super(key: key);
+  });
 
   @override
   State<VideoProgressBar> createState() => _VideoProgressBarState();

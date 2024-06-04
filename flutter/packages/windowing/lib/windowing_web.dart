@@ -1,10 +1,7 @@
-// In order to *not* need this ignore, consider extracting the "web" version
-// of your plugin as a separate package, instead of inlining it in the same
-// package as the core of your plugin.
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'dart:js_interop';
 
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+import 'package:web/web.dart';
 
 import 'windowing_platform_interface.dart';
 
@@ -26,14 +23,24 @@ class WindowControllerWeb extends WindowController {
   bool get isWindowed => true;
 
   @override
-  bool get isFullscreen => html.document.fullscreenElement != null;
+  bool get isFullscreen => document.fullscreenElement != null;
 
   @override
   Future<void> setFullscreen(bool value) async {
     if (value) {
-      html.document.documentElement?.requestFullscreen();
+      document.documentElement?.requestFullscreen();
     } else {
-      html.document.exitFullscreen();
+      document.exitFullscreen();
     }
   }
+}
+
+// TODO: https://github.com/dart-lang/web/issues/209 should remove the need for this
+extension on Document {
+  external Element? fullscreenElement;
+  external JSPromise exitFullscreen();
+}
+
+extension on Element {
+  external JSPromise requestFullscreen();
 }
