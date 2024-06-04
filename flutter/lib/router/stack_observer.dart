@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:zenith/main.dart';
 import 'package:zenith/router/stack_router.dart';
 
 class StackObserver extends StatefulWidget {

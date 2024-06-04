@@ -29,18 +29,6 @@ import 'package:zenith/window.dart';
 
 final _authStateProvider = StateProvider((ref) => false);
 
-abstract class StackRouterController<T> {
-  T get currentRoute;
-
-  void subscribe(RouteAware routeAware);
-  void unsubscribe(RouteAware routeAware);
-
-  void push(T route);
-  void pop();
-  void replace(T route);
-  void replaceAll(T route);
-}
-
 sealed class PrimaryRoute {
   const PrimaryRoute();
 }

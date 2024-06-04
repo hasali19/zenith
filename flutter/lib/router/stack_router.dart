@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:zenith/main.dart';
 import 'package:zenith/router/pop_scope.dart';
 import 'package:zenith/router/router_controller.dart';
 import 'package:zenith/router/router_delegate.dart';
+
+abstract class StackRouterController<T> {
+  T get currentRoute;
+
+  void subscribe(RouteAware routeAware);
+  void unsubscribe(RouteAware routeAware);
+
+  void push(T route);
+  void pop();
+  void replace(T route);
+  void replaceAll(T route);
+}
 
 class StackRouter<T> extends StatefulWidget {
   final List<T> Function(RouteLocation location) onSetLocation;
