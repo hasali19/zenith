@@ -10,6 +10,7 @@ import 'package:zenith/api.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/poster_item.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/router/stack_observer.dart';
 import 'package:zenith/router/stack_router.dart';
 import 'package:zenith/text_one_line.dart';
 import 'package:zenith/theme.dart';
@@ -101,58 +102,64 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
 
     final state = ref.watch(_stateProvider);
-    return state.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(),
-      ),
-      error: (error, stackTrace) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Failed to load data from server'),
-            TextButton(
-              onPressed: () => ref.invalidate(_stateProvider),
-              child: const Text('Retry'),
-            ),
-          ],
+    return StackObserver(
+      onPopNext: () {
+        ref.invalidate(_stateProvider);
+      },
+      child: state.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
         ),
-      ),
-      data: (data) => RefreshIndicator(
-        triggerMode: RefreshIndicatorTriggerMode.anywhere,
-        onRefresh: () => ref.refresh(_stateProvider.future),
-        child: ListView(
-          controller: _scrollController,
-          padding:
-              const EdgeInsets.symmetric(vertical: 16) + context.mq.padding,
-          children: [
-            if (data.continueWatching.isNotEmpty)
-              Section<MediaItem>(
-                title: 'Continue Watching',
-                titlePadding: sectionTitlePadding,
-                listSpacing: sectionListSpacing,
-                listItemWidth: thumbnailItemWidth,
-                listItemHeight: thumbnailItemHeight,
-                endPadding: sectionEndPadding,
-                items: data.continueWatching,
-                itemBuilder: (context, item) => ContinueWatchingCard(
-                  thumbnail: api.getMediaImageUrl(item.id, ImageType.thumbnail),
-                  title: item.name,
-                  subtitle: item.type == MediaType.episode
-                      ? '${item.getSeasonEpisode()!}: ${item.grandparent!.name}'
-                      : item.startDate?.year.toString() ?? '',
-                  progress: (item.videoUserData?.position ?? 0) /
-                      (item.videoFile?.duration ?? 1),
-                  padding: thumbnailItemPadding,
-                  onTap: () => _navigateToItem(item),
-                ),
+        error: (error, stackTrace) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Failed to load data from server'),
+              TextButton(
+                onPressed: () => ref.invalidate(_stateProvider),
+                child: const Text('Retry'),
               ),
-            if (data.recentMovies.isNotEmpty)
-              buildPosterItemSection(
-                  data.recentMovies, 'Recent Movies', Icons.movie),
-            if (data.recentShows.isNotEmpty)
-              buildPosterItemSection(
-                  data.recentShows, 'Recent Shows', Icons.tv),
-          ],
+            ],
+          ),
+        ),
+        data: (data) => RefreshIndicator(
+          triggerMode: RefreshIndicatorTriggerMode.anywhere,
+          onRefresh: () => ref.refresh(_stateProvider.future),
+          child: ListView(
+            controller: _scrollController,
+            padding:
+                const EdgeInsets.symmetric(vertical: 16) + context.mq.padding,
+            children: [
+              if (data.continueWatching.isNotEmpty)
+                Section<MediaItem>(
+                  title: 'Continue Watching',
+                  titlePadding: sectionTitlePadding,
+                  listSpacing: sectionListSpacing,
+                  listItemWidth: thumbnailItemWidth,
+                  listItemHeight: thumbnailItemHeight,
+                  endPadding: sectionEndPadding,
+                  items: data.continueWatching,
+                  itemBuilder: (context, item) => ContinueWatchingCard(
+                    thumbnail:
+                        api.getMediaImageUrl(item.id, ImageType.thumbnail),
+                    title: item.name,
+                    subtitle: item.type == MediaType.episode
+                        ? '${item.getSeasonEpisode()!}: ${item.grandparent!.name}'
+                        : item.startDate?.year.toString() ?? '',
+                    progress: (item.videoUserData?.position ?? 0) /
+                        (item.videoFile?.duration ?? 1),
+                    padding: thumbnailItemPadding,
+                    onTap: () => _navigateToItem(item),
+                  ),
+                ),
+              if (data.recentMovies.isNotEmpty)
+                buildPosterItemSection(
+                    data.recentMovies, 'Recent Movies', Icons.movie),
+              if (data.recentShows.isNotEmpty)
+                buildPosterItemSection(
+                    data.recentShows, 'Recent Shows', Icons.tv),
+            ],
+          ),
         ),
       ),
     );
