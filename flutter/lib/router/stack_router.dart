@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:zenith/router/page.dart';
 import 'package:zenith/router/pop_scope.dart';
 import 'package:zenith/router/router_controller.dart';
 import 'package:zenith/router/router_delegate.dart';
@@ -40,6 +41,32 @@ class StackRouter<T> extends StatefulWidget {
   State<StackRouter<T>> createState() => StackRouterState<T>();
 }
 
+class _NavigatorObserver<T> extends NavigatorObserver {
+  final StackRouterState<T> _router;
+
+  _NavigatorObserver(this._router);
+
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    for (final item in _router._routeAwares) {
+      if (previousRoute?.settings case ZenithPage(:final arguments)) {
+        if (arguments == item.$1) {
+          item.$2.didPushNext();
+        }
+      }
+    }
+  }
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    for (final item in _router._routeAwares) {
+      if (previousRoute?.settings.arguments == item.$1) {
+        item.$2.didPopNext();
+      }
+    }
+  }
+}
+
 class StackRouterState<T> extends State<StackRouter<T>>
     with RouteAware
     implements StackRouterController<T>, PopHandler, PopController {
@@ -47,6 +74,8 @@ class StackRouterState<T> extends State<StackRouter<T>>
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   final List<PopHandler> _popHandlers = [];
   final List<(T, RouteAware)> _routeAwares = [];
+
+  late final _NavigatorObserver _observer = _NavigatorObserver(this);
 
   RouterController? _routerController;
   StackRouterController? _parentController;
@@ -95,22 +124,14 @@ class StackRouterState<T> extends State<StackRouter<T>>
           child: Navigator(
             key: _navigatorKey,
             pages: _stack.map(widget.buildPage).toList(),
+            observers: [_observer],
             onPopPage: (route, result) {
               if (!route.didPop(result)) {
                 return false;
               }
 
               if (route.settings.arguments is T) {
-                final prevTop = _stack.remove(route.settings.arguments);
-
-                for (final item in _routeAwares) {
-                  if (_stack.last == item.$1) {
-                    item.$2.didPopNext();
-                  } else if (prevTop == item.$1) {
-                    item.$2.didPop();
-                  }
-                }
-
+                _stack.remove(route.settings.arguments);
                 _updateRouterLocation();
               }
 
@@ -157,15 +178,7 @@ class StackRouterState<T> extends State<StackRouter<T>>
   @override
   void pop() {
     setState(() {
-      final prevTop = _stack.removeLast();
-
-      for (final item in _routeAwares) {
-        if (_stack.last == item.$1) {
-          item.$2.didPopNext();
-        } else if (prevTop == item.$1) {
-          item.$2.didPop();
-        }
-      }
+      _stack.removeLast();
     });
 
     _updateRouterLocation();
@@ -189,20 +202,9 @@ class StackRouterState<T> extends State<StackRouter<T>>
 
   @override
   void push(T route) {
-    final prevTop = _stack.last;
-
     setState(() {
       _stack.add(route);
     });
-
-    for (final item in _routeAwares) {
-      if (prevTop == item.$1) {
-        item.$2.didPushNext();
-      } else if (_stack.last == item.$1) {
-        item.$2.didPush();
-      }
-    }
-
     _updateRouterLocation();
   }
 
