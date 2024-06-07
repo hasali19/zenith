@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:zenith/api.dart';
-import 'package:zenith/main.dart';
+import 'package:zenith/main_router.dart';
 import 'package:zenith/poster_item.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/router/stack_router.dart';

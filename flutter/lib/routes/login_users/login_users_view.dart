@@ -42,7 +42,7 @@ class LoginUsersView extends ConsumerWidget {
                 }
 
                 if (next case AsyncData(value: [])) {
-                  StackRouter.of<LoginSubRoute>(context)
+                  StackRouter.of<LoginChildRoute>(context)
                       .push(const LoginRegisterRoute(initial: true));
                 }
               });
@@ -70,7 +70,7 @@ class LoginUsersView extends ConsumerWidget {
         icon: Icons.account_circle,
         text: user.username,
         onTap: () {
-          StackRouter.of<LoginSubRoute>(context)
+          StackRouter.of<LoginChildRoute>(context)
               .push(LoginUserRoute(username: user.username));
         },
       ),

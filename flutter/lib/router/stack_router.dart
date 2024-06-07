@@ -17,16 +17,20 @@ abstract class StackRouterController<T> {
   void replaceAll(T route);
 }
 
-class StackRouter<T> extends StatefulWidget {
+abstract class ZenithRoute {
+  const ZenithRoute();
+
+  String get location;
+
+  Widget build(BuildContext context);
+}
+
+class StackRouter<T extends ZenithRoute> extends StatefulWidget {
   final List<T> Function(RouteLocation location) onSetLocation;
-  final Page<dynamic> Function(T route) buildPage;
-  final String Function(T route) buildLocation;
 
   const StackRouter({
     super.key,
     required this.onSetLocation,
-    required this.buildPage,
-    required this.buildLocation,
   });
 
   static StackRouterController<T> of<T>(BuildContext context) {
@@ -41,7 +45,7 @@ class StackRouter<T> extends StatefulWidget {
   State<StackRouter<T>> createState() => StackRouterState<T>();
 }
 
-class _NavigatorObserver<T> extends NavigatorObserver {
+class _NavigatorObserver<T extends ZenithRoute> extends NavigatorObserver {
   final StackRouterState<T> _router;
 
   _NavigatorObserver(this._router);
@@ -67,7 +71,7 @@ class _NavigatorObserver<T> extends NavigatorObserver {
   }
 }
 
-class StackRouterState<T> extends State<StackRouter<T>>
+class StackRouterState<T extends ZenithRoute> extends State<StackRouter<T>>
     with RouteAware
     implements StackRouterController<T>, PopHandler, PopController {
   final List<T> _stack = [];
@@ -75,7 +79,7 @@ class StackRouterState<T> extends State<StackRouter<T>>
   final List<PopHandler> _popHandlers = [];
   final List<(T, RouteAware)> _routeAwares = [];
 
-  late final _NavigatorObserver _observer = _NavigatorObserver(this);
+  late final _NavigatorObserver<T> _observer = _NavigatorObserver<T>(this);
 
   RouterController? _routerController;
   StackRouterController? _parentController;
@@ -123,7 +127,12 @@ class StackRouterState<T> extends State<StackRouter<T>>
           controller: this,
           child: Navigator(
             key: _navigatorKey,
-            pages: _stack.map(widget.buildPage).toList(),
+            pages: _stack
+                .map((route) => ZenithPage(
+                      route: route,
+                      child: Builder(builder: route.build),
+                    ))
+                .toList(),
             observers: [_observer],
             onPopPage: (route, result) {
               if (!route.didPop(result)) {
@@ -237,8 +246,7 @@ class StackRouterState<T> extends State<StackRouter<T>>
   }
 
   void _updateRouterLocation() {
-    RouterController.of(context)
-        .updateLocation(widget.buildLocation(currentRoute));
+    RouterController.of(context).updateLocation(currentRoute.location);
   }
 }
 

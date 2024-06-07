@@ -29,37 +29,6 @@ import 'package:zenith/window.dart';
 
 final _authStateProvider = StateProvider((ref) => false);
 
-sealed class PrimaryRoute {
-  const PrimaryRoute();
-}
-
-class MainRoute extends PrimaryRoute {
-  const MainRoute();
-}
-
-class ItemDetailsRoute extends PrimaryRoute {
-  final int id;
-
-  const ItemDetailsRoute({required this.id});
-}
-
-class VideoPlayerRoute extends PrimaryRoute {
-  final int id;
-  final double startPosition;
-
-  const VideoPlayerRoute({required this.id, required this.startPosition});
-}
-
-class LoginRoute extends PrimaryRoute {
-  final String? redirect;
-
-  const LoginRoute({required this.redirect});
-}
-
-class SetupRoute extends PrimaryRoute {
-  const SetupRoute();
-}
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
