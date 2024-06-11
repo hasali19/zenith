@@ -25,7 +25,7 @@ abstract class ZenithRoute {
 
 class StackRouter<T extends ZenithRoute> extends StatefulWidget {
   final List<T> Function(RouteLocation location) buildStack;
-  final String Function(List<T> stack) buildLocation;
+  final RouteLocation Function(List<T> stack) buildLocation;
 
   const StackRouter({
     super.key,

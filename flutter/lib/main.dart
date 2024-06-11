@@ -388,11 +388,13 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       _screen = screen;
     });
 
-    RouterController.of(context).updateLocation(switch (screen) {
-      Screen.home => '/',
-      Screen.movies => '/movies',
-      Screen.shows => '/shows',
-      Screen.settings => '/settings',
-    });
+    RouterController.of(context).updateLocation(
+      RouteLocation.path(switch (screen) {
+        Screen.home => '/',
+        Screen.movies => '/movies',
+        Screen.shows => '/shows',
+        Screen.settings => '/settings',
+      }),
+    );
   }
 }

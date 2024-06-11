@@ -4,7 +4,7 @@ import 'package:zenith/router/router_delegate.dart';
 typedef LocationListener = void Function(RouteLocation location);
 
 abstract interface class RouterController {
-  void updateLocation(String location);
+  void updateLocation(RouteLocation location);
 
   void addLocationListener(LocationListener listener);
   void removeLocationListener(LocationListener listener);

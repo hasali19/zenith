@@ -5,19 +5,11 @@ import 'package:zenith/router/router_controller.dart';
 
 class RouteLocation {
   final Uri uri;
-  final List<String> pathSegments;
 
-  const RouteLocation({required this.uri, required this.pathSegments});
+  const RouteLocation({required this.uri});
 
-  factory RouteLocation.uri(Uri uri) {
-    final start = uri.path.startsWith('/') ? 1 : 0;
-    final end =
-        uri.path.length - (uri.path != '/' && uri.path.endsWith('/') ? 1 : 0);
-    return RouteLocation(
-      uri: uri,
-      pathSegments: uri.path.substring(start, end).split('/'),
-    );
-  }
+  factory RouteLocation.path(String path) =>
+      RouteLocation(uri: Uri(path: path));
 }
 
 class ZenithRouterDelegate extends RouterDelegate<RouteLocation>
@@ -66,8 +58,8 @@ class ZenithRouterDelegate extends RouterDelegate<RouteLocation>
   }
 
   @override
-  void updateLocation(String location) {
-    _config = RouteLocation.uri(Uri.parse(location));
+  void updateLocation(RouteLocation location) {
+    _config = location;
     notifyListeners();
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/router/router.dart';
+import 'package:zenith/router/router_delegate.dart';
 import 'package:zenith/router/stack_router.dart';
 import 'package:zenith/routes/routes.dart';
 import 'package:zenith/screens/setup.dart';
@@ -81,17 +82,19 @@ class MainRouter extends ZenithRouter {
             return [
               const MainRoute(),
               if (location.uri.path.startsWith('/items/'))
-                ItemDetailsRoute(id: int.parse(location.pathSegments[1])),
+                ItemDetailsRoute(id: int.parse(location.uri.pathSegments[1])),
             ];
           },
-          buildLocation: (stack) => switch (stack.last) {
-            MainRoute() => '/',
-            ItemDetailsRoute(:final id) => '/items/$id',
-            VideoPlayerRoute(:final id, :final startPosition) =>
-              '/player/$id?startPosition=$startPosition',
-            LoginRoute() => '/login',
-            SetupRoute() => '/setup',
-          },
+          buildLocation: (stack) => RouteLocation.path(
+            switch (stack.last) {
+              MainRoute() => '/',
+              ItemDetailsRoute(:final id) => '/items/$id',
+              VideoPlayerRoute(:final id, :final startPosition) =>
+                '/player/$id?startPosition=$startPosition',
+              LoginRoute() => '/login',
+              SetupRoute() => '/setup',
+            },
+          ),
         );
       },
     );

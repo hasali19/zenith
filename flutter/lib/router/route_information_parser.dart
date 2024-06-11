@@ -8,7 +8,7 @@ class ZenithRouteInformationParser
   Future<RouteLocation> parseRouteInformation(
       RouteInformation routeInformation) {
     final uri = routeInformation.uri;
-    return SynchronousFuture(RouteLocation.uri(uri));
+    return SynchronousFuture(RouteLocation(uri: uri));
   }
 
   @override

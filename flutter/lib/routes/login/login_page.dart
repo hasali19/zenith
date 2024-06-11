@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zenith/router/router_delegate.dart';
 import 'package:zenith/router/stack_router.dart';
 import 'package:zenith/routes/login/login_controller.dart';
 import 'package:zenith/routes/login/routes.dart';
@@ -15,12 +16,14 @@ class LoginPage extends StatelessWidget {
       overrides: [loginRedirectPathProvider.overrideWithValue(redirect)],
       child: StackRouter<LoginChildRoute>(
         buildStack: (location) => const [LoginUsersRoute()],
-        buildLocation: (stack) => switch (stack.last) {
-          LoginUsersRoute() => '/login',
-          LoginUserRoute(:final username) => '/login/$username',
-          LoginRegisterRoute(:final initial) =>
-            '/login/register?initial=$initial',
-        },
+        buildLocation: (stack) => RouteLocation.path(
+          switch (stack.last) {
+            LoginUsersRoute() => '/login',
+            LoginUserRoute(:final username) => '/login/$username',
+            LoginRegisterRoute(:final initial) =>
+              '/login/register?initial=$initial',
+          },
+        ),
       ),
     );
   }
