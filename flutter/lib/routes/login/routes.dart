@@ -13,9 +13,6 @@ class LoginUsersRoute extends LoginChildRoute {
   const LoginUsersRoute();
 
   @override
-  String get location => '/login';
-
-  @override
   Widget build(BuildContext context) {
     return const LoginUsersPage();
   }
@@ -25,9 +22,6 @@ class LoginUserRoute extends LoginChildRoute {
   final String username;
 
   const LoginUserRoute({required this.username});
-
-  @override
-  String get location => '/login/$username';
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +45,6 @@ class LoginRegisterRoute extends LoginChildRoute {
   final bool initial;
 
   const LoginRegisterRoute({required this.initial});
-
-  @override
-  String get location => '/login/register?initial=$initial';
 
   @override
   Widget build(BuildContext context) {

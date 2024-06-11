@@ -20,17 +20,17 @@ abstract class StackRouterController<T> {
 abstract class ZenithRoute {
   const ZenithRoute();
 
-  String get location;
-
   Widget build(BuildContext context);
 }
 
 class StackRouter<T extends ZenithRoute> extends StatefulWidget {
-  final List<T> Function(RouteLocation location) onSetLocation;
+  final List<T> Function(RouteLocation location) buildStack;
+  final String Function(List<T> stack) buildLocation;
 
   const StackRouter({
     super.key,
-    required this.onSetLocation,
+    required this.buildStack,
+    required this.buildLocation,
   });
 
   static StackRouterController<T> of<T>(BuildContext context) {
@@ -113,7 +113,7 @@ class StackRouterState<T extends ZenithRoute> extends State<StackRouter<T>>
   void _onLocationChanged(RouteLocation location) {
     setState(() {
       _stack.clear();
-      _stack.addAll(widget.onSetLocation(location));
+      _stack.addAll(widget.buildStack(location));
     });
   }
 
@@ -246,7 +246,7 @@ class StackRouterState<T extends ZenithRoute> extends State<StackRouter<T>>
   }
 
   void _updateRouterLocation() {
-    RouterController.of(context).updateLocation(currentRoute.location);
+    RouterController.of(context).updateLocation(widget.buildLocation(_stack));
   }
 }
 

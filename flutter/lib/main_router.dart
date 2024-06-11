@@ -16,9 +16,6 @@ class MainRoute extends PrimaryRoute {
   const MainRoute();
 
   @override
-  String get location => '/';
-
-  @override
   Widget build(BuildContext context) {
     return const MainScreen();
   }
@@ -28,9 +25,6 @@ class ItemDetailsRoute extends PrimaryRoute {
   final int id;
 
   const ItemDetailsRoute({required this.id});
-
-  @override
-  String get location => 'items/$id';
 
   @override
   Widget build(BuildContext context) {
@@ -43,9 +37,6 @@ class VideoPlayerRoute extends PrimaryRoute {
   final double startPosition;
 
   const VideoPlayerRoute({required this.id, required this.startPosition});
-
-  @override
-  String get location => '/player/$id?startPosition=$startPosition';
 
   @override
   Widget build(BuildContext context) {
@@ -62,9 +53,6 @@ class LoginRoute extends PrimaryRoute {
   const LoginRoute({required this.redirect});
 
   @override
-  String get location => '/login';
-
-  @override
   Widget build(BuildContext context) {
     return LoginPage(redirect: redirect);
   }
@@ -72,9 +60,6 @@ class LoginRoute extends PrimaryRoute {
 
 class SetupRoute extends PrimaryRoute {
   const SetupRoute();
-
-  @override
-  String get location => '/setup';
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +74,7 @@ class MainRouter extends ZenithRouter {
       builder: (context, ref, child) {
         final activeServer = ref.read(activeServerProvider);
         return StackRouter<PrimaryRoute>(
-          onSetLocation: (location) {
+          buildStack: (location) {
             if (activeServer == null) {
               return const [SetupRoute()];
             }
@@ -98,6 +83,14 @@ class MainRouter extends ZenithRouter {
               if (location.uri.path.startsWith('/items/'))
                 ItemDetailsRoute(id: int.parse(location.pathSegments[1])),
             ];
+          },
+          buildLocation: (stack) => switch (stack.last) {
+            MainRoute() => '/',
+            ItemDetailsRoute(:final id) => '/items/$id',
+            VideoPlayerRoute(:final id, :final startPosition) =>
+              '/player/$id?startPosition=$startPosition',
+            LoginRoute() => '/login',
+            SetupRoute() => '/setup',
           },
         );
       },
