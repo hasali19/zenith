@@ -124,10 +124,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: flutter-actions/setup-flutter@v3
-        with:
-          channel: beta
-          version: latest
+      - name: Install flutter
+        run: |
+          $download_url="https://storage.googleapis.com/flutter_infra_release/releases/beta/windows/flutter_windows_3.23.0-0.1.pre-beta.zip"
+          $install_path="$env:RUNNER_TOOL_CACHE\flutter-3.23.0-0.1.pre-beta"
+          echo "Downloading SDK from $download_url ..."
+          Invoke-WebRequest $download_url -OutFile .
+          echo "Unpacking into $install_path"
+          Expand-Archive -Path flutter_windows_3.23.0-0.1.pre-beta.zip -Destination $install_path
+          echo "Successfully unpacked SDK"
+          "$install_path\flutter\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+          & $install_path\flutter\bin\flutter --version --suppress-analytics
+          & $install_path\flutter\bin\flutter config --no-analytics
+          & $install_path\flutter\bin\flutter config --no-cli-animations
 
       - name: Install wget
         run: |
