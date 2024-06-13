@@ -9,6 +9,8 @@ import 'package:zenith/fade_in_image.dart';
 import 'package:zenith/main_router.dart';
 import 'package:zenith/media_route_button/media_route_button.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/router/page.dart';
+import 'package:zenith/router/stack_observer.dart';
 import 'package:zenith/router/stack_router.dart';
 import 'package:zenith/routes/item_details/item_details_controller.dart';
 import 'package:zenith/routes/item_details/item_details_state.dart';
@@ -92,55 +94,63 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
           .push(ItemDetailsRoute(id: episode.id));
     }
 
-    return RefreshIndicator(
-      key: _refresh,
-      onRefresh: widget.onRefresh,
-      triggerMode: RefreshIndicatorTriggerMode.anywhere,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (isDesktop)
-            ZenithFadeInImage.dio(
-              url: widget.state.backdropUrl,
-            ),
-          _BackdropBlur(
-            child: CustomScrollView(
-              slivers: [
-                SliverCrossAxisPadded(
-                  paddingStart: context.mq.padding.left,
-                  paddingEnd: context.mq.padding.right,
-                  child: MultiSliver(
-                    children: [
-                      SliverToBoxAdapter(
-                        child: HeaderContent(
-                          state: widget.state,
-                          onPlayPressed: onPlayPressed,
-                          onChildItemPressed: (id) =>
-                              StackRouter.of<PrimaryRoute>(context)
-                                  .push(ItemDetailsRoute(id: id)),
-                          onFindMetadataMatch: _onFindMetadataMatch,
-                          onFixEpisodeMatch: _onFixEpisodeMatch,
-                          onRefreshMetadata: _onRefreshMetadata,
-                          onDelete: _onDelete,
+    return StackObserver(
+      onPopNext: (route) {
+        if (route.settings is ZenithPage) {
+          _refresh.currentState?.show();
+        }
+      },
+      child: RefreshIndicator(
+        key: _refresh,
+        onRefresh: widget.onRefresh,
+        triggerMode: RefreshIndicatorTriggerMode.anywhere,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (isDesktop)
+              ZenithFadeInImage.dio(
+                url: widget.state.backdropUrl,
+              ),
+            _BackdropBlur(
+              child: CustomScrollView(
+                slivers: [
+                  SliverCrossAxisPadded(
+                    paddingStart: context.mq.padding.left,
+                    paddingEnd: context.mq.padding.right,
+                    child: MultiSliver(
+                      children: [
+                        SliverToBoxAdapter(
+                          child: HeaderContent(
+                            state: widget.state,
+                            onPlayPressed: onPlayPressed,
+                            onChildItemPressed: (id) =>
+                                StackRouter.of<PrimaryRoute>(context)
+                                    .push(ItemDetailsRoute(id: id)),
+                            onFindMetadataMatch: _onFindMetadataMatch,
+                            onFixEpisodeMatch: _onFixEpisodeMatch,
+                            onRefreshMetadata: _onRefreshMetadata,
+                            onDelete: _onDelete,
+                          ),
                         ),
-                      ),
-                      if (widget.state.item.cast.isNotEmpty)
-                        CastList(cast: widget.state.item.cast),
-                      if (widget.state.seasons.isNotEmpty)
-                        EpisodesList(
-                          groups: widget.state.seasons,
-                          onEpisodePressed: onEpisodePressed,
+                        if (widget.state.item.cast.isNotEmpty)
+                          CastList(cast: widget.state.item.cast),
+                        if (widget.state.seasons.isNotEmpty)
+                          EpisodesList(
+                            groups: widget.state.seasons,
+                            onEpisodePressed: onEpisodePressed,
+                          ),
+                        SliverToBoxAdapter(
+                          child:
+                              SizedBox(height: context.mq.padding.bottom + 16),
                         ),
-                      SliverToBoxAdapter(
-                        child: SizedBox(height: context.mq.padding.bottom + 16),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

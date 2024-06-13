@@ -8,13 +8,18 @@ import 'package:zenith/router/router_delegate.dart';
 abstract class StackRouterController<T> {
   T get currentRoute;
 
-  void subscribe(RouteAware routeAware);
-  void unsubscribe(RouteAware routeAware);
+  void subscribe(StackRouterObserver routeAware);
+  void unsubscribe(StackRouterObserver routeAware);
 
   void push(T route);
   void pop();
   void replace(T route);
   void replaceAll(T route);
+}
+
+abstract class StackRouterObserver {
+  void didPushNext() {}
+  void didPopNext(Route route) {}
 }
 
 abstract class ZenithRoute {
@@ -52,7 +57,7 @@ class _NavigatorObserver<T extends ZenithRoute> extends NavigatorObserver {
 
   @override
   void didPush(Route route, Route? previousRoute) {
-    for (final item in _router._routeAwares) {
+    for (final item in _router._observers) {
       if (previousRoute?.settings case ZenithPage(:final arguments)) {
         if (arguments == item.$1) {
           item.$2.didPushNext();
@@ -63,21 +68,24 @@ class _NavigatorObserver<T extends ZenithRoute> extends NavigatorObserver {
 
   @override
   void didPop(Route route, Route? previousRoute) {
-    for (final item in _router._routeAwares) {
+    for (final item in _router._observers) {
       if (previousRoute?.settings.arguments == item.$1) {
-        item.$2.didPopNext();
+        item.$2.didPopNext(route);
       }
     }
   }
 }
 
 class StackRouterState<T extends ZenithRoute> extends State<StackRouter<T>>
-    with RouteAware
-    implements StackRouterController<T>, PopHandler, PopController {
+    implements
+        StackRouterController<T>,
+        PopHandler,
+        PopController,
+        StackRouterObserver {
   final List<T> _stack = [];
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   final List<PopHandler> _popHandlers = [];
-  final List<(T, RouteAware)> _routeAwares = [];
+  final List<(T, StackRouterObserver)> _observers = [];
 
   late final _NavigatorObserver<T> _observer = _NavigatorObserver<T>(this);
 
@@ -151,28 +159,30 @@ class StackRouterState<T extends ZenithRoute> extends State<StackRouter<T>>
   T get currentRoute => _stack.last;
 
   @override
-  void subscribe(RouteAware routeAware, {T? route}) {
-    _routeAwares.add((route ?? _stack.last, routeAware));
+  void subscribe(StackRouterObserver observer, {T? route}) {
+    _observers.add((route ?? _stack.last, observer));
   }
 
   @override
-  void unsubscribe(RouteAware routeAware, {T? route}) {
-    _routeAwares.removeWhere(
-        (item) => item.$2 == routeAware && (route == null || route == item.$1));
+  void unsubscribe(StackRouterObserver observer, {T? route}) {
+    _observers.removeWhere(
+        (item) => item.$2 == observer && (route == null || route == item.$1));
   }
 
   @override
   void didPushNext() {
-    for (final item in _routeAwares) {
-      item.$2.didPushNext();
+    for (final item in _observers) {
+      if (item.$1 == _stack.last) {
+        item.$2.didPushNext();
+      }
     }
   }
 
   @override
-  void didPopNext() {
-    for (final item in _routeAwares) {
+  void didPopNext(Route route) {
+    for (final item in _observers) {
       if (item.$1 == _stack.last) {
-        item.$2.didPopNext();
+        item.$2.didPopNext(route);
       }
     }
   }

@@ -103,7 +103,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final state = ref.watch(_stateProvider);
     return StackObserver(
-      onPopNext: () {
+      onPopNext: (route) {
         ref.invalidate(_stateProvider);
       },
       child: state.when(

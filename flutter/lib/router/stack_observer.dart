@@ -3,7 +3,7 @@ import 'package:zenith/router/stack_router.dart';
 
 class StackObserver extends StatefulWidget {
   final void Function()? onPushNext;
-  final void Function()? onPopNext;
+  final void Function(Route route)? onPopNext;
   final Widget child;
 
   const StackObserver({
@@ -17,7 +17,8 @@ class StackObserver extends StatefulWidget {
   State<StackObserver> createState() => _StackObserverState();
 }
 
-class _StackObserverState extends State<StackObserver> with RouteAware {
+class _StackObserverState extends State<StackObserver>
+    implements StackRouterObserver {
   StackRouterController? _controller;
 
   @override
@@ -40,8 +41,8 @@ class _StackObserverState extends State<StackObserver> with RouteAware {
   }
 
   @override
-  void didPopNext() {
-    widget.onPopNext?.call();
+  void didPopNext(Route route) {
+    widget.onPopNext?.call(route);
   }
 
   @override
