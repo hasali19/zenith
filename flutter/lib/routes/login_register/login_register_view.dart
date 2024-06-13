@@ -1,7 +1,5 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:zenith/router.dart';
 import 'package:zenith/routes/login_register/login_register_controller.dart';
 
 import 'login_register_state.dart';
@@ -45,7 +43,7 @@ class _LoginRegisterViewState extends ConsumerState<LoginRegisterView> {
 
     ref.listen(loginRegisterControllerProvider, (previous, next) {
       if (next case LoginRegisterSuccess()) {
-        context.router.replace(const LoginUsersRoute());
+        // context.router.replace(const LoginUsersRoute());
       } else if (next case LoginRegisterFailure()) {
         ScaffoldMessenger.of(context)
           ..clearSnackBars()

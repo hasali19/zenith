@@ -1,10 +1,10 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/api.dart';
-import 'package:zenith/router.dart';
+import 'package:zenith/router/stack_router.dart';
+import 'package:zenith/routes/login/routes.dart';
 
 part 'login_users_view.g.dart';
 
@@ -14,11 +14,11 @@ Future<List<User>> _users(_UsersRef ref) async {
   return await api.fetchUsers();
 }
 
-class LoginUsersView extends StatelessWidget {
+class LoginUsersView extends ConsumerWidget {
   const LoginUsersView({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ScaffoldMessenger(
       child: Scaffold(
         body: Center(
@@ -42,7 +42,8 @@ class LoginUsersView extends StatelessWidget {
                 }
 
                 if (next case AsyncData(value: [])) {
-                  context.router.replace(LoginRegisterRoute(initial: true));
+                  StackRouter.of<LoginChildRoute>(context)
+                      .push(const LoginRegisterRoute(initial: true));
                 }
               });
 
@@ -68,8 +69,10 @@ class LoginUsersView extends StatelessWidget {
         elevated: true,
         icon: Icons.account_circle,
         text: user.username,
-        onTap: () =>
-            context.router.push(LoginUserRoute(username: user.username)),
+        onTap: () {
+          StackRouter.of<LoginChildRoute>(context)
+              .push(LoginUserRoute(username: user.username));
+        },
       ),
     );
     return Padding(
@@ -87,13 +90,17 @@ class LoginUsersView extends StatelessWidget {
               elevated: false,
               icon: Icons.login,
               text: 'Login manually',
-              onTap: () => context.router.push(LoginUserRoute(username: null)),
+              onTap: () {
+                // context.router.push(LoginUserRoute(username: null));
+              },
             ),
             _UserListCard(
               elevated: false,
               icon: Icons.add_circle_outline,
               text: 'Add user',
-              onTap: () => context.router.push(LoginRegisterRoute()),
+              onTap: () {
+                // context.router.push(LoginRegisterRoute());
+              },
             ),
           ],
         ),
