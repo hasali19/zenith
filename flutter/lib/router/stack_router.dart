@@ -134,19 +134,12 @@ class StackRouterState<T extends ZenithRoute> extends State<StackRouter<T>>
                     ))
                 .toList(),
             observers: [_observer],
-            onPopPage: (route, result) {
-              if (!route.didPop(result)) {
-                return false;
-              }
-
-              if (route.settings.arguments is T) {
-                _stack.remove(route.settings.arguments);
+            onDidRemovePage: (page) {
+              final arguments = page.arguments;
+              if (arguments is T) {
+                _stack.remove(arguments);
                 _updateRouterLocation();
               }
-
-              route.onPopInvoked(true);
-
-              return true;
             },
           ),
         ),
