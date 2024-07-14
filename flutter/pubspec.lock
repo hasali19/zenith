@@ -362,7 +362,7 @@ packages:
     description:
       path: "packages/dynamic_color"
       ref: HEAD
-      resolved-ref: "96c1f1d620c3eab919c6696e5c7f2689fea373e5"
+      resolved-ref: "293eabfca19f13375829afad8886b3f371fb1933"
       url: "https://github.com/hasali19/material-foundation-flutter-packages.git"
     source: git
     version: "1.7.0"
