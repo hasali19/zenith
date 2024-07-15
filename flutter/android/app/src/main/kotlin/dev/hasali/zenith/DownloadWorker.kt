@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -227,7 +228,13 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
                 )
                 .build()
 
-        setForeground(ForegroundInfo(id.hashCode(), notification))
+        val foregroundInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ForegroundInfo(id.hashCode(), notification, FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        } else {
+            ForegroundInfo(id.hashCode(), notification)
+        }
+
+        setForeground(foregroundInfo)
     }
 
     private fun showCompletedNotification(filename: String, success: Boolean, length: Long) {
