@@ -172,49 +172,6 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     return items;
   }
 
-  Future<void> _showSubtitlesMenu(BuildContext context) {
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          builder: (context, scrollController) {
-            return ListView(
-              controller: scrollController,
-              children: _buildSubtitlesMenuItems(context),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  List<Widget> _buildSubtitlesMenuItems(BuildContext context) {
-    final items = [
-      ListTile(
-        title: const Text('None'),
-        onTap: () {
-          widget.onTextTrackSelected(null);
-          Navigator.pop(context);
-        },
-      )
-    ];
-
-    for (final track in _subtitles) {
-      items.add(ListTile(
-        title: Text(track.displayLanguage ?? 'Unknown'),
-        subtitle: track.title != null ? Text(track.title!) : null,
-        onTap: () {
-          widget.onTextTrackSelected(track);
-          Navigator.pop(context);
-        },
-      ));
-    }
-
-    return items;
-  }
-
   Future<void> _showBoxFitMenu(BuildContext context) {
     const fits = [
       (BoxFit.cover, 'Cover', Icons.crop_free),

@@ -342,7 +342,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     );
 
     return PopScope(
-      onPopInvoked: _onPopInvoked,
+      onPopInvokedWithResult: _onPopInvoked,
       child: Scaffold(
         backgroundColor: Colors.black,
         body: content,
@@ -350,13 +350,17 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     );
   }
 
-  Future<void> _onPopInvoked(bool didPop) async {
-    final window = ref.read(windowProvider);
-    if (window.isWindowed) {
-      await window.setFullscreen(false);
-    } else {
-      await platform.setExtendIntoCutout(false);
-      await platform.setSystemBarsVisible(true);
+  Future<void> _onPopInvoked(bool didPop, dynamic result) async {
+    if (didPop) {
+      final window = ref.read(windowProvider);
+      if (window.isWindowed) {
+        await window.setFullscreen(false);
+      } else {
+        await Future.wait([
+          platform.setExtendIntoCutout(false),
+          platform.setSystemBarsVisible(true),
+        ]);
+      }
     }
   }
 }
