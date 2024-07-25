@@ -124,7 +124,7 @@ async fn import_movie() -> eyre::Result<()> {
         .await?;
 
     assert_eq!(media_items.len(), 1);
-    let row = media_items.get(0).unwrap();
+    let row = media_items.first().unwrap();
 
     assert_eq!(row.item_type, MediaItemType::Movie);
     assert_eq!(row.name, "Movie Name");
@@ -138,7 +138,7 @@ async fn import_movie() -> eyre::Result<()> {
         .await?;
 
     assert_eq!(video_files.len(), 1);
-    let row = video_files.get(0).unwrap();
+    let row = video_files.first().unwrap();
 
     assert_eq!(
         row.path,
@@ -190,7 +190,7 @@ async fn import_movie_with_multiple_files() -> eyre::Result<()> {
         .await?;
 
     assert_eq!(media_items.len(), 1);
-    let original_movie = media_items.get(0).unwrap();
+    let original_movie = media_items.first().unwrap();
 
     library
         .process_file_system_change(FileSystemChange {
@@ -207,7 +207,7 @@ async fn import_movie_with_multiple_files() -> eyre::Result<()> {
         .await?;
 
     assert_eq!(media_items.len(), 1);
-    let movie = media_items.get(0).unwrap();
+    let movie = media_items.first().unwrap();
 
     assert_eq!(movie.id, original_movie.id);
 
@@ -325,7 +325,7 @@ async fn import_episode() -> eyre::Result<()> {
         .await?;
 
     assert_eq!(video_files.len(), 1);
-    let row = video_files.get(0).unwrap();
+    let row = video_files.first().unwrap();
 
     assert_eq!(row.item_id, episode.id);
     assert_eq!(row.path, "/media/shows/Show Name/S02E06.mkv");
@@ -430,7 +430,7 @@ async fn import_subtitle() -> eyre::Result<()> {
         .await?;
 
     assert_eq!(subtitles.len(), 1);
-    let row = subtitles.get(0).unwrap();
+    let row = subtitles.first().unwrap();
 
     assert_eq!(row.stream_index, None);
     assert_eq!(

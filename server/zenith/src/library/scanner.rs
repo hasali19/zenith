@@ -1,6 +1,6 @@
 use std::io;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 
 use async_trait::async_trait;
 use camino::{Utf8Path, Utf8PathBuf};
@@ -8,7 +8,6 @@ use db::media::MediaItemType;
 use db::sql::{self, Join};
 use db::Db;
 use eyre::eyre;
-use time::Instant;
 use tokio::sync::Mutex;
 use walkdir::WalkDir;
 
@@ -99,7 +98,7 @@ impl LibraryScanner {
             log_error(scanner.scan_library_files()).await;
 
             let duration = Instant::now() - start_time;
-            let seconds = duration.as_seconds_f32();
+            let seconds = duration.as_secs_f32();
 
             tracing::info!("completed scan in {seconds:.3}s");
         } else {
@@ -167,16 +166,18 @@ impl LibraryScannerImpl {
 
         for path in subtitles {
             if let Err(e) = tokio::fs::metadata(&path).await
-                    && e.kind() == io::ErrorKind::NotFound
-                {
-                    let change = FileSystemChange {
-                        path,
-                        file_type: FileType::Subtitle,
-                        change_type: ChangeType::Removed,
-                    };
+                && e.kind() == io::ErrorKind::NotFound
+            {
+                let change = FileSystemChange {
+                    path,
+                    file_type: FileType::Subtitle,
+                    change_type: ChangeType::Removed,
+                };
 
-                    self.event_handler.process_file_system_change(change).await?;
-                }
+                self.event_handler
+                    .process_file_system_change(change)
+                    .await?;
+            }
         }
 
         for (video_type, library_path) in &self.library_paths {

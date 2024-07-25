@@ -41,7 +41,6 @@ markdown = { workspace = true }
 migrations = { path = "../migrations" }
 mockall = { workspace = true, optional = true }
 notify = { workspace = true }
-once_cell = { workspace = true }
 openapiv3 = { workspace = true }
 rand = { workspace = true }
 regex = { workspace = true }

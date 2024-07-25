@@ -40,9 +40,9 @@ async fn update_progress(
     }
 
     let user_data = db::items::get_user_data_for_video(&mut conn, user.id, *id).await?;
-    let video_file = db::video_files::get_for_item(&mut conn, *id).await?;
+    let video_files = db::video_files::get_for_item(&mut conn, *id).await?;
 
-    let Some(video_file) = video_file.get(0) else {
+    let Some(video_file) = video_files.first() else {
         return Err(bad_request("no associated video files found"));
     };
 

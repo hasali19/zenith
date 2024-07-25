@@ -1,10 +1,11 @@
+use std::sync::LazyLock;
+
 use db::items::MediaItem;
 use db::media::{MediaImage, MediaImageSrcType, MediaImageType, MediaItemType, MetadataProvider};
 use db::people::NewPerson;
 use db::Db;
 use eyre::{eyre, Context};
 use itertools::Itertools;
-use once_cell::sync::Lazy;
 use regex::Regex;
 use sqlx::SqliteConnection;
 use thiserror::Error;
@@ -194,7 +195,7 @@ async fn find_match_for_show(
 
     let mut name = item.name.as_str();
 
-    static YEAR_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(.+) \(\d\d\d\d\)$").unwrap());
+    static YEAR_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(.+) \(\d\d\d\d\)$").unwrap());
 
     if let Some(captures) = YEAR_RE.captures(name) {
         name = captures.get(1).unwrap().as_str();

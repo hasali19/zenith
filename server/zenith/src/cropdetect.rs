@@ -1,8 +1,8 @@
 use std::io::BufRead;
 use std::process::Stdio;
+use std::sync::LazyLock;
 
 use eyre::eyre;
-use once_cell::sync::Lazy;
 use regex::Regex;
 use tokio::process::Command;
 
@@ -31,7 +31,7 @@ impl<'a> CropDetect<'a> {
     pub async fn run(&self, input: &str) -> eyre::Result<CropResult> {
         let output = Command::new(self.ffmpeg_path)
             .arg_pair("-i", input)
-            .arg_pair("-t", &self.duration.to_string())
+            .arg_pair("-t", self.duration.to_string())
             .arg_pair("-vf", "cropdetect")
             .arg_pair("-f", "null")
             .arg("-")
@@ -47,7 +47,7 @@ impl<'a> CropDetect<'a> {
 
         stderr
             .lines()
-            .flatten()
+            .map_while(Result::ok)
             .filter_map(|line| parse_log_line(&line))
             .last()
             .ok_or_else(|| eyre!("failed to find any crop results in ffmpeg output"))
@@ -55,7 +55,7 @@ impl<'a> CropDetect<'a> {
 }
 
 fn parse_log_line(line: &str) -> Option<CropResult> {
-    static LINE_REGEX: Lazy<Regex> = Lazy::new(|| {
+    static LINE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(r"x1:(\d+) x2:(\d+) y1:(\d+) y2:(\d+) w:\d+ h:\d+ x:\d+ y:\d+ pts:\d+ t:\S+ crop=\d+:\d+:\d+:\d+").unwrap()
     });
 

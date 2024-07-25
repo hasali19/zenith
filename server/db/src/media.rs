@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use std::fmt::Display;
 
 use eyre::eyre;
 use sqlx::{SqliteConnection, Type};
@@ -92,9 +93,10 @@ impl<'a> TryFrom<&'a String> for MediaImage<'a> {
     }
 }
 
-impl<'a> ToString for MediaImage<'a> {
-    fn to_string(&self) -> String {
-        format!(
+impl<'a> Display for MediaImage<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
             "{}|{}|{}",
             self.img_type as i32, self.src_type as i32, self.src
         )

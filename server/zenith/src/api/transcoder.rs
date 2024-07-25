@@ -29,12 +29,6 @@ pub async fn get_state(transcoder: Extension<Arc<Transcoder>>) -> ApiResult<impl
 }
 
 #[derive(Serialize)]
-struct ProgressEvent {
-    id: i64,
-    progress: f64,
-}
-
-#[derive(Serialize)]
 #[serde(tag = "type")]
 #[serde(rename_all = "snake_case")]
 enum Event {

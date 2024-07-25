@@ -433,7 +433,7 @@ async fn import_subtitle(mut app: TestApp) {
     assert_eq!(subtitle.sdh, false);
     assert_eq!(subtitle.forced, true);
 
-    let path = subtitles.get(0).unwrap().path.as_deref().unwrap();
+    let path = subtitles.first().unwrap().path.as_deref().unwrap();
     let contents = tokio::fs::read_to_string(path).await.unwrap();
 
     assert_eq!(contents, "subtitle content goes here");

@@ -104,10 +104,7 @@ impl<'a> PathParser<'a> {
             }
         }
 
-        let Some(mut sub_file_name) = path.file_stem() else {
-            return None;
-        };
-
+        let mut sub_file_name = path.file_stem()?;
         let mut sdh = false;
         let mut forced = false;
 
@@ -130,7 +127,9 @@ impl<'a> PathParser<'a> {
 
         {
             let (name, i) = split_ext(sub_file_name);
-            if let Some(i) = i && i.parse::<i32>().is_ok() {
+            if let Some(i) = i
+                && i.parse::<i32>().is_ok()
+            {
                 sub_file_name = name;
             }
         }
@@ -146,7 +145,8 @@ impl<'a> PathParser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use once_cell::sync::Lazy;
+    use std::sync::LazyLock;
+
     use pretty_assertions::assert_eq;
     use time::macros::datetime;
 
@@ -155,8 +155,8 @@ mod tests {
     use super::*;
 
     fn parser() -> PathParser<'static> {
-        static CONFIG: Lazy<Config> =
-            Lazy::new(|| serde_yaml::from_str(include_str!("tests/config.yml")).unwrap());
+        static CONFIG: LazyLock<Config> =
+            LazyLock::new(|| serde_yaml::from_str(include_str!("tests/config.yml")).unwrap());
         PathParser::new(&CONFIG.import.matchers)
     }
 
