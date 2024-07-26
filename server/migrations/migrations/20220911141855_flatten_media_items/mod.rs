@@ -1,6 +1,8 @@
+// hash:3bcb3d0c064e6193f7c8d41b3ea24a51400357add21ee6d01e09eae4639bb14f
+
 use std::path::Path;
 
-use sqlx::{Execute, QueryBuilder, Sqlite, SqliteConnection};
+use sqlx::{QueryBuilder, Sqlite, SqliteConnection};
 
 pub async fn execute(conn: &mut SqliteConnection) -> eyre::Result<()> {
     // Execute the main migration script.
@@ -28,11 +30,7 @@ pub async fn execute(conn: &mut SqliteConnection) -> eyre::Result<()> {
                 .push_bind(Path::new(path).parent().unwrap().to_str().unwrap());
         });
 
-        let mut query = query.build();
-        let sql = query.sql();
-        let arguments = query.take_arguments().unwrap();
-
-        sqlx::query_with(sql, arguments).execute(&mut *conn).await?;
+        query.build().execute(&mut *conn).await?;
     }
 
     Ok(())

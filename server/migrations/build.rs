@@ -1,5 +1,7 @@
+#![feature(let_chains)]
+
 use std::fs::File;
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 
 use sha2::{Digest, Sha256};
@@ -101,16 +103,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     for migration in &migrations {
-        let mut hasher = sha2::Sha256::new();
-
-        if matches!(migration.path.file_name(), Some(name) if name == "mod.rs") {
-            hash_dir(&mut hasher, migration.path.parent().unwrap())?;
-        } else {
-            hasher.update(std::fs::read_to_string(&migration.path)?.replace("\r\n", "\n"));
-        }
-
-        let hash = hasher.finalize();
         let name = &migration.name;
+        let hash = hash_migration(migration)?;
 
         writeln!(out, "    migrator.push_migration(")?;
         writeln!(out, "        \"{name}\",")?;
@@ -140,4 +134,34 @@ fn hash_dir(hasher: &mut Sha256, path: &Path) -> Result<(), Box<dyn std::error::
     }
 
     Ok(())
+}
+
+fn hash_migration(migration: &Migration) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let hash = if let MigrationKind::Rust = migration.kind
+        && let Some(hash) = try_read_hash_override(&migration.path)
+    {
+        hex::decode(hash)?
+    } else {
+        let mut hasher = sha2::Sha256::new();
+
+        if matches!(migration.path.file_name(), Some(name) if name == "mod.rs") {
+            hash_dir(&mut hasher, migration.path.parent().unwrap())?;
+        } else {
+            hasher.update(std::fs::read_to_string(&migration.path)?.replace("\r\n", "\n"));
+        }
+
+        hasher.finalize().to_vec()
+    };
+
+    Ok(hash)
+}
+
+fn try_read_hash_override(path: &Path) -> Option<String> {
+    let line = BufReader::new(File::open(path).ok()?).lines().next();
+    if let Some(Ok(line)) = &line
+        && let Some(hash) = line.strip_prefix("// hash:")
+    {
+        return Some(hash.trim().to_owned());
+    }
+    None
 }

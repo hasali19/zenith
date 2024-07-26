@@ -1,7 +1,7 @@
-use sqlx::sqlite::SqliteArguments;
-use sqlx::{Acquire, Arguments, FromRow, SqliteConnection};
+use sqlx::{Acquire, FromRow, SqliteConnection};
 
 use crate::sql;
+use crate::utils::arguments::QueryArguments;
 
 pub struct CollectionUserData {
     pub unwatched: u32,
@@ -92,11 +92,11 @@ pub async fn remove(conn: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
 pub async fn set_items(conn: &mut SqliteConnection, id: i64, items: &[i64]) -> eyre::Result<()> {
     let mut tx = conn.begin().await?;
 
-    let mut args = SqliteArguments::default();
-    args.add(id);
+    let mut args = QueryArguments::default();
+    args.add(id)?;
 
     for (i, item_id) in items.iter().enumerate() {
-        args.add(item_id);
+        args.add(item_id)?;
         sqlx::query("INSERT INTO collections_media_items VALUES (?1, ?2, ?3) ON CONFLICT DO UPDATE SET idx = ?3")
             .bind(id)
             .bind(item_id)
@@ -113,7 +113,9 @@ pub async fn set_items(conn: &mut SqliteConnection, id: i64, items: &[i64]) -> e
         WHERE collection_id = ? AND item_id NOT IN ({placeholders})
     ");
 
-    sqlx::query_with(&sql, args).execute(&mut *tx).await?;
+    sqlx::query_with(&sql, args.into_inner())
+        .execute(&mut *tx)
+        .await?;
 
     tx.commit().await?;
 

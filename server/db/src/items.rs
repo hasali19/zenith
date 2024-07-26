@@ -3,10 +3,11 @@ use std::fmt::Write;
 use camino::Utf8PathBuf;
 use eyre::{eyre, Context};
 use itertools::Itertools;
-use sqlx::sqlite::{SqliteArguments, SqliteRow};
-use sqlx::{Acquire, Arguments, FromRow, Row, SqliteConnection};
+use sqlx::sqlite::SqliteRow;
+use sqlx::{Acquire, FromRow, Row, SqliteConnection};
 
 use crate::sql::{self, Join};
+use crate::utils::arguments::QueryArguments;
 
 use super::media::{MediaImage, MediaItemType, MetadataProvider};
 use super::streams::StreamType;
@@ -314,7 +315,7 @@ pub enum SortField {
 }
 
 pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Result<Vec<MediaItem>> {
-    let mut args = SqliteArguments::default();
+    let mut args = QueryArguments::default();
     let mut conditions = vec![];
     let mut joins = vec![
         Join::left("video_files AS v ON v.item_id = m.id"),
@@ -325,23 +326,23 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
     if let Some(ids) = query.ids {
         conditions.push(format!("m.id IN ({})", sql::Placeholders(ids.len())));
         for index in ids {
-            args.add(index);
+            args.add(index)?;
         }
     }
 
     if let Some(item_type) = query.item_type {
         conditions.push("m.item_type = ?".to_owned());
-        args.add(item_type);
+        args.add(item_type)?;
     }
 
     if let Some(id) = query.parent_id {
         conditions.push("m.parent_id = ?".to_owned());
-        args.add(id);
+        args.add(id)?;
     }
 
     if let Some(id) = query.grandparent_id {
         conditions.push("m.grandparent_id = ?".to_owned());
-        args.add(id);
+        args.add(id)?;
     }
 
     if let Some(id) = query.collection_id {
@@ -349,7 +350,7 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
             "collections_media_items AS c ON c.item_id = m.id",
         ));
         conditions.push("c.collection_id = ?".to_owned());
-        args.add(id);
+        args.add(id)?;
     }
 
     let order_by = query
@@ -371,7 +372,7 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         .limit(query.limit)
         .to_sql();
 
-    let mut items: Vec<MediaItem> = sqlx::query_as_with(&sql, args.clone().clone())
+    let mut items: Vec<MediaItem> = sqlx::query_as_with(&sql, args.clone().into_inner())
         .fetch_all(&mut *conn)
         .await?;
 
@@ -384,7 +385,7 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         .condition(&condition)
         .to_sql();
 
-    let mut genres = sqlx::query_as_with::<_, (i64, String), _>(&sql, args.clone())
+    let mut genres = sqlx::query_as_with::<_, (i64, String), _>(&sql, args.clone().into_inner())
         .fetch_all(&mut *conn)
         .await?
         .into_iter()
@@ -414,7 +415,7 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         .order_by(&["c.idx"])
         .to_sql();
 
-    let mut cast = sqlx::query_as_with::<_, CastMemberRow, _>(&sql, args)
+    let mut cast = sqlx::query_as_with::<_, CastMemberRow, _>(&sql, args.into_inner())
         .fetch_all(&mut *conn)
         .await?
         .into_iter()
@@ -435,9 +436,9 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         .map(|item| item.id)
         .collect_vec();
 
-    let mut args = SqliteArguments::default();
+    let mut args = QueryArguments::default();
     for id in &video_ids {
-        args.add(*id);
+        args.add(*id)?;
     }
 
     let condition = format!("video_id IN ({})", sql::Placeholders(video_ids.len()));
@@ -447,7 +448,7 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         .condition(&condition)
         .to_sql();
 
-    let mut streams = sqlx::query_as_with(&sql, args.clone())
+    let mut streams = sqlx::query_as_with(&sql, args.clone().into_inner())
         .fetch_all(&mut *conn)
         .await?
         .into_iter()
@@ -458,7 +459,7 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         .condition(&condition)
         .to_sql();
 
-    let mut subtitles = sqlx::query_as_with(&sql, args.clone())
+    let mut subtitles = sqlx::query_as_with(&sql, args.clone().into_inner())
         .fetch_all(&mut *conn)
         .await?
         .into_iter()
@@ -616,10 +617,10 @@ pub async fn get_user_data_for_videos(
     user_id: i64,
     ids: &[i64],
 ) -> eyre::Result<Vec<VideoUserData>> {
-    let mut args = SqliteArguments::default();
-    args.add(user_id);
+    let mut args = QueryArguments::default();
+    args.add(user_id)?;
     for index in ids {
-        args.add(index);
+        args.add(index)?;
     }
 
     let sql = sql::select("video_files AS v")
@@ -635,7 +636,9 @@ pub async fn get_user_data_for_videos(
         .condition(&format!("v.item_id IN ({})", sql::Placeholders(ids.len())))
         .to_sql();
 
-    Ok(sqlx::query_as_with(&sql, args).fetch_all(conn).await?)
+    Ok(sqlx::query_as_with(&sql, args.into_inner())
+        .fetch_all(conn)
+        .await?)
 }
 
 pub async fn get_user_data_for_collections(
@@ -643,10 +646,10 @@ pub async fn get_user_data_for_collections(
     user_id: i64,
     ids: &[i64],
 ) -> eyre::Result<Vec<CollectionUserData>> {
-    let mut args = SqliteArguments::default();
-    args.add(user_id);
+    let mut args = QueryArguments::default();
+    args.add(user_id)?;
     for index in ids {
-        args.add(index);
+        args.add(index)?;
     }
 
     let mut placeholders = String::new();
@@ -676,7 +679,9 @@ pub async fn get_user_data_for_collections(
         GROUP BY v.grandparent_id
     ");
 
-    Ok(sqlx::query_as_with(&sql, args).fetch_all(conn).await?)
+    Ok(sqlx::query_as_with(&sql, args.into_inner())
+        .fetch_all(conn)
+        .await?)
 }
 
 #[derive(Default)]
@@ -718,14 +723,14 @@ pub async fn update_metadata(
 ) -> eyre::Result<()> {
     let mut columns = vec![];
     let mut values = vec![];
-    let mut args = SqliteArguments::default();
+    let mut args = QueryArguments::default();
 
     macro_rules! collect {
         ($field:ident) => {
             if let Some($field) = data.$field {
                 columns.push(stringify!($field));
                 values.push("?");
-                args.add($field);
+                args.add($field)?;
             }
         };
         ($field:ident, $($fields:ident),+) => {
@@ -755,14 +760,14 @@ pub async fn update_metadata(
         if let Some(img) = img {
             columns.push(column);
             values.push("?");
-            args.add(img.map(|img| img.to_string()));
+            args.add(img.map(|img| img.to_string()))?;
         }
     }
 
     columns.push("metadata_updated_at");
     values.push("(strftime('%s', 'now'))");
 
-    args.add(id);
+    args.add(id)?;
 
     let sql = sql::update("media_items")
         .columns(&columns)
@@ -772,15 +777,17 @@ pub async fn update_metadata(
 
     let mut tx = conn.begin().await?;
 
-    sqlx::query_with(&sql, args).execute(&mut *tx).await?;
+    sqlx::query_with(&sql, args.into_inner())
+        .execute(&mut *tx)
+        .await?;
 
     if let Some(genres) = data.genres {
         let genre_ids = if !genres.is_empty() {
-            let mut args = SqliteArguments::default();
+            let mut args = QueryArguments::default();
             let mut placeholders = String::new();
 
             for (i, &genre) in genres.iter().enumerate() {
-                args.add(genre);
+                args.add(genre)?;
                 placeholders += "(?)";
                 if i < genres.len() - 1 {
                     placeholders += ",";
@@ -794,7 +801,7 @@ pub async fn update_metadata(
                 RETURNING (id)
             ");
 
-            let genre_ids: Vec<i64> = sqlx::query_scalar_with(&sql, args)
+            let genre_ids: Vec<i64> = sqlx::query_scalar_with(&sql, args.into_inner())
                 .fetch_all(&mut *tx)
                 .await?;
 
@@ -803,12 +810,12 @@ pub async fn update_metadata(
             vec![]
         };
 
-        let mut args = SqliteArguments::default();
+        let mut args = QueryArguments::default();
         let mut placeholders = String::new();
 
         for (i, genre_id) in genre_ids.iter().enumerate() {
-            args.add(id);
-            args.add(genre_id);
+            args.add(id)?;
+            args.add(genre_id)?;
             placeholders += "(?, ?)";
             if i < genre_ids.len() - 1 {
                 placeholders += ",";
@@ -821,15 +828,15 @@ pub async fn update_metadata(
             VALUES {placeholders}
         ");
 
-        sqlx::query_with(&sql, args)
+        sqlx::query_with(&sql, args.into_inner())
             .execute(&mut *tx)
             .await
             .wrap_err_with(|| eyre!("query failed: {sql}"))?;
 
         let placeholders = sql::Placeholders(genre_ids.len());
-        let mut args = SqliteArguments::default();
+        let mut args = QueryArguments::default();
         for genre_id in &genre_ids {
-            args.add(genre_id);
+            args.add(genre_id)?;
         }
 
         #[rustfmt::skip]
@@ -838,18 +845,22 @@ pub async fn update_metadata(
             WHERE item_id = ? AND genre_id NOT IN ({placeholders})
         ");
 
-        sqlx::query_with(&sql, args).execute(&mut *tx).await?;
+        sqlx::query_with(&sql, args.into_inner())
+            .execute(&mut *tx)
+            .await?;
     }
 
-    if let Some(cast) = data.cast && !cast.is_empty() {
-        let mut args = SqliteArguments::default();
+    if let Some(cast) = data.cast
+        && !cast.is_empty()
+    {
+        let mut args = QueryArguments::default();
         let mut placeholders = String::new();
 
         for (i, cast_member) in cast.iter().enumerate() {
-            args.add(id);
-            args.add(cast_member.person_id);
-            args.add(cast_member.idx);
-            args.add(cast_member.character);
+            args.add(id)?;
+            args.add(cast_member.person_id)?;
+            args.add(cast_member.idx)?;
+            args.add(cast_member.character)?;
             placeholders += "(?, ?, ?, ?)";
             if i < cast.len() - 1 {
                 placeholders += ",";
@@ -864,15 +875,15 @@ pub async fn update_metadata(
                 character = excluded.character
         ");
 
-        sqlx::query_with(&sql, args)
+        sqlx::query_with(&sql, args.into_inner())
             .execute(&mut *tx)
             .await
             .wrap_err_with(|| eyre!("query failed: {sql}"))?;
 
         let placeholders = sql::Placeholders(cast.len());
-        let mut args = SqliteArguments::default();
+        let mut args = QueryArguments::default();
         for cast_member in cast {
-            args.add(cast_member.person_id);
+            args.add(cast_member.person_id)?;
         }
 
         #[rustfmt::skip]
@@ -881,18 +892,22 @@ pub async fn update_metadata(
             WHERE item_id = ? AND person_id NOT IN ({placeholders})
         ");
 
-        sqlx::query_with(&sql, args).execute(&mut *tx).await?;
+        sqlx::query_with(&sql, args.into_inner())
+            .execute(&mut *tx)
+            .await?;
     }
 
-    if let Some(crew) = data.crew && !crew.is_empty() {
-        let mut args = SqliteArguments::default();
+    if let Some(crew) = data.crew
+        && !crew.is_empty()
+    {
+        let mut args = QueryArguments::default();
         let mut placeholders = String::new();
 
         for (i, crew_member) in crew.iter().enumerate() {
-            args.add(id);
-            args.add(crew_member.person_id);
-            args.add(crew_member.department);
-            args.add(crew_member.job);
+            args.add(id)?;
+            args.add(crew_member.person_id)?;
+            args.add(crew_member.department)?;
+            args.add(crew_member.job)?;
             placeholders += "(?, ?, ?, ?)";
             if i < crew.len() - 1 {
                 placeholders += ",";
@@ -907,19 +922,22 @@ pub async fn update_metadata(
                 job = excluded.job
         ");
 
-        sqlx::query_with(&sql, args).execute(&mut *tx).await?;
+        sqlx::query_with(&sql, args.into_inner())
+            .execute(&mut *tx)
+            .await?;
 
-        let mut args = SqliteArguments::default();
+        let mut args = QueryArguments::default();
 
         let mut sql = "
             DELETE FROM crew
             WHERE item_id = ? AND (person_id, department, job) NOT IN (
-        ".to_string();
+        "
+        .to_string();
 
         for (i, crew_member) in crew.iter().enumerate() {
-            args.add(crew_member.person_id);
-            args.add(crew_member.department);
-            args.add(crew_member.job);
+            args.add(crew_member.person_id)?;
+            args.add(crew_member.department)?;
+            args.add(crew_member.job)?;
             write!(sql, "({})", sql::Placeholders(3))?;
             if i < crew.len() - 1 {
                 sql += ",";
@@ -928,7 +946,9 @@ pub async fn update_metadata(
 
         sql += ")";
 
-        sqlx::query_with(&sql, args).execute(&mut *tx).await?;
+        sqlx::query_with(&sql, args.into_inner())
+            .execute(&mut *tx)
+            .await?;
     }
 
     tx.commit().await?;

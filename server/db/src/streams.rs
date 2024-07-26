@@ -1,8 +1,8 @@
-use sqlx::sqlite::SqliteArguments;
+use sqlx::SqliteConnection;
 use sqlx::Type;
-use sqlx::{Arguments, SqliteConnection};
 
 use crate::sql;
+use crate::utils::arguments::QueryArguments;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Type)]
 pub enum StreamType {
@@ -142,12 +142,12 @@ pub async fn remove_except(
     except: impl Iterator<Item = u32>,
 ) -> eyre::Result<()> {
     let mut count = 0;
-    let mut args = SqliteArguments::default();
+    let mut args = QueryArguments::default();
 
-    args.add(video_id);
+    args.add(video_id)?;
 
     for index in except {
-        args.add(index);
+        args.add(index)?;
         count += 1;
     }
 
@@ -157,7 +157,9 @@ pub async fn remove_except(
         WHERE video_id = ? AND stream_index NOT IN ({placeholders})"
     );
 
-    sqlx::query_with(&sql, args).execute(conn).await?;
+    sqlx::query_with(&sql, args.into_inner())
+        .execute(conn)
+        .await?;
 
     Ok(())
 }
