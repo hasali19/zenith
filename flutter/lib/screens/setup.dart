@@ -1,16 +1,15 @@
 import 'dart:math';
 
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import 'package:zenith/main_router.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
-import 'package:zenith/router.dart';
+import 'package:zenith/router/stack_router.dart';
 
 const _uuid = Uuid();
 
-@RoutePage()
 class SetupScreen extends ConsumerStatefulWidget {
   const SetupScreen({super.key});
 
@@ -122,7 +121,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                   .update([...servers, server]);
 
               if (context.mounted) {
-                context.router.replace(const MainRoute());
+                StackRouter.of<PrimaryRoute>(context)
+                    .replace(const LoginRoute(redirect: null));
               }
             },
           ),

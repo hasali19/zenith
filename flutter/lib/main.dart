@@ -1,4 +1,3 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:cast_framework/cast_framework.dart';
 import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -13,10 +12,16 @@ import 'package:zenith/cookies.dart';
 import 'package:zenith/dio_client.dart';
 import 'package:zenith/drawer.dart';
 import 'package:zenith/language_codes.dart';
+import 'package:zenith/main_router.dart';
 import 'package:zenith/media_route_button/media_route_button.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
-import 'package:zenith/router.dart';
+import 'package:zenith/router/router_controller.dart';
+import 'package:zenith/router/router_delegate.dart';
+import 'package:zenith/router/stack_router.dart';
+import 'package:zenith/screens/home.dart';
+import 'package:zenith/screens/media_library.dart';
+import 'package:zenith/screens/settings.dart';
 import 'package:zenith/theme.dart';
 import 'package:zenith/themes.dart';
 import 'package:zenith/updater.dart';
@@ -27,7 +32,6 @@ final _authStateProvider = StateProvider((ref) => false);
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final prefs = await SharedPreferences.getInstance();
   final window = await WindowController.create();
 
   runApp(ProviderScope(
@@ -35,7 +39,8 @@ Future<void> main() async {
       if (kDebugMode) _LoggingProviderObserver(),
     ],
     overrides: [
-      preferencesProvider.overrideWithValue(prefs),
+      preferencesProvider
+          .overrideWithValue(await SharedPreferences.getInstance()),
       windowProvider.overrideWithValue(window),
       apiProvider.overrideWith((ref) {
         final activeServer = ref.watch(activeServerProvider);
@@ -96,22 +101,12 @@ class ZenithApp extends ConsumerStatefulWidget {
 }
 
 class _ZenithAppState extends ConsumerState<ZenithApp> {
-  late final AppRouter _router;
+  final _router = MainRouter();
 
   @override
   void initState() {
     super.initState();
     loadLanguageCodes();
-    _router = AppRouter(
-      isServerSet: () => Future.value(ref.read(activeServerProvider) != null),
-      isLoggedIn: () async {
-        try {
-          return await ref.read(apiProvider).isLoggedIn();
-        } catch (e) {
-          return null;
-        }
-      },
-    );
   }
 
   @override
@@ -149,7 +144,8 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
             AppThemeMode.dark => ThemeMode.dark,
             AppThemeMode.system => ThemeMode.system,
           },
-          routerConfig: _router.config(),
+          routerDelegate: _router.routerDelegate,
+          routeInformationParser: _router.routeInformationParser,
         ),
       );
     });
@@ -189,7 +185,6 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
   }
 }
 
-@RoutePage()
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
@@ -201,25 +196,72 @@ enum Screen {
   home,
   movies,
   shows,
-  // collections,
   settings,
 }
 
 class _MainScreenState extends ConsumerState<MainScreen> {
   final _updater = Updater();
 
+  RouterController? _routerController;
+  Screen _screen = Screen.home;
+
   @override
   void initState() {
     super.initState();
+
     if (kReleaseMode && ref.read(enableUpdatesCheck)) {
       _checkForUpdates();
     }
+
+    Future.microtask(() async {
+      if (await _isLoggedIn() == false && mounted) {
+        StackRouter.of<PrimaryRoute>(context)
+            .replace(const LoginRoute(redirect: null));
+      }
+    });
   }
 
-  _checkForUpdates() async {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _routerController?.removeLocationListener(_onLocationChanged);
+    _routerController = RouterController.of(context);
+    _routerController?.addLocationListener(_onLocationChanged);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _routerController?.removeLocationListener(_onLocationChanged);
+  }
+
+  Future<bool?> _isLoggedIn() async {
+    try {
+      return await ref.read(apiProvider).isLoggedIn();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> _checkForUpdates() async {
     final update = await _updater.checkForUpdates();
-    if (update != null && context.mounted) {
+    if (update != null && mounted) {
       await update.install();
+    }
+  }
+
+  void _onLocationChanged(RouteLocation location) {
+    final screen = switch (location.uri.path) {
+      '/' => Screen.home,
+      '/movies' => Screen.movies,
+      '/shows' => Screen.shows,
+      '/settings' => Screen.settings,
+      _ => null,
+    };
+    if (screen != null) {
+      setState(() {
+        _screen = screen;
+      });
     }
   }
 
@@ -229,95 +271,95 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
     void onLogout() {
       ref.read(apiProvider).logout();
-      context.router.popUntilRoot();
-      context.router.replace(LoginRoute(redirect: null));
+      StackRouter.of<PrimaryRoute>(context)
+          .replaceAll(const LoginRoute(redirect: null));
     }
 
-    return AutoTabsRouter(
-      routes: const [
-        HomeRoute(),
-        MoviesRoute(),
-        ShowsRoute(),
-        // CollectionsScreenRoute(),
-        SettingsRoute(),
+    final index = switch (_screen) {
+      Screen.home => 0,
+      Screen.movies => 1,
+      Screen.shows => 2,
+      Screen.settings => 3,
+    };
+
+    Widget child = IndexedStack(
+      index: index,
+      children: const [
+        HomeScreen(),
+        MoviesScreen(),
+        ShowsScreen(),
+        SettingsScreen(),
       ],
-      transitionBuilder: (context, child, animation) => child,
-      builder: (context, child) {
-        final screen = _activeScreen(context.tabsRouter.activeIndex);
+    );
 
-        // Use a permanent navigation drawer on larger screens
-
-        if (desktop) {
-          child = Row(
-            children: [
-              MainNavigationDrawer(
-                current: screen,
-                onDestinationTap: (screen) => _navigateTo(context, screen),
-                onLogoutTap: onLogout,
-              ),
-              Expanded(child: child),
-            ],
-          );
-        }
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(_title(screen)),
-            elevation: desktop ? 3 : null,
-            backgroundColor:
-                desktop ? Theme.of(context).colorScheme.surfaceContainer : null,
-            actions: [
-              if (CastFrameworkPlatform.instance.isSupported)
-                const MediaRouteButton(),
-              if (!desktop)
-                PopupMenuButton(
-                  itemBuilder: (context) {
-                    return [
-                      PopupMenuItem(
-                        onTap: onLogout,
-                        child: const Text('Logout'),
-                      ),
-                    ];
-                  },
-                ),
-            ],
+    if (desktop) {
+      child = Row(
+        children: [
+          MainNavigationDrawer(
+            current: _screen,
+            onDestinationTap: (screen) => _navigateTo(context, screen),
+            onLogoutTap: onLogout,
           ),
-          body: child,
-          bottomNavigationBar: switch (desktop) {
-            true => null,
-            false => NavigationBar(
-                destinations: [
-                  NavigationDestination(
-                    icon: Icon(screen == Screen.home
-                        ? Icons.home
-                        : Icons.home_outlined),
-                    label: 'Home',
+          Expanded(child: child),
+        ],
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_title(_screen)),
+        elevation: desktop ? 3 : null,
+        backgroundColor:
+            desktop ? Theme.of(context).colorScheme.surfaceContainer : null,
+        actions: [
+          if (CastFrameworkPlatform.instance.isSupported)
+            const MediaRouteButton(),
+          if (!desktop)
+            PopupMenuButton(
+              itemBuilder: (context) {
+                return [
+                  PopupMenuItem(
+                    onTap: onLogout,
+                    child: const Text('Logout'),
                   ),
-                  NavigationDestination(
-                    icon: Icon(screen == Screen.movies
-                        ? Icons.movie
-                        : Icons.movie_outlined),
-                    label: 'Movies',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(
-                        screen == Screen.shows ? Icons.tv : Icons.tv_outlined),
-                    label: 'Shows',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(screen == Screen.settings
-                        ? Icons.settings
-                        : Icons.settings_outlined),
-                    label: 'Settings',
-                  ),
-                ],
-                selectedIndex: context.tabsRouter.activeIndex,
-                onDestinationSelected: (value) {
-                  _navigateTo(context, _activeScreen(value));
-                },
+                ];
+              },
+            ),
+        ],
+      ),
+      body: child,
+      bottomNavigationBar: switch (desktop) {
+        true => null,
+        false => NavigationBar(
+            destinations: [
+              NavigationDestination(
+                icon: Icon(
+                    _screen == Screen.home ? Icons.home : Icons.home_outlined),
+                label: 'Home',
               ),
-          },
-        );
+              NavigationDestination(
+                icon: Icon(_screen == Screen.movies
+                    ? Icons.movie
+                    : Icons.movie_outlined),
+                label: 'Movies',
+              ),
+              NavigationDestination(
+                icon: Icon(
+                    _screen == Screen.shows ? Icons.tv : Icons.tv_outlined),
+                label: 'Shows',
+              ),
+              NavigationDestination(
+                icon: Icon(_screen == Screen.settings
+                    ? Icons.settings
+                    : Icons.settings_outlined),
+                label: 'Settings',
+              ),
+            ],
+            selectedIndex: index,
+            onDestinationSelected: (value) {
+              _navigateTo(context, _activeScreen(value));
+            },
+          ),
       },
     );
   }
@@ -327,7 +369,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       Screen.home => 'Zenith',
       Screen.movies => 'Movies',
       Screen.shows => 'Shows',
-      // Screen.collections => 'Collections',
       Screen.settings => 'Settings'
     };
   }
@@ -337,29 +378,23 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       0 => Screen.home,
       1 => Screen.movies,
       2 => Screen.shows,
-      // 3 => Screen.collections,
       3 => Screen.settings,
       _ => throw Exception('invalid tab index: $index')
     };
   }
 
   void _navigateTo(BuildContext context, Screen screen) {
-    switch (screen) {
-      case Screen.home:
-        context.tabsRouter.setActiveIndex(0);
-        break;
-      case Screen.movies:
-        context.tabsRouter.setActiveIndex(1);
-        break;
-      case Screen.shows:
-        context.tabsRouter.setActiveIndex(2);
-        break;
-      // case Screen.collections:
-      //   context.tabsRouter.setActiveIndex(3);
-      //   break;
-      case Screen.settings:
-        context.tabsRouter.setActiveIndex(3);
-        break;
-    }
+    setState(() {
+      _screen = screen;
+    });
+
+    RouterController.of(context).updateLocation(
+      RouteLocation.path(switch (screen) {
+        Screen.home => '/',
+        Screen.movies => '/movies',
+        Screen.shows => '/shows',
+        Screen.settings => '/settings',
+      }),
+    );
   }
 }
