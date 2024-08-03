@@ -9,134 +9,6 @@
 
 part of 'router.dart';
 
-abstract class _$AppRouter extends RootStackRouter {
-  // ignore: unused_element
-  _$AppRouter({super.navigatorKey});
-
-  @override
-  final Map<String, PageFactory> pagesMap = {
-    HomeRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const HomeScreen(),
-      );
-    },
-    ItemDetailsRoute.name: (routeData) {
-      final pathParams = routeData.inheritedPathParams;
-      final args = routeData.argsAs<ItemDetailsRouteArgs>(
-          orElse: () => ItemDetailsRouteArgs(id: pathParams.getInt('id')));
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: ItemDetailsPage(
-          key: args.key,
-          id: args.id,
-        ),
-      );
-    },
-    LoginRoute.name: (routeData) {
-      final queryParams = routeData.queryParams;
-      final args = routeData.argsAs<LoginRouteArgs>(
-          orElse: () =>
-              LoginRouteArgs(redirect: queryParams.optString('redirect')));
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: LoginPage(
-          key: args.key,
-          redirect: args.redirect,
-        ),
-      );
-    },
-    LoginRegisterRoute.name: (routeData) {
-      final queryParams = routeData.queryParams;
-      final args = routeData.argsAs<LoginRegisterRouteArgs>(
-          orElse: () => LoginRegisterRouteArgs(
-                initial: queryParams.getBool(
-                  'initial',
-                  false,
-                ),
-                code: queryParams.optString('code'),
-              ));
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: LoginRegisterPage(
-          key: args.key,
-          initial: args.initial,
-          code: args.code,
-        ),
-      );
-    },
-    LoginUserRoute.name: (routeData) {
-      final queryParams = routeData.queryParams;
-      final args = routeData.argsAs<LoginUserRouteArgs>(
-          orElse: () =>
-              LoginUserRouteArgs(username: queryParams.optString('username')));
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: LoginUserPage(
-          key: args.key,
-          username: args.username,
-        ),
-      );
-    },
-    LoginUsersRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const LoginUsersPage(),
-      );
-    },
-    MainRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const MainScreen(),
-      );
-    },
-    MoviesRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const MoviesScreen(),
-      );
-    },
-    SettingsRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const SettingsScreen(),
-      );
-    },
-    SetupRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const SetupScreen(),
-      );
-    },
-    ShowsRoute.name: (routeData) {
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: const ShowsScreen(),
-      );
-    },
-    VideoPlayerRoute.name: (routeData) {
-      final pathParams = routeData.inheritedPathParams;
-      final queryParams = routeData.queryParams;
-      final args = routeData.argsAs<VideoPlayerRouteArgs>(
-          orElse: () => VideoPlayerRouteArgs(
-                id: pathParams.getInt('id'),
-                startPosition: queryParams.getDouble(
-                  'startPosition',
-                  0,
-                ),
-              ));
-      return AutoRoutePage<dynamic>(
-        routeData: routeData,
-        child: VideoPlayerScreen(
-          key: args.key,
-          id: args.id,
-          startPosition: args.startPosition,
-        ),
-      );
-    },
-  };
-}
-
 /// generated route for
 /// [HomeScreen]
 class HomeRoute extends PageRouteInfo<void> {
@@ -148,7 +20,12 @@ class HomeRoute extends PageRouteInfo<void> {
 
   static const String name = 'HomeRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const HomeScreen();
+    },
+  );
 }
 
 /// generated route for
@@ -170,8 +47,18 @@ class ItemDetailsRoute extends PageRouteInfo<ItemDetailsRouteArgs> {
 
   static const String name = 'ItemDetailsRoute';
 
-  static const PageInfo<ItemDetailsRouteArgs> page =
-      PageInfo<ItemDetailsRouteArgs>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final pathParams = data.inheritedPathParams;
+      final args = data.argsAs<ItemDetailsRouteArgs>(
+          orElse: () => ItemDetailsRouteArgs(id: pathParams.getInt('id')));
+      return ItemDetailsPage(
+        key: args.key,
+        id: args.id,
+      );
+    },
+  );
 }
 
 class ItemDetailsRouteArgs {
@@ -209,7 +96,19 @@ class LoginRoute extends PageRouteInfo<LoginRouteArgs> {
 
   static const String name = 'LoginRoute';
 
-  static const PageInfo<LoginRouteArgs> page = PageInfo<LoginRouteArgs>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final queryParams = data.queryParams;
+      final args = data.argsAs<LoginRouteArgs>(
+          orElse: () =>
+              LoginRouteArgs(redirect: queryParams.optString('redirect')));
+      return LoginPage(
+        key: args.key,
+        redirect: args.redirect,
+      );
+    },
+  );
 }
 
 class LoginRouteArgs {
@@ -252,8 +151,25 @@ class LoginRegisterRoute extends PageRouteInfo<LoginRegisterRouteArgs> {
 
   static const String name = 'LoginRegisterRoute';
 
-  static const PageInfo<LoginRegisterRouteArgs> page =
-      PageInfo<LoginRegisterRouteArgs>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final queryParams = data.queryParams;
+      final args = data.argsAs<LoginRegisterRouteArgs>(
+          orElse: () => LoginRegisterRouteArgs(
+                initial: queryParams.getBool(
+                  'initial',
+                  false,
+                ),
+                code: queryParams.optString('code'),
+              ));
+      return LoginRegisterPage(
+        key: args.key,
+        initial: args.initial,
+        code: args.code,
+      );
+    },
+  );
 }
 
 class LoginRegisterRouteArgs {
@@ -294,8 +210,19 @@ class LoginUserRoute extends PageRouteInfo<LoginUserRouteArgs> {
 
   static const String name = 'LoginUserRoute';
 
-  static const PageInfo<LoginUserRouteArgs> page =
-      PageInfo<LoginUserRouteArgs>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final queryParams = data.queryParams;
+      final args = data.argsAs<LoginUserRouteArgs>(
+          orElse: () =>
+              LoginUserRouteArgs(username: queryParams.optString('username')));
+      return LoginUserPage(
+        key: args.key,
+        username: args.username,
+      );
+    },
+  );
 }
 
 class LoginUserRouteArgs {
@@ -325,7 +252,12 @@ class LoginUsersRoute extends PageRouteInfo<void> {
 
   static const String name = 'LoginUsersRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const LoginUsersPage();
+    },
+  );
 }
 
 /// generated route for
@@ -339,7 +271,12 @@ class MainRoute extends PageRouteInfo<void> {
 
   static const String name = 'MainRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const MainScreen();
+    },
+  );
 }
 
 /// generated route for
@@ -353,7 +290,12 @@ class MoviesRoute extends PageRouteInfo<void> {
 
   static const String name = 'MoviesRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const MoviesScreen();
+    },
+  );
 }
 
 /// generated route for
@@ -367,7 +309,12 @@ class SettingsRoute extends PageRouteInfo<void> {
 
   static const String name = 'SettingsRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const SettingsScreen();
+    },
+  );
 }
 
 /// generated route for
@@ -381,7 +328,12 @@ class SetupRoute extends PageRouteInfo<void> {
 
   static const String name = 'SetupRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const SetupScreen();
+    },
+  );
 }
 
 /// generated route for
@@ -395,7 +347,12 @@ class ShowsRoute extends PageRouteInfo<void> {
 
   static const String name = 'ShowsRoute';
 
-  static const PageInfo<void> page = PageInfo<void>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const ShowsScreen();
+    },
+  );
 }
 
 /// generated route for
@@ -420,8 +377,26 @@ class VideoPlayerRoute extends PageRouteInfo<VideoPlayerRouteArgs> {
 
   static const String name = 'VideoPlayerRoute';
 
-  static const PageInfo<VideoPlayerRouteArgs> page =
-      PageInfo<VideoPlayerRouteArgs>(name);
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final pathParams = data.inheritedPathParams;
+      final queryParams = data.queryParams;
+      final args = data.argsAs<VideoPlayerRouteArgs>(
+          orElse: () => VideoPlayerRouteArgs(
+                id: pathParams.getInt('id'),
+                startPosition: queryParams.getDouble(
+                  'startPosition',
+                  0,
+                ),
+              ));
+      return VideoPlayerScreen(
+        key: args.key,
+        id: args.id,
+        startPosition: args.startPosition,
+      );
+    },
+  );
 }
 
 class VideoPlayerRouteArgs {

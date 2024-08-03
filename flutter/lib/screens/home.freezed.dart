@@ -20,7 +20,9 @@ mixin _$HomeScreenData {
   List<MediaItem> get recentMovies => throw _privateConstructorUsedError;
   List<MediaItem> get recentShows => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of HomeScreenData
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $HomeScreenDataCopyWith<HomeScreenData> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -47,6 +49,8 @@ class _$HomeScreenDataCopyWithImpl<$Res, $Val extends HomeScreenData>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of HomeScreenData
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -93,6 +97,8 @@ class __$$HomeScreenDataImplCopyWithImpl<$Res>
       _$HomeScreenDataImpl _value, $Res Function(_$HomeScreenDataImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of HomeScreenData
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -190,7 +196,9 @@ class _$HomeScreenDataImpl
       const DeepCollectionEquality().hash(_recentMovies),
       const DeepCollectionEquality().hash(_recentShows));
 
-  @JsonKey(ignore: true)
+  /// Create a copy of HomeScreenData
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$HomeScreenDataImplCopyWith<_$HomeScreenDataImpl> get copyWith =>
@@ -210,8 +218,11 @@ abstract class _HomeScreenData implements HomeScreenData {
   List<MediaItem> get recentMovies;
   @override
   List<MediaItem> get recentShows;
+
+  /// Create a copy of HomeScreenData
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$HomeScreenDataImplCopyWith<_$HomeScreenDataImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

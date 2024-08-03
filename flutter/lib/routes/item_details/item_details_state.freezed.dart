@@ -25,7 +25,9 @@ mixin _$ItemDetailsState {
   String? get durationText => throw _privateConstructorUsedError;
   String? get videoDownloadUrl => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of ItemDetailsState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $ItemDetailsStateCopyWith<ItemDetailsState> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -59,6 +61,8 @@ class _$ItemDetailsStateCopyWithImpl<$Res, $Val extends ItemDetailsState>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of ItemDetailsState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -107,6 +111,8 @@ class _$ItemDetailsStateCopyWithImpl<$Res, $Val extends ItemDetailsState>
     ) as $Val);
   }
 
+  /// Create a copy of ItemDetailsState
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $PlayableStateCopyWith<$Res>? get playable {
@@ -150,6 +156,8 @@ class __$$ItemDetailsStateImplCopyWithImpl<$Res>
       $Res Function(_$ItemDetailsStateImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of ItemDetailsState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -274,7 +282,9 @@ class _$ItemDetailsStateImpl implements _ItemDetailsState {
       durationText,
       videoDownloadUrl);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of ItemDetailsState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$ItemDetailsStateImplCopyWith<_$ItemDetailsStateImpl> get copyWith =>
@@ -309,8 +319,11 @@ abstract class _ItemDetailsState implements ItemDetailsState {
   String? get durationText;
   @override
   String? get videoDownloadUrl;
+
+  /// Create a copy of ItemDetailsState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$ItemDetailsStateImplCopyWith<_$ItemDetailsStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -323,7 +336,9 @@ mixin _$PlayableState {
   bool get shouldResume => throw _privateConstructorUsedError;
   double get playPosition => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of PlayableState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $PlayableStateCopyWith<PlayableState> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -352,6 +367,8 @@ class _$PlayableStateCopyWithImpl<$Res, $Val extends PlayableState>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of PlayableState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -410,6 +427,8 @@ class __$$PlayableStateImplCopyWithImpl<$Res>
       _$PlayableStateImpl _value, $Res Function(_$PlayableStateImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of PlayableState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -489,7 +508,9 @@ class _$PlayableStateImpl implements _PlayableState {
   int get hashCode => Object.hash(
       runtimeType, id, progress, caption, shouldResume, playPosition);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of PlayableState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$PlayableStateImplCopyWith<_$PlayableStateImpl> get copyWith =>
@@ -514,8 +535,11 @@ abstract class _PlayableState implements PlayableState {
   bool get shouldResume;
   @override
   double get playPosition;
+
+  /// Create a copy of PlayableState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$PlayableStateImplCopyWith<_$PlayableStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -525,7 +549,9 @@ mixin _$EpisodeGroupState {
   String get name => throw _privateConstructorUsedError;
   List<EpisodeState> get episodes => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of EpisodeGroupState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $EpisodeGroupStateCopyWith<EpisodeGroupState> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -549,6 +575,8 @@ class _$EpisodeGroupStateCopyWithImpl<$Res, $Val extends EpisodeGroupState>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of EpisodeGroupState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -587,6 +615,8 @@ class __$$EpisodeGroupStateImplCopyWithImpl<$Res>
       $Res Function(_$EpisodeGroupStateImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of EpisodeGroupState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -641,7 +671,9 @@ class _$EpisodeGroupStateImpl implements _EpisodeGroupState {
   int get hashCode => Object.hash(
       runtimeType, name, const DeepCollectionEquality().hash(_episodes));
 
-  @JsonKey(ignore: true)
+  /// Create a copy of EpisodeGroupState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$EpisodeGroupStateImplCopyWith<_$EpisodeGroupStateImpl> get copyWith =>
@@ -658,8 +690,11 @@ abstract class _EpisodeGroupState implements EpisodeGroupState {
   String get name;
   @override
   List<EpisodeState> get episodes;
+
+  /// Create a copy of EpisodeGroupState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$EpisodeGroupStateImplCopyWith<_$EpisodeGroupStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -672,7 +707,9 @@ mixin _$EpisodeState {
   bool get isWatched => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of EpisodeState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $EpisodeStateCopyWith<EpisodeState> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -701,6 +738,8 @@ class _$EpisodeStateCopyWithImpl<$Res, $Val extends EpisodeState>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of EpisodeState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -759,6 +798,8 @@ class __$$EpisodeStateImplCopyWithImpl<$Res>
       _$EpisodeStateImpl _value, $Res Function(_$EpisodeStateImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of EpisodeState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -838,7 +879,9 @@ class _$EpisodeStateImpl implements _EpisodeState {
   int get hashCode =>
       Object.hash(runtimeType, id, thumbnailUrl, overview, isWatched, title);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of EpisodeState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$EpisodeStateImplCopyWith<_$EpisodeStateImpl> get copyWith =>
@@ -863,8 +906,11 @@ abstract class _EpisodeState implements EpisodeState {
   bool get isWatched;
   @override
   String get title;
+
+  /// Create a copy of EpisodeState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$EpisodeStateImplCopyWith<_$EpisodeStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
