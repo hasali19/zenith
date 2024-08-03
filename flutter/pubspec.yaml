@@ -31,7 +31,7 @@ dependencies:
     sdk: flutter
 
   audio_video_progress_bar: ^2.0.1
-  auto_route: ^8.1.3
+  auto_route: ^9.2.0
   cached_network_image: ^3.3.0
   cast_framework:
     path: packages/cast_framework
@@ -81,7 +81,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
 
-  auto_route_generator: ^8.0.0
+  auto_route_generator: ^9.0.0
   build_runner: ^2.0.0
   custom_lint: ^0.6.0
   freezed: ^2.4.1

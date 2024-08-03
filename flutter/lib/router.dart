@@ -13,7 +13,7 @@ import 'package:zenith/screens/video_player.dart';
 part 'router.gr.dart';
 
 @AutoRouterConfig()
-class AppRouter extends _$AppRouter {
+class AppRouter extends RootStackRouter {
   final Future<bool> Function() isServerSet;
   final Future<bool?> Function() isLoggedIn;
 
