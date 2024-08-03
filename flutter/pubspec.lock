@@ -352,10 +352,11 @@ packages:
   dio_image_provider:
     dependency: "direct main"
     description:
-      name: dio_image_provider
-      sha256: d7937f2b33c52db70cbf6209cf6ef6a929e006afcadaebfb6b0dc2da80dce52b
-      url: "https://pub.dev"
-    source: hosted
+      path: dio_image_provider
+      ref: HEAD
+      resolved-ref: "258557e48a26656c314dfc4e67dad2cfee43d5c8"
+      url: "https://github.com/hasali19/flutter_image_provider.git"
+    source: git
     version: "0.0.2"
   dio_web_adapter:
     dependency: transitive

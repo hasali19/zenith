@@ -38,7 +38,10 @@ dependencies:
   cookie_jar: ^4.0.8
   dio: ^5.3.4
   dio_cookie_manager: ^3.1.1
-  dio_image_provider: ^0.0.2
+  dio_image_provider:
+    git:
+      url: https://github.com/hasali19/flutter_image_provider.git
+      path: dio_image_provider
   dynamic_color:
     git:
       url: https://github.com/hasali19/material-foundation-flutter-packages.git
