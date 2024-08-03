@@ -19,7 +19,9 @@ mixin _$MediaRouteControllerState {
   cast.MediaRoute? get route => throw _privateConstructorUsedError;
   cast.MediaStatus? get mediaStatus => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of MediaRouteControllerState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $MediaRouteControllerStateCopyWith<MediaRouteControllerState> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -44,6 +46,8 @@ class _$MediaRouteControllerStateCopyWithImpl<$Res,
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of MediaRouteControllerState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -85,6 +89,8 @@ class __$$MediaRouteControllerStateImplCopyWithImpl<$Res>
       $Res Function(_$MediaRouteControllerStateImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of MediaRouteControllerState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -133,7 +139,9 @@ class _$MediaRouteControllerStateImpl implements _MediaRouteControllerState {
   @override
   int get hashCode => Object.hash(runtimeType, route, mediaStatus);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of MediaRouteControllerState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$MediaRouteControllerStateImplCopyWith<_$MediaRouteControllerStateImpl>
@@ -151,8 +159,11 @@ abstract class _MediaRouteControllerState implements MediaRouteControllerState {
   cast.MediaRoute? get route;
   @override
   cast.MediaStatus? get mediaStatus;
+
+  /// Create a copy of MediaRouteControllerState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$MediaRouteControllerStateImplCopyWith<_$MediaRouteControllerStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }

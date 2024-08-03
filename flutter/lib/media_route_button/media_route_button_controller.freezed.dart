@@ -18,7 +18,9 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$MediaRouteButtonState {
   bool get isConnected => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of MediaRouteButtonState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $MediaRouteButtonStateCopyWith<MediaRouteButtonState> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -43,6 +45,8 @@ class _$MediaRouteButtonStateCopyWithImpl<$Res,
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of MediaRouteButtonState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -78,6 +82,8 @@ class __$$MediaRouteButtonStateImplCopyWithImpl<$Res>
       $Res Function(_$MediaRouteButtonStateImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of MediaRouteButtonState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -117,7 +123,9 @@ class _$MediaRouteButtonStateImpl implements _MediaRouteButtonState {
   @override
   int get hashCode => Object.hash(runtimeType, isConnected);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of MediaRouteButtonState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$MediaRouteButtonStateImplCopyWith<_$MediaRouteButtonStateImpl>
@@ -131,8 +139,11 @@ abstract class _MediaRouteButtonState implements MediaRouteButtonState {
 
   @override
   bool get isConnected;
+
+  /// Create a copy of MediaRouteButtonState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$MediaRouteButtonStateImplCopyWith<_$MediaRouteButtonStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }

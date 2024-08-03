@@ -20,7 +20,9 @@ mixin _$MediaRouteChooserState {
   String? get requestedId => throw _privateConstructorUsedError;
   bool get isConnected => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of MediaRouteChooserState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $MediaRouteChooserStateCopyWith<MediaRouteChooserState> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -45,6 +47,8 @@ class _$MediaRouteChooserStateCopyWithImpl<$Res,
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of MediaRouteChooserState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -91,6 +95,8 @@ class __$$MediaRouteChooserStateImplCopyWithImpl<$Res>
       $Res Function(_$MediaRouteChooserStateImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of MediaRouteChooserState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -158,7 +164,9 @@ class _$MediaRouteChooserStateImpl implements _MediaRouteChooserState {
   int get hashCode => Object.hash(runtimeType,
       const DeepCollectionEquality().hash(_routes), requestedId, isConnected);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of MediaRouteChooserState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$MediaRouteChooserStateImplCopyWith<_$MediaRouteChooserStateImpl>
@@ -178,8 +186,11 @@ abstract class _MediaRouteChooserState implements MediaRouteChooserState {
   String? get requestedId;
   @override
   bool get isConnected;
+
+  /// Create a copy of MediaRouteChooserState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$MediaRouteChooserStateImplCopyWith<_$MediaRouteChooserStateImpl>
       get copyWith => throw _privateConstructorUsedError;
 }

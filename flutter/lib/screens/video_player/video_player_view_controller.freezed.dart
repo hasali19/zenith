@@ -19,7 +19,9 @@ mixin _$Playlist {
   List<MediaItem> get items => throw _privateConstructorUsedError;
   int get start => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Playlist
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $PlaylistCopyWith<Playlist> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -42,6 +44,8 @@ class _$PlaylistCopyWithImpl<$Res, $Val extends Playlist>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of Playlist
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -80,6 +84,8 @@ class __$$PlaylistImplCopyWithImpl<$Res>
       _$PlaylistImpl _value, $Res Function(_$PlaylistImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of Playlist
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -134,7 +140,9 @@ class _$PlaylistImpl implements _Playlist {
   int get hashCode => Object.hash(
       runtimeType, const DeepCollectionEquality().hash(_items), start);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Playlist
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$PlaylistImplCopyWith<_$PlaylistImpl> get copyWith =>
@@ -150,8 +158,11 @@ abstract class _Playlist implements Playlist {
   List<MediaItem> get items;
   @override
   int get start;
+
+  /// Create a copy of Playlist
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$PlaylistImplCopyWith<_$PlaylistImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -161,7 +172,9 @@ mixin _$VideoPlayerState {
   PlaybackLocation get location => throw _privateConstructorUsedError;
   Playlist? get playlist => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
+  /// Create a copy of VideoPlayerState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $VideoPlayerStateCopyWith<VideoPlayerState> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -187,6 +200,8 @@ class _$VideoPlayerStateCopyWithImpl<$Res, $Val extends VideoPlayerState>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of VideoPlayerState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -205,6 +220,8 @@ class _$VideoPlayerStateCopyWithImpl<$Res, $Val extends VideoPlayerState>
     ) as $Val);
   }
 
+  /// Create a copy of VideoPlayerState
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $PlaylistCopyWith<$Res>? get playlist {
@@ -240,6 +257,8 @@ class __$$VideoPlayerStateImplCopyWithImpl<$Res>
       $Res Function(_$VideoPlayerStateImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of VideoPlayerState
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -288,7 +307,9 @@ class _$VideoPlayerStateImpl implements _VideoPlayerState {
   @override
   int get hashCode => Object.hash(runtimeType, location, playlist);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of VideoPlayerState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$VideoPlayerStateImplCopyWith<_$VideoPlayerStateImpl> get copyWith =>
@@ -305,8 +326,11 @@ abstract class _VideoPlayerState implements VideoPlayerState {
   PlaybackLocation get location;
   @override
   Playlist? get playlist;
+
+  /// Create a copy of VideoPlayerState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$VideoPlayerStateImplCopyWith<_$VideoPlayerStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

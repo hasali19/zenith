@@ -24,8 +24,12 @@ mixin _$AccessToken {
   String get name => throw _privateConstructorUsedError;
   String get token => throw _privateConstructorUsedError;
 
+  /// Serializes this AccessToken to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of AccessToken
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $AccessTokenCopyWith<AccessToken> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -49,6 +53,8 @@ class _$AccessTokenCopyWithImpl<$Res, $Val extends AccessToken>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of AccessToken
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -92,6 +98,8 @@ class __$$AccessTokenImplCopyWithImpl<$Res>
       _$AccessTokenImpl _value, $Res Function(_$AccessTokenImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of AccessToken
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -147,11 +155,13 @@ class _$AccessTokenImpl implements _AccessToken {
             (identical(other.token, token) || other.token == token));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, owner, name, token);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of AccessToken
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$AccessTokenImplCopyWith<_$AccessTokenImpl> get copyWith =>
@@ -180,8 +190,11 @@ abstract class _AccessToken implements AccessToken {
   String get name;
   @override
   String get token;
+
+  /// Create a copy of AccessToken
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$AccessTokenImplCopyWith<_$AccessTokenImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -196,8 +209,12 @@ mixin _$CastConfig {
   @JsonKey(name: 'app_id')
   String? get appId => throw _privateConstructorUsedError;
 
+  /// Serializes this CastConfig to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of CastConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $CastConfigCopyWith<CastConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -221,6 +238,8 @@ class _$CastConfigCopyWithImpl<$Res, $Val extends CastConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of CastConfig
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -254,6 +273,8 @@ class __$$CastConfigImplCopyWithImpl<$Res>
       _$CastConfigImpl _value, $Res Function(_$CastConfigImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of CastConfig
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -294,11 +315,13 @@ class _$CastConfigImpl implements _CastConfig {
             (identical(other.appId, appId) || other.appId == appId));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, appId);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of CastConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$CastConfigImplCopyWith<_$CastConfigImpl> get copyWith =>
@@ -319,11 +342,15 @@ abstract class _CastConfig implements CastConfig {
   factory _CastConfig.fromJson(Map<String, dynamic> json) =
       _$CastConfigImpl.fromJson;
 
-  @override // ignore: invalid_annotation_target
+// ignore: invalid_annotation_target
+  @override
   @JsonKey(name: 'app_id')
   String? get appId;
+
+  /// Create a copy of CastConfig
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$CastConfigImplCopyWith<_$CastConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
