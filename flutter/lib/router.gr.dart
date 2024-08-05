@@ -78,6 +78,25 @@ class ItemDetailsRouteArgs {
 }
 
 /// generated route for
+/// [LibraryPage]
+class LibraryRoute extends PageRouteInfo<void> {
+  const LibraryRoute({List<PageRouteInfo>? children})
+      : super(
+          LibraryRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'LibraryRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return LibraryPage();
+    },
+  );
+}
+
+/// generated route for
 /// [LoginPage]
 class LoginRoute extends PageRouteInfo<LoginRouteArgs> {
   LoginRoute({

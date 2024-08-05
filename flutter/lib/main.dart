@@ -13,7 +13,6 @@ import 'package:zenith/cookies.dart';
 import 'package:zenith/dio_client.dart';
 import 'package:zenith/drawer.dart';
 import 'package:zenith/language_codes.dart';
-import 'package:zenith/media_route_button/media_route_button.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/router.dart';
@@ -197,14 +196,6 @@ class MainScreen extends ConsumerStatefulWidget {
   ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-enum Screen {
-  home,
-  movies,
-  shows,
-  // collections,
-  settings,
-}
-
 class _MainScreenState extends ConsumerState<MainScreen> {
   final _updater = Updater();
 
@@ -236,76 +227,37 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     return AutoTabsRouter(
       routes: const [
         HomeRoute(),
-        MoviesRoute(),
-        ShowsRoute(),
-        // CollectionsScreenRoute(),
         SettingsRoute(),
       ],
       transitionBuilder: (context, child, animation) => child,
       builder: (context, child) {
-        final screen = _activeScreen(context.tabsRouter.activeIndex);
-
         // Use a permanent navigation drawer on larger screens
 
         if (desktop) {
           child = Row(
             children: [
-              MainNavigationDrawer(
-                current: screen,
-                onDestinationTap: (screen) => _navigateTo(context, screen),
-                onLogoutTap: onLogout,
-              ),
+              MainNavigationDrawer(onLogoutTap: onLogout),
               Expanded(child: child),
             ],
           );
         }
 
+        final tabIndex = context.tabsRouter.activeIndex;
+
         return Scaffold(
-          appBar: AppBar(
-            title: Text(_title(screen)),
-            elevation: desktop ? 3 : null,
-            backgroundColor:
-                desktop ? Theme.of(context).colorScheme.surfaceContainer : null,
-            actions: [
-              if (CastFrameworkPlatform.instance.isSupported)
-                const MediaRouteButton(),
-              if (!desktop)
-                PopupMenuButton(
-                  itemBuilder: (context) {
-                    return [
-                      PopupMenuItem(
-                        onTap: onLogout,
-                        child: const Text('Logout'),
-                      ),
-                    ];
-                  },
-                ),
-            ],
-          ),
           body: child,
           bottomNavigationBar: switch (desktop) {
             true => null,
             false => NavigationBar(
                 destinations: [
                   NavigationDestination(
-                    icon: Icon(screen == Screen.home
-                        ? Icons.home
-                        : Icons.home_outlined),
-                    label: 'Home',
+                    icon: Icon(tabIndex == 0
+                        ? Icons.video_library
+                        : Icons.video_library_outlined),
+                    label: 'Library',
                   ),
                   NavigationDestination(
-                    icon: Icon(screen == Screen.movies
-                        ? Icons.movie
-                        : Icons.movie_outlined),
-                    label: 'Movies',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(
-                        screen == Screen.shows ? Icons.tv : Icons.tv_outlined),
-                    label: 'Shows',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(screen == Screen.settings
+                    icon: Icon(tabIndex == 1
                         ? Icons.settings
                         : Icons.settings_outlined),
                     label: 'Settings',
@@ -313,53 +265,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 ],
                 selectedIndex: context.tabsRouter.activeIndex,
                 onDestinationSelected: (value) {
-                  _navigateTo(context, _activeScreen(value));
+                  context.tabsRouter.setActiveIndex(value);
                 },
               ),
           },
         );
       },
     );
-  }
-
-  String _title(Screen screen) {
-    return switch (screen) {
-      Screen.home => 'Zenith',
-      Screen.movies => 'Movies',
-      Screen.shows => 'Shows',
-      // Screen.collections => 'Collections',
-      Screen.settings => 'Settings'
-    };
-  }
-
-  Screen _activeScreen(int index) {
-    return switch (index) {
-      0 => Screen.home,
-      1 => Screen.movies,
-      2 => Screen.shows,
-      // 3 => Screen.collections,
-      3 => Screen.settings,
-      _ => throw Exception('invalid tab index: $index')
-    };
-  }
-
-  void _navigateTo(BuildContext context, Screen screen) {
-    switch (screen) {
-      case Screen.home:
-        context.tabsRouter.setActiveIndex(0);
-        break;
-      case Screen.movies:
-        context.tabsRouter.setActiveIndex(1);
-        break;
-      case Screen.shows:
-        context.tabsRouter.setActiveIndex(2);
-        break;
-      // case Screen.collections:
-      //   context.tabsRouter.setActiveIndex(3);
-      //   break;
-      case Screen.settings:
-        context.tabsRouter.setActiveIndex(3);
-        break;
-    }
   }
 }

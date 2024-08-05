@@ -1,8 +1,11 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:cast_framework/cast_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/main.dart';
+import 'package:zenith/media_route_button/media_route_button.dart';
+import 'package:zenith/responsive.dart';
 import 'package:zenith/routes/routes.dart';
 import 'package:zenith/screens/home.dart';
 import 'package:zenith/screens/media_library.dart';
@@ -30,9 +33,15 @@ class AppRouter extends RootStackRouter {
           initial: true,
           guards: [ServerSetupGuard(isServerSet), AuthGuard(isLoggedIn)],
           children: [
-            AutoRoute(page: HomeRoute.page, initial: true),
-            AutoRoute(path: 'library/movies', page: MoviesRoute.page),
-            AutoRoute(path: 'library/shows', page: ShowsRoute.page),
+            AutoRoute(
+              page: LibraryRoute.page,
+              initial: true,
+              children: [
+                AutoRoute(page: HomeRoute.page, initial: true),
+                AutoRoute(path: 'movies', page: MoviesRoute.page),
+                AutoRoute(path: 'shows', page: ShowsRoute.page),
+              ],
+            ),
             AutoRoute(path: 'settings', page: SettingsRoute.page),
           ],
         ),
@@ -89,6 +98,57 @@ class AuthGuard extends AutoRouteGuard {
     }
 
     router.replace(LoginRoute(redirect: resolver.route.stringMatch));
+  }
+}
+
+@RoutePage()
+class LibraryPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    if (context.isDesktop) {
+      return AutoTabsRouter(
+        routes: const [
+          HomeRoute(),
+          MoviesRoute(),
+          ShowsRoute(),
+        ],
+        builder: (context, child) {
+          return child;
+        },
+      );
+    }
+    return AutoTabsRouter.tabBar(
+      builder: (context, child, tabController) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Zenith'),
+            actions: [
+              if (CastFrameworkPlatform.instance.isSupported)
+                const MediaRouteButton(),
+              PopupMenuButton(
+                itemBuilder: (context) {
+                  return [
+                    PopupMenuItem(
+                      onTap: () {},
+                      child: const Text('Logout'),
+                    ),
+                  ];
+                },
+              ),
+            ],
+            bottom: TabBar(
+              tabs: [
+                Tab(text: 'Home'),
+                Tab(text: 'Movies'),
+                Tab(text: 'Shows'),
+              ],
+              controller: tabController,
+            ),
+          ),
+          body: child,
+        );
+      },
+    );
   }
 }
 
