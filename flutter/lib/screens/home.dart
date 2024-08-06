@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:gap/gap.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sized_context/sized_context.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/poster_item.dart';
 import 'package:zenith/responsive.dart';
@@ -52,8 +51,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final _scrollController = ScrollController();
-
   ZenithApiClient get api => ref.watch(apiProvider);
 
   @override
@@ -128,9 +125,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         triggerMode: RefreshIndicatorTriggerMode.anywhere,
         onRefresh: () => ref.refresh(_stateProvider.future),
         child: ListView(
-          controller: _scrollController,
-          padding:
-              const EdgeInsets.symmetric(vertical: 16) + context.mq.padding,
+          padding: const EdgeInsets.symmetric(vertical: 16),
           children: [
             if (data.continueWatching.isNotEmpty)
               Section<MediaItem>(

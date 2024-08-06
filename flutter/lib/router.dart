@@ -119,33 +119,40 @@ class LibraryPage extends StatelessWidget {
     }
     return AutoTabsRouter.tabBar(
       builder: (context, child, tabController) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('Zenith'),
-            actions: [
-              if (CastFrameworkPlatform.instance.isSupported)
-                const MediaRouteButton(),
-              PopupMenuButton(
-                itemBuilder: (context) {
-                  return [
-                    PopupMenuItem(
-                      onTap: () {},
-                      child: const Text('Logout'),
-                    ),
-                  ];
-                },
-              ),
-            ],
-            bottom: TabBar(
-              tabs: [
-                Tab(text: 'Home'),
-                Tab(text: 'Movies'),
-                Tab(text: 'Shows'),
+        return NestedScrollView(
+          floatHeaderSlivers: true,
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            SliverAppBar(
+              title: Text('Zenith'),
+              floating: true,
+              forceElevated: innerBoxIsScrolled,
+              actions: [
+                if (CastFrameworkPlatform.instance.isSupported)
+                  const MediaRouteButton(),
+                PopupMenuButton(
+                  itemBuilder: (context) {
+                    return [
+                      PopupMenuItem(
+                        onTap: () {},
+                        child: const Text('Logout'),
+                      ),
+                    ];
+                  },
+                ),
               ],
-              controller: tabController,
+              bottom: TabBar(
+                tabs: [
+                  Tab(text: 'Home'),
+                  Tab(text: 'Movies'),
+                  Tab(text: 'Shows'),
+                ],
+                controller: tabController,
+              ),
             ),
-          ),
-          body: child,
+          ],
+          body: Builder(builder: (context) {
+            return child;
+          }),
         );
       },
     );

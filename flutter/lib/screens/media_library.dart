@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sized_context/sized_context.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/poster_item.dart';
 import 'package:zenith/responsive.dart';
@@ -79,8 +78,6 @@ class MediaItemGrid extends StatelessWidget {
   final void Function(MediaLibraryItem item) onItemTap;
   final void Function(MediaLibraryItem item)? onItemLongPress;
 
-  final ScrollController _scrollController = ScrollController();
-
   MediaItemGrid({
     super.key,
     required this.items,
@@ -108,8 +105,7 @@ class MediaItemGrid extends StatelessWidget {
         onRefresh: onRefresh,
         child: ListView.builder(
           physics: const AlwaysScrollableScrollPhysics(),
-          controller: _scrollController,
-          padding: EdgeInsets.all(gridPadding) + context.mq.padding,
+          padding: EdgeInsets.all(gridPadding),
           itemCount: (items.length / cols).ceil(),
           itemBuilder: (context, rowIndex) {
             final columns = <Widget>[];
