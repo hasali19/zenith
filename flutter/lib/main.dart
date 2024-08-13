@@ -270,7 +270,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 ],
                 selectedIndex: context.tabsRouter.activeIndex,
                 onDestinationSelected: (value) {
-                  context.tabsRouter.setActiveIndex(value);
+                  if (context.tabsRouter.activeIndex == value) {
+                    context.tabsRouter.childControllers
+                        .forEach((controller) => controller.maybePopTop());
+                  } else {
+                    context.tabsRouter.setActiveIndex(value);
+                  }
                 },
               ),
           },

@@ -97,6 +97,25 @@ class LibraryRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [LibraryTabsPage]
+class LibraryTabsRoute extends PageRouteInfo<void> {
+  const LibraryTabsRoute({List<PageRouteInfo>? children})
+      : super(
+          LibraryTabsRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'LibraryTabsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const LibraryTabsPage();
+    },
+  );
+}
+
+/// generated route for
 /// [LoginPage]
 class LoginRoute extends PageRouteInfo<LoginRouteArgs> {
   LoginRoute({

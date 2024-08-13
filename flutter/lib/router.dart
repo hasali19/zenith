@@ -37,19 +37,24 @@ class AppRouter extends RootStackRouter {
               page: LibraryRoute.page,
               initial: true,
               children: [
-                AutoRoute(page: HomeRoute.page, initial: true),
-                AutoRoute(path: 'movies', page: MoviesRoute.page),
-                AutoRoute(path: 'shows', page: ShowsRoute.page),
+                AutoRoute(
+                  page: LibraryTabsRoute.page,
+                  initial: true,
+                  children: [
+                    AutoRoute(page: HomeRoute.page, initial: true),
+                    AutoRoute(path: 'movies', page: MoviesRoute.page),
+                    AutoRoute(path: 'shows', page: ShowsRoute.page),
+                  ],
+                ),
+                AutoRoute(
+                  path: 'items/:id',
+                  page: ItemDetailsRoute.page,
+                  usesPathAsKey: true,
+                ),
               ],
             ),
             AutoRoute(path: 'settings', page: SettingsRoute.page),
           ],
-        ),
-        AutoRoute(
-          path: '/items/:id',
-          page: ItemDetailsRoute.page,
-          usesPathAsKey: true,
-          guards: [ServerSetupGuard(isServerSet), AuthGuard(isLoggedIn)],
         ),
         AutoRoute(
           path: '/player/:id',
@@ -103,6 +108,16 @@ class AuthGuard extends AutoRouteGuard {
 
 @RoutePage()
 class LibraryPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return AutoRouter();
+  }
+}
+
+@RoutePage()
+class LibraryTabsPage extends StatelessWidget {
+  const LibraryTabsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     if (context.isDesktop) {
