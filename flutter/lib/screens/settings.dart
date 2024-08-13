@@ -17,7 +17,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _updater = Updater();
 
-  PackageInfo? _packageInfo;
+  String? _version;
+  String? _buildNumber;
 
   @override
   void initState() {
@@ -25,7 +26,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     () async {
       final info = await PackageInfo.fromPlatform();
       setState(() {
-        _packageInfo = info;
+        if (info.version.isNotEmpty) {
+          _version = info.version;
+        }
+
+        if (info.buildNumber.isNotEmpty) {
+          _buildNumber = info.buildNumber;
+        }
       });
     }();
   }
@@ -203,18 +210,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 },
               ),
               const Divider(),
-              ListTile(
-                title: const Text('Version'),
-                subtitle: Text(_packageInfo?.version ?? ''),
-              ),
-              ListTile(
-                title: const Text('Build number'),
-                subtitle: Text(_packageInfo?.buildNumber ?? ''),
-              ),
-              ListTile(
-                title: const Text('Commit'),
-                subtitle: Text(Updater.revision ?? 'Unknown'),
-              ),
+              if (_version != null)
+                ListTile(
+                  title: const Text('Version'),
+                  subtitle: Text(_version!),
+                ),
+              if (_buildNumber != null)
+                ListTile(
+                  title: const Text('Build number'),
+                  subtitle: Text(_buildNumber!),
+                ),
+              if (Updater.revision != null)
+                ListTile(
+                  title: const Text('Commit'),
+                  subtitle: Text(Updater.revision ?? 'Unknown'),
+                ),
               CheckboxListTile(
                 title: const Text('Auto update check'),
                 subtitle:
