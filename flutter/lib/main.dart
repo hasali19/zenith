@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:windowing/windowing.dart';
 import 'package:zenith/api.dart';
@@ -28,6 +29,7 @@ Future<void> main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final window = await WindowController.create();
+  final packageInfo = await PackageInfo.fromPlatform();
 
   runApp(ProviderScope(
     observers: [
@@ -39,8 +41,11 @@ Future<void> main() async {
       apiProvider.overrideWith((ref) {
         final activeServer = ref.watch(activeServerProvider);
         if (activeServer != null) {
-          final client =
-              createDioClient(activeServer.url, ref.watch(cookieJarProvider));
+          final client = createDioClient(
+            activeServer.url,
+            ref.watch(cookieJarProvider),
+            packageInfo,
+          );
           DioImage.defaultDio = client;
           return ZenithApiClient(
             client,
