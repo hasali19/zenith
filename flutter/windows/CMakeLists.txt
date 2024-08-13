@@ -14,6 +14,7 @@ cmake_policy(SET CMP0063 NEW)
 
 # Define build configuration option.
 get_property(IS_MULTICONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+
 if(IS_MULTICONFIG)
   set(CMAKE_CONFIGURATION_TYPES "Debug;Profile;Release"
     CACHE STRING "" FORCE)
@@ -25,6 +26,7 @@ else()
       "Debug" "Profile" "Release")
   endif()
 endif()
+
 # Define settings for the Profile build mode.
 set(CMAKE_EXE_LINKER_FLAGS_PROFILE "${CMAKE_EXE_LINKER_FLAGS_RELEASE}")
 set(CMAKE_SHARED_LINKER_FLAGS_PROFILE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
@@ -53,6 +55,14 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 
 # Import targets from rust workspace.
 corrosion_import_crate(MANIFEST_PATH "../Cargo.toml")
+
+corrosion_set_env_vars(${BINARY_NAME}
+  "FLUTTER_VERSION=\"${FLUTTER_VERSION}\""
+  "FLUTTER_VERSION_MAJOR=${FLUTTER_VERSION_MAJOR}"
+  "FLUTTER_VERSION_MINOR=${FLUTTER_VERSION_MINOR}"
+  "FLUTTER_VERSION_PATCH=${FLUTTER_VERSION_PATCH}"
+  "FLUTTER_VERSION_BUILD=${FLUTTER_VERSION_BUILD}"
+)
 
 # Link rust exe to flutter engine.
 corrosion_add_target_local_rustflags(${BINARY_NAME} "-Lnative=${FLUTTER_MANAGED_DIR}/ephemeral")
@@ -83,8 +93,10 @@ corrosion_link_libraries(${BINARY_NAME} plugin_registrar)
 # run in place. This is done instead of making a separate bundle (as on Linux)
 # so that building and running from within Visual Studio will work.
 set(BUILD_BUNDLE_DIR "${CMAKE_CURRENT_BINARY_DIR}/runner/\${CMAKE_INSTALL_CONFIG_NAME}")
+
 # Make the "install" step default, as it's required to run.
 set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
+
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "${BUILD_BUNDLE_DIR}" CACHE PATH "..." FORCE)
 endif()

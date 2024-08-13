@@ -173,7 +173,7 @@ jobs:
           $env:ANGLE_BIN_DIR="$(pwd)\angle-win64\bin"
           cd flutter
           $env:GIT_COMMIT_HASH=(git rev-parse HEAD)
-          flutter build windows -v --build-number=$env:GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH
+          flutter build windows -v --build-number=$env:GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$env:GIT_COMMIT_HASH
 
       - uses: actions/upload-artifact@v4
         with:

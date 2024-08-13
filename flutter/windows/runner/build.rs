@@ -1,16 +1,28 @@
-use std::io;
 use std::path::PathBuf;
+use std::{env, io};
 
 use embed_manifest::embed_manifest_file;
 
 fn main() {
     let sdk = get_winsdk_include().unwrap();
 
-    windres::Build::new()
-        .include(sdk.join("um"))
-        .include(sdk.join("shared"))
-        .compile("Runner.rc")
-        .unwrap();
+    let defines = [
+        "FLUTTER_VERSION",
+        "FLUTTER_VERSION_MAJOR",
+        "FLUTTER_VERSION_MINOR",
+        "FLUTTER_VERSION_PATCH",
+        "FLUTTER_VERSION_BUILD",
+    ];
+
+    let mut build = windres::Build::new();
+
+    build.include(sdk.join("um")).include(sdk.join("shared"));
+
+    for define in defines {
+        build.define(define, env::var(define).as_deref().ok());
+    }
+
+    build.compile("Runner.rc").unwrap();
 
     embed_manifest_file("runner.exe.manifest").unwrap();
 }
