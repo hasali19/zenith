@@ -53,7 +53,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
   Timer? _controlsTimer;
 
   api.MediaItem get currentItem =>
-      widget.items[_controller?.currentItemIndex ?? 0];
+      widget.items[_controller?.currentItemIndex ?? widget.startIndex];
 
   List<api.SubtitleTrack> get subtitles =>
       currentItem.videoFile?.subtitles ?? [];
