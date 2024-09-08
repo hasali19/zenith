@@ -334,6 +334,16 @@ private class PlayerInstance(
     private var onEvent: EventCallback? = null
 
     init {
+        surfaceProducer.setCallback(object : SurfaceProducer.Callback {
+            override fun onSurfaceCreated() {
+                player.setVideoSurface(surfaceProducer.surface)
+            }
+
+            override fun onSurfaceDestroyed() {
+                player.setVideoSurface(null)
+            }
+        })
+
         player.setVideoSurface(surfaceProducer.surface)
         player.addListener(object : Player.Listener {
             override fun onVideoSizeChanged(videoSize: VideoSize) {
