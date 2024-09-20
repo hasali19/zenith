@@ -55,7 +55,7 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
 
   VideoControllerWeb(this.id, this._element) {
     _element.addEventListener(
-        'durationchange', ((event) => notifyListeners()).toJS);
+        'durationchange', ((Event event) => notifyListeners()).toJS);
     _element.onPause.listen((event) => notifyListeners());
     _element.onPlay.listen((event) => notifyListeners());
 
