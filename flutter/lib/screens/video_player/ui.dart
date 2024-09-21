@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:video_player/video_player.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/screens/video_player/play_pause_button.dart';
+import 'package:zenith/screens/video_player/subtitles.dart';
 import 'package:zenith/themes.dart';
 
 import 'bottom_controls.dart';
@@ -24,7 +24,7 @@ class AudioTrack {
 class VideoPlayerUi extends ConsumerStatefulWidget {
   final Widget title;
   final List<AudioTrack> audioTracks;
-  final List<SubtitleTrack> subtitles;
+  final List<SubtitleTrackData> subtitles;
   final VideoProgressData Function() progress;
   final bool isAudioTrackSelectionSupported;
   final BoxFit fit;
@@ -35,7 +35,7 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
   final void Function() onInteractionStart;
   final void Function() onInteractionEnd;
   final void Function(int index) onAudioTrackSelected;
-  final void Function(SubtitleTrack? track) onTextTrackSelected;
+  final void Function(SubtitleTrackData? track) onTextTrackSelected;
   final void Function(BoxFit fit) onFitSelected;
   final void Function(double speed) onPlaybackSpeedSelected;
   final void Function(double position) onSeek;
@@ -73,18 +73,35 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
 }
 
 class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
-  late final List<SubtitleTrack> _subtitles;
-  late final List<AudioTrack> _audioTracks;
+  late List<AudioTrack> _audioTracks;
+  late List<SubtitleTrackData> _subtitles;
 
   @override
   void initState() {
     super.initState();
-    _subtitles = [...widget.subtitles];
-    _subtitles.sort((a, b) =>
-        (a.displayLanguage ?? '').compareTo((b.displayLanguage ?? '')));
+    _updateAudioTracks();
+    _updateSubtitles();
+  }
 
+  @override
+  void didUpdateWidget(covariant VideoPlayerUi oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.audioTracks != widget.audioTracks) {
+      _updateAudioTracks();
+    }
+    if (oldWidget.subtitles != widget.subtitles) {
+      _updateSubtitles();
+    }
+  }
+
+  void _updateAudioTracks() {
     _audioTracks = [...widget.audioTracks];
     _audioTracks.sort((a, b) => a.language.compareTo(b.language));
+  }
+
+  void _updateSubtitles() {
+    _subtitles = widget.subtitles.toList();
+    _subtitles.sort((a, b) => a.language.compareTo(b.language));
   }
 
   Future<void> _showModalBottomSheet(

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:video_player/video_player.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/screens/video_player/subtitles.dart';
 import 'package:zenith/window.dart';
 
 class BottomControls extends ConsumerWidget {
-  final List<SubtitleTrack> subtitles;
-  final void Function(SubtitleTrack? track) onSubtitleTrackSelected;
+  final List<SubtitleTrackData> subtitles;
+  final void Function(SubtitleTrackData? track) onSubtitleTrackSelected;
   final void Function() onInteractionStart;
   final void Function() onInteractionEnd;
 
@@ -52,8 +52,11 @@ class BottomControls extends ConsumerWidget {
 
     for (final track in subtitles) {
       items.add(ListTile(
-        title: Text(track.displayLanguage ?? 'Unknown'),
-        subtitle: track.title != null ? Text(track.title!) : null,
+        title: Text(track.language),
+        subtitle: switch (track.label) {
+          null => null,
+          final label => Text(label)
+        },
         onTap: () {
           onSubtitleTrackSelected(track);
           Navigator.pop(context);
@@ -100,8 +103,8 @@ class BottomControls extends ConsumerWidget {
 }
 
 class _SubtitleMenuButton extends StatelessWidget {
-  final List<SubtitleTrack> subtitles;
-  final void Function(SubtitleTrack? track) onSubtitleTrackSelected;
+  final List<SubtitleTrackData> subtitles;
+  final void Function(SubtitleTrackData? track) onSubtitleTrackSelected;
   final void Function() onInteractionStart;
   final void Function() onInteractionEnd;
 
@@ -126,10 +129,10 @@ class _SubtitleMenuButton extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(track.displayLanguage ?? 'Unknown'),
-                    if (track.title != null)
+                    Text(track.language),
+                    if (track.label case String label)
                       Text(
-                        track.title!,
+                        label,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                   ],

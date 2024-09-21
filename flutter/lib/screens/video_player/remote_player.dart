@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import 'package:zenith/api.dart' as api;
 import 'package:zenith/fade_in_image.dart';
+import 'package:zenith/language_codes.dart';
 import 'package:zenith/screens/video_player/media_title.dart';
+import 'package:zenith/screens/video_player/subtitles.dart';
 import 'package:zenith/screens/video_player/ui.dart';
-import 'package:zenith/screens/video_player/utils.dart';
 import 'package:zenith/screens/video_player/video_progress_bar.dart';
 
 class RemoteVideoPlayer extends ConsumerStatefulWidget {
@@ -155,8 +156,17 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
             builder: (context, mediaStatus, child) => VideoPlayerUi(
               title: MediaTitle(item: item),
               audioTracks: const [],
-              subtitles: item.videoFile!.subtitles
-                  .map((s) => subtitleFromApi(_api, s))
+              subtitles: (mediaStatus?.mediaInfo?.mediaTracks ?? [])
+                  .where((track) => track?.type == MediaTrackType.text)
+                  .nonNulls
+                  .map((track) => SubtitleTrackData(
+                        id: track.trackId.toString(),
+                        language: switch (track.language) {
+                          null => 'Unknown',
+                          final language => tryResolveLanguageCode(language),
+                        },
+                        label: track.name,
+                      ))
                   .toList(),
               progress: _getProgress,
               isAudioTrackSelectionSupported: false,

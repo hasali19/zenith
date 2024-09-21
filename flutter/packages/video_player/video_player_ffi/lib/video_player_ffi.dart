@@ -113,6 +113,9 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
 
   final _positionHandler = MediaPositionHandler();
 
+  List<VideoItem>? _playlist;
+  List<SubtitleTrack> _subtitleTracks = [];
+
   VideoControllerWindows(this.player, this.surface) {
     _channel.setMethodCallHandler((call) async {
       final Map<dynamic, dynamic> args = call.arguments;
@@ -137,6 +140,7 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
       if (args.containsKey('playlist-pos')) {
         currentItemIndex = args['playlist-pos'];
         _state = VideoState.active;
+        _updateSubtitleTracks();
       }
 
       if (args['state'] == 'ended') {
@@ -194,32 +198,27 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
 
   @override
   void load(List<VideoItem> items, int startIndex, double startPosition) {
-    final pItems = calloc<FfiVideoItem>(items.length);
+    using((alloc) {
+      final pItems = alloc<FfiVideoItem>(items.length);
 
-    for (final (i, item) in items.indexed) {
-      final pItem = pItems[i];
-      pItem.url = item.url.toNativeUtf8();
-      pItem.title = item.title == null
-          ? Pointer<Utf8>.fromAddress(0)
-          : item.title!.toNativeUtf8();
-      pItem.subtitle = item.subtitle == null
-          ? Pointer<Utf8>.fromAddress(0)
-          : item.subtitle!.toNativeUtf8();
-    }
+      for (final (i, item) in items.indexed) {
+        final pItem = pItems[i];
+        pItem.url = item.url.toNativeUtf8(allocator: alloc);
+        pItem.title = item.title == null
+            ? Pointer<Utf8>.fromAddress(0)
+            : item.title!.toNativeUtf8(allocator: alloc);
+        pItem.subtitle = item.subtitle == null
+            ? Pointer<Utf8>.fromAddress(0)
+            : item.subtitle!.toNativeUtf8(allocator: alloc);
+      }
 
-    ffiLoad(player, pItems, items.length, startIndex, startPosition);
-
-    for (var i = 0; i < items.length; i++) {
-      final pItem = pItems[i];
-      calloc.free(pItem.url);
-      if (pItem.title.address != 0) calloc.free(pItem.title);
-      if (pItem.subtitle.address != 0) calloc.free(pItem.subtitle);
-    }
-
-    calloc.free(pItems);
+      ffiLoad(player, pItems, items.length, startIndex, startPosition);
+    });
 
     _state = VideoState.active;
+    _playlist = items;
     currentItemIndex = startIndex;
+    _updateSubtitleTracks();
   }
 
   @override
@@ -262,13 +261,17 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
   }
 
   @override
-  void setTextTrack(SubtitleTrack? track) {
-    if (track != null) {
-      final pUrl = track.src.toNativeUtf8();
+  void setSubtitleTrack(String? trackId) {
+    if (_playlist == null) return;
+    if (trackId == null) {
+      ffiSetSubtitleFile(player, Pointer.fromAddress(0));
+    } else {
+      final externalTrack = _playlist![currentItemIndex]
+          .subtitles
+          .firstWhere((t) => trackId == t.id);
+      final pUrl = externalTrack.src.toNativeUtf8();
       ffiSetSubtitleFile(player, pUrl);
       calloc.free(pUrl);
-    } else {
-      ffiSetSubtitleFile(player, Pointer.fromAddress(0));
     }
   }
 
@@ -280,4 +283,27 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
   @override
   VideoState get state => _state;
   VideoState _state = VideoState.idle;
+
+  @override
+  List<SubtitleTrack> get currentTextTracks => _subtitleTracks;
+
+  @override
+  // TODO: Support embedded subtitles
+  bool get supportsEmbeddedSubtitles => false;
+
+  void _updateSubtitleTracks() {
+    final playlist = _playlist;
+    if (playlist == null) {
+      _subtitleTracks = [];
+    } else {
+      _subtitleTracks = playlist[currentItemIndex]
+          .subtitles
+          .map((track) => SubtitleTrack(
+                id: track.id,
+                label: track.title,
+                language: track.language,
+              ))
+          .toList();
+    }
+  }
 }

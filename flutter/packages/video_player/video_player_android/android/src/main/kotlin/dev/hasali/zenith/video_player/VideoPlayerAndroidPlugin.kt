@@ -4,14 +4,18 @@ import android.app.Activity
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
+import androidx.annotation.OptIn
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaItem.SubtitleConfiguration
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.TrackGroup
 import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.common.text.CueGroup
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -186,6 +190,20 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                                     "position" to it.position,
                                 )
                             )
+
+                            is PlayerInstance.Event.TextTracksChanged -> events.success(
+                                mapOf(
+                                    "type" to "textTracksChanged",
+                                    "tracks" to it.tracks.map { group ->
+                                        val format = group.getTrackFormat(0)
+                                        mapOf(
+                                            "id" to format.id,
+                                            "label" to format.label,
+                                            "lang" to format.language,
+                                        )
+                                    },
+                                )
+                            )
                         }
                     }
                 }
@@ -296,6 +314,7 @@ data class SubtitleTrack(
     val language: String?,
 )
 
+@OptIn(UnstableApi::class)
 private class PlayerInstance(
     private val context: Context,
     private val surfaceProducer: SurfaceProducer,
@@ -317,6 +336,7 @@ private class PlayerInstance(
         data class Cues(val text: String?) : Event()
         data class PlaybackSpeed(val speed: Double, val position: Long) : Event()
         data class MediaItemTransition(val index: Int, val position: Long) : Event()
+        data class TextTracksChanged(val tracks: List<Tracks.Group>) : Event()
     }
 
     private val trackSelector = DefaultTrackSelector(context)
@@ -410,6 +430,10 @@ private class PlayerInstance(
                     )
                 )
             }
+
+            override fun onTracksChanged(tracks: Tracks) {
+                onEvent?.invoke(Event.TextTracksChanged(tracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }))
+            }
         })
 
         for (i in 0 until player.rendererCount) {
@@ -452,31 +476,19 @@ private class PlayerInstance(
         val mediaSources = items.map { item ->
             val mediaItem = MediaItem.Builder()
                 .setUri(item.url)
+                .setSubtitleConfigurations(item.subtitles.map { track ->
+                    SubtitleConfiguration.Builder(Uri.parse(track.src))
+                        .setId("external:${track.id}")
+                        .setMimeType(track.mimeType)
+                        .setLanguage(track.language)
+                        .setLabel(track.title)
+                        .build()
+                })
                 .build()
 
-            val sources = mutableListOf(
-                DefaultMediaSourceFactory(context)
-                    .setDataSourceFactory(dataSourceFactory)
-                    .createMediaSource(mediaItem)
-            )
-
-            item.subtitles.forEach { track ->
-                val uri = Uri.parse(track.src)
-
-                val subtitle = MediaItem.SubtitleConfiguration.Builder(uri)
-                    .setId("external:${track.id}")
-                    .setMimeType(track.mimeType)
-                    .setLanguage(track.language)
-                    .setLabel(track.title)
-                    .build()
-
-                val source = SingleSampleMediaSource.Factory(dataSourceFactory)
-                    .createMediaSource(subtitle, C.TIME_UNSET)
-
-                sources.add(source)
-            }
-
-            MergingMediaSource(*sources.toTypedArray())
+            DefaultMediaSourceFactory(context)
+                .setDataSourceFactory(dataSourceFactory)
+                .createMediaSource(mediaItem)
         }
 
         player.setMediaSources(mediaSources, startIndex, startPosition)
@@ -548,7 +560,7 @@ private class PlayerInstance(
     }
 
     fun setTextTrack(trackId: String?) {
-        setTrackById(textRenderer ?: return, if (trackId != null) "external:$trackId" else null)
+        setTrackById(textRenderer ?: return, trackId)
     }
 
     fun release() {

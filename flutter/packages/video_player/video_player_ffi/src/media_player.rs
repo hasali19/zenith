@@ -131,7 +131,9 @@ impl MediaPlayer {
                     }
                     "playlist-playing-pos" => {
                         let value = unsafe { data.cast::<i64>().as_ref() };
-                        if let Some(value) = value && *value > 0 {
+                        if let Some(value) = value
+                            && *value > 0
+                        {
                             println!("playlist-playing-pos {value}");
 
                             let playlist = self.playlist.lock().unwrap();

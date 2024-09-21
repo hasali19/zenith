@@ -12,9 +12,11 @@ import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:zenith/api.dart' as api;
 import 'package:zenith/cookies.dart';
+import 'package:zenith/language_codes.dart';
 import 'package:zenith/platform.dart' as platform;
 import 'package:zenith/preferences.dart';
 import 'package:zenith/screens/video_player/media_title.dart';
+import 'package:zenith/screens/video_player/subtitles.dart';
 import 'package:zenith/screens/video_player/ui.dart';
 import 'package:zenith/screens/video_player/utils.dart';
 import 'package:zenith/screens/video_player/video_progress_bar.dart';
@@ -113,6 +115,8 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
       return VideoItem(
         url: _api.getVideoUrl(item.videoFile!.id),
         subtitles: item.videoFile!.subtitles
+            .where((s) =>
+                !controller.supportsEmbeddedSubtitles || s.streamIndex == null)
             .map((s) => subtitleFromApi(_api, s))
             .toList(),
         title: title,
@@ -258,47 +262,62 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
   }
 
   Widget _buildUi() {
+    final controller = _controller!;
     final content = ListenableBuilder(
-      listenable: _controller!,
-      builder: (context, child) => VideoPlayerUi(
-        title: MediaTitle(item: currentItem),
-        audioTracks: currentItem.videoFile!.streams
+      listenable: controller,
+      builder: (context, child) {
+        final audioTracks = currentItem.videoFile!.streams
             .whereType<api.AudioStreamInfo>()
             .map(audioTrackFromApi)
-            .toList(),
-        subtitles: currentItem.videoFile!.subtitles
-            .map((s) => subtitleFromApi(_api, s))
-            .toList(),
-        progress: () => VideoProgressData(
-          total: Duration(seconds: _controller!.duration.toInt()),
-          progress: Duration(seconds: _controller!.position.toInt()),
-        ),
-        isAudioTrackSelectionSupported:
-            _controller!.supportsAudioTrackSelection,
-        fit: _controller!.fit,
-        playbackSpeed: _controller!.playbackSpeed,
-        isLoading: _controller!.loading,
-        isPaused: _controller!.paused,
-        onInteractionStart: _disableAutoHideControls,
-        onInteractionEnd: _resetControlsTimer,
-        onAudioTrackSelected: (index) => _controller!.setAudioTrack(index),
-        onTextTrackSelected: (track) => _controller!.setTextTrack(track),
-        onFitSelected: (fit) => _controller!.setFit(fit),
-        onPlaybackSpeedSelected: (speed) =>
-            _controller!.setPlaybackSpeed(speed),
-        onSeek: (position) => _controller!.position = position,
-        onSeekDelta: (delta) => _controller!.position += delta,
-        onSeekToPrevious: () => _controller!.seekToPreviousItem(),
-        onSeekToNext: () {
-          if (ref.read(setWatchedOnSkipProvider)) {
-            _api.updateUserData(
-                currentItem.id, api.VideoUserDataPatch(isWatched: true));
-          }
-          _controller!.seekToNextItem();
-        },
-        onSetPaused: (isPaused) =>
-            isPaused ? _controller!.pause() : _controller!.play(),
-      ),
+            .toList();
+
+        final subtitles = controller.currentTextTracks
+            .map((track) => SubtitleTrackData(
+                  id: track.id,
+                  language: switch (track.language) {
+                    null => 'Unknown',
+                    final language => tryResolveLanguageCode(language),
+                  },
+                  label: track.label,
+                ))
+            .toList();
+
+        return VideoPlayerUi(
+          title: MediaTitle(item: currentItem),
+          audioTracks: audioTracks,
+          subtitles: subtitles,
+          progress: () => VideoProgressData(
+            total: Duration(seconds: controller.duration.toInt()),
+            progress: Duration(seconds: controller.position.toInt()),
+          ),
+          isAudioTrackSelectionSupported:
+              controller.supportsAudioTrackSelection,
+          fit: controller.fit,
+          playbackSpeed: controller.playbackSpeed,
+          isLoading: controller.loading,
+          isPaused: controller.paused,
+          onInteractionStart: _disableAutoHideControls,
+          onInteractionEnd: _resetControlsTimer,
+          onAudioTrackSelected: (index) => controller.setAudioTrack(index),
+          onTextTrackSelected: (track) =>
+              controller.setSubtitleTrack(track?.id),
+          onFitSelected: (fit) => controller.setFit(fit),
+          onPlaybackSpeedSelected: (speed) =>
+              controller.setPlaybackSpeed(speed),
+          onSeek: (position) => controller.position = position,
+          onSeekDelta: (delta) => controller.position += delta,
+          onSeekToPrevious: () => controller.seekToPreviousItem(),
+          onSeekToNext: () {
+            if (ref.read(setWatchedOnSkipProvider)) {
+              _api.updateUserData(
+                  currentItem.id, api.VideoUserDataPatch(isWatched: true));
+            }
+            controller.seekToNextItem();
+          },
+          onSetPaused: (isPaused) =>
+              isPaused ? controller.pause() : controller.play(),
+        );
+      },
     );
 
     return ValueListenableBuilder(

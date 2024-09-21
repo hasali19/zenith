@@ -121,6 +121,7 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   final _positionHandler = MediaPositionHandler();
 
   double _playbackSpeed = 1.0;
+  List<SubtitleTrack>? _currentTextTracks;
 
   @override
   bool get supportsAudioTrackSelection => true;
@@ -153,6 +154,12 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
 
   @override
   double get position => _positionHandler.positionMs / 1000;
+
+  @override
+  List<SubtitleTrack> get currentTextTracks => _currentTextTracks ?? [];
+
+  @override
+  bool get supportsEmbeddedSubtitles => true;
 
   @override
   set position(value) {
@@ -189,6 +196,15 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
         _playbackSpeed = event['speed'];
       } else if (type == 'mediaItemTransition') {
         currentItemIndex = event['index'];
+      } else if (type == 'textTracksChanged') {
+        List<dynamic> tracks = event['tracks'];
+        _currentTextTracks = tracks
+            .map((track) => SubtitleTrack(
+                  id: track['id'],
+                  label: track['label'],
+                  language: track['lang'],
+                ))
+            .toList();
       }
       if (event.containsKey('position')) {
         _positionHandler.update(
@@ -240,9 +256,8 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   }
 
   @override
-  void setTextTrack(SubtitleTrack? track) {
-    _methodChannel
-        .invokeMethod('setTextTrack', {'id': id, 'trackId': track?.id});
+  void setSubtitleTrack(String? trackId) {
+    _methodChannel.invokeMethod('setTextTrack', {'id': id, 'trackId': trackId});
   }
 
   @override

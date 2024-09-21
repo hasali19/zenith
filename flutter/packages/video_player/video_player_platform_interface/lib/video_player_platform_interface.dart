@@ -21,7 +21,7 @@ abstract class VideoPlayerPlatform extends PlatformInterface {
 
 enum VideoState { idle, active, ended }
 
-class SubtitleTrack {
+class ExternalSubtitleTrack {
   String id;
   String src;
   String mimeType;
@@ -29,7 +29,7 @@ class SubtitleTrack {
   String? language;
   String? displayLanguage;
 
-  SubtitleTrack({
+  ExternalSubtitleTrack({
     required this.id,
     required this.src,
     required this.mimeType,
@@ -43,13 +43,25 @@ class VideoItem {
   final String? title;
   final String? subtitle;
   final String url;
-  final List<SubtitleTrack> subtitles;
+  final List<ExternalSubtitleTrack> subtitles;
 
   VideoItem({
     required this.url,
     required this.subtitles,
     this.title,
     this.subtitle,
+  });
+}
+
+class SubtitleTrack {
+  String id;
+  String? label;
+  String? language;
+
+  SubtitleTrack({
+    required this.id,
+    required this.label,
+    required this.language,
   });
 }
 
@@ -61,10 +73,13 @@ abstract class VideoController implements Listenable {
   double get duration;
   bool get paused;
   bool get loading;
-  bool get supportsAudioTrackSelection;
   int get currentItemIndex;
   BoxFit get fit;
   double get playbackSpeed;
+  List<SubtitleTrack> get currentTextTracks;
+
+  bool get supportsAudioTrackSelection;
+  bool get supportsEmbeddedSubtitles;
 
   void load(List<VideoItem> items, int startIndex, double startPosition);
   void play();
@@ -72,7 +87,7 @@ abstract class VideoController implements Listenable {
   void seekToNextItem();
   void seekToPreviousItem();
   void setAudioTrack(int index);
-  void setTextTrack(SubtitleTrack? track);
+  void setSubtitleTrack(String? trackId);
   void setFit(BoxFit fit);
   void setPlaybackSpeed(double speed);
   void dispose();

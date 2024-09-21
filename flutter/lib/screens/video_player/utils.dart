@@ -15,9 +15,9 @@ String _formatToMimeType(String? format) {
   throw ArgumentError.value(format, 'format', 'unsupported text track format');
 }
 
-video_player.SubtitleTrack subtitleFromApi(
+video_player.ExternalSubtitleTrack subtitleFromApi(
     ZenithApiClient api, SubtitleTrack subtitle) {
-  return video_player.SubtitleTrack(
+  return video_player.ExternalSubtitleTrack(
     id: subtitle.id.toString(),
     src: api.getSubtitleUrl(subtitle.id),
     mimeType: subtitle.streamIndex == null

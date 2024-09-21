@@ -48,9 +48,11 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
 class VideoControllerWeb extends VideoController with ChangeNotifier {
   final int id;
   final HTMLVideoElement _element;
-  final Map<int, TextTrack> _textTracks = {};
+  final Map<String, TextTrack> _textTrackCache = {};
 
   VideoState _state = VideoState.idle;
+  VideoItem? _videoItem;
+  List<SubtitleTrack> _subtitleTracks = [];
   TextTrack? _activeTextTrack;
 
   VideoControllerWeb(this.id, this._element) {
@@ -127,6 +129,15 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
 
     _state = VideoState.active;
     _activeTextTrack = null;
+    _videoItem = item;
+    _subtitleTracks = item.subtitles
+        .map((track) => SubtitleTrack(
+              id: track.id,
+              label: track.title,
+              language: track.language,
+            ))
+        .toList();
+
     currentItemIndex = startIndex;
   }
 
@@ -157,15 +168,30 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
   }
 
   @override
-  Future<void> setTextTrack(SubtitleTrack? track) async {
+  List<SubtitleTrack> get currentTextTracks => _subtitleTracks;
+
+  @override
+  bool get supportsEmbeddedSubtitles => false;
+
+  @override
+  Future<void> setSubtitleTrack(String? trackId) async {
     _activeTextTrack?.mode = 'hidden';
     _activeTextTrack = null;
 
-    if (track != null) {
-      var tt = _textTracks[track.id];
+    if (trackId != null) {
+      var tt = _textTrackCache[trackId];
 
       if (tt == null) {
-        final res = await http.get(Uri.parse(track.src));
+        final src = _videoItem?.subtitles
+            .where((t) => t.id == trackId)
+            .map((t) => t.src)
+            .firstOrNull;
+
+        if (src == null) {
+          throw ArgumentError('Unknown subtitle track $trackId');
+        }
+
+        final res = await http.get(Uri.parse(src));
         final contentType = res.headers['content-type'];
 
         final TextTrackParser parser;
