@@ -271,7 +271,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
             .map(audioTrackFromApi)
             .toList();
 
-        final subtitles = controller.currentTextTracks
+        final subtitles = controller.currentSubtitleTracks
             .map((track) => SubtitleTrackData(
                   id: track.id,
                   language: switch (track.language) {
@@ -286,6 +286,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
           title: MediaTitle(item: currentItem),
           audioTracks: audioTracks,
           subtitles: subtitles,
+          activeSubtitleId: controller.activeSubtitleTrackId,
           progress: () => VideoProgressData(
             total: Duration(seconds: controller.duration.toInt()),
             progress: Duration(seconds: controller.position.toInt()),

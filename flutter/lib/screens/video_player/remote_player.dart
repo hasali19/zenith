@@ -168,6 +168,8 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
                         label: track.name,
                       ))
                   .toList(),
+              // TODO: Query active subtitle track from remote
+              activeSubtitleId: null,
               progress: _getProgress,
               isAudioTrackSelectionSupported: false,
               fit: BoxFit.cover,

@@ -76,7 +76,8 @@ abstract class VideoController implements Listenable {
   int get currentItemIndex;
   BoxFit get fit;
   double get playbackSpeed;
-  List<SubtitleTrack> get currentTextTracks;
+  List<SubtitleTrack> get currentSubtitleTracks;
+  String? activeSubtitleTrackId;
 
   bool get supportsAudioTrackSelection;
   bool get supportsEmbeddedSubtitles;

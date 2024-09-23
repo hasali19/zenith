@@ -54,6 +54,7 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
   VideoItem? _videoItem;
   List<SubtitleTrack> _subtitleTracks = [];
   TextTrack? _activeTextTrack;
+  String? _activeTextTrackId;
 
   VideoControllerWeb(this.id, this._element) {
     _element.addEventListener(
@@ -168,7 +169,10 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
   }
 
   @override
-  List<SubtitleTrack> get currentTextTracks => _subtitleTracks;
+  List<SubtitleTrack> get currentSubtitleTracks => _subtitleTracks;
+
+  @override
+  String? get activeSubtitleTrackId => _activeTextTrackId;
 
   @override
   bool get supportsEmbeddedSubtitles => false;
@@ -215,7 +219,11 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
       }
 
       tt.mode = 'showing';
+
       _activeTextTrack = tt;
+      _activeTextTrackId = trackId;
+
+      notifyListeners();
     }
   }
 

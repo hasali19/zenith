@@ -122,6 +122,7 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
 
   double _playbackSpeed = 1.0;
   List<SubtitleTrack>? _currentTextTracks;
+  String? _activeTextTrack;
 
   @override
   bool get supportsAudioTrackSelection => true;
@@ -156,7 +157,10 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   double get position => _positionHandler.positionMs / 1000;
 
   @override
-  List<SubtitleTrack> get currentTextTracks => _currentTextTracks ?? [];
+  List<SubtitleTrack> get currentSubtitleTracks => _currentTextTracks ?? [];
+
+  @override
+  String? get activeSubtitleTrackId => _activeTextTrack;
 
   @override
   bool get supportsEmbeddedSubtitles => true;
@@ -198,6 +202,7 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
         currentItemIndex = event['index'];
       } else if (type == 'textTracksChanged') {
         List<dynamic> tracks = event['tracks'];
+
         _currentTextTracks = tracks
             .map((track) => SubtitleTrack(
                   id: track['id'],
@@ -205,6 +210,8 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
                   language: track['lang'],
                 ))
             .toList();
+
+        _activeTextTrack = event['active'];
       }
       if (event.containsKey('position')) {
         _positionHandler.update(

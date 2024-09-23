@@ -25,6 +25,7 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
   final Widget title;
   final List<AudioTrack> audioTracks;
   final List<SubtitleTrackData> subtitles;
+  final String? activeSubtitleId;
   final VideoProgressData Function() progress;
   final bool isAudioTrackSelectionSupported;
   final BoxFit fit;
@@ -49,6 +50,7 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
     required this.title,
     required this.audioTracks,
     required this.subtitles,
+    required this.activeSubtitleId,
     required this.progress,
     required this.isAudioTrackSelectionSupported,
     required this.fit,
@@ -273,6 +275,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         const SizedBox(height: 8),
         BottomControls(
           subtitles: _subtitles,
+          activeSubtitleId: widget.activeSubtitleId,
           onSubtitleTrackSelected: widget.onTextTrackSelected,
           onShowOptionsMenu: () {
             widget.onInteractionEnd();

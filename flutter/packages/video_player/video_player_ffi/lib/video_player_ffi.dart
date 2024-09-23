@@ -115,6 +115,7 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
 
   List<VideoItem>? _playlist;
   List<SubtitleTrack> _subtitleTracks = [];
+  String? _activeSubtitleTrack;
 
   VideoControllerWindows(this.player, this.surface) {
     _channel.setMethodCallHandler((call) async {
@@ -265,6 +266,7 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
     if (_playlist == null) return;
     if (trackId == null) {
       ffiSetSubtitleFile(player, Pointer.fromAddress(0));
+      _activeSubtitleTrack = null;
     } else {
       final externalTrack = _playlist![currentItemIndex]
           .subtitles
@@ -272,7 +274,9 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
       final pUrl = externalTrack.src.toNativeUtf8();
       ffiSetSubtitleFile(player, pUrl);
       calloc.free(pUrl);
+      _activeSubtitleTrack = trackId;
     }
+    notifyListeners();
   }
 
   @override
@@ -285,7 +289,10 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
   VideoState _state = VideoState.idle;
 
   @override
-  List<SubtitleTrack> get currentTextTracks => _subtitleTracks;
+  List<SubtitleTrack> get currentSubtitleTracks => _subtitleTracks;
+
+  @override
+  String? get activeSubtitleTrackId => _activeSubtitleTrack;
 
   @override
   // TODO: Support embedded subtitles

@@ -19,8 +19,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.exoplayer.source.MergingMediaSource
-import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -191,19 +189,36 @@ class VideoPlayerAndroidPlugin : FlutterPlugin, ActivityAware {
                                 )
                             )
 
-                            is PlayerInstance.Event.TextTracksChanged -> events.success(
-                                mapOf(
-                                    "type" to "textTracksChanged",
-                                    "tracks" to it.tracks.map { group ->
-                                        val format = group.getTrackFormat(0)
+                            is PlayerInstance.Event.TracksChanged -> {
+                                val tracks = mutableListOf<Map<String, Any?>>()
+                                var active: String? = null
+
+                                for (group in it.tracks) {
+                                    if (group.type != C.TRACK_TYPE_TEXT) {
+                                        continue
+                                    }
+                                    val format = group.getTrackFormat(0)
+                                    if (group.isSelected) {
+                                        active = format.id
+                                    }
+                                    tracks.add(
                                         mapOf(
                                             "id" to format.id,
                                             "label" to format.label,
                                             "lang" to format.language,
+                                            "isSelected" to group.isSelected,
                                         )
-                                    },
+                                    )
+                                }
+
+                                events.success(
+                                    mapOf(
+                                        "type" to "textTracksChanged",
+                                        "tracks" to tracks,
+                                        "active" to active,
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
                 }
@@ -336,7 +351,7 @@ private class PlayerInstance(
         data class Cues(val text: String?) : Event()
         data class PlaybackSpeed(val speed: Double, val position: Long) : Event()
         data class MediaItemTransition(val index: Int, val position: Long) : Event()
-        data class TextTracksChanged(val tracks: List<Tracks.Group>) : Event()
+        data class TracksChanged(val tracks: List<Tracks.Group>) : Event()
     }
 
     private val trackSelector = DefaultTrackSelector(context)
@@ -432,7 +447,7 @@ private class PlayerInstance(
             }
 
             override fun onTracksChanged(tracks: Tracks) {
-                onEvent?.invoke(Event.TextTracksChanged(tracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }))
+                onEvent?.invoke(Event.TracksChanged(tracks.groups))
             }
         })
 
