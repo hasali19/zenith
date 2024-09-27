@@ -15,8 +15,9 @@ Dio createDioClient(
     validateStatus: (status) =>
         status != null && (status >= 200 && status < 300) || status == 401,
     headers: {
-      'User-Agent':
-          'Flutter ${Platform.operatingSystem} ${packageInfo.buildNumber}/${Updater.revision?.substring(0, 7)}',
+      if (!kIsWeb)
+        'User-Agent':
+            'Flutter ${Platform.operatingSystem} ${packageInfo.buildNumber}/${Updater.revision?.substring(0, 7)}',
     },
   ));
 
