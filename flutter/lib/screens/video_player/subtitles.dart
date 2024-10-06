@@ -217,9 +217,11 @@ class _SubtitlesDropdownMenuButton extends StatelessWidget {
           ? null
           : () => onSubtitleTrackSelected(track),
       child: Builder(builder: (context) {
-        final secondaryTextStyle = DefaultTextStyle.of(context)
-            .style
-            .merge(Theme.of(context).textTheme.bodySmall);
+        final defaultStyle = DefaultTextStyle.of(context).style;
+        final secondaryTextStyle = Theme.of(context)
+            .textTheme
+            .bodySmall!
+            .copyWith(color: defaultStyle.color);
 
         return ConstrainedBox(
           constraints: const BoxConstraints(minWidth: 150),
