@@ -45,6 +45,15 @@ pub struct VideoItem {
     pub url: *const i8,
     pub title: *const i8,
     pub subtitle: *const i8,
+    pub external_subtitles_count: usize,
+    pub external_subtitles: *const ExternalSubtitle,
+}
+
+#[repr(C)]
+pub struct ExternalSubtitle {
+    pub url: *const i8,
+    pub title: *const i8,
+    pub language: *const i8,
 }
 
 #[no_mangle]
@@ -65,6 +74,18 @@ pub unsafe extern "C" fn load(
             url: to_owned_string(item.url),
             title: item.title.as_ref().map(|p| to_owned_string(p)),
             subtitle: item.subtitle.as_ref().map(|s| to_owned_string(s)),
+            external_subtitles: if item.external_subtitles_count == 0 {
+                vec![]
+            } else {
+                std::slice::from_raw_parts(item.external_subtitles, item.external_subtitles_count)
+                    .iter()
+                    .map(|sub| media_player::ExternalSubtitle {
+                        url: to_owned_string(sub.url),
+                        language: sub.language.as_ref().map(|s| to_owned_string(s)),
+                        title: sub.title.as_ref().map(|s| to_owned_string(s)),
+                    })
+                    .collect()
+            },
         })
         .collect::<Vec<_>>();
 
@@ -80,15 +101,11 @@ pub unsafe extern "C" fn set_audio_track(player: *const MediaPlayer, index: i32)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn set_subtitle_file(player: *const MediaPlayer, url: *const i8) {
+pub unsafe extern "C" fn set_subtitle_track(player: *const MediaPlayer, id: i64) {
     player
         .as_ref()
         .unwrap()
-        .set_subtitle_file(if url.is_null() {
-            None
-        } else {
-            Some(CStr::from_ptr(url).to_str().unwrap())
-        });
+        .set_subtitle_track(if id == -1 { None } else { Some(id) });
 }
 
 #[no_mangle]

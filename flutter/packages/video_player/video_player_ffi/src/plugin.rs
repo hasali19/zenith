@@ -10,7 +10,7 @@ use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::WindowsAndMessaging::{GetAncestor, GA_ROOT};
 
 use crate::cstr;
-use crate::media_player::{MediaPlayer, MediaPlayerEvent};
+use crate::media_player::{MediaPlayer, MediaPlayerEvent, MediaTrack, MediaTrackType};
 use crate::video_surface::VideoSurface;
 
 struct VideoPlayerFfiPlugin {
@@ -61,41 +61,55 @@ impl VideoPlayerFfiPlugin {
                                 EncodableValue::F64(position.into()),
                             );
 
-                            match event {
-                                MediaPlayerEvent::DurationChanged(v) => {
+                            match &event {
+                                &MediaPlayerEvent::DurationChanged(v) => {
                                     res.insert(
                                         EncodableValue::Str("duration"),
                                         EncodableValue::F64(v.into()),
                                     );
                                 }
-                                MediaPlayerEvent::PauseChanged(v) => {
+                                &MediaPlayerEvent::PauseChanged(v) => {
                                     res.insert(
                                         EncodableValue::Str("paused"),
                                         EncodableValue::Bool(v),
                                     );
                                 }
-                                MediaPlayerEvent::IdleChanged(v) => {
+                                &MediaPlayerEvent::IdleChanged(v) => {
                                     res.insert(
                                         EncodableValue::Str("idle"),
                                         EncodableValue::Bool(v),
                                     );
                                 }
-                                MediaPlayerEvent::VideoEnded => {
+                                &MediaPlayerEvent::VideoEnded => {
                                     res.insert(
                                         EncodableValue::Str("state"),
                                         EncodableValue::Str("ended"),
                                     );
                                 }
-                                MediaPlayerEvent::SpeedChanged(v) => {
+                                &MediaPlayerEvent::SpeedChanged(v) => {
                                     res.insert(
                                         EncodableValue::Str("speed"),
                                         EncodableValue::F64(v.into()),
                                     );
                                 }
-                                MediaPlayerEvent::PlaylistPosChanged(v) => {
+                                &MediaPlayerEvent::PlaylistPosChanged(v) => {
                                     res.insert(
                                         EncodableValue::Str("playlist-pos"),
                                         EncodableValue::I64(v.into()),
+                                    );
+                                }
+                                MediaPlayerEvent::TracksChanged(tracks) => {
+                                    res.insert(
+                                        EncodableValue::Str("tracks"),
+                                        build_tracks_list(tracks),
+                                    );
+                                }
+                                &MediaPlayerEvent::SubTrackChanged(track_id) => {
+                                    res.insert(
+                                        EncodableValue::Str("selected-sub-track"),
+                                        track_id
+                                            .map(EncodableValue::I64)
+                                            .unwrap_or(EncodableValue::Null),
                                     );
                                 }
                             }
@@ -155,13 +169,56 @@ impl VideoPlayerFfiPlugin {
 
                 let surface = unsafe { Box::from_raw(surface as *mut VideoSurface) };
 
-                surface.destroy();
+                drop(surface);
 
                 reply.success(&EncodableValue::Null);
             }
             _ => reply.not_implemented(),
         }
     }
+}
+
+fn build_tracks_list(tracks: &[MediaTrack]) -> EncodableValue<'_> {
+    EncodableValue::List(
+        tracks
+            .iter()
+            .map(|track| {
+                EncodableValue::Map({
+                    let mut map = BTreeMap::new();
+                    map.insert(EncodableValue::Str("id"), EncodableValue::I64(track.id));
+                    map.insert(
+                        EncodableValue::Str("type"),
+                        EncodableValue::I64(match track.track_type {
+                            MediaTrackType::Video => 1,
+                            MediaTrackType::Audio => 2,
+                            MediaTrackType::Subtitle => 3,
+                        }),
+                    );
+                    map.insert(
+                        EncodableValue::Str("title"),
+                        track
+                            .title
+                            .as_deref()
+                            .map(EncodableValue::Str)
+                            .unwrap_or(EncodableValue::Null),
+                    );
+                    map.insert(
+                        EncodableValue::Str("lang"),
+                        track
+                            .language
+                            .as_deref()
+                            .map(EncodableValue::Str)
+                            .unwrap_or(EncodableValue::Null),
+                    );
+                    map.insert(
+                        EncodableValue::Str("selected"),
+                        EncodableValue::Bool(track.selected),
+                    );
+                    map
+                })
+            })
+            .collect(),
+    )
 }
 
 flutter_plugin!(VideoPlayerFfiPlugin);

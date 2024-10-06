@@ -95,9 +95,18 @@ impl MpvPlayer {
         }
     }
 
-    pub fn add_sub_async(&self, url: &str) {
+    pub fn add_sub_async(&self, url: &str, title: Option<&str>, lang: Option<&str>) {
         let url = CString::new(url).unwrap();
-        let mut args = [s!("sub-add"), url.as_ptr(), s!("cached"), ptr::null()];
+        let title = title.map(|v| CString::new(v).unwrap());
+        let lang = lang.map(|v| CString::new(v).unwrap());
+        let mut args = [
+            s!("sub-add"),
+            url.as_ptr(),
+            s!("auto"),
+            title.as_ref().map(|v| v.as_ptr()).unwrap_or(ptr::null()),
+            lang.as_ref().map(|v| v.as_ptr()).unwrap_or(ptr::null()),
+            ptr::null(),
+        ];
         unsafe {
             mpv_command_async(self.mpv, 0, &mut args as *mut *const c_char);
         }

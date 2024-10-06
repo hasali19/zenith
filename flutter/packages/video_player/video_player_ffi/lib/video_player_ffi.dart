@@ -11,6 +11,15 @@ final class FfiVideoItem extends Struct {
   external Pointer<Utf8> url;
   external Pointer<Utf8> title;
   external Pointer<Utf8> subtitle;
+  @IntPtr()
+  external int externalSubtitlesCount;
+  external Pointer<FfiExternalSubtitle> externalSubtitles;
+}
+
+final class FfiExternalSubtitle extends Struct {
+  external Pointer<Utf8> url;
+  external Pointer<Utf8> title;
+  external Pointer<Utf8> language;
 }
 
 final DynamicLibrary _lib = DynamicLibrary.open('video_player_ffi.dll');
@@ -35,9 +44,8 @@ final void Function(int player, Pointer<FfiVideoItem> items, int itemCount,
 final void Function(int player, int index) ffiSetAudioTrack = _lib
     .lookup<NativeFunction<Void Function(IntPtr, Int32)>>('set_audio_track')
     .asFunction();
-final void Function(int player, Pointer<Utf8> url) ffiSetSubtitleFile = _lib
-    .lookup<NativeFunction<Void Function(IntPtr, Pointer<Utf8>)>>(
-        'set_subtitle_file')
+final void Function(int player, int id) ffiSetSubtitleTrack = _lib
+    .lookup<NativeFunction<Void Function(IntPtr, Int64)>>('set_subtitle_track')
     .asFunction();
 final void Function(int player) ffiPause =
     _lib.lookup<NativeFunction<Void Function(IntPtr)>>('pause').asFunction();
@@ -141,7 +149,24 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
       if (args.containsKey('playlist-pos')) {
         currentItemIndex = args['playlist-pos'];
         _state = VideoState.active;
-        _updateSubtitleTracks();
+      }
+
+      if (args.containsKey('tracks')) {
+        _subtitleTracks = (args['tracks'] as List<dynamic>)
+            .where((track) => track['type'] == 3)
+            .map(
+              (track) => SubtitleTrack(
+                id: track['id'].toString(),
+                label: track['title'],
+                language: track['lang'],
+              ),
+            )
+            .toList();
+      }
+
+      if (args.containsKey('selected-sub-track')) {
+        final int? trackId = args['selected-sub-track'];
+        _activeSubtitleTrack = trackId?.toString();
       }
 
       if (args['state'] == 'ended') {
@@ -205,12 +230,24 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
       for (final (i, item) in items.indexed) {
         final pItem = pItems[i];
         pItem.url = item.url.toNativeUtf8(allocator: alloc);
-        pItem.title = item.title == null
-            ? Pointer<Utf8>.fromAddress(0)
-            : item.title!.toNativeUtf8(allocator: alloc);
-        pItem.subtitle = item.subtitle == null
-            ? Pointer<Utf8>.fromAddress(0)
-            : item.subtitle!.toNativeUtf8(allocator: alloc);
+        pItem.title = item.title?.toNativeUtf8(allocator: alloc) ??
+            Pointer.fromAddress(0);
+        pItem.subtitle = item.subtitle?.toNativeUtf8(allocator: alloc) ??
+            Pointer.fromAddress(0);
+        pItem.externalSubtitlesCount = item.subtitles.length;
+        pItem.externalSubtitles =
+            alloc<FfiExternalSubtitle>(item.subtitles.length);
+
+        for (final (j, sub) in item.subtitles.indexed) {
+          pItem.externalSubtitles[j].url =
+              sub.src.toNativeUtf8(allocator: alloc);
+          pItem.externalSubtitles[j].title =
+              sub.title?.toNativeUtf8(allocator: alloc) ??
+                  Pointer.fromAddress(0);
+          pItem.externalSubtitles[j].language =
+              sub.language?.toNativeUtf8(allocator: alloc) ??
+                  Pointer.fromAddress(0);
+        }
       }
 
       ffiLoad(player, pItems, items.length, startIndex, startPosition);
@@ -219,7 +256,6 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
     _state = VideoState.active;
     _playlist = items;
     currentItemIndex = startIndex;
-    _updateSubtitleTracks();
   }
 
   @override
@@ -265,16 +301,9 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
   void setSubtitleTrack(String? trackId) {
     if (_playlist == null) return;
     if (trackId == null) {
-      ffiSetSubtitleFile(player, Pointer.fromAddress(0));
-      _activeSubtitleTrack = null;
+      ffiSetSubtitleTrack(player, -1);
     } else {
-      final externalTrack = _playlist![currentItemIndex]
-          .subtitles
-          .firstWhere((t) => trackId == t.id);
-      final pUrl = externalTrack.src.toNativeUtf8();
-      ffiSetSubtitleFile(player, pUrl);
-      calloc.free(pUrl);
-      _activeSubtitleTrack = trackId;
+      ffiSetSubtitleTrack(player, int.parse(trackId));
     }
     notifyListeners();
   }
@@ -295,22 +324,5 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
   String? get activeSubtitleTrackId => _activeSubtitleTrack;
 
   @override
-  // TODO: Support embedded subtitles
-  bool get supportsEmbeddedSubtitles => false;
-
-  void _updateSubtitleTracks() {
-    final playlist = _playlist;
-    if (playlist == null) {
-      _subtitleTracks = [];
-    } else {
-      _subtitleTracks = playlist[currentItemIndex]
-          .subtitles
-          .map((track) => SubtitleTrack(
-                id: track.id,
-                label: track.title,
-                language: track.language,
-              ))
-          .toList();
-    }
-  }
+  bool get supportsEmbeddedSubtitles => true;
 }

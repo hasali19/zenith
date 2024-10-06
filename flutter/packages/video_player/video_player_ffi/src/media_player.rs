@@ -1,7 +1,9 @@
 use std::ffi::CStr;
+use std::slice;
 use std::sync::atomic::{self, AtomicU64};
 use std::sync::{Arc, Mutex};
 
+use mpv_sys::{mpv_format_MPV_FORMAT_NODE_ARRAY, mpv_format_MPV_FORMAT_NODE_MAP, mpv_node};
 use windows::Media::SystemMediaTransportControlsButton;
 use windows::Win32::Foundation::HWND;
 
@@ -21,6 +23,28 @@ pub struct VideoItem {
     pub url: String,
     pub title: Option<String>,
     pub subtitle: Option<String>,
+    pub external_subtitles: Vec<ExternalSubtitle>,
+}
+
+#[derive(Debug)]
+pub struct ExternalSubtitle {
+    pub url: String,
+    pub title: Option<String>,
+    pub language: Option<String>,
+}
+
+pub enum MediaTrackType {
+    Video,
+    Audio,
+    Subtitle,
+}
+
+pub struct MediaTrack {
+    pub id: i64,
+    pub track_type: MediaTrackType,
+    pub title: Option<String>,
+    pub language: Option<String>,
+    pub selected: bool,
 }
 
 #[allow(clippy::enum_variant_names)]
@@ -31,6 +55,8 @@ pub enum MediaPlayerEvent {
     SpeedChanged(f64),
     PlaylistPosChanged(u32),
     VideoEnded,
+    TracksChanged(Vec<MediaTrack>),
+    SubTrackChanged(Option<i64>),
 }
 
 unsafe impl Send for MediaPlayer {}
@@ -49,6 +75,8 @@ impl MediaPlayer {
         mpv.observe_property("core-idle", MpvFormat::Flag, 0);
         mpv.observe_property("speed", MpvFormat::Double, 0);
         mpv.observe_property("playlist-playing-pos", MpvFormat::Int64, 0);
+        mpv.observe_property("track-list", MpvFormat::Node, 0);
+        mpv.observe_property("current-tracks/sub", MpvFormat::Node, 0);
 
         let mut controls = SystemMediaControls::new(hwnd);
 
@@ -143,6 +171,14 @@ impl MediaPlayer {
                                     item.title.as_deref(),
                                     item.subtitle.as_deref(),
                                 );
+
+                                for sub in &item.external_subtitles {
+                                    self.mpv.add_sub_async(
+                                        &sub.url,
+                                        sub.title.as_deref(),
+                                        sub.language.as_deref(),
+                                    );
+                                }
                             }
 
                             event_handler(
@@ -150,6 +186,101 @@ impl MediaPlayer {
                                 MediaPlayerEvent::PlaylistPosChanged(*value as u32),
                             );
                         }
+                    }
+                    "track-list" => {
+                        let value = unsafe { data.cast::<mpv_node>().as_ref() };
+                        if let Some(value) = value {
+                            assert_eq!(value.format, mpv_format_MPV_FORMAT_NODE_ARRAY);
+
+                            let list = unsafe { value.u.list.as_ref().unwrap() };
+                            let values = if list.num == 0 {
+                                &[]
+                            } else {
+                                unsafe { slice::from_raw_parts(list.values, list.num as usize) }
+                            };
+
+                            let mut tracks = vec![];
+
+                            for track in values {
+                                assert_eq!(track.format, mpv_format_MPV_FORMAT_NODE_MAP);
+
+                                let map = unsafe { track.u.list.as_ref().unwrap() };
+
+                                let keys =
+                                    unsafe { slice::from_raw_parts(map.keys, map.num as usize) };
+
+                                let values =
+                                    unsafe { slice::from_raw_parts(map.values, map.num as usize) };
+
+                                let mut id = None;
+                                let mut track_type = None;
+                                let mut title = None;
+                                let mut lang = None;
+                                let mut selected = false;
+
+                                for (&key, value) in keys.iter().zip(values) {
+                                    unsafe {
+                                        let key = CStr::from_ptr(key);
+                                        if key == c"id" {
+                                            id = Some(value.u.int64);
+                                        } else if key == c"type" {
+                                            track_type = Some(CStr::from_ptr(value.u.string));
+                                        } else if key == c"title" {
+                                            title = Some(CStr::from_ptr(value.u.string));
+                                        } else if key == c"lang" {
+                                            lang = Some(CStr::from_ptr(value.u.string));
+                                        } else if key == c"selected" {
+                                            selected = value.u.flag == 1;
+                                        }
+                                    }
+                                }
+
+                                let id = id.unwrap();
+                                let track_type = track_type.unwrap();
+
+                                tracks.push(MediaTrack {
+                                    id,
+                                    track_type: match track_type.to_str() {
+                                        Ok("video") => MediaTrackType::Video,
+                                        Ok("audio") => MediaTrackType::Audio,
+                                        Ok("sub") => MediaTrackType::Subtitle,
+                                        _ => unreachable!(),
+                                    },
+                                    title: title
+                                        .and_then(|title| title.to_str().ok())
+                                        .map(|title| title.to_owned()),
+                                    language: lang
+                                        .and_then(|lang| lang.to_str().ok())
+                                        .map(|lang| lang.to_owned()),
+                                    selected,
+                                });
+                            }
+
+                            event_handler(position, MediaPlayerEvent::TracksChanged(tracks));
+                        }
+                    }
+                    "current-tracks/sub" => {
+                        let value = unsafe { data.cast::<mpv_node>().as_ref() };
+                        let mut id = None;
+                        if let Some(track) = value {
+                            assert_eq!(track.format, mpv_format_MPV_FORMAT_NODE_MAP);
+
+                            let map = unsafe { track.u.list.as_ref().unwrap() };
+
+                            let keys = unsafe { slice::from_raw_parts(map.keys, map.num as usize) };
+                            let values =
+                                unsafe { slice::from_raw_parts(map.values, map.num as usize) };
+
+                            for (&key, value) in keys.iter().zip(values) {
+                                unsafe {
+                                    let key = CStr::from_ptr(key);
+                                    if key == c"id" {
+                                        id = Some(value.u.int64);
+                                    }
+                                }
+                            }
+                        }
+                        event_handler(position, MediaPlayerEvent::SubTrackChanged(id));
                     }
                     _ => {}
                 },
@@ -183,11 +314,11 @@ impl MediaPlayer {
         self.mpv.set_property_async("aid", value, 0);
     }
 
-    pub fn set_subtitle_file(&self, url: Option<&str>) {
-        if let Some(url) = url {
-            self.mpv.add_sub_async(url);
+    pub fn set_subtitle_track(&self, id: Option<i64>) {
+        if let Some(id) = id {
+            self.mpv.set_property_async("sid", id, 0);
         } else {
-            self.mpv.set_property_async("sid", cstr!("no"), 0);
+            self.mpv.set_property_async("sid", c"no", 0);
         }
     }
 

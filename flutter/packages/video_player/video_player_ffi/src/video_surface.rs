@@ -83,8 +83,10 @@ impl VideoSurface {
     pub fn texture_id(&self) -> i64 {
         self.texture_id
     }
+}
 
-    pub fn destroy(self) {
+impl Drop for VideoSurface {
+    fn drop(&mut self) {
         self.event_sender.send(RenderEvent::Exit).unwrap();
         self.exit_receiver.recv().unwrap();
     }
