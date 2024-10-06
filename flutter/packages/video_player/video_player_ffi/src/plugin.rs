@@ -148,6 +148,7 @@ impl VideoPlayerFfiPlugin {
                 let player = unsafe { (player as *const MediaPlayer).as_ref().unwrap() };
                 let mpv = player.mpv();
 
+                mpv.set_property("vo", cstr!("libmpv"));
                 mpv.set_property("hwdec", cstr!("d3d11va-copy"));
                 mpv.set_property("video-sync", cstr!("audio"));
                 mpv.set_property("video-timing-offset", cstr!("0"));

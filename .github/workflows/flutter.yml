@@ -153,7 +153,7 @@ jobs:
 
       - name: Download mpv
         run: |
-          wget https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-v3-20231231-git-abc2a74.7z/download
+          wget https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-v3-20240929-git-c3d9243.7z/download
           7z x download -ompv
           cd mpv
 
