@@ -3,6 +3,6 @@ resolver = "2"
 members = [
     "crates/*",
     "windows/runner",
-    "packages/video_player/video_player_ffi",
+    "packages/video_player",
 ]
 exclude = ["windows/flutter"]
