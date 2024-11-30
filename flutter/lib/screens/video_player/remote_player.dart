@@ -157,7 +157,7 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
               title: MediaTitle(item: item),
               audioTracks: const [],
               subtitles: (mediaStatus?.mediaInfo?.mediaTracks ?? [])
-                  .where((track) => track?.type == MediaTrackType.text)
+                  .where((track) => track.type == MediaTrackType.text)
                   .nonNulls
                   .map((track) => SubtitleTrackData(
                         id: track.trackId.toString(),

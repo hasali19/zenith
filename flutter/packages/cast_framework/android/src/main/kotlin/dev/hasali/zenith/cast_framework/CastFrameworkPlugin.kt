@@ -79,7 +79,7 @@ class CastFrameworkPlugin : FlutterPlugin {
                                     MediaMetadata(
                                         mediaType = when (metadata.mediaType) {
                                             MEDIA_TYPE_MOVIE -> MediaType.MOVIE
-                                            MEDIA_TYPE_TV_SHOW -> MediaType.TVSHOW
+                                            MEDIA_TYPE_TV_SHOW -> MediaType.TV_SHOW
                                             else -> MediaType.UNKNOWN
                                         },
                                         title = metadata.getString(KEY_TITLE),

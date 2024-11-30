@@ -1,5 +1,3 @@
-import 'dart:js_interop';
-
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:web/web.dart';
 
@@ -33,14 +31,4 @@ class WindowControllerWeb extends WindowController {
       document.exitFullscreen();
     }
   }
-}
-
-// TODO: https://github.com/dart-lang/web/issues/209 should remove the need for this
-extension on Document {
-  external Element? fullscreenElement;
-  external JSPromise exitFullscreen();
-}
-
-extension on Element {
-  external JSPromise requestFullscreen();
 }

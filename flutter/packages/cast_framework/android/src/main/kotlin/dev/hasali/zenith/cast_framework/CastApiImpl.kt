@@ -78,7 +78,7 @@ class CastApiImpl(
 
                         queueData.items?.let { queueItems ->
                             val castItems =
-                                queueItems.filterNotNull().withIndex().map { (i, queueItem) ->
+                                queueItems.withIndex().map { (i, queueItem) ->
                                     MediaQueueItem.Builder(queueItem.mediaInfo!!.toCastMediaInfo())
                                         .apply {
                                             queueItem.autoPlay?.let { autoPlay ->
@@ -90,9 +90,7 @@ class CastApiImpl(
                                             }
 
                                             queueItem.activeTrackIds?.let { activeTrackIds ->
-                                                setActiveTrackIds(
-                                                    activeTrackIds.filterNotNull().toLongArray()
-                                                )
+                                                setActiveTrackIds(activeTrackIds.toLongArray())
                                             }
 
                                             setCustomData(JSONObject().apply {
@@ -109,8 +107,8 @@ class CastApiImpl(
                             setQueueType(
                                 when (queueType) {
                                     MediaQueueType.GENERIC -> MediaQueueData.MEDIA_QUEUE_TYPE_GENERIC
-                                    MediaQueueType.TVSERIES -> MediaQueueData.MEDIA_QUEUE_TYPE_TV_SERIES
-                                    MediaQueueType.VIDEOPLAYLIST -> MediaQueueData.MEDIA_QUEUE_TYPE_VIDEO_PLAYLIST
+                                    MediaQueueType.TV_SERIES -> MediaQueueData.MEDIA_QUEUE_TYPE_TV_SERIES
+                                    MediaQueueType.VIDEO_PLAYLIST -> MediaQueueData.MEDIA_QUEUE_TYPE_VIDEO_PLAYLIST
                                     MediaQueueType.MOVIE -> MediaQueueData.MEDIA_QUEUE_TYPE_MOVIE
                                 }
                             )
@@ -136,7 +134,7 @@ class CastApiImpl(
             .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
             .apply {
                 setMediaTracks(
-                    mediaTracks?.filterNotNull()?.map { track ->
+                    mediaTracks?.map { track ->
                         val type = when (track.type) {
                             MediaTrackType.TEXT -> MediaTrack.TYPE_TEXT
                         }
@@ -159,7 +157,7 @@ class CastApiImpl(
                 metadata?.let { metadata ->
                     val mediaType = when (metadata.mediaType) {
                         MediaType.MOVIE -> MediaMetadata.MEDIA_TYPE_MOVIE
-                        MediaType.TVSHOW -> MediaMetadata.MEDIA_TYPE_TV_SHOW
+                        MediaType.TV_SHOW -> MediaMetadata.MEDIA_TYPE_TV_SHOW
                         else -> MediaMetadata.MEDIA_TYPE_GENERIC
                     }
 

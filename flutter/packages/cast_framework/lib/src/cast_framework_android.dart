@@ -32,7 +32,7 @@ class CastFrameworkAndroid extends CastFrameworkPlatform {
 
   void _ensureInitialized() {
     if (!_isInit) {
-      cast.CastEventsApi.setup(_RemotePlaybackEventsApi(this));
+      cast.CastEventsApi.setUp(_RemotePlaybackEventsApi(this));
       _isInit = true;
     }
   }

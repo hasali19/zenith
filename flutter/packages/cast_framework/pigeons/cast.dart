@@ -1,5 +1,13 @@
 import 'package:pigeon/pigeon.dart';
 
+@ConfigurePigeon(PigeonOptions(
+  dartOut: 'lib/src/cast_api.g.dart',
+  kotlinOut:
+      'android/src/main/kotlin/dev/hasali/zenith/cast_framework/pigeon/CastApi.g.kt',
+  kotlinOptions: KotlinOptions(
+    package: 'dev.hasali.zenith.cast_framework.pigeon',
+  ),
+))
 class MediaRoute {
   late String id;
   late String name;
@@ -20,20 +28,20 @@ class MediaLoadRequestData {
 
 class MediaInfo {
   String? url;
-  List<MediaTrack?>? mediaTracks;
+  List<MediaTrack>? mediaTracks;
   MediaMetadata? metadata;
   int? streamDuration;
 }
 
 class MediaQueueData {
-  List<MediaQueueItem?>? items;
+  List<MediaQueueItem>? items;
   int? startIndex;
   MediaQueueType? queueType;
 }
 
 class MediaQueueItem {
   MediaInfo? mediaInfo;
-  List<int?>? activeTrackIds;
+  List<int>? activeTrackIds;
   bool? autoPlay;
   double? startTime;
 }

@@ -21,7 +21,10 @@ jobs:
         with:
           channel: beta
 
-      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: |
+          dart run build_runner build --delete-conflicting-outputs
+          cd packages/cast_framework
+          dart run pigeon --input pigeons/cast.dart
         working-directory: flutter
 
       - uses: infotroph/tree-is-clean@v1
