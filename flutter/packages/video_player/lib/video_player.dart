@@ -8,4 +8,5 @@
 export 'src/video_player_platform_interface.dart';
 
 export 'src/android/video_player_android.dart' show VideoPlayerAndroid;
-export 'src/windows/video_player_windows.dart' show VideoPlayerWindows;
+export 'src/windows/video_player_windows.dart'
+    if (dart.library.html) 'video_player_web.dart';
