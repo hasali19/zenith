@@ -26,7 +26,7 @@ class HomeScreenData with _$HomeScreenData {
 }
 
 @riverpod
-Future<HomeScreenData> _state(_StateRef ref) async {
+Future<HomeScreenData> _state(Ref ref) async {
   final api = ref.watch(apiProvider);
 
   final results = await Future.wait([

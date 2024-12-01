@@ -65,7 +65,7 @@ pub fn main() {
         window_size.height as i32,
     ));
 
-    let messenger = &view_controller.engine().create_messenger();
+    let messenger = view_controller.engine().create_messenger();
 
     messenger.set_callback("zenith.hasali.uk/windowing", move |name, args, reply| {
         if name == "isWindowed" {

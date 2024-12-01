@@ -119,10 +119,11 @@ class VideoPlayerPlugin : FlutterPlugin, ActivityAware {
                     requireNotNull(events)
                     players[arguments.toId()]!!.setEventCallback {
                         when (it) {
-                            is PlayerInstance.Event.AspectRatioChanged -> events.success(
+                            is PlayerInstance.Event.VideoSizeChanged -> events.success(
                                 mapOf(
-                                    "type" to "aspectRatioChanged",
-                                    "value" to it.value,
+                                    "type" to "videoSizeChanged",
+                                    "width" to it.width,
+                                    "height" to it.height,
                                 )
                             )
 
@@ -341,7 +342,7 @@ private class PlayerInstance(
     }
 
     sealed class Event {
-        data class AspectRatioChanged(val value: Double) : Event()
+        data class VideoSizeChanged(val width: Int, val height: Int) : Event()
         data class DurationChanged(val value: Long, val position: Long) : Event()
         data class PlaybackStateChanged(val state: PlaybackState, val position: Long) : Event()
         data class PlayWhenReadyChanged(val value: Boolean, val position: Long) : Event()
@@ -381,12 +382,7 @@ private class PlayerInstance(
         player.setVideoSurface(surfaceProducer.surface)
         player.addListener(object : Player.Listener {
             override fun onVideoSizeChanged(videoSize: VideoSize) {
-                val aspectRatio = if (videoSize.width == 0 || videoSize.height == 0) {
-                    0.0
-                } else {
-                    videoSize.width.toDouble() * videoSize.pixelWidthHeightRatio / videoSize.height.toDouble()
-                }
-                onEvent?.invoke(Event.AspectRatioChanged(aspectRatio))
+                onEvent?.invoke(Event.VideoSizeChanged(videoSize.width, videoSize.height))
             }
 
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:signals/signals_flutter.dart';
 
 import '../video_player_platform_interface.dart';
 
@@ -25,53 +26,106 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
   @override
   Widget buildView(VideoController controller) {
     if (controller is VideoControllerAndroid) {
-      return ValueListenableBuilder<double>(
-        valueListenable: controller.aspectRatio,
-        builder: (context, aspectRatio, child) =>
-            ValueListenableBuilder<BoxFit>(
-          valueListenable: controller._fit,
-          builder: (context, fit, child) =>
-              LayoutBuilder(builder: (context, constraints) {
-            var width = constraints.maxWidth;
-            var height = width / aspectRatio;
-            if (height > constraints.maxHeight) {
-              height = constraints.maxHeight;
-              width = height * aspectRatio;
-            }
-            return Stack(
-              children: [
-                Positioned.fill(
-                  child: FittedBox(
-                    fit: fit,
-                    alignment: Alignment.center,
-                    child: SizedBox(
-                      width: width,
-                      height: height,
-                      child: Texture(textureId: controller.id),
-                    ),
-                  ),
-                ),
-                SubtitleView(
-                  events: controller._subsController.stream,
-                  textScale: constraints.maxWidth / 900,
-                ),
-              ],
-            );
-          }),
-        ),
-      );
+      return _VideoView(controller: controller);
     } else {
       throw ArgumentError.value(controller, 'controller');
     }
   }
 }
 
-class SubtitleView extends StatelessWidget {
-  const SubtitleView({
-    Key? key,
+class _VideoView extends StatelessWidget {
+  final VideoControllerAndroid controller;
+
+  const _VideoView({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final pixelRatio = MediaQuery.devicePixelRatioOf(context);
+
+        final videoSize = controller.size.watch(context);
+        final fit = controller._fit.watch(context);
+        final cropRect = controller._cropRect.watch(context);
+
+        final size = Size(
+          videoSize.width / pixelRatio,
+          videoSize.height / pixelRatio,
+        );
+
+        Widget video = Container(
+          width: size.width,
+          height: size.height,
+          color: Colors.blue,
+          child: Texture(
+            textureId: controller.id,
+            filterQuality: FilterQuality.medium,
+          ),
+        );
+
+        if (cropRect case Rect cropRect) {
+          final cropOffset = cropRect.topLeft / pixelRatio;
+          final cropSize = cropRect.size / pixelRatio;
+
+          video = SizedOverflowBox(
+            size: Size(cropSize.width, cropSize.height),
+            alignment: Alignment(
+              size.width == cropSize.width
+                  ? 0
+                  : cropOffset.dx / (size.width - cropSize.width) * 2 - 1,
+              size.height == cropSize.height
+                  ? 0
+                  : cropOffset.dy / (size.height - cropSize.height) * 2 - 1,
+            ),
+            child: ClipRect(
+              clipper: _VideoClipper(cropOffset & cropSize),
+              child: video,
+            ),
+          );
+        }
+
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: FittedBox(
+                fit: fit,
+                clipBehavior: Clip.hardEdge,
+                alignment: Alignment.center,
+                child: video,
+              ),
+            ),
+            _SubtitleView(
+              events: controller._subsController.stream,
+              textScale: constraints.maxWidth / 900,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _VideoClipper extends CustomClipper<Rect> {
+  final Rect rect;
+
+  const _VideoClipper(this.rect);
+
+  @override
+  Rect getClip(Size size) {
+    return rect;
+  }
+
+  @override
+  bool shouldReclip(covariant _VideoClipper oldClipper) {
+    return rect != oldClipper.rect;
+  }
+}
+
+class _SubtitleView extends StatelessWidget {
+  const _SubtitleView({
     required this.events,
     required this.textScale,
-  }) : super(key: key);
+  });
 
   final double textScale;
   final Stream<String?> events;
@@ -124,6 +178,7 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   double _playbackSpeed = 1.0;
   List<SubtitleTrack>? _currentTextTracks;
   String? _activeTextTrack;
+  List<Rect?>? _cropRects;
 
   @override
   bool get supportsAudioTrackSelection => true;
@@ -143,8 +198,9 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   @override
   int currentItemIndex = 0;
 
-  final aspectRatio = ValueNotifier(1.0);
-  final _fit = ValueNotifier(BoxFit.contain);
+  final size = signal(Size.zero);
+  final _fit = signal(BoxFit.contain);
+  final _cropRect = signal<Rect?>(null);
 
   @override
   BoxFit get fit => _fit.value;
@@ -193,14 +249,17 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
         }
       } else if (type == 'isPlayingChanged') {
         _playing = event['value'];
-      } else if (type == 'aspectRatioChanged') {
-        aspectRatio.value = event['value'];
+      } else if (type == 'videoSizeChanged') {
+        int width = event['width'];
+        int height = event['height'];
+        size.value = Size(width.toDouble(), height.toDouble());
       } else if (type == 'cues') {
         _subsController.add(event['text']);
       } else if (type == 'playbackSpeed') {
         _playbackSpeed = event['speed'];
       } else if (type == 'mediaItemTransition') {
         currentItemIndex = event['index'];
+        _cropRect.value = _cropRects?[currentItemIndex];
       } else if (type == 'textTracksChanged') {
         List<dynamic> tracks = event['tracks'];
 
@@ -256,6 +315,9 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
         'startPosition': (startPosition * 1000).toInt(),
       },
     );
+
+    _cropRects = items.map((item) => item.cropRect).toList();
+    _cropRect.value = items[startIndex].cropRect;
   }
 
   @override

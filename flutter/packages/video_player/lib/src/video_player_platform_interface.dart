@@ -44,12 +44,14 @@ class VideoItem {
   final String? subtitle;
   final String url;
   final List<ExternalSubtitleTrack> subtitles;
+  final Rect? cropRect;
 
   VideoItem({
     required this.url,
-    required this.subtitles,
     this.title,
     this.subtitle,
+    this.subtitles = const [],
+    this.cropRect,
   });
 }
 
