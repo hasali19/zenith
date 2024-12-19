@@ -84,6 +84,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     _progressReportTimer.cancel();
     _controller?.dispose();
     platform.setPipEnabled(false);
+    platform.setSystemBarsVisible(true);
   }
 
   Future<void> _initController() async {
@@ -263,6 +264,10 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
       } else {
         _uiVisibilityController.finishUiInteraction();
       }
+    });
+
+    useValueChanged(_uiVisibilityController.isVisible, (_, __) {
+      platform.setSystemBarsVisible(_uiVisibilityController.isVisible);
     });
 
     final controller = _controller!;
