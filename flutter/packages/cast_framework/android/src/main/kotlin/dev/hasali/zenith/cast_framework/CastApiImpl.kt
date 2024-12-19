@@ -74,8 +74,6 @@ class CastApiImpl(
             loadRequestData.queueData?.let { queueData ->
                 setQueueData(
                     MediaQueueData.Builder().run {
-                        println("Queuing items ${queueData.items}")
-
                         queueData.items?.let { queueItems ->
                             val castItems =
                                 queueItems.withIndex().map { (i, queueItem) ->
@@ -136,6 +134,8 @@ class CastApiImpl(
                 setMediaTracks(
                     mediaTracks?.map { track ->
                         val type = when (track.type) {
+                            MediaTrackType.VIDEO -> MediaTrack.TYPE_VIDEO
+                            MediaTrackType.AUDIO -> MediaTrack.TYPE_AUDIO
                             MediaTrackType.TEXT -> MediaTrack.TYPE_TEXT
                         }
 

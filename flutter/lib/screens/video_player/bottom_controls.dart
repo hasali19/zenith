@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:video_player/video_player.dart' show VideoController;
 import 'package:zenith/screens/video_player/subtitles.dart';
 import 'package:zenith/window.dart';
 
 class BottomControls extends ConsumerWidget {
-  final List<SubtitleTrackData> subtitles;
-  final String? activeSubtitleId;
-  final void Function(SubtitleTrackData? track) onSubtitleTrackSelected;
+  final VideoController controller;
   final void Function() onShowOptionsMenu;
   final void Function() onInteractionStart;
   final void Function() onInteractionEnd;
 
   const BottomControls({
     super.key,
-    required this.subtitles,
-    required this.activeSubtitleId,
-    required this.onSubtitleTrackSelected,
+    required this.controller,
     required this.onShowOptionsMenu,
     required this.onInteractionStart,
     required this.onInteractionEnd,
@@ -28,9 +25,7 @@ class BottomControls extends ConsumerWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         SubtitlesMenuButton(
-          tracks: subtitles,
-          activeTrackId: activeSubtitleId,
-          onTrackSelected: onSubtitleTrackSelected,
+          controller: controller,
           onInteractionStart: onInteractionStart,
           onInteractionEnd: onInteractionEnd,
         ),

@@ -42,6 +42,7 @@ abstract interface class MediaRouter {
 
 abstract interface class RemoteMediaClient {
   ValueNotifier<MediaStatus?> get mediaStatus;
+  ValueNotifier<MediaInfo?> get mediaInfo;
 
   void load(MediaLoadRequestData request);
   void play();

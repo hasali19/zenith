@@ -12,14 +12,11 @@ import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:zenith/api.dart' as api;
 import 'package:zenith/cookies.dart';
-import 'package:zenith/language_codes.dart';
 import 'package:zenith/platform.dart' as platform;
 import 'package:zenith/preferences.dart';
 import 'package:zenith/screens/video_player/media_title.dart';
-import 'package:zenith/screens/video_player/subtitles.dart';
 import 'package:zenith/screens/video_player/ui.dart';
 import 'package:zenith/screens/video_player/utils.dart';
-import 'package:zenith/screens/video_player/video_progress_bar.dart';
 import 'package:zenith/window.dart';
 
 class LocalVideoPlayer extends ConsumerStatefulWidget {
@@ -122,8 +119,10 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
                 !controller.supportsEmbeddedSubtitles || s.streamIndex == null)
             .map((s) => subtitleFromApi(_api, s))
             .toList(),
-        title: title,
-        subtitle: subtitle,
+        metadata: MediaMetadata(
+          title: title,
+          subtitle: subtitle,
+        ),
         cropRect: switch ((videoStream?.crop1, videoStream?.crop2)) {
           ((int x1, int y1), (int x2, int y2)) => Rect.fromPoints(
               Offset(x1.toDouble(), y1.toDouble()),
@@ -271,84 +270,6 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     }
   }
 
-  Widget _buildUi() {
-    final controller = _controller!;
-    final content = ListenableBuilder(
-      listenable: controller,
-      builder: (context, child) {
-        final audioTracks = currentItem.videoFile!.streams
-            .whereType<api.AudioStreamInfo>()
-            .map(audioTrackFromApi)
-            .toList();
-
-        final subtitles = controller.currentSubtitleTracks
-            .map((track) => SubtitleTrackData(
-                  id: track.id,
-                  language: switch (track.language) {
-                    null => 'Unknown',
-                    final language => tryResolveLanguageCode(language),
-                  },
-                  label: track.label,
-                ))
-            .toList();
-
-        return VideoPlayerUi(
-          title: MediaTitle(item: currentItem),
-          audioTracks: audioTracks,
-          subtitles: subtitles,
-          activeSubtitleId: controller.activeSubtitleTrackId,
-          progress: () => VideoProgressData(
-            total: Duration(seconds: controller.duration.toInt()),
-            progress: Duration(seconds: controller.position.toInt()),
-          ),
-          isAudioTrackSelectionSupported:
-              controller.supportsAudioTrackSelection,
-          fit: controller.fit,
-          playbackSpeed: controller.playbackSpeed,
-          isLoading: controller.loading,
-          isPaused: controller.paused,
-          onInteractionStart: _disableAutoHideControls,
-          onInteractionEnd: _resetControlsTimer,
-          onAudioTrackSelected: (index) => controller.setAudioTrack(index),
-          onTextTrackSelected: (track) =>
-              controller.setSubtitleTrack(track?.id),
-          onFitSelected: (fit) => controller.setFit(fit),
-          onPlaybackSpeedSelected: (speed) =>
-              controller.setPlaybackSpeed(speed),
-          onSeek: (position) => controller.position = position,
-          onSeekDelta: (delta) => controller.position += delta,
-          onSeekToPrevious: () => controller.seekToPreviousItem(),
-          onSeekToNext: () {
-            if (ref.read(setWatchedOnSkipProvider)) {
-              _api.updateUserData(
-                  currentItem.id, api.VideoUserDataPatch(isWatched: true));
-            }
-            controller.seekToNextItem();
-          },
-          onSetPaused: (isPaused) =>
-              isPaused ? controller.pause() : controller.play(),
-        );
-      },
-    );
-
-    return ValueListenableBuilder(
-      valueListenable: platform.isInPipMode,
-      builder: (context, isInPipMode, child) {
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: child,
-          ),
-          child: (shouldShowControls && !isInPipMode) ||
-                  ModalRoute.of(context)?.isCurrent == false
-              ? content
-              : const SizedBox.expand(),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final content = ValueListenableBuilder<EdgeInsets>(
@@ -378,6 +299,44 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
         body: content,
       ),
     );
+  }
+
+  Widget _buildUi() {
+    final controller = _controller!;
+    final content = ListenableBuilder(
+      listenable: controller,
+      builder: (context, child) => VideoPlayerUi(
+        title: MediaTitle(item: currentItem),
+        controller: controller,
+        onInteractionStart: _disableAutoHideControls,
+        onInteractionEnd: _resetControlsTimer,
+        onSeekToNext: _onSeekToNext,
+      ),
+    );
+
+    return ValueListenableBuilder(
+      valueListenable: platform.isInPipMode,
+      builder: (context, isInPipMode, child) {
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+          child: (shouldShowControls && !isInPipMode) ||
+                  ModalRoute.of(context)?.isCurrent == false
+              ? content
+              : const SizedBox.expand(),
+        );
+      },
+    );
+  }
+
+  void _onSeekToNext() {
+    if (ref.read(setWatchedOnSkipProvider)) {
+      _api.updateUserData(
+          currentItem.id, api.VideoUserDataPatch(isWatched: true));
+    }
   }
 
   Future<void> _onPopInvoked(bool didPop, dynamic result) async {

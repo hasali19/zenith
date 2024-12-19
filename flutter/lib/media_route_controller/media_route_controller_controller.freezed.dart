@@ -18,6 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$MediaRouteControllerState {
   cast.MediaRoute? get route => throw _privateConstructorUsedError;
   cast.MediaStatus? get mediaStatus => throw _privateConstructorUsedError;
+  cast.MediaInfo? get mediaInfo => throw _privateConstructorUsedError;
 
   /// Create a copy of MediaRouteControllerState
   /// with the given fields replaced by the non-null parameter values.
@@ -32,7 +33,10 @@ abstract class $MediaRouteControllerStateCopyWith<$Res> {
           $Res Function(MediaRouteControllerState) then) =
       _$MediaRouteControllerStateCopyWithImpl<$Res, MediaRouteControllerState>;
   @useResult
-  $Res call({cast.MediaRoute? route, cast.MediaStatus? mediaStatus});
+  $Res call(
+      {cast.MediaRoute? route,
+      cast.MediaStatus? mediaStatus,
+      cast.MediaInfo? mediaInfo});
 }
 
 /// @nodoc
@@ -53,6 +57,7 @@ class _$MediaRouteControllerStateCopyWithImpl<$Res,
   $Res call({
     Object? route = freezed,
     Object? mediaStatus = freezed,
+    Object? mediaInfo = freezed,
   }) {
     return _then(_value.copyWith(
       route: freezed == route
@@ -63,6 +68,10 @@ class _$MediaRouteControllerStateCopyWithImpl<$Res,
           ? _value.mediaStatus
           : mediaStatus // ignore: cast_nullable_to_non_nullable
               as cast.MediaStatus?,
+      mediaInfo: freezed == mediaInfo
+          ? _value.mediaInfo
+          : mediaInfo // ignore: cast_nullable_to_non_nullable
+              as cast.MediaInfo?,
     ) as $Val);
   }
 }
@@ -76,7 +85,10 @@ abstract class _$$MediaRouteControllerStateImplCopyWith<$Res>
       __$$MediaRouteControllerStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({cast.MediaRoute? route, cast.MediaStatus? mediaStatus});
+  $Res call(
+      {cast.MediaRoute? route,
+      cast.MediaStatus? mediaStatus,
+      cast.MediaInfo? mediaInfo});
 }
 
 /// @nodoc
@@ -96,6 +108,7 @@ class __$$MediaRouteControllerStateImplCopyWithImpl<$Res>
   $Res call({
     Object? route = freezed,
     Object? mediaStatus = freezed,
+    Object? mediaInfo = freezed,
   }) {
     return _then(_$MediaRouteControllerStateImpl(
       route: freezed == route
@@ -106,6 +119,10 @@ class __$$MediaRouteControllerStateImplCopyWithImpl<$Res>
           ? _value.mediaStatus
           : mediaStatus // ignore: cast_nullable_to_non_nullable
               as cast.MediaStatus?,
+      mediaInfo: freezed == mediaInfo
+          ? _value.mediaInfo
+          : mediaInfo // ignore: cast_nullable_to_non_nullable
+              as cast.MediaInfo?,
     ));
   }
 }
@@ -114,16 +131,20 @@ class __$$MediaRouteControllerStateImplCopyWithImpl<$Res>
 
 class _$MediaRouteControllerStateImpl implements _MediaRouteControllerState {
   _$MediaRouteControllerStateImpl(
-      {required this.route, required this.mediaStatus});
+      {required this.route,
+      required this.mediaStatus,
+      required this.mediaInfo});
 
   @override
   final cast.MediaRoute? route;
   @override
   final cast.MediaStatus? mediaStatus;
+  @override
+  final cast.MediaInfo? mediaInfo;
 
   @override
   String toString() {
-    return 'MediaRouteControllerState(route: $route, mediaStatus: $mediaStatus)';
+    return 'MediaRouteControllerState(route: $route, mediaStatus: $mediaStatus, mediaInfo: $mediaInfo)';
   }
 
   @override
@@ -133,11 +154,13 @@ class _$MediaRouteControllerStateImpl implements _MediaRouteControllerState {
             other is _$MediaRouteControllerStateImpl &&
             (identical(other.route, route) || other.route == route) &&
             (identical(other.mediaStatus, mediaStatus) ||
-                other.mediaStatus == mediaStatus));
+                other.mediaStatus == mediaStatus) &&
+            (identical(other.mediaInfo, mediaInfo) ||
+                other.mediaInfo == mediaInfo));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, route, mediaStatus);
+  int get hashCode => Object.hash(runtimeType, route, mediaStatus, mediaInfo);
 
   /// Create a copy of MediaRouteControllerState
   /// with the given fields replaced by the non-null parameter values.
@@ -152,13 +175,16 @@ class _$MediaRouteControllerStateImpl implements _MediaRouteControllerState {
 abstract class _MediaRouteControllerState implements MediaRouteControllerState {
   factory _MediaRouteControllerState(
           {required final cast.MediaRoute? route,
-          required final cast.MediaStatus? mediaStatus}) =
+          required final cast.MediaStatus? mediaStatus,
+          required final cast.MediaInfo? mediaInfo}) =
       _$MediaRouteControllerStateImpl;
 
   @override
   cast.MediaRoute? get route;
   @override
   cast.MediaStatus? get mediaStatus;
+  @override
+  cast.MediaInfo? get mediaInfo;
 
   /// Create a copy of MediaRouteControllerState
   /// with the given fields replaced by the non-null parameter values.

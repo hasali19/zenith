@@ -66,6 +66,9 @@ class _RemoteMediaClient implements RemoteMediaClient {
   final mediaStatus = ValueNotifier<cast.MediaStatus?>(null);
 
   @override
+  final mediaInfo = ValueNotifier<cast.MediaInfo?>(null);
+
+  @override
   void load(cast.MediaLoadRequestData request) {
     _api.load(request);
   }
@@ -127,5 +130,10 @@ class _RemotePlaybackEventsApi implements cast.CastEventsApi {
   @override
   void onStatusUpdated(cast.MediaStatus? status) {
     _plugin.remoteMediaClient.mediaStatus.value = status;
+  }
+
+  @override
+  void onMediaInfoUpdated(cast.MediaInfo? info) {
+    _plugin.remoteMediaClient.mediaInfo.value = info;
   }
 }

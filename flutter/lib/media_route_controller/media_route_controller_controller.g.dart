@@ -7,7 +7,7 @@ part of 'media_route_controller_controller.dart';
 // **************************************************************************
 
 String _$mediaRouteControllerControllerHash() =>
-    r'2429382ccfdabe6b2ee8230348f54f286c2f108a';
+    r'6f233b770fe62ff598fdfd813d885aa226a61ff7';
 
 /// See also [MediaRouteControllerController].
 @ProviderFor(MediaRouteControllerController)

@@ -48,8 +48,7 @@ class _MediaRouteControllerDialogState
   Stream<_VideoProgress> _createProgressStream() {
     _VideoProgress getProgress() {
       final positionMs = _positionHandler.positionMs.toInt();
-      final durationMs =
-          _client.mediaStatus.value?.mediaInfo?.streamDuration ?? positionMs;
+      final durationMs = _client.mediaInfo.value?.streamDuration ?? positionMs;
       return (
         total: Duration(milliseconds: durationMs),
         progress: Duration(milliseconds: positionMs),
@@ -88,36 +87,38 @@ class _MediaRouteControllerDialogState
     return AlertDialog(
       title: Text(state.route?.name ?? ''),
       contentPadding: const EdgeInsets.only(top: 16),
-      content: switch (state.mediaStatus) {
-        null || MediaStatus(playerState: PlayerState.idle) => Container(
+      content: switch ((state.mediaStatus, state.mediaInfo)) {
+        (null, _) ||
+        (MediaStatus(playerState: PlayerState.idle), _) =>
+          Container(
             color: Colors.black.withAlpha(30),
             padding:
                 const EdgeInsets.only(left: 20, right: 20, top: 16, bottom: 16),
             child: const Text('No media selected'),
           ),
-        final mediaStatus => Column(
+        (final mediaStatus, final mediaInfo) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (mediaStatus.mediaInfo?.metadata?.backdrop != null)
+              if (mediaInfo?.metadata?.backdrop != null)
                 Flexible(
                   child: ZenithFadeInImage.dio(
-                    url: mediaStatus.mediaInfo!.metadata!.backdrop!.url,
+                    url: mediaInfo!.metadata!.backdrop!.url,
                   ),
                 ),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  mediaStatus.mediaInfo?.metadata?.title ?? 'Unknown',
+                  mediaInfo?.metadata?.title ?? 'Unknown',
                   style: Theme.of(context).textTheme.titleLarge,
                   textAlign: TextAlign.center,
                 ),
               ),
-              if (mediaStatus.mediaInfo!.metadata?.seriesTitle != null)
+              if (mediaInfo!.metadata?.seriesTitle != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    '${formatSeasonEpisode(mediaStatus.mediaInfo!.metadata!.seasonNumber!, mediaStatus.mediaInfo!.metadata!.episodeNumber!)} - ${mediaStatus.mediaInfo!.metadata!.seriesTitle!}',
+                    '${formatSeasonEpisode(mediaInfo.metadata!.seasonNumber!, mediaInfo.metadata!.episodeNumber!)} - ${mediaInfo.metadata!.seriesTitle!}',
                     style: Theme.of(context).textTheme.titleMedium,
                     textAlign: TextAlign.center,
                   ),
@@ -148,7 +149,7 @@ class _MediaRouteControllerDialogState
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     PlayPauseButton(
-                      isPlaying: mediaStatus.playerState != PlayerState.paused,
+                      isPlaying: mediaStatus!.playerState != PlayerState.paused,
                       onSetPlaying: (playing) {
                         if (mediaStatus.playerState != PlayerState.paused) {
                           _client.pause();

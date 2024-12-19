@@ -176,7 +176,8 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   final _positionHandler = MediaPositionHandler();
 
   double _playbackSpeed = 1.0;
-  List<SubtitleTrack>? _currentTextTracks;
+  List<AudioTrack> _audioTracks = [];
+  List<SubtitleTrack> _subtitleTracks = [];
   String? _activeTextTrack;
   List<Rect?>? _cropRects;
 
@@ -214,7 +215,10 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   double get position => _positionHandler.positionMs / 1000;
 
   @override
-  List<SubtitleTrack> get currentSubtitleTracks => _currentTextTracks ?? [];
+  List<AudioTrack> get availableAudioTracks => _audioTracks;
+
+  @override
+  List<SubtitleTrack> get currentSubtitleTracks => _subtitleTracks;
 
   @override
   String? get activeSubtitleTrackId => _activeTextTrack;
@@ -260,18 +264,33 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
       } else if (type == 'mediaItemTransition') {
         currentItemIndex = event['index'];
         _cropRect.value = _cropRects?[currentItemIndex];
-      } else if (type == 'textTracksChanged') {
+      } else if (type == 'tracksChanged') {
+        _audioTracks = [];
+        _subtitleTracks = [];
+
         List<dynamic> tracks = event['tracks'];
 
-        _currentTextTracks = tracks
-            .map((track) => SubtitleTrack(
-                  id: track['id'],
-                  label: track['label'],
-                  language: track['lang'],
-                ))
-            .toList();
+        for (final (index, track) in tracks.indexed) {
+          switch (track['type']) {
+            case 2:
+              _audioTracks.add(AudioTrack(
+                index: index,
+                language: track['lang'],
+                codec: track['codec'],
+              ));
+              break;
 
-        _activeTextTrack = event['active'];
+            case 3:
+              _subtitleTracks.add(SubtitleTrack(
+                id: track['id'],
+                label: track['label'],
+                language: track['lang'],
+              ));
+              break;
+          }
+        }
+
+        _activeTextTrack = event['activeTextTrack'];
       }
       if (event.containsKey('position')) {
         _positionHandler.update(
@@ -293,7 +312,7 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
 
   @override
   void load(List<VideoItem> items, int startIndex, double startPosition) async {
-    toSubtitleDto(track) => {
+    toSubtitleDto(ExternalSubtitleTrack track) => {
           'id': track.id,
           'src': track.src,
           'mimeType': track.mimeType,
@@ -301,7 +320,7 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
           'language': track.language
         };
 
-    toItemDto(item) => {
+    toItemDto(VideoItem item) => {
           'url': item.url,
           'subtitles': item.subtitles.map(toSubtitleDto).toList(),
         };

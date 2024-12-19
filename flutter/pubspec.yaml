@@ -69,6 +69,7 @@ dependencies:
   web: ^1.1.0
   windowing:
     path: packages/windowing
+  flutter_hooks: ^0.20.5
 
 dev_dependencies:
   flutter_test:

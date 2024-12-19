@@ -1,73 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:video_player/video_player.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/screens/video_player/play_pause_button.dart';
-import 'package:zenith/screens/video_player/subtitles.dart';
 import 'package:zenith/themes.dart';
 
 import 'bottom_controls.dart';
 import 'video_progress_bar.dart';
 
-class AudioTrack {
-  final int index;
-  final String language;
-  final String codec;
-
-  AudioTrack({
-    required this.index,
-    required this.language,
-    required this.codec,
-  });
-}
-
 class VideoPlayerUi extends ConsumerStatefulWidget {
   final Widget title;
-  final List<AudioTrack> audioTracks;
-  final List<SubtitleTrackData> subtitles;
-  final String? activeSubtitleId;
-  final VideoProgressData Function() progress;
-  final bool isAudioTrackSelectionSupported;
-  final BoxFit fit;
-  final double playbackSpeed;
-  final bool isLoading;
-  final bool isPaused;
+  final VideoController controller;
 
   final void Function() onInteractionStart;
   final void Function() onInteractionEnd;
-  final void Function(int index) onAudioTrackSelected;
-  final void Function(SubtitleTrackData? track) onTextTrackSelected;
-  final void Function(BoxFit fit) onFitSelected;
-  final void Function(double speed) onPlaybackSpeedSelected;
-  final void Function(double position) onSeek;
-  final void Function(double delta) onSeekDelta;
-  final void Function() onSeekToPrevious;
-  final void Function() onSeekToNext;
-  final void Function(bool isPaused) onSetPaused;
+  final void Function()? onSeekToNext;
 
   const VideoPlayerUi({
     super.key,
     required this.title,
-    required this.audioTracks,
-    required this.subtitles,
-    required this.activeSubtitleId,
-    required this.progress,
-    required this.isAudioTrackSelectionSupported,
-    required this.fit,
-    required this.playbackSpeed,
-    required this.isLoading,
-    required this.isPaused,
+    required this.controller,
     required this.onInteractionStart,
     required this.onInteractionEnd,
-    required this.onAudioTrackSelected,
-    required this.onTextTrackSelected,
-    required this.onFitSelected,
-    required this.onPlaybackSpeedSelected,
-    required this.onSeek,
-    required this.onSeekDelta,
-    required this.onSeekToPrevious,
-    required this.onSeekToNext,
-    required this.onSetPaused,
+    this.onSeekToNext,
   });
 
   @override
@@ -75,37 +31,6 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
 }
 
 class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
-  late List<AudioTrack> _audioTracks;
-  late List<SubtitleTrackData> _subtitles;
-
-  @override
-  void initState() {
-    super.initState();
-    _updateAudioTracks();
-    _updateSubtitles();
-  }
-
-  @override
-  void didUpdateWidget(covariant VideoPlayerUi oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.audioTracks != widget.audioTracks) {
-      _updateAudioTracks();
-    }
-    if (oldWidget.subtitles != widget.subtitles) {
-      _updateSubtitles();
-    }
-  }
-
-  void _updateAudioTracks() {
-    _audioTracks = [...widget.audioTracks];
-    _audioTracks.sort((a, b) => a.language.compareTo(b.language));
-  }
-
-  void _updateSubtitles() {
-    _subtitles = widget.subtitles.toList();
-    _subtitles.sort((a, b) => a.language.compareTo(b.language));
-  }
-
   Future<void> _showModalBottomSheet(
       Widget Function(BuildContext context) builder,
       {bool safeArea = true}) {
@@ -122,6 +47,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
 
   void _showOptionsMenu(BuildContext context) async {
     widget.onInteractionStart();
+
     await _showModalBottomSheet(
       (context) => Wrap(
         children: [
@@ -133,7 +59,8 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
               _showBoxFitMenu(context);
             },
           ),
-          if (widget.isAudioTrackSelectionSupported && _audioTracks.length > 1)
+          if (widget.controller.supportsAudioTrackSelection &&
+              widget.controller.availableAudioTracks.length > 1)
             ListTile(
               leading: const Icon(Icons.audiotrack),
               title: const Text('Audio'),
@@ -157,6 +84,12 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
   }
 
   Future<void> _showAudioMenu(BuildContext context) {
+    final audioTracks = () {
+      final audioTracks = [...widget.controller.availableAudioTracks];
+      audioTracks.sort((a, b) => a.language.compareTo(b.language));
+      return audioTracks;
+    }();
+
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -166,7 +99,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
           builder: (context, scrollController) {
             return ListView(
               controller: scrollController,
-              children: _buildAudioMenuItems(context),
+              children: _buildAudioMenuItems(context, audioTracks),
             );
           },
         );
@@ -174,15 +107,16 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     );
   }
 
-  List<Widget> _buildAudioMenuItems(BuildContext context) {
+  List<Widget> _buildAudioMenuItems(
+      BuildContext context, List<AudioTrack> audioTracks) {
     final items = <Widget>[];
 
-    for (final track in _audioTracks) {
+    for (final track in audioTracks) {
       items.add(ListTile(
         title: Text(track.language),
         subtitle: Text(track.codec),
         onTap: () {
-          widget.onAudioTrackSelected(track.index);
+          widget.controller.setAudioTrack(track.index);
           Navigator.pop(context);
         },
       ));
@@ -199,15 +133,16 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
 
     buildListTile(e) {
       onSetFit() {
-        widget.onFitSelected(e.$1);
+        widget.controller.setFit(e.$1);
         Navigator.pop(context);
       }
 
       return ListTile(
         leading: Icon(e.$3),
         title: Text(e.$2),
-        onTap: widget.fit == e.$1 ? null : onSetFit,
-        trailing: widget.fit != e.$1 ? null : const Icon(Icons.check),
+        onTap: widget.controller.fit == e.$1 ? null : onSetFit,
+        trailing:
+            widget.controller.fit != e.$1 ? null : const Icon(Icons.check),
       );
     }
 
@@ -225,15 +160,16 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
 
     buildListTile(speed) {
       onSetSpeed() {
-        widget.onPlaybackSpeedSelected(speed);
+        widget.controller.setPlaybackSpeed(speed);
         Navigator.pop(context);
       }
 
       return ListTile(
         title: Text('${speed}x'),
-        onTap: widget.playbackSpeed == speed ? null : onSetSpeed,
-        trailing:
-            widget.playbackSpeed != speed ? null : const Icon(Icons.check),
+        onTap: widget.controller.playbackSpeed == speed ? null : onSetSpeed,
+        trailing: widget.controller.playbackSpeed != speed
+            ? null
+            : const Icon(Icons.check),
       );
     }
 
@@ -267,16 +203,18 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         VideoProgressBar(
-          progress: widget.progress,
-          onSeek: (position) => widget.onSeek(position.inSeconds.toDouble()),
+          progress: () => VideoProgressData(
+            total: Duration(seconds: widget.controller.duration.toInt()),
+            progress: Duration(seconds: widget.controller.position.toInt()),
+          ),
+          onSeek: (position) =>
+              widget.controller.position = position.inSeconds.toDouble(),
           onSeekStart: widget.onInteractionStart,
           onSeekEnd: widget.onInteractionEnd,
         ),
         const SizedBox(height: 8),
         BottomControls(
-          subtitles: _subtitles,
-          activeSubtitleId: widget.activeSubtitleId,
-          onSubtitleTrackSelected: widget.onTextTrackSelected,
+          controller: widget.controller,
           onShowOptionsMenu: () {
             widget.onInteractionEnd();
             _showOptionsMenu(context);
@@ -304,9 +242,9 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
             begin: const FractionalOffset(0, 0),
             end: const FractionalOffset(0, 1),
             colors: [
-              Colors.black.withOpacity(0.7),
+              Colors.black.withValues(alpha: 0.7),
               Colors.transparent,
-              Colors.black.withOpacity(0.7),
+              Colors.black.withValues(alpha: 0.7),
             ],
           ),
         ),
@@ -324,22 +262,27 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
             Align(
               alignment: Alignment.center,
               child: _CenterControls(
-                isLoading: widget.isLoading,
-                isPaused: widget.isPaused,
+                isLoading: widget.controller.loading,
+                isPaused: widget.controller.paused,
                 onSetPaused: (paused) {
-                  widget.onSetPaused(paused);
+                  if (paused) {
+                    widget.controller.pause();
+                  } else {
+                    widget.controller.play();
+                  }
                   widget.onInteractionEnd();
                 },
                 onSeekDelta: (delta) {
-                  widget.onSeekDelta(delta);
+                  widget.controller.position += delta;
                   widget.onInteractionEnd();
                 },
                 onSkipPrevious: () {
-                  widget.onSeekToPrevious();
+                  widget.controller.seekToPreviousItem();
                   widget.onInteractionEnd();
                 },
                 onSkipNext: () {
-                  widget.onSeekToNext();
+                  widget.onSeekToNext?.call();
+                  widget.controller.seekToNextItem();
                   widget.onInteractionEnd();
                 },
               ),

@@ -191,31 +191,35 @@ class VideoPlayerPlugin : FlutterPlugin, ActivityAware {
 
                             is PlayerInstance.Event.TracksChanged -> {
                                 val tracks = mutableListOf<Map<String, Any?>>()
-                                var active: String? = null
+                                var activeTextTrack: String? = null
 
                                 for (group in it.tracks) {
-                                    if (group.type != C.TRACK_TYPE_TEXT) {
-                                        continue
-                                    }
                                     val format = group.getTrackFormat(0)
-                                    if (group.isSelected) {
-                                        active = format.id
+                                    if (group.type == C.TRACK_TYPE_TEXT && group.isSelected) {
+                                        activeTextTrack = format.id
                                     }
+
                                     tracks.add(
                                         mapOf(
                                             "id" to format.id,
+                                            "type" to when (group.type) {
+                                                C.TRACK_TYPE_VIDEO -> 1
+                                                C.TRACK_TYPE_AUDIO -> 2
+                                                C.TRACK_TYPE_TEXT -> 3
+                                                else -> 4
+                                            },
                                             "label" to format.label,
                                             "lang" to format.language,
-                                            "isSelected" to group.isSelected,
+                                            "codec" to format.codecs,
                                         )
                                     )
                                 }
 
                                 events.success(
                                     mapOf(
-                                        "type" to "textTracksChanged",
+                                        "type" to "tracksChanged",
                                         "tracks" to tracks,
-                                        "active" to active,
+                                        "activeTextTrack" to activeTextTrack,
                                     )
                                 )
                             }

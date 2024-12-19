@@ -123,6 +123,7 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
   final _positionHandler = MediaPositionHandler();
 
   List<VideoItem>? _playlist;
+  List<AudioTrack> _audioTracks = [];
   List<SubtitleTrack> _subtitleTracks = [];
   String? _activeSubtitleTrack;
 
@@ -153,16 +154,30 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
       }
 
       if (args.containsKey('tracks')) {
-        _subtitleTracks = (args['tracks'] as List<dynamic>)
-            .where((track) => track['type'] == 3)
-            .map(
-              (track) => SubtitleTrack(
+        _audioTracks = [];
+        _subtitleTracks = [];
+
+        List<dynamic> tracks = args['tracks'];
+
+        for (final (index, track) in tracks.indexed) {
+          switch (track['type']) {
+            case 2:
+              _audioTracks.add(AudioTrack(
+                index: index,
+                language: track['lang'],
+                codec: track['codec'],
+              ));
+              break;
+
+            case 3:
+              _subtitleTracks.add(SubtitleTrack(
                 id: track['id'].toString(),
                 label: track['title'],
                 language: track['lang'],
-              ),
-            )
-            .toList();
+              ));
+              break;
+          }
+        }
       }
 
       if (args.containsKey('selected-sub-track')) {
@@ -231,10 +246,11 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
       for (final (i, item) in items.indexed) {
         final pItem = pItems[i];
         pItem.url = item.url.toNativeUtf8(allocator: alloc);
-        pItem.title = item.title?.toNativeUtf8(allocator: alloc) ??
+        pItem.title = item.metadata.title?.toNativeUtf8(allocator: alloc) ??
             Pointer.fromAddress(0);
-        pItem.subtitle = item.subtitle?.toNativeUtf8(allocator: alloc) ??
-            Pointer.fromAddress(0);
+        pItem.subtitle =
+            item.metadata.subtitle?.toNativeUtf8(allocator: alloc) ??
+                Pointer.fromAddress(0);
         pItem.externalSubtitlesCount = item.subtitles.length;
         pItem.externalSubtitles =
             alloc<FfiExternalSubtitle>(item.subtitles.length);
@@ -306,7 +322,6 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
     } else {
       ffiSetSubtitleTrack(player, int.parse(trackId));
     }
-    notifyListeners();
   }
 
   @override
@@ -317,6 +332,9 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
   @override
   VideoState get state => _state;
   VideoState _state = VideoState.idle;
+
+  @override
+  List<AudioTrack> get availableAudioTracks => _audioTracks;
 
   @override
   List<SubtitleTrack> get currentSubtitleTracks => _subtitleTracks;

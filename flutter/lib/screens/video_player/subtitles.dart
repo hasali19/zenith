@@ -1,30 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:video_player/video_player.dart'
+    show VideoController, SubtitleTrack;
+import 'package:zenith/language_codes.dart';
 import 'package:zenith/responsive.dart';
 
-class SubtitleTrackData {
-  final String id;
-  final String language;
-  final String? label;
-
-  const SubtitleTrackData({
-    required this.id,
-    required this.language,
-    required this.label,
-  });
-}
-
 class SubtitlesMenuButton extends StatelessWidget {
-  final List<SubtitleTrackData> tracks;
-  final String? activeTrackId;
-  final void Function(SubtitleTrackData? track) onTrackSelected;
+  final VideoController controller;
   final void Function() onInteractionStart;
   final void Function() onInteractionEnd;
 
   const SubtitlesMenuButton({
     super.key,
-    required this.tracks,
-    required this.activeTrackId,
-    required this.onTrackSelected,
+    required this.controller,
     required this.onInteractionStart,
     required this.onInteractionEnd,
   });
@@ -33,9 +21,10 @@ class SubtitlesMenuButton extends StatelessWidget {
   Widget build(BuildContext context) {
     if (context.isDesktop) {
       return _SubtitlesDropdownMenuButton(
-        subtitles: tracks,
-        activeTrackId: activeTrackId,
-        onSubtitleTrackSelected: onTrackSelected,
+        subtitles: controller.currentSubtitleTracks,
+        activeTrackId: controller.activeSubtitleTrackId,
+        onSubtitleTrackSelected: (track) =>
+            controller.setSubtitleTrack(track?.id),
         onInteractionStart: onInteractionStart,
         onInteractionEnd: onInteractionEnd,
       );
@@ -43,44 +32,35 @@ class SubtitlesMenuButton extends StatelessWidget {
       return IconButton(
         icon: const Icon(Icons.closed_caption),
         splashRadius: 20,
-        onPressed: () => _showSubtitlesMenuSheet(context),
+        onPressed: () => showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          builder: (context) => DraggableScrollableSheet(
+            expand: false,
+            builder: (context, scrollController) => _SubtitlesMenuSheet(
+              scrollController: scrollController,
+              controller: controller,
+            ),
+          ),
+        ),
       );
     }
   }
-
-  Future<void> _showSubtitlesMenuSheet(BuildContext context) {
-    final initialActiveTrackId = activeTrackId;
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        expand: false,
-        builder: (context, scrollController) => _SubtitlesMenuSheet(
-          scrollController: scrollController,
-          subtitles: tracks,
-          activeTrackId: initialActiveTrackId,
-          onItemSelected: onTrackSelected,
-        ),
-      ),
-    );
-  }
 }
 
-class _SubtitlesMenuSheet extends StatelessWidget {
+class _SubtitlesMenuSheet extends HookWidget {
   final ScrollController scrollController;
-  final List<SubtitleTrackData> subtitles;
-  final String? activeTrackId;
-  final void Function(SubtitleTrackData? track) onItemSelected;
+  final VideoController controller;
 
   const _SubtitlesMenuSheet({
     required this.scrollController,
-    required this.subtitles,
-    required this.activeTrackId,
-    required this.onItemSelected,
+    required this.controller,
   });
 
   @override
   Widget build(BuildContext context) {
+    useListenable(controller);
+
     return ListView(
       controller: scrollController,
       children: _buildMenuItems(context),
@@ -88,10 +68,13 @@ class _SubtitlesMenuSheet extends StatelessWidget {
   }
 
   List<Widget> _buildMenuItems(BuildContext context) {
-    SubtitleTrackData? activeTrack;
-    if (activeTrackId != null) {
-      activeTrack =
-          subtitles.where((track) => track.id == activeTrackId).firstOrNull;
+    final subtitles = useSortedSubtitleTracks(controller.currentSubtitleTracks);
+
+    SubtitleTrack? activeTrack;
+    if (controller.activeSubtitleTrackId != null) {
+      activeTrack = subtitles
+          .where((track) => track.id == controller.activeSubtitleTrackId)
+          .firstOrNull;
     }
 
     final items = <Widget>[
@@ -99,25 +82,27 @@ class _SubtitlesMenuSheet extends StatelessWidget {
         context,
         'None',
         null,
-        activeTrackId == null,
-        () => onItemSelected(null),
+        activeTrack == null,
+        () => controller.setSubtitleTrack(null),
       ),
-      if (activeTrack != null)
+      if (activeTrack case SubtitleTrack track)
         _buildMenuItem(
           context,
-          activeTrack.language,
-          activeTrack.label,
-          activeTrackId == activeTrack.id,
-          () => onItemSelected(activeTrack),
+          track.language!,
+          track.label,
+          true,
+          () => controller.setSubtitleTrack(track.id),
         ),
       const Divider(),
+      for (final track in subtitles.where((t) => t.id != activeTrack?.id))
+        _buildMenuItem(
+          context,
+          track.language!,
+          track.label,
+          false,
+          () => controller.setSubtitleTrack(track.id),
+        ),
     ];
-
-    for (final track in subtitles) {
-      if (track.id == activeTrackId) continue;
-      items.add(_buildMenuItem(context, track.language, track.label,
-          activeTrackId == track.id, () => onItemSelected(track)));
-    }
 
     return items;
   }
@@ -148,10 +133,10 @@ class _SubtitlesMenuSheet extends StatelessWidget {
   }
 }
 
-class _SubtitlesDropdownMenuButton extends StatelessWidget {
-  final List<SubtitleTrackData> subtitles;
+class _SubtitlesDropdownMenuButton extends HookWidget {
+  final List<SubtitleTrack> subtitles;
   final String? activeTrackId;
-  final void Function(SubtitleTrackData? track) onSubtitleTrackSelected;
+  final void Function(SubtitleTrack? track) onSubtitleTrackSelected;
   final void Function() onInteractionStart;
   final void Function() onInteractionEnd;
 
@@ -165,7 +150,9 @@ class _SubtitlesDropdownMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    SubtitleTrackData? activeTrack;
+    final subtitles = useSortedSubtitleTracks(this.subtitles);
+
+    SubtitleTrack? activeTrack;
     if (activeTrackId != null) {
       activeTrack =
           subtitles.where((track) => track.id == activeTrackId).firstOrNull;
@@ -174,11 +161,11 @@ class _SubtitlesDropdownMenuButton extends StatelessWidget {
     return MenuAnchor(
       menuChildren: [
         _buildNoneMenuItem(),
-        if (activeTrack != null) _buildMenuItem(context, activeTrack),
+        if (activeTrack != null) _buildMenuItem(activeTrack),
         const Divider(),
         ...subtitles
             .where((track) => track.id != activeTrackId)
-            .map((track) => _buildMenuItem(context, track)),
+            .map(_buildMenuItem),
       ],
       builder: (context, controller, child) {
         return IconButton(
@@ -210,7 +197,7 @@ class _SubtitlesDropdownMenuButton extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(BuildContext context, SubtitleTrackData track) {
+  Widget _buildMenuItem(SubtitleTrack track) {
     return MenuItemButton(
       trailingIcon: track.id == activeTrackId ? const Icon(Icons.check) : null,
       onPressed: track.id == activeTrackId
@@ -228,16 +215,32 @@ class _SubtitlesDropdownMenuButton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(track.language),
+              Text(track.language!),
               if (track.label case String label)
-                Text(
-                  label,
-                  style: secondaryTextStyle,
-                ),
+                Text(label, style: secondaryTextStyle),
             ],
           ),
         );
       }),
     );
   }
+}
+
+List<SubtitleTrack> useSortedSubtitleTracks(List<SubtitleTrack> tracks) {
+  return useMemoized(() {
+    final mappedTracks = tracks.map(_resolveLanguage).toList();
+    mappedTracks.sort((a, b) => a.language!.compareTo(b.language!));
+    return mappedTracks;
+  }, [tracks]);
+}
+
+SubtitleTrack _resolveLanguage(SubtitleTrack track) {
+  return SubtitleTrack(
+    id: track.id,
+    language: switch (track.language) {
+      null => 'Unknown',
+      final lang => tryResolveLanguageCode(lang),
+    },
+    label: track.label,
+  );
 }

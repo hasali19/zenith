@@ -5,7 +5,7 @@ import 'dart:ui_web';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:http/http.dart' as http;
-import 'package:web/web.dart';
+import 'package:web/web.dart' as web;
 
 import '../video_player_platform_interface.dart';
 import 'text_track_parser.dart';
@@ -21,7 +21,7 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
   Future<VideoController> createController(
       {Map<String, String>? headers}) async {
     final id = nextId++;
-    final element = document.createElement('video') as HTMLVideoElement
+    final element = web.document.createElement('video') as web.HTMLVideoElement
       ..autoplay = true
       ..style.width = '100%'
       ..style.height = '100%'
@@ -48,18 +48,18 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
 
 class VideoControllerWeb extends VideoController with ChangeNotifier {
   final int id;
-  final HTMLVideoElement _element;
-  final Map<String, TextTrack> _textTrackCache = {};
+  final web.HTMLVideoElement _element;
+  final Map<String, web.TextTrack> _textTrackCache = {};
 
   VideoState _state = VideoState.idle;
   VideoItem? _videoItem;
   List<SubtitleTrack> _subtitleTracks = [];
-  TextTrack? _activeTextTrack;
+  web.TextTrack? _activeTextTrack;
   String? _activeTextTrackId;
 
   VideoControllerWeb(this.id, this._element) {
     _element.addEventListener(
-        'durationchange', ((Event event) => notifyListeners()).toJS);
+        'durationchange', ((web.Event event) => notifyListeners()).toJS);
     _element.onPause.listen((event) => notifyListeners());
     _element.onPlay.listen((event) => notifyListeners());
 
@@ -170,6 +170,9 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
   }
 
   @override
+  List<AudioTrack> get availableAudioTracks => const [];
+
+  @override
   List<SubtitleTrack> get currentSubtitleTracks => _subtitleTracks;
 
   @override
@@ -206,7 +209,7 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
             contentType == 'application/x-subrip') {
           parser = SrtParser();
         } else {
-          console.error('unsupported text track format: $contentType'.toJS);
+          web.console.error('unsupported text track format: $contentType'.toJS);
           return;
         }
 

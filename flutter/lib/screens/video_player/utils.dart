@@ -1,7 +1,5 @@
 import 'package:video_player/video_player.dart' as video_player;
 import 'package:zenith/api.dart';
-import 'package:zenith/language_codes.dart';
-import 'package:zenith/screens/video_player/ui.dart';
 
 String _formatToMimeType(String? format) {
   if (format == null || format == 'webvtt') {
@@ -25,16 +23,5 @@ video_player.ExternalSubtitleTrack subtitleFromApi(
         : 'text/vtt', // all platforms currently use extracted vtt files for embedded subs, instead of using the stream directly
     title: subtitle.title,
     language: subtitle.language,
-    displayLanguage: subtitle.language != null
-        ? tryResolveLanguageCode(subtitle.language!)
-        : null,
-  );
-}
-
-AudioTrack audioTrackFromApi(AudioStreamInfo stream) {
-  return AudioTrack(
-    index: stream.index,
-    language: tryResolveLanguageCode(stream.language ?? 'Unknown'),
-    codec: stream.codec,
   );
 }

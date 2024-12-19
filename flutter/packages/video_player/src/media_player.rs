@@ -45,6 +45,7 @@ pub struct MediaTrack {
     pub title: Option<String>,
     pub language: Option<String>,
     pub selected: bool,
+    pub codec: Option<String>,
 }
 
 #[allow(clippy::enum_variant_names)]
@@ -217,6 +218,7 @@ impl MediaPlayer {
                                 let mut title = None;
                                 let mut lang = None;
                                 let mut selected = false;
+                                let mut codec = None;
 
                                 for (&key, value) in keys.iter().zip(values) {
                                     unsafe {
@@ -231,6 +233,12 @@ impl MediaPlayer {
                                             lang = Some(CStr::from_ptr(value.u.string));
                                         } else if key == c"selected" {
                                             selected = value.u.flag == 1;
+                                        } else if key == c"codec" {
+                                            codec = if value.u.string.is_null() {
+                                                None
+                                            } else {
+                                                Some(CStr::from_ptr(value.u.string))
+                                            };
                                         }
                                     }
                                 }
@@ -253,6 +261,9 @@ impl MediaPlayer {
                                         .and_then(|lang| lang.to_str().ok())
                                         .map(|lang| lang.to_owned()),
                                     selected,
+                                    codec: codec
+                                        .and_then(|codec| codec.to_str().ok())
+                                        .map(|codec| codec.to_owned()),
                                 });
                             }
 

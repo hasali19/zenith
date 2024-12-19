@@ -54,6 +54,8 @@ enum MediaQueueType {
 }
 
 enum MediaTrackType {
+  video,
+  audio,
   text,
 }
 
@@ -64,7 +66,7 @@ enum MediaTrackSubtype {
 class MediaTrack {
   late int trackId;
   late MediaTrackType type;
-  late String contentId;
+  late String? contentId;
   MediaTrackSubtype? subtype;
   String? name;
   String? language;
@@ -132,6 +134,14 @@ abstract class CastApi {
   void stop();
 }
 
+enum IdleReason {
+  canceled,
+  error,
+  finished,
+  interrupted,
+  none,
+}
+
 enum PlayerState {
   idle,
   buffering,
@@ -143,10 +153,11 @@ enum PlayerState {
 
 class MediaStatus {
   late PlayerState playerState;
-  late MediaInfo? mediaInfo;
+  late IdleReason idleReason;
   late int streamPosition;
   late double playbackRate;
   late int? currentItemIndex;
+  late List<int>? activeTrackIds;
 }
 
 @FlutterApi()
@@ -158,4 +169,5 @@ abstract class CastEventsApi {
   // RemoteMediaClient
 
   void onStatusUpdated(MediaStatus? status);
+  void onMediaInfoUpdated(MediaInfo? info);
 }

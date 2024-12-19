@@ -215,6 +215,14 @@ fn build_tracks_list(tracks: &[MediaTrack]) -> EncodableValue<'_> {
                         EncodableValue::Str("selected"),
                         EncodableValue::Bool(track.selected),
                     );
+                    map.insert(
+                        EncodableValue::Str("codec"),
+                        track
+                            .codec
+                            .as_deref()
+                            .map(EncodableValue::Str)
+                            .unwrap_or(EncodableValue::Null),
+                    );
                     map
                 })
             })

@@ -27,7 +27,6 @@ class ExternalSubtitleTrack {
   String mimeType;
   String? title;
   String? language;
-  String? displayLanguage;
 
   ExternalSubtitleTrack({
     required this.id,
@@ -35,32 +34,68 @@ class ExternalSubtitleTrack {
     required this.mimeType,
     this.title,
     this.language,
-    this.displayLanguage,
   });
 }
 
-class VideoItem {
+enum MediaType {
+  movie,
+  tvShow,
+}
+
+final class MediaMetadata {
+  final MediaType? type;
   final String? title;
   final String? subtitle;
+  final String? seriesTitle;
+  final int? seasonNumber;
+  final int? episodeNumber;
+  final String? posterUrl;
+  final String? backdropUrl;
+
+  const MediaMetadata({
+    this.type,
+    this.title,
+    this.subtitle,
+    this.seriesTitle,
+    this.seasonNumber,
+    this.episodeNumber,
+    this.posterUrl,
+    this.backdropUrl,
+  });
+}
+
+final class VideoItem {
   final String url;
   final List<ExternalSubtitleTrack> subtitles;
   final Rect? cropRect;
+  final MediaMetadata metadata;
 
-  VideoItem({
+  const VideoItem({
     required this.url,
-    this.title,
-    this.subtitle,
     this.subtitles = const [],
     this.cropRect,
+    this.metadata = const MediaMetadata(),
   });
 }
 
-class SubtitleTrack {
-  String id;
-  String? label;
-  String? language;
+final class AudioTrack {
+  final int index;
+  final String language;
+  final String codec;
 
-  SubtitleTrack({
+  const AudioTrack({
+    required this.index,
+    required this.language,
+    required this.codec,
+  });
+}
+
+final class SubtitleTrack {
+  final String id;
+  final String? label;
+  final String? language;
+
+  const SubtitleTrack({
     required this.id,
     required this.label,
     required this.language,
@@ -78,7 +113,10 @@ abstract class VideoController implements Listenable {
   int get currentItemIndex;
   BoxFit get fit;
   double get playbackSpeed;
+
+  List<AudioTrack> get availableAudioTracks;
   List<SubtitleTrack> get currentSubtitleTracks;
+
   String? activeSubtitleTrackId;
 
   bool get supportsAudioTrackSelection;
