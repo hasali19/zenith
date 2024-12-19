@@ -47,10 +47,12 @@ dependencies:
       url: https://github.com/hasali19/material-foundation-flutter-packages.git
       path: packages/dynamic_color
   expandable: ^5.0.1
+  flutter_hooks: ^0.20.5
   flutter_riverpod: ^2.4.1
   flutter_secure_storage: ^9.2.1
   freezed_annotation: ^2.3.0
   gap: ^3.0.1
+  hooks_riverpod: ^2.6.1
   json_annotation: ^4.9.0
   logger: ^2.0.2+1
   package_info_plus: ^8.0.0
@@ -69,7 +71,6 @@ dependencies:
   web: ^1.1.0
   windowing:
     path: packages/windowing
-  flutter_hooks: ^0.20.5
 
 dev_dependencies:
   flutter_test:

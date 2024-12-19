@@ -6,7 +6,8 @@ import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -14,12 +15,14 @@ import 'package:zenith/api.dart' as api;
 import 'package:zenith/cookies.dart';
 import 'package:zenith/platform.dart' as platform;
 import 'package:zenith/preferences.dart';
-import 'package:zenith/screens/video_player/media_title.dart';
-import 'package:zenith/screens/video_player/ui.dart';
-import 'package:zenith/screens/video_player/utils.dart';
 import 'package:zenith/window.dart';
 
-class LocalVideoPlayer extends ConsumerStatefulWidget {
+import 'media_title.dart';
+import 'ui.dart';
+import 'ui_visibility.dart';
+import 'utils.dart';
+
+class LocalVideoPlayer extends StatefulHookConsumerWidget {
   final List<api.MediaItem> items;
   final int startIndex;
   final double startPosition;
@@ -43,13 +46,8 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
   late FocusNode _focusNode;
 
   VideoController? _controller;
-  bool _shouldShowControls = true;
-
-  bool _isPaused = false;
-  VideoState _videoState = VideoState.idle;
 
   late Timer _progressReportTimer;
-  Timer? _controlsTimer;
 
   api.MediaItem get currentItem =>
       widget.items[_controller?.currentItemIndex ?? widget.startIndex];
@@ -57,8 +55,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
   List<api.SubtitleTrack> get subtitles =>
       currentItem.videoFile?.subtitles ?? [];
 
-  bool get shouldShowControls =>
-      _shouldShowControls || _videoState == VideoState.ended;
+  final _uiVisibilityController = UiVisibilityController();
 
   @override
   void initState() {
@@ -73,7 +70,8 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     _progressReportTimer = Timer.periodic(
         const Duration(seconds: 5), (timer) => _onProgressReporterTick());
 
-    _showControls();
+    _uiVisibilityController.setAutoHideEnabled(true);
+    _uiVisibilityController.finishUiInteraction();
 
     Future.microtask(_initController);
   }
@@ -82,7 +80,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
   void dispose() {
     super.dispose();
     WakelockPlus.disable();
-    _controlsTimer?.cancel();
+    _uiVisibilityController.dispose();
     _progressReportTimer.cancel();
     _controller?.dispose();
     platform.setPipEnabled(false);
@@ -135,18 +133,8 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
 
     setState(() {
       _controller = controller
-        ..load(videos, widget.startIndex, widget.startPosition)
-        ..addListener(() {
-          setState(() {
-            _videoState = controller.state;
-          });
-
-          if (_isPaused != controller.paused) {
-            // video was paused or unpaused
-            _isPaused = controller.paused;
-            _showControls();
-          }
-        });
+        ..load(videos, widget.startIndex, widget.startPosition);
+      _uiVisibilityController.setVideoController(controller);
     });
   }
 
@@ -166,46 +154,9 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     }
   }
 
-  void _toggleControls() {
-    if (!_shouldShowControls) {
-      _showControls();
-    } else {
-      _hideControls();
-    }
-  }
-
-  void _hideControls() {
-    _controlsTimer?.cancel();
-    if (_shouldShowControls) {
-      platform.setSystemBarsVisible(false);
-      setState(() => _shouldShowControls = false);
-    }
-  }
-
-  void _showControls() {
-    if (!_shouldShowControls) {
-      platform.setSystemBarsVisible(true);
-      setState(() => _shouldShowControls = true);
-    }
-    _resetControlsTimer();
-  }
-
-  void _disableAutoHideControls() {
-    _controlsTimer?.cancel();
-    if (!_shouldShowControls) {
-      platform.setSystemBarsVisible(true);
-      setState(() => _shouldShowControls = true);
-    }
-  }
-
-  void _resetControlsTimer() {
-    _controlsTimer?.cancel();
-    if (!_isPaused) {
-      _controlsTimer = Timer(const Duration(seconds: 5), _hideControls);
-    }
-  }
-
   Widget _buildPlayer(VideoController controller) {
+    useListenable(_uiVisibilityController);
+
     final content = Stack(
       children: [
         Positioned.fill(
@@ -213,7 +164,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
         ),
         GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: _toggleControls,
+          onTap: _uiVisibilityController.toggle,
           child: _buildUi(),
         )
       ],
@@ -224,13 +175,14 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
       autofocus: true,
       onKeyEvent: _onKeyEvent,
       child: MouseRegion(
-        cursor:
-            shouldShowControls ? MouseCursor.defer : SystemMouseCursors.none,
+        cursor: _uiVisibilityController.isVisible
+            ? MouseCursor.defer
+            : SystemMouseCursors.none,
         child: Listener(
           behavior: HitTestBehavior.opaque,
           onPointerHover: (e) {
             if (e.kind == PointerDeviceKind.mouse) {
-              _showControls();
+              _uiVisibilityController.finishUiInteraction();
             }
           },
           child: content,
@@ -302,14 +254,25 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
   }
 
   Widget _buildUi() {
+    final isRouteCurrent = ModalRoute.of(context)?.isCurrent == true;
+
+    useValueChanged(isRouteCurrent, (oldValue, void oldResult) {
+      if (!isRouteCurrent) {
+        // A route (e.g. modal sheet, dialog, etc) has been pushed above the player, so disable auto-hiding UI.
+        _uiVisibilityController.startUiInteraction();
+      } else {
+        _uiVisibilityController.finishUiInteraction();
+      }
+    });
+
     final controller = _controller!;
     final content = ListenableBuilder(
       listenable: controller,
       builder: (context, child) => VideoPlayerUi(
         title: MediaTitle(item: currentItem),
         controller: controller,
-        onInteractionStart: _disableAutoHideControls,
-        onInteractionEnd: _resetControlsTimer,
+        onInteractionStart: _uiVisibilityController.startUiInteraction,
+        onInteractionEnd: _uiVisibilityController.finishUiInteraction,
         onSeekToNext: _onSeekToNext,
       ),
     );
@@ -323,8 +286,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
             opacity: animation,
             child: child,
           ),
-          child: (shouldShowControls && !isInPipMode) ||
-                  ModalRoute.of(context)?.isCurrent == false
+          child: (_uiVisibilityController.isVisible && !isInPipMode)
               ? content
               : const SizedBox.expand(),
         );
