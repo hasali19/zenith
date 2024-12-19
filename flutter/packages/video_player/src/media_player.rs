@@ -160,14 +160,12 @@ impl MediaPlayer {
                     }
                     "playlist-playing-pos" => {
                         let value = unsafe { data.cast::<i64>().as_ref() };
-                        if let Some(value) = value
-                            && *value > 0
-                        {
-                            println!("playlist-playing-pos {value}");
-
+                        if let Some(&value) = value {
                             let playlist = self.playlist.lock().unwrap();
 
-                            if let Some(item) = playlist.get(*value as usize) {
+                            if let Ok(pos) = usize::try_from(value)
+                                && let Some(item) = playlist.get(pos)
+                            {
                                 self.system_media_controls.update_media_display(
                                     item.title.as_deref(),
                                     item.subtitle.as_deref(),
@@ -180,12 +178,12 @@ impl MediaPlayer {
                                         sub.language.as_deref(),
                                     );
                                 }
-                            }
 
-                            event_handler(
-                                position,
-                                MediaPlayerEvent::PlaylistPosChanged(*value as u32),
-                            );
+                                event_handler(
+                                    position,
+                                    MediaPlayerEvent::PlaylistPosChanged(value as u32),
+                                );
+                            }
                         }
                     }
                     "track-list" => {
