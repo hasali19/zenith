@@ -144,6 +144,7 @@ class VideoPlayerUi extends HookConsumerWidget {
       constraints: width > 600
           ? const BoxConstraints.expand(width: 600).copyWith(minHeight: 0)
           : null,
+      clipBehavior: Clip.antiAlias,
       builder: (context) =>
           safeArea ? SafeArea(child: builder(context)) : builder(context),
     );
@@ -157,6 +158,13 @@ class VideoPlayerUi extends HookConsumerWidget {
           ListTile(
             leading: const Icon(Icons.aspect_ratio),
             title: const Text('Fit'),
+            subtitle: Text(switch (controller.fit) {
+              BoxFit.cover => 'Cover',
+              BoxFit.contain => 'Contain',
+              BoxFit.fitWidth => 'Fit Width',
+              BoxFit.fitHeight => 'Fit Height',
+              _ => 'Unknown',
+            }),
             onTap: () {
               Navigator.pop(context);
               _showVideoFitMenu(context);
@@ -175,6 +183,7 @@ class VideoPlayerUi extends HookConsumerWidget {
           ListTile(
             leading: const Icon(Icons.speed),
             title: const Text('Playback speed'),
+            subtitle: Text('${controller.playbackSpeed}'),
             onTap: () {
               Navigator.pop(context);
               _showPlaybackSpeedMenu(context);
