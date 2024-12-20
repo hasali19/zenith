@@ -145,6 +145,7 @@ class VideoPlayerUi extends HookConsumerWidget {
           ? const BoxConstraints.expand(width: 600).copyWith(minHeight: 0)
           : null,
       clipBehavior: Clip.antiAlias,
+      barrierColor: Colors.transparent,
       builder: (context) =>
           safeArea ? SafeArea(child: builder(context)) : builder(context),
     );
@@ -205,6 +206,8 @@ class VideoPlayerUi extends HookConsumerWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      clipBehavior: Clip.antiAlias,
+      barrierColor: Colors.transparent,
       builder: (context) {
         return DraggableScrollableSheet(
           expand: false,
@@ -242,6 +245,7 @@ class VideoPlayerUi extends HookConsumerWidget {
       context: context,
       isScrollControlled: true,
       clipBehavior: Clip.antiAlias,
+      barrierColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         expand: false,
         builder: (context, scrollController) => HookBuilder(
@@ -259,6 +263,8 @@ class VideoPlayerUi extends HookConsumerWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      clipBehavior: Clip.antiAlias,
+      barrierColor: Colors.transparent,
       builder: (context) {
         return DraggableScrollableSheet(
           expand: false,
