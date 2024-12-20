@@ -87,6 +87,116 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     platform.setSystemBarsVisible(true);
   }
 
+  @override
+  Widget build(BuildContext context) {
+    final content = ValueListenableBuilder<EdgeInsets>(
+      valueListenable: platform.stableSystemBarInsets,
+      builder: (context, physicalInsets, child) {
+        final stableSystemBarInsets =
+            physicalInsets / context.mq.devicePixelRatio;
+        final insets = EdgeInsets.fromLTRB(
+            max(stableSystemBarInsets.left, context.mq.padding.left),
+            max(stableSystemBarInsets.top, context.mq.padding.top),
+            max(stableSystemBarInsets.right, context.mq.padding.right),
+            max(stableSystemBarInsets.bottom, context.mq.padding.bottom));
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(padding: insets),
+          child: child!,
+        );
+      },
+      child: _controller == null
+          ? const Center(child: CircularProgressIndicator())
+          : _buildPlayer(_controller!),
+    );
+
+    return PopScope(
+      onPopInvokedWithResult: _onPopInvoked,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: content,
+      ),
+    );
+  }
+
+  Widget _buildPlayer(VideoController controller) {
+    final isUiVisible = useListenableSelector(
+        _uiVisibilityController, () => _uiVisibilityController.isVisible);
+
+    final isRouteCurrent = ModalRoute.of(context)?.isCurrent == true;
+
+    useValueChanged(isRouteCurrent, (oldValue, void oldResult) {
+      if (!isRouteCurrent) {
+        // A route (e.g. modal sheet, dialog, etc) has been pushed above the player, so disable auto-hiding UI.
+        _uiVisibilityController.startUiInteraction();
+      } else {
+        _uiVisibilityController.finishUiInteraction();
+      }
+    });
+
+    useValueChanged(_uiVisibilityController.isVisible, (_, void __) {
+      platform.setSystemBarsVisible(_uiVisibilityController.isVisible);
+    });
+
+    return KeyboardListener(
+      focusNode: _focusNode,
+      autofocus: true,
+      onKeyEvent: _onKeyEvent,
+      child: MouseRegion(
+        cursor: isUiVisible ? MouseCursor.defer : SystemMouseCursors.none,
+        child: Listener(
+          behavior: HitTestBehavior.opaque,
+          onPointerHover: (e) {
+            if (e.kind == PointerDeviceKind.mouse) {
+              _uiVisibilityController.finishUiInteraction();
+            }
+          },
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: VideoPlayerPlatform.instance.buildView(_controller!),
+              ),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _uiVisibilityController.toggle,
+                child: _buildUi(isUiVisible),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUi(bool isVisible) {
+    return ValueListenableBuilder(
+      valueListenable: platform.isInPipMode,
+      builder: (context, isInPipMode, child) {
+        final controller = _controller!;
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+          child: switch (_uiVisibilityController.isVisible && !isInPipMode) {
+            false => const SizedBox.expand(),
+            true => ListenableBuilder(
+                listenable: controller,
+                builder: (context, child) => VideoPlayerUi(
+                  title: MediaTitle(item: currentItem),
+                  controller: controller,
+                  onInteractionStart:
+                      _uiVisibilityController.startUiInteraction,
+                  onInteractionEnd: _uiVisibilityController.finishUiInteraction,
+                  onSeekToNext: _onSeekToNext,
+                ),
+              ),
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _initController() async {
     final cookies = ref.read(cookieJarProvider);
 
@@ -155,43 +265,6 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     }
   }
 
-  Widget _buildPlayer(VideoController controller) {
-    useListenable(_uiVisibilityController);
-
-    final content = Stack(
-      children: [
-        Positioned.fill(
-          child: VideoPlayerPlatform.instance.buildView(_controller!),
-        ),
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: _uiVisibilityController.toggle,
-          child: _buildUi(),
-        )
-      ],
-    );
-
-    return KeyboardListener(
-      focusNode: _focusNode,
-      autofocus: true,
-      onKeyEvent: _onKeyEvent,
-      child: MouseRegion(
-        cursor: _uiVisibilityController.isVisible
-            ? MouseCursor.defer
-            : SystemMouseCursors.none,
-        child: Listener(
-          behavior: HitTestBehavior.opaque,
-          onPointerHover: (e) {
-            if (e.kind == PointerDeviceKind.mouse) {
-              _uiVisibilityController.finishUiInteraction();
-            }
-          },
-          child: content,
-        ),
-      ),
-    );
-  }
-
   void _onKeyEvent(KeyEvent event) {
     final window = ref.read(windowProvider);
     if (event is KeyUpEvent) {
@@ -221,82 +294,6 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
         controller.pause();
       }
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final content = ValueListenableBuilder<EdgeInsets>(
-      valueListenable: platform.stableSystemBarInsets,
-      builder: (context, physicalInsets, child) {
-        final stableSystemBarInsets =
-            physicalInsets / context.mq.devicePixelRatio;
-        final insets = EdgeInsets.fromLTRB(
-            max(stableSystemBarInsets.left, context.mq.padding.left),
-            max(stableSystemBarInsets.top, context.mq.padding.top),
-            max(stableSystemBarInsets.right, context.mq.padding.right),
-            max(stableSystemBarInsets.bottom, context.mq.padding.bottom));
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(padding: insets),
-          child: child!,
-        );
-      },
-      child: _controller == null
-          ? const Center(child: CircularProgressIndicator())
-          : _buildPlayer(_controller!),
-    );
-
-    return PopScope(
-      onPopInvokedWithResult: _onPopInvoked,
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: content,
-      ),
-    );
-  }
-
-  Widget _buildUi() {
-    final isRouteCurrent = ModalRoute.of(context)?.isCurrent == true;
-
-    useValueChanged(isRouteCurrent, (oldValue, void oldResult) {
-      if (!isRouteCurrent) {
-        // A route (e.g. modal sheet, dialog, etc) has been pushed above the player, so disable auto-hiding UI.
-        _uiVisibilityController.startUiInteraction();
-      } else {
-        _uiVisibilityController.finishUiInteraction();
-      }
-    });
-
-    useValueChanged(_uiVisibilityController.isVisible, (_, __) {
-      platform.setSystemBarsVisible(_uiVisibilityController.isVisible);
-    });
-
-    final controller = _controller!;
-    final content = ListenableBuilder(
-      listenable: controller,
-      builder: (context, child) => VideoPlayerUi(
-        title: MediaTitle(item: currentItem),
-        controller: controller,
-        onInteractionStart: _uiVisibilityController.startUiInteraction,
-        onInteractionEnd: _uiVisibilityController.finishUiInteraction,
-        onSeekToNext: _onSeekToNext,
-      ),
-    );
-
-    return ValueListenableBuilder(
-      valueListenable: platform.isInPipMode,
-      builder: (context, isInPipMode, child) {
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: child,
-          ),
-          child: (_uiVisibilityController.isVisible && !isInPipMode)
-              ? content
-              : const SizedBox.expand(),
-        );
-      },
-    );
   }
 
   void _onSeekToNext() {

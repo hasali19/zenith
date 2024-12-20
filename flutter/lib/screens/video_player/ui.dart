@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
@@ -9,7 +9,7 @@ import 'package:zenith/themes.dart';
 import 'bottom_controls.dart';
 import 'video_progress_bar.dart';
 
-class VideoPlayerUi extends ConsumerStatefulWidget {
+class VideoPlayerUi extends HookConsumerWidget {
   final Widget title;
   final VideoController controller;
 
@@ -27,12 +27,114 @@ class VideoPlayerUi extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<VideoPlayerUi> createState() => _VideoPlayerUiState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final desktop = MediaQuery.of(context).isDesktop;
+    final appBarPadding = desktop ? 32.0 : 0.0;
+    final bottomControlsPadding = desktop
+        ? const EdgeInsets.symmetric(horizontal: 96, vertical: 48)
+        : const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
 
-class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
+    return Theme(
+      data: ref.watch(themesProvider).dark,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: const FractionalOffset(0, 0),
+            end: const FractionalOffset(0, 1),
+            colors: [
+              Colors.black.withValues(alpha: 0.7),
+              Colors.transparent,
+              Colors.black.withValues(alpha: 0.7),
+            ],
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Padding(
+                padding: EdgeInsets.all(appBarPadding),
+                child: AppBar(
+                  title: title,
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: _CenterControls(
+                isLoading: controller.loading,
+                isPaused: controller.paused,
+                onSetPaused: (paused) {
+                  if (paused) {
+                    controller.pause();
+                  } else {
+                    controller.play();
+                  }
+                  onInteractionEnd();
+                },
+                onSeekDelta: (delta) {
+                  controller.position += delta;
+                  onInteractionEnd();
+                },
+                onSkipPrevious: () {
+                  controller.seekToPreviousItem();
+                  onInteractionEnd();
+                },
+                onSkipNext: () {
+                  onSeekToNext?.call();
+                  controller.seekToNextItem();
+                  onInteractionEnd();
+                },
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: bottomControlsPadding,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      VideoProgressBar(
+                        progress: () => VideoProgressData(
+                          total: Duration(seconds: controller.duration.toInt()),
+                          progress:
+                              Duration(seconds: controller.position.toInt()),
+                        ),
+                        onSeek: (position) =>
+                            controller.position = position.inSeconds.toDouble(),
+                        onSeekStart: onInteractionStart,
+                        onSeekEnd: onInteractionEnd,
+                      ),
+                      const SizedBox(height: 8),
+                      BottomControls(
+                        controller: controller,
+                        onShowOptionsMenu: () {
+                          onInteractionEnd();
+                          _showOptionsMenu(context);
+                        },
+                        onInteractionStart: onInteractionStart,
+                        onInteractionEnd: onInteractionEnd,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _showModalBottomSheet(
-      Widget Function(BuildContext context) builder,
+      BuildContext context, Widget Function(BuildContext context) builder,
       {bool safeArea = true}) {
     final width = MediaQuery.of(context).size.width;
     return showModalBottomSheet<void>(
@@ -45,10 +147,9 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
     );
   }
 
-  void _showOptionsMenu(BuildContext context) async {
-    widget.onInteractionStart();
-
-    await _showModalBottomSheet(
+  Future<void> _showOptionsMenu(BuildContext context) {
+    return _showModalBottomSheet(
+      context,
       (context) => Wrap(
         children: [
           ListTile(
@@ -59,8 +160,8 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
               _showBoxFitMenu(context);
             },
           ),
-          if (widget.controller.supportsAudioTrackSelection &&
-              widget.controller.availableAudioTracks.length > 1)
+          if (controller.supportsAudioTrackSelection &&
+              controller.availableAudioTracks.length > 1)
             ListTile(
               leading: const Icon(Icons.audiotrack),
               title: const Text('Audio'),
@@ -80,12 +181,11 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         ],
       ),
     );
-    widget.onInteractionEnd();
   }
 
   Future<void> _showAudioMenu(BuildContext context) {
     final audioTracks = () {
-      final audioTracks = [...widget.controller.availableAudioTracks];
+      final audioTracks = [...controller.availableAudioTracks];
       audioTracks.sort((a, b) => a.language.compareTo(b.language));
       return audioTracks;
     }();
@@ -116,7 +216,7 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         title: Text(track.language),
         subtitle: Text(track.codec),
         onTap: () {
-          widget.controller.setAudioTrack(track.index);
+          controller.setAudioTrack(track.index);
           Navigator.pop(context);
         },
       ));
@@ -133,46 +233,27 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
 
     buildListTile(e) {
       onSetFit() {
-        widget.controller.setFit(e.$1);
+        controller.setFit(e.$1);
         Navigator.pop(context);
       }
 
       return ListTile(
         leading: Icon(e.$3),
         title: Text(e.$2),
-        onTap: widget.controller.fit == e.$1 ? null : onSetFit,
-        trailing:
-            widget.controller.fit != e.$1 ? null : const Icon(Icons.check),
+        onTap: controller.fit == e.$1 ? null : onSetFit,
+        trailing: controller.fit != e.$1 ? null : const Icon(Icons.check),
       );
     }
 
-    return _showModalBottomSheet(
-      (context) {
-        return Wrap(
-          children: fits.map(buildListTile).toList(),
-        );
-      },
-    );
+    return _showModalBottomSheet(context, (context) {
+      return Wrap(
+        children: fits.map(buildListTile).toList(),
+      );
+    });
   }
 
   Future<void> _showPlaybackSpeedMenu(BuildContext context) {
     const speeds = [1.0, 1.25, 1.5, 1.75, 2.0];
-
-    buildListTile(speed) {
-      onSetSpeed() {
-        widget.controller.setPlaybackSpeed(speed);
-        Navigator.pop(context);
-      }
-
-      return ListTile(
-        title: Text('${speed}x'),
-        onTap: widget.controller.playbackSpeed == speed ? null : onSetSpeed,
-        trailing: widget.controller.playbackSpeed != speed
-            ? null
-            : const Icon(Icons.check),
-      );
-    }
-
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -180,6 +261,21 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
         return DraggableScrollableSheet(
           expand: false,
           builder: (context, scrollController) {
+            Widget buildListTile(speed) {
+              void onSetSpeed() {
+                controller.setPlaybackSpeed(speed);
+                Navigator.pop(context);
+              }
+
+              return ListTile(
+                title: Text('${speed}x'),
+                onTap: controller.playbackSpeed == speed ? null : onSetSpeed,
+                trailing: controller.playbackSpeed != speed
+                    ? null
+                    : const Icon(Icons.check),
+              );
+            }
+
             return ListView(
               controller: scrollController,
               children: speeds.map(buildListTile).toList(),
@@ -187,120 +283,6 @@ class _VideoPlayerUiState extends ConsumerState<VideoPlayerUi> {
           },
         );
       },
-    );
-  }
-
-  Widget _buildAppBar() {
-    return AppBar(
-      title: widget.title,
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-    );
-  }
-
-  Widget _buildBottomUi() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        VideoProgressBar(
-          progress: () => VideoProgressData(
-            total: Duration(seconds: widget.controller.duration.toInt()),
-            progress: Duration(seconds: widget.controller.position.toInt()),
-          ),
-          onSeek: (position) =>
-              widget.controller.position = position.inSeconds.toDouble(),
-          onSeekStart: widget.onInteractionStart,
-          onSeekEnd: widget.onInteractionEnd,
-        ),
-        const SizedBox(height: 8),
-        BottomControls(
-          controller: widget.controller,
-          onShowOptionsMenu: () {
-            widget.onInteractionEnd();
-            _showOptionsMenu(context);
-          },
-          onInteractionStart: widget.onInteractionStart,
-          onInteractionEnd: widget.onInteractionEnd,
-        ),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final desktop = MediaQuery.of(context).isDesktop;
-    final appBarPadding = desktop ? 32.0 : 0.0;
-    final bottomControlsPadding = desktop
-        ? const EdgeInsets.symmetric(horizontal: 96, vertical: 48)
-        : const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
-
-    return Theme(
-      data: ref.watch(themesProvider).dark,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: const FractionalOffset(0, 0),
-            end: const FractionalOffset(0, 1),
-            colors: [
-              Colors.black.withValues(alpha: 0.7),
-              Colors.transparent,
-              Colors.black.withValues(alpha: 0.7),
-            ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Padding(
-                padding: EdgeInsets.all(appBarPadding),
-                child: _buildAppBar(),
-              ),
-            ),
-            Align(
-              alignment: Alignment.center,
-              child: _CenterControls(
-                isLoading: widget.controller.loading,
-                isPaused: widget.controller.paused,
-                onSetPaused: (paused) {
-                  if (paused) {
-                    widget.controller.pause();
-                  } else {
-                    widget.controller.play();
-                  }
-                  widget.onInteractionEnd();
-                },
-                onSeekDelta: (delta) {
-                  widget.controller.position += delta;
-                  widget.onInteractionEnd();
-                },
-                onSkipPrevious: () {
-                  widget.controller.seekToPreviousItem();
-                  widget.onInteractionEnd();
-                },
-                onSkipNext: () {
-                  widget.onSeekToNext?.call();
-                  widget.controller.seekToNextItem();
-                  widget.onInteractionEnd();
-                },
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                child: Padding(
-                  padding: bottomControlsPadding,
-                  child: _buildBottomUi(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
