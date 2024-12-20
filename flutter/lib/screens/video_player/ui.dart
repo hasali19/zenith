@@ -155,21 +155,22 @@ class VideoPlayerUi extends HookConsumerWidget {
       context,
       (context) => Wrap(
         children: [
-          ListTile(
-            leading: const Icon(Icons.aspect_ratio),
-            title: const Text('Fit'),
-            subtitle: Text(switch (controller.fit) {
-              BoxFit.cover => 'Cover',
-              BoxFit.contain => 'Contain',
-              BoxFit.fitWidth => 'Fit Width',
-              BoxFit.fitHeight => 'Fit Height',
-              _ => 'Unknown',
-            }),
-            onTap: () {
-              Navigator.pop(context);
-              _showVideoFitMenu(context);
-            },
-          ),
+          if (controller.supportsVideoFitting)
+            ListTile(
+              leading: const Icon(Icons.aspect_ratio),
+              title: const Text('Fit'),
+              subtitle: Text(switch (controller.fit) {
+                BoxFit.cover => 'Cover',
+                BoxFit.contain => 'Contain',
+                BoxFit.fitWidth => 'Fit Width',
+                BoxFit.fitHeight => 'Fit Height',
+                _ => 'Unknown',
+              }),
+              onTap: () {
+                Navigator.pop(context);
+                _showVideoFitMenu(context);
+              },
+            ),
           if (controller.supportsAudioTrackSelection &&
               controller.availableAudioTracks.length > 1)
             ListTile(

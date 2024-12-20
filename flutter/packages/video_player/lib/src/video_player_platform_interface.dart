@@ -126,6 +126,7 @@ abstract class VideoController implements Listenable {
 
   bool get supportsAudioTrackSelection;
   bool get supportsEmbeddedSubtitles;
+  bool get supportsVideoFitting => false;
   bool get supportsCropRects => false;
 
   void load(List<VideoItem> items, int startIndex, double startPosition);

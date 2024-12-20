@@ -228,6 +228,9 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   bool get supportsEmbeddedSubtitles => true;
 
   @override
+  bool get supportsVideoFitting => true;
+
+  @override
   bool get supportsCropRects => true;
 
   @override
