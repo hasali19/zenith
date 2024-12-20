@@ -17,8 +17,8 @@ dependencies:
   ffi: ^2.0.1
   http: ^1.1.0
   plugin_platform_interface: ^2.1.2
-  signals: ^6.0.1
   web: ^1.1.0
+  flutter_hooks: ^0.20.5
 
 dev_dependencies:
   flutter_test:

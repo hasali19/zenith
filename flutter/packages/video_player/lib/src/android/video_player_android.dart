@@ -3,7 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:signals/signals_flutter.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
 import '../video_player_platform_interface.dart';
 
@@ -33,37 +33,37 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
   }
 }
 
-class _VideoView extends StatelessWidget {
+class _VideoView extends HookWidget {
   final VideoControllerAndroid controller;
 
   const _VideoView({required this.controller});
 
   @override
   Widget build(BuildContext context) {
+    final videoSize = useValueListenable(controller._size);
+    final fit = useValueListenable(controller._fit);
+    final cropRect = useValueListenable(controller._cropRect);
+    final shouldUseCropRect = useValueListenable(controller._shouldUseCropRect);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final pixelRatio = MediaQuery.devicePixelRatioOf(context);
-
-        final videoSize = controller.size.watch(context);
-        final fit = controller._fit.watch(context);
-        final cropRect = controller._cropRect.watch(context);
 
         final size = Size(
           videoSize.width / pixelRatio,
           videoSize.height / pixelRatio,
         );
 
-        Widget video = Container(
+        Widget video = SizedBox(
           width: size.width,
           height: size.height,
-          color: Colors.blue,
           child: Texture(
             textureId: controller.id,
             filterQuality: FilterQuality.medium,
           ),
         );
 
-        if (cropRect case Rect cropRect) {
+        if ((shouldUseCropRect, cropRect) case (true, Rect cropRect)) {
           final cropOffset = cropRect.topLeft / pixelRatio;
           final cropSize = cropRect.size / pixelRatio;
 
@@ -199,9 +199,10 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   @override
   int currentItemIndex = 0;
 
-  final size = signal(Size.zero);
-  final _fit = signal(BoxFit.contain);
-  final _cropRect = signal<Rect?>(null);
+  final _size = ValueNotifier(Size.zero);
+  final _fit = ValueNotifier(BoxFit.contain);
+  final _cropRect = ValueNotifier<Rect?>(null);
+  final _shouldUseCropRect = ValueNotifier(true);
 
   @override
   BoxFit get fit => _fit.value;
@@ -227,9 +228,24 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   bool get supportsEmbeddedSubtitles => true;
 
   @override
+  bool get supportsCropRects => true;
+
+  @override
+  Rect? get currentCropRect => _cropRect.value;
+
+  @override
   set position(value) {
     _methodChannel.invokeMethod(
         'seekTo', {'id': id, 'position': (value * 1000.0).toInt()});
+  }
+
+  @override
+  bool get isUsingCropRects => _shouldUseCropRect.value;
+
+  @override
+  set isUsingCropRects(bool value) {
+    _shouldUseCropRect.value = value;
+    notifyListeners();
   }
 
   VideoControllerAndroid(this.id) {
@@ -256,7 +272,7 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
       } else if (type == 'videoSizeChanged') {
         int width = event['width'];
         int height = event['height'];
-        size.value = Size(width.toDouble(), height.toDouble());
+        _size.value = Size(width.toDouble(), height.toDouble());
       } else if (type == 'cues') {
         _subsController.add(event['text']);
       } else if (type == 'playbackSpeed') {
@@ -307,6 +323,10 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   void dispose() async {
     super.dispose();
     _subscription.cancel();
+    _size.dispose();
+    _fit.dispose();
+    _cropRect.dispose();
+    _shouldUseCropRect.dispose();
     await _methodChannel.invokeMethod('dispose', {'id': id});
   }
 

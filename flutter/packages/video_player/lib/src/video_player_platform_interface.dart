@@ -114,13 +114,19 @@ abstract class VideoController implements Listenable {
   BoxFit get fit;
   double get playbackSpeed;
 
+  bool get isUsingCropRects => false;
+  set isUsingCropRects(bool value) {}
+
+  Rect? get currentCropRect => null;
+
   List<AudioTrack> get availableAudioTracks;
   List<SubtitleTrack> get currentSubtitleTracks;
 
-  String? activeSubtitleTrackId;
+  String? get activeSubtitleTrackId;
 
   bool get supportsAudioTrackSelection;
   bool get supportsEmbeddedSubtitles;
+  bool get supportsCropRects => false;
 
   void load(List<VideoItem> items, int startIndex, double startPosition);
   void play();

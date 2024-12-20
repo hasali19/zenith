@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:video_player/video_player.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
@@ -157,7 +159,7 @@ class VideoPlayerUi extends HookConsumerWidget {
             title: const Text('Fit'),
             onTap: () {
               Navigator.pop(context);
-              _showBoxFitMenu(context);
+              _showVideoFitMenu(context);
             },
           ),
           if (controller.supportsAudioTrackSelection &&
@@ -225,31 +227,21 @@ class VideoPlayerUi extends HookConsumerWidget {
     return items;
   }
 
-  Future<void> _showBoxFitMenu(BuildContext context) {
-    const fits = [
-      (BoxFit.cover, 'Cover', Icons.crop_free),
-      (BoxFit.contain, 'Contain', Icons.fit_screen)
-    ];
-
-    buildListTile(e) {
-      onSetFit() {
-        controller.setFit(e.$1);
-        Navigator.pop(context);
-      }
-
-      return ListTile(
-        leading: Icon(e.$3),
-        title: Text(e.$2),
-        onTap: controller.fit == e.$1 ? null : onSetFit,
-        trailing: controller.fit != e.$1 ? null : const Icon(Icons.check),
-      );
-    }
-
-    return _showModalBottomSheet(context, (context) {
-      return Wrap(
-        children: fits.map(buildListTile).toList(),
-      );
-    });
+  Future<void> _showVideoFitMenu(BuildContext context) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      clipBehavior: Clip.antiAlias,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        builder: (context, scrollController) => HookBuilder(
+          builder: (context) => VideoFitMenu(
+            controller: controller,
+            scrollController: scrollController,
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _showPlaybackSpeedMenu(BuildContext context) {
@@ -370,6 +362,69 @@ class _CenterControls extends ConsumerWidget {
           iconSize: secondaryIconSize,
           onPressed: onSkipNext,
         ),
+      ],
+    );
+  }
+}
+
+class VideoFitMenu extends HookWidget {
+  final VideoController controller;
+  final ScrollController? scrollController;
+
+  const VideoFitMenu({
+    super.key,
+    required this.controller,
+    this.scrollController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const fits = [
+      (BoxFit.cover, 'Cover', Icons.crop_free),
+      (BoxFit.contain, 'Contain', Icons.fit_screen),
+      (BoxFit.fitWidth, 'Fit Width', Symbols.fit_page_width),
+      (BoxFit.fitHeight, 'Fit Height', Symbols.fit_page_height),
+    ];
+
+    final (isUsingCropRects, currentCropRect, currentFit) =
+        useListenableSelector(
+            controller,
+            () => (
+                  controller.isUsingCropRects,
+                  controller.currentCropRect,
+                  controller.fit,
+                ));
+
+    return ListView(
+      controller: scrollController,
+      children: [
+        if (controller.supportsCropRects)
+          CheckboxListTile(
+            secondary: Icon(Icons.crop),
+            title: Text('Fix black bars'),
+            subtitle: Text(switch (currentCropRect) {
+              null => 'No crop rect available',
+              final rect =>
+                'Using rect ${rect.left.toInt()}:${rect.top.toInt()}:${rect.width.toInt()}:${rect.height.toInt()}',
+            }),
+            value: isUsingCropRects,
+            onChanged: (value) {
+              if (value != null) {
+                controller.isUsingCropRects = value;
+              }
+            },
+          ),
+        if (controller.supportsCropRects) Divider(),
+        for (final (value, label, icon) in fits)
+          ListTile(
+            leading: Icon(icon),
+            title: Text(label),
+            trailing: currentFit != value ? null : const Icon(Icons.check),
+            onTap: switch (currentFit == value) {
+              true => null,
+              false => () => controller.setFit(value),
+            },
+          ),
       ],
     );
   }

@@ -120,9 +120,8 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
   }
 }
 
-class RemoteVideoController
-    with ChangeNotifier
-    implements video_player.VideoController {
+class RemoteVideoController extends video_player.VideoController
+    with ChangeNotifier {
   final _client = CastFrameworkPlatform.instance.remoteMediaClient;
   final _positionHandler = video_player.MediaPositionHandler();
 
