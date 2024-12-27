@@ -12,7 +12,7 @@ import 'package:windowing/windowing.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/cookies.dart';
 import 'package:zenith/dio_client.dart';
-import 'package:zenith/drawer.dart';
+import 'package:zenith/main_navigation.dart';
 import 'package:zenith/language_codes.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
@@ -236,9 +236,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       ],
       transitionBuilder: (context, child, animation) => child,
       builder: (context, child) {
-        // Use a permanent navigation drawer on larger screens
-
         if (desktop) {
+          // Use a permanent navigation drawer on larger screens
           child = Row(
             children: [
               MainNavigationDrawer(onLogoutTap: onLogout),
@@ -247,37 +246,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           );
         }
 
-        final tabIndex = context.tabsRouter.activeIndex;
-
         return Scaffold(
           body: child,
           bottomNavigationBar: switch (desktop) {
             true => null,
-            false => NavigationBar(
-                destinations: [
-                  NavigationDestination(
-                    icon: Icon(tabIndex == 0
-                        ? Icons.video_library
-                        : Icons.video_library_outlined),
-                    label: 'Library',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(tabIndex == 1
-                        ? Icons.settings
-                        : Icons.settings_outlined),
-                    label: 'Settings',
-                  ),
-                ],
-                selectedIndex: context.tabsRouter.activeIndex,
-                onDestinationSelected: (value) {
-                  if (context.tabsRouter.activeIndex == value) {
-                    context.tabsRouter.childControllers
-                        .forEach((controller) => controller.maybePopTop());
-                  } else {
-                    context.tabsRouter.setActiveIndex(value);
-                  }
-                },
-              ),
+            false => MainNavigationBar(),
           },
         );
       },

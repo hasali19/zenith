@@ -95,3 +95,75 @@ class NavigationDrawerHeadline extends StatelessWidget {
     );
   }
 }
+
+class MainNavigationBar extends StatefulWidget {
+  const MainNavigationBar({super.key});
+
+  @override
+  State<MainNavigationBar> createState() => _MainNavigationBarState();
+}
+
+class _MainNavigationBarState extends State<MainNavigationBar> {
+  int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = _activeDestinationIndex(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      destinations: [
+        NavigationDestination(
+          icon: Icon(_index == 0 ? Icons.home : Icons.home_outlined),
+          label: 'Home',
+        ),
+        NavigationDestination(
+          icon: Icon(_index == 1 ? Icons.movie : Icons.movie_outlined),
+          label: 'Movies',
+        ),
+        NavigationDestination(
+          icon: Icon(_index == 2 ? Icons.tv : Icons.tv_outlined),
+          label: 'Shows',
+        ),
+        NavigationDestination(
+          icon: Icon(_index == 3 ? Icons.settings : Icons.settings_outlined),
+          label: 'Settings',
+        ),
+      ],
+      selectedIndex: _index,
+      onDestinationSelected: (value) {
+        final route = switch (value) {
+          0 => const HomeRoute(),
+          1 => const MoviesRoute(),
+          2 => const ShowsRoute(),
+          3 => const SettingsRoute(),
+          _ => throw Exception('Invalid destination index: $value'),
+        };
+
+        context.router.navigate(route);
+
+        setState(() {
+          _index = value;
+        });
+      },
+    );
+  }
+
+  int _activeDestinationIndex(BuildContext context) {
+    final router = context.router;
+    if (router.isRouteActive(HomeRoute.name)) {
+      return 0;
+    } else if (router.isRouteActive(MoviesRoute.name)) {
+      return 1;
+    } else if (router.isRouteActive(ShowsRoute.name)) {
+      return 2;
+    } else if (router.isRouteActive(SettingsRoute.name)) {
+      return 3;
+    } else {
+      return 0;
+    }
+  }
+}

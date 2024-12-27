@@ -108,6 +108,8 @@ class AuthGuard extends AutoRouteGuard {
 
 @RoutePage()
 class LibraryPage extends StatelessWidget {
+  const LibraryPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return AutoRouter();
@@ -120,27 +122,21 @@ class LibraryTabsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (context.isDesktop) {
-      return AutoTabsRouter(
-        routes: const [
-          HomeRoute(),
-          MoviesRoute(),
-          ShowsRoute(),
-        ],
-        builder: (context, child) {
+    return AutoTabsRouter(
+      routes: const [
+        HomeRoute(),
+        MoviesRoute(),
+        ShowsRoute(),
+      ],
+      builder: (context, child) {
+        if (context.isDesktop) {
           return child;
-        },
-      );
-    }
-    return AutoTabsRouter.tabBar(
-      builder: (context, child, tabController) {
-        return NestedScrollView(
-          floatHeaderSlivers: true,
-          headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverAppBar(
+        }
+
+        return Column(
+          children: [
+            AppBar(
               title: Text('Zenith'),
-              floating: true,
-              forceElevated: innerBoxIsScrolled,
               actions: [
                 if (CastFrameworkPlatform.instance.isSupported)
                   const MediaRouteButton(),
@@ -155,19 +151,9 @@ class LibraryTabsPage extends StatelessWidget {
                   },
                 ),
               ],
-              bottom: TabBar(
-                tabs: [
-                  Tab(text: 'Home'),
-                  Tab(text: 'Movies'),
-                  Tab(text: 'Shows'),
-                ],
-                controller: tabController,
-              ),
             ),
+            Expanded(child: child),
           ],
-          body: Builder(builder: (context) {
-            return child;
-          }),
         );
       },
     );
