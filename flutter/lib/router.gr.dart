@@ -91,7 +91,7 @@ class LibraryRoute extends PageRouteInfo<void> {
   static PageInfo page = PageInfo(
     name,
     builder: (data) {
-      return LibraryPage();
+      return const LibraryPage();
     },
   );
 }
