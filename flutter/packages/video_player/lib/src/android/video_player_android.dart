@@ -202,7 +202,7 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   final _size = ValueNotifier(Size.zero);
   final _fit = ValueNotifier(BoxFit.contain);
   final _cropRect = ValueNotifier<Rect?>(null);
-  final _shouldUseCropRect = ValueNotifier(true);
+  final _shouldUseCropRect = ValueNotifier(false);
 
   @override
   BoxFit get fit => _fit.value;
