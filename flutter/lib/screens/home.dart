@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:gap/gap.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sized_context/sized_context.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/poster_item.dart';
 import 'package:zenith/responsive.dart';
@@ -198,7 +199,8 @@ class _SectionState<T> extends State<Section<T>> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: widget.titlePadding,
+          padding: widget.titlePadding +
+              context.mq.padding.copyWith(top: 0, bottom: 0),
           child: Text(widget.title, style: titleStyle),
         ),
         _buildContent(widget.items),
@@ -221,7 +223,9 @@ class _SectionState<T> extends State<Section<T>> {
             padding: const EdgeInsets.only(bottom: scrollbarHeight),
             child: ListView.separated(
               controller: _scrollController,
-              padding: EdgeInsets.symmetric(horizontal: widget.listSpacing * 2),
+              padding:
+                  EdgeInsets.symmetric(horizontal: widget.listSpacing * 2) +
+                      context.mq.padding.copyWith(top: 0, bottom: 0),
               separatorBuilder: (context, index) =>
                   SizedBox(width: widget.listSpacing),
               scrollDirection: Axis.horizontal,

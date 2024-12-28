@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sized_context/sized_context.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/poster_item.dart';
 import 'package:zenith/responsive.dart';
@@ -78,7 +79,7 @@ class MediaItemGrid extends StatelessWidget {
   final void Function(MediaLibraryItem item) onItemTap;
   final void Function(MediaLibraryItem item)? onItemLongPress;
 
-  MediaItemGrid({
+  const MediaItemGrid({
     super.key,
     required this.items,
     required this.posterFallback,
@@ -90,54 +91,58 @@ class MediaItemGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final desktop = MediaQuery.of(context).isDesktop;
-    return LayoutBuilder(builder: ((context, constraints) {
-      final maxColWidth = desktop ? 240.0 : 150.0;
-      final gridPadding = desktop ? 24.0 : 12.0;
-      final itemSpacing = desktop ? 16.0 : 8.0;
+    return Padding(
+      padding: context.mq.padding.copyWith(top: 0, bottom: 0),
+      child: LayoutBuilder(builder: ((context, constraints) {
+        final maxColWidth = desktop ? 240.0 : 150.0;
+        final gridPadding = desktop ? 24.0 : 12.0;
+        final itemSpacing = desktop ? 16.0 : 8.0;
 
-      final gridWidth = constraints.maxWidth - gridPadding * 2;
-      final cols = (gridWidth / (maxColWidth + itemSpacing * 2)).ceil();
-      final colWidth = gridWidth / cols;
-      final infoTopPadding = desktop ? 16.0 : 8.0;
+        final gridWidth = constraints.maxWidth - gridPadding * 2;
+        final cols = (gridWidth / (maxColWidth + itemSpacing * 2)).ceil();
+        final colWidth = gridWidth / cols;
+        final infoTopPadding = desktop ? 16.0 : 8.0;
 
-      return RefreshIndicator(
-        triggerMode: RefreshIndicatorTriggerMode.anywhere,
-        onRefresh: onRefresh,
-        child: ListView.builder(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.all(gridPadding),
-          itemCount: (items.length / cols).ceil(),
-          itemBuilder: (context, rowIndex) {
-            final columns = <Widget>[];
-            final maxItemIndex = math.min((rowIndex + 1) * cols, items.length);
+        return RefreshIndicator(
+          triggerMode: RefreshIndicatorTriggerMode.anywhere,
+          onRefresh: onRefresh,
+          child: ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.all(gridPadding),
+            itemCount: (items.length / cols).ceil(),
+            itemBuilder: (context, rowIndex) {
+              final columns = <Widget>[];
+              final maxItemIndex =
+                  math.min((rowIndex + 1) * cols, items.length);
 
-            for (var i = rowIndex * cols; i < maxItemIndex; i++) {
-              final item = items[i];
-              columns.add(Container(
-                width: colWidth,
-                padding: EdgeInsets.all(itemSpacing / 2),
-                child: PosterItem(
-                  infoSeparator: infoTopPadding,
-                  poster: item.poster,
-                  posterFallback: posterFallback,
-                  title: item.title,
-                  subtitle: item.subtitle,
-                  isWatched: item.isWatched,
-                  onTap: () => onItemTap(item),
-                  onLongPress: onItemLongPress != null
-                      ? () => onItemLongPress!(item)
-                      : null,
-                ),
-              ));
-            }
+              for (var i = rowIndex * cols; i < maxItemIndex; i++) {
+                final item = items[i];
+                columns.add(Container(
+                  width: colWidth,
+                  padding: EdgeInsets.all(itemSpacing / 2),
+                  child: PosterItem(
+                    infoSeparator: infoTopPadding,
+                    poster: item.poster,
+                    posterFallback: posterFallback,
+                    title: item.title,
+                    subtitle: item.subtitle,
+                    isWatched: item.isWatched,
+                    onTap: () => onItemTap(item),
+                    onLongPress: onItemLongPress != null
+                        ? () => onItemLongPress!(item)
+                        : null,
+                  ),
+                ));
+              }
 
-            return Padding(
-              padding: EdgeInsets.symmetric(vertical: itemSpacing / 2),
-              child: Row(children: columns),
-            );
-          },
-        ),
-      );
-    }));
+              return Padding(
+                padding: EdgeInsets.symmetric(vertical: itemSpacing / 2),
+                child: Row(children: columns),
+              );
+            },
+          ),
+        );
+      })),
+    );
   }
 }
