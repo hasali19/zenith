@@ -209,6 +209,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   }
                 },
               ),
+              CheckboxListTile(
+                title: const Text('Fix black bars'),
+                subtitle: const Text(
+                    'Use black region detection to crop out black bars from videos'),
+                value: ref.watch(applyCropRectsProvider),
+                onChanged: (value) {
+                  if (value != null) {
+                    ref.read(applyCropRectsProvider.notifier).update(value);
+                  }
+                },
+              ),
               const Divider(),
               if (_version != null)
                 ListTile(

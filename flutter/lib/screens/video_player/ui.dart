@@ -383,7 +383,7 @@ class _CenterControls extends ConsumerWidget {
   }
 }
 
-class VideoFitMenu extends HookWidget {
+class VideoFitMenu extends HookConsumerWidget {
   final VideoController controller;
   final ScrollController? scrollController;
 
@@ -394,7 +394,7 @@ class VideoFitMenu extends HookWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     const fits = [
       (BoxFit.cover, 'Cover', Icons.crop_free),
       (BoxFit.contain, 'Contain', Icons.fit_screen),
@@ -426,7 +426,7 @@ class VideoFitMenu extends HookWidget {
             value: isUsingCropRects,
             onChanged: (value) {
               if (value != null) {
-                controller.isUsingCropRects = value;
+                ref.read(applyCropRectsProvider.notifier).update(value);
               }
             },
           ),

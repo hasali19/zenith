@@ -46,6 +46,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
   late FocusNode _focusNode;
 
   VideoController? _controller;
+  ProviderSubscription? _applyCropRectsSubscription;
 
   late Timer _progressReportTimer;
 
@@ -83,6 +84,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     _uiVisibilityController.dispose();
     _progressReportTimer.cancel();
     _controller?.dispose();
+    _applyCropRectsSubscription?.close();
     platform.setPipEnabled(false);
     platform.setSystemBarsVisible(true);
   }
@@ -244,8 +246,14 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
 
     setState(() {
       _controller = controller
+        ..isUsingCropRects = ref.read(applyCropRectsProvider)
         ..load(videos, widget.startIndex, widget.startPosition);
       _uiVisibilityController.setVideoController(controller);
+    });
+
+    _applyCropRectsSubscription =
+        ref.listenManual(applyCropRectsProvider, (previous, value) {
+      controller.isUsingCropRects = value;
     });
   }
 

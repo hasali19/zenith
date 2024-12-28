@@ -147,3 +147,9 @@ final setWatchedOnSkipProvider = createPrefProvider<bool>(
   prefKey: 'player.setWatchedOnSkip',
   defaultValue: kReleaseMode,
 );
+
+final applyCropRectsProvider = createPrefProvider<bool>(
+  prefs: (ref) => ref.watch(preferencesProvider),
+  prefKey: 'player.applyCropRects',
+  defaultValue: false,
+);
