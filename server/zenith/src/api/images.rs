@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+use std::fmt::Write;
 use std::io;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
@@ -7,22 +9,131 @@ use axum::response::IntoResponse;
 use axum::Extension;
 use axum_files::{FileRequest, FileResponse};
 use camino::{Utf8Path, Utf8PathBuf};
+use db::images::{Image, ImageSourceType, ImageType};
 use db::Db;
+use eyre::eyre;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
 use sha2::{Digest, Sha256};
 use speq::axum::get;
-use speq::Reflect;
+use speq::{Reflect, StatusCode};
+use tokio::fs;
 
 use crate::config::Config;
-use crate::utils;
 
+use super::error::ApiError;
 use super::ext::OptionExt;
 use super::ApiResult;
 
 #[derive(Deserialize, Reflect)]
 pub struct ImageQuery {
     width: Option<u32>,
+}
+
+#[get("/images/:id")]
+pub async fn get_image(
+    Path(id): Path<String>,
+    #[query] QsQuery(query): QsQuery<ImageQuery>,
+    file: FileRequest,
+    Extension(config): Extension<Arc<Config>>,
+    Extension(db): Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
+    let mut conn = db.acquire().await?;
+
+    let image_path = config
+        .paths
+        .cache
+        .join("images")
+        .join(&id[..2])
+        .join(&id)
+        .join(build_file_name(query.width).as_ref())
+        .with_extension("jpg");
+
+    if fs::try_exists(&image_path).await? {
+        return Ok(FileResponse::from_request(file, &image_path).await?);
+    }
+
+    let image = db::images::get(&mut conn, &id)
+        .await?
+        .or_not_found("image not found")?;
+
+    if image.source_type != ImageSourceType::Tmdb {
+        return Err(ApiError {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            inner: Arc::new(eyre!(
+                "only tmdb images are currently supported by this endpoint"
+            )),
+        });
+    }
+
+    download_tmdb_image(&image, &query, &image_path).await?;
+
+    Ok(FileResponse::from_request(file, &image_path).await?)
+}
+
+fn build_file_name(width: Option<u32>) -> Cow<'static, str> {
+    if let Some(width) = width {
+        Cow::Owned(format!("w{width}"))
+    } else {
+        Cow::Borrowed("original")
+    }
+}
+
+async fn download_tmdb_image(
+    image: &Image,
+    query: &ImageQuery,
+    destination: &Utf8Path,
+) -> eyre::Result<()> {
+    // TODO: query available sizes from tmdb api
+    let available_sizes = available_tmdb_sizes(image.image_type);
+
+    let actual_size = query.width.and_then(|requested_size| {
+        available_sizes
+            .iter()
+            .copied()
+            .find(|&size| size >= requested_size)
+    });
+
+    let url = build_tmdb_url(&image.source, actual_size);
+
+    download_image(&url, destination).await?;
+
+    Ok(())
+}
+
+fn available_tmdb_sizes(image_type: ImageType) -> &'static [u32] {
+    match image_type {
+        ImageType::Poster => &[92, 154, 185, 342, 500, 780],
+        ImageType::Backdrop => &[300, 780, 1280],
+        ImageType::Thumbnail => &[92, 185, 300, 780],
+        ImageType::Profile => &[45, 185],
+    }
+}
+
+fn build_tmdb_url(path: &str, size: Option<u32>) -> String {
+    let mut url = String::from("https://image.tmdb.org/t/p/");
+    if let Some(size) = size {
+        write!(url, "w{size}").unwrap();
+    } else {
+        url += "original";
+    }
+    url += path;
+    url
+}
+
+async fn download_image(url: &str, destination: &Utf8Path) -> eyre::Result<()> {
+    tracing::info!(path = %destination, url = %url, "downloading image");
+
+    let res = reqwest::get(url).await?.error_for_status()?;
+    let bytes = res.bytes().await?;
+
+    if let Some(parent) = destination.parent() {
+        fs::create_dir_all(parent).await?;
+    }
+
+    fs::write(destination, bytes).await?;
+
+    Ok(())
 }
 
 #[derive(Deserialize, Reflect)]
@@ -37,7 +148,7 @@ pub enum MediaImageType {
 #[path(i64, MediaImageType)]
 #[response(status = 200)]
 #[response(status = 404)]
-pub async fn get_image(
+pub async fn get_image_for_item(
     Path((id, img_type)): Path<(i64, MediaImageType)>,
     #[query] QsQuery(query): QsQuery<ImageQuery>,
     file: FileRequest,
@@ -86,13 +197,20 @@ pub async fn get_image(
         MediaImageType::Thumbnail => item.thumbnail,
     };
 
-    let url = utils::get_image_url(img.or_not_found("item does not have image of requested type")?);
+    let img_id = img.or_not_found("item does not have image of requested type")?;
+    let img = db::images::get(&mut conn, &img_id)
+        .await?
+        .or_not_found("image not found")?;
 
-    // FIXME: super hacky - should use stored db values directly rather than result of utils::get_image_url
-    let url = match img_type {
-        MediaImageType::Poster => url.replacen("w342", size, 1),
-        MediaImageType::Backdrop | MediaImageType::Thumbnail => url.replacen("original", size, 1),
-    };
+    if img.source_type != ImageSourceType::Tmdb {
+        return Err(ApiError {
+            status: StatusCode::INTERNAL_SERVER_ERROR,
+            inner: Arc::new(eyre!("only tmdb images are supported by this endpoint")),
+        });
+    }
+
+    let src = &img.source;
+    let url = format!("https://image.tmdb.org/t/p/{size}{src}");
 
     let img_path = get_img_path(&url, &config.paths.cache).await?;
 
@@ -118,7 +236,16 @@ async fn get_img_path(url: &str, cache_dir: &Utf8Path) -> ApiResult<Utf8PathBuf>
             url = %url,
             "image is out of date",
         );
-        let bytes = reqwest::get(url).await.unwrap().bytes().await.unwrap();
+
+        let bytes = reqwest::get(url)
+            .await
+            .unwrap()
+            .error_for_status()
+            .unwrap()
+            .bytes()
+            .await
+            .unwrap();
+
         std::fs::create_dir_all(cached_path.parent().unwrap())?;
         std::fs::write(&cached_path, bytes)?;
     }

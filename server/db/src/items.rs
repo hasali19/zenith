@@ -9,7 +9,7 @@ use sqlx::{Acquire, FromRow, Row, SqliteConnection};
 use crate::sql::{self, Join};
 use crate::utils::arguments::QueryArguments;
 
-use super::media::{MediaImage, MediaItemType, MetadataProvider};
+use super::media::{MediaItemType, MetadataProvider};
 use super::streams::StreamType;
 
 pub struct ExternalIds {
@@ -695,15 +695,15 @@ pub async fn get_user_data_for_collections(
         .await?)
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct UpdateMetadata<'a> {
     pub name: Option<&'a str>,
     pub overview: Option<Option<&'a str>>,
     pub start_date: Option<Option<i64>>,
     pub end_date: Option<Option<i64>>,
-    pub poster: Option<Option<MediaImage<'a>>>,
-    pub backdrop: Option<Option<MediaImage<'a>>>,
-    pub thumbnail: Option<Option<MediaImage<'a>>>,
+    pub poster: Option<Option<String>>,
+    pub backdrop: Option<Option<String>>,
+    pub thumbnail: Option<Option<String>>,
     pub age_rating: Option<Option<&'a str>>,
     pub genres: Option<&'a [&'a str]>,
     pub cast: Option<&'a [UpdateCastMember<'a>]>,
@@ -715,12 +715,14 @@ pub struct UpdateMetadata<'a> {
     pub metadata_provider_key: Option<Option<&'a str>>,
 }
 
+#[derive(Debug)]
 pub struct UpdateCastMember<'a> {
     pub person_id: i64,
     pub idx: u32,
     pub character: Option<&'a str>,
 }
 
+#[derive(Debug)]
 pub struct UpdateCrewMember<'a> {
     pub person_id: i64,
     pub department: &'a str,

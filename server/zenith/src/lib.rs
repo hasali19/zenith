@@ -12,7 +12,6 @@ pub mod server;
 pub mod subtitles;
 pub mod transcoder;
 pub mod util;
-pub mod utils;
 pub mod video_prober;
 
 use axum::extract::FromRef;

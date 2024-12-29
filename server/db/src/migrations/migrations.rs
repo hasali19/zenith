@@ -1,7 +1,9 @@
-#[path = "../migrations/20220809142403_initial/mod.rs"]
+#[path = "../../migrations/20220809142403_initial/mod.rs"]
 mod _20220809142403_initial;
-#[path = "../migrations/20220911141855_flatten_media_items/mod.rs"]
+#[path = "../../migrations/20220911141855_flatten_media_items/mod.rs"]
 mod _20220911141855_flatten_media_items;
+#[path = "../../migrations/20241229133611_images/mod.rs"]
+mod _20241229133611_images;
 use sqlx::SqliteConnection;
 
 async fn _20220809142403_initial(conn: &mut SqliteConnection) -> eyre::Result<()> {
@@ -13,101 +15,105 @@ async fn _20220911141855_flatten_media_items(conn: &mut SqliteConnection) -> eyr
 }
 
 async fn _20221207120648_collections(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20221207120648_collections.sql"))
+    sqlx::query(include_str!("../../migrations/20221207120648_collections.sql"))
         .execute(conn)
         .await?;
     Ok(())
 }
 
 async fn _20221211142452_metadata(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20221211142452_metadata.sql"))
+    sqlx::query(include_str!("../../migrations/20221211142452_metadata.sql"))
         .execute(conn)
         .await?;
     Ok(())
 }
 
 async fn _20221224150754_metadata_provider(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20221224150754_metadata_provider.sql"))
+    sqlx::query(include_str!("../../migrations/20221224150754_metadata_provider.sql"))
         .execute(conn)
         .await?;
     Ok(())
 }
 
 async fn _20230121173622_trailers(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20230121173622_trailers.sql"))
+    sqlx::query(include_str!("../../migrations/20230121173622_trailers.sql"))
         .execute(conn)
         .await?;
     Ok(())
 }
 
 async fn _20230216113153_subtitle_type(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20230216113153_subtitle_type.sql"))
+    sqlx::query(include_str!("../../migrations/20230216113153_subtitle_type.sql"))
         .execute(conn)
         .await?;
     Ok(())
 }
 
 async fn _20230408085807_multiple_video_files(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20230408085807_multiple_video_files.sql"))
+    sqlx::query(include_str!("../../migrations/20230408085807_multiple_video_files.sql"))
         .execute(conn)
         .await?;
     Ok(())
 }
 
 async fn _20230410172401_video_path_stem(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20230410172401_video_path_stem.sql"))
+    sqlx::query(include_str!("../../migrations/20230410172401_video_path_stem.sql"))
         .execute(conn)
         .await?;
     Ok(())
 }
 
 async fn _20230414220002_video_scanned_at(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20230414220002_video_scanned_at.sql"))
+    sqlx::query(include_str!("../../migrations/20230414220002_video_scanned_at.sql"))
         .execute(conn)
         .await?;
     Ok(())
 }
 
 async fn _20230414222557_audio_channels(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20230414222557_audio_channels.sql"))
+    sqlx::query(include_str!("../../migrations/20230414222557_audio_channels.sql"))
         .execute(conn)
         .await?;
     Ok(())
 }
 
 async fn _20230417123322_users(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20230417123322_users.sql"))
+    sqlx::query(include_str!("../../migrations/20230417123322_users.sql"))
         .execute(conn)
         .await?;
     Ok(())
 }
 
 async fn _20230618085148_cast(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20230618085148_cast.sql"))
+    sqlx::query(include_str!("../../migrations/20230618085148_cast.sql"))
         .execute(conn)
         .await?;
     Ok(())
 }
 
 async fn _20230618162615_crew(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20230618162615_crew.sql"))
+    sqlx::query(include_str!("../../migrations/20230618162615_crew.sql"))
         .execute(conn)
         .await?;
     Ok(())
 }
 
 async fn _20231022143554_video_crop(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20231022143554_video_crop.sql"))
+    sqlx::query(include_str!("../../migrations/20231022143554_video_crop.sql"))
         .execute(conn)
         .await?;
     Ok(())
 }
 
 async fn _20231228161701_access_tokens(conn: &mut SqliteConnection) -> eyre::Result<()> {
-    sqlx::query(include_str!("../migrations/20231228161701_access_tokens.sql"))
+    sqlx::query(include_str!("../../migrations/20231228161701_access_tokens.sql"))
         .execute(conn)
         .await?;
     Ok(())
+}
+
+async fn _20241229133611_images(conn: &mut SqliteConnection) -> eyre::Result<()> {
+    _20241229133611_images::execute(conn).await
 }
 
 pub(super) fn collect(migrator: &mut super::Migrator) {
@@ -190,5 +196,10 @@ pub(super) fn collect(migrator: &mut super::Migrator) {
         "20231228161701_access_tokens",
         Box::new(|conn| Box::pin(_20231228161701_access_tokens(conn))),
         [228, 50, 183, 70, 106, 104, 7, 139, 186, 192, 51, 153, 24, 112, 117, 237, 200, 152, 181, 128, 144, 152, 178, 234, 190, 17, 71, 112, 87, 158, 113, 150],
+    );
+    migrator.push_migration(
+        "20241229133611_images",
+        Box::new(|conn| Box::pin(_20241229133611_images(conn))),
+        [34, 66, 80, 124, 52, 58, 243, 119, 33, 118, 168, 246, 97, 109, 218, 238, 181, 8, 228, 146, 168, 26, 184, 99, 158, 24, 126, 189, 152, 151, 34, 222],
     );
 }

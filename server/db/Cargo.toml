@@ -9,7 +9,6 @@ edition = "2021"
 camino = { workspace = true, features = ["serde1", "sqlx-sqlite"] }
 eyre = { workspace = true }
 itertools = { workspace = true }
-migrations = { path = "../migrations" }
 sqlx = { workspace = true, features = [
     "macros",
     "runtime-tokio-rustls",
@@ -19,3 +18,8 @@ tempfile = { workspace = true }
 tokio = { workspace = true, features = ["fs"] }
 tracing = { workspace = true }
 strum = { workspace = true, features = ["derive"] }
+uuid = { workspace = true, features = ["v4"] }
+
+[build-dependencies]
+hex = { workspace = true }
+sha2 = { workspace = true }

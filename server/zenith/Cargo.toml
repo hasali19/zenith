@@ -38,7 +38,6 @@ hyper-util = { workspace = true }
 indexmap = { workspace = true }
 itertools = { workspace = true }
 markdown = { workspace = true }
-migrations = { path = "../migrations" }
 mockall = { workspace = true, optional = true }
 notify = { workspace = true }
 openapiv3 = { workspace = true }

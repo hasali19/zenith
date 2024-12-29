@@ -2,8 +2,6 @@ use camino::Utf8PathBuf;
 use serde::{Deserialize, Serialize};
 use speq::Reflect;
 
-use crate::utils;
-
 #[derive(Debug, Serialize, Deserialize, Reflect)]
 #[serde(rename_all = "snake_case")]
 pub enum MediaItemType {
@@ -161,9 +159,9 @@ impl From<db::items::MediaItem> for MediaItem {
             overview: item.overview,
             start_date: item.start_date,
             end_date: item.end_date,
-            poster: item.poster.map(utils::get_image_url),
-            backdrop: item.backdrop.map(utils::get_image_url),
-            thumbnail: item.thumbnail.map(utils::get_image_url),
+            poster: item.poster,
+            backdrop: item.backdrop,
+            thumbnail: item.thumbnail,
             age_rating: item.age_rating,
             genres: item.genres,
             trailer: item.trailer,
@@ -187,7 +185,7 @@ impl From<db::items::MediaItem> for MediaItem {
                 .map(|member| CastMember {
                     name: member.name,
                     character: member.character,
-                    profile: member.profile.map(utils::get_image_url),
+                    profile: member.profile,
                 })
                 .collect(),
             director: item.director,

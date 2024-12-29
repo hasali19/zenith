@@ -7,8 +7,6 @@ use serde::{Deserialize, Serialize};
 use speq::axum::{delete, get, post, put};
 use speq::Reflect;
 
-use crate::utils;
-
 use super::ApiResult;
 
 #[derive(Serialize, Reflect)]
@@ -25,7 +23,7 @@ impl From<db::collections::Collection> for Collection {
             id: collection.id,
             name: collection.name,
             overview: collection.overview,
-            poster: collection.poster.map(utils::get_image_url),
+            poster: collection.poster,
         }
     }
 }

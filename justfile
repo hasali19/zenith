@@ -8,3 +8,6 @@ test *args='':
 
 coverage:
     cargo llvm-cov nextest --features mocks --json --hide-instantiations --ignore-filename-regex external | llvm-cov-pretty
+
+new-migration name:
+    ./server/db/new_migration.sh {{name}}

@@ -1,9 +1,11 @@
 #![feature(let_chains)]
 
+mod migrations;
 mod utils;
 
 pub mod access_tokens;
 pub mod collections;
+pub mod images;
 pub mod items;
 pub mod media;
 pub mod people;

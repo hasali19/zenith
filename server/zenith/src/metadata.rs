@@ -1,7 +1,8 @@
 use std::sync::LazyLock;
 
+use db::images::{ImageSourceType, ImageType};
 use db::items::MediaItem;
-use db::media::{MediaImage, MediaImageSrcType, MediaImageType, MediaItemType, MetadataProvider};
+use db::media::{MediaItemType, MetadataProvider};
 use db::people::NewPerson;
 use db::Db;
 use eyre::{eyre, Context};
@@ -270,21 +271,6 @@ async fn refresh_movie_metadata(
 
     // tracing::debug!(?metadata);
 
-    let poster = metadata.poster_path.as_deref().map(|poster| MediaImage {
-        img_type: MediaImageType::Poster,
-        src_type: MediaImageSrcType::Tmdb,
-        src: poster,
-    });
-
-    let backdrop = metadata
-        .backdrop_path
-        .as_deref()
-        .map(|backdrop| MediaImage {
-            img_type: MediaImageType::Backdrop,
-            src_type: MediaImageSrcType::Tmdb,
-            src: backdrop,
-        });
-
     let genres = metadata
         .genres
         .iter()
@@ -315,6 +301,14 @@ async fn refresh_movie_metadata(
     let trailer = get_trailer(&metadata.videos.results);
     let cast = get_cast(&mut *db, &metadata.credits.cast).await?;
     let crew = get_crew(&mut *db, &metadata.credits.crew).await?;
+
+    let poster = get_image_id(&mut *db, ImageType::Poster, metadata.poster_path.as_deref()).await?;
+    let backdrop = get_image_id(
+        &mut *db,
+        ImageType::Backdrop,
+        metadata.backdrop_path.as_deref(),
+    )
+    .await?;
 
     let data = db::items::UpdateMetadata {
         name: Some(&metadata.title),
@@ -372,21 +366,6 @@ async fn refresh_tv_show_metadata(
         .and_then(|date| Some(date.with_time(Time::from_hms(0, 0, 0).ok()?)))
         .map(|dt| dt.assume_utc().unix_timestamp());
 
-    let poster = metadata.poster_path.as_deref().map(|poster| MediaImage {
-        img_type: MediaImageType::Poster,
-        src_type: MediaImageSrcType::Tmdb,
-        src: poster,
-    });
-
-    let backdrop = metadata
-        .backdrop_path
-        .as_deref()
-        .map(|backdrop| MediaImage {
-            img_type: MediaImageType::Backdrop,
-            src_type: MediaImageSrcType::Tmdb,
-            src: backdrop,
-        });
-
     let genres = metadata
         .genres
         .iter()
@@ -411,6 +390,14 @@ async fn refresh_tv_show_metadata(
     let trailer = get_trailer(&metadata.videos.results);
     let cast = get_cast(&mut *db, &metadata.aggregate_credits.cast).await?;
     let crew = get_crew(&mut *db, &metadata.aggregate_credits.crew).await?;
+
+    let poster = get_image_id(&mut *db, ImageType::Poster, metadata.poster_path.as_deref()).await?;
+    let backdrop = get_image_id(
+        &mut *db,
+        ImageType::Backdrop,
+        metadata.backdrop_path.as_deref(),
+    )
+    .await?;
 
     let data = db::items::UpdateMetadata {
         name: Some(&metadata.name),
@@ -479,15 +466,11 @@ async fn refresh_tv_season_metadata(
 
     // tracing::debug!(?metadata);
 
-    let poster = metadata.poster_path.as_deref().map(|poster| MediaImage {
-        img_type: MediaImageType::Poster,
-        src_type: MediaImageSrcType::Tmdb,
-        src: poster,
-    });
-
     let trailer = get_trailer(&metadata.videos.results);
     let cast = get_cast(&mut *db, &metadata.aggregate_credits.cast).await?;
     let crew = get_crew(&mut *db, &metadata.aggregate_credits.crew).await?;
+
+    let poster = get_image_id(&mut *db, ImageType::Poster, metadata.poster_path.as_deref()).await?;
 
     let metadata_key = format!("{show_id}:{season_number}");
     let data = db::items::UpdateMetadata {
@@ -571,15 +554,11 @@ async fn refresh_tv_episode_metadata(
         .next()
         .map(|image| image.file_path);
 
-    let thumbnail = thumbnail.as_deref().map(|thumbnail| MediaImage {
-        img_type: MediaImageType::Thumbnail,
-        src_type: MediaImageSrcType::Tmdb,
-        src: thumbnail,
-    });
-
     let trailer = get_trailer(&metadata.videos.results);
     let cast = get_cast(&mut *db, &metadata.credits.cast).await?;
     let crew = get_crew(&mut *db, &metadata.credits.crew).await?;
+
+    let thumbnail = get_image_id(&mut *db, ImageType::Thumbnail, thumbnail.as_deref()).await?;
 
     let metadata_key = format!("{show_id}:{season_number}:{episode_number}");
     let data = db::items::UpdateMetadata {
@@ -604,6 +583,20 @@ async fn refresh_tv_episode_metadata(
     db::items::update_metadata(&mut *db, item.id, data).await?;
 
     Ok(())
+}
+
+async fn get_image_id(
+    conn: &mut SqliteConnection,
+    image_type: ImageType,
+    image_path: Option<&str>,
+) -> eyre::Result<Option<String>> {
+    let id = if let Some(image_path) = image_path {
+        Some(db::images::get_or_create(conn, image_type, ImageSourceType::Tmdb, image_path).await?)
+    } else {
+        None
+    };
+
+    Ok(id)
 }
 
 fn get_trailer(videos: &[Video]) -> Option<String> {
@@ -631,20 +624,20 @@ async fn get_cast<'a>(
 ) -> eyre::Result<Vec<db::items::UpdateCastMember<'a>>> {
     let mut updates = vec![];
     for actor in cast {
+        let profile = get_image_id(
+            &mut *conn,
+            ImageType::Profile,
+            actor.profile_path.as_deref(),
+        )
+        .await?;
+
         let person_id = db::people::get_by_tmdb_id_or_create(
             conn,
             actor.id,
             NewPerson {
                 tmdb_id: None,
                 name: &actor.name,
-                profile: actor
-                    .profile_path
-                    .as_deref()
-                    .map(|profile_path| MediaImage {
-                        img_type: MediaImageType::Profile,
-                        src_type: MediaImageSrcType::Tmdb,
-                        src: profile_path,
-                    }),
+                profile,
             },
         )
         .await?;
@@ -667,20 +660,20 @@ async fn get_crew<'a>(
 ) -> eyre::Result<Vec<db::items::UpdateCrewMember<'a>>> {
     let mut updates = vec![];
     for crew_member in cast {
+        let profile = get_image_id(
+            &mut *conn,
+            ImageType::Profile,
+            crew_member.profile_path.as_deref(),
+        )
+        .await?;
+
         let person_id = db::people::get_by_tmdb_id_or_create(
             conn,
             crew_member.id,
             NewPerson {
                 tmdb_id: None,
                 name: &crew_member.name,
-                profile: crew_member
-                    .profile_path
-                    .as_deref()
-                    .map(|profile_path| MediaImage {
-                        img_type: MediaImageType::Profile,
-                        src_type: MediaImageSrcType::Tmdb,
-                        src: profile_path,
-                    }),
+                profile,
             },
         )
         .await?;

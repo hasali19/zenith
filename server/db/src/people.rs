@@ -1,12 +1,11 @@
 use sqlx::SqliteConnection;
 
-use crate::media::MediaImage;
 use crate::sql;
 
 pub struct NewPerson<'a> {
     pub tmdb_id: Option<i32>,
     pub name: &'a str,
-    pub profile: Option<MediaImage<'a>>,
+    pub profile: Option<String>,
 }
 
 pub async fn create(conn: &mut SqliteConnection, person: NewPerson<'_>) -> eyre::Result<i64> {

@@ -58,13 +58,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     migrations.sort_by(|a, b| a.name.cmp(&b.name));
 
-    let mut out = File::create("src/migrations.rs")?;
+    let mut out = File::create("src/migrations/migrations.rs")?;
 
     for migration in &migrations {
         if let MigrationKind::Rust = migration.kind {
             let name = &migration.name;
             let path = migration.path.to_str().unwrap().replace('\\', "/");
-            writeln!(out, "#[path = \"../{path}\"]")?;
+            writeln!(out, "#[path = \"../../{path}\"]")?;
             writeln!(out, "mod _{name};")?;
         }
     }
@@ -83,7 +83,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match migration.kind {
             MigrationKind::Sql => {
                 let path = migration.path.to_str().unwrap().replace('\\', "/");
-                writeln!(out, "    sqlx::query(include_str!(\"../{path}\"))",)?;
+                writeln!(out, "    sqlx::query(include_str!(\"../../{path}\"))",)?;
                 writeln!(out, "        .execute(conn)")?;
                 writeln!(out, "        .await?;")?;
                 writeln!(out, "    Ok(())")?;

@@ -1,4 +1,5 @@
 use axum::body::Body;
+use db::images::ImageSourceType;
 use hyper::{Request, StatusCode};
 use serde_json::json;
 use test_macros::test;
@@ -55,6 +56,7 @@ async fn find_match_for_movie(mut app: TestApp) {
                 "cast": [],
                 "crew": [],
             },
+            "poster_path": "/poster.jpg",
         })))
         .mount(&app.mock_server)
         .await;
@@ -73,6 +75,19 @@ async fn find_match_for_movie(mut app: TestApp) {
         .unwrap();
 
     assert_eq!(res.status(), StatusCode::OK);
+
+    let mut conn = app.db.acquire().await.unwrap();
+    let item = db::items::get(&mut conn, 1).await.unwrap().unwrap();
+
+    assert!(item.poster.is_some());
+
+    let poster = db::images::get(&mut conn, item.poster.as_deref().unwrap())
+        .await
+        .unwrap()
+        .unwrap();
+
+    assert_eq!(poster.source_type, ImageSourceType::Tmdb);
+    assert_eq!(poster.source, "/poster.jpg");
 }
 
 #[test(with_app)]
