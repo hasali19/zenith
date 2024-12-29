@@ -36,6 +36,7 @@ test_snapshot!(
     get_multiple_items_by_ids,
     "/items?ids[]=1&ids[]=4&ids[]=7&ids[]=9",
 );
+test_snapshot!(search_by_name, "/items?name=Movie%201");
 test_snapshot!(get_continue_watching, "/items/continue_watching");
 
 #[test(with_app)]

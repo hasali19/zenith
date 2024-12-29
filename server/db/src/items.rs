@@ -301,6 +301,7 @@ pub struct Query<'a> {
     pub parent_id: Option<i64>,
     pub grandparent_id: Option<i64>,
     pub collection_id: Option<i64>,
+    pub name: Option<&'a str>,
     pub sort_by: &'a [SortField],
     pub limit: Option<u32>,
     pub offset: Option<u32>,
@@ -315,6 +316,8 @@ pub enum SortField {
 }
 
 pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Result<Vec<MediaItem>> {
+    tracing::debug!("querying with params {query:?}");
+
     let mut args = QueryArguments::default();
     let mut conditions = vec![];
     let mut joins = vec![
@@ -351,6 +354,11 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         ));
         conditions.push("c.collection_id = ?".to_owned());
         args.add(id)?;
+    }
+
+    if let Some(name) = query.name {
+        conditions.push("m.name LIKE concat('%', ?, '%')".to_owned());
+        args.add(name)?;
     }
 
     let order_by = query

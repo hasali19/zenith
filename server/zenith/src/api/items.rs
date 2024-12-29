@@ -30,6 +30,7 @@ struct ItemsQuery {
     parent_id: Option<i64>,
     grandparent_id: Option<i64>,
     collection_id: Option<i64>,
+    name: Option<String>,
     #[serde(default)]
     sort_by: Vec<ItemSortField>,
     limit: Option<u32>,
@@ -70,6 +71,7 @@ async fn get_items(
         parent_id: query.parent_id,
         grandparent_id: query.grandparent_id,
         collection_id: query.collection_id,
+        name: query.name.as_deref(),
         sort_by: &query
             .sort_by
             .iter()
