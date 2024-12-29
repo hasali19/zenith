@@ -26,7 +26,8 @@ use super::ext::OptionExt;
 struct ItemsQuery {
     #[serde(default)]
     ids: Vec<i64>,
-    item_type: Option<MediaItemType>,
+    #[serde(default)]
+    item_type: Vec<MediaItemType>,
     parent_id: Option<i64>,
     grandparent_id: Option<i64>,
     collection_id: Option<i64>,
@@ -67,7 +68,7 @@ async fn get_items(
         } else {
             Some(&query.ids)
         },
-        item_type: query.item_type.map(Into::into),
+        item_types: &query.item_type.into_iter().map(Into::into).collect_vec(),
         parent_id: query.parent_id,
         grandparent_id: query.grandparent_id,
         collection_id: query.collection_id,

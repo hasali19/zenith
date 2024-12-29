@@ -17,7 +17,7 @@ pub async fn get_movies(user: auth::User, db: Extension<Db>) -> ApiResult<Json<V
     let mut conn = db.acquire().await?;
 
     let query = db::items::Query {
-        item_type: Some(MediaItemType::Movie),
+        item_types: &[MediaItemType::Movie],
         sort_by: &[SortField::Name],
         ..Default::default()
     };

@@ -297,7 +297,7 @@ const SUBTITLE_COLUMNS: &[&str] = &[
 #[derive(Debug, Default)]
 pub struct Query<'a> {
     pub ids: Option<&'a [i64]>,
-    pub item_type: Option<MediaItemType>,
+    pub item_types: &'a [MediaItemType],
     pub parent_id: Option<i64>,
     pub grandparent_id: Option<i64>,
     pub collection_id: Option<i64>,
@@ -333,9 +333,12 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
         }
     }
 
-    if let Some(item_type) = query.item_type {
-        conditions.push("m.item_type = ?".to_owned());
-        args.add(item_type)?;
+    if !query.item_types.is_empty() {
+        let placeholders = sql::Placeholders(query.item_types.len());
+        conditions.push(format!("m.item_type IN ({placeholders})"));
+        for item_type in query.item_types {
+            args.add(item_type)?;
+        }
     }
 
     if let Some(id) = query.parent_id {

@@ -18,7 +18,7 @@ pub async fn get_shows(user: auth::User, db: Extension<Db>) -> ApiResult<impl In
     let mut conn = db.acquire().await?;
 
     let query = db::items::Query {
-        item_type: Some(MediaItemType::Show),
+        item_types: &[MediaItemType::Show],
         sort_by: &[SortField::Name],
         ..Default::default()
     };
@@ -45,7 +45,7 @@ pub async fn get_seasons(
     let mut conn = db.acquire().await?;
 
     let query = db::items::Query {
-        item_type: Some(MediaItemType::Season),
+        item_types: &[MediaItemType::Season],
         parent_id: Some(*show_id),
         sort_by: &[SortField::ParentIndex],
         ..Default::default()
@@ -65,7 +65,7 @@ pub async fn get_show_episodes(
     let mut conn = db.acquire().await?;
 
     let query = db::items::Query {
-        item_type: Some(MediaItemType::Episode),
+        item_types: &[MediaItemType::Episode],
         grandparent_id: Some(*show_id),
         sort_by: &[SortField::GrandparentIndex, SortField::ParentIndex],
         ..Default::default()
@@ -85,7 +85,7 @@ pub async fn get_episodes(
     let mut conn = db.acquire().await?;
 
     let query = db::items::Query {
-        item_type: Some(MediaItemType::Episode),
+        item_types: &[MediaItemType::Episode],
         parent_id: Some(*season_id),
         sort_by: &[SortField::ParentIndex],
         ..Default::default()
