@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart' as video_player;
 import 'package:zenith/api.dart' as api;
-import 'package:zenith/fade_in_image.dart';
+import 'package:zenith/constants.dart';
+import 'package:zenith/image.dart';
 import 'package:zenith/screens/video_player/media_title.dart';
 import 'package:zenith/screens/video_player/ui.dart';
 
@@ -55,6 +56,13 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
       return uri.replace(queryParameters: params).toString();
     }
 
+    String? buildImageUrl(api.ImageId? id, int width) {
+      if (id == null) {
+        return null;
+      }
+      return withToken(_api.getImageUrl(id, width: width));
+    }
+
     final items = widget.items
         .map(
           (item) => video_player.VideoItem(
@@ -76,10 +84,9 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
               seriesTitle: item.grandparent?.name,
               seasonNumber: item.grandparent?.index,
               episodeNumber: item.parent?.index,
-              posterUrl: withToken(
-                  _api.getMediaImageUrl(item.id, api.ImageType.poster)),
-              backdropUrl: withToken(
-                  _api.getMediaImageUrl(item.id, api.ImageType.backdrop)),
+              posterUrl: buildImageUrl(item.poster, mediaPosterImageWidth),
+              backdropUrl:
+                  buildImageUrl(item.backdrop, mediaBackdropImageWidth),
               type: switch (item.type) {
                 api.MediaType.movie => video_player.MediaType.movie,
                 api.MediaType.episode => video_player.MediaType.tvShow,
@@ -98,11 +105,10 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
     return Scaffold(
       body: Stack(
         children: [
-          Positioned.fill(
-            child: ZenithFadeInImage.dio(
-              url: _api.getMediaImageUrl(item.id, api.ImageType.backdrop),
+          if (item.backdrop case api.ImageId id)
+            Positioned.fill(
+              child: ZenithApiImage(id: id, requestWidth: 780),
             ),
-          ),
           ListenableBuilder(
             listenable: _controller,
             builder: (context, child) {

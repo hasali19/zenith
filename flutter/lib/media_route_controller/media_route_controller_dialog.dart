@@ -5,7 +5,7 @@ import 'package:cast_framework/cast_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
-import 'package:zenith/fade_in_image.dart';
+import 'package:zenith/image.dart';
 import 'package:zenith/format_utils.dart';
 import 'package:zenith/media_route_controller/media_route_controller_controller.dart';
 import 'package:zenith/screens/video_player/play_pause_button.dart';
@@ -101,8 +101,8 @@ class _MediaRouteControllerDialogState
             children: [
               if (mediaInfo?.metadata?.backdrop != null)
                 Flexible(
-                  child: ZenithFadeInImage.dio(
-                    url: mediaInfo!.metadata!.backdrop!.url,
+                  child: ZenithImage(
+                    image: NetworkImage(mediaInfo!.metadata!.backdrop!.url),
                   ),
                 ),
               const SizedBox(height: 8),

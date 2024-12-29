@@ -1,6 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/constants.dart';
+import 'package:zenith/image.dart';
 import 'package:zenith/responsive.dart';
 
 class CastList extends StatelessWidget {
@@ -90,20 +91,22 @@ class _CastListItem extends StatelessWidget {
   }
 
   Widget _buildProfileImage() {
-    return castMember.profile == null
-        ? SizedBox(
-            width: itemWidth,
-            height: itemHeight,
-            child: const Center(
-              child: Icon(Icons.person, size: 48),
-            ),
-          )
-        : CachedNetworkImage(
-            imageUrl: castMember.profile!,
-            width: itemWidth,
-            height: itemHeight,
-            fit: BoxFit.cover,
-          );
+    return switch (castMember.profile) {
+      null => SizedBox(
+          width: itemWidth,
+          height: itemHeight,
+          child: const Center(
+            child: Icon(Icons.person, size: 48),
+          ),
+        ),
+      final profile => ZenithApiImage(
+          id: profile,
+          requestWidth: mediaProfileImageWidth,
+          width: itemWidth,
+          height: itemHeight,
+          fit: BoxFit.cover,
+        ),
+    };
   }
 
   Column _buildTextContent() {

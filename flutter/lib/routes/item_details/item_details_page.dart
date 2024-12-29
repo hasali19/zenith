@@ -6,7 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:sliver_tools/sliver_tools.dart';
-import 'package:zenith/fade_in_image.dart';
+import 'package:zenith/constants.dart';
+import 'package:zenith/image.dart';
 import 'package:zenith/media_route_button/media_route_button.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/router.dart';
@@ -107,9 +108,10 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (isDesktop)
-            ZenithFadeInImage.dio(
-              url: widget.state.backdropUrl,
+          if (isDesktop && widget.state.backdrop != null)
+            ZenithApiImage(
+              id: widget.state.backdrop!,
+              requestWidth: mediaBackdropImageWidth,
             ),
           _BackdropBlur(
             child: CustomScrollView(

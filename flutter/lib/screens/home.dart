@@ -1,5 +1,4 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:dio_image_provider/dio_image_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +7,8 @@ import 'package:gap/gap.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/constants.dart';
+import 'package:zenith/image.dart';
 import 'package:zenith/poster_item.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/router.dart';
@@ -95,8 +96,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           endPadding: sectionEndPadding,
           items: items,
           itemBuilder: (context, item) => PosterItem(
-            poster: api.getMediaImageUrl(item.id, ImageType.poster),
-            posterFallback: posterFallback,
+            imageId: item.poster,
+            requestWidth: mediaPosterImageWidth,
+            fallbackIcon: posterFallback,
             title: item.name,
             subtitle: item.startDate?.year.toString() ?? '',
             isWatched: true, // hide new icon since they're all new
@@ -138,7 +140,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 endPadding: sectionEndPadding,
                 items: data.continueWatching,
                 itemBuilder: (context, item) => ContinueWatchingCard(
-                  thumbnail: api.getMediaImageUrl(item.id, ImageType.thumbnail),
+                  imageId: item.thumbnail,
+                  requestWidth: mediaThumbnailImageWidth,
                   title: item.name,
                   subtitle: item.type == MediaType.episode
                       ? '${item.getSeasonEpisode()!}: ${item.grandparent!.name}'
@@ -243,7 +246,8 @@ class _SectionState<T> extends State<Section<T>> {
 }
 
 class ContinueWatchingCard extends StatelessWidget {
-  final String thumbnail;
+  final ImageId? imageId;
+  final int requestWidth;
   final String title;
   final String subtitle;
   final double progress;
@@ -252,7 +256,8 @@ class ContinueWatchingCard extends StatelessWidget {
 
   const ContinueWatchingCard({
     super.key,
-    required this.thumbnail,
+    required this.imageId,
+    required this.requestWidth,
     required this.title,
     required this.subtitle,
     required this.progress,
@@ -272,45 +277,54 @@ class ContinueWatchingCard extends StatelessWidget {
 
     return AspectRatio(
       aspectRatio: 16 / 9,
-      child: Card(
-        margin: EdgeInsets.zero,
-        elevation: cardTheme.elevation ?? 1,
-        clipBehavior: Clip.hardEdge,
-        shape: cardTheme.shape,
-        child: Ink(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: DioImage.string(thumbnail),
-              fit: BoxFit.cover,
-              filterQuality: FilterQuality.medium,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Card(
+              elevation: cardTheme.elevation ?? 1,
+              margin: EdgeInsets.zero,
+              clipBehavior: Clip.hardEdge,
+              shape: cardTheme.shape,
+              child: switch (imageId) {
+                null => Center(child: Icon(Icons.video_file, size: 40)),
+                final imageId =>
+                  ZenithApiImage(id: imageId, requestWidth: requestWidth)
+              },
             ),
           ),
-          child: InkWell(
-            onTap: onTap,
-            child: Container(
-              alignment: Alignment.bottomLeft,
-              padding: EdgeInsets.all(padding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextOneLine(title, style: titleStyle),
-                  TextOneLine(subtitle, style: subtitleStyle),
-                  if (progress > 0.05 && progress < 0.9) ...[
-                    const Gap(8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: Colors.white,
-                      ),
-                    ),
-                  ]
-                ],
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              clipBehavior: Clip.hardEdge,
+              shape: cardTheme.shape,
+              child: InkWell(
+                onTap: onTap,
+                child: Container(
+                  alignment: Alignment.bottomLeft,
+                  padding: EdgeInsets.all(padding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextOneLine(title, style: titleStyle),
+                      TextOneLine(subtitle, style: subtitleStyle),
+                      if (progress > 0.05 && progress < 0.9) ...[
+                        const Gap(8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            backgroundColor: Colors.white,
+                          ),
+                        ),
+                      ]
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

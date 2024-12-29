@@ -17,8 +17,8 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$ItemDetailsState {
   MediaItem get item => throw _privateConstructorUsedError;
-  String get posterUrl => throw _privateConstructorUsedError;
-  String get backdropUrl => throw _privateConstructorUsedError;
+  ImageId? get poster => throw _privateConstructorUsedError;
+  ImageId? get backdrop => throw _privateConstructorUsedError;
   List<EpisodeGroupState> get seasons => throw _privateConstructorUsedError;
   PlayableState? get playable => throw _privateConstructorUsedError;
   bool get isWatched => throw _privateConstructorUsedError;
@@ -40,8 +40,8 @@ abstract class $ItemDetailsStateCopyWith<$Res> {
   @useResult
   $Res call(
       {MediaItem item,
-      String posterUrl,
-      String backdropUrl,
+      ImageId? poster,
+      ImageId? backdrop,
       List<EpisodeGroupState> seasons,
       PlayableState? playable,
       bool isWatched,
@@ -67,8 +67,8 @@ class _$ItemDetailsStateCopyWithImpl<$Res, $Val extends ItemDetailsState>
   @override
   $Res call({
     Object? item = null,
-    Object? posterUrl = null,
-    Object? backdropUrl = null,
+    Object? poster = freezed,
+    Object? backdrop = freezed,
     Object? seasons = null,
     Object? playable = freezed,
     Object? isWatched = null,
@@ -80,14 +80,14 @@ class _$ItemDetailsStateCopyWithImpl<$Res, $Val extends ItemDetailsState>
           ? _value.item
           : item // ignore: cast_nullable_to_non_nullable
               as MediaItem,
-      posterUrl: null == posterUrl
-          ? _value.posterUrl
-          : posterUrl // ignore: cast_nullable_to_non_nullable
-              as String,
-      backdropUrl: null == backdropUrl
-          ? _value.backdropUrl
-          : backdropUrl // ignore: cast_nullable_to_non_nullable
-              as String,
+      poster: freezed == poster
+          ? _value.poster
+          : poster // ignore: cast_nullable_to_non_nullable
+              as ImageId?,
+      backdrop: freezed == backdrop
+          ? _value.backdrop
+          : backdrop // ignore: cast_nullable_to_non_nullable
+              as ImageId?,
       seasons: null == seasons
           ? _value.seasons
           : seasons // ignore: cast_nullable_to_non_nullable
@@ -136,8 +136,8 @@ abstract class _$$ItemDetailsStateImplCopyWith<$Res>
   @useResult
   $Res call(
       {MediaItem item,
-      String posterUrl,
-      String backdropUrl,
+      ImageId? poster,
+      ImageId? backdrop,
       List<EpisodeGroupState> seasons,
       PlayableState? playable,
       bool isWatched,
@@ -162,8 +162,8 @@ class __$$ItemDetailsStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? item = null,
-    Object? posterUrl = null,
-    Object? backdropUrl = null,
+    Object? poster = freezed,
+    Object? backdrop = freezed,
     Object? seasons = null,
     Object? playable = freezed,
     Object? isWatched = null,
@@ -175,14 +175,14 @@ class __$$ItemDetailsStateImplCopyWithImpl<$Res>
           ? _value.item
           : item // ignore: cast_nullable_to_non_nullable
               as MediaItem,
-      posterUrl: null == posterUrl
-          ? _value.posterUrl
-          : posterUrl // ignore: cast_nullable_to_non_nullable
-              as String,
-      backdropUrl: null == backdropUrl
-          ? _value.backdropUrl
-          : backdropUrl // ignore: cast_nullable_to_non_nullable
-              as String,
+      poster: freezed == poster
+          ? _value.poster
+          : poster // ignore: cast_nullable_to_non_nullable
+              as ImageId?,
+      backdrop: freezed == backdrop
+          ? _value.backdrop
+          : backdrop // ignore: cast_nullable_to_non_nullable
+              as ImageId?,
       seasons: null == seasons
           ? _value._seasons
           : seasons // ignore: cast_nullable_to_non_nullable
@@ -212,8 +212,8 @@ class __$$ItemDetailsStateImplCopyWithImpl<$Res>
 class _$ItemDetailsStateImpl implements _ItemDetailsState {
   _$ItemDetailsStateImpl(
       {required this.item,
-      required this.posterUrl,
-      required this.backdropUrl,
+      required this.poster,
+      required this.backdrop,
       required final List<EpisodeGroupState> seasons,
       required this.playable,
       required this.isWatched,
@@ -224,9 +224,9 @@ class _$ItemDetailsStateImpl implements _ItemDetailsState {
   @override
   final MediaItem item;
   @override
-  final String posterUrl;
+  final ImageId? poster;
   @override
-  final String backdropUrl;
+  final ImageId? backdrop;
   final List<EpisodeGroupState> _seasons;
   @override
   List<EpisodeGroupState> get seasons {
@@ -246,7 +246,7 @@ class _$ItemDetailsStateImpl implements _ItemDetailsState {
 
   @override
   String toString() {
-    return 'ItemDetailsState(item: $item, posterUrl: $posterUrl, backdropUrl: $backdropUrl, seasons: $seasons, playable: $playable, isWatched: $isWatched, durationText: $durationText, videoDownloadUrl: $videoDownloadUrl)';
+    return 'ItemDetailsState(item: $item, poster: $poster, backdrop: $backdrop, seasons: $seasons, playable: $playable, isWatched: $isWatched, durationText: $durationText, videoDownloadUrl: $videoDownloadUrl)';
   }
 
   @override
@@ -255,10 +255,9 @@ class _$ItemDetailsStateImpl implements _ItemDetailsState {
         (other.runtimeType == runtimeType &&
             other is _$ItemDetailsStateImpl &&
             (identical(other.item, item) || other.item == item) &&
-            (identical(other.posterUrl, posterUrl) ||
-                other.posterUrl == posterUrl) &&
-            (identical(other.backdropUrl, backdropUrl) ||
-                other.backdropUrl == backdropUrl) &&
+            (identical(other.poster, poster) || other.poster == poster) &&
+            (identical(other.backdrop, backdrop) ||
+                other.backdrop == backdrop) &&
             const DeepCollectionEquality().equals(other._seasons, _seasons) &&
             (identical(other.playable, playable) ||
                 other.playable == playable) &&
@@ -274,8 +273,8 @@ class _$ItemDetailsStateImpl implements _ItemDetailsState {
   int get hashCode => Object.hash(
       runtimeType,
       item,
-      posterUrl,
-      backdropUrl,
+      poster,
+      backdrop,
       const DeepCollectionEquality().hash(_seasons),
       playable,
       isWatched,
@@ -295,8 +294,8 @@ class _$ItemDetailsStateImpl implements _ItemDetailsState {
 abstract class _ItemDetailsState implements ItemDetailsState {
   factory _ItemDetailsState(
       {required final MediaItem item,
-      required final String posterUrl,
-      required final String backdropUrl,
+      required final ImageId? poster,
+      required final ImageId? backdrop,
       required final List<EpisodeGroupState> seasons,
       required final PlayableState? playable,
       required final bool isWatched,
@@ -306,9 +305,9 @@ abstract class _ItemDetailsState implements ItemDetailsState {
   @override
   MediaItem get item;
   @override
-  String get posterUrl;
+  ImageId? get poster;
   @override
-  String get backdropUrl;
+  ImageId? get backdrop;
   @override
   List<EpisodeGroupState> get seasons;
   @override
@@ -702,7 +701,7 @@ abstract class _EpisodeGroupState implements EpisodeGroupState {
 /// @nodoc
 mixin _$EpisodeState {
   int get id => throw _privateConstructorUsedError;
-  String get thumbnailUrl => throw _privateConstructorUsedError;
+  ImageId? get thumbnail => throw _privateConstructorUsedError;
   String? get overview => throw _privateConstructorUsedError;
   bool get isWatched => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
@@ -722,7 +721,7 @@ abstract class $EpisodeStateCopyWith<$Res> {
   @useResult
   $Res call(
       {int id,
-      String thumbnailUrl,
+      ImageId? thumbnail,
       String? overview,
       bool isWatched,
       String title});
@@ -744,7 +743,7 @@ class _$EpisodeStateCopyWithImpl<$Res, $Val extends EpisodeState>
   @override
   $Res call({
     Object? id = null,
-    Object? thumbnailUrl = null,
+    Object? thumbnail = freezed,
     Object? overview = freezed,
     Object? isWatched = null,
     Object? title = null,
@@ -754,10 +753,10 @@ class _$EpisodeStateCopyWithImpl<$Res, $Val extends EpisodeState>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
-      thumbnailUrl: null == thumbnailUrl
-          ? _value.thumbnailUrl
-          : thumbnailUrl // ignore: cast_nullable_to_non_nullable
-              as String,
+      thumbnail: freezed == thumbnail
+          ? _value.thumbnail
+          : thumbnail // ignore: cast_nullable_to_non_nullable
+              as ImageId?,
       overview: freezed == overview
           ? _value.overview
           : overview // ignore: cast_nullable_to_non_nullable
@@ -784,7 +783,7 @@ abstract class _$$EpisodeStateImplCopyWith<$Res>
   @useResult
   $Res call(
       {int id,
-      String thumbnailUrl,
+      ImageId? thumbnail,
       String? overview,
       bool isWatched,
       String title});
@@ -804,7 +803,7 @@ class __$$EpisodeStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? thumbnailUrl = null,
+    Object? thumbnail = freezed,
     Object? overview = freezed,
     Object? isWatched = null,
     Object? title = null,
@@ -814,10 +813,10 @@ class __$$EpisodeStateImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
-      thumbnailUrl: null == thumbnailUrl
-          ? _value.thumbnailUrl
-          : thumbnailUrl // ignore: cast_nullable_to_non_nullable
-              as String,
+      thumbnail: freezed == thumbnail
+          ? _value.thumbnail
+          : thumbnail // ignore: cast_nullable_to_non_nullable
+              as ImageId?,
       overview: freezed == overview
           ? _value.overview
           : overview // ignore: cast_nullable_to_non_nullable
@@ -839,7 +838,7 @@ class __$$EpisodeStateImplCopyWithImpl<$Res>
 class _$EpisodeStateImpl implements _EpisodeState {
   _$EpisodeStateImpl(
       {required this.id,
-      required this.thumbnailUrl,
+      required this.thumbnail,
       required this.overview,
       required this.isWatched,
       required this.title});
@@ -847,7 +846,7 @@ class _$EpisodeStateImpl implements _EpisodeState {
   @override
   final int id;
   @override
-  final String thumbnailUrl;
+  final ImageId? thumbnail;
   @override
   final String? overview;
   @override
@@ -857,7 +856,7 @@ class _$EpisodeStateImpl implements _EpisodeState {
 
   @override
   String toString() {
-    return 'EpisodeState(id: $id, thumbnailUrl: $thumbnailUrl, overview: $overview, isWatched: $isWatched, title: $title)';
+    return 'EpisodeState(id: $id, thumbnail: $thumbnail, overview: $overview, isWatched: $isWatched, title: $title)';
   }
 
   @override
@@ -866,8 +865,8 @@ class _$EpisodeStateImpl implements _EpisodeState {
         (other.runtimeType == runtimeType &&
             other is _$EpisodeStateImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.thumbnailUrl, thumbnailUrl) ||
-                other.thumbnailUrl == thumbnailUrl) &&
+            (identical(other.thumbnail, thumbnail) ||
+                other.thumbnail == thumbnail) &&
             (identical(other.overview, overview) ||
                 other.overview == overview) &&
             (identical(other.isWatched, isWatched) ||
@@ -877,7 +876,7 @@ class _$EpisodeStateImpl implements _EpisodeState {
 
   @override
   int get hashCode =>
-      Object.hash(runtimeType, id, thumbnailUrl, overview, isWatched, title);
+      Object.hash(runtimeType, id, thumbnail, overview, isWatched, title);
 
   /// Create a copy of EpisodeState
   /// with the given fields replaced by the non-null parameter values.
@@ -891,7 +890,7 @@ class _$EpisodeStateImpl implements _EpisodeState {
 abstract class _EpisodeState implements EpisodeState {
   factory _EpisodeState(
       {required final int id,
-      required final String thumbnailUrl,
+      required final ImageId? thumbnail,
       required final String? overview,
       required final bool isWatched,
       required final String title}) = _$EpisodeStateImpl;
@@ -899,7 +898,7 @@ abstract class _EpisodeState implements EpisodeState {
   @override
   int get id;
   @override
-  String get thumbnailUrl;
+  ImageId? get thumbnail;
   @override
   String? get overview;
   @override

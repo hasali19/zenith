@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:zenith/fade_in_image.dart';
+import 'package:zenith/api.dart';
+import 'package:zenith/image.dart';
 import 'package:zenith/text_one_line.dart';
 import 'package:zenith/theme.dart';
 
 class PosterItem extends StatelessWidget {
-  final String? poster;
-  final IconData posterFallback;
+  final ImageId? imageId;
+  final int requestWidth;
+  final IconData fallbackIcon;
   final String title;
   final String? subtitle;
   final bool isWatched;
@@ -15,8 +17,9 @@ class PosterItem extends StatelessWidget {
 
   const PosterItem({
     super.key,
-    required this.poster,
-    required this.posterFallback,
+    required this.imageId,
+    required this.requestWidth,
+    required this.fallbackIcon,
     required this.title,
     required this.subtitle,
     required this.isWatched,
@@ -41,11 +44,11 @@ class PosterItem extends StatelessWidget {
                   margin: EdgeInsets.zero,
                   clipBehavior: Clip.hardEdge,
                   shape: cardTheme.shape,
-                  child: poster != null
-                      ? ZenithFadeInImage.dio(url: poster!)
-                      : Center(
-                          child: Icon(posterFallback, size: 40),
-                        ),
+                  child: switch (imageId) {
+                    null => Center(child: Icon(fallbackIcon, size: 40)),
+                    final imageId =>
+                      ZenithApiImage(id: imageId, requestWidth: requestWidth)
+                  },
                 ),
               ),
               if (!isWatched)

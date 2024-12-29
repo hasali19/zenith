@@ -13,6 +13,8 @@ enum MediaType {
   episode,
 }
 
+extension type ImageId(String value) {}
+
 class MediaItem {
   final int id;
   final MediaType type;
@@ -20,6 +22,9 @@ class MediaItem {
   final String? overview;
   final DateTime? startDate;
   final DateTime? endDate;
+  final ImageId? poster;
+  final ImageId? backdrop;
+  final ImageId? thumbnail;
   final MediaItemParent? parent;
   final MediaItemParent? grandparent;
   final VideoFile? videoFile;
@@ -38,6 +43,9 @@ class MediaItem {
     required this.overview,
     required this.startDate,
     required this.endDate,
+    required this.poster,
+    required this.backdrop,
+    required this.thumbnail,
     required this.parent,
     required this.grandparent,
     required this.videoFile,
@@ -62,6 +70,9 @@ class MediaItem {
       endDate: json['end_date'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['end_date'] * 1000)
           : null,
+      poster: json['poster'],
+      backdrop: json['backdrop'],
+      thumbnail: json['thumbnail'],
       parent: json['parent'] != null
           ? MediaItemParent.fromJson(json['parent'])
           : null,
@@ -122,7 +133,7 @@ class MediaItemParent {
 class CastMember {
   final String name;
   final String? character;
-  final String? profile;
+  final ImageId? profile;
 
   CastMember({
     required this.name,
@@ -645,9 +656,9 @@ class ZenithApiClient {
     return url;
   }
 
-  String getMediaImageUrl(int id, ImageType type, {int? width}) {
+  String getImageUrl(ImageId id, {required int? width}) {
     return Uri.parse(_client.options.baseUrl).replace(
-      path: 'api/items/$id/images/${type.name}',
+      path: 'api/images/${id.value}',
       queryParameters: {if (width != null) 'width': width.toString()},
     ).toString();
   }

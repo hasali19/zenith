@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/constants.dart';
 import 'package:zenith/poster_item.dart';
 import 'package:zenith/responsive.dart';
 
@@ -11,7 +12,7 @@ class MediaLibraryItem {
   final int id;
   final String title;
   final String? subtitle;
-  final String? poster;
+  final ImageId? poster;
   final bool isWatched;
 
   MediaLibraryItem({
@@ -28,7 +29,7 @@ class MediaLibraryItem {
         id: item.id,
         title: item.name,
         subtitle: item.startDate?.year.toString(),
-        poster: client.getMediaImageUrl(item.id, ImageType.poster),
+        poster: item.poster,
         isWatched: () {
           if (item.type == MediaType.show) {
             return item.collectionUserData?.unwatched == 0;
@@ -121,9 +122,10 @@ class MediaItemGrid extends StatelessWidget {
                   width: colWidth,
                   padding: EdgeInsets.all(itemSpacing / 2),
                   child: PosterItem(
+                    imageId: item.poster,
+                    requestWidth: mediaPosterImageWidth,
                     infoSeparator: infoTopPadding,
-                    poster: item.poster,
-                    posterFallback: posterFallback,
+                    fallbackIcon: posterFallback,
                     title: item.title,
                     subtitle: item.subtitle,
                     isWatched: item.isWatched,

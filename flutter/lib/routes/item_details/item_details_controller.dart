@@ -23,7 +23,7 @@ class ItemDetailsController extends _$ItemDetailsController {
               .map(
                 (e) => EpisodeState(
                   id: e.id,
-                  thumbnailUrl: api.getMediaImageUrl(e.id, ImageType.thumbnail),
+                  thumbnail: e.thumbnail,
                   overview: e.overview,
                   isWatched: e.videoUserData?.isWatched ?? false,
                   title: '${e.parent!.index} - ${e.name}',
@@ -36,8 +36,8 @@ class ItemDetailsController extends _$ItemDetailsController {
 
     return ItemDetailsState(
       item: item,
-      posterUrl: api.getMediaImageUrl(id, ImageType.poster),
-      backdropUrl: api.getMediaImageUrl(id, ImageType.backdrop),
+      poster: item.poster,
+      backdrop: item.backdrop,
       seasons: seasons,
       playable: _getPlayableForItem(item, episodeGroups),
       isWatched: switch (item.type) {

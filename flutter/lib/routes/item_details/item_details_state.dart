@@ -7,8 +7,8 @@ part 'item_details_state.freezed.dart';
 class ItemDetailsState with _$ItemDetailsState {
   factory ItemDetailsState({
     required MediaItem item,
-    required String posterUrl,
-    required String backdropUrl,
+    required ImageId? poster,
+    required ImageId? backdrop,
     required List<EpisodeGroupState> seasons,
     required PlayableState? playable,
     required bool isWatched,
@@ -40,7 +40,7 @@ class EpisodeGroupState with _$EpisodeGroupState {
 class EpisodeState with _$EpisodeState {
   factory EpisodeState({
     required int id,
-    required String thumbnailUrl,
+    required ImageId? thumbnail,
     required String? overview,
     required bool isWatched,
     required String title,

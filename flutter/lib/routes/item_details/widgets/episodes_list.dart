@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sliver_tools/sliver_tools.dart';
-import 'package:zenith/fade_in_image.dart';
+import 'package:zenith/api.dart';
+import 'package:zenith/constants.dart';
+import 'package:zenith/image.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/routes/item_details/item_details_state.dart';
 import 'package:zenith/text_one_line.dart';
@@ -130,7 +132,8 @@ class _EpisodeListItem extends StatelessWidget {
                     width: width,
                     height: height,
                     child: _EpisodeThumbnail(
-                      url: episode.thumbnailUrl,
+                      imageId: episode.thumbnail,
+                      imageWidth: mediaThumbnailImageWidth,
                       isWatched: episode.isWatched,
                     ),
                   ),
@@ -171,11 +174,13 @@ class _EpisodeListItem extends StatelessWidget {
 }
 
 class _EpisodeThumbnail extends StatelessWidget {
-  final String? url;
+  final ImageId? imageId;
+  final int imageWidth;
   final bool isWatched;
 
   const _EpisodeThumbnail({
-    required this.url,
+    required this.imageId,
+    required this.imageWidth,
     required this.isWatched,
   });
 
@@ -187,11 +192,12 @@ class _EpisodeThumbnail extends StatelessWidget {
       clipBehavior: Clip.hardEdge,
       borderRadius: const BorderRadius.all(Radius.circular(8)),
       child: Stack(children: [
-        url == null
-            ? const Icon(Icons.video_file, size: 48)
-            : Positioned.fill(
-                child: ZenithFadeInImage.dio(url: url!),
-              ),
+        switch (imageId) {
+          null => const Icon(Icons.video_file, size: 48),
+          final imageId => Positioned.fill(
+              child: ZenithApiImage(id: imageId!, requestWidth: imageWidth),
+            )
+        },
         if (isWatched)
           Container(
             color: Colors.black.withAlpha(127),

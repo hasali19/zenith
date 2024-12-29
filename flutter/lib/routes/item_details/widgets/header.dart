@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/constants.dart';
 import 'package:zenith/download.dart'
     if (dart.library.js_interop) 'package:zenith/download_web.dart';
-import 'package:zenith/fade_in_image.dart';
+import 'package:zenith/image.dart';
 import 'package:zenith/language_codes.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/routes/item_details/item_details_controller.dart';
@@ -47,13 +48,15 @@ class HeaderContent extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         HeaderLayout(
-          backdrop: ZenithFadeInImage.dio(
-            url: state.backdropUrl,
+          backdrop: ZenithApiImage(
+            id: state.backdrop!,
+            requestWidth: mediaBackdropImageWidth,
             height: 300,
             alignment: Alignment.topCenter,
           ),
           poster: Poster(
-            url: state.posterUrl,
+            imageId: state.poster,
+            requestWidth: mediaPosterImageWidth,
             progress: state.playable?.progress,
             caption: state.playable?.caption,
           ),
@@ -454,13 +457,15 @@ class _WatchedToggleButtonState extends State<WatchedToggleButton> {
 }
 
 class Poster extends StatelessWidget {
-  final String url;
+  final ImageId? imageId;
+  final int requestWidth;
   final double? progress;
   final String? caption;
 
   const Poster({
     super.key,
-    required this.url,
+    required this.imageId,
+    required this.requestWidth,
     required this.progress,
     required this.caption,
   });
@@ -476,7 +481,11 @@ class Poster extends StatelessWidget {
               : BorderRadius.circular(16),
           child: AspectRatio(
             aspectRatio: 2.0 / 3.0,
-            child: ZenithFadeInImage.dio(url: url),
+            child: switch (imageId) {
+              null => SizedBox(),
+              final imageId =>
+                ZenithApiImage(id: imageId, requestWidth: requestWidth)
+            },
           ),
         ),
         if (progress != null)
