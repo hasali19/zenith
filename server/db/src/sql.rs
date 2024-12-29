@@ -108,7 +108,7 @@ pub enum Condition<'a> {
     Atom(&'a str),
 }
 
-impl<'a> Condition<'a> {
+impl Condition<'_> {
     fn write_to(&self, sql: &mut String) {
         match self {
             Condition::Atom(str) => sql.push_str(str),

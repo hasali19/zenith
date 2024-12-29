@@ -240,7 +240,7 @@ impl Default for Watcher {
 fn deserialize_regex<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Regex, D::Error> {
     struct RegexVisitor;
 
-    impl<'de> Visitor<'de> for RegexVisitor {
+    impl Visitor<'_> for RegexVisitor {
         type Value = Regex;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -263,7 +263,7 @@ fn deserialize_lib_path<'de, D: Deserializer<'de>>(
 ) -> Result<Utf8PathBuf, D::Error> {
     struct PathBufVisitor;
 
-    impl<'de> Visitor<'de> for PathBufVisitor {
+    impl Visitor<'_> for PathBufVisitor {
         type Value = Utf8PathBuf;
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {

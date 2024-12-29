@@ -93,7 +93,7 @@ impl<'a> TryFrom<&'a String> for MediaImage<'a> {
     }
 }
 
-impl<'a> Display for MediaImage<'a> {
+impl Display for MediaImage<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
