@@ -122,7 +122,7 @@ class AuthGuard extends AutoRouteGuard {
       return resolver.next(true);
     }
 
-    router.replace(LoginRoute(redirect: resolver.route.stringMatch));
+    router.replace(LoginRoute(redirect: router.currentPath));
   }
 }
 
