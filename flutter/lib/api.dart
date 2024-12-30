@@ -13,6 +13,8 @@ enum MediaType {
   episode,
 }
 
+final _mediaTypeMap = {for (final v in MediaType.values) v.name: v};
+
 extension type ImageId(String value) {}
 
 class MediaItem {
@@ -58,7 +60,8 @@ class MediaItem {
     required this.cast,
   });
 
-  factory MediaItem.fromJson(MediaType type, Map<String, dynamic> json) {
+  factory MediaItem.fromJson(Map<String, dynamic> json) {
+    MediaType type = _mediaTypeMap[json['type']]!;
     return MediaItem(
       id: json['id'],
       type: type,
@@ -475,7 +478,7 @@ class ZenithApiClient {
     final res = await _client.get('/api/movies');
     if (res.statusCode == 200) {
       final List<dynamic> json = res.data;
-      return json.map((e) => MediaItem.fromJson(MediaType.movie, e)).toList();
+      return json.map((e) => MediaItem.fromJson(e)).toList();
     } else {
       throw Exception('Failed to fetch movies');
     }
@@ -485,7 +488,7 @@ class ZenithApiClient {
     final res = await _client.get('/api/movies/recent');
     if (res.statusCode == 200) {
       final List<dynamic> json = res.data;
-      return json.map((e) => MediaItem.fromJson(MediaType.movie, e)).toList();
+      return json.map((e) => MediaItem.fromJson(e)).toList();
     } else {
       throw Exception('Failed to fetch movies');
     }
@@ -495,7 +498,7 @@ class ZenithApiClient {
     final res = await _client.get('/api/shows');
     if (res.statusCode == 200) {
       final List<dynamic> json = res.data;
-      return json.map((e) => MediaItem.fromJson(MediaType.show, e)).toList();
+      return json.map((e) => MediaItem.fromJson(e)).toList();
     } else {
       throw Exception('Failed to fetch shows');
     }
@@ -505,7 +508,7 @@ class ZenithApiClient {
     final res = await _client.get('/api/shows/recent');
     if (res.statusCode == 200) {
       final List<dynamic> json = res.data;
-      return json.map((e) => MediaItem.fromJson(MediaType.show, e)).toList();
+      return json.map((e) => MediaItem.fromJson(e)).toList();
     } else {
       throw Exception('Failed to fetch shows');
     }
@@ -515,7 +518,7 @@ class ZenithApiClient {
     final res = await _client.get('/api/shows/$showId/seasons');
     if (res.statusCode == 200) {
       final List<dynamic> json = res.data;
-      return json.map((e) => MediaItem.fromJson(MediaType.season, e)).toList();
+      return json.map((e) => MediaItem.fromJson(e)).toList();
     } else {
       throw Exception('Failed to fetch seasons');
     }
@@ -525,7 +528,7 @@ class ZenithApiClient {
     final res = await _client.get('/api/shows/$showId/episodes');
     if (res.statusCode == 200) {
       final List<dynamic> json = res.data;
-      return json.map((e) => MediaItem.fromJson(MediaType.episode, e)).toList();
+      return json.map((e) => MediaItem.fromJson(e)).toList();
     } else {
       throw Exception('Failed to fetch episodes');
     }
@@ -535,7 +538,7 @@ class ZenithApiClient {
     final res = await _client.get('/api/seasons/$seasonId/episodes');
     if (res.statusCode == 200) {
       final List<dynamic> json = res.data;
-      return json.map((e) => MediaItem.fromJson(MediaType.episode, e)).toList();
+      return json.map((e) => MediaItem.fromJson(e)).toList();
     } else {
       throw Exception('Failed to fetch episodes');
     }
@@ -545,11 +548,27 @@ class ZenithApiClient {
     final res = await _client.get('/api/items/$id');
     if (res.statusCode == 200) {
       final dynamic json = res.data;
-      final type =
-          MediaType.values.firstWhere((type) => type.name == json['type']);
-      return MediaItem.fromJson(type, json);
+      return MediaItem.fromJson(json);
     } else {
       throw Exception('Failed to fetch shows');
+    }
+  }
+
+  Future<List<MediaItem>> searchByName(String query,
+      {List<MediaType>? types, int? limit}) async {
+    types ??= [];
+
+    final res = await _client.get('/api/items', queryParameters: {
+      'name': query,
+      if (types.isNotEmpty) 'item_type': types.map((t) => t.name).toList(),
+      if (limit != null) 'limit': limit,
+    });
+
+    if (res.statusCode == 200) {
+      final List<dynamic> json = res.data;
+      return json.map((e) => MediaItem.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to fetch episodes');
     }
   }
 
@@ -562,15 +581,7 @@ class ZenithApiClient {
     final res = await _client.get('/api/items/continue_watching');
     if (res.statusCode == 200) {
       final List<dynamic> json = res.data;
-      return json.map((json) {
-        if (json['type'] == 'movie') {
-          return MediaItem.fromJson(MediaType.movie, json);
-        } else if (json['type'] == 'episode') {
-          return MediaItem.fromJson(MediaType.episode, json);
-        } else {
-          throw Exception('Unsupported media item type');
-        }
-      }).toList();
+      return json.map((json) => MediaItem.fromJson(json)).toList();
     } else {
       throw Exception('Failed to fetch items');
     }
@@ -623,7 +634,7 @@ class ZenithApiClient {
         .get('/api/items?collection_id=$id&sort_by[]=collection_index');
     if (res.statusCode == 200) {
       final List<dynamic> json = res.data;
-      return json.map((e) => MediaItem.fromJson(MediaType.episode, e)).toList();
+      return json.map((e) => MediaItem.fromJson(e)).toList();
     } else {
       throw Exception('Failed to fetch items');
     }

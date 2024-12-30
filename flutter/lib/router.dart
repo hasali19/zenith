@@ -1,8 +1,10 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:cast_framework/cast_framework.dart';
+import 'package:cast_framework/cast_framework.dart' hide MediaType;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/constants.dart';
+import 'package:zenith/image.dart';
 import 'package:zenith/main.dart';
 import 'package:zenith/media_route_button/media_route_button.dart';
 import 'package:zenith/responsive.dart';
@@ -138,6 +140,7 @@ class LibraryTabsPage extends StatelessWidget {
             AppBar(
               title: Text('Zenith'),
               actions: [
+                _SearchButton(),
                 if (CastFrameworkPlatform.instance.isSupported)
                   const MediaRouteButton(),
                 PopupMenuButton(
@@ -155,6 +158,74 @@ class LibraryTabsPage extends StatelessWidget {
             Expanded(child: child),
           ],
         );
+      },
+    );
+  }
+}
+
+class _SearchButton extends ConsumerStatefulWidget {
+  const _SearchButton();
+
+  @override
+  ConsumerState<_SearchButton> createState() => _SearchButtonState();
+}
+
+class _SearchButtonState extends ConsumerState<_SearchButton> {
+  String? _query;
+  Iterable<Widget> _results = <Widget>[];
+
+  @override
+  Widget build(BuildContext context) {
+    return SearchAnchor(
+      builder: (context, controller) {
+        return IconButton(
+          icon: Icon(Icons.search),
+          onPressed: () {
+            controller.openView();
+          },
+        );
+      },
+      suggestionsBuilder: (context, controller) async {
+        _query = controller.text;
+
+        if (controller.text.length < 3) {
+          return [];
+        }
+
+        final api = ref.read(apiProvider);
+        final results = (await api
+            .searchByName(_query!, types: [MediaType.movie, MediaType.show]));
+
+        // If another search happened after this one, throw away these options.
+        // Use the previous options instead and wait for the newer request to
+        // finish.
+        if (_query != controller.text) {
+          return _results;
+        }
+
+        _results = List<ListTile>.generate(results.length, (int index) {
+          final item = results[index];
+          return ListTile(
+            title: Text(item.name),
+            subtitle: Text(item.startDate?.year.toString() ?? ''),
+            minVerticalPadding: 24,
+            leading: Card(
+              margin: EdgeInsets.zero,
+              clipBehavior: Clip.antiAlias,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4)),
+              child: ZenithApiImage(
+                id: item.poster!,
+                requestWidth: mediaPosterImageWidth,
+              ),
+            ),
+            onTap: () {
+              context.router.push(ItemDetailsRoute(id: item.id));
+            },
+          );
+        });
+
+        return _results;
       },
     );
   }

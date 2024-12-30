@@ -19,6 +19,7 @@ Dio createDioClient(
         'User-Agent':
             'Flutter ${Platform.operatingSystem} ${packageInfo.buildNumber}/${Updater.revision?.substring(0, 7)}',
     },
+    listFormat: ListFormat.multiCompatible,
   ));
 
   if (!kIsWeb) {
