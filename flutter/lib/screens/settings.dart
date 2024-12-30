@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
+import 'package:zenith/router.dart';
 import 'package:zenith/updater.dart';
 
 @RoutePage()
@@ -89,25 +90,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     builder: (context) => AlertDialog(
                       title: const Text('Choose theme'),
                       content: StatefulBuilder(builder: (context, setState) {
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: AppThemeMode.values
-                              .map(
-                                (value) => RadioListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  value: value,
-                                  title: Text(value.label),
-                                  groupValue: selected,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      if (value != null) {
-                                        selected = value;
-                                      }
-                                    });
-                                  },
-                                ),
-                              )
-                              .toList(),
+                        return SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: AppThemeMode.values
+                                .map(
+                                  (value) => RadioListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    value: value,
+                                    title: Text(value.label),
+                                    groupValue: selected,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        if (value != null) {
+                                          selected = value;
+                                        }
+                                      });
+                                    },
+                                  ),
+                                )
+                                .toList(),
+                          ),
                         );
                       }),
                       actions: [
@@ -221,6 +224,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 },
               ),
               const Divider(),
+              ListTile(
+                title: const Text('Server'),
+                subtitle: Text(ref.watch(activeServerProvider)?.url ?? 'None'),
+                onTap: () async {
+                  context.router.navigate(const SetupRoute());
+                },
+              ),
               if (_version != null)
                 ListTile(
                   title: const Text('Version'),

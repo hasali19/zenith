@@ -1,8 +1,7 @@
-import 'dart:math';
-
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
 import 'package:uuid/uuid.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
@@ -21,28 +20,23 @@ class SetupScreen extends ConsumerStatefulWidget {
 class _SetupScreenState extends ConsumerState<SetupScreen> {
   final _key = GlobalKey<FormState>();
 
-  var _scheme = 'http';
-  final _nameController = TextEditingController();
+  var _scheme = 'https';
   final _hostController = TextEditingController();
-  final _portController = TextEditingController(text: '8000');
 
   @override
   void dispose() {
-    _nameController.dispose();
     super.dispose();
+    _hostController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final servers = ref.watch(serversPrefProvider);
     Widget content = Form(
       key: _key,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextFormField(
-            controller: _nameController,
-            decoration: const InputDecoration(hintText: 'Server name'),
-          ),
-          const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -56,9 +50,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                   value: _scheme,
                   onChanged: (value) => setState(() {
                     _scheme = value!;
-                    if (_scheme == 'https') {
-                      _portController.text = '443';
-                    }
                   }),
                 ),
               ),
@@ -76,56 +67,27 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                       : null,
                 ),
               ),
-              Padding(
-                padding:
-                    EdgeInsets.fromLTRB(4, context.isDesktop ? 12 : 14, 4, 0),
-                child: const Text(':'),
-              ),
-              SizedBox(
-                width: 100,
-                child: TextFormField(
-                  controller: _portController,
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    final port = int.tryParse(value ?? '');
-                    if (port == null || port < 0 || port > pow(2, 16)) {
-                      return 'Invalid port number';
-                    } else {
-                      return null;
-                    }
-                  },
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            child: const Text('Continue'),
-            onPressed: () async {
-              if (_key.currentState?.validate() != true) {
-                return;
-              }
-
-              final servers = ref.read(serversPrefProvider);
-              final server = Server(
-                id: _uuid.v4(),
-                name: _nameController.text,
-                url: Uri(
-                  scheme: _scheme,
-                  host: _hostController.text,
-                  port: int.parse(_portController.text),
-                ).toString(),
-              );
-
-              await ref
-                  .read(serversPrefProvider.notifier)
-                  .update([...servers, server]);
-
-              if (context.mounted) {
-                context.router.replace(const MainRoute());
-              }
-            },
+          const Gap(32),
+          Align(
+            alignment: Alignment.center,
+            child: ElevatedButton(
+              onPressed: _onSubmit,
+              child: const Text('Continue'),
+            ),
           ),
+          if (servers.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 32, bottom: 8),
+              child: Text('Previously used',
+                  style: TextStyle(fontStyle: FontStyle.italic)),
+            ),
+          for (final server in servers)
+            ListTile(
+              title: Text(server.url),
+              onTap: () => _onSelectExisting(server.id),
+            ),
         ],
       ),
     );
@@ -147,12 +109,54 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add server'),
+        title: const Text('Select server'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: content,
       ),
     );
+  }
+
+  void _onSubmit() async {
+    if (_key.currentState?.validate() != true) {
+      return;
+    }
+
+    final url = '$_scheme://${_hostController.text}';
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Invalid url: $url')));
+    }
+
+    final servers = ref.read(serversPrefProvider);
+    final Server server;
+    if (servers.where((server) => server.url == url).firstOrNull
+        case Server existing) {
+      server = existing;
+    } else {
+      server = Server(
+        id: _uuid.v4(),
+        name: null,
+        url: url,
+      );
+
+      await ref.read(serversPrefProvider.notifier).update([server, ...servers]);
+    }
+
+    await ref.read(serverPrefProvider.notifier).update(server.id);
+
+    if (mounted) {
+      context.router.replaceAll([const MainRoute()]);
+    }
+  }
+
+  void _onSelectExisting(String id) async {
+    await ref.read(serverPrefProvider.notifier).update(id);
+
+    if (mounted) {
+      context.router.replaceAll([const MainRoute()]);
+    }
   }
 }
