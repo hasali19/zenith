@@ -137,11 +137,11 @@ class LibraryPage extends StatelessWidget {
 }
 
 @RoutePage()
-class LibraryTabsPage extends StatelessWidget {
+class LibraryTabsPage extends ConsumerWidget {
   const LibraryTabsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return AutoTabsRouter(
       routes: const [
         HomeRoute(),
@@ -165,8 +165,12 @@ class LibraryTabsPage extends StatelessWidget {
                   itemBuilder: (context) {
                     return [
                       PopupMenuItem(
-                        onTap: () {},
                         child: const Text('Logout'),
+                        onTap: () {
+                          ref.read(apiProvider).logout();
+                          context.router
+                              .replaceAll([LoginRoute(redirect: null)]);
+                        },
                       ),
                     ];
                   },
