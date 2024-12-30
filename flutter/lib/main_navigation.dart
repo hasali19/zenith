@@ -22,16 +22,18 @@ class MainNavigationDrawer extends ConsumerWidget {
           return;
         }
 
-        final route = switch (value) {
-          0 => const HomeRoute(),
-          1 => const MoviesRoute(),
-          2 => const ShowsRoute(),
-          3 => const ManageServerRoute(),
-          4 => const SettingsRoute(),
-          _ => throw Exception('Invalid destination index: $value'),
-        };
-
-        context.router.navigate(route);
+        switch (value) {
+          case 0:
+            context.router.navigate(const HomeRoute());
+          case 1:
+            context.router.navigate(const MoviesRoute());
+          case 2:
+            context.router.navigate(const ShowsRoute());
+          case 3:
+            context.tabsRouter.setActiveIndex(1);
+          case 4:
+            context.tabsRouter.setActiveIndex(2);
+        }
       },
       children: [
         NavigationDrawerHeadline(text: 'Library'),
@@ -146,16 +148,18 @@ class _MainNavigationBarState extends State<MainNavigationBar> {
       ],
       selectedIndex: _index,
       onDestinationSelected: (value) {
-        final route = switch (value) {
-          0 => const HomeRoute(),
-          1 => const MoviesRoute(),
-          2 => const ShowsRoute(),
-          3 => const ManageServerRoute(),
-          4 => const SettingsRoute(),
-          _ => throw Exception('Invalid destination index: $value'),
-        };
-
-        context.router.navigate(route);
+        switch (value) {
+          case 0:
+            context.router.navigate(const HomeRoute());
+          case 1:
+            context.router.navigate(const MoviesRoute());
+          case 2:
+            context.router.navigate(const ShowsRoute());
+          case 3:
+            context.tabsRouter.setActiveIndex(1);
+          case 4:
+            context.tabsRouter.setActiveIndex(2);
+        }
 
         setState(() {
           _index = value;
