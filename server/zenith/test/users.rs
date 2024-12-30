@@ -121,6 +121,21 @@ async fn create_user_request_with_code(mut app: TestApp) {
         .as_str()
         .unwrap();
 
+    let res = app.get("/users/registrations").await;
+
+    assert!(res.is_array());
+    assert_eq!(res.as_array().unwrap().len(), 1);
+    assert_eq!(
+        res.as_array().unwrap()[0]
+            .as_object()
+            .unwrap()
+            .get("code")
+            .unwrap()
+            .as_str()
+            .unwrap(),
+        code
+    );
+
     let body = json!({
         "username": "test2",
         "password": "password",

@@ -1,17 +1,21 @@
 use std::time::{Duration, SystemTime};
 
+use axum::extract::Path;
+use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
 use db::Db;
-use eyre::Context;
+use eyre::{eyre, Context};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use speq::axum::{get, post};
+use speq::axum::{delete, get, post};
+use time::format_description::well_known::Iso8601;
+use time::OffsetDateTime;
 use uuid::Uuid;
 
 use crate::password_utils::hash_password;
 
-use super::error::{bad_request, ApiError};
+use super::error::{bad_request, not_found, ApiError};
 use super::ext::OptionExt;
 use super::{auth, ApiResult};
 
@@ -112,6 +116,21 @@ async fn create(
 #[derive(Serialize)]
 struct UserRegistration {
     code: String,
+    created_at: String,
+    expires_at: String,
+}
+
+#[get("/users/registrations")]
+async fn get_registrations(_user: auth::User, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
+    let mut conn = db.acquire().await?;
+
+    let registrations: Vec<_> = db::user_registrations::get_all(&mut conn)
+        .await?
+        .into_iter()
+        .map(UserRegistration::try_from)
+        .try_collect()?;
+
+    Ok(Json(registrations))
 }
 
 #[post("/users/registrations")]
@@ -125,9 +144,45 @@ async fn create_registration(_user: auth::User, db: Extension<Db>) -> ApiResult<
         duration: Duration::from_secs(7 * 24 * 60 * 60),
     };
 
-    db::user_registrations::create(&mut transaction, data).await?;
+    let registration = db::user_registrations::create(&mut transaction, data).await?;
 
     transaction.commit().await?;
 
-    Ok(Json(UserRegistration { code: id }))
+    Ok(Json(UserRegistration::try_from(registration)?))
+}
+
+#[delete("/users/registrations/:id")]
+async fn delete_registration(
+    _user: auth::User,
+    Path(code): Path<String>,
+    db: Extension<Db>,
+) -> ApiResult<impl IntoResponse> {
+    let mut conn = db.acquire().await?;
+
+    let is_deleted = db::user_registrations::delete(&mut conn, &code).await?;
+
+    if !is_deleted {
+        return Err(not_found("no registration found with the given id"));
+    }
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+impl TryFrom<db::user_registrations::UserRegistration> for UserRegistration {
+    type Error = eyre::Report;
+
+    fn try_from(value: db::user_registrations::UserRegistration) -> Result<Self, Self::Error> {
+        let id = value.id;
+        let created_at = value.created_at;
+        let expires_at = value.expires_at;
+        Ok(UserRegistration {
+            code: id,
+            created_at: OffsetDateTime::from_unix_timestamp(created_at)
+                .wrap_err_with(|| eyre!("failed to create DateTime for timestamp: {created_at}"))?
+                .format(&Iso8601::DEFAULT)?,
+            expires_at: OffsetDateTime::from_unix_timestamp(expires_at)
+                .wrap_err_with(|| eyre!("failed to create DateTime for timestamp: {expires_at}"))?
+                .format(&Iso8601::DEFAULT)?,
+        })
+    }
 }
