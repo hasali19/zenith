@@ -318,6 +318,63 @@ class MainRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [ManageServerPage]
+class ManageServerRoute extends PageRouteInfo<void> {
+  const ManageServerRoute({List<PageRouteInfo>? children})
+      : super(
+          ManageServerRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'ManageServerRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const ManageServerPage();
+    },
+  );
+}
+
+/// generated route for
+/// [ManageServerShellPage]
+class ManageServerShellRoute extends PageRouteInfo<void> {
+  const ManageServerShellRoute({List<PageRouteInfo>? children})
+      : super(
+          ManageServerShellRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'ManageServerShellRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const ManageServerShellPage();
+    },
+  );
+}
+
+/// generated route for
+/// [ManageUsersPage]
+class ManageUsersRoute extends PageRouteInfo<void> {
+  const ManageUsersRoute({List<PageRouteInfo>? children})
+      : super(
+          ManageUsersRoute.name,
+          initialChildren: children,
+        );
+
+  static const String name = 'ManageUsersRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const ManageUsersPage();
+    },
+  );
+}
+
+/// generated route for
 /// [MoviesScreen]
 class MoviesRoute extends PageRouteInfo<void> {
   const MoviesRoute({List<PageRouteInfo>? children})

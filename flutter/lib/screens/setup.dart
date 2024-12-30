@@ -69,14 +69,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
               ),
             ],
           ),
-          const Gap(32),
-          Align(
-            alignment: Alignment.center,
-            child: ElevatedButton(
-              onPressed: _onSubmit,
-              child: const Text('Continue'),
-            ),
-          ),
           if (servers.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 32, bottom: 8),
@@ -88,6 +80,14 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
               title: Text(server.url),
               onTap: () => _onSelectExisting(server.id),
             ),
+          const Gap(32),
+          Align(
+            alignment: Alignment.center,
+            child: ElevatedButton(
+              onPressed: _onSubmit,
+              child: const Text('Continue'),
+            ),
+          ),
         ],
       ),
     );

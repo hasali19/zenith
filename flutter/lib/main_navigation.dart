@@ -17,7 +17,7 @@ class MainNavigationDrawer extends ConsumerWidget {
       backgroundColor: Theme.of(context).colorScheme.surface,
       selectedIndex: _activeDestinationIndex(context),
       onDestinationSelected: (value) {
-        if (value == 4) {
+        if (value == 5) {
           onLogoutTap();
           return;
         }
@@ -26,7 +26,8 @@ class MainNavigationDrawer extends ConsumerWidget {
           0 => const HomeRoute(),
           1 => const MoviesRoute(),
           2 => const ShowsRoute(),
-          3 => const SettingsRoute(),
+          3 => const ManageServerRoute(),
+          4 => const SettingsRoute(),
           _ => throw Exception('Invalid destination index: $value'),
         };
 
@@ -51,6 +52,10 @@ class MainNavigationDrawer extends ConsumerWidget {
           child: Divider(),
         ),
         NavigationDrawerDestination(
+          icon: Icon(Icons.dns),
+          label: Text('Server'),
+        ),
+        NavigationDrawerDestination(
           icon: Icon(Icons.settings),
           label: Text('Settings'),
         ),
@@ -70,8 +75,10 @@ class MainNavigationDrawer extends ConsumerWidget {
       return 1;
     } else if (router.isRouteActive(ShowsRoute.name)) {
       return 2;
-    } else if (router.isRouteActive(SettingsRoute.name)) {
+    } else if (router.isRouteActive(ManageServerRoute.name)) {
       return 3;
+    } else if (router.isRouteActive(SettingsRoute.name)) {
+      return 4;
     } else {
       return null;
     }
@@ -129,7 +136,11 @@ class _MainNavigationBarState extends State<MainNavigationBar> {
           label: 'Shows',
         ),
         NavigationDestination(
-          icon: Icon(_index == 3 ? Icons.settings : Icons.settings_outlined),
+          icon: Icon(_index == 3 ? Icons.dns : Icons.dns_outlined),
+          label: 'Server',
+        ),
+        NavigationDestination(
+          icon: Icon(_index == 4 ? Icons.settings : Icons.settings_outlined),
           label: 'Settings',
         ),
       ],
@@ -139,7 +150,8 @@ class _MainNavigationBarState extends State<MainNavigationBar> {
           0 => const HomeRoute(),
           1 => const MoviesRoute(),
           2 => const ShowsRoute(),
-          3 => const SettingsRoute(),
+          3 => const ManageServerRoute(),
+          4 => const SettingsRoute(),
           _ => throw Exception('Invalid destination index: $value'),
         };
 
@@ -160,8 +172,10 @@ class _MainNavigationBarState extends State<MainNavigationBar> {
       return 1;
     } else if (router.isRouteActive(ShowsRoute.name)) {
       return 2;
-    } else if (router.isRouteActive(SettingsRoute.name)) {
+    } else if (router.isRouteActive(ManageServerRoute.name)) {
       return 3;
+    } else if (router.isRouteActive(SettingsRoute.name)) {
+      return 4;
     } else {
       return 0;
     }

@@ -374,6 +374,25 @@ class User {
       );
 }
 
+class UserRegistration {
+  final String code;
+  final DateTime createdAt;
+  final DateTime expiresAt;
+
+  UserRegistration({
+    required this.code,
+    required this.createdAt,
+    required this.expiresAt,
+  });
+
+  factory UserRegistration.fromJson(Map<String, dynamic> json) =>
+      UserRegistration(
+        code: json['code'],
+        createdAt: DateTime.parse(json['created_at']),
+        expiresAt: DateTime.parse(json['expires_at']),
+      );
+}
+
 enum AccessTokenOwner {
   system,
   user,
@@ -471,6 +490,32 @@ class ZenithApiClient {
 
     if (res.statusCode != 200) {
       throw Exception('Failed to create user');
+    }
+  }
+
+  Future<List<UserRegistration>> fetchUserRegistrations() async {
+    final res = await _client.get('/api/users/registrations');
+    if (res.statusCode == 200) {
+      final List<dynamic> json = res.data;
+      return json.map((e) => UserRegistration.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to fetch registrations');
+    }
+  }
+
+  Future<UserRegistration> createUserRegistration() async {
+    final res = await _client.post('/api/users/registrations');
+    if (res.statusCode == 200) {
+      return UserRegistration.fromJson(res.data);
+    } else {
+      throw Exception('Failed to create registration');
+    }
+  }
+
+  Future<void> deleteUserRegistration(String code) async {
+    final res = await _client.delete('/api/users/registrations/$code');
+    if (res.statusCode != 204) {
+      throw Exception('Failed to delete registration');
     }
   }
 

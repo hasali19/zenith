@@ -55,6 +55,14 @@ class AppRouter extends RootStackRouter {
                 ),
               ],
             ),
+            AutoRoute(
+              path: 'server',
+              page: ManageServerShellRoute.page,
+              children: [
+                AutoRoute(page: ManageServerRoute.page, initial: true),
+                AutoRoute(path: 'users', page: ManageUsersRoute.page),
+              ],
+            ),
             AutoRoute(path: 'settings', page: SettingsRoute.page),
           ],
         ),
@@ -76,6 +84,16 @@ class AppRouter extends RootStackRouter {
         ),
         AutoRoute(path: '/setup', page: SetupRoute.page),
       ];
+}
+
+@RoutePage()
+class ManageServerShellPage extends StatelessWidget {
+  const ManageServerShellPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AutoRouter();
+  }
 }
 
 class ServerSetupGuard extends AutoRouteGuard {
