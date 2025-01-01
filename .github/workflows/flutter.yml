@@ -127,20 +127,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install flutter
-        run: |
-          $flutter_version="3.27.0-0.2.pre-beta"
-          $download_url="https://storage.googleapis.com/flutter_infra_release/releases/beta/windows/flutter_windows_$flutter_version.zip"
-          $install_path="$env:RUNNER_TOOL_CACHE\flutter-$flutter_version"
-          echo "Downloading SDK from $download_url ..."
-          Invoke-WebRequest $download_url -OutFile .
-          echo "Unpacking into $install_path"
-          Expand-Archive -Path flutter_windows_$flutter_version.zip -Destination $install_path
-          echo "Successfully unpacked SDK"
-          "$install_path\flutter\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
-          & $install_path\flutter\bin\flutter --version --suppress-analytics
-          & $install_path\flutter\bin\flutter config --no-analytics
-          & $install_path\flutter\bin\flutter config --no-cli-animations
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: beta
 
       - name: Install wget
         run: |
