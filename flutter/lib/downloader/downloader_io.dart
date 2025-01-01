@@ -6,11 +6,13 @@ import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/cookies.dart';
 import 'package:zenith/database/database.dart';
 import 'package:zenith/downloader/downloader_base.dart';
 
@@ -165,6 +167,14 @@ class ZenithDownloader extends BaseDownloader {
     await _db.delete(_db.downloadedFiles).delete(file);
   }
 }
+
+final zenithDownloaderProvider = Provider<BaseDownloader>((ref) {
+  return ZenithDownloader(
+    ref.watch(cookieJarProvider),
+    ref.watch(apiProvider),
+    ref.watch(databaseProvider),
+  );
+});
 
 Future<void> _downloaderCallbackDispatcher() async {
   WidgetsFlutterBinding.ensureInitialized();
