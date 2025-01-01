@@ -1,60 +1,120 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/database/database.dart';
 import 'package:zenith/routes/item_details/item_details_state.dart';
 
 part 'item_details_controller.g.dart';
 
 @riverpod
 class ItemDetailsController extends _$ItemDetailsController {
-  @override
-  Future<ItemDetailsState> build(int id) async {
-    final api = ref.watch(apiProvider);
-    final item = await api.fetchMediaItem(id);
-    final episodeGroups = <List<MediaItem>>[];
-    final seasons = <EpisodeGroupState>[];
+  AsyncValue<MediaItem> _item = AsyncLoading();
+  AsyncValue<List<(MediaItem, List<MediaItem>)>> _seasons = AsyncLoading();
+  AsyncValue<DownloadedFile?> _download = AsyncLoading();
 
-    if (item.type == MediaType.show) {
-      for (final season in await api.fetchSeasons(item.id)) {
-        final episodes = await api.fetchEpisodes(season.id);
-        episodeGroups.add(episodes);
-        seasons.add(EpisodeGroupState(
-          name: season.name,
-          episodes: episodes
-              .map(
-                (e) => EpisodeState(
-                  id: e.id,
-                  thumbnail: e.thumbnail,
-                  overview: e.overview,
-                  isWatched: e.videoUserData?.isWatched ?? false,
-                  title: '${e.parent!.index} - ${e.name}',
-                ),
-              )
-              .toList(),
-        ));
-      }
+  late final _api = ref.watch(apiProvider);
+  late final _db = ref.watch(databaseProvider);
+
+  @override
+  AsyncValue<ItemDetailsState> build(int id) {
+    _refreshApi();
+
+    final downloadedFilesSubscription = (_db.select(_db.downloadedFiles)
+          ..where((d) => d.itemId.equals(id)))
+        .watch()
+        .listen((files) {
+      _download = AsyncData(files.firstOrNull);
+      _updateState();
+    }, onError: (e, s) {
+      _download = AsyncError(e, s);
+      _updateState();
+    });
+
+    ref.onDispose(downloadedFilesSubscription.cancel);
+
+    return AsyncLoading();
+  }
+
+  Future<void> refresh() {
+    return _refreshApi();
+  }
+
+  Future<void> _refreshApi() async {
+    final MediaItem item;
+    try {
+      item = await _api.fetchMediaItem(id);
+      _item = AsyncData(item);
+    } catch (e, s) {
+      _item = AsyncError(e, s);
+      return _updateState();
     }
 
-    return ItemDetailsState(
-      item: item,
-      poster: item.poster,
-      backdrop: item.backdrop,
-      seasons: seasons,
-      playable: _getPlayableForItem(item, episodeGroups),
-      isWatched: switch (item.type) {
-        MediaType.movie ||
-        MediaType.episode =>
-          item.videoUserData?.isWatched ?? false,
-        _ => item.collectionUserData?.unwatched == 0,
-      },
-      durationText: switch (item.videoFile) {
-        null => null,
-        final videoFile => _formatDuration(videoFile.duration),
-      },
-      videoDownloadUrl: switch (item.videoFile) {
-        null => null,
-        final videoFile => api.getVideoUrl(videoFile.id, attachment: true)
-      },
-    );
+    try {
+      final seasons = <(MediaItem, List<MediaItem>)>[];
+
+      if (item.type == MediaType.show) {
+        for (final season in await _api.fetchSeasons(item.id)) {
+          final episodes = await _api.fetchEpisodes(season.id);
+          seasons.add((season, episodes));
+        }
+      }
+
+      _seasons = AsyncData(seasons);
+    } catch (e, s) {
+      _seasons = AsyncError(e, s);
+      return _updateState();
+    }
+
+    _updateState();
+  }
+
+  void _updateState() {
+    switch ((_item, _seasons, _download)) {
+      case (
+          AsyncData(value: final item),
+          AsyncData(value: final seasons),
+          AsyncData(value: final download)
+        ):
+        state = AsyncData(ItemDetailsState(
+          item: item,
+          poster: item.poster,
+          backdrop: item.backdrop,
+          seasons: seasons.map((seasonAndEpisodes) {
+            final (season, episodes) = seasonAndEpisodes;
+            return EpisodeGroupState(
+              name: season.name,
+              episodes: episodes
+                  .map((episode) => EpisodeState(
+                        id: episode.id,
+                        thumbnail: episode.thumbnail,
+                        overview: episode.overview,
+                        isWatched: episode.videoUserData?.isWatched ?? false,
+                        title: '${episode.parent!.index} - ${episode.name}',
+                      ))
+                  .toList(),
+            );
+          }).toList(),
+          playable: _getPlayableForItem(item, seasons),
+          isWatched: switch (item.type) {
+            MediaType.movie ||
+            MediaType.episode =>
+              item.videoUserData?.isWatched ?? false,
+            _ => item.collectionUserData?.unwatched == 0,
+          },
+          durationText: switch (item.videoFile) {
+            null => null,
+            final videoFile => _formatDuration(videoFile.duration),
+          },
+          downloadedFile: download,
+        ));
+
+      case (AsyncError(:final error, :final stackTrace), _, _) ||
+            (_, AsyncError(:final error, :final stackTrace), _) ||
+            (_, _, AsyncError(:final error, :final stackTrace)):
+        state = AsyncError(error, stackTrace);
+
+      default:
+        state = AsyncLoading();
+    }
   }
 
   void setIsWatched(bool isWatched) async {
@@ -88,7 +148,7 @@ class ItemDetailsController extends _$ItemDetailsController {
 }
 
 PlayableState? _getPlayableForItem(
-    MediaItem item, List<List<MediaItem>> seasons) {
+    MediaItem item, List<(MediaItem, List<MediaItem>)> seasons) {
   final playable = _getPlayableMediaForItem(item, seasons);
   if (playable == null) {
     return null;
@@ -145,15 +205,15 @@ PlayableState? _getPlayableForItem(
 }
 
 MediaItem? _getPlayableMediaForItem(
-    MediaItem item, List<List<MediaItem>> seasons) {
+    MediaItem item, List<(MediaItem, List<MediaItem>)> seasons) {
   if (item.type == MediaType.show) {
     MediaItem? lastWatched;
     int? lastWatchedS;
     int? lastWatchedE;
     for (var s = 0; s < seasons.length; s++) {
-      final season = seasons[s];
-      for (var e = 0; e < season.length; e++) {
-        final episode = season[e];
+      final (_, episodes) = seasons[s];
+      for (var e = 0; e < episodes.length; e++) {
+        final episode = episodes[e];
         final userData = episode.videoUserData!;
         if (lastWatched == null ||
             userData.lastWatchedAt != null &&
@@ -169,12 +229,12 @@ MediaItem? _getPlayableMediaForItem(
     if (lastWatched != null &&
         (lastWatched.videoUserData?.position ?? 0) >
             lastWatched.videoFile!.duration * 0.9) {
-      if (lastWatchedE! + 1 < seasons[lastWatchedS!].length) {
-        return seasons[lastWatchedS][lastWatchedE + 1];
+      if (lastWatchedE! + 1 < seasons[lastWatchedS!].$2.length) {
+        return seasons[lastWatchedS].$2[lastWatchedE + 1];
       } else if (lastWatchedS + 1 < seasons.length) {
-        return seasons[lastWatchedS + 1][0];
+        return seasons[lastWatchedS + 1].$2[0];
       } else {
-        return seasons[0][0];
+        return seasons[0].$2[0];
       }
     }
     return lastWatched;

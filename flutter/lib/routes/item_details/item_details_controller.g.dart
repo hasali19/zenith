@@ -7,7 +7,7 @@ part of 'item_details_controller.dart';
 // **************************************************************************
 
 String _$itemDetailsControllerHash() =>
-    r'af11730cd7dbad9ddbfcc06da5c2eff1c49ba0aa';
+    r'1fda97a5aadbf8e2a086a5f5c792811611686167';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -31,10 +31,10 @@ class _SystemHash {
 }
 
 abstract class _$ItemDetailsController
-    extends BuildlessAutoDisposeAsyncNotifier<ItemDetailsState> {
+    extends BuildlessAutoDisposeNotifier<AsyncValue<ItemDetailsState>> {
   late final int id;
 
-  FutureOr<ItemDetailsState> build(
+  AsyncValue<ItemDetailsState> build(
     int id,
   );
 }
@@ -82,9 +82,8 @@ class ItemDetailsControllerFamily extends Family<AsyncValue<ItemDetailsState>> {
 }
 
 /// See also [ItemDetailsController].
-class ItemDetailsControllerProvider
-    extends AutoDisposeAsyncNotifierProviderImpl<ItemDetailsController,
-        ItemDetailsState> {
+class ItemDetailsControllerProvider extends AutoDisposeNotifierProviderImpl<
+    ItemDetailsController, AsyncValue<ItemDetailsState>> {
   /// See also [ItemDetailsController].
   ItemDetailsControllerProvider(
     int id,
@@ -115,7 +114,7 @@ class ItemDetailsControllerProvider
   final int id;
 
   @override
-  FutureOr<ItemDetailsState> runNotifierBuild(
+  AsyncValue<ItemDetailsState> runNotifierBuild(
     covariant ItemDetailsController notifier,
   ) {
     return notifier.build(
@@ -140,8 +139,8 @@ class ItemDetailsControllerProvider
   }
 
   @override
-  AutoDisposeAsyncNotifierProviderElement<ItemDetailsController,
-      ItemDetailsState> createElement() {
+  AutoDisposeNotifierProviderElement<ItemDetailsController,
+      AsyncValue<ItemDetailsState>> createElement() {
     return _ItemDetailsControllerProviderElement(this);
   }
 
@@ -162,14 +161,14 @@ class ItemDetailsControllerProvider
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 mixin ItemDetailsControllerRef
-    on AutoDisposeAsyncNotifierProviderRef<ItemDetailsState> {
+    on AutoDisposeNotifierProviderRef<AsyncValue<ItemDetailsState>> {
   /// The parameter `id` of this provider.
   int get id;
 }
 
 class _ItemDetailsControllerProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<ItemDetailsController,
-        ItemDetailsState> with ItemDetailsControllerRef {
+    extends AutoDisposeNotifierProviderElement<ItemDetailsController,
+        AsyncValue<ItemDetailsState>> with ItemDetailsControllerRef {
   _ItemDetailsControllerProviderElement(super.provider);
 
   @override

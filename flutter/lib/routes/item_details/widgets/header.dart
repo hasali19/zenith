@@ -4,8 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/constants.dart';
-import 'package:zenith/download.dart'
-    if (dart.library.js_interop) 'package:zenith/download_web.dart';
+import 'package:zenith/downloader/downloader.dart';
 import 'package:zenith/image.dart';
 import 'package:zenith/language_codes.dart';
 import 'package:zenith/responsive.dart';
@@ -229,22 +228,85 @@ class HeaderContent extends ConsumerWidget {
       },
     ));
 
-    final videoDownloadUrl = state.videoDownloadUrl;
-    if (videoDownloadUrl != null) {
+    final videoFile = state.item.videoFile;
+    if (videoFile != null) {
       if (isDesktop) {
         actions.add(const SizedBox(width: 16));
       }
 
       actions.add(IconButton(
-        icon: const Icon(Icons.download),
-        onPressed: () {
-          final videoFile = state.item.videoFile!;
-          final name = videoFile.path.split('/').last;
-          ref.read(zenithDownloaderProvider).downloadFile(
-                context,
-                url: videoDownloadUrl,
-                filename: name,
-              );
+        icon: Icon(
+          state.downloadedFile == null
+              ? Icons.cloud_download_outlined
+              : Icons.cloud_done_outlined,
+        ),
+        color: switch (state.downloadedFile) {
+          null => null,
+          final f when f.path == null => Colors.orange,
+          _ => Colors.green,
+        },
+        onPressed: () async {
+          final downloadedFile = state.downloadedFile;
+          if (downloadedFile == null) {
+            final videoFile = state.item.videoFile!;
+            final name = videoFile.path.split('/').last;
+            ref.read(zenithDownloaderProvider).downloadFile(
+                  context,
+                  itemId: state.item.id,
+                  videoFileId: videoFile.id,
+                  fileName: name,
+                );
+          } else if (downloadedFile.path == null) {
+            final isCancelConfirmed = await showDialog<bool>(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text('Cancel download?'),
+                  actions: [
+                    TextButton(
+                      child: Text('No'),
+                      onPressed: () => Navigator.pop(context, false),
+                    ),
+                    TextButton(
+                      child: Text('Yes'),
+                      onPressed: () => Navigator.pop(context, true),
+                    ),
+                  ],
+                );
+              },
+            );
+
+            if (isCancelConfirmed == true) {
+              ref
+                  .read(zenithDownloaderProvider)
+                  .cancelDownload(downloadedFile.id);
+            }
+          } else {
+            final isRemoveConfirmed = await showDialog<bool>(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text('Delete local file?'),
+                  actions: [
+                    TextButton(
+                      child: Text('Cancel'),
+                      onPressed: () => Navigator.pop(context, false),
+                    ),
+                    TextButton(
+                      child: Text('Delete'),
+                      onPressed: () => Navigator.pop(context, true),
+                    ),
+                  ],
+                );
+              },
+            );
+
+            if (isRemoveConfirmed == true) {
+              ref
+                  .read(zenithDownloaderProvider)
+                  .removeDownloadedFile(downloadedFile.id);
+            }
+          }
         },
       ));
 

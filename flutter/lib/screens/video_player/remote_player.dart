@@ -66,7 +66,8 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
     final items = widget.items
         .map(
           (item) => video_player.VideoItem(
-            url: withToken(_api.getVideoUrl(item.videoFile!.id)),
+            source: video_player.NetworkSource(
+                withToken(_api.getVideoUrl(item.videoFile!.id))),
             subtitles: (item.videoFile?.subtitles ?? [])
                 .map(
                   (track) => video_player.ExternalSubtitleTrack(
@@ -192,7 +193,11 @@ class RemoteVideoController extends video_player.VideoController
             .map(
               (item) => MediaQueueItem(
                 mediaInfo: MediaInfo(
-                  url: item.url,
+                  url: switch (item.source) {
+                    video_player.NetworkSource(:final url) => url,
+                    video_player.LocalFileSource() =>
+                      throw UnimplementedError(),
+                  },
                   mediaTracks: item.subtitles
                       .map(
                         (track) => MediaTrack(

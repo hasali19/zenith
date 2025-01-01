@@ -4,6 +4,7 @@ import android.app.PictureInPictureParams
 import android.content.ComponentName
 import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
@@ -166,12 +167,24 @@ class MainActivity : FlutterActivity() {
 
     private fun handleDownloaderMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
+            "init" -> {
+                val callbackDispatcherHandle = call.argument<Long>("callbackDispatcherHandle")
+                if (callbackDispatcherHandle == null) {
+                    result.error("missing_argument", "callbackDispatcherHandle is required", null)
+                    return
+                }
+
+                SharedPreferencesHelper
+                    .setCallbackDispatcherHandle(this, callbackDispatcherHandle)
+
+                result.success(null)
+            }
+
             "enqueue" -> {
+                val id = UUID.fromString(call.argument<String>("id")!!)
                 val uri = call.argument<String>("uri")!!
                 val cookies = call.argument<String>("cookies")
                 val filename = call.argument<String>("filename")!!
-
-                val id = UUID.randomUUID()
 
                 val constraints = Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.UNMETERED)
@@ -193,6 +206,18 @@ class MainActivity : FlutterActivity() {
                     .enqueue(request)
 
                 DownloadWorker.showStartingNotification(this, id, filename)
+            }
+
+            "cancel" -> {
+                val id = UUID.fromString(call.argument("id"))
+                WorkManager.getInstance(this).cancelWorkById(id)
+                result.success(null)
+            }
+
+            "deleteFile" -> {
+                val uri = Uri.parse(call.argument("uri")!!)
+                context.contentResolver.delete(uri, null, null)
+                result.success(null)
             }
 
             else -> result.notImplemented()

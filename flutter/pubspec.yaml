@@ -42,6 +42,8 @@ dependencies:
     git:
       url: https://github.com/hasali19/flutter_image_provider.git
       path: dio_image_provider
+  drift: ^2.23.0
+  drift_flutter: ^0.2.3
   dynamic_color:
     git:
       url: https://github.com/hasali19/material-foundation-flutter-packages.git
@@ -86,8 +88,9 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
   auto_route_generator: ^9.0.0
-  build_runner: ^2.0.0
+  build_runner: ^2.4.14
   custom_lint: ^0.7.0
+  drift_dev: ^2.23.0
   freezed: ^2.4.1
   json_serializable: ^6.7.1
   msix: ^3.16.4

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +14,7 @@ import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:zenith/api.dart' as api;
 import 'package:zenith/cookies.dart';
+import 'package:zenith/database/database.dart';
 import 'package:zenith/platform.dart' as platform;
 import 'package:zenith/preferences.dart';
 import 'package:zenith/window.dart';
@@ -42,6 +44,7 @@ class LocalVideoPlayer extends StatefulHookConsumerWidget {
 
 class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
   api.ZenithApiClient get _api => ref.read(api.apiProvider);
+  AppDatabase get _db => ref.read(databaseProvider);
 
   late FocusNode _focusNode;
 
@@ -209,6 +212,13 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
       },
     );
 
+    final itemIds = widget.items.map((item) => item.id).toList();
+    final downloadedFiles = await (_db.select(_db.downloadedFiles)
+          ..where((f) => f.itemId.isIn(itemIds) & f.path.isNotNull()))
+        .get();
+
+    final downloadsMap = {for (final f in downloadedFiles) f.itemId: f.path};
+
     final videos = widget.items.map((item) {
       final String? title;
       final String? subtitle;
@@ -224,7 +234,10 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
           item.videoFile?.streams.whereType<api.VideoStreamInfo>().firstOrNull;
 
       return VideoItem(
-        url: _api.getVideoUrl(item.videoFile!.id),
+        source: switch (downloadsMap[item.id]) {
+          null => NetworkSource(_api.getVideoUrl(item.videoFile!.id)),
+          final path => LocalFileSource(path),
+        },
         subtitles: item.videoFile!.subtitles
             .where((s) =>
                 !controller.supportsEmbeddedSubtitles || s.streamIndex == null)

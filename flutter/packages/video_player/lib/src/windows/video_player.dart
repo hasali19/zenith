@@ -245,7 +245,11 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
 
       for (final (i, item) in items.indexed) {
         final pItem = pItems[i];
-        pItem.url = item.url.toNativeUtf8(allocator: alloc);
+        final url = switch (item.source) {
+          NetworkSource(:final url) => url,
+          LocalFileSource() => throw UnimplementedError(),
+        };
+        pItem.url = url.toNativeUtf8(allocator: alloc);
         pItem.title = item.metadata.title?.toNativeUtf8(allocator: alloc) ??
             Pointer.fromAddress(0);
         pItem.subtitle =

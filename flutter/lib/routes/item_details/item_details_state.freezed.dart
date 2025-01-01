@@ -23,7 +23,7 @@ mixin _$ItemDetailsState {
   PlayableState? get playable => throw _privateConstructorUsedError;
   bool get isWatched => throw _privateConstructorUsedError;
   String? get durationText => throw _privateConstructorUsedError;
-  String? get videoDownloadUrl => throw _privateConstructorUsedError;
+  DownloadedFile? get downloadedFile => throw _privateConstructorUsedError;
 
   /// Create a copy of ItemDetailsState
   /// with the given fields replaced by the non-null parameter values.
@@ -46,7 +46,7 @@ abstract class $ItemDetailsStateCopyWith<$Res> {
       PlayableState? playable,
       bool isWatched,
       String? durationText,
-      String? videoDownloadUrl});
+      DownloadedFile? downloadedFile});
 
   $PlayableStateCopyWith<$Res>? get playable;
 }
@@ -73,7 +73,7 @@ class _$ItemDetailsStateCopyWithImpl<$Res, $Val extends ItemDetailsState>
     Object? playable = freezed,
     Object? isWatched = null,
     Object? durationText = freezed,
-    Object? videoDownloadUrl = freezed,
+    Object? downloadedFile = freezed,
   }) {
     return _then(_value.copyWith(
       item: null == item
@@ -104,10 +104,10 @@ class _$ItemDetailsStateCopyWithImpl<$Res, $Val extends ItemDetailsState>
           ? _value.durationText
           : durationText // ignore: cast_nullable_to_non_nullable
               as String?,
-      videoDownloadUrl: freezed == videoDownloadUrl
-          ? _value.videoDownloadUrl
-          : videoDownloadUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
+      downloadedFile: freezed == downloadedFile
+          ? _value.downloadedFile
+          : downloadedFile // ignore: cast_nullable_to_non_nullable
+              as DownloadedFile?,
     ) as $Val);
   }
 
@@ -142,7 +142,7 @@ abstract class _$$ItemDetailsStateImplCopyWith<$Res>
       PlayableState? playable,
       bool isWatched,
       String? durationText,
-      String? videoDownloadUrl});
+      DownloadedFile? downloadedFile});
 
   @override
   $PlayableStateCopyWith<$Res>? get playable;
@@ -168,7 +168,7 @@ class __$$ItemDetailsStateImplCopyWithImpl<$Res>
     Object? playable = freezed,
     Object? isWatched = null,
     Object? durationText = freezed,
-    Object? videoDownloadUrl = freezed,
+    Object? downloadedFile = freezed,
   }) {
     return _then(_$ItemDetailsStateImpl(
       item: null == item
@@ -199,10 +199,10 @@ class __$$ItemDetailsStateImplCopyWithImpl<$Res>
           ? _value.durationText
           : durationText // ignore: cast_nullable_to_non_nullable
               as String?,
-      videoDownloadUrl: freezed == videoDownloadUrl
-          ? _value.videoDownloadUrl
-          : videoDownloadUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
+      downloadedFile: freezed == downloadedFile
+          ? _value.downloadedFile
+          : downloadedFile // ignore: cast_nullable_to_non_nullable
+              as DownloadedFile?,
     ));
   }
 }
@@ -218,7 +218,7 @@ class _$ItemDetailsStateImpl implements _ItemDetailsState {
       required this.playable,
       required this.isWatched,
       required this.durationText,
-      required this.videoDownloadUrl})
+      required this.downloadedFile})
       : _seasons = seasons;
 
   @override
@@ -242,11 +242,11 @@ class _$ItemDetailsStateImpl implements _ItemDetailsState {
   @override
   final String? durationText;
   @override
-  final String? videoDownloadUrl;
+  final DownloadedFile? downloadedFile;
 
   @override
   String toString() {
-    return 'ItemDetailsState(item: $item, poster: $poster, backdrop: $backdrop, seasons: $seasons, playable: $playable, isWatched: $isWatched, durationText: $durationText, videoDownloadUrl: $videoDownloadUrl)';
+    return 'ItemDetailsState(item: $item, poster: $poster, backdrop: $backdrop, seasons: $seasons, playable: $playable, isWatched: $isWatched, durationText: $durationText, downloadedFile: $downloadedFile)';
   }
 
   @override
@@ -265,8 +265,8 @@ class _$ItemDetailsStateImpl implements _ItemDetailsState {
                 other.isWatched == isWatched) &&
             (identical(other.durationText, durationText) ||
                 other.durationText == durationText) &&
-            (identical(other.videoDownloadUrl, videoDownloadUrl) ||
-                other.videoDownloadUrl == videoDownloadUrl));
+            const DeepCollectionEquality()
+                .equals(other.downloadedFile, downloadedFile));
   }
 
   @override
@@ -279,7 +279,7 @@ class _$ItemDetailsStateImpl implements _ItemDetailsState {
       playable,
       isWatched,
       durationText,
-      videoDownloadUrl);
+      const DeepCollectionEquality().hash(downloadedFile));
 
   /// Create a copy of ItemDetailsState
   /// with the given fields replaced by the non-null parameter values.
@@ -300,7 +300,7 @@ abstract class _ItemDetailsState implements ItemDetailsState {
       required final PlayableState? playable,
       required final bool isWatched,
       required final String? durationText,
-      required final String? videoDownloadUrl}) = _$ItemDetailsStateImpl;
+      required final DownloadedFile? downloadedFile}) = _$ItemDetailsStateImpl;
 
   @override
   MediaItem get item;
@@ -317,7 +317,7 @@ abstract class _ItemDetailsState implements ItemDetailsState {
   @override
   String? get durationText;
   @override
-  String? get videoDownloadUrl;
+  DownloadedFile? get downloadedFile;
 
   /// Create a copy of ItemDetailsState
   /// with the given fields replaced by the non-null parameter values.

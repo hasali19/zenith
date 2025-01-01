@@ -64,14 +64,30 @@ final class MediaMetadata {
   });
 }
 
-final class VideoItem {
+sealed class MediaSource {
+  const MediaSource();
+}
+
+final class NetworkSource extends MediaSource {
   final String url;
+
+  const NetworkSource(this.url);
+}
+
+final class LocalFileSource extends MediaSource {
+  final String path;
+
+  const LocalFileSource(this.path);
+}
+
+final class VideoItem {
+  final MediaSource source;
   final List<ExternalSubtitleTrack> subtitles;
   final Rect? cropRect;
   final MediaMetadata metadata;
 
   const VideoItem({
-    required this.url,
+    required this.source,
     this.subtitles = const [],
     this.cropRect,
     this.metadata = const MediaMetadata(),

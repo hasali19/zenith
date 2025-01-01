@@ -343,10 +343,13 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
           'language': track.language
         };
 
-    toItemDto(VideoItem item) => {
-          'url': item.url,
-          'subtitles': item.subtitles.map(toSubtitleDto).toList(),
-        };
+    toItemDto(VideoItem item) {
+      return {
+        if (item.source case NetworkSource(:final url)) 'url': url,
+        if (item.source case LocalFileSource(:final path)) 'path': path,
+        'subtitles': item.subtitles.map(toSubtitleDto).toList(),
+      };
+    }
 
     await _methodChannel.invokeMethod(
       'load',

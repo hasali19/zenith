@@ -51,7 +51,7 @@ class ItemDetailsPage extends ConsumerWidget {
           data: (data) => _ItemDetailsContent(
             state: data,
             onRefresh: () =>
-                ref.refresh(itemDetailsControllerProvider(id).future),
+                ref.read(itemDetailsControllerProvider(id).notifier).refresh(),
           ),
         );
       }),

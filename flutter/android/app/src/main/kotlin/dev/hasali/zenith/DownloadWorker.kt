@@ -7,8 +7,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+import android.net.Uri
 import android.os.Build
-import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.webkit.MimeTypeMap
@@ -18,12 +18,13 @@ import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -78,7 +79,9 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
         val uri = inputData.getString("uri")!!
         val cookies = inputData.getString("cookies")
         val filename = inputData.getString("filename")!!
-        var success = true
+
+        var success = false
+        var outputUri: Uri? = null
 
         coroutineScope {
             var totalBytes = 0L
@@ -94,19 +97,30 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
             }
 
             try {
-                download(uri, cookies, filename) { d, t ->
+                outputUri = download(uri, cookies, filename) { d, t ->
                     downloadedBytes = d
                     totalBytes = t
                 }
+                success = true
             } catch (e: Exception) {
-                success = false
-                Log.e("DownloadWorker", e.toString())
+                Log.e("DownloadWorker", e.stackTraceToString())
             } finally {
                 notifier.cancel()
             }
 
             if (!isStopped) {
                 showCompletedNotification(filename, success, totalBytes)
+            }
+
+            withContext(Dispatchers.Main + NonCancellable) {
+                val engine = BackgroundFlutterEngine.getInstance(applicationContext)
+                engine.downloaderChannel.invokeMethodWithResult(
+                    "onDownloadResult", mapOf(
+                        "id" to id.toString(),
+                        "success" to success,
+                        "uri" to outputUri?.toString(),
+                    )
+                )
             }
         }
 
@@ -122,78 +136,71 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
         cookies: String?,
         filename: String,
         onProgress: (downloaded: Long, total: Long) -> Unit
-    ) {
-        withContext(Dispatchers.IO) {
-            withOutputStream(filename) { outputStream ->
-                val connection = (URL(url).openConnection() as HttpURLConnection).apply {
-                    requestMethod = "GET"
-                    setRequestProperty("Cookie", cookies)
-                }
+    ): Uri = withContext(Dispatchers.IO) {
+        withOutputStream(filename) { outputStream ->
+            val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                setRequestProperty("Cookie", cookies)
+            }
 
-                var downloaded = 0L
-                val length = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    connection.contentLengthLong
-                } else {
-                    connection.getHeaderField("Content-Length")?.toLong() ?: -1
-                }
+            var downloaded = 0L
+            val length = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                connection.contentLengthLong
+            } else {
+                connection.getHeaderField("Content-Length")?.toLong() ?: -1
+            }
 
-                val inputStream = connection.inputStream.buffered()
-                for (it in inputStream.iterator().asSequence().chunked(8192)) {
-                    outputStream.write(it.toByteArray())
-                    downloaded += it.size
-                    onProgress(downloaded, length)
-                    if (isStopped) {
-                        return@withOutputStream false
-                    }
+            val inputStream = connection.inputStream.buffered()
+            for (it in inputStream.iterator().asSequence().chunked(8192)) {
+                outputStream.write(it.toByteArray())
+                downloaded += it.size
+                onProgress(downloaded, length)
+                if (isStopped) {
+                    throw CancellationException()
                 }
-
-                true
             }
         }
     }
 
     private inline fun withOutputStream(
         filename: String,
-        block: (outputStream: OutputStream) -> Boolean
-    ) {
+        block: (outputStream: OutputStream) -> Unit
+    ): Uri {
         val extension = MimeTypeMap.getFileExtensionFromUrl(filename)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val directoryPath = "${Environment.DIRECTORY_DOWNLOADS}/Zenith"
-            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+        val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+        val resolver = applicationContext.contentResolver
 
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
-                put(
-                    MediaStore.MediaColumns.MIME_TYPE,
-                    mimeType
-                )
-                put(MediaStore.MediaColumns.RELATIVE_PATH, directoryPath)
-                put(MediaStore.MediaColumns.IS_PENDING, 1)
-            }
-
-            val contentResolver = applicationContext.contentResolver
-            val uri =
-                contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)!!
-
-            val success = try {
-                contentResolver.openOutputStream(uri)!!.use(block)
-            } catch (e: Exception) {
-                contentResolver.delete(uri, null, null)
-                throw e
-            }
-
-            if (success) {
-                contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
-                contentResolver.update(uri, contentValues, null, null)
-            } else {
-                contentResolver.delete(uri, null, null)
-            }
+        val videoCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
         } else {
-            val downloadsDir =
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val file = File("$downloadsDir/Zenith/$filename")
-            file.outputStream().use(block)
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
         }
+
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Video.Media.DISPLAY_NAME, filename)
+            put(
+                MediaStore.MediaColumns.MIME_TYPE,
+                mimeType
+            )
+            put(MediaStore.MediaColumns.IS_PENDING, 1)
+        }
+
+        val uri = resolver.insert(videoCollection, contentValues)
+            ?: throw Exception("Failed to add file to MediaStore")
+
+        try {
+            resolver.openOutputStream(uri)!!.use(block)
+        } catch (e: Exception) {
+            Log.w("DownloadWorker", "Download failed, deleting output file")
+            resolver.delete(uri, null, null)
+            throw e
+        }
+
+        contentValues.clear()
+        contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
+        resolver.update(uri, contentValues, null, null)
+
+        return uri
     }
 
     private suspend fun updateProgressNotification(

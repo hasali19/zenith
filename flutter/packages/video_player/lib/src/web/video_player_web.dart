@@ -121,9 +121,12 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
   void load(List<VideoItem> items, int startIndex, double startPosition) {
     // TODO: Implement playlist support for web
     final item = items[startIndex];
-    _element.src = item.url;
     _element.crossOrigin = 'anonymous';
     _element.currentTime = startPosition;
+    _element.src = switch (item.source) {
+      NetworkSource(:final url) => url,
+      LocalFileSource() => throw UnimplementedError(),
+    };
 
     while (_element.firstChild != null) {
       _element.removeChild(_element.firstChild!);

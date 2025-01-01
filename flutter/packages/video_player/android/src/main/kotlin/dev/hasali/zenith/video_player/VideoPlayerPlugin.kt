@@ -16,6 +16,8 @@ import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.ContentDataSource
+import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -53,7 +55,11 @@ class VideoPlayerPlugin : FlutterPlugin, ActivityAware {
                             id = call.argument("id")!!,
                             items = call.argument<List<Map<String, Any>>>("items")!!.map { item ->
                                 VideoItem(
-                                    url = item.get("url") as String,
+                                    source = when {
+                                        item.containsKey("url") -> VideoSource.Network(item["url"] as String)
+                                        item.containsKey("path") -> VideoSource.LocalFile(item["path"] as String)
+                                        else -> throw IllegalArgumentException("url or path is required")
+                                    },
                                     subtitles = (item["subtitles"] as List<*>)
                                         .map { it as Map<*, *> }
                                         .map {
@@ -320,8 +326,13 @@ class VideoPlayerPlugin : FlutterPlugin, ActivityAware {
 
 private typealias EventCallback = (event: PlayerInstance.Event) -> Unit
 
+sealed interface VideoSource {
+    data class Network(val url: String) : VideoSource
+    data class LocalFile(val path: String) : VideoSource
+}
+
 data class VideoItem(
-    val url: String,
+    val source: VideoSource,
     val subtitles: List<SubtitleTrack>,
 )
 
@@ -480,16 +491,19 @@ private class PlayerInstance(
     }
 
     fun load(items: List<VideoItem>, startIndex: Int, startPosition: Long) {
-        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
-        val dataSourceFactory = {
-            val dataSource = httpDataSourceFactory.createDataSource()
-            headers.forEach { (k, v) -> dataSource.setRequestProperty(k, v) }
-            dataSource
-        };
+        val contentDataSourceFactory: DataSource.Factory =
+            DataSource.Factory { ContentDataSource(context) }
+        val httpDataSourceFactory: DataSource.Factory =
+            DefaultHttpDataSource.Factory().apply { setDefaultRequestProperties(headers) }
 
         val mediaSources = items.map { item ->
             val mediaItem = MediaItem.Builder()
-                .setUri(item.url)
+                .setUri(
+                    when (item.source) {
+                        is VideoSource.Network -> item.source.url
+                        is VideoSource.LocalFile -> item.source.path
+                    }
+                )
                 .setSubtitleConfigurations(item.subtitles.map { track ->
                     SubtitleConfiguration.Builder(Uri.parse(track.src))
                         .setId("external:${track.id}")
@@ -501,7 +515,12 @@ private class PlayerInstance(
                 .build()
 
             DefaultMediaSourceFactory(context)
-                .setDataSourceFactory(dataSourceFactory)
+                .setDataSourceFactory(
+                    when (item.source) {
+                        is VideoSource.Network -> httpDataSourceFactory
+                        is VideoSource.LocalFile -> contentDataSourceFactory
+                    }
+                )
                 .createMediaSource(mediaItem)
         }
 
