@@ -38,9 +38,9 @@ class MainActivity : FlutterActivity() {
     private val pendingInstalls = mutableMapOf<Int, (resultCode: Int) -> Unit>()
 
     object Channels {
-        const val Updater = "zenith.hasali.dev/updater"
-        const val Platform = "zenith.hasali.dev/platform"
-        const val Downloader = "zenith.hasali.dev/downloader"
+        const val UPDATER = "zenith.hasali.dev/updater"
+        const val PLATFORM = "zenith.hasali.dev/platform"
+        const val DOWNLOADER = "zenith.hasali.dev/downloader"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,15 +53,15 @@ class MainActivity : FlutterActivity() {
 
         val messenger = flutterEngine.dartExecutor.binaryMessenger
 
-        updaterChannel = MethodChannel(messenger, Channels.Updater).also {
+        updaterChannel = MethodChannel(messenger, Channels.UPDATER).also {
             it.setMethodCallHandler(::handleUpdaterMethodCall)
         }
 
-        platformChannel = MethodChannel(messenger, Channels.Platform).also {
+        platformChannel = MethodChannel(messenger, Channels.PLATFORM).also {
             it.setMethodCallHandler(::handlePlatformMethodCall)
         }
 
-        downloaderChannel = MethodChannel(messenger, Channels.Downloader).also {
+        downloaderChannel = MethodChannel(messenger, Channels.DOWNLOADER).also {
             it.setMethodCallHandler(::handleDownloaderMethodCall)
         }
 

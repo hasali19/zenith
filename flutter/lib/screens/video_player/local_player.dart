@@ -246,6 +246,10 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
         metadata: MediaMetadata(
           title: title,
           subtitle: subtitle,
+          backdropUrl: switch (item.backdrop) {
+            null => null,
+            final id => _api.getImageUrl(id, width: 780),
+          },
         ),
         cropRect: switch ((videoStream?.crop1, videoStream?.crop2)) {
           ((int x1, int y1), (int x2, int y2)) => Rect.fromPoints(

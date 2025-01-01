@@ -8,6 +8,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaItem.SubtitleConfiguration
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.TrackGroup
@@ -18,11 +19,15 @@ import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.ContentDataSource
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DataSourceBitmapLoader
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.session.CacheBitmapLoader
 import androidx.media3.session.MediaSession
+import androidx.media3.ui.PlayerNotificationManager
+import com.google.common.util.concurrent.MoreExecutors
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -31,6 +36,7 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.view.TextureRegistry
 import io.flutter.view.TextureRegistry.SurfaceProducer
+import java.util.concurrent.Executors
 
 class VideoPlayerPlugin : FlutterPlugin, ActivityAware {
     private lateinit var applicationContext: Context
@@ -71,6 +77,13 @@ class VideoPlayerPlugin : FlutterPlugin, ActivityAware {
                                                 language = it["language"] as String?,
                                             )
                                         },
+                                    title = item["title"] as String?,
+                                    subtitle = item["subtitle"] as String?,
+                                    seriesTitle = item["seriesTitle"] as String?,
+                                    seasonNumber = item["seasonNumber"] as Int?,
+                                    episodeNumber = item["episodeNumber"] as Int?,
+                                    posterUrl = item["posterUrl"] as String?,
+                                    backdropUrl = item["backdropUrl"] as String?,
                                 )
                             },
                             startIndex = call.argument("startIndex")!!,
@@ -334,6 +347,13 @@ sealed interface VideoSource {
 data class VideoItem(
     val source: VideoSource,
     val subtitles: List<SubtitleTrack>,
+    val title: String?,
+    val subtitle: String?,
+    val seriesTitle: String?,
+    val seasonNumber: Int?,
+    val episodeNumber: Int?,
+    val posterUrl: String?,
+    val backdropUrl: String?,
 )
 
 data class SubtitleTrack(
@@ -374,7 +394,23 @@ private class PlayerInstance(
         .setTrackSelector(trackSelector)
         .build()
 
+    private val httpDataSourceFactory =
+        DefaultHttpDataSource.Factory().apply { setDefaultRequestProperties(headers) }
+    private val contentDataSourceFactory = DataSource.Factory { ContentDataSource(context) }
+
+    private val bitmapLoaderExecutorService = Executors.newSingleThreadExecutor()
     private val session = MediaSession.Builder(context, player)
+        .setBitmapLoader(
+            CacheBitmapLoader(
+                DataSourceBitmapLoader(
+                    MoreExecutors.listeningDecorator(bitmapLoaderExecutorService),
+                    httpDataSourceFactory
+                )
+            )
+        )
+        .build()
+
+    private val notificationManager = PlayerNotificationManager.Builder(context, 424242, "media")
         .build()
 
     private var audioRenderer: Int? = null
@@ -484,6 +520,9 @@ private class PlayerInstance(
         trackSelector.parameters = trackSelector.buildUponParameters()
             .setPreferredAudioLanguage("en")
             .build()
+
+        notificationManager.setPlayer(player)
+        notificationManager.setMediaSessionToken(session.platformToken)
     }
 
     fun setEventCallback(callback: EventCallback?) {
@@ -491,36 +530,45 @@ private class PlayerInstance(
     }
 
     fun load(items: List<VideoItem>, startIndex: Int, startPosition: Long) {
-        val contentDataSourceFactory: DataSource.Factory =
-            DataSource.Factory { ContentDataSource(context) }
-        val httpDataSourceFactory: DataSource.Factory =
-            DefaultHttpDataSource.Factory().apply { setDefaultRequestProperties(headers) }
-
         val mediaSources = items.map { item ->
-            val mediaItem = MediaItem.Builder()
-                .setUri(
-                    when (item.source) {
-                        is VideoSource.Network -> item.source.url
-                        is VideoSource.LocalFile -> item.source.path
-                    }
-                )
-                .setSubtitleConfigurations(item.subtitles.map { track ->
-                    SubtitleConfiguration.Builder(Uri.parse(track.src))
-                        .setId("external:${track.id}")
-                        .setMimeType(track.mimeType)
-                        .setLanguage(track.language)
-                        .setLabel(track.title)
-                        .build()
-                })
+            val uri = when (item.source) {
+                is VideoSource.Network -> item.source.url
+                is VideoSource.LocalFile -> item.source.path
+            }
+
+            val backdropUrl = when (item.backdropUrl) {
+                null -> null
+                else -> Uri.parse(item.backdropUrl)
+            }
+
+            val metadata = MediaMetadata.Builder()
+                .setTitle(item.title)
+                .setSubtitle(item.subtitle)
+                .setArtworkUri(backdropUrl)
                 .build()
 
+            val subtitles = item.subtitles.map { track ->
+                SubtitleConfiguration.Builder(Uri.parse(track.src))
+                    .setId("external:${track.id}")
+                    .setMimeType(track.mimeType)
+                    .setLanguage(track.language)
+                    .setLabel(track.title)
+                    .build()
+            }
+
+            val mediaItem = MediaItem.Builder()
+                .setUri(uri)
+                .setSubtitleConfigurations(subtitles)
+                .setMediaMetadata(metadata)
+                .build()
+
+            val dataSourceFactory = when (item.source) {
+                is VideoSource.Network -> httpDataSourceFactory
+                is VideoSource.LocalFile -> contentDataSourceFactory
+            }
+
             DefaultMediaSourceFactory(context)
-                .setDataSourceFactory(
-                    when (item.source) {
-                        is VideoSource.Network -> httpDataSourceFactory
-                        is VideoSource.LocalFile -> contentDataSourceFactory
-                    }
-                )
+                .setDataSourceFactory(dataSourceFactory)
                 .createMediaSource(mediaItem)
         }
 
@@ -597,6 +645,8 @@ private class PlayerInstance(
     }
 
     fun release() {
+        bitmapLoaderExecutorService.shutdown()
+        notificationManager.setPlayer(null)
         session.release()
         player.release()
         surfaceProducer.release()

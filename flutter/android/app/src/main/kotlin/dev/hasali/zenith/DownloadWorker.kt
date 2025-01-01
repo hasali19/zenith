@@ -58,7 +58,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
 
                 NotificationManagerCompat.from(context).notify(
                     id.hashCode(),
-                    NotificationCompat.Builder(context, NotificationChannels.Downloads)
+                    NotificationCompat.Builder(context, NotificationChannels.DOWNLOADS)
                         .setSmallIcon(R.drawable.ic_notification_small)
                         .setContentTitle(filename)
                         .setContentText("Starting download...")
@@ -222,7 +222,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
 
         val pc = (downloaded.toDouble() / length.toDouble()) * 100.0
         val notification =
-            NotificationCompat.Builder(applicationContext, NotificationChannels.Downloads)
+            NotificationCompat.Builder(applicationContext, NotificationChannels.DOWNLOADS)
                 .setSmallIcon(R.drawable.ic_notification_small)
                 .setContentTitle(filename)
                 .setContentText("${downloaded.formatAsSize()}/${length.formatAsSize()}")
@@ -247,7 +247,7 @@ class DownloadWorker(appContext: Context, params: WorkerParameters) :
     private fun showCompletedNotification(filename: String, success: Boolean, length: Long) {
         if (applicationContext.checkPermission(Manifest.permission.POST_NOTIFICATIONS)) {
             val notification =
-                NotificationCompat.Builder(applicationContext, NotificationChannels.Downloads)
+                NotificationCompat.Builder(applicationContext, NotificationChannels.DOWNLOADS)
                     .setSmallIcon(R.drawable.ic_notification_small)
                     .setContentTitle(filename)
                     .setContentText(if (success) "Download complete · ${length.formatAsSize()}" else "Download failed")

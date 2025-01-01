@@ -348,6 +348,13 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
         if (item.source case NetworkSource(:final url)) 'url': url,
         if (item.source case LocalFileSource(:final path)) 'path': path,
         'subtitles': item.subtitles.map(toSubtitleDto).toList(),
+        'title': item.metadata.title,
+        'subtitle': item.metadata.subtitle,
+        'seriesTitle': item.metadata.seriesTitle,
+        'seasonNumber': item.metadata.seasonNumber,
+        'episodeNumber': item.metadata.episodeNumber,
+        'posterUrl': item.metadata.posterUrl,
+        'backdropUrl': item.metadata.backdropUrl,
       };
     }
 
