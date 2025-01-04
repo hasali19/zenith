@@ -47,12 +47,18 @@ class HeaderContent extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         HeaderLayout(
-          backdrop: ZenithApiImage(
-            id: state.backdrop!,
-            requestWidth: mediaBackdropImageWidth,
-            height: 300,
-            alignment: Alignment.topCenter,
-          ),
+          backdrop: switch (state.backdrop) {
+            null => Container(
+                height: 300,
+                color: Colors.grey,
+              ),
+            final backdrop => ZenithApiImage(
+                id: backdrop,
+                requestWidth: mediaBackdropImageWidth,
+                height: 300,
+                alignment: Alignment.topCenter,
+              ),
+          },
           poster: Poster(
             imageId: state.poster,
             requestWidth: mediaPosterImageWidth,
@@ -544,7 +550,9 @@ class Poster extends StatelessWidget {
           child: AspectRatio(
             aspectRatio: 2.0 / 3.0,
             child: switch (imageId) {
-              null => SizedBox(),
+              null => Material(
+                  child: Icon(Icons.tv, size: 48),
+                ),
               final imageId =>
                 ZenithApiImage(id: imageId, requestWidth: requestWidth)
             },
