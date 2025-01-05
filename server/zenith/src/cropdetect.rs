@@ -56,7 +56,7 @@ impl<'a> CropDetect<'a> {
 
 fn parse_log_line(line: &str) -> Option<CropResult> {
     static LINE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(r"x1:(\d+) x2:(\d+) y1:(\d+) y2:(\d+) w:\d+ h:\d+ x:\d+ y:\d+ pts:\d+ t:\S+ crop=\d+:\d+:\d+:\d+").unwrap()
+        Regex::new(r"x1:(\d+) x2:(\d+) y1:(\d+) y2:(\d+) .+ crop=\d+:\d+:\d+:\d+").unwrap()
     });
 
     let captures = LINE_REGEX.captures(line)?;
