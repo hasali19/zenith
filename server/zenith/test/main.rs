@@ -13,13 +13,13 @@ use axum::Extension;
 use axum_extra::extract::cookie::Key;
 use bytes::Buf;
 use camino::{Utf8Path, Utf8PathBuf};
+use db::WriteConnection;
 use futures::future::LocalBoxFuture;
 use futures::Future;
 use http_body_util::BodyExt;
 use hyper::StatusCode;
 use libtest_mimic::{Arguments, Failed, Trial};
 use serde_json::{json, Value};
-use sqlx::SqliteConnection;
 use tempfile::TempDir;
 use tmdb::TmdbClient;
 use tokio::task::LocalSet;
@@ -37,7 +37,7 @@ use zenith::video_prober::MockVideoProber;
 use zenith::{App, Db, MediaItemType};
 
 async fn insert_video_file(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     item_id: i64,
     path: &str,
 ) -> eyre::Result<()> {
@@ -77,7 +77,7 @@ async fn insert_video_file(
     Ok(())
 }
 
-async fn init_test_data(conn: &mut SqliteConnection) -> eyre::Result<()> {
+async fn init_test_data(conn: &mut WriteConnection) -> eyre::Result<()> {
     // hash of "password"
     const PASSWORD_HASH: &str = "$argon2id$v=19$m=19456,t=2,p=1$cV946Lj8LNOX2F7ClooV3A$bZQHhEei6/LLmfpyuX2Hqupj416sfZ8/LtxmUg0FZqI";
 
@@ -328,7 +328,7 @@ where
         .unwrap();
     tracing::debug!("opened db {id}");
 
-    init_test_data(&mut db.acquire().await.unwrap())
+    init_test_data(&mut db.acquire_write().await.unwrap())
         .await
         .unwrap();
 

@@ -1,8 +1,7 @@
-use sqlx::SqliteConnection;
 use sqlx::Type;
 
-use crate::sql;
 use crate::utils::arguments::QueryArguments;
+use crate::{sql, WriteConnection};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Type)]
 pub enum StreamType {
@@ -19,7 +18,7 @@ pub struct NewVideoStream<'a> {
 }
 
 pub async fn insert_video_stream(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     stream: &NewVideoStream<'_>,
 ) -> eyre::Result<()> {
     let sql = "
@@ -63,7 +62,7 @@ pub struct UpdateVideoStream {
 }
 
 pub async fn update_video_stream_by_index(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     video_id: i64,
     stream_index: u32,
     stream: &UpdateVideoStream,
@@ -97,7 +96,7 @@ pub struct NewAudioStream<'a> {
 }
 
 pub async fn insert_audio_stream(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     stream: &NewAudioStream<'_>,
 ) -> eyre::Result<()> {
     let sql = "
@@ -137,7 +136,7 @@ pub async fn insert_audio_stream(
 }
 
 pub async fn remove_except(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     video_id: i64,
     except: impl Iterator<Item = u32>,
 ) -> eyre::Result<()> {

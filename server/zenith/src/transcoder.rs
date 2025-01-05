@@ -376,7 +376,7 @@ impl Transcoder {
     }
 
     async fn cropdetect_if_required(&self, id: i64, path: &Utf8Path) -> eyre::Result<()> {
-        let mut conn = self.db.acquire().await?;
+        let mut conn = self.db.acquire_write().await?;
 
         let sql = "
             SELECT stream_index
@@ -461,7 +461,7 @@ impl Transcoder {
         stream_index: u32,
         path: &Utf8Path,
     ) -> eyre::Result<()> {
-        let mut conn = self.db.acquire().await?;
+        let mut conn = self.db.acquire_write().await?;
 
         let data = UpdateSubtitle {
             path: Some(path),
@@ -475,7 +475,7 @@ impl Transcoder {
     }
 
     async fn update_video_path(&self, id: i64, path: &Utf8Path) -> eyre::Result<()> {
-        let mut conn = self.db.acquire().await?;
+        let mut conn = self.db.acquire_write().await?;
 
         let data = UpdateVideoFile {
             path: Some(path),

@@ -1,6 +1,8 @@
 use std::time::{Duration, SystemTime};
 
-use sqlx::{FromRow, SqliteConnection};
+use sqlx::FromRow;
+
+use crate::{ReadConnection, WriteConnection};
 
 pub struct NewUserRegistration<'a> {
     pub id: &'a str,
@@ -8,7 +10,7 @@ pub struct NewUserRegistration<'a> {
 }
 
 pub async fn create(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     data: NewUserRegistration<'_>,
 ) -> eyre::Result<UserRegistration> {
     let now = SystemTime::now()
@@ -40,7 +42,7 @@ pub struct UserRegistration {
     pub expires_at: i64,
 }
 
-pub async fn get(conn: &mut SqliteConnection, id: &str) -> eyre::Result<Option<UserRegistration>> {
+pub async fn get(conn: &mut ReadConnection, id: &str) -> eyre::Result<Option<UserRegistration>> {
     let registration = sqlx::query_as("SELECT * FROM user_registrations WHERE id = ?")
         .bind(id)
         .fetch_optional(conn)
@@ -48,14 +50,14 @@ pub async fn get(conn: &mut SqliteConnection, id: &str) -> eyre::Result<Option<U
     Ok(registration)
 }
 
-pub async fn get_all(conn: &mut SqliteConnection) -> eyre::Result<Vec<UserRegistration>> {
+pub async fn get_all(conn: &mut ReadConnection) -> eyre::Result<Vec<UserRegistration>> {
     let registrations = sqlx::query_as("SELECT * FROM user_registrations")
         .fetch_all(conn)
         .await?;
     Ok(registrations)
 }
 
-pub async fn delete(conn: &mut SqliteConnection, id: &str) -> eyre::Result<bool> {
+pub async fn delete(conn: &mut WriteConnection, id: &str) -> eyre::Result<bool> {
     let res = sqlx::query("DELETE FROM user_registrations WHERE id = ?")
         .bind(id)
         .execute(conn)

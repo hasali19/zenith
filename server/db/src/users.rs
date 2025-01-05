@@ -1,13 +1,13 @@
-use sqlx::{FromRow, SqliteConnection};
+use sqlx::FromRow;
 
-use crate::sql;
+use crate::{sql, ReadConnection, WriteConnection};
 
 pub struct NewUser<'a> {
     pub username: &'a str,
     pub password_hash: &'a str,
 }
 
-pub async fn create(conn: &mut SqliteConnection, user: NewUser<'_>) -> eyre::Result<i64> {
+pub async fn create(conn: &mut WriteConnection, user: NewUser<'_>) -> eyre::Result<i64> {
     let sql = sql::insert("users")
         .columns(&["username", "password_hash"])
         .values(&["?", "?"])
@@ -32,7 +32,7 @@ pub struct User {
 
 const SELECT_COLS: &[&str] = &["id", "username", "password_hash"];
 
-pub async fn get_all(conn: &mut SqliteConnection) -> eyre::Result<Vec<User>> {
+pub async fn get_all(conn: &mut ReadConnection) -> eyre::Result<Vec<User>> {
     let sql = sql::select("users").columns(SELECT_COLS).to_sql();
     sqlx::query_as(&sql)
         .fetch_all(conn)
@@ -40,7 +40,7 @@ pub async fn get_all(conn: &mut SqliteConnection) -> eyre::Result<Vec<User>> {
         .map_err(Into::into)
 }
 
-pub async fn get_by_id(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<User>> {
+pub async fn get_by_id(conn: &mut ReadConnection, id: i64) -> eyre::Result<Option<User>> {
     let sql = sql::select("users")
         .columns(SELECT_COLS)
         .condition("id = ?")
@@ -54,7 +54,7 @@ pub async fn get_by_id(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Opt
 }
 
 pub async fn get_by_username(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     username: &str,
 ) -> eyre::Result<Option<User>> {
     let sql = sql::select("users")

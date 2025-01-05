@@ -4,10 +4,11 @@ use camino::Utf8PathBuf;
 use eyre::{eyre, Context};
 use itertools::Itertools;
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Acquire, FromRow, Row, SqliteConnection};
+use sqlx::{FromRow, Row};
 
 use crate::sql::{self, Join};
 use crate::utils::arguments::QueryArguments;
+use crate::{ReadConnection, WriteConnection};
 
 use super::media::{MediaItemType, MetadataProvider};
 use super::streams::StreamType;
@@ -315,7 +316,7 @@ pub enum SortField {
     CollectionIndex,
 }
 
-pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Result<Vec<MediaItem>> {
+pub async fn query(conn: &mut ReadConnection, query: Query<'_>) -> eyre::Result<Vec<MediaItem>> {
     tracing::debug!("querying with params {query:?}");
 
     let mut args = QueryArguments::default();
@@ -489,7 +490,7 @@ pub async fn query(conn: &mut SqliteConnection, query: Query<'_>) -> eyre::Resul
     Ok(items)
 }
 
-pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<MediaItem>> {
+pub async fn get(conn: &mut ReadConnection, id: i64) -> eyre::Result<Option<MediaItem>> {
     let ids = [id];
     let query = Query {
         ids: Some(&ids),
@@ -502,7 +503,7 @@ pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Me
 }
 
 pub async fn get_continue_watching(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     user_id: i64,
     limit: Option<u32>,
 ) -> eyre::Result<Vec<i64>> {
@@ -559,7 +560,7 @@ pub async fn get_continue_watching(
 }
 
 pub async fn get_recently_added_movies(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     user_id: i64,
 ) -> eyre::Result<Vec<i64>> {
     let sql = sql::select("movies AS m")
@@ -581,7 +582,7 @@ pub async fn get_recently_added_movies(
 }
 
 pub async fn get_recently_updated_shows(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     user_id: i64,
 ) -> eyre::Result<Vec<i64>> {
     let condition = "
@@ -613,7 +614,7 @@ pub async fn get_recently_updated_shows(
 }
 
 pub async fn get_user_data_for_video(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     user_id: i64,
     id: i64,
 ) -> eyre::Result<Option<VideoUserData>> {
@@ -624,7 +625,7 @@ pub async fn get_user_data_for_video(
 }
 
 pub async fn get_user_data_for_videos(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     user_id: i64,
     ids: &[i64],
 ) -> eyre::Result<Vec<VideoUserData>> {
@@ -653,7 +654,7 @@ pub async fn get_user_data_for_videos(
 }
 
 pub async fn get_user_data_for_collections(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     user_id: i64,
     ids: &[i64],
 ) -> eyre::Result<Vec<CollectionUserData>> {
@@ -730,7 +731,7 @@ pub struct UpdateCrewMember<'a> {
 }
 
 pub async fn update_metadata(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     id: i64,
     data: UpdateMetadata<'_>,
 ) -> eyre::Result<()> {
@@ -972,7 +973,7 @@ pub async fn update_metadata(
 /// Deletes a media item from the database, as well as any associated objects.
 ///
 /// This should be called from within a transaction.
-pub async fn remove(conn: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
+pub async fn remove(conn: &mut WriteConnection, id: i64) -> eyre::Result<()> {
     sqlx::query("DELETE FROM media_item_user_data WHERE item_id = ?")
         .bind(id)
         .execute(&mut *conn)

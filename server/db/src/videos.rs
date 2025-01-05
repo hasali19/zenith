@@ -1,8 +1,7 @@
-use sqlx::SqliteConnection;
-
 use crate::sql::{self, OnConflict, UpdateList};
+use crate::{ReadConnection, WriteConnection};
 
-pub async fn get_all_ids(conn: &mut SqliteConnection) -> eyre::Result<Vec<i64>> {
+pub async fn get_all_ids(conn: &mut ReadConnection) -> eyre::Result<Vec<i64>> {
     sqlx::query_scalar("SELECT item_id FROM video_files")
         .fetch_all(conn)
         .await
@@ -22,7 +21,7 @@ pub struct UpdateVideoUserData {
 }
 
 pub async fn update_user_data(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     media_id: i64,
     user_id: i64,
     data: UpdateVideoUserData,

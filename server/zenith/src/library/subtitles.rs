@@ -15,7 +15,7 @@ impl MediaLibrary {
             return Ok(());
         };
 
-        let mut transaction = self.db.begin().await?;
+        let mut transaction = self.db.begin_write().await?;
 
         let sql = sql::select("video_files")
             .columns(&["id"])

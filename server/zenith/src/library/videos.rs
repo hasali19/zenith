@@ -1,10 +1,9 @@
 use camino::Utf8Path;
-use db::sql;
 use db::streams::{NewAudioStream, NewVideoStream};
 use db::subtitles::NewSubtitle;
 use db::video_files::UpdateVideoFile;
+use db::{sql, WriteConnection};
 use eyre::eyre;
-use sqlx::SqliteConnection;
 
 use crate::video_prober::VideoInfo;
 
@@ -24,7 +23,7 @@ impl MediaLibrary {
     }
 
     pub async fn rescan_video(&self, path: &Utf8Path) -> eyre::Result<()> {
-        let mut transaction = self.db.begin().await?;
+        let mut transaction = self.db.begin_write().await?;
 
         let video_id = sqlx::query_scalar("SELECT id FROM video_files WHERE path = ?")
             .bind(path)
@@ -43,7 +42,7 @@ impl MediaLibrary {
 
     pub async fn remove_video(&self, path: &Utf8Path) -> eyre::Result<()> {
         tracing::info!(%path, "removing video");
-        let mut transaction = self.db.begin().await?;
+        let mut transaction = self.db.begin_write().await?;
         db::video_files::remove_by_path(&mut transaction, path).await?;
         transaction.commit().await?;
         Ok(())
@@ -57,7 +56,7 @@ impl MediaLibrary {
         let info = self.video_prober.probe(path).await?;
         let duration: f64 = info.format.duration.parse()?;
 
-        let mut transaction = self.db.begin().await?;
+        let mut transaction = self.db.begin_write().await?;
 
         let sql = sql::insert("video_files")
             .columns(&["item_id", "path", "duration", "scanned_at"])
@@ -83,7 +82,7 @@ impl MediaLibrary {
 }
 
 async fn update_video_info(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     id: i64,
     info: &VideoInfo,
 ) -> eyre::Result<()> {

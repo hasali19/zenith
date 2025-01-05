@@ -45,7 +45,7 @@ test_snapshot!(
 
 #[test(with_app)]
 async fn get_collections(mut app: TestApp) {
-    let mut conn = app.db.acquire().await.unwrap();
+    let mut conn = app.db.acquire_write().await.unwrap();
 
     db::collections::create(
         &mut conn,
@@ -70,7 +70,7 @@ async fn get_collections(mut app: TestApp) {
 
 #[test(with_app)]
 async fn get_collection(mut app: TestApp) {
-    let mut conn = app.db.acquire().await.unwrap();
+    let mut conn = app.db.acquire_write().await.unwrap();
 
     db::collections::create(
         &mut conn,
@@ -128,7 +128,7 @@ async fn create_collection(mut app: TestApp) {
 
 #[test(with_app)]
 async fn delete_collection(mut app: TestApp) {
-    let mut conn = app.db.acquire().await.unwrap();
+    let mut conn = app.db.acquire_write().await.unwrap();
 
     let collection = db::collections::create(
         &mut conn,
@@ -138,6 +138,8 @@ async fn delete_collection(mut app: TestApp) {
     )
     .await
     .unwrap();
+
+    drop(conn);
 
     let cookie = app.login().await;
 
@@ -168,7 +170,7 @@ async fn delete_collection(mut app: TestApp) {
 
 #[test(with_app)]
 async fn update_collection(mut app: TestApp) {
-    let mut conn = app.db.acquire().await.unwrap();
+    let mut conn = app.db.acquire_write().await.unwrap();
 
     let collection = db::collections::create(
         &mut conn,
@@ -178,6 +180,8 @@ async fn update_collection(mut app: TestApp) {
     )
     .await
     .unwrap();
+
+    drop(conn);
 
     let body = json!({
         "meta": {
@@ -448,7 +452,7 @@ async fn import_subtitle(mut app: TestApp) {
 async fn get_subtitle_content(mut app: TestApp) {
     let cookie = app.login().await;
 
-    let mut conn = app.db.acquire().await.unwrap();
+    let mut conn = app.db.acquire_write().await.unwrap();
 
     let sub_file = NamedTempFile::new().unwrap();
     tokio::fs::write(sub_file.path(), "subtitle content goes here")
@@ -495,7 +499,7 @@ async fn get_subtitle_content(mut app: TestApp) {
 async fn delete_subtitle(mut app: TestApp) {
     let cookie = app.login().await;
 
-    let mut conn = app.db.acquire().await.unwrap();
+    let mut conn = app.db.acquire_write().await.unwrap();
 
     let sub_file = NamedTempFile::new().unwrap();
     tokio::fs::write(sub_file.path(), "subtitle content goes here")
@@ -518,6 +522,8 @@ async fn delete_subtitle(mut app: TestApp) {
     .await
     .unwrap();
 
+    drop(conn);
+
     let res = app
         .router()
         .oneshot(
@@ -534,6 +540,7 @@ async fn delete_subtitle(mut app: TestApp) {
     assert!(res.status().is_success());
     assert!(!sub_file.path().exists());
 
+    let mut conn = app.db.acquire().await.unwrap();
     let row = db::subtitles::get_by_id(&mut conn, id).await.unwrap();
 
     assert!(row.is_none());

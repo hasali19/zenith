@@ -1,9 +1,11 @@
+// hash:2242507c343af3772176a8f6616ddaeeb508e492a81ab8639e187ebd989722de
+
 use itertools::Itertools;
-use sqlx::SqliteConnection;
 
 use crate::images::{self, ImageSourceType, ImageType};
+use crate::WriteConnection;
 
-pub async fn execute(conn: &mut SqliteConnection) -> eyre::Result<()> {
+pub async fn execute(conn: &mut WriteConnection) -> eyre::Result<()> {
     // Execute the main migration script.
     sqlx::query(include_str!("add_tables.sql"))
         .execute(&mut *conn)

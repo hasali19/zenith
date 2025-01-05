@@ -114,7 +114,7 @@ async fn find_match_for_nonexistent_item(mut app: TestApp) {
 async fn refresh_metadata_for_show(mut app: TestApp) {
     let cookie = app.login().await;
 
-    let mut conn = app.db.acquire().await.unwrap();
+    let mut conn = app.db.acquire_write().await.unwrap();
 
     db::items::update_metadata(
         &mut conn,
@@ -127,6 +127,8 @@ async fn refresh_metadata_for_show(mut app: TestApp) {
     )
     .await
     .unwrap();
+
+    drop(conn);
 
     Mock::given(method("GET"))
         .and(path("/tv/123"))
@@ -310,7 +312,7 @@ async fn set_match_for_unmatched_episode(mut app: TestApp) {
 async fn set_match_for_previously_matched_episode(mut app: TestApp) {
     let cookie = app.login().await;
 
-    let mut conn = app.db.acquire().await.unwrap();
+    let mut conn = app.db.acquire_write().await.unwrap();
 
     db::items::update_metadata(
         &mut conn,
@@ -323,6 +325,8 @@ async fn set_match_for_previously_matched_episode(mut app: TestApp) {
     )
     .await
     .unwrap();
+
+    drop(conn);
 
     Mock::given(method("GET"))
         .and(path("/tv/123/season/1/episode/2"))
@@ -370,7 +374,7 @@ async fn set_match_for_previously_matched_episode(mut app: TestApp) {
 async fn set_match_for_unmatched_episode_with_matched_show(mut app: TestApp) {
     let cookie = app.login().await;
 
-    let mut conn = app.db.acquire().await.unwrap();
+    let mut conn = app.db.acquire_write().await.unwrap();
 
     db::items::update_metadata(
         &mut conn,
@@ -383,6 +387,8 @@ async fn set_match_for_unmatched_episode_with_matched_show(mut app: TestApp) {
     )
     .await
     .unwrap();
+
+    drop(conn);
 
     Mock::given(method("GET"))
         .and(path("/tv/123/season/1/episode/2"))

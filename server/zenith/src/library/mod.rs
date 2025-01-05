@@ -10,9 +10,8 @@ pub mod watcher;
 
 use camino::Utf8PathBuf;
 use db::media::MediaItemType;
-use db::Db;
+use db::{Db, WriteConnection};
 pub use scanner::LibraryScanner;
-use sqlx::{Connection, SqliteConnection};
 use tokio::sync::broadcast;
 
 use std::sync::Arc;
@@ -100,7 +99,7 @@ impl MediaLibrary {
 
     async fn remove_item(
         &self,
-        conn: &mut SqliteConnection,
+        conn: &mut WriteConnection,
         id: i64,
         media_type: MediaItemType,
     ) -> eyre::Result<()> {

@@ -1,7 +1,7 @@
 use camino::Utf8Path;
 use db::media::{MediaItemType, MetadataProvider};
 use db::sql::{self, Join, OnConflict, UpdateList};
-use sqlx::{Connection, SqliteConnection};
+use db::ReadConnection;
 use time::OffsetDateTime;
 
 use crate::library::parser::MoviePathMeta;
@@ -80,7 +80,7 @@ impl MediaLibrary {
     pub(super) async fn validate_movies(&self) -> eyre::Result<()> {
         tracing::info!("validating movies");
 
-        let mut conn = self.db.acquire().await?;
+        let mut conn = self.db.acquire_write().await?;
 
         let sql = sql::select("media_items")
             .columns(&["id", "name"])
@@ -103,7 +103,7 @@ impl MediaLibrary {
 }
 
 async fn get_movie_id_by_path(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     path: &Utf8Path,
 ) -> eyre::Result<Option<i64>> {
     let sql = sql::select("indexed_paths")

@@ -272,7 +272,7 @@ fn walk_dir_with_exts<'a>(
 #[cfg(test)]
 mod tests {
     use db::subtitles::NewSubtitle;
-    use sqlx::SqliteConnection;
+    use db::WriteConnection;
     use tempfile::TempDir;
     use uuid::Uuid;
 
@@ -337,7 +337,7 @@ mod tests {
         let movie_path = tmp.path().join("Test Movie (2023).mkv");
 
         {
-            let mut conn = db.acquire().await?;
+            let mut conn = db.acquire_write().await?;
             insert_movie(&mut conn, "Test Movie", movie_path.as_path().try_into()?).await?;
         }
 
@@ -380,7 +380,7 @@ mod tests {
         let sub_path = tmp.path().join("Test Movie (2023).srt");
 
         {
-            let mut conn = db.acquire().await?;
+            let mut conn = db.acquire_write().await?;
             let (_, video_id) =
                 insert_movie(&mut conn, "Test Movie", movie_path.as_path().try_into()?).await?;
             insert_subtitle(&mut conn, video_id, sub_path.as_path().try_into()?).await?;
@@ -424,7 +424,7 @@ mod tests {
     }
 
     async fn insert_movie(
-        conn: &mut SqliteConnection,
+        conn: &mut WriteConnection,
         name: &str,
         path: &Utf8Path,
     ) -> eyre::Result<(i64, i64)> {
@@ -456,7 +456,7 @@ mod tests {
     }
 
     async fn insert_subtitle(
-        conn: &mut SqliteConnection,
+        conn: &mut WriteConnection,
         video_id: i64,
         path: &Utf8Path,
     ) -> eyre::Result<()> {

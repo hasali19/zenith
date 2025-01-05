@@ -29,9 +29,9 @@ async fn update_progress(
     user: auth::User,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
+    let mut conn = db.acquire_write().await?;
 
-    let item = db::items::get(&mut conn, *id)
+    let item = db::items::get(conn.as_read(), *id)
         .await?
         .or_not_found("item not found")?;
 
@@ -39,8 +39,8 @@ async fn update_progress(
         return Err(bad_request("item id must refer to a video item"));
     }
 
-    let user_data = db::items::get_user_data_for_video(&mut conn, user.id, *id).await?;
-    let video_files = db::video_files::get_for_item(&mut conn, *id).await?;
+    let user_data = db::items::get_user_data_for_video(conn.as_read(), user.id, *id).await?;
+    let video_files = db::video_files::get_for_item(conn.as_read(), *id).await?;
 
     let Some(video_file) = video_files.first() else {
         return Err(bad_request("no associated video files found"));

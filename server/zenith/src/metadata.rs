@@ -4,11 +4,10 @@ use db::images::{ImageSourceType, ImageType};
 use db::items::MediaItem;
 use db::media::{MediaItemType, MetadataProvider};
 use db::people::NewPerson;
-use db::Db;
+use db::{Db, ReadConnection, WriteConnection};
 use eyre::{eyre, Context};
 use itertools::Itertools;
 use regex::Regex;
-use sqlx::SqliteConnection;
 use thiserror::Error;
 use time::{format_description, Date, OffsetDateTime, Time};
 use tmdb::{
@@ -32,7 +31,7 @@ impl MetadataManager {
 
         tokio::spawn(async move {
             while let Some(req) = receiver.recv().await {
-                let mut conn = db.acquire().await.unwrap();
+                let mut conn = db.acquire_write().await.unwrap();
                 let res = match req {
                     Request::FindMatch(id) => find_match(&mut conn, &tmdb, id).await,
                     Request::Refresh(id) => refresh(&mut conn, &tmdb, id).await,
@@ -60,7 +59,7 @@ impl MetadataManager {
     }
 
     #[tracing::instrument(skip(self, conn))]
-    pub async fn enqueue_all_unmatched(&self, conn: &mut SqliteConnection) -> eyre::Result<()> {
+    pub async fn enqueue_all_unmatched(&self, conn: &mut ReadConnection) -> eyre::Result<()> {
         let sql = "
             SELECT id FROM media_items
             WHERE metadata_provider IS NOT NULL AND metadata_provider_key IS NULL
@@ -83,7 +82,7 @@ impl MetadataManager {
     }
 
     #[tracing::instrument(skip(self, conn))]
-    pub async fn enqueue_all_outdated(&self, conn: &mut SqliteConnection) -> eyre::Result<()> {
+    pub async fn enqueue_all_outdated(&self, conn: &mut ReadConnection) -> eyre::Result<()> {
         let sql = "
             SELECT id FROM media_items
             WHERE metadata_provider IS NOT NULL AND metadata_provider_key IS NOT NULL
@@ -117,11 +116,11 @@ pub enum Error {
 
 #[tracing::instrument(skip(conn, tmdb))]
 pub async fn find_match(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     tmdb: &TmdbClient,
     id: i64,
 ) -> Result<(), Error> {
-    let item = db::items::get(&mut *conn, id)
+    let item = db::items::get(conn.as_read(), id)
         .await
         .map_err(Error::Other)?
         .ok_or(Error::NotFound)?;
@@ -137,7 +136,7 @@ pub async fn find_match(
 }
 
 async fn find_match_for_movie(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     tmdb: &TmdbClient,
     mut item: MediaItem,
 ) -> eyre::Result<()> {
@@ -188,7 +187,7 @@ async fn find_match_for_movie(
 }
 
 async fn find_match_for_show(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     tmdb: &TmdbClient,
     mut item: MediaItem,
 ) -> eyre::Result<()> {
@@ -235,8 +234,8 @@ async fn find_match_for_show(
 }
 
 #[tracing::instrument(skip(conn, tmdb))]
-pub async fn refresh(conn: &mut SqliteConnection, tmdb: &TmdbClient, id: i64) -> Result<(), Error> {
-    let item = db::items::get(&mut *conn, id)
+pub async fn refresh(conn: &mut WriteConnection, tmdb: &TmdbClient, id: i64) -> Result<(), Error> {
+    let item = db::items::get(conn.as_read(), id)
         .await
         .map_err(Error::Other)?
         .ok_or(Error::NotFound)?;
@@ -252,7 +251,7 @@ pub async fn refresh(conn: &mut SqliteConnection, tmdb: &TmdbClient, id: i64) ->
 }
 
 async fn refresh_movie_metadata(
-    db: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     tmdb: &TmdbClient,
     item: MediaItem,
 ) -> eyre::Result<()> {
@@ -299,12 +298,17 @@ async fn refresh_movie_metadata(
         });
 
     let trailer = get_trailer(&metadata.videos.results);
-    let cast = get_cast(&mut *db, &metadata.credits.cast).await?;
-    let crew = get_crew(&mut *db, &metadata.credits.crew).await?;
+    let cast = get_cast(&mut *conn, &metadata.credits.cast).await?;
+    let crew = get_crew(&mut *conn, &metadata.credits.crew).await?;
 
-    let poster = get_image_id(&mut *db, ImageType::Poster, metadata.poster_path.as_deref()).await?;
+    let poster = get_image_id(
+        &mut *conn,
+        ImageType::Poster,
+        metadata.poster_path.as_deref(),
+    )
+    .await?;
     let backdrop = get_image_id(
-        &mut *db,
+        &mut *conn,
         ImageType::Backdrop,
         metadata.backdrop_path.as_deref(),
     )
@@ -329,13 +333,13 @@ async fn refresh_movie_metadata(
         metadata_provider_key: None,
     };
 
-    db::items::update_metadata(&mut *db, item.id, data).await?;
+    db::items::update_metadata(&mut *conn, item.id, data).await?;
 
     Ok(())
 }
 
 async fn refresh_tv_show_metadata(
-    db: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     tmdb: &TmdbClient,
     item: MediaItem,
 ) -> eyre::Result<()> {
@@ -388,12 +392,17 @@ async fn refresh_tv_show_metadata(
         });
 
     let trailer = get_trailer(&metadata.videos.results);
-    let cast = get_cast(&mut *db, &metadata.aggregate_credits.cast).await?;
-    let crew = get_crew(&mut *db, &metadata.aggregate_credits.crew).await?;
+    let cast = get_cast(&mut *conn, &metadata.aggregate_credits.cast).await?;
+    let crew = get_crew(&mut *conn, &metadata.aggregate_credits.crew).await?;
 
-    let poster = get_image_id(&mut *db, ImageType::Poster, metadata.poster_path.as_deref()).await?;
+    let poster = get_image_id(
+        &mut *conn,
+        ImageType::Poster,
+        metadata.poster_path.as_deref(),
+    )
+    .await?;
     let backdrop = get_image_id(
-        &mut *db,
+        &mut *conn,
         ImageType::Backdrop,
         metadata.backdrop_path.as_deref(),
     )
@@ -418,7 +427,7 @@ async fn refresh_tv_show_metadata(
         metadata_provider_key: None,
     };
 
-    db::items::update_metadata(&mut *db, item.id, data).await?;
+    db::items::update_metadata(&mut *conn, item.id, data).await?;
 
     Ok(())
 }
@@ -429,7 +438,7 @@ fn parse_season_key(key: &str) -> Option<(i32, i32)> {
 }
 
 async fn refresh_tv_season_metadata(
-    db: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     tmdb: &TmdbClient,
     item: MediaItem,
 ) -> eyre::Result<()> {
@@ -448,7 +457,7 @@ async fn refresh_tv_season_metadata(
         Some(key) => key,
         None => {
             let parent = item.parent.unwrap();
-            let show = db::items::get(&mut *db, parent.id)
+            let show = db::items::get(conn.as_read(), parent.id)
                 .await?
                 .ok_or_else(|| eyre!("show not found for season: {}", item.id))?;
 
@@ -467,10 +476,15 @@ async fn refresh_tv_season_metadata(
     // tracing::debug!(?metadata);
 
     let trailer = get_trailer(&metadata.videos.results);
-    let cast = get_cast(&mut *db, &metadata.aggregate_credits.cast).await?;
-    let crew = get_crew(&mut *db, &metadata.aggregate_credits.crew).await?;
+    let cast = get_cast(&mut *conn, &metadata.aggregate_credits.cast).await?;
+    let crew = get_crew(&mut *conn, &metadata.aggregate_credits.crew).await?;
 
-    let poster = get_image_id(&mut *db, ImageType::Poster, metadata.poster_path.as_deref()).await?;
+    let poster = get_image_id(
+        &mut *conn,
+        ImageType::Poster,
+        metadata.poster_path.as_deref(),
+    )
+    .await?;
 
     let metadata_key = format!("{show_id}:{season_number}");
     let data = db::items::UpdateMetadata {
@@ -492,7 +506,7 @@ async fn refresh_tv_season_metadata(
         metadata_provider_key: Some(Some(&metadata_key)),
     };
 
-    db::items::update_metadata(&mut *db, item.id, data).await?;
+    db::items::update_metadata(&mut *conn, item.id, data).await?;
 
     Ok(())
 }
@@ -507,7 +521,7 @@ fn parse_episode_key(key: &str) -> Option<(i32, i32, i32)> {
 }
 
 async fn refresh_tv_episode_metadata(
-    db: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     tmdb: &TmdbClient,
     item: MediaItem,
 ) -> eyre::Result<()> {
@@ -527,7 +541,7 @@ async fn refresh_tv_episode_metadata(
         None => {
             let parent = item.parent.unwrap();
             let grandparent = item.grandparent.unwrap();
-            let show = db::items::get(&mut *db, grandparent.id)
+            let show = db::items::get(conn.as_read(), grandparent.id)
                 .await?
                 .ok_or_else(|| eyre!("show not found for episode: {}", item.id))?;
 
@@ -555,10 +569,10 @@ async fn refresh_tv_episode_metadata(
         .map(|image| image.file_path);
 
     let trailer = get_trailer(&metadata.videos.results);
-    let cast = get_cast(&mut *db, &metadata.credits.cast).await?;
-    let crew = get_crew(&mut *db, &metadata.credits.crew).await?;
+    let cast = get_cast(&mut *conn, &metadata.credits.cast).await?;
+    let crew = get_crew(&mut *conn, &metadata.credits.crew).await?;
 
-    let thumbnail = get_image_id(&mut *db, ImageType::Thumbnail, thumbnail.as_deref()).await?;
+    let thumbnail = get_image_id(&mut *conn, ImageType::Thumbnail, thumbnail.as_deref()).await?;
 
     let metadata_key = format!("{show_id}:{season_number}:{episode_number}");
     let data = db::items::UpdateMetadata {
@@ -580,13 +594,13 @@ async fn refresh_tv_episode_metadata(
         metadata_provider_key: Some(Some(&metadata_key)),
     };
 
-    db::items::update_metadata(&mut *db, item.id, data).await?;
+    db::items::update_metadata(&mut *conn, item.id, data).await?;
 
     Ok(())
 }
 
 async fn get_image_id(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     image_type: ImageType,
     image_path: Option<&str>,
 ) -> eyre::Result<Option<String>> {
@@ -619,7 +633,7 @@ fn build_youtube_url(video: &tmdb::Video) -> String {
 }
 
 async fn get_cast<'a>(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     cast: &'a [tmdb::CastMember],
 ) -> eyre::Result<Vec<db::items::UpdateCastMember<'a>>> {
     let mut updates = vec![];
@@ -655,7 +669,7 @@ async fn get_cast<'a>(
 }
 
 async fn get_crew<'a>(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     cast: &'a [tmdb::CrewMember],
 ) -> eyre::Result<Vec<db::items::UpdateCrewMember<'a>>> {
     let mut updates = vec![];

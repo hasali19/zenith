@@ -1,7 +1,6 @@
-use sqlx::{Connection, SqliteConnection};
 use uuid::Uuid;
 
-use crate::sql;
+use crate::{sql, ReadConnection, WriteConnection};
 
 #[derive(Debug, sqlx::FromRow)]
 pub struct Image {
@@ -26,7 +25,7 @@ pub enum ImageSourceType {
     Tmdb = 1,
 }
 
-pub async fn get(conn: &mut SqliteConnection, id: &str) -> eyre::Result<Option<Image>> {
+pub async fn get(conn: &mut ReadConnection, id: &str) -> eyre::Result<Option<Image>> {
     let sql = sql::select("images")
         .columns(&["id", "image_type", "source_type", "source"])
         .condition("id = ?")
@@ -41,7 +40,7 @@ pub async fn get(conn: &mut SqliteConnection, id: &str) -> eyre::Result<Option<I
 }
 
 pub async fn get_or_create(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     image_type: ImageType,
     source_type: ImageSourceType,
     source: &str,

@@ -45,7 +45,7 @@ async fn find_match(
     tmdb: Extension<TmdbClient>,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
+    let mut conn = db.acquire_write().await?;
 
     metadata::find_match(&mut conn, &tmdb, id)
         .await
@@ -71,9 +71,9 @@ async fn set_match(
     db: Extension<Db>,
     body: Json<SetMetadataMatch>,
 ) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
+    let mut conn = db.acquire_write().await?;
 
-    let item = db::items::get(&mut conn, id)
+    let item = db::items::get(conn.as_read(), id)
         .await?
         .or_not_found("media item not found")?;
 
@@ -102,7 +102,7 @@ async fn set_match(
 
                     match tmdb_id {
                         Some(tmdb_id) => tmdb_id,
-                        None => db::items::get(&mut conn, item.grandparent.unwrap().id)
+                        None => db::items::get(conn.as_read(), item.grandparent.unwrap().id)
                             .await?
                             .unwrap()
                             .metadata_provider_key
@@ -148,7 +148,7 @@ async fn refresh_metadata(
     tmdb: Extension<TmdbClient>,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
+    let mut conn = db.acquire_write().await?;
 
     metadata::refresh(&mut conn, &tmdb, id)
         .await

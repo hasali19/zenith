@@ -6,13 +6,12 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use db::videos::UpdateVideoUserData;
-use db::Db;
+use db::{Db, ReadConnection};
 use itertools::Itertools;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
 use speq::axum::{delete, get, patch};
 use speq::Reflect;
-use sqlx::SqliteConnection;
 
 use crate::api::ApiResult;
 use crate::library::MediaLibrary;
@@ -127,7 +126,7 @@ pub async fn get_item(
 }
 
 pub(super) async fn query_items_by_id(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     user_id: i64,
     ids: &[i64],
 ) -> eyre::Result<Vec<MediaItem>> {
@@ -146,7 +145,7 @@ pub(super) async fn query_items_by_id(
 }
 
 pub(super) async fn query_items(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     user_id: i64,
     query: db::items::Query<'_>,
 ) -> eyre::Result<Vec<MediaItem>> {
@@ -254,9 +253,9 @@ async fn update_user_data(
     db: Extension<Db>,
     data: Json<VideoUserDataPatch>,
 ) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
+    let mut conn = db.acquire_write().await?;
 
-    let item_type = db::media::get_item_type(&mut conn, *id)
+    let item_type = db::media::get_item_type(conn.as_read(), *id)
         .await?
         .or_not_found("media item not found")?;
 
@@ -271,7 +270,7 @@ async fn update_user_data(
             };
 
             ids.extend(
-                db::items::query(&mut conn, query)
+                db::items::query(conn.as_read(), query)
                     .await?
                     .iter()
                     .map(|e| e.id),
@@ -284,7 +283,7 @@ async fn update_user_data(
             };
 
             ids.extend(
-                db::items::query(&mut conn, query)
+                db::items::query(conn.as_read(), query)
                     .await?
                     .iter()
                     .map(|e| e.id),

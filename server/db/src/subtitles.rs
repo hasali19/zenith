@@ -1,5 +1,7 @@
 use camino::{Utf8Path, Utf8PathBuf};
-use sqlx::{FromRow, SqliteConnection};
+use sqlx::FromRow;
+
+use crate::{ReadConnection, WriteConnection};
 
 pub struct NewSubtitle<'a> {
     pub video_id: i64,
@@ -25,7 +27,7 @@ pub struct Subtitle {
     pub forced: bool,
 }
 
-pub async fn insert(conn: &mut SqliteConnection, subtitle: &NewSubtitle<'_>) -> eyre::Result<i64> {
+pub async fn insert(conn: &mut WriteConnection, subtitle: &NewSubtitle<'_>) -> eyre::Result<i64> {
     let sql = "
         INSERT INTO subtitles
             (video_id, stream_index, path, title, language, format, sdh, forced)
@@ -52,7 +54,7 @@ pub async fn insert(conn: &mut SqliteConnection, subtitle: &NewSubtitle<'_>) -> 
     Ok(res.last_insert_rowid())
 }
 
-pub async fn get_by_id(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Subtitle>> {
+pub async fn get_by_id(conn: &mut ReadConnection, id: i64) -> eyre::Result<Option<Subtitle>> {
     let sql = "
         SELECT id, video_id, stream_index, path, title, language, format, sdh, forced
         FROM subtitles
@@ -67,7 +69,7 @@ pub async fn get_by_id(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Opt
 }
 
 pub async fn get_for_video(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     video_id: i64,
 ) -> eyre::Result<Vec<Subtitle>> {
     let sql = "
@@ -90,7 +92,7 @@ pub struct UpdateSubtitle<'a> {
 }
 
 pub async fn update_embedded(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     video_id: i64,
     stream_index: u32,
     data: UpdateSubtitle<'_>,
@@ -115,7 +117,7 @@ pub async fn update_embedded(
     Ok(())
 }
 
-pub async fn delete(conn: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
+pub async fn delete(conn: &mut WriteConnection, id: i64) -> eyre::Result<()> {
     sqlx::query("DELETE FROM subtitles WHERE id = ?")
         .bind(id)
         .execute(conn)

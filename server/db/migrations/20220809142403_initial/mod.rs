@@ -1,6 +1,8 @@
-use sqlx::SqliteConnection;
+// hash:0a016bcb352b035c780172ce10febb8b627ea5b0c79456a1d9b2fe7c336578da
 
-pub async fn execute(conn: &mut SqliteConnection) -> eyre::Result<()> {
+use crate::WriteConnection;
+
+pub async fn execute(conn: &mut WriteConnection) -> eyre::Result<()> {
     let sql = "
         select name from sqlite_master
         where type='table' and name='_sqlx_migrations'";

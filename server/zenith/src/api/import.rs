@@ -97,7 +97,7 @@ pub async fn import_subtitle(
         return Err(bad_request(format!("{dst_path:?} already exists")));
     }
 
-    let mut transaction = db.begin().await?;
+    let mut transaction = db.begin_write().await?;
     let subtitles = NewSubtitle {
         video_id: data.video_id,
         stream_index: None,

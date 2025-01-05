@@ -236,14 +236,15 @@ async fn get_token(
     db: Extension<Db>,
     user: User,
 ) -> ApiResult<impl IntoResponse> {
-    let mut transaction = db.begin().await?;
+    let mut transaction = db.begin_write().await?;
 
     let owner = match query.owner {
         AccessTokenOwner::System => db::access_tokens::AccessTokenOwner::System,
         AccessTokenOwner::User => db::access_tokens::AccessTokenOwner::User,
     };
 
-    let token = db::access_tokens::get_named(&mut transaction, user.id, owner, &query.name).await?;
+    let token =
+        db::access_tokens::get_named(transaction.as_read(), user.id, owner, &query.name).await?;
 
     let token = match token {
         Some(token) => token,

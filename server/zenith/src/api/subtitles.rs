@@ -110,9 +110,9 @@ async fn convert_subtitle(
 #[path(i64)]
 #[response(status = 200)]
 pub async fn delete_subtitle(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
+    let mut conn = db.acquire_write().await?;
 
-    let subtitle = db::subtitles::get_by_id(&mut conn, *id)
+    let subtitle = db::subtitles::get_by_id(conn.as_read(), *id)
         .await?
         .or_not_found("subtitle not found")?;
 

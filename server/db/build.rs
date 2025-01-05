@@ -69,7 +69,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    writeln!(out, "use sqlx::SqliteConnection;")?;
+    writeln!(out, "use crate::WriteConnection;")?;
     writeln!(out)?;
 
     for migration in &migrations {
@@ -77,7 +77,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         writeln!(
             out,
-            "async fn {fn_name}(conn: &mut SqliteConnection) -> eyre::Result<()> {{"
+            "async fn {fn_name}(conn: &mut WriteConnection) -> eyre::Result<()> {{"
         )?;
 
         match migration.kind {

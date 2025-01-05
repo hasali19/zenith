@@ -63,7 +63,7 @@ async fn create_collection(
     db: Extension<Db>,
     data: Json<NewCollection>,
 ) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
+    let mut conn = db.acquire_write().await?;
     let data = db::collections::NewCollection { name: &data.name };
     let collection = db::collections::create(&mut conn, data).await?;
     Ok(Json(Collection::from(collection)))
@@ -71,7 +71,7 @@ async fn create_collection(
 
 #[delete("/collections/:id")]
 async fn delete_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
+    let mut conn = db.acquire_write().await?;
     db::collections::remove(&mut conn, *id).await?;
     Ok(())
 }
@@ -95,7 +95,7 @@ async fn update_collection(
     db: Extension<Db>,
     data: Json<UpdateCollection>,
 ) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
+    let mut conn = db.acquire_write().await?;
 
     if let Some(meta) = &data.meta {
         let data = db::collections::UpdateCollection {

@@ -3,8 +3,8 @@ use std::borrow::Cow;
 use camino::Utf8Path;
 use db::media::{MediaItemType, MetadataProvider};
 use db::sql::{self, Join};
+use db::{ReadConnection, WriteConnection};
 use eyre::Context;
-use sqlx::{Connection, SqliteConnection};
 
 use super::parser::EpisodePathMeta;
 use super::{LibraryEvent, MediaLibrary};
@@ -177,7 +177,7 @@ impl MediaLibrary {
     pub(super) async fn validate_shows(&self) -> eyre::Result<()> {
         tracing::info!("validating shows");
 
-        let mut conn = self.db.acquire().await?;
+        let mut conn = self.db.acquire_write().await?;
 
         let sql = sql::select("media_items AS e")
             .columns(&["e.id", "e.grandparent_index", "e.parent_index", "s.name"])
@@ -199,7 +199,7 @@ impl MediaLibrary {
         self.remove_empty_collections(&mut conn).await
     }
 
-    async fn remove_empty_collections(&self, conn: &mut SqliteConnection) -> eyre::Result<()> {
+    async fn remove_empty_collections(&self, conn: &mut WriteConnection) -> eyre::Result<()> {
         // Don't use a subquery here - it doesn't seem to work. e.g.
         // SELECT * FROM media_items WHERE item_type = 3 AND id NOT IN (SELECT parent_id FROM media_items)
         // ^ returns an empty result set despite orphan seasons existing
@@ -245,7 +245,7 @@ impl MediaLibrary {
 }
 
 async fn get_show_id_by_path(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     path: &Utf8Path,
 ) -> eyre::Result<Option<i64>> {
     let sql = sql::select("indexed_paths")
@@ -263,7 +263,7 @@ async fn get_show_id_by_path(
 }
 
 async fn get_season_id(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     show_id: i64,
     season_number: u32,
 ) -> eyre::Result<Option<i64>> {
@@ -282,7 +282,7 @@ async fn get_season_id(
 }
 
 async fn get_episode_id(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     season_id: i64,
     episode_number: u32,
 ) -> eyre::Result<Option<i64>> {

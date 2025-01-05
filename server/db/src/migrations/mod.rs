@@ -6,12 +6,11 @@ use std::future::Future;
 use std::pin::Pin;
 
 use eyre::{eyre, Context};
-use sqlx::{Acquire, SqliteConnection, SqlitePool};
+
+use crate::{Db, WriteConnection};
 
 type MigrationFn = Box<
-    dyn for<'a> Fn(
-        &'a mut SqliteConnection,
-    ) -> Pin<Box<dyn Future<Output = eyre::Result<()>> + 'a>>,
+    dyn for<'a> Fn(&'a mut WriteConnection) -> Pin<Box<dyn Future<Output = eyre::Result<()>> + 'a>>,
 >;
 
 struct Migration {
@@ -34,12 +33,12 @@ impl Migrator {
     }
 }
 
-#[tracing::instrument(skip(pool))]
-pub async fn migrate(pool: &SqlitePool) -> eyre::Result<()> {
+#[tracing::instrument(skip(db))]
+pub async fn migrate(db: &Db) -> eyre::Result<()> {
     let mut migrator = Migrator { migrations: vec![] };
     migrations::collect(&mut migrator);
 
-    let mut conn = pool.acquire().await?;
+    let mut conn = db.acquire_write().await?;
 
     init_migration_table(&mut conn).await?;
 
@@ -60,7 +59,7 @@ pub async fn migrate(pool: &SqlitePool) -> eyre::Result<()> {
     Ok(())
 }
 
-async fn init_migration_table(conn: &mut SqliteConnection) -> eyre::Result<()> {
+async fn init_migration_table(conn: &mut WriteConnection) -> eyre::Result<()> {
     sqlx::query(include_str!("schema.sql"))
         .execute(conn)
         .await?;
@@ -73,7 +72,7 @@ struct ExecutedMigration {
 }
 
 async fn get_current_migrations(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
 ) -> eyre::Result<Vec<ExecutedMigration>> {
     sqlx::query_as("select version, name, hash from _migrations order by version asc")
         .fetch_all(conn)
@@ -89,7 +88,7 @@ async fn verify_migration(migration: &Migration, executed: &ExecutedMigration) -
     Ok(())
 }
 
-async fn apply_migration(conn: &mut SqliteConnection, migration: &Migration) -> eyre::Result<()> {
+async fn apply_migration(conn: &mut WriteConnection, migration: &Migration) -> eyre::Result<()> {
     tracing::info!("applying migration '{}'", migration.name);
     let mut tx = conn.begin().await?;
     (migration.runner)(&mut tx).await?;
@@ -98,11 +97,7 @@ async fn apply_migration(conn: &mut SqliteConnection, migration: &Migration) -> 
     Ok(())
 }
 
-async fn record_migration(
-    conn: &mut SqliteConnection,
-    name: &str,
-    hash: &[u8],
-) -> eyre::Result<()> {
+async fn record_migration(conn: &mut WriteConnection, name: &str, hash: &[u8]) -> eyre::Result<()> {
     sqlx::query("insert into _migrations (name, hash) values (?, ?)")
         .bind(name)
         .bind(hash)

@@ -1,8 +1,8 @@
 use std::time::{Duration, SystemTime};
 
-use sqlx::{FromRow, SqliteConnection};
+use sqlx::FromRow;
 
-use crate::sql;
+use crate::{sql, ReadConnection, WriteConnection};
 
 #[derive(Clone, Copy, sqlx::Type)]
 #[repr(i32)]
@@ -20,7 +20,7 @@ pub struct NewAccessToken<'a> {
 }
 
 pub async fn create(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     data: NewAccessToken<'_>,
 ) -> eyre::Result<AccessToken> {
     let now = SystemTime::now()
@@ -65,7 +65,7 @@ pub struct AccessToken {
 }
 
 pub async fn get_named(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     user_id: i64,
     owner: AccessTokenOwner,
     name: &str,
@@ -85,7 +85,7 @@ pub async fn get_named(
     Ok(token)
 }
 
-pub async fn get(conn: &mut SqliteConnection, token: &str) -> eyre::Result<Option<AccessToken>> {
+pub async fn get(conn: &mut ReadConnection, token: &str) -> eyre::Result<Option<AccessToken>> {
     let token = sqlx::query_as("SELECT * FROM user_access_tokens WHERE token = ?")
         .bind(token)
         .fetch_optional(conn)
@@ -93,7 +93,7 @@ pub async fn get(conn: &mut SqliteConnection, token: &str) -> eyre::Result<Optio
     Ok(token)
 }
 
-pub async fn delete(conn: &mut SqliteConnection, token: &str) -> eyre::Result<()> {
+pub async fn delete(conn: &mut WriteConnection, token: &str) -> eyre::Result<()> {
     sqlx::query("DELETE FROM user_access_tokens WHERE token = ?")
         .bind(token)
         .execute(conn)

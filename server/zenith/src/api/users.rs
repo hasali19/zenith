@@ -62,13 +62,13 @@ async fn create(
     user: Result<auth::User, ApiError>,
     Json(body): Json<NewUser>,
 ) -> ApiResult<impl IntoResponse> {
-    let mut transaction = db.begin().await?;
+    let mut transaction = db.begin_write().await?;
 
     // Must be authenticated to create a user, unless a registration code is provided or no users exist
     if let Err(e) = user {
         match body.registration_code {
             Some(code) => {
-                let registration = db::user_registrations::get(&mut transaction, &code)
+                let registration = db::user_registrations::get(transaction.as_read(), &code)
                     .await?
                     // Reject if code is invalid
                     .or_bad_request("invalid registration code")?;
@@ -87,7 +87,7 @@ async fn create(
                 tracing::info!("creating new user {}", body.username);
             }
             None => {
-                let users = db::users::get_all(&mut transaction).await?;
+                let users = db::users::get_all(transaction.as_read()).await?;
                 if !users.is_empty() {
                     return Err(e);
                 }
@@ -135,7 +135,7 @@ async fn get_registrations(_user: auth::User, db: Extension<Db>) -> ApiResult<im
 
 #[post("/users/registrations")]
 async fn create_registration(_user: auth::User, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
-    let mut transaction = db.begin().await?;
+    let mut transaction = db.begin_write().await?;
 
     let id = Uuid::new_v4().to_string();
 
@@ -157,7 +157,7 @@ async fn delete_registration(
     Path(code): Path<String>,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
-    let mut conn = db.acquire().await?;
+    let mut conn = db.acquire_write().await?;
 
     let is_deleted = db::user_registrations::delete(&mut conn, &code).await?;
 

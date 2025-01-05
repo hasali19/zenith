@@ -12,7 +12,7 @@ async fn get_users_unauthenticated(mut app: TestApp) {
     // hash of "password"
     const PASSWORD_HASH: &str = "$argon2id$v=19$m=19456,t=2,p=1$cV946Lj8LNOX2F7ClooV3A$bZQHhEei6/LLmfpyuX2Hqupj416sfZ8/LtxmUg0FZqI";
 
-    let mut conn = app.db.acquire().await.unwrap();
+    let mut conn = app.db.acquire_write().await.unwrap();
 
     db::users::create(
         &mut conn,
@@ -44,7 +44,7 @@ async fn get_authenticated_user(mut app: TestApp) {
 
 #[test(with_app)]
 async fn get_authenticated_user_with_auth_header(mut app: TestApp) {
-    let mut conn = app.db.acquire().await.unwrap();
+    let mut conn = app.db.acquire_write().await.unwrap();
 
     db::access_tokens::create(
         &mut conn,

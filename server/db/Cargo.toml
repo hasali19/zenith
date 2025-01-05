@@ -8,16 +8,17 @@ edition = "2021"
 [dependencies]
 camino = { workspace = true, features = ["serde1", "sqlx-sqlite"] }
 eyre = { workspace = true }
+futures.workspace = true
 itertools = { workspace = true }
 sqlx = { workspace = true, features = [
     "macros",
     "runtime-tokio-rustls",
     "sqlite",
 ] }
+strum = { workspace = true, features = ["derive"] }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["fs"] }
 tracing = { workspace = true }
-strum = { workspace = true, features = ["derive"] }
 uuid = { workspace = true, features = ["v4"] }
 
 [build-dependencies]

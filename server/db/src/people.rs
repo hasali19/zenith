@@ -1,6 +1,4 @@
-use sqlx::SqliteConnection;
-
-use crate::sql;
+use crate::{sql, WriteConnection};
 
 pub struct NewPerson<'a> {
     pub tmdb_id: Option<i32>,
@@ -8,7 +6,7 @@ pub struct NewPerson<'a> {
     pub profile: Option<String>,
 }
 
-pub async fn create(conn: &mut SqliteConnection, person: NewPerson<'_>) -> eyre::Result<i64> {
+pub async fn create(conn: &mut WriteConnection, person: NewPerson<'_>) -> eyre::Result<i64> {
     let sql = sql::insert("people")
         .columns(&["tmdb_id", "name", "profile"])
         .values(&["?", "?", "?"])
@@ -26,7 +24,7 @@ pub async fn create(conn: &mut SqliteConnection, person: NewPerson<'_>) -> eyre:
 }
 
 pub async fn get_by_tmdb_id_or_create(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     tmdb_id: i32,
     person: NewPerson<'_>,
 ) -> eyre::Result<i64> {

@@ -1,5 +1,7 @@
 use camino::{Utf8Path, Utf8PathBuf};
-use sqlx::{FromRow, SqliteConnection};
+use sqlx::FromRow;
+
+use crate::{ReadConnection, WriteConnection};
 
 #[derive(FromRow)]
 pub struct VideoFile {
@@ -12,7 +14,7 @@ pub struct VideoFile {
     pub scanned_at: Option<i64>,
 }
 
-pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<VideoFile>> {
+pub async fn get(conn: &mut ReadConnection, id: i64) -> eyre::Result<Option<VideoFile>> {
     sqlx::query_as("SELECT * FROM video_files WHERE id = ?")
         .bind(id)
         .fetch_optional(conn)
@@ -20,10 +22,7 @@ pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Vi
         .map_err(Into::into)
 }
 
-pub async fn get_for_item(
-    conn: &mut SqliteConnection,
-    item_id: i64,
-) -> eyre::Result<Vec<VideoFile>> {
+pub async fn get_for_item(conn: &mut ReadConnection, item_id: i64) -> eyre::Result<Vec<VideoFile>> {
     sqlx::query_as("SELECT * FROM video_files WHERE item_id = ?")
         .bind(item_id)
         .fetch_all(conn)
@@ -33,7 +32,7 @@ pub async fn get_for_item(
 
 /// Retrieves all videos associated with the item or its children/grandchildren.
 pub async fn get_recursive_for_item(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     item_id: i64,
 ) -> eyre::Result<Vec<VideoFile>> {
     let sql = "
@@ -60,7 +59,7 @@ pub struct UpdateVideoFile<'a> {
 }
 
 pub async fn update(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     id: i64,
     data: UpdateVideoFile<'_>,
 ) -> eyre::Result<()> {
@@ -85,7 +84,7 @@ pub async fn update(
     Ok(())
 }
 
-pub async fn remove_by_path(conn: &mut SqliteConnection, path: &Utf8Path) -> eyre::Result<()> {
+pub async fn remove_by_path(conn: &mut WriteConnection, path: &Utf8Path) -> eyre::Result<()> {
     let sql = "
         DELETE FROM video_file_streams
         WHERE video_id = (SELECT id FROM video_files WHERE path = ?)

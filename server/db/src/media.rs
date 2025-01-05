@@ -1,4 +1,6 @@
-use sqlx::{SqliteConnection, Type};
+use sqlx::Type;
+
+use crate::ReadConnection;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Type)]
 #[repr(i32)]
@@ -16,7 +18,7 @@ impl MediaItemType {
 }
 
 pub async fn get_item_type(
-    conn: &mut SqliteConnection,
+    conn: &mut ReadConnection,
     id: i64,
 ) -> eyre::Result<Option<MediaItemType>> {
     sqlx::query_scalar("SELECT item_type FROM media_items WHERE id = ?")

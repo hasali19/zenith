@@ -2,9 +2,11 @@
 
 use std::path::Path;
 
-use sqlx::{QueryBuilder, Sqlite, SqliteConnection};
+use sqlx::{QueryBuilder, Sqlite};
 
-pub async fn execute(conn: &mut SqliteConnection) -> eyre::Result<()> {
+use crate::WriteConnection;
+
+pub async fn execute(conn: &mut WriteConnection) -> eyre::Result<()> {
     // Execute the main migration script.
     sqlx::query(include_str!("script.sql"))
         .execute(&mut *conn)

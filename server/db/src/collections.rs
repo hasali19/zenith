@@ -1,7 +1,7 @@
-use sqlx::{Acquire, FromRow, SqliteConnection};
+use sqlx::FromRow;
 
-use crate::sql;
 use crate::utils::arguments::QueryArguments;
+use crate::{sql, ReadConnection, WriteConnection};
 
 pub struct CollectionUserData {
     pub unwatched: u32,
@@ -15,13 +15,13 @@ pub struct Collection {
     pub poster: Option<String>,
 }
 
-pub async fn get_all(conn: &mut SqliteConnection) -> eyre::Result<Vec<Collection>> {
+pub async fn get_all(conn: &mut ReadConnection) -> eyre::Result<Vec<Collection>> {
     Ok(sqlx::query_as("SELECT id, name, overview, (SELECT m.poster FROM collections_media_items AS mc JOIN media_items AS m ON m.id = mc.item_id WHERE mc.collection_id = c.id ORDER BY mc.idx LIMIT 1) AS poster FROM collections AS c")
         .fetch_all(conn)
         .await?)
 }
 
-pub async fn get(conn: &mut SqliteConnection, id: i64) -> eyre::Result<Option<Collection>> {
+pub async fn get(conn: &mut ReadConnection, id: i64) -> eyre::Result<Option<Collection>> {
     Ok(
         sqlx::query_as("SELECT id, name, overview, (SELECT m.poster FROM collections_media_items AS mc JOIN media_items AS m ON m.id = mc.item_id WHERE mc.collection_id = c.id ORDER BY mc.idx LIMIT 1) AS poster FROM collections AS c WHERE id = ?")
             .bind(id)
@@ -35,7 +35,7 @@ pub struct NewCollection<'a> {
 }
 
 pub async fn create(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     data: NewCollection<'_>,
 ) -> eyre::Result<Collection> {
     let id = sqlx::query_scalar("INSERT INTO collections (name) VALUES (?) RETURNING (id)")
@@ -57,7 +57,7 @@ pub struct UpdateCollection<'a> {
 }
 
 pub async fn update(
-    conn: &mut SqliteConnection,
+    conn: &mut WriteConnection,
     id: i64,
     data: UpdateCollection<'_>,
 ) -> eyre::Result<()> {
@@ -71,7 +71,7 @@ pub async fn update(
     Ok(())
 }
 
-pub async fn remove(conn: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
+pub async fn remove(conn: &mut WriteConnection, id: i64) -> eyre::Result<()> {
     let mut tx = conn.begin().await?;
 
     sqlx::query("DELETE FROM collections_media_items WHERE collection_id = ?")
@@ -89,7 +89,7 @@ pub async fn remove(conn: &mut SqliteConnection, id: i64) -> eyre::Result<()> {
     Ok(())
 }
 
-pub async fn set_items(conn: &mut SqliteConnection, id: i64, items: &[i64]) -> eyre::Result<()> {
+pub async fn set_items(conn: &mut WriteConnection, id: i64, items: &[i64]) -> eyre::Result<()> {
     let mut tx = conn.begin().await?;
 
     let mut args = QueryArguments::default();
