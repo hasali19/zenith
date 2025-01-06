@@ -22,8 +22,9 @@ jobs:
           channel: beta
 
       - run: |
+          cd packages/zenith
           dart run build_runner build --delete-conflicting-outputs
-          cd packages/cast_framework
+          cd ../cast_framework
           dart run pigeon --input pigeons/cast.dart
         working-directory: flutter
 
@@ -49,7 +50,7 @@ jobs:
           echo $ANDROID_KEYSTORE | base64 -d > keystore.jks
           export GIT_COMMIT_HASH=$(git rev-parse HEAD)
           flutter build apk --build-number=$GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH --split-per-abi
-        working-directory: flutter
+        working-directory: flutter/packages/zenith
         env:
           ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
           ANDROID_KEYSTORE_KEY_ALIAS: ${{ secrets.ANDROID_KEYSTORE_KEY_ALIAS }}
@@ -59,7 +60,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: zenith-flutter-android
-          path: flutter/build/app/outputs/flutter-apk/app-*-release.apk
+          path: flutter/packages/zenith/build/app/outputs/flutter-apk/app-*-release.apk
 
   build_web:
     runs-on: ubuntu-latest
@@ -73,12 +74,12 @@ jobs:
       - run: |
           export GIT_COMMIT_HASH=$(git rev-parse HEAD)
           flutter build web --wasm --build-number=$GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH --dart-define=DEFAULT_SERVER=
-        working-directory: flutter
+        working-directory: flutter/packages/zenith
 
       - uses: actions/upload-artifact@v4
         with:
           name: zenith-flutter-web
-          path: flutter/build/web
+          path: flutter/packages/zenith/build/web
 
   deploy_web_docker:
     runs-on: ubuntu-latest
@@ -163,14 +164,14 @@ jobs:
         run: |
           $env:MPV_DIR="$(pwd)\mpv"
           $env:ANGLE_BIN_DIR="$(pwd)\angle-win64\bin"
-          cd flutter
           $env:GIT_COMMIT_HASH=(git rev-parse HEAD)
+          cd flutter/packages/zenith
           flutter build windows -v --build-number=$env:GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$env:GIT_COMMIT_HASH
 
       - uses: actions/upload-artifact@v4
         with:
           name: zenith-flutter-windows
-          path: flutter/build/windows/x64/runner/Release
+          path: flutter/packages/zenith/build/windows/x64/runner/Release
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -178,7 +179,7 @@ jobs:
         run: |
           $env:MPV_DIR="$(pwd)\mpv"
           $env:ANGLE_BIN_DIR="$(pwd)\angle-win64\bin"
-          cd flutter
+          cd flutter/packages/zenith
           $version = (cat .\pubspec.yaml | select-string -pattern '^version: (.+)').Matches[0].Groups[1].Value.Split('+')[0].Trim()
           $version = "$version.$env:GITHUB_RUN_NUMBER"
           echo "Building MSIX package version $version"
@@ -191,12 +192,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: zenith-flutter-windows-msix
-          path: flutter/build/windows/x64/runner/Release/zenith.msix
+          path: flutter/packages/zenith/build/windows/x64/runner/Release/zenith.msix
 
       - uses: actions/upload-artifact@v4
         with:
           name: zenith-flutter-windows-appinstaller
-          path: flutter/zenith.appinstaller
+          path: flutter/packages/zenith/zenith.appinstaller
 
   release:
     runs-on: ubuntu-latest
