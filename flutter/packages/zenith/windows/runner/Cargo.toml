@@ -9,12 +9,8 @@ edition = "2021"
 dirs = "5.0"
 raw-window-handle = "0.6"
 winit = "0.29"
-
-[dependencies.flutter-desktop-messenger]
-path = "../../crates/flutter-desktop-messenger"
-
-[dependencies.flutter-windows-sys]
-path = "../../crates/flutter-windows-sys"
+flutter-desktop-messenger.workspace = true
+flutter-windows-sys.workspace = true
 
 [dependencies.windows]
 version = "0.52"

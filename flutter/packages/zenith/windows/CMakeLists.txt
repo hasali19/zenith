@@ -54,7 +54,7 @@ set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})
 
 # Import targets from rust workspace.
-corrosion_import_crate(MANIFEST_PATH "../Cargo.toml")
+corrosion_import_crate(MANIFEST_PATH "../../../Cargo.toml")
 
 corrosion_set_env_vars(${BINARY_NAME}
   "FLUTTER_VERSION=\"${FLUTTER_VERSION}\""

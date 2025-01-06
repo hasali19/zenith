@@ -2,7 +2,11 @@
 resolver = "2"
 members = [
     "crates/*",
-    "windows/runner",
+    "packages/zenith/windows/runner",
     "packages/video_player",
 ]
 exclude = ["windows/flutter"]
+
+[workspace.dependencies]
+flutter-desktop-messenger = { path = "crates/flutter-desktop-messenger" }
+flutter-windows-sys = { path = "crates/flutter-windows-sys" }
