@@ -176,6 +176,7 @@ final zenithDownloaderProvider = Provider<BaseDownloader>((ref) {
   );
 });
 
+@pragma('vm:entry-point')
 Future<void> _downloaderCallbackDispatcher() async {
   WidgetsFlutterBinding.ensureInitialized();
 
