@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -224,13 +225,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 },
               ),
               const Divider(),
-              ListTile(
-                title: const Text('Server'),
-                subtitle: Text(ref.watch(activeServerProvider)?.url ?? 'None'),
-                onTap: () async {
-                  context.router.navigate(const SetupRoute());
-                },
-              ),
+              if (!kIsWeb)
+                ListTile(
+                  title: const Text('Server'),
+                  subtitle:
+                      Text(ref.watch(activeServerProvider)?.url ?? 'None'),
+                  onTap: () async {
+                    context.router.navigate(const SetupRoute());
+                  },
+                ),
               if (_version != null)
                 ListTile(
                   title: const Text('Version'),
@@ -246,24 +249,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   title: const Text('Commit'),
                   subtitle: Text(Updater.revision ?? 'Unknown'),
                 ),
-              CheckboxListTile(
-                title: const Text('Auto update check'),
-                subtitle:
-                    const Text('Notify if an update is available on startup'),
-                value: ref.watch(enableUpdatesCheck),
-                onChanged: (value) {
-                  if (value != null) {
-                    ref.read(enableUpdatesCheck.notifier).update(value);
-                  }
-                },
-              ),
-              ListTile(
-                title: const Text('Check for updates'),
-                subtitle: const Text('Check immediately for available updates'),
-                onTap: () {
-                  _checkForUpdates(context);
-                },
-              ),
+              if (!kIsWeb)
+                CheckboxListTile(
+                  title: const Text('Auto update check'),
+                  subtitle:
+                      const Text('Notify if an update is available on startup'),
+                  value: ref.watch(enableUpdatesCheck),
+                  onChanged: (value) {
+                    if (value != null) {
+                      ref.read(enableUpdatesCheck.notifier).update(value);
+                    }
+                  },
+                ),
+              if (!kIsWeb)
+                ListTile(
+                  title: const Text('Check for updates'),
+                  subtitle:
+                      const Text('Check immediately for available updates'),
+                  onTap: () {
+                    _checkForUpdates(context);
+                  },
+                ),
             ]),
           ),
         ),
