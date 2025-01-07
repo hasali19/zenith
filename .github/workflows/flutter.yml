@@ -83,7 +83,7 @@ jobs:
 
   deploy_web_docker:
     runs-on: ubuntu-latest
-    if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
+    if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs:
       - check_generated_code
       - build_web
@@ -201,7 +201,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
+    if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs:
       - check_generated_code
       - build_android

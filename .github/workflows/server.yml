@@ -143,7 +143,7 @@ jobs:
   deploy:
     name: Deploy docker image
     runs-on: ubuntu-latest
-    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs:
       - lint
       - test
