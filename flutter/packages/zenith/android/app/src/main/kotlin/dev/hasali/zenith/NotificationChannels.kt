@@ -31,6 +31,7 @@ object NotificationChannels {
 
         val channel = NotificationChannelCompat.Builder(MEDIA, NotificationManagerCompat.IMPORTANCE_HIGH)
             .setName("Media")
+            .setImportance(NotificationManagerCompat.IMPORTANCE_LOW)
             .build()
 
         notificationManager.createNotificationChannel(channel)
