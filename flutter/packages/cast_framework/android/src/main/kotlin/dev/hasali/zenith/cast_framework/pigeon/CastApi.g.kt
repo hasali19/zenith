@@ -612,7 +612,7 @@ interface CastApi {
   fun registerRoutesListener(mode: RoutesScanningMode)
   fun unregisterRoutesListener(mode: RoutesScanningMode)
   fun selectRoute(id: String?)
-  fun load(loadRequestData: MediaLoadRequestData)
+  fun load(loadRequestData: MediaLoadRequestData, callback: (Result<Unit>) -> Unit)
   fun setActiveMediaTracks(trackIds: List<Long>)
   fun play()
   fun pause()
@@ -710,13 +710,14 @@ interface CastApi {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
             val loadRequestDataArg = args[0] as MediaLoadRequestData
-            val wrapped: List<Any?> = try {
-              api.load(loadRequestDataArg)
-              listOf(null)
-            } catch (exception: Throwable) {
-              wrapError(exception)
+            api.load(loadRequestDataArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(wrapError(error))
+              } else {
+                reply.reply(wrapResult(null))
+              }
             }
-            reply.reply(wrapped)
           }
         } else {
           channel.setMessageHandler(null)

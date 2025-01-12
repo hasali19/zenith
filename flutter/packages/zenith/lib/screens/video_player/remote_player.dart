@@ -227,7 +227,7 @@ class RemoteVideoController extends video_player.VideoController
       }),
     );
 
-    _client.load(MediaLoadRequestData(
+    await _client.load(MediaLoadRequestData(
       queueData: MediaQueueData(
         items: items
             .map(
@@ -286,6 +286,11 @@ class RemoteVideoController extends video_player.VideoController
             .toList(),
         startIndex: startIndex,
       ),
+    ));
+
+    _client.seek(MediaSeekOptions(
+      position: (startPosition * 1000).toInt(),
+      resumeState: ResumeState.unchanged,
     ));
   }
 

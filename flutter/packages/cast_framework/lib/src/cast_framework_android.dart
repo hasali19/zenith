@@ -69,8 +69,8 @@ class _RemoteMediaClient implements RemoteMediaClient {
   final mediaInfo = ValueNotifier<cast.MediaInfo?>(null);
 
   @override
-  void load(cast.MediaLoadRequestData request) {
-    _api.load(request);
+  Future<void> load(cast.MediaLoadRequestData request) {
+    return _api.load(request);
   }
 
   @override

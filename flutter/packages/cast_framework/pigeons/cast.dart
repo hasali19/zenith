@@ -126,6 +126,7 @@ abstract class CastApi {
 
   // RemoteMediaClient
 
+  @async
   void load(MediaLoadRequestData loadRequestData);
   void setActiveMediaTracks(List<int> trackIds);
   void play();

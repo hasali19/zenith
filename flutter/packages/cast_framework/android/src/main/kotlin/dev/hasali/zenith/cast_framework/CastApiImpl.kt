@@ -63,7 +63,7 @@ class CastApiImpl(
         updateCallback(false)
     }
 
-    override fun load(loadRequestData: MediaLoadRequestData) {
+    override fun load(loadRequestData: MediaLoadRequestData, callback: (Result<Unit>) -> Unit) {
         val session = castContext.sessionManager.currentCastSession ?: return
         val client = session.remoteMediaClient ?: return
         val request = com.google.android.gms.cast.MediaLoadRequestData.Builder().run {
@@ -130,7 +130,13 @@ class CastApiImpl(
             build()
         }
 
-        client.load(request)
+        client.load(request).setResultCallback {
+            if (it.status.isSuccess) {
+                callback(Result.success(Unit))
+            } else {
+                callback(Result.failure(RuntimeException("${it.status.statusCode} - ${it.status.statusMessage}")))
+            }
+        }
     }
 
     private fun dev.hasali.zenith.cast_framework.pigeon.MediaInfo.toCastMediaInfo(): MediaInfo {

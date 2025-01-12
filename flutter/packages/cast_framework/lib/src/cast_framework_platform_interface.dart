@@ -44,7 +44,7 @@ abstract interface class RemoteMediaClient {
   ValueNotifier<MediaStatus?> get mediaStatus;
   ValueNotifier<MediaInfo?> get mediaInfo;
 
-  void load(MediaLoadRequestData request);
+  Future<void> load(MediaLoadRequestData request);
   void play();
   void pause();
   void stop();
