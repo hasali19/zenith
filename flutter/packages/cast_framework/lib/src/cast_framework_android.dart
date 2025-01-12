@@ -109,6 +109,11 @@ class _RemoteMediaClient implements RemoteMediaClient {
   }
 
   @override
+  Future<void> sendMessage(String namespace, String message) {
+    return _api.sendMessage(namespace, message);
+  }
+
+  @override
   void stop() {
     _api.stop();
   }

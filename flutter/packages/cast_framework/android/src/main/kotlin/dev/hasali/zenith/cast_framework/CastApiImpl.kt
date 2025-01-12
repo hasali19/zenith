@@ -91,9 +91,11 @@ class CastApiImpl(
                                                 setActiveTrackIds(activeTrackIds.toLongArray())
                                             }
 
-                                            setCustomData(JSONObject().apply {
-                                                put("index", i)
-                                            })
+                                            queueItem.customDataJson?.let { customData ->
+                                                setCustomData(JSONObject(customData).apply {
+                                                    put("index", i)
+                                                })
+                                            }
                                         }
                                         .build()
                                 }
@@ -119,6 +121,10 @@ class CastApiImpl(
                         build()
                     }
                 )
+            }
+
+            loadRequestData.customDataJson?.let { customData ->
+                setCustomData(JSONObject(customData))
             }
 
             build()
@@ -249,6 +255,17 @@ class CastApiImpl(
         val session = castContext.sessionManager.currentCastSession ?: return
         val client = session.remoteMediaClient ?: return
         client.setPlaybackRate(playbackRate)
+    }
+
+    override fun sendMessage(namespace: String, message: String, callback: (Result<Unit>) -> Unit) {
+        val session = castContext.sessionManager.currentCastSession ?: return
+        session.sendMessage(namespace, message).setResultCallback {
+            if (it.isSuccess) {
+                callback(Result.success(Unit))
+            } else {
+                callback(Result.failure(RuntimeException("${it.statusCode} - ${it.statusMessage}")))
+            }
+        }
     }
 
     override fun stop() {

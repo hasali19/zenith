@@ -85,12 +85,14 @@ final class VideoItem {
   final List<ExternalSubtitleTrack> subtitles;
   final Rect? cropRect;
   final MediaMetadata metadata;
+  final Object? extra;
 
   const VideoItem({
     required this.source,
     this.subtitles = const [],
     this.cropRect,
     this.metadata = const MediaMetadata(),
+    this.extra,
   });
 }
 

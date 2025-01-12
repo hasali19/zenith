@@ -24,6 +24,7 @@ enum RoutesScanningMode {
 class MediaLoadRequestData {
   MediaInfo? mediaInfo;
   MediaQueueData? queueData;
+  String? customDataJson;
 }
 
 class MediaInfo {
@@ -44,6 +45,7 @@ class MediaQueueItem {
   List<int>? activeTrackIds;
   bool? autoPlay;
   double? startTime;
+  String? customDataJson;
 }
 
 enum MediaQueueType {
@@ -131,6 +133,8 @@ abstract class CastApi {
   void queueNext();
   void queuePrev();
   void setPlaybackRate(double playbackRate);
+  @async
+  void sendMessage(String namespace, String message);
   void stop();
 }
 

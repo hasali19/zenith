@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cast_framework/cast_framework.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,6 +52,8 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
     final token = await _api.getAccessToken(api.AccessTokenOwner.system, 'cast',
         create: true);
 
+    _controller.setInitData(_api.baseUrl, token.token);
+
     String withToken(String url) {
       final uri = Uri.parse(url);
       var params = {...uri.queryParameters, 'token': token.token};
@@ -94,6 +98,9 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
                 _ => null,
               },
             ),
+            extra: {
+              'id': item.id,
+            },
           ),
         )
         .toList();
@@ -132,6 +139,9 @@ class RemoteVideoController extends video_player.VideoController
   final _client = CastFrameworkPlatform.instance.remoteMediaClient;
   final _positionHandler = video_player.MediaPositionHandler();
 
+  String? _server;
+  String? _token;
+
   MediaStatus? _mediaStatus;
   MediaInfo? _mediaInfo;
   int _currentItemIndex = 0;
@@ -154,6 +164,11 @@ class RemoteVideoController extends video_player.VideoController
   void init() {
     _client.mediaStatus.addListener(_onMediaStatusUpdated);
     _client.mediaInfo.addListener(_onMediaInfoUpdated);
+  }
+
+  void setInitData(String server, String token) {
+    _server = server;
+    _token = token;
   }
 
   @override
@@ -186,7 +201,16 @@ class RemoteVideoController extends video_player.VideoController
     List<video_player.VideoItem> items,
     int startIndex,
     double startPosition,
-  ) {
+  ) async {
+    await _client.sendMessage(
+      'urn:x-cast:dev.hasali.zenith',
+      jsonEncode({
+        'type': 'init',
+        'token': _token,
+        'server': _server,
+      }),
+    );
+
     _client.load(MediaLoadRequestData(
       queueData: MediaQueueData(
         items: items
@@ -240,6 +264,7 @@ class RemoteVideoController extends video_player.VideoController
                   ),
                 ),
                 autoPlay: true,
+                customDataJson: jsonEncode(item.extra),
               ),
             )
             .toList(),

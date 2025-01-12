@@ -179,20 +179,23 @@ data class MediaRoute (
 /** Generated class from Pigeon that represents data sent in messages. */
 data class MediaLoadRequestData (
   val mediaInfo: MediaInfo? = null,
-  val queueData: MediaQueueData? = null
+  val queueData: MediaQueueData? = null,
+  val customDataJson: String? = null
 )
  {
   companion object {
     fun fromList(pigeonVar_list: List<Any?>): MediaLoadRequestData {
       val mediaInfo = pigeonVar_list[0] as MediaInfo?
       val queueData = pigeonVar_list[1] as MediaQueueData?
-      return MediaLoadRequestData(mediaInfo, queueData)
+      val customDataJson = pigeonVar_list[2] as String?
+      return MediaLoadRequestData(mediaInfo, queueData, customDataJson)
     }
   }
   fun toList(): List<Any?> {
     return listOf(
       mediaInfo,
       queueData,
+      customDataJson,
     )
   }
 }
@@ -253,7 +256,8 @@ data class MediaQueueItem (
   val mediaInfo: MediaInfo? = null,
   val activeTrackIds: List<Long>? = null,
   val autoPlay: Boolean? = null,
-  val startTime: Double? = null
+  val startTime: Double? = null,
+  val customDataJson: String? = null
 )
  {
   companion object {
@@ -262,7 +266,8 @@ data class MediaQueueItem (
       val activeTrackIds = pigeonVar_list[1] as List<Long>?
       val autoPlay = pigeonVar_list[2] as Boolean?
       val startTime = pigeonVar_list[3] as Double?
-      return MediaQueueItem(mediaInfo, activeTrackIds, autoPlay, startTime)
+      val customDataJson = pigeonVar_list[4] as String?
+      return MediaQueueItem(mediaInfo, activeTrackIds, autoPlay, startTime, customDataJson)
     }
   }
   fun toList(): List<Any?> {
@@ -271,6 +276,7 @@ data class MediaQueueItem (
       activeTrackIds,
       autoPlay,
       startTime,
+      customDataJson,
     )
   }
 }
@@ -596,6 +602,7 @@ private open class CastApiPigeonCodec : StandardMessageCodec() {
   }
 }
 
+
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface CastApi {
   fun init(receiverAppId: String)
@@ -610,6 +617,7 @@ interface CastApi {
   fun queueNext()
   fun queuePrev()
   fun setPlaybackRate(playbackRate: Double)
+  fun sendMessage(namespace: String, message: String, callback: (Result<Unit>) -> Unit)
   fun stop()
 
   companion object {
@@ -824,6 +832,26 @@ interface CastApi {
               wrapError(exception)
             }
             reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.cast_framework.CastApi.sendMessage$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val namespaceArg = args[0] as String
+            val messageArg = args[1] as String
+            api.sendMessage(namespaceArg, messageArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(wrapError(error))
+              } else {
+                reply.reply(wrapResult(null))
+              }
+            }
           }
         } else {
           channel.setMessageHandler(null)
