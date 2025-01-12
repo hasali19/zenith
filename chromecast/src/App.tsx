@@ -4,9 +4,31 @@ import { CastMediaPlayer } from "./CastMediaPlayer";
 
 const MESSAGE_CHANNEL = "urn:x-cast:dev.hasali.zenith";
 
+enum MessageType {
+  INIT = "init",
+}
+
+type CustomMessage = InitMessage | UnknownMessage;
+
+interface InitMessage {
+  type: MessageType.INIT;
+  server: string;
+  token: string;
+}
+
+interface UnknownMessage {
+  type: never;
+}
+
 declare module "chromecast-caf-receiver/cast.framework.messages" {
   interface QueueItemCustomData {
     id?: number;
+  }
+}
+
+declare module "chromecast-caf-receiver/cast.framework.system" {
+  interface Event {
+    senderId: string;
   }
 }
 
@@ -19,10 +41,14 @@ export default function App() {
     let token: string | null = null;
 
     context.addCustomMessageListener(MESSAGE_CHANNEL, (e) => {
-      const msg = e.data as any;
-      if (msg && msg.server && msg.token) {
+      const sender = e.senderId;
+      const msg = e.data as CustomMessage | null;
+      if (msg && msg.type === MessageType.INIT) {
         server = msg.server;
         token = msg.token;
+        context.sendCustomMessage(MESSAGE_CHANNEL, sender, {
+          type: MessageType.INIT,
+        });
       }
     });
 
