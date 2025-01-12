@@ -1,5 +1,6 @@
 package dev.hasali.zenith.cast_framework
 
+import android.graphics.Color
 import android.net.Uri
 import androidx.mediarouter.media.MediaRouter
 import com.google.android.gms.cast.MediaInfo
@@ -10,6 +11,7 @@ import com.google.android.gms.cast.MediaSeekOptions.RESUME_STATE_PAUSE
 import com.google.android.gms.cast.MediaSeekOptions.RESUME_STATE_PLAY
 import com.google.android.gms.cast.MediaSeekOptions.RESUME_STATE_UNCHANGED
 import com.google.android.gms.cast.MediaTrack
+import com.google.android.gms.cast.TextTrackStyle
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.common.images.WebImage
 import dev.hasali.zenith.cast_framework.pigeon.CastApi
@@ -132,6 +134,12 @@ class CastApiImpl(
 
         client.load(request).setResultCallback {
             if (it.status.isSuccess) {
+                client.setTextTrackStyle(TextTrackStyle().apply {
+                    fontGenericFamily = TextTrackStyle.FONT_FAMILY_SANS_SERIF
+                    backgroundColor = Color.parseColor("#01000000")
+                    edgeType = TextTrackStyle.EDGE_TYPE_OUTLINE
+                    edgeColor = Color.BLACK
+                })
                 callback(Result.success(Unit))
             } else {
                 callback(Result.failure(RuntimeException("${it.status.statusCode} - ${it.status.statusMessage}")))
