@@ -49,6 +49,19 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
   }
 
   void _loadMedia() async {
+    final playerState = CastFrameworkPlatform
+        .instance.remoteMediaClient.mediaStatus.value?.playerState;
+    if (playerState != null && playerState != PlayerState.idle) {
+      final customDataJson = CastFrameworkPlatform
+          .instance.remoteMediaClient.mediaInfo.value?.customDataJson;
+      if (customDataJson != null) {
+        final customData = jsonDecode(customDataJson);
+        if (customData['id'] == widget.items[widget.startIndex].id) {
+          return;
+        }
+      }
+    }
+
     final token = await _api.getAccessToken(api.AccessTokenOwner.system, 'cast',
         create: true);
 
@@ -164,6 +177,9 @@ class RemoteVideoController extends video_player.VideoController
   void init() {
     _client.mediaStatus.addListener(_onMediaStatusUpdated);
     _client.mediaInfo.addListener(_onMediaInfoUpdated);
+
+    _onMediaStatusUpdated();
+    _onMediaInfoUpdated();
   }
 
   void setInitData(String server, String token) {

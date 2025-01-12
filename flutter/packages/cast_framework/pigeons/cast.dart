@@ -32,6 +32,7 @@ class MediaInfo {
   List<MediaTrack>? mediaTracks;
   MediaMetadata? metadata;
   int? streamDuration;
+  String? customDataJson;
 }
 
 class MediaQueueData {

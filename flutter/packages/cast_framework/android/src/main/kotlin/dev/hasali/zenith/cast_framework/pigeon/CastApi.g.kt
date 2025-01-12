@@ -205,7 +205,8 @@ data class MediaInfo (
   val url: String? = null,
   val mediaTracks: List<MediaTrack>? = null,
   val metadata: MediaMetadata? = null,
-  val streamDuration: Long? = null
+  val streamDuration: Long? = null,
+  val customDataJson: String? = null
 )
  {
   companion object {
@@ -214,7 +215,8 @@ data class MediaInfo (
       val mediaTracks = pigeonVar_list[1] as List<MediaTrack>?
       val metadata = pigeonVar_list[2] as MediaMetadata?
       val streamDuration = pigeonVar_list[3] as Long?
-      return MediaInfo(url, mediaTracks, metadata, streamDuration)
+      val customDataJson = pigeonVar_list[4] as String?
+      return MediaInfo(url, mediaTracks, metadata, streamDuration, customDataJson)
     }
   }
   fun toList(): List<Any?> {
@@ -223,6 +225,7 @@ data class MediaInfo (
       mediaTracks,
       metadata,
       streamDuration,
+      customDataJson,
     )
   }
 }

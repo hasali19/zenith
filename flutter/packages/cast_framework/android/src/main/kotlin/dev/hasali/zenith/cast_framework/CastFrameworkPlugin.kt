@@ -146,7 +146,8 @@ class CastFrameworkPlugin : FlutterPlugin {
                                     name = it.name,
                                     language = it.language,
                                 )
-                            }
+                            },
+                            customDataJson = status.getItemById(status.currentItemId)?.customData?.toString(),
                         )
                     }) {}
                 }

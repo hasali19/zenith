@@ -150,6 +150,7 @@ class MediaInfo {
     this.mediaTracks,
     this.metadata,
     this.streamDuration,
+    this.customDataJson,
   });
 
   String? url;
@@ -160,12 +161,15 @@ class MediaInfo {
 
   int? streamDuration;
 
+  String? customDataJson;
+
   Object encode() {
     return <Object?>[
       url,
       mediaTracks,
       metadata,
       streamDuration,
+      customDataJson,
     ];
   }
 
@@ -176,6 +180,7 @@ class MediaInfo {
       mediaTracks: (result[1] as List<Object?>?)?.cast<MediaTrack>(),
       metadata: result[2] as MediaMetadata?,
       streamDuration: result[3] as int?,
+      customDataJson: result[4] as String?,
     );
   }
 }
