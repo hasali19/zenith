@@ -11,6 +11,10 @@ on:
     tags-ignore:
       - "*/latest"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check_generated_code:
     runs-on: ubuntu-latest
@@ -72,6 +76,9 @@ jobs:
           channel: beta
 
       - run: |
+          curl -L https://github.com/simolus3/sqlite3.dart/releases/download/sqlite3-2.6.0/sqlite3.wasm -o web/sqlite3.wasm
+          flutter pub get
+          dart compile js -O4 web/drift_worker.dart -o web/drift_worker.js
           export GIT_COMMIT_HASH=$(git rev-parse HEAD)
           flutter build web --wasm --build-number=$GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH --dart-define=DEFAULT_SERVER=
         working-directory: flutter/packages/zenith

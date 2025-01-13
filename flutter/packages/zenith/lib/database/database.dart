@@ -1,7 +1,10 @@
 import 'package:drift/drift.dart';
-import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import './database_stub.dart'
+    if (dart.library.ffi) './database_io.dart'
+    if (dart.library.js_interop) './database_web.dart';
 
 part 'database.g.dart';
 
@@ -18,19 +21,10 @@ class DownloadedFiles extends Table {
 
 @DriftDatabase(tables: [DownloadedFiles])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase() : super(createExecutor());
 
   @override
   int get schemaVersion => 1;
-
-  static QueryExecutor _openConnection() {
-    return driftDatabase(
-      name: 'zenith',
-      native: DriftNativeOptions(
-        shareAcrossIsolates: true,
-      ),
-    );
-  }
 }
 
 @riverpod
