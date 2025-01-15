@@ -399,8 +399,12 @@ class HeaderContent extends ConsumerWidget {
     }
 
     final isDesktop = context.isDesktop;
-    final bodySmall = Theme.of(context).textTheme.bodySmall;
     final bodyLarge = Theme.of(context).textTheme.bodyLarge;
+
+    final videoStreams =
+        videoInfo.streams.whereType<VideoStreamInfo>().toList();
+    final audioStreams =
+        videoInfo.streams.whereType<AudioStreamInfo>().toList();
 
     return Padding(
       padding: const EdgeInsets.only(top: 32),
@@ -408,6 +412,8 @@ class HeaderContent extends ConsumerWidget {
         constraints: const BoxConstraints(maxWidth: 600),
         child: Table(
           defaultColumnWidth: const IntrinsicColumnWidth(),
+          defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
           columnWidths: {
             1: const IntrinsicColumnWidth(),
             2: isDesktop
@@ -419,10 +425,12 @@ class HeaderContent extends ConsumerWidget {
               children: [
                 Text('Video', style: bodyLarge),
                 const SizedBox(width: 16),
-                StreamDropdownButton<VideoStreamInfo>(
-                  items:
-                      videoInfo.streams.whereType<VideoStreamInfo>().toList(),
-                  itemBuilder: (item) => Text(item.codec),
+                _MenuButton<VideoStreamInfo>(
+                  items: videoStreams,
+                  initialValue: videoStreams.first,
+                  itemBuilder: (item) =>
+                      _MenuItemEntry(title: Text(item.codec)),
+                  selectedItemBuilder: (context, item) => Text(item.codec),
                 ),
               ],
             ),
@@ -430,10 +438,14 @@ class HeaderContent extends ConsumerWidget {
               children: [
                 Text('Audio', style: bodyLarge),
                 const SizedBox(width: 16),
-                StreamDropdownButton<AudioStreamInfo>(
-                  items:
-                      videoInfo.streams.whereType<AudioStreamInfo>().toList(),
-                  itemBuilder: (item) => Text(
+                _MenuButton<AudioStreamInfo>(
+                  items: audioStreams,
+                  initialValue: audioStreams.first,
+                  itemBuilder: (item) => _MenuItemEntry(
+                    title: Text(
+                        "${tryResolveLanguageCode(item.language ?? "Unknown")} (${item.codec})"),
+                  ),
+                  selectedItemBuilder: (context, item) => Text(
                       "${tryResolveLanguageCode(item.language ?? "Unknown")} (${item.codec})"),
                 ),
               ],
@@ -443,25 +455,34 @@ class HeaderContent extends ConsumerWidget {
                 children: [
                   Text('Subtitles', style: bodyLarge),
                   const SizedBox(width: 16),
-                  StreamDropdownButton<SubtitleTrack>(
-                    items: videoInfo.subtitles,
-                    itemBuilder: (item) => Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextOneLine(
-                            tryResolveLanguageCode(item.language ?? 'Unknown')),
-                        if (item.title != null)
-                          TextOneLine(
-                            item.title!,
-                            style: bodyLarge!.copyWith(color: bodySmall!.color),
-                          ),
-                      ],
-                    ),
-                    selectedItemBuilder: (context, item) => Text(
-                      tryResolveLanguageCode(item.language ?? 'Unknown'),
-                      style: bodyLarge,
-                    ),
+                  _MenuButton(
+                    items: [null, ...videoInfo.subtitles],
+                    initialValue: null,
+                    itemBuilder: (item) {
+                      if (item == null) {
+                        return _MenuItemEntry(
+                          title: Text('None'),
+                        );
+                      } else {
+                        final title = item.title;
+                        return _MenuItemEntry(
+                          title: Text(tryResolveLanguageCode(
+                              item.language ?? 'Unknown')),
+                          subtitle: title == null
+                              ? null
+                              : TextOneLine(title,
+                                  style: TextTheme.of(context).bodySmall),
+                        );
+                      }
+                    },
+                    selectedItemBuilder: (context, item) {
+                      if (item == null) {
+                        return Text('None');
+                      } else {
+                        return Text(
+                            tryResolveLanguageCode(item.language ?? 'Unknown'));
+                      }
+                    },
                   ),
                 ],
               ),
@@ -659,38 +680,110 @@ class _OverviewState extends State<Overview> {
   }
 }
 
-class StreamDropdownButton<T> extends StatelessWidget {
-  final List<T> items;
-  final Widget Function(T item) itemBuilder;
-  final Widget Function(BuildContext context, T item)? selectedItemBuilder;
+final class _MenuItemEntry {
+  final Widget title;
+  final Widget? subtitle;
 
-  const StreamDropdownButton({
+  const _MenuItemEntry({
+    required this.title,
+    this.subtitle,
+  });
+}
+
+class _MenuButton<T> extends StatelessWidget {
+  final List<T> items;
+  final T initialValue;
+  final _MenuItemEntry Function(T item) itemBuilder;
+  final Widget Function(BuildContext context, T item) selectedItemBuilder;
+
+  const _MenuButton({
     super.key,
     required this.items,
+    required this.initialValue,
     required this.itemBuilder,
-    this.selectedItemBuilder,
+    required this.selectedItemBuilder,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bodyLarge = Theme.of(context).textTheme.bodyLarge;
-    return DropdownButton<T>(
-      value: items[0],
-      items: items
-          .map((a) => DropdownMenuItem(
-                value: a,
-                child: itemBuilder(a),
-              ))
-          .toList(),
-      onChanged: (value) {},
-      underline: const SizedBox(),
-      isDense: true,
-      isExpanded: true,
-      style: bodyLarge,
-      selectedItemBuilder: selectedItemBuilder != null
-          ? ((context) =>
-              items.map((e) => selectedItemBuilder!(context, e)).toList())
-          : null,
+    Widget child = selectedItemBuilder.call(context, items.first);
+
+    if (items.length > 1) {
+      child = Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          child: DefaultTextStyle(
+            style: TextStyle(color: ColorScheme.of(context).primary),
+            child: child,
+          ),
+          onTapUp: (details) {
+            if (context.isDesktop) {
+              _showPopupMenu(context);
+            } else {
+              _showModalSheet(context);
+            }
+          },
+        ),
+      );
+    }
+
+    return Row(
+      children: [child],
+    );
+  }
+
+  void _showPopupMenu(BuildContext context) {
+    final RenderBox box = context.findRenderObject()! as RenderBox;
+    final RenderBox overlay =
+        Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
+    final offset =
+        box.localToGlobal(Offset(0, box.size.height), ancestor: overlay);
+    showMenu(
+      clipBehavior: Clip.antiAlias,
+      position: RelativeRect.fromRect(
+        Rect.fromPoints(offset, offset),
+        Offset.zero & overlay.size,
+      ),
+      context: context,
+      constraints: BoxConstraints.loose(Size(480, 600)),
+      items: <PopupMenuEntry>[
+        for (final _MenuItemEntry(:title, :subtitle) in items.map(itemBuilder))
+          PopupMenuItem(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                title,
+                if (subtitle != null) subtitle,
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showModalSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      clipBehavior: Clip.antiAlias,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          builder: (context, scrollController) {
+            return ListView(
+              controller: scrollController,
+              children: [
+                for (final _MenuItemEntry(:title, :subtitle)
+                    in items.map(itemBuilder))
+                  ListTile(
+                    title: title,
+                    subtitle: subtitle,
+                  ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

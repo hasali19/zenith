@@ -197,8 +197,8 @@ abstract class StreamInfo {
 class VideoStreamInfo extends StreamInfo {
   final int width;
   final int height;
-  final (int x, int y)? crop1;
-  final (int x, int y)? crop2;
+  final ({int x, int y})? crop1;
+  final ({int x, int y})? crop2;
 
   const VideoStreamInfo({
     required super.id,
@@ -222,12 +222,12 @@ class VideoStreamInfo extends StreamInfo {
       codec: json['codec'],
       width: json['width'],
       height: json['height'],
-      crop1: switch ((cropX1, cropY1)) {
-        final (int, int) crop1 => crop1,
+      crop1: switch ((x: cropX1, y: cropY1)) {
+        final ({int x, int y}) crop1 => crop1,
         _ => null,
       },
-      crop2: switch ((cropX2, cropY2)) {
-        final (int, int) crop2 => crop2,
+      crop2: switch ((x: cropX2, y: cropY2)) {
+        final ({int x, int y}) crop2 => crop2,
         _ => null,
       },
     );
