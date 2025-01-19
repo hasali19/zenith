@@ -81,6 +81,7 @@ pub enum EncodableValue<'a> {
     F64(Float64),
     Str(&'a str),
     List(Vec<EncodableValue<'a>>),
+    U8List(Vec<u8>),
     Map(BTreeMap<EncodableValue<'a>, EncodableValue<'a>>),
 }
 
@@ -168,6 +169,14 @@ fn write_list(w: &mut WriteCursor, values: &[EncodableValue]) -> io::Result<()> 
     Ok(())
 }
 
+fn write_u8_list(w: &mut WriteCursor, values: &[u8]) -> io::Result<()> {
+    write_size(w, values.len() as u32)?;
+    for v in values {
+        w.write_u8(*v)?;
+    }
+    Ok(())
+}
+
 fn read_map<'a>(
     cursor: &mut ReadCursor<'a>,
 ) -> io::Result<BTreeMap<EncodableValue<'a>, EncodableValue<'a>>> {
@@ -246,6 +255,10 @@ pub fn write_value(w: &mut WriteCursor, value: &EncodableValue) -> io::Result<()
         EncodableValue::List(v) => {
             w.write_u8(EncodedType::List as u8)?;
             write_list(w, v)?;
+        }
+        EncodableValue::U8List(v) => {
+            w.write_u8(EncodedType::UInt8List as u8)?;
+            write_u8_list(w, v)?;
         }
         EncodableValue::Map(v) => {
             w.write_u8(EncodedType::Map as u8)?;

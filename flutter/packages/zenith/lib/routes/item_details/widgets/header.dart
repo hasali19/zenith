@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,7 @@ import 'package:zenith/constants.dart';
 import 'package:zenith/downloader/downloader.dart';
 import 'package:zenith/image.dart';
 import 'package:zenith/language_codes.dart';
+import 'package:zenith/platform/file_picker/file_picker.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/routes/item_details/item_details_controller.dart';
 import 'package:zenith/routes/item_details/item_details_state.dart';
@@ -41,7 +44,7 @@ class HeaderContent extends ConsumerWidget {
     final subtitle = _buildSubtitle(context);
     final metaTable = _buildMetaTable();
     final overview = _buildOverview();
-    final videoInfo = _buildVideoInfo(context);
+    final videoInfo = _buildVideoInfo(context, ref);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,7 +395,7 @@ class HeaderContent extends ConsumerWidget {
     );
   }
 
-  Widget? _buildVideoInfo(BuildContext context) {
+  Widget? _buildVideoInfo(BuildContext context, WidgetRef ref) {
     final videoInfo = state.item.videoFile;
     if (videoInfo == null) {
       return null;
@@ -455,7 +458,7 @@ class HeaderContent extends ConsumerWidget {
                 children: [
                   Text('Subtitles', style: bodyLarge),
                   const SizedBox(width: 16),
-                  _MenuButton(
+                  _SubtitlesMenuButton(
                     items: [null, ...videoInfo.subtitles],
                     initialValue: null,
                     itemBuilder: (item) {
@@ -482,6 +485,12 @@ class HeaderContent extends ConsumerWidget {
                         return Text(
                             tryResolveLanguageCode(item.language ?? 'Unknown'));
                       }
+                    },
+                    onUploadFile: (fileName, bytes) {
+                      ref
+                          .read(itemDetailsControllerProvider(state.item.id)
+                              .notifier)
+                          .uploadSubtitleFile(fileName, bytes);
                     },
                   ),
                 ],
@@ -746,7 +755,7 @@ class _MenuButton<T> extends StatelessWidget {
       ),
       context: context,
       constraints: BoxConstraints.loose(Size(480, 600)),
-      items: <PopupMenuEntry>[
+      items: buildPopupEntries(context, [
         for (final _MenuItemEntry(:title, :subtitle) in items.map(itemBuilder))
           PopupMenuItem(
             child: Column(
@@ -757,7 +766,7 @@ class _MenuButton<T> extends StatelessWidget {
               ],
             ),
           ),
-      ],
+      ]),
     );
   }
 
@@ -769,21 +778,83 @@ class _MenuButton<T> extends StatelessWidget {
       builder: (context) {
         return DraggableScrollableSheet(
           expand: false,
-          builder: (context, scrollController) {
-            return ListView(
-              controller: scrollController,
-              children: [
-                for (final _MenuItemEntry(:title, :subtitle)
-                    in items.map(itemBuilder))
-                  ListTile(
-                    title: title,
-                    subtitle: subtitle,
-                  ),
-              ],
-            );
-          },
+          builder: (context, scrollController) => ListView(
+            controller: scrollController,
+            children: buildBottomSheetItems(context, [
+              for (final _MenuItemEntry(:title, :subtitle)
+                  in items.map(itemBuilder))
+                ListTile(
+                  title: title,
+                  subtitle: subtitle,
+                ),
+            ]),
+          ),
         );
       },
     );
+  }
+
+  @protected
+  List<Widget> buildBottomSheetItems(BuildContext context, List<Widget> items) {
+    return items;
+  }
+
+  @protected
+  List<PopupMenuEntry> buildPopupEntries(
+      BuildContext context, List<PopupMenuEntry> entries) {
+    return entries;
+  }
+}
+
+class _SubtitlesMenuButton extends _MenuButton {
+  final void Function(String fileName, Uint8List bytes) onUploadFile;
+
+  const _SubtitlesMenuButton({
+    required super.items,
+    required super.initialValue,
+    required super.itemBuilder,
+    required super.selectedItemBuilder,
+    required this.onUploadFile,
+  });
+
+  @override
+  List<Widget> buildBottomSheetItems(BuildContext context, List<Widget> items) {
+    return [
+      ...items,
+      Divider(),
+      ListTile(
+        leading: const Icon(Icons.upload),
+        title: const Text('Upload'),
+        onTap: () async {
+          await _onUploadTap();
+          if (context.mounted) {
+            Navigator.pop(context);
+          }
+        },
+      ),
+    ];
+  }
+
+  @override
+  List<PopupMenuEntry> buildPopupEntries(
+      BuildContext context, List<PopupMenuEntry> entries) {
+    return [
+      ...entries,
+      PopupMenuDivider(),
+      PopupMenuItem(
+        onTap: _onUploadTap,
+        child: Text('Upload'),
+      ),
+    ];
+  }
+
+  Future<void> _onUploadTap() async {
+    final result = await showFilePicker();
+
+    if (result == null) {
+      return;
+    }
+
+    onUploadFile(result.name, result.bytes);
   }
 }

@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -754,6 +757,29 @@ class ZenithApiClient {
     } else {
       throw Exception('Failed to get cast config');
     }
+  }
+
+  Future<void> importSubtitleFile(
+      int videoId, String fileName, Uint8List bytes) async {
+    final formData = FormData.fromMap({
+      'data': jsonEncode({
+        'video_id': videoId,
+        'title': fileName,
+        'language': 'eng',
+      }),
+      'file':
+          MultipartFile.fromBytes(bytes, filename: fileName, contentType: () {
+        if (fileName.endsWith('vtt')) {
+          return DioMediaType.parse('web/vtt');
+        } else if (fileName.endsWith('srt')) {
+          return DioMediaType.parse('application/x-subrip');
+        } else {
+          throw ArgumentError('unsupported file type: $fileName');
+        }
+      }()),
+    });
+
+    await _client.post('/api/import/subtitle', data: formData);
   }
 }
 

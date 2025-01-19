@@ -1,8 +1,19 @@
+use std::env;
+use std::path::Path;
+
 use which::which;
 
 fn main() {
-    let flutter_path = which("flutter").expect("flutter not found in PATH");
-    let flutter_bin = flutter_path.parent().unwrap();
+    let flutter_exe;
+    let flutter_bin = env::var("FLUTTER_BIN_DIR");
+    let flutter_bin = match &flutter_bin {
+        Ok(p) => Path::new(p),
+        Err(_) => {
+            flutter_exe = which("flutter").expect("flutter not found in PATH");
+            flutter_exe.parent().unwrap()
+        }
+    };
+
     let header = flutter_bin.join("cache/artifacts/engine/windows-x64/flutter_windows.h");
 
     let bindings = bindgen::builder()

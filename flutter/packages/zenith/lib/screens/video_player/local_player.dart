@@ -252,9 +252,11 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
           },
         ),
         cropRect: switch ((videoStream?.crop1, videoStream?.crop2)) {
-          ((int x1, int y1), (int x2, int y2)) => Rect.fromPoints(
-              Offset(x1.toDouble(), y1.toDouble()),
-              Offset(x2.toDouble(), y2.toDouble()),
+          (null, _) || (_, null) => null,
+          (final ({int x, int y}) a, final ({int x, int y}) b) =>
+            Rect.fromPoints(
+              Offset(a.x.toDouble(), a.y.toDouble()),
+              Offset(b.x.toDouble(), b.y.toDouble()),
             ),
           _ => null,
         },

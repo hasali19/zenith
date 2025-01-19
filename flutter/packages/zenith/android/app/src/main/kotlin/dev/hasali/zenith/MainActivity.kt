@@ -7,33 +7,41 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.OpenableColumns
+import android.util.Log
 import android.view.WindowManager
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
-import java.util.concurrent.Executors
 
-class MainActivity : FlutterActivity() {
-
-    private val executor = Executors.newCachedThreadPool()
+class MainActivity : FlutterFragmentActivity() {
 
     private lateinit var updaterChannel: MethodChannel
     private lateinit var platformChannel: MethodChannel
     private lateinit var downloaderChannel: MethodChannel
 
+    private lateinit var getContent: ActivityResultLauncher<String>
+
     private var isPipModeEnabled = false
     private var nextInstallId = 424242
+    private var filePickerCallback: ((Uri?) -> Unit)? = null
 
     private val pendingInstalls = mutableMapOf<Int, (resultCode: Int) -> Unit>()
 
@@ -46,6 +54,10 @@ class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         NotificationChannels.createAll(this)
+
+        getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            filePickerCallback?.invoke(uri)
+        }
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -161,6 +173,44 @@ class MainActivity : FlutterActivity() {
                 result.success(null)
             }
 
+            "showFilePicker" -> {
+                filePickerCallback = { uri ->
+                    filePickerCallback = null
+
+                    if (uri == null) {
+                        result.success(null)
+                    } else {
+                        lifecycleScope.launch {
+                            withContext(Dispatchers.IO) {
+                                val name = contentResolver.query(uri, null, null, null, null)
+                                    .use { cursor ->
+                                        if (cursor != null && cursor.moveToFirst()) {
+                                            val index =
+                                                cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
+                                            cursor.getString(index)
+                                        } else {
+                                            null
+                                        }
+                                    }
+
+                                val bytes =
+                                    contentResolver.openInputStream(uri)?.use { it.readBytes() }
+
+                                result.success(
+                                    mapOf(
+                                        "path" to uri.toString(),
+                                        "name" to name,
+                                        "bytes" to bytes,
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+
+                getContent.launch("*/*")
+            }
+
             else -> result.notImplemented()
         }
     }
@@ -216,8 +266,12 @@ class MainActivity : FlutterActivity() {
 
             "deleteFile" -> {
                 val uri = Uri.parse(call.argument("uri")!!)
-                context.contentResolver.delete(uri, null, null)
-                result.success(null)
+                lifecycleScope.launch {
+                    withContext(Dispatchers.IO) {
+                        contentResolver.delete(uri, null, null)
+                        result.success(null)
+                    }
+                }
             }
 
             else -> result.notImplemented()
@@ -226,7 +280,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onPictureInPictureModeChanged(
         isInPictureInPictureMode: Boolean,
-        newConfig: Configuration?
+        newConfig: Configuration
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         platformChannel.invokeMethod("setIsInPipMode", isInPictureInPictureMode)

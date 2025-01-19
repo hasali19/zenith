@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use std::ffi::{c_void, CStr, CString};
 use std::io::{Cursor, Write};
 use std::ptr;
@@ -18,7 +17,7 @@ pub type FlutterDesktopMessengerCallback =
 
 pub struct FlutterDesktopMessenger {
     ptr: FlutterDesktopMessengerRef,
-    callbacks: Mutex<BTreeMap<CString, FlutterDesktopMessengerCallback>>,
+    callbacks: Mutex<Vec<(CString, *mut FlutterDesktopMessengerCallback)>>,
 }
 
 unsafe impl Send for FlutterDesktopMessenger {}
@@ -28,7 +27,7 @@ impl FlutterDesktopMessenger {
     pub fn new(messenger: FlutterDesktopMessengerRef) -> FlutterDesktopMessenger {
         FlutterDesktopMessenger {
             ptr: messenger,
-            callbacks: Mutex::new(BTreeMap::new()),
+            callbacks: Mutex::new(vec![]),
         }
     }
 
@@ -73,18 +72,19 @@ impl FlutterDesktopMessenger {
 
     fn set_callback_impl(&self, channel: &str, callback: FlutterDesktopMessengerCallback) {
         let channel = CString::new(channel).unwrap();
+        let callback = &raw mut *Box::leak(Box::new(callback));
 
-        let mut callbacks = self.callbacks.lock().unwrap();
-        callbacks.insert(channel.clone(), Box::new(callback));
-
-        let callback = callbacks.get(&channel).unwrap();
+        self.callbacks
+            .lock()
+            .unwrap()
+            .push((channel.clone(), callback));
 
         unsafe {
             FlutterDesktopMessengerSetCallback(
                 self.ptr,
                 channel.as_ptr(),
                 Some(messenger_callback),
-                callback as *const _ as _,
+                callback.cast(),
             )
         };
     }
@@ -92,14 +92,16 @@ impl FlutterDesktopMessenger {
 
 impl Drop for FlutterDesktopMessenger {
     fn drop(&mut self) {
-        unsafe {
-            for channel in self.callbacks.lock().unwrap().keys() {
+        for (channel, callback) in self.callbacks.lock().unwrap().iter() {
+            unsafe {
                 FlutterDesktopMessengerSetCallback(
                     self.ptr,
                     channel.as_ptr(),
                     None,
                     ptr::null_mut(),
                 );
+
+                drop(Box::from_raw(*callback))
             }
         }
     }

@@ -4,8 +4,12 @@ mod flutter_window_binding;
 mod flutter_windows;
 mod window_placement;
 
+use std::fs;
+
 use flutter_desktop_messenger::codec::EncodableValue;
+use map_macro::btree_map;
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+use rfd::FileDialog;
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
@@ -67,20 +71,51 @@ pub fn main() {
 
     let messenger = view_controller.engine().create_messenger();
 
-    messenger.set_callback("zenith.hasali.uk/windowing", move |name, args, reply| {
-        if name == "isWindowed" {
-            reply.success(&EncodableValue::Bool(true));
-        } else if name == "setFullscreen" {
-            window.set_fullscreen(
-                args.as_bool()
-                    .expect("setFullscreen arg must be bool")
-                    .then_some(Fullscreen::Borderless(None)),
-            );
-            reply.success(&EncodableValue::Null);
-        } else {
-            reply.not_implemented();
-        }
-    });
+    messenger.set_callback(
+        "zenith.hasali.uk/windowing",
+        move |name, args, reply| match name {
+            "isWindowed" => {
+                reply.success(&EncodableValue::Bool(true));
+            }
+            "setFullscreen" => {
+                window.set_fullscreen(
+                    args.as_bool()
+                        .expect("setFullscreen arg must be bool")
+                        .then_some(Fullscreen::Borderless(None)),
+                );
+                reply.success(&EncodableValue::Null);
+            }
+            _ => {
+                reply.not_implemented();
+            }
+        },
+    );
+
+    messenger.set_callback(
+        "zenith.hasali.dev/platform",
+        move |name, _args, reply| match name {
+            "showFilePicker" => {
+                let file = FileDialog::new().pick_file();
+
+                let Some(path) = file else {
+                    reply.success(&EncodableValue::Null);
+                    return;
+                };
+
+                let file_name = path.file_name().unwrap().to_str().unwrap();
+                let bytes = fs::read(&path).unwrap();
+
+                reply.success(&EncodableValue::Map(btree_map! {
+                    EncodableValue::Str("name") => EncodableValue::Str(file_name),
+                    EncodableValue::Str("path") => EncodableValue::Str(path.to_str().unwrap()),
+                    EncodableValue::Str("bytes") => EncodableValue::U8List(bytes),
+                }));
+            }
+            _ => {
+                reply.not_implemented();
+            }
+        },
+    );
 
     let _binding = FlutterWindowBinding::new(&view_controller, window_handle);
 

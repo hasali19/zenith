@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/database/database.dart';
@@ -121,29 +123,34 @@ class ItemDetailsController extends _$ItemDetailsController {
     final id = state.valueOrNull?.item.id;
     if (id == null) return;
 
-    await ref
-        .read(apiProvider)
-        .updateUserData(id, VideoUserDataPatch(isWatched: isWatched));
+    await _api.updateUserData(id, VideoUserDataPatch(isWatched: isWatched));
 
-    ref.invalidateSelf();
+    refresh();
   }
 
   void findMetadataMatch() async {
     final id = state.valueOrNull?.item.id;
     if (id == null) return;
 
-    await ref.read(apiProvider).findMetadataMatch(id);
+    await _api.findMetadataMatch(id);
 
-    ref.invalidateSelf();
+    refresh();
   }
 
   void refreshMetadata() async {
     final id = state.valueOrNull?.item.id;
     if (id == null) return;
 
-    await ref.read(apiProvider).refreshMetadata(id);
+    await _api.refreshMetadata(id);
 
-    ref.invalidateSelf();
+    refresh();
+  }
+
+  Future<void> uploadSubtitleFile(String fileName, Uint8List bytes) async {
+    await _api.importSubtitleFile(
+        state.value!.item.videoFile!.id, fileName, bytes);
+
+    refresh();
   }
 }
 

@@ -7,10 +7,12 @@ edition = "2021"
 
 [dependencies]
 dirs = "5.0"
-raw-window-handle = "0.6"
-winit = "0.29"
 flutter-desktop-messenger.workspace = true
 flutter-windows-sys.workspace = true
+map-macro = "0.3.0"
+raw-window-handle = "0.6"
+rfd = { version = "0.15.2", default-features = false }
+winit = "0.29"
 
 [dependencies.windows]
 version = "0.52"
