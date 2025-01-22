@@ -258,7 +258,6 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
               Offset(a.x.toDouble(), a.y.toDouble()),
               Offset(b.x.toDouble(), b.y.toDouble()),
             ),
-          _ => null,
         },
       );
     }).toList();
