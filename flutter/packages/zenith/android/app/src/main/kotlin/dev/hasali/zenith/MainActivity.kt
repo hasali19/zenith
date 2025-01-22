@@ -1,5 +1,6 @@
 package dev.hasali.zenith
 
+import android.app.Activity
 import android.app.PictureInPictureParams
 import android.content.ComponentName
 import android.content.Intent
@@ -8,10 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.util.Log
 import android.view.WindowManager
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -22,7 +20,7 @@ import androidx.work.Data
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import io.flutter.embedding.android.FlutterFragmentActivity
+import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -31,19 +29,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
-class MainActivity : FlutterFragmentActivity() {
+class MainActivity : FlutterActivity() {
 
     private lateinit var updaterChannel: MethodChannel
     private lateinit var platformChannel: MethodChannel
     private lateinit var downloaderChannel: MethodChannel
 
-    private lateinit var getContent: ActivityResultLauncher<String>
-
     private var isPipModeEnabled = false
-    private var nextInstallId = 424242
-    private var filePickerCallback: ((Uri?) -> Unit)? = null
 
-    private val pendingInstalls = mutableMapOf<Int, (resultCode: Int) -> Unit>()
+    private var nextRequestCode = 424242
+    private val pendingResultCallbacks =
+        mutableMapOf<Int, (resultCode: Int, data: Intent?) -> Unit>()
 
     object Channels {
         const val UPDATER = "zenith.hasali.dev/updater"
@@ -54,10 +50,6 @@ class MainActivity : FlutterFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         NotificationChannels.createAll(this)
-
-        getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            filePickerCallback?.invoke(uri)
-        }
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -101,11 +93,9 @@ class MainActivity : FlutterFragmentActivity() {
                     putExtra("packageName", packageName)
                 }
 
-                val id = nextInstallId++
-                pendingInstalls[id] = {
-                    result.success(id)
+                startActivityForResult(intent) { _, _ ->
+                    result.success(Unit)
                 }
-                startActivityForResult(intent, id)
             }
 
             else -> result.notImplemented()
@@ -114,9 +104,9 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        val pendingInstallCallback = pendingInstalls.remove(requestCode)
-        if (pendingInstallCallback != null) {
-            pendingInstallCallback(resultCode)
+        val callback = pendingResultCallbacks.remove(requestCode)
+        if (callback != null) {
+            callback(resultCode, data)
         }
     }
 
@@ -174,9 +164,12 @@ class MainActivity : FlutterFragmentActivity() {
             }
 
             "showFilePicker" -> {
-                filePickerCallback = { uri ->
-                    filePickerCallback = null
+                val intent = Intent(Intent.ACTION_GET_CONTENT)
+                    .addCategory(Intent.CATEGORY_OPENABLE)
+                    .setType("*/*")
 
+                startActivityForResult(intent) { resultCode, data ->
+                    val uri = data?.takeIf { resultCode == Activity.RESULT_OK }?.data
                     if (uri == null) {
                         result.success(null)
                     } else {
@@ -207,8 +200,6 @@ class MainActivity : FlutterFragmentActivity() {
                         }
                     }
                 }
-
-                getContent.launch("*/*")
             }
 
             else -> result.notImplemented()
@@ -294,5 +285,14 @@ class MainActivity : FlutterFragmentActivity() {
                 enterPictureInPictureMode()
             }
         }
+    }
+
+    private fun startActivityForResult(
+        intent: Intent,
+        callback: (resultCode: Int, data: Intent?) -> Unit
+    ) {
+        val requestCode = nextRequestCode++
+        pendingResultCallbacks[requestCode] = callback
+        startActivityForResult(intent, requestCode)
     }
 }
