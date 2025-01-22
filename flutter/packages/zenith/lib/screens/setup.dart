@@ -1,8 +1,10 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:uuid/uuid.dart';
+import 'package:zenith/database/database.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/router.dart';
@@ -31,7 +33,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final servers = ref.watch(serversPrefProvider);
+    final servers = ref.watch(serversProvider).servers;
     Widget content = Form(
       key: _key,
       child: Column(
@@ -78,7 +80,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
           for (final server in servers)
             ListTile(
               title: Text(server.url),
-              onTap: () => _onSelectExisting(server.id),
+              onTap: () => _onSelectExisting(server.uuid),
             ),
           const Gap(32),
           Align(
@@ -130,22 +132,18 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
           .showSnackBar(SnackBar(content: Text('Invalid url: $url')));
     }
 
-    final servers = ref.read(serversPrefProvider);
-    final Server server;
-    if (servers.where((server) => server.url == url).firstOrNull
-        case Server existing) {
-      server = existing;
-    } else {
-      server = Server(
-        id: _uuid.v4(),
-        name: null,
-        url: url,
-      );
+    final id = _uuid.v4();
+    final servers = ref.read(serversProvider);
+    final server = ServersCompanion.insert(
+      uuid: id,
+      url: url,
+    );
 
-      await ref.read(serversPrefProvider.notifier).update([server, ...servers]);
-    }
+    // Insert new server in db
+    await servers.addServer(server, InsertMode.insertOrReplace);
 
-    await ref.read(serverPrefProvider.notifier).update(server.id);
+    // Set the new server as the active server in user preferences
+    await ref.read(serverPrefProvider.notifier).update(id);
 
     if (mounted) {
       context.router.replaceAll([const MainRoute()]);

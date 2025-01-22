@@ -3,6 +3,222 @@
 part of 'database.dart';
 
 // ignore_for_file: type=lint
+class $ServersTable extends Servers with TableInfo<$ServersTable, Server> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ServersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _uuidMeta = const VerificationMeta('uuid');
+  @override
+  late final GeneratedColumn<String> uuid = GeneratedColumn<String>(
+      'uuid', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  @override
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+      'url', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  @override
+  List<GeneratedColumn> get $columns => [id, uuid, url];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'servers';
+  @override
+  VerificationContext validateIntegrity(Insertable<Server> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('uuid')) {
+      context.handle(
+          _uuidMeta, uuid.isAcceptableOrUnknown(data['uuid']!, _uuidMeta));
+    } else if (isInserting) {
+      context.missing(_uuidMeta);
+    }
+    if (data.containsKey('url')) {
+      context.handle(
+          _urlMeta, url.isAcceptableOrUnknown(data['url']!, _urlMeta));
+    } else if (isInserting) {
+      context.missing(_urlMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Server map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Server(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      uuid: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}uuid'])!,
+      url: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}url'])!,
+    );
+  }
+
+  @override
+  $ServersTable createAlias(String alias) {
+    return $ServersTable(attachedDatabase, alias);
+  }
+}
+
+class Server extends DataClass implements Insertable<Server> {
+  final int id;
+  final String uuid;
+  final String url;
+  const Server({required this.id, required this.uuid, required this.url});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['uuid'] = Variable<String>(uuid);
+    map['url'] = Variable<String>(url);
+    return map;
+  }
+
+  ServersCompanion toCompanion(bool nullToAbsent) {
+    return ServersCompanion(
+      id: Value(id),
+      uuid: Value(uuid),
+      url: Value(url),
+    );
+  }
+
+  factory Server.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Server(
+      id: serializer.fromJson<int>(json['id']),
+      uuid: serializer.fromJson<String>(json['uuid']),
+      url: serializer.fromJson<String>(json['url']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'uuid': serializer.toJson<String>(uuid),
+      'url': serializer.toJson<String>(url),
+    };
+  }
+
+  Server copyWith({int? id, String? uuid, String? url}) => Server(
+        id: id ?? this.id,
+        uuid: uuid ?? this.uuid,
+        url: url ?? this.url,
+      );
+  Server copyWithCompanion(ServersCompanion data) {
+    return Server(
+      id: data.id.present ? data.id.value : this.id,
+      uuid: data.uuid.present ? data.uuid.value : this.uuid,
+      url: data.url.present ? data.url.value : this.url,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Server(')
+          ..write('id: $id, ')
+          ..write('uuid: $uuid, ')
+          ..write('url: $url')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, uuid, url);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Server &&
+          other.id == this.id &&
+          other.uuid == this.uuid &&
+          other.url == this.url);
+}
+
+class ServersCompanion extends UpdateCompanion<Server> {
+  final Value<int> id;
+  final Value<String> uuid;
+  final Value<String> url;
+  const ServersCompanion({
+    this.id = const Value.absent(),
+    this.uuid = const Value.absent(),
+    this.url = const Value.absent(),
+  });
+  ServersCompanion.insert({
+    this.id = const Value.absent(),
+    required String uuid,
+    required String url,
+  })  : uuid = Value(uuid),
+        url = Value(url);
+  static Insertable<Server> custom({
+    Expression<int>? id,
+    Expression<String>? uuid,
+    Expression<String>? url,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (uuid != null) 'uuid': uuid,
+      if (url != null) 'url': url,
+    });
+  }
+
+  ServersCompanion copyWith(
+      {Value<int>? id, Value<String>? uuid, Value<String>? url}) {
+    return ServersCompanion(
+      id: id ?? this.id,
+      uuid: uuid ?? this.uuid,
+      url: url ?? this.url,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (uuid.present) {
+      map['uuid'] = Variable<String>(uuid.value);
+    }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ServersCompanion(')
+          ..write('id: $id, ')
+          ..write('uuid: $uuid, ')
+          ..write('url: $url')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $DownloadedFilesTable extends DownloadedFiles
     with TableInfo<$DownloadedFilesTable, DownloadedFile> {
   @override
@@ -315,18 +531,149 @@ class DownloadedFilesCompanion extends UpdateCompanion<DownloadedFile> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
+  late final $ServersTable servers = $ServersTable(this);
   late final $DownloadedFilesTable downloadedFiles =
       $DownloadedFilesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [downloadedFiles];
+  List<DatabaseSchemaEntity> get allSchemaEntities =>
+      [servers, downloadedFiles];
   @override
   DriftDatabaseOptions get options =>
       const DriftDatabaseOptions(storeDateTimeAsText: true);
 }
 
+typedef $$ServersTableCreateCompanionBuilder = ServersCompanion Function({
+  Value<int> id,
+  required String uuid,
+  required String url,
+});
+typedef $$ServersTableUpdateCompanionBuilder = ServersCompanion Function({
+  Value<int> id,
+  Value<String> uuid,
+  Value<String> url,
+});
+
+class $$ServersTableFilterComposer
+    extends Composer<_$AppDatabase, $ServersTable> {
+  $$ServersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get uuid => $composableBuilder(
+      column: $table.uuid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get url => $composableBuilder(
+      column: $table.url, builder: (column) => ColumnFilters(column));
+}
+
+class $$ServersTableOrderingComposer
+    extends Composer<_$AppDatabase, $ServersTable> {
+  $$ServersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get uuid => $composableBuilder(
+      column: $table.uuid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get url => $composableBuilder(
+      column: $table.url, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ServersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ServersTable> {
+  $$ServersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get uuid =>
+      $composableBuilder(column: $table.uuid, builder: (column) => column);
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+}
+
+class $$ServersTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ServersTable,
+    Server,
+    $$ServersTableFilterComposer,
+    $$ServersTableOrderingComposer,
+    $$ServersTableAnnotationComposer,
+    $$ServersTableCreateCompanionBuilder,
+    $$ServersTableUpdateCompanionBuilder,
+    (Server, BaseReferences<_$AppDatabase, $ServersTable, Server>),
+    Server,
+    PrefetchHooks Function()> {
+  $$ServersTableTableManager(_$AppDatabase db, $ServersTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ServersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ServersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ServersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> uuid = const Value.absent(),
+            Value<String> url = const Value.absent(),
+          }) =>
+              ServersCompanion(
+            id: id,
+            uuid: uuid,
+            url: url,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String uuid,
+            required String url,
+          }) =>
+              ServersCompanion.insert(
+            id: id,
+            uuid: uuid,
+            url: url,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ServersTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ServersTable,
+    Server,
+    $$ServersTableFilterComposer,
+    $$ServersTableOrderingComposer,
+    $$ServersTableAnnotationComposer,
+    $$ServersTableCreateCompanionBuilder,
+    $$ServersTableUpdateCompanionBuilder,
+    (Server, BaseReferences<_$AppDatabase, $ServersTable, Server>),
+    Server,
+    PrefetchHooks Function()>;
 typedef $$DownloadedFilesTableCreateCompanionBuilder = DownloadedFilesCompanion
     Function({
   required String id,
@@ -505,6 +852,8 @@ typedef $$DownloadedFilesTableProcessedTableManager = ProcessedTableManager<
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
+  $$ServersTableTableManager get servers =>
+      $$ServersTableTableManager(_db, _db.servers);
   $$DownloadedFilesTableTableManager get downloadedFiles =>
       $$DownloadedFilesTableTableManager(_db, _db.downloadedFiles);
 }

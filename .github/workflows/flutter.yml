@@ -28,6 +28,7 @@ jobs:
       - run: |
           cd packages/zenith
           dart run build_runner build --delete-conflicting-outputs
+          dart run drift_dev make-migrations
           cd ../cast_framework
           dart run pigeon --input pigeons/cast.dart
         working-directory: flutter

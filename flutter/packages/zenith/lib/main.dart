@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:windowing/windowing.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/cookies.dart';
+import 'package:zenith/database/database.dart';
 import 'package:zenith/dio_client.dart';
 import 'package:zenith/main_navigation.dart';
 import 'package:zenith/language_codes.dart';
@@ -31,12 +32,19 @@ Future<void> main() async {
   final window = await WindowController.create();
   final packageInfo = await PackageInfo.fromPlatform();
 
+  final db = AppDatabase();
+  final servers = ServersList(
+    db,
+    await db.select(db.servers).get(),
+  );
+
   runApp(ProviderScope(
     observers: [
       if (kDebugMode) _LoggingProviderObserver(),
     ],
     overrides: [
       preferencesProvider.overrideWithValue(prefs),
+      serversProvider.overrideWithValue(servers),
       windowProvider.overrideWithValue(window),
       apiProvider.overrideWith((ref) {
         final activeServer = ref.watch(activeServerProvider);
