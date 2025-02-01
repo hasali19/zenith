@@ -201,9 +201,14 @@ PlayableState? _getPlayableForItem(
     return null;
   }();
 
+  final seasonIndex = switch (playable.grandparent) {
+    null => null,
+    final grandparent => grandparent.index - 1,
+  };
+
   return PlayableState(
     id: playable.id,
-    seasonIndex: playable.grandparent!.index - 1,
+    seasonIndex: seasonIndex,
     progress: currentProgress,
     caption: caption,
     shouldResume: playable.shouldResume,

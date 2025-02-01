@@ -330,7 +330,7 @@ abstract class _ItemDetailsState implements ItemDetailsState {
 /// @nodoc
 mixin _$PlayableState {
   int get id => throw _privateConstructorUsedError;
-  int get seasonIndex => throw _privateConstructorUsedError;
+  int? get seasonIndex => throw _privateConstructorUsedError;
   double? get progress => throw _privateConstructorUsedError;
   String? get caption => throw _privateConstructorUsedError;
   bool get shouldResume => throw _privateConstructorUsedError;
@@ -351,7 +351,7 @@ abstract class $PlayableStateCopyWith<$Res> {
   @useResult
   $Res call(
       {int id,
-      int seasonIndex,
+      int? seasonIndex,
       double? progress,
       String? caption,
       bool shouldResume,
@@ -374,7 +374,7 @@ class _$PlayableStateCopyWithImpl<$Res, $Val extends PlayableState>
   @override
   $Res call({
     Object? id = null,
-    Object? seasonIndex = null,
+    Object? seasonIndex = freezed,
     Object? progress = freezed,
     Object? caption = freezed,
     Object? shouldResume = null,
@@ -385,10 +385,10 @@ class _$PlayableStateCopyWithImpl<$Res, $Val extends PlayableState>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
-      seasonIndex: null == seasonIndex
+      seasonIndex: freezed == seasonIndex
           ? _value.seasonIndex
           : seasonIndex // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       progress: freezed == progress
           ? _value.progress
           : progress // ignore: cast_nullable_to_non_nullable
@@ -419,7 +419,7 @@ abstract class _$$PlayableStateImplCopyWith<$Res>
   @useResult
   $Res call(
       {int id,
-      int seasonIndex,
+      int? seasonIndex,
       double? progress,
       String? caption,
       bool shouldResume,
@@ -440,7 +440,7 @@ class __$$PlayableStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? seasonIndex = null,
+    Object? seasonIndex = freezed,
     Object? progress = freezed,
     Object? caption = freezed,
     Object? shouldResume = null,
@@ -451,10 +451,10 @@ class __$$PlayableStateImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
-      seasonIndex: null == seasonIndex
+      seasonIndex: freezed == seasonIndex
           ? _value.seasonIndex
           : seasonIndex // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       progress: freezed == progress
           ? _value.progress
           : progress // ignore: cast_nullable_to_non_nullable
@@ -489,7 +489,7 @@ class _$PlayableStateImpl implements _PlayableState {
   @override
   final int id;
   @override
-  final int seasonIndex;
+  final int? seasonIndex;
   @override
   final double? progress;
   @override
@@ -537,7 +537,7 @@ class _$PlayableStateImpl implements _PlayableState {
 abstract class _PlayableState implements PlayableState {
   factory _PlayableState(
       {required final int id,
-      required final int seasonIndex,
+      required final int? seasonIndex,
       required final double? progress,
       required final String? caption,
       required final bool shouldResume,
@@ -546,7 +546,7 @@ abstract class _PlayableState implements PlayableState {
   @override
   int get id;
   @override
-  int get seasonIndex;
+  int? get seasonIndex;
   @override
   double? get progress;
   @override
