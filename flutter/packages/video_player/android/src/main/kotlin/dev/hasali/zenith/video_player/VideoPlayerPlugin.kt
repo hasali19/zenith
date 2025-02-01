@@ -425,7 +425,7 @@ private class PlayerInstance(
                 player.setVideoSurface(surfaceProducer.surface)
             }
 
-            override fun onSurfaceDestroyed() {
+            override fun onSurfaceCleanup() {
                 player.setVideoSurface(null)
             }
         })
