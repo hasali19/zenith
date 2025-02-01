@@ -69,6 +69,7 @@ dependencies:
   shared_preferences: ^2.0.15
   shared_preferences_riverpod: ^0.3.0
   sized_context: ^1.0.0+1
+  sliver_expandable: ^1.1.1
   sliver_tools: ^0.2.8
   theme_tailor_annotation: ^3.0.1
   url_launcher: ^6.1.8

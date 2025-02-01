@@ -203,6 +203,7 @@ PlayableState? _getPlayableForItem(
 
   return PlayableState(
     id: playable.id,
+    seasonIndex: playable.grandparent!.index - 1,
     progress: currentProgress,
     caption: caption,
     shouldResume: playable.shouldResume,

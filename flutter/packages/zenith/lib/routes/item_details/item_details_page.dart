@@ -136,9 +136,13 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
                       if (widget.state.item.cast.isNotEmpty)
                         CastList(cast: widget.state.item.cast),
                       if (widget.state.seasons.isNotEmpty)
-                        EpisodesList(
-                          groups: widget.state.seasons,
-                          onEpisodePressed: onEpisodePressed,
+                        SliverPadding(
+                          padding: EdgeInsets.only(top: 16),
+                          sliver: EpisodesList(
+                            initialExpanded: widget.state.playable?.seasonIndex,
+                            groups: widget.state.seasons,
+                            onEpisodePressed: onEpisodePressed,
+                          ),
                         ),
                       SliverToBoxAdapter(
                         child: SizedBox(height: context.mq.padding.bottom + 16),
