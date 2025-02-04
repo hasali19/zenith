@@ -47,7 +47,7 @@ structmeta = "0.3"
 strum = "0.26"
 syn = { version = "2", default-features = false }
 tempfile = "3.5"
-thiserror = "1.0"
+thiserror = "2.0"
 time = "0.3"
 tokio = "1.20"
 tokio-stream = "0.1"
