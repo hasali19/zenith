@@ -10,8 +10,8 @@ use axum::{Extension, Json};
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use axum_extra::extract::PrivateCookieJar;
 use db::Db;
-use rand::distributions::Distribution;
-use rand::seq::SliceRandom;
+use rand::distr::Distribution;
+use rand::seq::IndexedRandom;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_qs::axum::QsQuery;
@@ -250,7 +250,7 @@ async fn get_token(
         Some(token) => token,
         None => {
             if query.create {
-                let token = rand::thread_rng()
+                let token = rand::rng()
                     .sample_iter(&AsciiPrintable)
                     .take(32)
                     .collect::<String>();
