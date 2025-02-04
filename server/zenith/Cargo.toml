@@ -70,7 +70,7 @@ tokio = { workspace = true, features = [
 tokio-stream = { workspace = true, features = ["sync"] }
 tower-http = { workspace = true, features = ["cors", "fs", "trace"] }
 tokio-util = { workspace = true }
-tower = { workspace = true }
+tower = { workspace = true, features = ["util"] }
 tracing = { workspace = true }
 tracing-error = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
