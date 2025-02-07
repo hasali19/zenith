@@ -20,7 +20,7 @@ struct ProgressUpdate {
     position: f64,
 }
 
-#[post("/progress/:id")]
+#[post("/progress/{id}")]
 #[path(i64)]
 #[response(status = 200)]
 async fn update_progress(

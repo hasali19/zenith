@@ -2,7 +2,6 @@ use std::io::SeekFrom;
 use std::ops::Bound;
 use std::path::Path;
 
-use axum::async_trait;
 use axum::body::Body;
 use axum::extract::FromRequestParts;
 use axum::http::{request, StatusCode};
@@ -20,7 +19,6 @@ pub struct FileRequest {
     range: Option<Range>,
 }
 
-#[async_trait]
 impl<S: Send + Sync> FromRequestParts<S> for FileRequest {
     type Rejection = TypedHeaderRejection;
 

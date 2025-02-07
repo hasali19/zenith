@@ -37,7 +37,7 @@ async fn refresh_outdated(
     Ok(())
 }
 
-#[post("/metadata/:id/find_match")]
+#[post("/metadata/{id}/find_match")]
 #[path(i64)]
 #[response(status = 200)]
 async fn find_match(
@@ -64,7 +64,7 @@ struct SetMetadataMatch {
     episode_number: Option<i32>,
 }
 
-#[post("/metadata/:id/set_match")]
+#[post("/metadata/{id}/set_match")]
 async fn set_match(
     Path(id): Path<i64>,
     tmdb: Extension<TmdbClient>,
@@ -140,7 +140,7 @@ async fn set_match(
     Ok(())
 }
 
-#[post("/metadata/:id/refresh")]
+#[post("/metadata/{id}/refresh")]
 #[path(i64)]
 #[response(status = 200)]
 async fn refresh_metadata(

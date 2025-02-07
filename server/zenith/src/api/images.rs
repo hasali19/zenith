@@ -30,7 +30,7 @@ pub struct ImageQuery {
     width: Option<u32>,
 }
 
-#[get("/images/:id")]
+#[get("/images/{id}")]
 pub async fn get_image(
     Path(id): Path<String>,
     #[query] QsQuery(query): QsQuery<ImageQuery>,
@@ -144,7 +144,7 @@ pub enum MediaImageType {
     Thumbnail,
 }
 
-#[get("/items/:id/images/:type")]
+#[get("/items/{id}/images/{type}")]
 #[path(i64, MediaImageType)]
 #[response(status = 200)]
 #[response(status = 404)]

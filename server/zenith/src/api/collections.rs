@@ -40,7 +40,7 @@ async fn get_collections(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     Ok(Json(collections))
 }
 
-#[get("/collections/:id")]
+#[get("/collections/{id}")]
 #[path(i64)]
 #[response(model = Collection)]
 async fn get_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
@@ -69,7 +69,7 @@ async fn create_collection(
     Ok(Json(Collection::from(collection)))
 }
 
-#[delete("/collections/:id")]
+#[delete("/collections/{id}")]
 async fn delete_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire_write().await?;
     db::collections::remove(&mut conn, *id).await?;
@@ -88,7 +88,7 @@ struct UpdateCollectionMeta {
     overview: Option<String>,
 }
 
-#[put("/collections/:id")]
+#[put("/collections/{id}")]
 #[response(model = Collection)]
 async fn update_collection(
     id: Path<i64>,

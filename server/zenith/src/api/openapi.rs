@@ -1,11 +1,13 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use axum::http::Method;
 use camino::Utf8Path;
 use indexmap::indexmap;
 use markdown::{Block, Span};
 use openapiv3::*;
+use regex::Regex;
 use speq::reflection::{
     EnumTag, EnumVariantKind, Field, FloatWidth, PrimitiveType, Type, TypeDecl,
 };
@@ -28,19 +30,7 @@ pub fn openapi_spec() -> OpenAPI {
         .routes
         .into_iter()
         .fold(Default::default(), |mut paths, route| {
-            let path = route
-                .path
-                .trim_start_matches('/')
-                .split('/')
-                .map(|segment| {
-                    if segment.starts_with(':') {
-                        format!("{{{}}}", segment.trim_start_matches(':'))
-                    } else {
-                        segment.to_owned()
-                    }
-                })
-                .collect::<Vec<_>>()
-                .join("/");
+            let path = route.path.value.trim_start_matches('/');
 
             let item = match paths
                 .paths
@@ -114,9 +104,15 @@ fn build_route_spec(
         }
     }
 
-    for param in route.params {
+    for (i, param_name) in parse_path_params(&route.path.value).enumerate() {
+        let param_type = route
+            .path
+            .params
+            .get(i)
+            .unwrap_or(&Type::Primitive(PrimitiveType::String));
+
         let parameter_data = ParameterData {
-            name: param.name.into_owned(),
+            name: param_name.to_owned(),
             required: true,
             deprecated: None,
             description: None,
@@ -124,7 +120,7 @@ fn build_route_spec(
             examples: Default::default(),
             explode: None,
             extensions: Default::default(),
-            format: ParameterSchemaOrContent::Schema(type_to_schema(&param.type_desc)),
+            format: ParameterSchemaOrContent::Schema(type_to_schema(param_type)),
         };
 
         operation
@@ -225,6 +221,11 @@ fn build_route_spec(
     Some(operation)
 }
 
+fn parse_path_params(path: &str) -> impl Iterator<Item = &str> {
+    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\{([^\/]+)\}").unwrap());
+    RE.captures_iter(path).map(|c| c.get(1).unwrap().as_str())
+}
+
 fn type_to_schema(type_desc: &Type) -> ReferenceOr<Schema> {
     use openapiv3::Type as SchemaType;
     let schema = match type_desc {
@@ -281,6 +282,7 @@ fn type_to_schema(type_desc: &Type) -> ReferenceOr<Schema> {
                 reference: format!("#/components/schemas/{id}"),
             }
         }
+        Type::Tuple(_) => todo!(),
     };
 
     ReferenceOr::Item(schema)

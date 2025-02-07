@@ -151,7 +151,7 @@ async fn create_registration(_user: auth::User, db: Extension<Db>) -> ApiResult<
     Ok(Json(UserRegistration::try_from(registration)?))
 }
 
-#[delete("/users/registrations/:id")]
+#[delete("/users/registrations/{id}")]
 async fn delete_registration(
     _user: auth::User,
     Path(code): Path<String>,

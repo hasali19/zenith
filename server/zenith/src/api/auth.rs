@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 use std::time::Duration;
 
-use async_trait::async_trait;
 use axum::extract::{FromRequestParts, Request};
 use axum::http::{request, Method};
 use axum::middleware::Next;
@@ -30,7 +29,6 @@ pub struct User {
     pub username: String,
 }
 
-#[async_trait]
 impl<S: Send + Sync> FromRequestParts<S> for User {
     type Rejection = ApiError;
 

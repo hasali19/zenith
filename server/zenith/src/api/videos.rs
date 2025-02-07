@@ -18,7 +18,7 @@ pub struct GetVideoContentQuery {
     attachment: bool,
 }
 
-#[get("/videos/:id")]
+#[get("/videos/{id}")]
 #[path(i64)]
 #[response(status = 200)]
 pub async fn get_video_content(

@@ -34,7 +34,7 @@ pub async fn get_recent_shows(user: auth::User, db: Extension<Db>) -> ApiResult<
     Ok(Json(query_items_by_id(&mut conn, user.id, &ids).await?))
 }
 
-#[get("/shows/:id/seasons")]
+#[get("/shows/{id}/seasons")]
 #[path(i64)]
 #[response(model = Vec<MediaItem>)]
 pub async fn get_seasons(
@@ -54,7 +54,7 @@ pub async fn get_seasons(
     Ok(Json(query_items(&mut conn, user.id, query).await?))
 }
 
-#[get("/shows/:id/episodes")]
+#[get("/shows/{id}/episodes")]
 #[path(i64)]
 #[response(model = Vec<MediaItem>)]
 pub async fn get_show_episodes(
@@ -74,7 +74,7 @@ pub async fn get_show_episodes(
     Ok(Json(query_items(&mut conn, user.id, query).await?))
 }
 
-#[get("/seasons/:id/episodes")]
+#[get("/seasons/{id}/episodes")]
 #[path(i64)]
 #[response(model = Vec<MediaItem>)]
 pub async fn get_episodes(

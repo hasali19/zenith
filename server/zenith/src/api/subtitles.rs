@@ -34,7 +34,7 @@ struct GetSubtitleParams {
     format: Option<Format>,
 }
 
-#[get("/subtitles/:id")]
+#[get("/subtitles/{id}")]
 #[path(i64)]
 #[response(status = 200)]
 async fn get_subtitle(
@@ -106,7 +106,7 @@ async fn convert_subtitle(
     Ok(output.stdout)
 }
 
-#[delete("/subtitles/:id")]
+#[delete("/subtitles/{id}")]
 #[path(i64)]
 #[response(status = 200)]
 pub async fn delete_subtitle(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {

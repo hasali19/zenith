@@ -107,7 +107,7 @@ async fn get_continue_watching(
     Ok(Json(query_items_by_id(&mut conn, user.id, &ids).await?))
 }
 
-#[get("/items/:id")]
+#[get("/items/{id}")]
 #[path(i64)]
 #[response(model = MediaItem)]
 pub async fn get_item(
@@ -205,7 +205,7 @@ pub struct DeleteItemQuery {
     remove_files: bool,
 }
 
-#[delete("/items/:id")]
+#[delete("/items/{id}")]
 #[path(i64)]
 #[response(status = 200)]
 async fn delete_item(
@@ -243,7 +243,7 @@ struct VideoUserDataPatch {
     position: Option<f64>,
 }
 
-#[patch("/items/:id/user_data")]
+#[patch("/items/{id}/user_data")]
 #[path(i64)]
 #[request(model = VideoUserDataPatch)]
 #[response(status = 200)]
