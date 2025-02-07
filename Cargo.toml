@@ -39,10 +39,10 @@ regex = "1.6"
 reqwest = { version = "0.12", default-features = false }
 serde = "1.0"
 serde_json = "1.0"
-serde_qs = { git = "https://github.com/Atrox/serde_qs", rev = "2cfa3ee" }
+serde_qs = "0.13"
 serde_yaml = "0.9"
 sha2 = "0.10"
-speq = { git = "https://github.com/hasali19/speq", rev = "a0096c3" }
+speq = { git = "https://github.com/hasali19/speq" }
 sqlx = { version = "0.8", default-features = false }
 structmeta = "0.3"
 strum = "0.26"

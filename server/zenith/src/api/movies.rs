@@ -26,7 +26,6 @@ pub async fn get_movies(user: auth::User, db: Extension<Db>) -> ApiResult<Json<V
 }
 
 #[get("/movies/{id}")]
-#[path(i64)]
 #[response(model = MediaItem)]
 pub async fn get_movie(
     id: Path<i64>,

@@ -21,11 +21,10 @@ struct ProgressUpdate {
 }
 
 #[post("/progress/{id}")]
-#[path(i64)]
 #[response(status = 200)]
 async fn update_progress(
     id: Path<i64>,
-    #[query] query: QsQuery<ProgressUpdate>,
+    query: QsQuery<ProgressUpdate>,
     user: auth::User,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {

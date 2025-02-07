@@ -12,6 +12,7 @@ use headers::{
     AcceptRanges, ContentDisposition, ContentLength, ContentRange, ContentType, Header,
     HeaderMapExt, HeaderValue, Range,
 };
+use speq::RouteHandlerInput;
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio_util::codec::{BytesCodec, FramedRead};
 
@@ -37,6 +38,10 @@ impl<S: Send + Sync> FromRequestParts<S> for FileRequest {
 
         Ok(FileRequest { range })
     }
+}
+
+impl RouteHandlerInput for FileRequest {
+    // TODO: Describe accepted headers
 }
 
 pub struct FileResponse {

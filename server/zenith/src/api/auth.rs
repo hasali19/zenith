@@ -15,7 +15,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_qs::axum::QsQuery;
 use speq::axum::post;
-use speq::Reflect;
+use speq::{Reflect, RouteHandlerInput};
 use tower::Service;
 
 use crate::password_utils::verify_password;
@@ -42,6 +42,8 @@ impl<S: Send + Sync> FromRequestParts<S> for User {
             .ok_or_else(|| unauthorized("unauthorized"))
     }
 }
+
+impl RouteHandlerInput for User {}
 
 // TODO: These should not be hardcoded here
 const IGNORED_PATHS: &[(&str, &[Method])] =
@@ -145,7 +147,7 @@ async fn try_extract_user(
     })
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 struct Credentials {
     username: String,
     password: String,
@@ -230,7 +232,7 @@ impl Distribution<char> for AsciiPrintable {
 
 #[post("/auth/token")]
 async fn get_token(
-    #[query] query: QsQuery<TokenQuery>,
+    query: QsQuery<TokenQuery>,
     db: Extension<Db>,
     user: User,
 ) -> ApiResult<impl IntoResponse> {

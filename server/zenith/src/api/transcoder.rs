@@ -74,7 +74,7 @@ pub struct TranscodeParams {
 #[post("/transcoder")]
 #[response(status = 200)]
 pub async fn transcode(
-    #[query] query: QsQuery<TranscodeParams>,
+    query: QsQuery<TranscodeParams>,
     transcoder: Extension<Arc<Transcoder>>,
 ) -> ApiResult<impl IntoResponse> {
     match query.video_id {

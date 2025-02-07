@@ -35,11 +35,10 @@ struct GetSubtitleParams {
 }
 
 #[get("/subtitles/{id}")]
-#[path(i64)]
 #[response(status = 200)]
 async fn get_subtitle(
     id: Path<i64>,
-    #[query] QsQuery(params): QsQuery<GetSubtitleParams>,
+    QsQuery(params): QsQuery<GetSubtitleParams>,
     file: FileRequest,
     db: Extension<Db>,
     config: Extension<Arc<Config>>,
@@ -107,7 +106,6 @@ async fn convert_subtitle(
 }
 
 #[delete("/subtitles/{id}")]
-#[path(i64)]
 #[response(status = 200)]
 pub async fn delete_subtitle(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire_write().await?;

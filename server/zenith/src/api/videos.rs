@@ -19,11 +19,10 @@ pub struct GetVideoContentQuery {
 }
 
 #[get("/videos/{id}")]
-#[path(i64)]
 #[response(status = 200)]
 pub async fn get_video_content(
     id: Path<i64>,
-    #[query] query: QsQuery<GetVideoContentQuery>,
+    query: QsQuery<GetVideoContentQuery>,
     file: FileRequest,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {

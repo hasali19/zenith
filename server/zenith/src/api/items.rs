@@ -49,7 +49,7 @@ enum ItemSortField {
 #[get("/items")]
 #[response(model = Vec<MediaItem>)]
 async fn get_items(
-    #[query] QsQuery(query): QsQuery<ItemsQuery>,
+    QsQuery(query): QsQuery<ItemsQuery>,
     user: auth::User,
     db: Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
@@ -97,7 +97,7 @@ struct ContinueWatchingQuery {
 #[get("/items/continue_watching")]
 #[response(model = Vec<MediaItem>)]
 async fn get_continue_watching(
-    #[query] QsQuery(query): QsQuery<ContinueWatchingQuery>,
+    QsQuery(query): QsQuery<ContinueWatchingQuery>,
     user: auth::User,
     Extension(db): Extension<Db>,
 ) -> ApiResult<impl IntoResponse> {
@@ -108,7 +108,6 @@ async fn get_continue_watching(
 }
 
 #[get("/items/{id}")]
-#[path(i64)]
 #[response(model = MediaItem)]
 pub async fn get_item(
     id: Path<i64>,
@@ -199,14 +198,13 @@ pub(super) async fn query_items(
     Ok(res)
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 pub struct DeleteItemQuery {
     #[serde(default)]
     remove_files: bool,
 }
 
 #[delete("/items/{id}")]
-#[path(i64)]
 #[response(status = 200)]
 async fn delete_item(
     Path(id): Path<i64>,
@@ -244,8 +242,6 @@ struct VideoUserDataPatch {
 }
 
 #[patch("/items/{id}/user_data")]
-#[path(i64)]
-#[request(model = VideoUserDataPatch)]
 #[response(status = 200)]
 async fn update_user_data(
     id: Path<i64>,

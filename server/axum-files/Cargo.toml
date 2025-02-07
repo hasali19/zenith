@@ -10,5 +10,6 @@ axum = { workspace = true }
 axum-extra = { workspace = true, features = ["typed-header"] }
 headers = { workspace = true }
 mime_guess = { workspace = true }
+speq = { workspace = true }
 tokio = { workspace = true, features = ["fs", "io-util"] }
 tokio-util = { workspace = true, features = ["codec"] }

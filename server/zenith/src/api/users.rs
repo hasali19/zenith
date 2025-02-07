@@ -9,6 +9,7 @@ use eyre::{eyre, Context};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use speq::axum::{delete, get, post};
+use speq::Reflect;
 use time::format_description::well_known::Iso8601;
 use time::OffsetDateTime;
 use uuid::Uuid;
@@ -49,7 +50,7 @@ async fn get_authenticated_user(user: auth::User) -> ApiResult<impl IntoResponse
     }))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 struct NewUser {
     username: String,
     password: String,
@@ -64,7 +65,7 @@ async fn create(
 ) -> ApiResult<impl IntoResponse> {
     let mut transaction = db.begin_write().await?;
 
-    // Must be authenticated to create a user, unless a registration code is provided or no users exist
+    // Must be authenticated to create a user, unless a registration code is provided or no users have been created yet.
     if let Err(e) = user {
         match body.registration_code {
             Some(code) => {

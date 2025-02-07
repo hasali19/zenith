@@ -6,6 +6,7 @@ use db::media::MetadataProvider;
 use db::Db;
 use serde::Deserialize;
 use speq::axum::post;
+use speq::Reflect;
 use tmdb::TmdbClient;
 
 use crate::api::ApiResult;
@@ -38,7 +39,6 @@ async fn refresh_outdated(
 }
 
 #[post("/metadata/{id}/find_match")]
-#[path(i64)]
 #[response(status = 200)]
 async fn find_match(
     Path(id): Path<i64>,
@@ -57,7 +57,7 @@ async fn find_match(
     Ok(StatusCode::OK)
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 struct SetMetadataMatch {
     tmdb_id: Option<i32>,
     season_number: Option<i32>,
@@ -141,7 +141,6 @@ async fn set_match(
 }
 
 #[post("/metadata/{id}/refresh")]
-#[path(i64)]
 #[response(status = 200)]
 async fn refresh_metadata(
     Path(id): Path<i64>,

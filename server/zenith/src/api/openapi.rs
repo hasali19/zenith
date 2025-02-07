@@ -105,9 +105,20 @@ fn build_route_spec(
     }
 
     for (i, param_name) in parse_path_params(&route.path.value).enumerate() {
-        let param_type = route
-            .path
-            .params
+        let params = if let Some(params) = &route.path.params {
+            match params {
+                Type::Primitive(_) => std::slice::from_ref(params),
+                Type::Option(_) => panic!("path param cannot be optional"),
+                Type::Array(_) => todo!(),
+                Type::Tuple(items) => items,
+                Type::Map(_) => todo!(),
+                Type::Id(_name) => todo!(),
+            }
+        } else {
+            &[]
+        };
+
+        let param_type = params
             .get(i)
             .unwrap_or(&Type::Primitive(PrimitiveType::String));
 

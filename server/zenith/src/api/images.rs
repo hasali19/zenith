@@ -33,7 +33,7 @@ pub struct ImageQuery {
 #[get("/images/{id}")]
 pub async fn get_image(
     Path(id): Path<String>,
-    #[query] QsQuery(query): QsQuery<ImageQuery>,
+    QsQuery(query): QsQuery<ImageQuery>,
     file: FileRequest,
     Extension(config): Extension<Arc<Config>>,
     Extension(db): Extension<Db>,
@@ -145,12 +145,11 @@ pub enum MediaImageType {
 }
 
 #[get("/items/{id}/images/{type}")]
-#[path(i64, MediaImageType)]
 #[response(status = 200)]
 #[response(status = 404)]
 pub async fn get_image_for_item(
     Path((id, img_type)): Path<(i64, MediaImageType)>,
-    #[query] QsQuery(query): QsQuery<ImageQuery>,
+    QsQuery(query): QsQuery<ImageQuery>,
     file: FileRequest,
     Extension(config): Extension<Arc<Config>>,
     Extension(db): Extension<Db>,

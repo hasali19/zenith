@@ -41,7 +41,6 @@ async fn get_collections(db: Extension<Db>) -> ApiResult<impl IntoResponse> {
 }
 
 #[get("/collections/{id}")]
-#[path(i64)]
 #[response(model = Collection)]
 async fn get_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire().await?;
@@ -51,7 +50,7 @@ async fn get_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl Into
     Ok(Json(collection))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 struct NewCollection {
     name: String,
 }
@@ -76,13 +75,13 @@ async fn delete_collection(id: Path<i64>, db: Extension<Db>) -> ApiResult<impl I
     Ok(())
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 struct UpdateCollection {
     meta: Option<UpdateCollectionMeta>,
     items: Option<Vec<i64>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Reflect)]
 struct UpdateCollectionMeta {
     name: String,
     overview: Option<String>,

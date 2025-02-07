@@ -202,7 +202,7 @@ async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
     let router = axum::Router::new()
         .nest("/api", zenith::api::router(app.clone()))
         .route_service_with_tsr("/chromecast-receiver", chromecast_assets_service.clone())
-        .route_service("/chromecast-receiver/*path", chromecast_assets_service)
+        .route_service("/chromecast-receiver/{*path}", chromecast_assets_service)
         .fallback_service(axum::routing::get(spa))
         .layer(TraceLayer::new_for_http())
         .layer(Extension(config))
