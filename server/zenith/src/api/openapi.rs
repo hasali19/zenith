@@ -142,6 +142,27 @@ fn build_route_spec(
             }));
     }
 
+    for header in &route.headers {
+        operation
+            .parameters
+            .push(ReferenceOr::Item(Parameter::Header {
+                parameter_data: ParameterData {
+                    name: header.name.as_ref().to_owned(),
+                    required: !header.is_optional,
+                    deprecated: None,
+                    description: None,
+                    example: None,
+                    examples: Default::default(),
+                    explode: None,
+                    extensions: Default::default(),
+                    format: ParameterSchemaOrContent::Schema(type_to_schema(&Type::Primitive(
+                        PrimitiveType::String,
+                    ))),
+                },
+                style: HeaderStyle::Simple,
+            }));
+    }
+
     if let Some(query) = route.query {
         let struct_type = query
             .type_desc
@@ -151,8 +172,9 @@ fn build_route_spec(
             .unwrap_or_else(|| panic!("unsupported query model type: {:?}", query.type_desc));
 
         for field in &struct_type.fields {
-            // serde_qs requires array parameters to be passed in the form 'key[]=a&key[]=b'. While openapi doesn't have
-            // a dedicated option for this, we can make it work by appending [] to the parameter name.
+            // serde_qs requires array parameters to be passed in the form
+            // 'key[]=a&key[]=b'. While openapi doesn't have a dedicated option for this, we
+            // can make it work by appending [] to the parameter name.
             let mut name = field.name.clone();
             if let Type::Array(_) = &field.type_desc {
                 name += "[]";
@@ -174,8 +196,8 @@ fn build_route_spec(
                 .parameters
                 .push(ReferenceOr::Item(Parameter::Query {
                     parameter_data,
-                    // serde_qs requires the [] for arrays to be passed unencoded when using strict mode:
-                    // https://docs.rs/serde_qs/latest/serde_qs/#strict-vs-non-strict-modes
+                    // serde_qs requires the [] for arrays to be passed unencoded when using strict
+                    // mode: https://docs.rs/serde_qs/latest/serde_qs/#strict-vs-non-strict-modes
                     allow_reserved: true,
                     style: QueryStyle::Form,
                     allow_empty_value: None,
