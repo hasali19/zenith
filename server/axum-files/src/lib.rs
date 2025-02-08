@@ -131,3 +131,73 @@ impl IntoResponse for FileResponse {
         self.res.into_response()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use http_body_util::BodyExt;
+
+    use super::*;
+
+    const TEST_FILE: &[u8] = include_bytes!("../test/test.txt");
+
+    #[tokio::test]
+    async fn simple_request() {
+        let FileResponse { res, .. } =
+            FileResponse::from_request(FileRequest { range: None }, "test/test.txt")
+                .await
+                .unwrap();
+
+        assert_eq!(res.status(), StatusCode::OK);
+
+        let accept_ranges = res.headers().get(AcceptRanges::name());
+        assert_eq!(accept_ranges, Some(&HeaderValue::from_static("bytes")));
+
+        let content_type = res.headers().get(ContentType::name());
+        assert_eq!(content_type, Some(&HeaderValue::from_static("text/plain")));
+
+        let content_length = res.headers().get(ContentLength::name());
+        assert_eq!(
+            content_length,
+            Some(&HeaderValue::from_str(&format!("{}", TEST_FILE.len())).unwrap())
+        );
+    }
+
+    #[tokio::test]
+    async fn range_request() {
+        let FileResponse { res, .. } = FileResponse::from_request(
+            FileRequest {
+                range: Some(Range::bytes(10..=19).unwrap()),
+            },
+            "test/test.txt",
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(res.status(), StatusCode::PARTIAL_CONTENT);
+
+        let accept_ranges = res.headers().get(AcceptRanges::name());
+        assert_eq!(accept_ranges, Some(&HeaderValue::from_static("bytes")));
+
+        let content_type = res.headers().get(ContentType::name());
+        assert_eq!(content_type, Some(&HeaderValue::from_static("text/plain")));
+
+        let content_length = res.headers().get(ContentLength::name());
+        assert_eq!(content_length, Some(&HeaderValue::from_static("10")));
+
+        let content_range = res.headers().get(ContentRange::name());
+        assert_eq!(
+            content_range,
+            Some(&HeaderValue::from_str(&format!("bytes 10-19/3227")).unwrap())
+        );
+
+        let bytes = res
+            .into_body()
+            .into_data_stream()
+            .collect()
+            .await
+            .unwrap()
+            .to_bytes();
+
+        assert_eq!(&bytes, &TEST_FILE[10..=19]);
+    }
+}

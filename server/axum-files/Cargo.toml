@@ -13,3 +13,7 @@ mime_guess = { workspace = true }
 speq = { workspace = true }
 tokio = { workspace = true, features = ["fs", "io-util"] }
 tokio-util = { workspace = true, features = ["codec"] }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt"] }
+http-body-util.workspace = true
