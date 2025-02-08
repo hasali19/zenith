@@ -2,16 +2,16 @@ use std::borrow::Cow;
 use std::time::Duration;
 
 use axum::extract::{FromRequestParts, Request};
-use axum::http::{request, Method};
+use axum::http::{Method, request};
 use axum::middleware::Next;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
-use axum_extra::extract::cookie::{Cookie, SameSite};
 use axum_extra::extract::PrivateCookieJar;
+use axum_extra::extract::cookie::{Cookie, SameSite};
 use db::Db;
+use rand::Rng;
 use rand::distr::Distribution;
 use rand::seq::IndexedRandom;
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_qs::axum::QsQuery;
 use speq::axum::post;
@@ -20,8 +20,8 @@ use tower::Service;
 
 use crate::password_utils::verify_password;
 
-use super::error::{not_found, unauthorized, ApiError};
 use super::ApiResult;
+use super::error::{ApiError, not_found, unauthorized};
 
 #[derive(Clone)]
 pub struct User {

@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use camino::Utf8PathBuf;
-use eyre::{eyre, Context};
+use eyre::{Context, eyre};
 use itertools::Itertools;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
@@ -263,7 +263,7 @@ const ITEM_COLUMNS: &[&str] = &[
     "path",
     "duration",
     "format_name",
-    "(SELECT name FROM crew JOIN people ON person_id = people.id WHERE item_id = m.id AND job = 'Director') AS director"
+    "(SELECT name FROM crew JOIN people ON person_id = people.id WHERE item_id = m.id AND job = 'Director') AS director",
 ];
 
 const STREAM_COLUMNS: &[&str] = &[

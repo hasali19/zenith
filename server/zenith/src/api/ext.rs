@@ -1,5 +1,5 @@
-use super::error::{self};
 use super::ApiResult;
+use super::error::{self};
 
 pub trait OptionExt<T> {
     fn or_bad_request(self, msg: impl ToString) -> ApiResult<T>;

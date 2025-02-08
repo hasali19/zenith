@@ -1,6 +1,6 @@
 use sqlx::FromRow;
 
-use crate::{sql, ReadConnection, WriteConnection};
+use crate::{ReadConnection, WriteConnection, sql};
 
 pub struct NewUser<'a> {
     pub username: &'a str,

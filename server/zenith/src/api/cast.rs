@@ -3,13 +3,13 @@ use std::sync::Arc;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
 use serde::Serialize;
-use speq::axum::get;
 use speq::Reflect;
+use speq::axum::get;
 
 use crate::config::Config;
 
-use super::ext::OptionExt;
 use super::ApiResult;
+use super::ext::OptionExt;
 
 #[derive(Serialize, Reflect)]
 struct CastConfig {

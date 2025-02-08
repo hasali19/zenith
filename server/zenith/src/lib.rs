@@ -16,8 +16,8 @@ pub mod video_prober;
 
 use axum::extract::FromRef;
 use axum_extra::extract::cookie::Key;
-pub use db::media::MediaItemType;
 pub use db::Db;
+pub use db::media::MediaItemType;
 
 #[derive(Clone)]
 pub struct App {

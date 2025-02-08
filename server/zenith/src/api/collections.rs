@@ -4,8 +4,8 @@ use axum::{Extension, Json};
 use db::Db;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use speq::axum::{delete, get, post, put};
 use speq::Reflect;
+use speq::axum::{delete, get, post, put};
 
 use super::ApiResult;
 

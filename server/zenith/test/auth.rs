@@ -5,7 +5,7 @@ use serde_json::json;
 use test_macros::test;
 use tower::ServiceExt;
 
-use crate::{with_app, TestApp};
+use crate::{TestApp, with_app};
 
 #[test(with_app)]
 async fn request_with_invalid_token_is_rejected(mut app: TestApp) {
@@ -170,13 +170,14 @@ async fn logout_removes_auth_cookie(mut app: TestApp) {
         .await
         .unwrap();
 
-    assert!(res
-        .headers()
-        .get("Set-Cookie")
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .starts_with("auth=;"));
+    assert!(
+        res.headers()
+            .get("Set-Cookie")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .starts_with("auth=;")
+    );
 }
 
 #[test(with_app)]

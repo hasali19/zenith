@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::BufReader;
 
 use camino::{Utf8Path, Utf8PathBuf};
-use eyre::{eyre, Context};
+use eyre::{Context, eyre};
 use regex::Regex;
 use serde::de::Visitor;
 use serde::{Deserialize, Deserializer};

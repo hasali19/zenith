@@ -7,7 +7,7 @@ use tower::ServiceExt;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, ResponseTemplate};
 
-use crate::{json_body, with_app, TestApp};
+use crate::{TestApp, json_body, with_app};
 
 #[test(with_app)]
 async fn find_match_for_movie(mut app: TestApp) {

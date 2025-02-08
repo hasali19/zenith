@@ -4,13 +4,13 @@ use std::io;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
+use axum::Extension;
 use axum::extract::Path;
 use axum::response::IntoResponse;
-use axum::Extension;
 use axum_files::{FileRequest, FileResponse};
 use camino::{Utf8Path, Utf8PathBuf};
-use db::images::{Image, ImageSourceType, ImageType};
 use db::Db;
+use db::images::{Image, ImageSourceType, ImageType};
 use eyre::eyre;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
@@ -21,9 +21,9 @@ use tokio::fs;
 
 use crate::config::Config;
 
+use super::ApiResult;
 use super::error::ApiError;
 use super::ext::OptionExt;
-use super::ApiResult;
 
 #[derive(Deserialize, Reflect)]
 pub struct ImageQuery {

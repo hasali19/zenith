@@ -4,9 +4,9 @@ use std::time::{Duration, Instant, SystemTime};
 
 use async_trait::async_trait;
 use camino::{Utf8Path, Utf8PathBuf};
+use db::Db;
 use db::media::MediaItemType;
 use db::sql::{self, Join};
-use db::Db;
 use eyre::eyre;
 use tokio::sync::Mutex;
 use walkdir::WalkDir;
@@ -272,8 +272,8 @@ fn walk_dir_with_exts<'a>(
 
 #[cfg(test)]
 mod tests {
-    use db::subtitles::NewSubtitle;
     use db::WriteConnection;
+    use db::subtitles::NewSubtitle;
     use tempfile::TempDir;
     use uuid::Uuid;
 

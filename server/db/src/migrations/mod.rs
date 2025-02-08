@@ -5,7 +5,7 @@ mod migrations;
 use std::future::Future;
 use std::pin::Pin;
 
-use eyre::{eyre, Context};
+use eyre::{Context, eyre};
 
 use crate::{Db, WriteConnection};
 

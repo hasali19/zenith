@@ -3,16 +3,16 @@ use std::sync::Arc;
 use axum::extract::{Extension, Multipart};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use db::subtitles::NewSubtitle;
 use db::Db;
+use db::subtitles::NewSubtitle;
 use serde::Deserialize;
 use speq::axum::post;
 use tokio_stream::StreamExt;
 use uuid::Uuid;
 
+use crate::api::ApiResult;
 use crate::api::error::bad_request;
 use crate::api::ext::OptionExt;
-use crate::api::ApiResult;
 use crate::config::Config;
 use crate::{subtitles, util};
 

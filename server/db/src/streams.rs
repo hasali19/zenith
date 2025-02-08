@@ -1,7 +1,7 @@
 use sqlx::Type;
 
 use crate::utils::arguments::QueryArguments;
-use crate::{sql, WriteConnection};
+use crate::{WriteConnection, sql};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Type)]
 pub enum StreamType {

@@ -5,20 +5,20 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::{Extension, Json};
 use db::Db;
-use eyre::{eyre, Context};
+use eyre::{Context, eyre};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use speq::axum::{delete, get, post};
 use speq::Reflect;
-use time::format_description::well_known::Iso8601;
+use speq::axum::{delete, get, post};
 use time::OffsetDateTime;
+use time::format_description::well_known::Iso8601;
 use uuid::Uuid;
 
 use crate::password_utils::hash_password;
 
-use super::error::{bad_request, not_found, ApiError};
+use super::error::{ApiError, bad_request, not_found};
 use super::ext::OptionExt;
-use super::{auth, ApiResult};
+use super::{ApiResult, auth};
 
 #[derive(Serialize)]
 struct User {

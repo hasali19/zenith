@@ -5,11 +5,11 @@ use db::items::MediaItem;
 use db::media::{MediaItemType, MetadataProvider};
 use db::people::NewPerson;
 use db::{Db, ReadConnection, WriteConnection};
-use eyre::{eyre, Context};
+use eyre::{Context, eyre};
 use itertools::Itertools;
 use regex::Regex;
 use thiserror::Error;
-use time::{format_description, Date, OffsetDateTime, Time};
+use time::{Date, OffsetDateTime, Time, format_description};
 use tmdb::{
     MovieReleaseDatesResult, MovieSearchQuery, TmdbClient, TvShowSearchQuery, Video, VideoSite,
     VideoType,
@@ -162,7 +162,7 @@ async fn find_match_for_movie(
                 Err(eyre!("no match found for '{title} ({year})'"))
             } else {
                 Err(eyre!("no match found for '{title}'"))
-            }
+            };
         }
     };
 

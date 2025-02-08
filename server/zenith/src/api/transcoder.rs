@@ -1,18 +1,18 @@
 use std::sync::Arc;
 
+use axum::Json;
 use axum::extract::Extension;
 use axum::http::StatusCode;
-use axum::response::{sse, IntoResponse};
-use axum::Json;
+use axum::response::{IntoResponse, sse};
 use serde::{Deserialize, Serialize};
 use serde_qs::axum::QsQuery;
-use speq::axum::{get, post};
 use speq::Reflect;
-use tokio_stream::wrappers::BroadcastStream;
+use speq::axum::{get, post};
 use tokio_stream::StreamExt;
+use tokio_stream::wrappers::BroadcastStream;
 
-use crate::api::error::bad_request;
 use crate::api::ApiResult;
+use crate::api::error::bad_request;
 use crate::transcoder::{self, Job, Transcoder};
 
 #[derive(Serialize, Reflect)]

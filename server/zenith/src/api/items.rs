@@ -1,17 +1,17 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use axum::Json;
 use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::Json;
 use db::videos::UpdateVideoUserData;
 use db::{Db, ReadConnection};
 use itertools::Itertools;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
-use speq::axum::{delete, get, patch};
 use speq::Reflect;
+use speq::axum::{delete, get, patch};
 
 use crate::api::ApiResult;
 use crate::library::MediaLibrary;

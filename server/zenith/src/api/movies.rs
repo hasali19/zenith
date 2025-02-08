@@ -1,7 +1,7 @@
-use axum::extract::{Extension, Path};
 use axum::Json;
-use db::items::SortField;
+use axum::extract::{Extension, Path};
 use db::Db;
+use db::items::SortField;
 use speq::axum::get;
 
 use crate::MediaItemType;
@@ -9,7 +9,7 @@ use crate::MediaItemType;
 use super::dto::MediaItem;
 use super::ext::OptionExt;
 use super::items::{query_items, query_items_by_id};
-use super::{auth, ApiResult};
+use super::{ApiResult, auth};
 
 #[get("/movies")]
 #[response(model = Vec<MediaItem>)]

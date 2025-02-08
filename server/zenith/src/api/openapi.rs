@@ -8,10 +8,10 @@ use indexmap::indexmap;
 use markdown::{Block, Span};
 use openapiv3::*;
 use regex::Regex;
+use speq::RouteSpec;
 use speq::reflection::{
     EnumTag, EnumVariantKind, Field, FloatWidth, PrimitiveType, Type, TypeDecl,
 };
-use speq::RouteSpec;
 
 pub fn openapi_spec() -> OpenAPI {
     let spec = speq::spec();
@@ -313,7 +313,7 @@ fn type_to_schema(type_desc: &Type) -> ReferenceOr<Schema> {
         Type::Id(id) => {
             return ReferenceOr::Reference {
                 reference: format!("#/components/schemas/{id}"),
-            }
+            };
         }
         Type::Tuple(_) => todo!(),
     };

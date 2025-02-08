@@ -1,7 +1,7 @@
 use camino::Utf8Path;
+use db::ReadConnection;
 use db::media::{MediaItemType, MetadataProvider};
 use db::sql::{self, Join, OnConflict, UpdateList};
-use db::ReadConnection;
 use time::OffsetDateTime;
 
 use crate::library::parser::MoviePathMeta;

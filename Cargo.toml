@@ -2,6 +2,8 @@
 members = ["server/*"]
 exclude = ["desktop", "flutter"]
 resolver = "2"
+package.authors = ["Hasan Mohsin <hasan@hasali.dev>"]
+package.edition = "2024"
 
 [workspace.dependencies]
 argon2 = "0.5"

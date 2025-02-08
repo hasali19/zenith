@@ -2,7 +2,7 @@ use std::time::{Duration, SystemTime};
 
 use sqlx::FromRow;
 
-use crate::{sql, ReadConnection, WriteConnection};
+use crate::{ReadConnection, WriteConnection, sql};
 
 #[derive(Clone, Copy, sqlx::Type)]
 #[repr(i32)]

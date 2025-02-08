@@ -2,7 +2,7 @@ use camino::Utf8Path;
 use db::streams::{NewAudioStream, NewVideoStream};
 use db::subtitles::NewSubtitle;
 use db::video_files::UpdateVideoFile;
-use db::{sql, WriteConnection};
+use db::{WriteConnection, sql};
 use eyre::eyre;
 
 use crate::video_prober::VideoInfo;

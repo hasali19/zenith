@@ -6,18 +6,18 @@ use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum_files::{FileRequest, FileResponse};
-use db::subtitles::Subtitle;
 use db::Db;
+use db::subtitles::Subtitle;
 use eyre::Context;
 use hyper::header::CONTENT_TYPE;
 use serde::Deserialize;
 use serde_qs::axum::QsQuery;
-use speq::axum::{delete, get};
 use speq::Reflect;
+use speq::axum::{delete, get};
 use tokio::process::Command;
 
-use crate::api::error::bad_request;
 use crate::api::ApiResult;
+use crate::api::error::bad_request;
 use crate::config::Config;
 
 use super::error::not_found;

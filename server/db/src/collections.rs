@@ -1,7 +1,7 @@
 use sqlx::FromRow;
 
 use crate::utils::arguments::QueryArguments;
-use crate::{sql, ReadConnection, WriteConnection};
+use crate::{ReadConnection, WriteConnection, sql};
 
 pub struct CollectionUserData {
     pub unwatched: u32,

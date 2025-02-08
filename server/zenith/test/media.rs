@@ -12,7 +12,7 @@ use tempfile::NamedTempFile;
 use test_macros::test;
 use tower::ServiceExt;
 
-use crate::{json_body, with_app, TestApp};
+use crate::{TestApp, json_body, with_app};
 
 macro_rules! test_snapshot {
     ($name:ident, $path:expr $(,)?) => {

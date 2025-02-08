@@ -5,7 +5,7 @@ use serde_json::json;
 use test_macros::test;
 use tower::ServiceExt;
 
-use crate::{with_app, TestApp};
+use crate::{TestApp, with_app};
 
 #[test(with_app)]
 async fn get_users_unauthenticated(mut app: TestApp) {

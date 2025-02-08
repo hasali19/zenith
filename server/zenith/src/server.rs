@@ -2,8 +2,8 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use axum::Router;
-use hyper::body::Incoming;
 use hyper::Request;
+use hyper::body::Incoming;
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
 use tokio::sync::watch;

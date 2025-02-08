@@ -1,6 +1,6 @@
+use axum::Extension;
 use axum::body::Body;
 use axum::response::{IntoResponse, Response};
-use axum::Extension;
 use speq::axum::post;
 use time::OffsetDateTime;
 

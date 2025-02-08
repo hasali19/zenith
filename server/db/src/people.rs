@@ -1,4 +1,4 @@
-use crate::{sql, WriteConnection};
+use crate::{WriteConnection, sql};
 
 pub struct NewPerson<'a> {
     pub tmdb_id: Option<i32>,

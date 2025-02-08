@@ -4,16 +4,16 @@ use std::sync::Arc;
 
 use camino::{Utf8Path, Utf8PathBuf};
 use color_eyre::{Help, SectionExt};
+use db::Db;
 use db::streams::{StreamType, UpdateVideoStream};
 use db::subtitles::{Subtitle, UpdateSubtitle};
 use db::video_files::UpdateVideoFile;
-use db::Db;
-use eyre::{eyre, Context};
+use eyre::{Context, eyre};
 use serde::Serialize;
 use speq::Reflect;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
-use tokio::sync::{broadcast, RwLock, Semaphore};
+use tokio::sync::{RwLock, Semaphore, broadcast};
 
 use crate::config::Config;
 use crate::cropdetect::CropDetect;

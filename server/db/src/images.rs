@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::{sql, ReadConnection, WriteConnection};
+use crate::{ReadConnection, WriteConnection, sql};
 
 #[derive(Debug, sqlx::FromRow)]
 pub struct Image {
