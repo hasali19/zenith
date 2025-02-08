@@ -59,6 +59,12 @@ jobs:
       - name: Run tests
         run: cargo nextest run --profile ci --features mocks
 
+      - name: Test summary
+        uses: test-summary/action@v2
+        if: ${{ !cancelled() }}
+        with:
+          paths: target/nextest/ci/junit.xml
+
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
