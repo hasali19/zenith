@@ -103,7 +103,8 @@ impl Db {
     }
 
     pub async fn close(&self) {
-        self.read_pool.close().await
+        self.read_pool.close().await;
+        self.write_pool.close().await;
     }
 }
 
