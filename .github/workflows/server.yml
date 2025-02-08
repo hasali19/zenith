@@ -57,7 +57,14 @@ jobs:
         run: cargo binstall cargo-nextest --secure --no-confirm --force
 
       - name: Run tests
-        run: cargo nextest run --features mocks
+        run: cargo nextest run --profile ci --features mocks
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: target/nextest/ci/junit.xml
 
   coverage:
     runs-on: ubuntu-latest
