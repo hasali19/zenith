@@ -508,9 +508,10 @@ pub async fn get_continue_watching(
     limit: Option<u32>,
 ) -> eyre::Result<Vec<i64>> {
     // This beautiful query does two things:
-    // - for movies, we grab ids of all movies where the user position is within the "currently watching" range
-    // - for each show, we grab the last episode that was watched; if that episode was finished, then we instead
-    //   get the next episode if it exists
+    // - for movies, we grab ids of all movies where the user position is within the
+    //   "currently watching" range
+    // - for each show, we grab the last episode that was watched; if that episode
+    //   was finished, then we instead get the next episode if it exists
     let mut sql = "
         SELECT id, position_updated_at FROM (
             SELECT m.id AS id, u.position_updated_at AS position_updated_at FROM movies AS m

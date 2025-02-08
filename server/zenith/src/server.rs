@@ -16,8 +16,8 @@ pub async fn serve(addr: &SocketAddr, app: Router) -> eyre::Result<()> {
     // Create a `TcpListener` using tokio.
     let listener = TcpListener::bind(addr).await.unwrap();
 
-    // Create a watch channel to track tasks that are handling connections and wait for them to
-    // complete.
+    // Create a watch channel to track tasks that are handling connections and wait
+    // for them to complete.
     let (close_tx, close_rx) = watch::channel(());
 
     // Continuously accept new connections.
@@ -42,27 +42,27 @@ pub async fn serve(addr: &SocketAddr, app: Router) -> eyre::Result<()> {
         // Clone the watch receiver and move it into the task.
         let close_rx = close_rx.clone();
 
-        // Spawn a task to handle the connection. That way we can serve multiple connections
-        // concurrently.
+        // Spawn a task to handle the connection. That way we can serve multiple
+        // connections concurrently.
         tokio::spawn(async move {
             // Hyper has its own `AsyncRead` and `AsyncWrite` traits and doesn't use tokio.
             // `TokioIo` converts between them.
             let socket = TokioIo::new(socket);
 
             // Hyper also has its own `Service` trait and doesn't use tower. We can use
-            // `hyper::service::service_fn` to create a hyper `Service` that calls our app through
-            // `tower::Service::call`.
+            // `hyper::service::service_fn` to create a hyper `Service` that calls our app
+            // through `tower::Service::call`.
             let hyper_service = hyper::service::service_fn(move |request: Request<Incoming>| {
-                // We have to clone `tower_service` because hyper's `Service` uses `&self` whereas
-                // tower's `Service` requires `&mut self`.
+                // We have to clone `tower_service` because hyper's `Service` uses `&self`
+                // whereas tower's `Service` requires `&mut self`.
                 //
                 // We don't need to call `poll_ready` since `Router` is always ready.
                 tower_service.clone().call(request)
             });
 
-            // `hyper_util::server::conn::auto::Builder` supports both http1 and http2 but doesn't
-            // support graceful so we have to use hyper directly and unfortunately pick between
-            // http1 and http2.
+            // `hyper_util::server::conn::auto::Builder` supports both http1 and http2 but
+            // doesn't support graceful so we have to use hyper directly and
+            // unfortunately pick between http1 and http2.
             let conn = hyper::server::conn::http1::Builder::new()
                 .serve_connection(socket, hyper_service)
                 // `with_upgrades` is required for websockets.
@@ -100,8 +100,8 @@ pub async fn serve(addr: &SocketAddr, app: Router) -> eyre::Result<()> {
         });
     }
 
-    // We only care about the watch receivers that were moved into the tasks so close the residual
-    // receiver.
+    // We only care about the watch receivers that were moved into the tasks so
+    // close the residual receiver.
     drop(close_rx);
 
     // Close the listener to stop accepting new connections.

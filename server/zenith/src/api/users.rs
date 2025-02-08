@@ -65,7 +65,8 @@ async fn create(
 ) -> ApiResult<impl IntoResponse> {
     let mut transaction = db.begin_write().await?;
 
-    // Must be authenticated to create a user, unless a registration code is provided or no users have been created yet.
+    // Must be authenticated to create a user, unless a registration code is
+    // provided or no users have been created yet.
     if let Err(e) = user {
         match body.registration_code {
             Some(code) => {

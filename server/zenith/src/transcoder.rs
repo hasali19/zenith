@@ -142,7 +142,8 @@ impl Transcoder {
 
     /// Returns the queue of jobs.
     ///
-    /// This includes the job currently being processed as the first item in the queue.
+    /// This includes the job currently being processed as the first item in the
+    /// queue.
     pub async fn queue(&self) -> Vec<Job> {
         let mut queue = vec![];
 

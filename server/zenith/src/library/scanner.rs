@@ -77,11 +77,12 @@ impl LibraryScanner {
 
     /// Runs a library scan if one is not already running.
     ///
-    /// This will validate libraries by checking that existing media items still exist on disk, and
-    /// scan the disk for new files to be added to the library.
+    /// This will validate libraries by checking that existing media items still
+    /// exist on disk, and scan the disk for new files to be added to the
+    /// library.
     ///
-    /// If a scan is already running, this will return immediately without waiting for it
-    /// to finish.
+    /// If a scan is already running, this will return immediately without
+    /// waiting for it to finish.
     #[tracing::instrument(skip(self))]
     pub async fn run_scan(self: Arc<Self>) {
         if let Ok(scanner) = self.inner.try_lock() {

@@ -201,8 +201,9 @@ impl MediaLibrary {
 
     async fn remove_empty_collections(&self, conn: &mut WriteConnection) -> eyre::Result<()> {
         // Don't use a subquery here - it doesn't seem to work. e.g.
-        // SELECT * FROM media_items WHERE item_type = 3 AND id NOT IN (SELECT parent_id FROM media_items)
-        // ^ returns an empty result set despite orphan seasons existing
+        // SELECT * FROM media_items WHERE item_type = 3 AND id NOT IN (SELECT parent_id
+        // FROM media_items) returns an empty result set despite orphan
+        // seasons existing
 
         let sql = "
             SELECT s.id, s.parent_index, sh.name FROM media_items AS s
