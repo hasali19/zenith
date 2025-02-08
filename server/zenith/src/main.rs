@@ -61,19 +61,13 @@ fn init_tracing(config: &Config) {
 async fn main() -> eyre::Result<()> {
     color_eyre::install()?;
 
-    let config = Arc::new(Config::load("config.yml")?);
-
-    init_tracing(&config);
-
     match std::env::args().nth(1).as_deref().unwrap_or("serve") {
         "openapi" => {
             let spec = zenith::api::openapi_spec();
             let json = serde_json::to_string_pretty(&spec)?;
             println!("{json}");
         }
-        "serve" => {
-            run_server(config).await?;
-        }
+        "serve" => run_server().await?,
         cmd => {
             eprintln!("unrecognised command: {cmd}");
         }
@@ -112,7 +106,11 @@ fn new_library_scanner(
     ))
 }
 
-async fn run_server(config: Arc<Config>) -> eyre::Result<()> {
+async fn run_server() -> eyre::Result<()> {
+    let config = Arc::new(Config::load("config.yml")?);
+
+    init_tracing(&config);
+
     let db = Db::init(&config.database.path).await?;
     let tmdb = TmdbClient::new("https://api.themoviedb.org/3", &config.tmdb.api_key);
     let metadata = MetadataManager::new(db.clone(), tmdb.clone());
