@@ -273,6 +273,13 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
         ref.listenManual(applyCropRectsProvider, (previous, value) {
       controller.isUsingCropRects = value;
     });
+
+    if (controller.subtitleStyle case SubtitleStyleOptions style) {
+      final size = ref.read(subtitleSizeProvider);
+      if (size != null) {
+        style.size = size;
+      }
+    }
   }
 
   void _onProgressReporterTick() {

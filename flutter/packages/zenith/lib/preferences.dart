@@ -143,3 +143,9 @@ final applyCropRectsProvider = createPrefProvider<bool>(
   prefKey: 'player.applyCropRects',
   defaultValue: false,
 );
+
+final subtitleSizeProvider = createPrefProvider<int?>(
+  prefs: (ref) => ref.watch(preferencesProvider),
+  prefKey: 'player.subtitleSize',
+  defaultValue: null,
+);

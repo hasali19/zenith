@@ -297,7 +297,7 @@ class VideoPlayerUi extends HookConsumerWidget {
   }
 }
 
-class _SubtitlesSizeListTile extends StatefulWidget {
+class _SubtitlesSizeListTile extends ConsumerStatefulWidget {
   final SubtitleStyleOptions style;
 
   const _SubtitlesSizeListTile({
@@ -305,11 +305,13 @@ class _SubtitlesSizeListTile extends StatefulWidget {
   });
 
   @override
-  State<_SubtitlesSizeListTile> createState() => _SubtitlesSizeListTileState();
+  ConsumerState<_SubtitlesSizeListTile> createState() =>
+      _SubtitlesSizeListTileState();
 }
 
-class _SubtitlesSizeListTileState extends State<_SubtitlesSizeListTile> {
-  int _value = 20;
+class _SubtitlesSizeListTileState
+    extends ConsumerState<_SubtitlesSizeListTile> {
+  late int _value;
 
   @override
   void initState() {
@@ -338,6 +340,7 @@ class _SubtitlesSizeListTileState extends State<_SubtitlesSizeListTile> {
             setState(() {
               _value = value.toInt();
               widget.style.size = _value;
+              ref.read(subtitleSizeProvider.notifier).update(_value);
             });
           },
         ),

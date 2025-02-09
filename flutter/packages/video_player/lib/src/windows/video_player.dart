@@ -130,9 +130,10 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
   List<AudioTrack> _audioTracks = [];
   List<SubtitleTrack> _subtitleTracks = [];
   String? _activeSubtitleTrack;
-  _SubtitleStyleOptions? _subtitleStyle;
+  _SubtitleStyleOptions _subtitleStyle;
 
-  VideoControllerWindows(this.player, this.surface) {
+  VideoControllerWindows(this.player, this.surface)
+      : _subtitleStyle = _SubtitleStyleOptions(player: player, size: 40) {
     _channel.setMethodCallHandler((call) async {
       bool skipNotify = false;
 
@@ -194,15 +195,8 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
 
       if (args.containsKey('subtitle-style')) {
         final Map<dynamic, dynamic> style = args['subtitle-style'];
-        if (_subtitleStyle case _SubtitleStyleOptions options) {
-          skipNotify = true;
-          options._setSize(style['size']);
-        } else {
-          _subtitleStyle = _SubtitleStyleOptions(
-            player: player,
-            size: style['size'],
-          );
-        }
+        skipNotify = true;
+        _subtitleStyle._setSize(style['size']);
       }
 
       if (args['state'] == 'ended') {
