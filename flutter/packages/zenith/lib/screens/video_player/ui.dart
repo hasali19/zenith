@@ -330,8 +330,8 @@ class _SubtitlesSizeListTileState extends State<_SubtitlesSizeListTile> {
         child: Slider(
           padding: EdgeInsets.symmetric(vertical: 12),
           min: 10,
-          max: 100,
-          divisions: (100 - 10) ~/ 5,
+          max: 50,
+          divisions: (50 - 10) ~/ 2,
           label: _value.toString(),
           value: _value.toDouble(),
           onChanged: (value) {

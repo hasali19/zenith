@@ -96,7 +96,7 @@ class _VideoView extends HookWidget {
             ),
             _SubtitleView(
               events: controller._subsController.stream,
-              textScale: constraints.maxWidth / 900,
+              style: controller.subtitleStyle,
             ),
           ],
         );
@@ -121,20 +121,23 @@ class _VideoClipper extends CustomClipper<Rect> {
   }
 }
 
-class _SubtitleView extends StatelessWidget {
+class _SubtitleView extends HookWidget {
   const _SubtitleView({
     required this.events,
-    required this.textScale,
+    required this.style,
   });
 
-  final double textScale;
   final Stream<String?> events;
+  final SubtitleStyleOptions style;
 
   @override
   Widget build(BuildContext context) {
-    var textStyle = Theme.of(context).textTheme.titleLarge!;
-    textStyle = textStyle.copyWith(
-        fontSize: math.max(textStyle.fontSize! * textScale, 14));
+    final style = useListenable(this.style);
+
+    final textStyle = Theme.of(context)
+        .textTheme
+        .titleLarge!
+        .copyWith(fontSize: style.size.toDouble());
 
     final outlineStyle = textStyle.copyWith(
         foreground: Paint()
@@ -164,6 +167,19 @@ class _SubtitleView extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+class _SubtitleStyleOptions extends SubtitleStyleOptions with ChangeNotifier {
+  int _size = 16;
+
+  @override
+  int get size => _size;
+
+  @override
+  set size(int value) {
+    _size = value;
+    notifyListeners();
   }
 }
 
@@ -203,6 +219,7 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   final _fit = ValueNotifier(BoxFit.contain);
   final _cropRect = ValueNotifier<Rect?>(null);
   final _shouldUseCropRect = ValueNotifier(false);
+  final _subtitleStyle = _SubtitleStyleOptions();
 
   @override
   BoxFit get fit => _fit.value;
@@ -235,6 +252,9 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
 
   @override
   Rect? get currentCropRect => _cropRect.value;
+
+  @override
+  SubtitleStyleOptions get subtitleStyle => _subtitleStyle;
 
   @override
   set position(value) {
