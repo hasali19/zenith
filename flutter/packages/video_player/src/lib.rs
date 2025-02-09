@@ -137,3 +137,8 @@ pub unsafe extern "C" fn seek_to(player: *const MediaPlayer, position: f64) {
 pub unsafe extern "C" fn set_speed(player: *const MediaPlayer, speed: f64) {
     player.as_ref().unwrap().set_speed(speed);
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn set_subtitle_font_size(player: *const MediaPlayer, size: u32) {
+    player.as_ref().unwrap().set_subtitle_font_size(size);
+}

@@ -64,6 +64,10 @@ final void Function(int player, double position) ffiSeekTo = _lib
 final void Function(int player, double speed) ffiSetSpeed = _lib
     .lookup<NativeFunction<Void Function(IntPtr, Double)>>('set_speed')
     .asFunction();
+final void Function(int player, int size) ffiSetSubtitleFontSize = _lib
+    .lookup<NativeFunction<Void Function(IntPtr, Int64)>>(
+        'set_subtitle_font_size')
+    .asFunction();
 
 class VideoPlayerWindows extends VideoPlayerPlatform {
   static registerWith() {
@@ -126,9 +130,12 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
   List<AudioTrack> _audioTracks = [];
   List<SubtitleTrack> _subtitleTracks = [];
   String? _activeSubtitleTrack;
+  _SubtitleStyleOptions? _subtitleStyle;
 
   VideoControllerWindows(this.player, this.surface) {
     _channel.setMethodCallHandler((call) async {
+      bool skipNotify = false;
+
       final Map<dynamic, dynamic> args = call.arguments;
       final double position = args['position'];
 
@@ -185,6 +192,19 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
         _activeSubtitleTrack = trackId?.toString();
       }
 
+      if (args.containsKey('subtitle-style')) {
+        final Map<dynamic, dynamic> style = args['subtitle-style'];
+        if (_subtitleStyle case _SubtitleStyleOptions options) {
+          skipNotify = true;
+          options._setSize(style['size']);
+        } else {
+          _subtitleStyle = _SubtitleStyleOptions(
+            player: player,
+            size: style['size'],
+          );
+        }
+      }
+
       if (args['state'] == 'ended') {
         _state = VideoState.ended;
       }
@@ -195,7 +215,9 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
         speed: _playbackSpeed,
       );
 
-      notifyListeners();
+      if (!skipNotify) {
+        notifyListeners();
+      }
     });
 
     textureId = ffiGetTextureId(surface);
@@ -348,4 +370,32 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
 
   @override
   bool get supportsEmbeddedSubtitles => true;
+
+  @override
+  SubtitleStyleOptions? get subtitleStyle => _subtitleStyle;
+}
+
+class _SubtitleStyleOptions extends SubtitleStyleOptions with ChangeNotifier {
+  final int _player;
+
+  int _size;
+
+  _SubtitleStyleOptions({
+    required int player,
+    required int size,
+  })  : _player = player,
+        _size = size;
+
+  @override
+  int get size => _size;
+
+  @override
+  set size(int value) {
+    ffiSetSubtitleFontSize(_player, value);
+  }
+
+  void _setSize(int size) {
+    _size = size;
+    notifyListeners();
+  }
 }

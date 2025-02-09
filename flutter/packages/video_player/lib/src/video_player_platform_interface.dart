@@ -147,6 +147,8 @@ abstract class VideoController implements Listenable {
   bool get supportsVideoFitting => false;
   bool get supportsCropRects => false;
 
+  SubtitleStyleOptions? get subtitleStyle => null;
+
   void load(List<VideoItem> items, int startIndex, double startPosition);
   void play();
   void pause();
@@ -157,6 +159,11 @@ abstract class VideoController implements Listenable {
   void setFit(BoxFit fit);
   void setPlaybackSpeed(double speed);
   void dispose();
+}
+
+abstract class SubtitleStyleOptions implements Listenable {
+  int get size;
+  set size(int value);
 }
 
 class MediaPositionHandler {

@@ -112,6 +112,19 @@ impl VideoPlayerPlugin {
                                             .unwrap_or(EncodableValue::Null),
                                     );
                                 }
+                                MediaPlayerEvent::SubStyleChanged(style) => {
+                                    res.insert(
+                                        EncodableValue::Str("subtitle-style"),
+                                        EncodableValue::Map({
+                                            let mut map = BTreeMap::new();
+                                            map.insert(
+                                                EncodableValue::Str("size"),
+                                                EncodableValue::I64(style.size.into()),
+                                            );
+                                            map
+                                        }),
+                                    );
+                                }
                             }
 
                             messenger.call("video_player", "event", &EncodableValue::Map(res));

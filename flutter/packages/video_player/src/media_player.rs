@@ -48,7 +48,10 @@ pub struct MediaTrack {
     pub codec: Option<String>,
 }
 
-#[allow(clippy::enum_variant_names)]
+pub struct SubtitleStyle {
+    pub size: u32,
+}
+
 pub enum MediaPlayerEvent {
     DurationChanged(f64),
     PauseChanged(bool),
@@ -58,6 +61,7 @@ pub enum MediaPlayerEvent {
     VideoEnded,
     TracksChanged(Vec<MediaTrack>),
     SubTrackChanged(Option<i64>),
+    SubStyleChanged(SubtitleStyle),
 }
 
 unsafe impl Send for MediaPlayer {}
@@ -78,6 +82,7 @@ impl MediaPlayer {
         mpv.observe_property("playlist-playing-pos", MpvFormat::Int64, 0);
         mpv.observe_property("track-list", MpvFormat::Node, 0);
         mpv.observe_property("current-tracks/sub", MpvFormat::Node, 0);
+        mpv.observe_property("sub-font-size", MpvFormat::Int64, 0);
 
         let mut controls = SystemMediaControls::new(hwnd);
 
@@ -291,6 +296,17 @@ impl MediaPlayer {
                         }
                         event_handler(position, MediaPlayerEvent::SubTrackChanged(id));
                     }
+                    "sub-font-size" => {
+                        let value = unsafe { data.cast::<i64>().as_ref() };
+                        if let Some(&value) = value
+                            && let Ok(value) = value.try_into()
+                        {
+                            event_handler(
+                                position,
+                                MediaPlayerEvent::SubStyleChanged(SubtitleStyle { size: value }),
+                            );
+                        }
+                    }
                     _ => {}
                 },
                 mpv_player::Event::LogMessage { text } => {
@@ -349,6 +365,10 @@ impl MediaPlayer {
 
     pub fn set_speed(&self, speed: f64) {
         self.mpv.set_property_async("speed", speed, 0);
+    }
+
+    pub fn set_subtitle_font_size(&self, size: u32) {
+        self.mpv.set_property_async("sub-font-size", size, 0);
     }
 
     pub fn quit(&self) {

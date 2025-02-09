@@ -191,6 +191,8 @@ class VideoPlayerUi extends HookConsumerWidget {
               _showPlaybackSpeedMenu(context);
             },
           ),
+          if (controller.subtitleStyle case SubtitleStyleOptions style)
+            _SubtitlesSizeListTile(style: style),
         ],
       ),
     );
@@ -291,6 +293,56 @@ class VideoPlayerUi extends HookConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _SubtitlesSizeListTile extends StatefulWidget {
+  final SubtitleStyleOptions style;
+
+  const _SubtitlesSizeListTile({
+    required this.style,
+  });
+
+  @override
+  State<_SubtitlesSizeListTile> createState() => _SubtitlesSizeListTileState();
+}
+
+class _SubtitlesSizeListTileState extends State<_SubtitlesSizeListTile> {
+  int _value = 20;
+
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.style.size;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text('Subtitles size'),
+      subtitle: SliderTheme(
+        data: SliderThemeData(
+          trackHeight: 2,
+          thumbShape: RoundSliderThumbShape(enabledThumbRadius: 8),
+          overlayShape: RoundSliderOverlayShape(overlayRadius: 16),
+        ),
+        child: Slider(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          min: 10,
+          max: 100,
+          divisions: (100 - 10) ~/ 5,
+          label: _value.toString(),
+          value: _value.toDouble(),
+          onChanged: (value) {
+            setState(() {
+              _value = value.toInt();
+              widget.style.size = _value;
+            });
+          },
+        ),
+      ),
+      leading: Icon(Icons.closed_caption),
     );
   }
 }
