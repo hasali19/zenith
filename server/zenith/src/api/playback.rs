@@ -32,7 +32,7 @@ struct PlaybackUpdate {
 }
 
 #[post("/playback/{video_id}")]
-async fn start(
+async fn playback_action(
     Path(video_id): Path<i64>,
     db: Extension<Db>,
     trakt: Extension<Arc<TraktClient>>,
