@@ -17,6 +17,7 @@ pub struct VideoUserData {
 pub struct UpdateVideoUserData {
     pub is_watched: Option<bool>,
     pub position: Option<f64>,
+    /// Whether to update the position_updated_at timestamp to the current time.
     pub set_position_updated: bool,
 }
 

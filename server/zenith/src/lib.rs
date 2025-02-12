@@ -10,6 +10,7 @@ pub mod library;
 pub mod metadata;
 pub mod server;
 pub mod subtitles;
+pub mod trakt;
 pub mod transcoder;
 pub mod util;
 pub mod video_prober;

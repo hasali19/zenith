@@ -309,6 +309,7 @@ where
         tmdb: config::Tmdb {
             api_key: "".to_owned(),
         },
+        trakt: None,
         transcoding: config::Transcoding::default(),
         database: config::Database::default(),
         import: config::Import::default(),

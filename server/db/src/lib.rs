@@ -12,6 +12,7 @@ pub mod people;
 pub mod sql;
 pub mod streams;
 pub mod subtitles;
+pub mod trakt;
 pub mod user_registrations;
 pub mod users;
 pub mod video_files;
