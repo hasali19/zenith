@@ -3,8 +3,9 @@ use std::sync::Arc;
 use axum::extract::Path;
 use axum::response::{IntoResponse, NoContent};
 use axum::{Extension, Json};
-use db::items::MediaItem;
+use db::items::{MediaItem, VideoUserData};
 use db::media::MediaItemType;
+use db::videos::UpdateVideoUserData;
 use db::{Db, WriteConnection};
 use serde::Deserialize;
 use speq::Reflect;
@@ -51,6 +52,8 @@ async fn playback_action(
 
     let progress = body.position / video_file.duration.unwrap();
 
+    update_saved_position(&mut conn, user.id, &item, body.position, progress).await?;
+
     if let Err(e) =
         post_action_to_trakt(&mut conn, &trakt, user.id, body.action, &item, progress).await
     {
@@ -60,6 +63,39 @@ async fn playback_action(
     conn.commit().await?;
 
     Ok(NoContent)
+}
+
+async fn update_saved_position(
+    conn: &mut WriteConnection,
+    user_id: i64,
+    item: &MediaItem,
+    position: f64,
+    progress: f64,
+) -> eyre::Result<()> {
+    let user_data =
+        db::items::get_video_user_data_for_item(conn.as_read(), user_id, item.id).await?;
+
+    let is_watched = matches!(
+        user_data,
+        Some(VideoUserData {
+            is_watched: true,
+            ..
+        }),
+    );
+
+    let data = UpdateVideoUserData {
+        position: Some(position),
+        is_watched: if is_watched {
+            None
+        } else {
+            Some(progress >= 0.9)
+        },
+        set_position_updated: true,
+    };
+
+    db::videos::update_user_data(conn, item.id, user_id, data).await?;
+
+    Ok(())
 }
 
 async fn post_action_to_trakt(

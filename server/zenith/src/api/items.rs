@@ -151,14 +151,14 @@ pub(super) async fn query_items(
     let items = db::items::query(&mut *conn, query).await?;
     let ids = items.iter().map(|item| item.id).collect_vec();
 
-    let mut video_user_data = db::items::get_user_data_for_videos(&mut *conn, user_id, &ids)
+    let mut video_user_data = db::items::get_video_user_data_for_items(&mut *conn, user_id, &ids)
         .await?
         .into_iter()
         .map(|user_data| (user_data.item_id, user_data))
         .collect::<HashMap<_, _>>();
 
     let mut collection_user_data =
-        db::items::get_user_data_for_collections(&mut *conn, user_id, &ids)
+        db::items::get_collection_user_data_for_items(&mut *conn, user_id, &ids)
             .await?
             .into_iter()
             .map(|user_data| (user_data.item_id, user_data))

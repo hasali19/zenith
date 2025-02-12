@@ -38,7 +38,7 @@ async fn update_progress(
         return Err(bad_request("item id must refer to a video item"));
     }
 
-    let user_data = db::items::get_user_data_for_video(conn.as_read(), user.id, *id).await?;
+    let user_data = db::items::get_video_user_data_for_item(conn.as_read(), user.id, *id).await?;
     let video_files = db::video_files::get_for_item(conn.as_read(), *id).await?;
 
     let Some(video_file) = video_files.first() else {

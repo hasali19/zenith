@@ -614,18 +614,24 @@ pub async fn get_recently_updated_shows(
     Ok(show_ids)
 }
 
-pub async fn get_user_data_for_video(
+/// Returns user data for the specified item id. The id must refer to an item of
+/// type `Movie` or `Episode`.
+pub async fn get_video_user_data_for_item(
     conn: &mut ReadConnection,
     user_id: i64,
     id: i64,
 ) -> eyre::Result<Option<VideoUserData>> {
-    Ok(get_user_data_for_videos(conn, user_id, &[id])
+    let user_data = get_video_user_data_for_items(conn, user_id, &[id])
         .await?
         .into_iter()
-        .next())
+        .next();
+
+    Ok(user_data)
 }
 
-pub async fn get_user_data_for_videos(
+/// Returns user data for the specified item ids. The ids must refer to items of
+/// type `Movie` or `Episode`.
+pub async fn get_video_user_data_for_items(
     conn: &mut ReadConnection,
     user_id: i64,
     ids: &[i64],
@@ -649,12 +655,14 @@ pub async fn get_user_data_for_videos(
         .condition(&format!("v.item_id IN ({})", sql::Placeholders(ids.len())))
         .to_sql();
 
-    Ok(sqlx::query_as_with(&sql, args.into_inner())
+    let results = sqlx::query_as_with(&sql, args.into_inner())
         .fetch_all(conn)
-        .await?)
+        .await?;
+
+    Ok(results)
 }
 
-pub async fn get_user_data_for_collections(
+pub async fn get_collection_user_data_for_items(
     conn: &mut ReadConnection,
     user_id: i64,
     ids: &[i64],
