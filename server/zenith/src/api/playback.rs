@@ -49,22 +49,10 @@ async fn start(
         .await?
         .or_not_found("item not found")?;
 
-    let Some(tmdb_id) = item.tmdb_id else {
-        return Ok(NoContent);
-    };
-
     let progress = body.position / video_file.duration.unwrap();
 
-    if let Err(e) = post_action_to_trakt(
-        &mut conn,
-        &trakt,
-        user.id,
-        tmdb_id,
-        body.action,
-        &item,
-        progress,
-    )
-    .await
+    if let Err(e) =
+        post_action_to_trakt(&mut conn, &trakt, user.id, body.action, &item, progress).await
     {
         tracing::error!("failed to send scrobble to trakt: {e:?}");
     };
@@ -78,7 +66,6 @@ async fn post_action_to_trakt(
     conn: &mut WriteConnection,
     trakt: &TraktClient,
     user_id: i64,
-    tmdb_id: i32,
     action: PlaybackAction,
     item: &MediaItem,
     progress: f64,
@@ -94,17 +81,17 @@ async fn post_action_to_trakt(
     match action {
         PlaybackAction::Start | PlaybackAction::Resume => {
             trakt
-                .scrobble_start(user_id, tmdb_id, progress, video_type)
+                .scrobble_start(user_id, item, progress, video_type)
                 .await?;
         }
         PlaybackAction::Pause => {
             trakt
-                .scrobble_pause(user_id, tmdb_id, progress, video_type)
+                .scrobble_pause(user_id, item, progress, video_type)
                 .await?;
         }
         PlaybackAction::Stop => {
             trakt
-                .scrobble_stop(user_id, tmdb_id, progress, video_type)
+                .scrobble_stop(user_id, item, progress, video_type)
                 .await?;
         }
         PlaybackAction::Progress => {}

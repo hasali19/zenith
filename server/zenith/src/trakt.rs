@@ -1,5 +1,6 @@
 use axum::http;
 use db::WriteConnection;
+use db::items::MediaItem;
 use serde::Deserialize;
 use serde_json::json;
 use time::format_description::well_known::Iso8601;
@@ -174,11 +175,15 @@ impl<'a> TraktService<'a> {
     pub async fn scrobble_start(
         &mut self,
         user_id: i64,
-        tmdb_id: i32,
+        item: &MediaItem,
         progress: f64,
         video_type: VideoType,
     ) -> eyre::Result<bool> {
         let Some(access_token) = self.get_access_token(user_id).await? else {
+            return Ok(false);
+        };
+
+        let Some(tmdb_id) = item.tmdb_id else {
             return Ok(false);
         };
 
@@ -192,11 +197,15 @@ impl<'a> TraktService<'a> {
     pub async fn scrobble_pause(
         &mut self,
         user_id: i64,
-        tmdb_id: i32,
+        item: &MediaItem,
         progress: f64,
         video_type: VideoType,
     ) -> eyre::Result<bool> {
         let Some(access_token) = self.get_access_token(user_id).await? else {
+            return Ok(false);
+        };
+
+        let Some(tmdb_id) = item.tmdb_id else {
             return Ok(false);
         };
 
@@ -210,11 +219,15 @@ impl<'a> TraktService<'a> {
     pub async fn scrobble_stop(
         &mut self,
         user_id: i64,
-        tmdb_id: i32,
+        item: &MediaItem,
         progress: f64,
         video_type: VideoType,
     ) -> eyre::Result<bool> {
         let Some(access_token) = self.get_access_token(user_id).await? else {
+            return Ok(false);
+        };
+
+        let Some(tmdb_id) = item.tmdb_id else {
             return Ok(false);
         };
 
