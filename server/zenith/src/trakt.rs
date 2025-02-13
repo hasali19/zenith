@@ -40,7 +40,7 @@ impl TraktClient {
     ) -> eyre::Result<Option<TokenResponse>> {
         let res = self
             .client
-            .post("https://api.trakt.tv/oauth/token")
+            .post(format!("{}/oauth/token", self.base_url))
             .json(&json!({
                 "refresh_token": refresh_token,
                 "client_id": &self.client_id,
@@ -211,10 +211,12 @@ impl<'a> TraktService<'a> {
         item: &MediaItem,
     ) -> eyre::Result<bool> {
         let Some(access_token) = self.get_access_token(user_id).await? else {
+            tracing::trace!("skipping as user is not connected to trakt");
             return Ok(false);
         };
 
         let Some(tmdb_id) = item.tmdb_id else {
+            tracing::trace!(item.id, "skipping due to missing tmdb id");
             return Ok(false);
         };
 

@@ -20,11 +20,7 @@ async fn connect(
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.acquire_write().await?;
 
-    sqlx::query("insert into trakt_user_auth (user_id, refresh_token) values (?, ?)")
-        .bind(user.id)
-        .bind(&body.refresh_token)
-        .execute(&mut *conn)
-        .await?;
+    db::trakt::connect(&mut conn, user.id, &body.refresh_token).await?;
 
     Ok(NoContent)
 }

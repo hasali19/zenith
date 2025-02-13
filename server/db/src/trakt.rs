@@ -26,6 +26,26 @@ pub async fn get_user(conn: &mut ReadConnection, user_id: i64) -> eyre::Result<O
     Ok(res)
 }
 
+pub async fn connect(
+    conn: &mut WriteConnection,
+    user_id: i64,
+    refresh_token: &str,
+) -> eyre::Result<()> {
+    let sql = "
+        insert into trakt_user_auth (user_id, refresh_token)
+        values (?, ?)
+        on conflict do update set
+            refresh_token = excluded.refresh_token";
+
+    sqlx::query(sql)
+        .bind(user_id)
+        .bind(refresh_token)
+        .execute(conn)
+        .await?;
+
+    Ok(())
+}
+
 pub async fn update_tokens(
     conn: &mut WriteConnection,
     user_id: i64,
