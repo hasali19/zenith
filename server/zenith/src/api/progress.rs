@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use axum::extract::rejection::ExtensionRejection;
 use axum::extract::{Extension, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -30,7 +31,7 @@ async fn update_progress(
     query: QsQuery<ProgressUpdate>,
     user: auth::User,
     db: Extension<Db>,
-    trakt: Extension<Arc<TraktClient>>,
+    trakt: Result<Extension<Arc<TraktClient>>, ExtensionRejection>,
 ) -> ApiResult<impl IntoResponse> {
     let mut conn = db.begin_write().await?;
 
@@ -72,7 +73,8 @@ async fn update_progress(
 
     db::videos::update_user_data(&mut conn, *id, user.id, data).await?;
 
-    if !prev_is_watched
+    if let Ok(trakt) = trakt
+        && !prev_is_watched
         && is_watched
         && let Err(e) = sync_watch_to_trakt(&mut conn, &trakt, user.id, &item).await
     {
