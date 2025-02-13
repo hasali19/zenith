@@ -1,6 +1,7 @@
 use axum::http;
 use db::WriteConnection;
 use db::items::MediaItem;
+use eyre::bail;
 use serde::Deserialize;
 use serde_json::json;
 use time::format_description::well_known::Iso8601;
@@ -140,6 +141,38 @@ impl TraktClient {
         Ok(())
     }
 
+    pub async fn sync_history_add(
+        &self,
+        access_token: &str,
+        tmdb_id: i32,
+        video_type: VideoType,
+    ) -> eyre::Result<()> {
+        let item_key = match video_type {
+            VideoType::Movie => "movies",
+            VideoType::Episode => "episodes",
+        };
+
+        self.client
+            .post(format!("{}/sync/history", self.base_url))
+            .header("trakt-api-version", "2")
+            .header("trakt-api-key", &self.client_id)
+            .bearer_auth(access_token)
+            .json(&json!({
+                item_key: [
+                    {
+                        "ids": {
+                            "tmdb": tmdb_id,
+                        },
+                    },
+                ],
+            }))
+            .send()
+            .await?
+            .error_for_status()?;
+
+        Ok(())
+    }
+
     fn context<'a>(&'a self, access_token: &'a str) -> trakt_rs::Context<'a> {
         trakt_rs::Context {
             base_url: &self.base_url,
@@ -170,6 +203,33 @@ pub struct TraktService<'a> {
 impl<'a> TraktService<'a> {
     pub fn new(client: &'a TraktClient, conn: &'a mut WriteConnection) -> TraktService<'a> {
         TraktService { client, conn }
+    }
+
+    pub async fn add_to_watch_history(
+        &mut self,
+        user_id: i64,
+        item: &MediaItem,
+    ) -> eyre::Result<bool> {
+        let Some(access_token) = self.get_access_token(user_id).await? else {
+            return Ok(false);
+        };
+
+        let Some(tmdb_id) = item.tmdb_id else {
+            return Ok(false);
+        };
+
+        let video_type = match item.kind {
+            db::media::MediaItemType::Movie => VideoType::Movie,
+            db::media::MediaItemType::Show => bail!("shows are not currently supported"),
+            db::media::MediaItemType::Season => bail!("seasons are not currently supported"),
+            db::media::MediaItemType::Episode => VideoType::Episode,
+        };
+
+        self.client
+            .sync_history_add(&access_token, tmdb_id, video_type)
+            .await?;
+
+        Ok(true)
     }
 
     pub async fn scrobble_start(
