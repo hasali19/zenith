@@ -10,7 +10,6 @@ mod items;
 mod metadata;
 mod movies;
 mod openapi;
-mod playback;
 mod progress;
 mod routing;
 mod scanner;

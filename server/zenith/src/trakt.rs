@@ -1,4 +1,3 @@
-use axum::http;
 use db::WriteConnection;
 use db::items::MediaItem;
 use eyre::bail;
@@ -6,7 +5,6 @@ use serde::Deserialize;
 use serde_json::json;
 use time::format_description::well_known::Iso8601;
 use time::{Duration, OffsetDateTime};
-use trakt_rs::Request;
 
 pub struct TraktClient {
     pub client: reqwest::Client,
@@ -60,87 +58,6 @@ impl TraktClient {
         Ok(Some(res))
     }
 
-    pub async fn scrobble_start(
-        &self,
-        access_token: &str,
-        tmdb_id: i32,
-        progress: f64,
-        video_type: VideoType,
-    ) -> eyre::Result<()> {
-        use trakt_rs::api::scrobble::start::Request;
-
-        let id = trakt_rs::smo::Id::Tmdb(tmdb_id.try_into()?);
-
-        match video_type {
-            VideoType::Movie => {
-                self.execute_with_auth(access_token, Request::new_movie(id, progress))
-                    .await?
-                    .error_for_status()?;
-            }
-            VideoType::Episode => {
-                self.execute_with_auth(access_token, Request::new_episode(id, progress))
-                    .await?
-                    .error_for_status()?;
-            }
-        }
-
-        Ok(())
-    }
-
-    pub async fn scrobble_pause(
-        &self,
-        access_token: &str,
-        tmdb_id: i32,
-        progress: f64,
-        video_type: VideoType,
-    ) -> eyre::Result<()> {
-        use trakt_rs::api::scrobble::start::Request;
-
-        let id = trakt_rs::smo::Id::Tmdb(tmdb_id.try_into()?);
-
-        match video_type {
-            VideoType::Movie => {
-                self.execute_with_auth(access_token, Request::new_movie(id, progress))
-                    .await?
-                    .error_for_status()?;
-            }
-            VideoType::Episode => {
-                self.execute_with_auth(access_token, Request::new_episode(id, progress))
-                    .await?
-                    .error_for_status()?;
-            }
-        }
-
-        Ok(())
-    }
-
-    pub async fn scrobble_stop(
-        &self,
-        access_token: &str,
-        tmdb_id: i32,
-        progress: f64,
-        video_type: VideoType,
-    ) -> eyre::Result<()> {
-        use trakt_rs::api::scrobble::stop::Request;
-
-        let id = trakt_rs::smo::Id::Tmdb(tmdb_id.try_into()?);
-
-        match video_type {
-            VideoType::Movie => {
-                self.execute_with_auth(access_token, Request::new_movie(id, progress))
-                    .await?
-                    .error_for_status()?;
-            }
-            VideoType::Episode => {
-                self.execute_with_auth(access_token, Request::new_episode(id, progress))
-                    .await?
-                    .error_for_status()?;
-            }
-        }
-
-        Ok(())
-    }
-
     pub async fn sync_history_add(
         &self,
         access_token: &str,
@@ -171,27 +88,6 @@ impl TraktClient {
             .error_for_status()?;
 
         Ok(())
-    }
-
-    fn context<'a>(&'a self, access_token: &'a str) -> trakt_rs::Context<'a> {
-        trakt_rs::Context {
-            base_url: &self.base_url,
-            client_id: &self.client_id,
-            oauth_token: Some(access_token),
-        }
-    }
-
-    async fn execute_with_auth<R: Request>(
-        &self,
-        access_token: &str,
-        req: R,
-    ) -> eyre::Result<reqwest::Response> {
-        let req: http::Request<Vec<u8>> = req.try_into_http_request(self.context(access_token))?;
-
-        self.client
-            .execute(req.try_into()?)
-            .await
-            .map_err(|e| e.into())
     }
 }
 
@@ -229,72 +125,6 @@ impl<'a> TraktService<'a> {
 
         self.client
             .sync_history_add(&access_token, tmdb_id, video_type)
-            .await?;
-
-        Ok(true)
-    }
-
-    pub async fn scrobble_start(
-        &mut self,
-        user_id: i64,
-        item: &MediaItem,
-        progress: f64,
-        video_type: VideoType,
-    ) -> eyre::Result<bool> {
-        let Some(access_token) = self.get_access_token(user_id).await? else {
-            return Ok(false);
-        };
-
-        let Some(tmdb_id) = item.tmdb_id else {
-            return Ok(false);
-        };
-
-        self.client
-            .scrobble_start(&access_token, tmdb_id, progress, video_type)
-            .await?;
-
-        Ok(true)
-    }
-
-    pub async fn scrobble_pause(
-        &mut self,
-        user_id: i64,
-        item: &MediaItem,
-        progress: f64,
-        video_type: VideoType,
-    ) -> eyre::Result<bool> {
-        let Some(access_token) = self.get_access_token(user_id).await? else {
-            return Ok(false);
-        };
-
-        let Some(tmdb_id) = item.tmdb_id else {
-            return Ok(false);
-        };
-
-        self.client
-            .scrobble_pause(&access_token, tmdb_id, progress, video_type)
-            .await?;
-
-        Ok(true)
-    }
-
-    pub async fn scrobble_stop(
-        &mut self,
-        user_id: i64,
-        item: &MediaItem,
-        progress: f64,
-        video_type: VideoType,
-    ) -> eyre::Result<bool> {
-        let Some(access_token) = self.get_access_token(user_id).await? else {
-            return Ok(false);
-        };
-
-        let Some(tmdb_id) = item.tmdb_id else {
-            return Ok(false);
-        };
-
-        self.client
-            .scrobble_stop(&access_token, tmdb_id, progress, video_type)
             .await?;
 
         Ok(true)

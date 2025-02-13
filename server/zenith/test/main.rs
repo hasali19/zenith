@@ -2,7 +2,6 @@ mod auth;
 mod cast;
 mod media;
 mod metadata;
-mod playback;
 mod users;
 
 use std::io::Read;
