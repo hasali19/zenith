@@ -49,6 +49,7 @@ sqlx = { version = "0.8", default-features = false }
 structmeta = "0.3"
 strum = "0.26"
 syn = { version = "2", default-features = false }
+tap = "1.0.1"
 tempfile = "3.5"
 thiserror = "2.0"
 time = "0.3"

@@ -33,6 +33,7 @@ use uuid::Uuid;
 use wiremock::MockServer;
 use zenith::config::{self, Config};
 use zenith::library::MediaLibrary;
+use zenith::trakt::TraktClient;
 use zenith::video_prober::MockVideoProber;
 use zenith::{App, Db, MediaItemType};
 
@@ -309,6 +310,7 @@ where
         tmdb: config::Tmdb {
             api_key: "".to_owned(),
         },
+        trakt: None,
         transcoding: config::Transcoding::default(),
         database: config::Database::default(),
         import: config::Import::default(),
@@ -345,12 +347,21 @@ where
         Arc::new(MockVideoProber::new()),
     ));
 
+    let trakt_client = Arc::new(TraktClient {
+        base_url: mock_server.uri(),
+        client: reqwest::Client::new(),
+        client_id: "client_id".to_owned(),
+        client_secret: "client_secret".to_owned(),
+        redirect_uri: "redirect_uri".to_owned(),
+    });
+
     let router = zenith::api::router(app)
         .layer(TraceLayer::new_for_http())
         .layer(Extension(config.clone()))
         .layer(Extension(db.clone()))
         .layer(Extension(media_library))
-        .layer(Extension(tmdb_client));
+        .layer(Extension(tmdb_client))
+        .layer(Extension(trakt_client));
 
     let app = TestApp {
         _config: config,

@@ -17,6 +17,7 @@ sqlx = { workspace = true, features = [
 ] }
 strum = { workspace = true, features = ["derive"] }
 tempfile = { workspace = true }
+time.workspace = true
 tokio = { workspace = true, features = ["fs"] }
 tracing = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }

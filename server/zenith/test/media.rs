@@ -11,6 +11,8 @@ use serde_json::json;
 use tempfile::NamedTempFile;
 use test_macros::test;
 use tower::ServiceExt;
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, ResponseTemplate};
 
 use crate::{TestApp, json_body, with_app};
 
@@ -242,6 +244,36 @@ async fn update_progress(mut app: TestApp) {
         .oneshot(
             Request::builder()
                 .method("POST")
+                .uri("/progress/1?position=50")
+                .header("Cookie", &cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let mut conn = app.db.acquire().await.unwrap();
+
+    let user_data = db::items::get_video_user_data_for_item(&mut conn, 1, 1)
+        .await
+        .unwrap()
+        .unwrap();
+
+    assert!(!user_data.is_watched);
+    assert_eq!(user_data.position, 50.0);
+}
+
+#[test(with_app)]
+async fn update_progress_watched(mut app: TestApp) {
+    let cookie = app.login().await;
+
+    let res = app
+        .router()
+        .oneshot(
+            Request::builder()
+                .method("POST")
                 .uri("/progress/1?position=100")
                 .header("Cookie", &cookie)
                 .body(Body::empty())
@@ -253,13 +285,79 @@ async fn update_progress(mut app: TestApp) {
     assert_eq!(res.status(), StatusCode::OK);
 
     let mut conn = app.db.acquire().await.unwrap();
-    let position: f64 =
-        sqlx::query_scalar("SELECT position FROM media_item_user_data WHERE item_id = 1")
-            .fetch_one(&mut *conn)
+
+    let user_data = db::items::get_video_user_data_for_item(&mut conn, 1, 1)
+        .await
+        .unwrap()
+        .unwrap();
+
+    assert!(user_data.is_watched);
+    assert_eq!(user_data.position, 100.0);
+}
+
+#[test(with_app)]
+async fn update_progress_sync_trakt(mut app: TestApp) {
+    let cookie = app.login().await;
+
+    {
+        let mut conn = app.db.acquire_write().await.unwrap();
+        db::trakt::connect(&mut conn, 1, "refresh_token")
             .await
             .unwrap();
+        db::items::update_metadata(
+            &mut conn,
+            1,
+            db::items::UpdateMetadata {
+                tmdb_id: Some(Some(42)),
+                ..Default::default()
+            },
+        )
+        .await
+        .unwrap();
+    }
 
-    assert_eq!(position, 100.0);
+    Mock::given(method("POST"))
+        .and(path("/oauth/token"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "access_token": "access_token",
+            "expires_in": 123,
+            "refresh_token": "refresh_token_2",
+        })))
+        .expect(1)
+        .mount(&app.mock_server)
+        .await;
+
+    Mock::given(method("POST"))
+        .and(path("/sync/history"))
+        .respond_with(ResponseTemplate::new(200))
+        .expect(1)
+        .mount(&app.mock_server)
+        .await;
+
+    let res = app
+        .router()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/progress/1?position=100")
+                .header("Cookie", &cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let mut conn = app.db.acquire().await.unwrap();
+
+    let user_data = db::items::get_video_user_data_for_item(&mut conn, 1, 1)
+        .await
+        .unwrap()
+        .unwrap();
+
+    assert!(user_data.is_watched);
+    assert_eq!(user_data.position, 100.0);
 }
 
 #[test(with_app)]

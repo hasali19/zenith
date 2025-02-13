@@ -15,6 +15,7 @@ use axum_extra::routing::RouterExt;
 use axum_files::{FileRequest, FileResponse};
 use camino::Utf8Path;
 use eyre::Context;
+use tap::Pipe;
 use time::OffsetDateTime;
 use tmdb::TmdbClient;
 use tokio::time::Instant;
@@ -25,10 +26,11 @@ use tracing_error::ErrorLayer;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, Layer};
-use zenith::config::{Config, LogFormat};
+use zenith::config::{self, Config, LogFormat};
 use zenith::library::scanner::{LibraryScanner, VideoFileType};
 use zenith::library::{FileSystemChange, LibraryEvent, MediaLibrary};
 use zenith::metadata::MetadataManager;
+use zenith::trakt::TraktClient;
 use zenith::transcoder::{self, Transcoder};
 use zenith::video_prober::Ffprobe;
 use zenith::{App, Db};
@@ -203,13 +205,20 @@ async fn run_server() -> eyre::Result<()> {
         .route_service("/chromecast-receiver/{*path}", chromecast_assets_service)
         .fallback_service(axum::routing::get(spa))
         .layer(TraceLayer::new_for_http())
-        .layer(Extension(config))
         .layer(Extension(db.clone()))
         .layer(Extension(library.clone()))
         .layer(Extension(metadata))
         .layer(Extension(transcoder))
         .layer(Extension(scanner))
-        .layer(Extension(tmdb));
+        .layer(Extension(tmdb))
+        .pipe(|router| {
+            if let Some(trakt_config) = &config.trakt {
+                router.layer(Extension(Arc::new(create_trakt_client(trakt_config))))
+            } else {
+                router
+            }
+        })
+        .layer(Extension(config));
 
     zenith::server::serve(&addr, router).await?;
 
@@ -234,6 +243,20 @@ fn load_or_create_key(key_path: &Utf8Path) -> eyre::Result<Key> {
         std::fs::write(key_path, key.master())
             .wrap_err_with(|| format!("failed to write key to file: {key_path:?}"))?;
         Ok(key)
+    }
+}
+
+fn create_trakt_client(config: &config::Trakt) -> TraktClient {
+    TraktClient {
+        client: reqwest::Client::new(),
+        base_url: config
+            .base_url
+            .as_deref()
+            .unwrap_or("https://api.trakt.tv")
+            .to_owned(),
+        client_id: config.client_id.to_owned(),
+        client_secret: config.client_secret.to_owned(),
+        redirect_uri: config.redirect_uri.to_owned(),
     }
 }
 

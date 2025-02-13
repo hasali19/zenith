@@ -15,6 +15,7 @@ mod routing;
 mod scanner;
 mod server;
 mod subtitles;
+mod trakt;
 mod transcoder;
 mod tv;
 mod users;

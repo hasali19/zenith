@@ -17,6 +17,7 @@ pub struct Config {
     #[serde(default)]
     pub paths: Paths,
     pub tmdb: Tmdb,
+    pub trakt: Option<Trakt>,
     #[serde(default)]
     pub transcoding: Transcoding,
     #[serde(default)]
@@ -93,6 +94,14 @@ impl Default for Paths {
 #[derive(Deserialize)]
 pub struct Tmdb {
     pub api_key: String,
+}
+
+#[derive(Deserialize)]
+pub struct Trakt {
+    pub base_url: Option<String>,
+    pub client_id: String,
+    pub client_secret: String,
+    pub redirect_uri: String,
 }
 
 #[derive(Deserialize)]

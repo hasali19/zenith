@@ -54,6 +54,7 @@ sqlx = { workspace = true, features = [
     "runtime-tokio-rustls",
     "sqlite",
 ] }
+tap.workspace = true
 tempfile = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true, features = ["parsing"] }
@@ -67,9 +68,9 @@ tokio = { workspace = true, features = [
     "signal",
 ] }
 tokio-stream = { workspace = true, features = ["sync"] }
-tower-http = { workspace = true, features = ["cors", "fs", "trace"] }
 tokio-util = { workspace = true }
 tower = { workspace = true, features = ["util"] }
+tower-http = { workspace = true, features = ["cors", "fs", "trace"] }
 tracing = { workspace = true }
 tracing-error = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }

@@ -116,6 +116,13 @@ async fn _20241229133611_images(conn: &mut WriteConnection) -> eyre::Result<()> 
     _20241229133611_images::execute(conn).await
 }
 
+async fn _20250209155346_trakt_auth(conn: &mut WriteConnection) -> eyre::Result<()> {
+    sqlx::query(include_str!("../../migrations/20250209155346_trakt_auth.sql"))
+        .execute(conn)
+        .await?;
+    Ok(())
+}
+
 pub(super) fn collect(migrator: &mut super::Migrator) {
     migrator.push_migration(
         "20220809142403_initial",
@@ -201,5 +208,10 @@ pub(super) fn collect(migrator: &mut super::Migrator) {
         "20241229133611_images",
         Box::new(|conn| Box::pin(_20241229133611_images(conn))),
         [34, 66, 80, 124, 52, 58, 243, 119, 33, 118, 168, 246, 97, 109, 218, 238, 181, 8, 228, 146, 168, 26, 184, 99, 158, 24, 126, 189, 152, 151, 34, 222],
+    );
+    migrator.push_migration(
+        "20250209155346_trakt_auth",
+        Box::new(|conn| Box::pin(_20250209155346_trakt_auth(conn))),
+        [103, 187, 9, 249, 188, 58, 28, 33, 171, 234, 149, 95, 239, 104, 141, 249, 77, 85, 103, 39, 139, 40, 226, 178, 206, 52, 50, 55, 157, 106, 160, 140],
     );
 }
