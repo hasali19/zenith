@@ -178,6 +178,11 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
             brightness: brightness,
           ),
       fontFamily: 'Exo2',
+      pageTransitionsTheme: PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+        },
+      ),
     );
     return baseTheme.copyWith(
       cardTheme: baseTheme.cardTheme.copyWith(
