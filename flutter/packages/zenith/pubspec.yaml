@@ -80,6 +80,7 @@ dependencies:
   web: ^1.1.0
   windowing:
     path: ../windowing
+  wolt_modal_sheet: ^0.11.0
 
 dev_dependencies:
   flutter_test:

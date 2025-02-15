@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:video_player/video_player.dart';
+import 'package:wolt_modal_sheet/wolt_modal_sheet.dart';
 import 'package:zenith/preferences.dart';
 import 'package:zenith/responsive.dart';
 import 'package:zenith/screens/video_player/play_pause_button.dart';
@@ -135,93 +138,57 @@ class VideoPlayerUi extends HookConsumerWidget {
     );
   }
 
-  Future<void> _showModalBottomSheet(
-      BuildContext context, Widget Function(BuildContext context) builder,
-      {bool safeArea = true}) {
-    final width = MediaQuery.of(context).size.width;
-    return showModalBottomSheet<void>(
-      context: context,
-      constraints: width > 600
-          ? const BoxConstraints.expand(width: 600).copyWith(minHeight: 0)
-          : null,
-      clipBehavior: Clip.antiAlias,
-      barrierColor: Colors.transparent,
-      builder: (context) =>
-          safeArea ? SafeArea(child: builder(context)) : builder(context),
-    );
-  }
-
   Future<void> _showOptionsMenu(BuildContext context) {
-    return _showModalBottomSheet(
-      context,
-      (context) => Wrap(
-        children: [
-          if (controller.supportsVideoFitting)
-            ListTile(
-              leading: const Icon(Icons.aspect_ratio),
-              title: const Text('Fit'),
-              subtitle: Text(switch (controller.fit) {
-                BoxFit.cover => 'Cover',
-                BoxFit.contain => 'Contain',
-                BoxFit.fitWidth => 'Fit Width',
-                BoxFit.fitHeight => 'Fit Height',
-                _ => 'Unknown',
-              }),
-              onTap: () {
-                Navigator.pop(context);
-                _showVideoFitMenu(context);
-              },
-            ),
-          if (controller.supportsAudioTrackSelection &&
-              controller.availableAudioTracks.length > 1)
-            ListTile(
-              leading: const Icon(Icons.audiotrack),
-              title: const Text('Audio'),
-              onTap: () {
-                Navigator.pop(context);
-                _showAudioMenu(context);
-              },
-            ),
-          ListTile(
-            leading: const Icon(Icons.speed),
-            title: const Text('Playback speed'),
-            subtitle: Text('${controller.playbackSpeed}'),
-            onTap: () {
-              Navigator.pop(context);
+    return WoltModalSheet.show(
+      context: context,
+      showDragHandle: false,
+      pageListBuilder: (context) {
+        return [
+          _OptionsMenuSheetPage(
+            controller: controller,
+            onShowVideoFitMenu: () {
+              WoltModalSheet.of(context)
+                ..addOrReplacePage(
+                    _VideoFitMenuSheetPage(controller: controller))
+                ..showNext();
+            },
+            onShowAudioTrackMenu: () {
+              _showAudioMenu(context);
+            },
+            onShowPlaybackSpeedMenu: () {
               _showPlaybackSpeedMenu(context);
             },
           ),
-          if (controller.subtitleStyle case SubtitleStyleOptions style)
-            _SubtitlesSizeListTile(style: style),
-        ],
-      ),
+        ];
+      },
     );
   }
 
-  Future<void> _showAudioMenu(BuildContext context) {
+  void _showAudioMenu(BuildContext context) {
     final audioTracks = () {
       final audioTracks = [...controller.availableAudioTracks];
       audioTracks.sort((a, b) => a.language.compareTo(b.language));
       return audioTracks;
     }();
 
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      clipBehavior: Clip.antiAlias,
-      barrierColor: Colors.transparent,
-      builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          builder: (context, scrollController) {
-            return ListView(
-              controller: scrollController,
+    WoltModalSheet.of(context)
+      ..addOrReplacePage(
+        SliverWoltModalSheetPage(
+          leadingNavBarWidget: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: WoltModalSheet.of(context).showPrevious,
+            ),
+          ),
+          mainContentSliversBuilder: (context) => [
+            SliverList.list(
               children: _buildAudioMenuItems(context, audioTracks),
-            );
-          },
-        );
-      },
-    );
+            ),
+          ],
+        ),
+      )
+      ..showNext();
   }
 
   List<Widget> _buildAudioMenuItems(
@@ -234,7 +201,7 @@ class VideoPlayerUi extends HookConsumerWidget {
         subtitle: Text(track.codec),
         onTap: () {
           controller.setAudioTrack(track.index);
-          Navigator.pop(context);
+          WoltModalSheet.of(context).popPage();
         },
       ));
     }
@@ -242,59 +209,113 @@ class VideoPlayerUi extends HookConsumerWidget {
     return items;
   }
 
-  Future<void> _showVideoFitMenu(BuildContext context) {
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      clipBehavior: Clip.antiAlias,
-      barrierColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        expand: false,
-        builder: (context, scrollController) => HookBuilder(
-          builder: (context) => VideoFitMenu(
-            controller: controller,
-            scrollController: scrollController,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showPlaybackSpeedMenu(BuildContext context) {
+  void _showPlaybackSpeedMenu(BuildContext context) {
     const speeds = [1.0, 1.25, 1.5, 1.75, 2.0];
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      clipBehavior: Clip.antiAlias,
-      barrierColor: Colors.transparent,
-      builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          builder: (context, scrollController) {
-            Widget buildListTile(speed) {
-              void onSetSpeed() {
-                controller.setPlaybackSpeed(speed);
-                Navigator.pop(context);
-              }
 
-              return ListTile(
-                title: Text('${speed}x'),
-                onTap: controller.playbackSpeed == speed ? null : onSetSpeed,
-                trailing: controller.playbackSpeed != speed
-                    ? null
-                    : const Icon(Icons.check),
-              );
-            }
+    final modalSheet = WoltModalSheet.of(context);
 
-            return ListView(
-              controller: scrollController,
+    Widget buildListTile(speed) {
+      void onSetSpeed() {
+        controller.setPlaybackSpeed(speed);
+        modalSheet.popPage();
+      }
+
+      return ListTile(
+        title: Text('${speed}x'),
+        onTap: controller.playbackSpeed == speed ? null : onSetSpeed,
+        trailing:
+            controller.playbackSpeed != speed ? null : const Icon(Icons.check),
+      );
+    }
+
+    WoltModalSheet.of(context)
+      ..addOrReplacePage(
+        SliverWoltModalSheetPage(
+          leadingNavBarWidget: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: WoltModalSheet.of(context).popPage,
+            ),
+          ),
+          mainContentSliversBuilder: (context) => [
+            SliverList.list(
               children: speeds.map(buildListTile).toList(),
-            );
+            ),
+          ],
+        ),
+      )
+      ..showNext();
+  }
+}
+
+class _OptionsMenuSheetPage extends SliverWoltModalSheetPage {
+  _OptionsMenuSheetPage({
+    required VideoController controller,
+    required void Function() onShowVideoFitMenu,
+    required void Function() onShowAudioTrackMenu,
+    required void Function() onShowPlaybackSpeedMenu,
+  }) : super(
+          hasTopBarLayer: false,
+          mainContentSliversBuilder: (context) {
+            return [
+              SliverList.list(
+                children: [
+                  if (controller.supportsVideoFitting)
+                    ListTile(
+                      leading: const Icon(Icons.aspect_ratio),
+                      title: const Text('Fit'),
+                      subtitle: Text(switch (controller.fit) {
+                        BoxFit.cover => 'Cover',
+                        BoxFit.contain => 'Contain',
+                        BoxFit.fitWidth => 'Fit Width',
+                        BoxFit.fitHeight => 'Fit Height',
+                        _ => 'Unknown',
+                      }),
+                      onTap: onShowVideoFitMenu,
+                    ),
+                  if (controller.supportsAudioTrackSelection &&
+                      controller.availableAudioTracks.length > 1)
+                    ListTile(
+                      leading: const Icon(Icons.audiotrack),
+                      title: const Text('Audio'),
+                      onTap: onShowAudioTrackMenu,
+                    ),
+                  ListTile(
+                    leading: const Icon(Icons.speed),
+                    title: const Text('Playback speed'),
+                    subtitle: Text('${controller.playbackSpeed}'),
+                    onTap: onShowPlaybackSpeedMenu,
+                  ),
+                  if (controller.subtitleStyle case SubtitleStyleOptions style)
+                    _SubtitlesSizeListTile(style: style),
+                ],
+              ),
+            ];
           },
         );
-      },
-    );
-  }
+}
+
+class _VideoFitMenuSheetPage extends SliverWoltModalSheetPage {
+  _VideoFitMenuSheetPage({required VideoController controller})
+      : super(
+          leadingNavBarWidget: Builder(
+            builder: (context) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  onPressed: WoltModalSheet.of(context).showPrevious,
+                ),
+              );
+            },
+          ),
+          mainContentSliversBuilder: (context) {
+            return [
+              VideoFitMenu(controller: controller),
+            ];
+          },
+        );
 }
 
 class _SubtitlesSizeListTile extends ConsumerStatefulWidget {
@@ -440,12 +461,10 @@ class _CenterControls extends ConsumerWidget {
 
 class VideoFitMenu extends HookConsumerWidget {
   final VideoController controller;
-  final ScrollController? scrollController;
 
   const VideoFitMenu({
     super.key,
     required this.controller,
-    this.scrollController,
   });
 
   @override
@@ -466,8 +485,7 @@ class VideoFitMenu extends HookConsumerWidget {
                   controller.fit,
                 ));
 
-    return ListView(
-      controller: scrollController,
+    return SliverList.list(
       children: [
         if (controller.supportsCropRects)
           CheckboxListTile(
