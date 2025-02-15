@@ -862,7 +862,7 @@ class $AppDatabaseManager {
 // RiverpodGenerator
 // **************************************************************************
 
-String _$databaseHash() => r'd7a35a83ad0e3d2e5c3a40b438bc9be186d6af93';
+String _$databaseHash() => r'f49266809b0ea1acbaf98dcded4180cffa0ca0a1';
 
 /// See also [database].
 @ProviderFor(database)
