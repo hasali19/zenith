@@ -1,6 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo&family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap');
+
 cast-media-player {
     --logo-image: url('/chromecast-receiver/zenith_full_dark.png');
     --logo-size: calc(100vw - 70%) auto;
     --splash-image: var(--logo-image);
     --splash-size: var(--logo-size);
+}
+
+body {
+    margin: 0;
 }
