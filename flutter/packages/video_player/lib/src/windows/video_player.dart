@@ -172,10 +172,9 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
             case 2:
               _audioTracks.add(AudioTrack(
                 index: index,
-                language: track['lang'],
-                codec: track['codec'],
+                language: track['lang'] ?? 'Unknown',
+                codec: track['codec'] ?? 'Unknown',
               ));
-              break;
 
             case 3:
               _subtitleTracks.add(SubtitleTrack(
@@ -183,7 +182,6 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
                 label: track['title'],
                 language: track['lang'],
               ));
-              break;
           }
         }
       }
