@@ -44,6 +44,7 @@ Future<void> main() async {
     ],
     overrides: [
       preferencesProvider.overrideWithValue(prefs),
+      databaseProvider.overrideWithValue(db),
       serversProvider.overrideWithValue(servers),
       windowProvider.overrideWithValue(window),
       apiProvider.overrideWith((ref) {

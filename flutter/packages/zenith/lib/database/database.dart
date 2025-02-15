@@ -94,5 +94,5 @@ class AppDatabase extends _$AppDatabase {
 
 @riverpod
 AppDatabase database(Ref ref) {
-  return AppDatabase();
+  throw UnimplementedError();
 }
