@@ -210,7 +210,8 @@ export default function App() {
               "object-fit": "cover",
             }}
             onload={(e) => {
-              e.target.style.opacity = "1";
+              const target = e.target as HTMLImageElement;
+              target.style.opacity = "1";
             }}
           />
         </div>
@@ -239,7 +240,8 @@ export default function App() {
               transition: "opacity 300ms ease",
             }}
             onload={(e) => {
-              e.target.style.opacity = "1";
+              const target = e.target as HTMLImageElement;
+              target.style.opacity = "1";
             }}
           />
           <div style={{ "margin-left": "32px" }}>
