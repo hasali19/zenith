@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:auto_route/auto_route.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:sliver_tools/sliver_tools.dart';
+import 'package:zenith/api.dart';
 import 'package:zenith/constants.dart';
 import 'package:zenith/image.dart';
 import 'package:zenith/media_route_button/media_route_button.dart';
@@ -75,6 +77,37 @@ class _ItemDetailsContent extends ConsumerStatefulWidget {
 
 class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
   final _refresh = GlobalKey<RefreshIndicatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(
+      () async {
+        final api = ref.read(apiProvider);
+        final token = await api.getAccessToken(AccessTokenOwner.system, 'cast',
+            create: true);
+        if (CastFrameworkPlatform.instance.isSupported) {
+          CastFrameworkPlatform.instance.remoteMediaClient.sendMessage(
+            'urn:x-cast:dev.hasali.zenith',
+            jsonEncode({
+              'type': 'init',
+              'token': token.token,
+              'server': api.baseUrl,
+            }),
+          );
+
+          CastFrameworkPlatform.instance.remoteMediaClient.sendMessage(
+            'urn:x-cast:dev.hasali.zenith',
+            jsonEncode({
+              'type': 'focus-item-details',
+              'id': widget.state.item.id,
+            }),
+          );
+        }
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
