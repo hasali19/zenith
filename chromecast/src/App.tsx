@@ -52,9 +52,6 @@ export default function App() {
     const context = cast.framework.CastReceiverContext.getInstance();
     const playerManager = context.getPlayerManager();
 
-    let server: string | null = null;
-    let token: string | null = null;
-
     context.addCustomMessageListener(MESSAGE_CHANNEL, (e) => {
       const sender = e.senderId;
       const msg = e.data as CustomMessage | null;
@@ -100,13 +97,15 @@ export default function App() {
     const timer = setInterval(() => {
       const state = playerManager.getPlayerState();
       const currentItem = playerManager.getQueueManager()?.getCurrentItem();
+      const currentConfig = config();
 
       if (
-        server &&
-        token &&
+        currentConfig &&
         state === cast.framework.messages.PlayerState.PLAYING &&
         currentItem
       ) {
+        const server = currentConfig.baseUrl;
+        const token = currentConfig.token;
         const videoId = currentItem.customData?.id;
         if (videoId) {
           const currentTime = playerManager.getCurrentTimeSec();
