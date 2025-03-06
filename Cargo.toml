@@ -11,7 +11,7 @@ assert-json-diff = "2.0"
 async-trait = "0.1"
 axum = { version = "0.8", default-features = false }
 axum-extra = "0.10"
-bytes = "1.1"
+bytes = "1.10"
 camino = "1.1"
 color-eyre = "0.6"
 eyre = "0.6"
