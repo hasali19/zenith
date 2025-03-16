@@ -49,6 +49,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
   late FocusNode _focusNode;
 
   VideoController? _controller;
+  List<VideoItem>? _playlist;
   ProviderSubscription? _applyCropRectsSubscription;
 
   late Timer _progressReportTimer;
@@ -190,6 +191,8 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
                 builder: (context, child) => VideoPlayerUi(
                   title: MediaTitle(item: currentItem),
                   controller: controller,
+                  isOffline: _playlist?[controller.currentItemIndex].source
+                      is LocalFileSource,
                   onInteractionStart:
                       _uiVisibilityController.startUiInteraction,
                   onInteractionEnd: _uiVisibilityController.finishUiInteraction,
@@ -263,6 +266,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     }).toList();
 
     setState(() {
+      _playlist = videos;
       _controller = controller
         ..isUsingCropRects = ref.read(applyCropRectsProvider)
         ..load(videos, widget.startIndex, widget.startPosition);

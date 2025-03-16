@@ -17,6 +17,7 @@ import 'video_progress_bar.dart';
 class VideoPlayerUi extends HookConsumerWidget {
   final Widget title;
   final VideoController controller;
+  final bool isOffline;
 
   final void Function() onInteractionStart;
   final void Function() onInteractionEnd;
@@ -26,6 +27,7 @@ class VideoPlayerUi extends HookConsumerWidget {
     super.key,
     required this.title,
     required this.controller,
+    required this.isOffline,
     required this.onInteractionStart,
     required this.onInteractionEnd,
     this.onSeekToNext,
@@ -65,6 +67,16 @@ class VideoPlayerUi extends HookConsumerWidget {
                   title: title,
                   backgroundColor: Colors.transparent,
                   elevation: 0,
+                  actions: [
+                    if (isOffline)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Tooltip(
+                          message: 'Offline',
+                          child: Icon(Icons.cloud_off),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),

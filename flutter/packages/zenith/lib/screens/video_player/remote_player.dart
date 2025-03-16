@@ -136,6 +136,7 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
               return VideoPlayerUi(
                 title: MediaTitle(item: item),
                 controller: _controller,
+                isOffline: false,
                 onInteractionStart: () {},
                 onInteractionEnd: () {},
               );
