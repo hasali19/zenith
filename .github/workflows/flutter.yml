@@ -173,6 +173,7 @@ jobs:
           $env:MPV_DIR="$(pwd)\mpv"
           $env:ANGLE_BIN_DIR="$(pwd)\angle-win64\bin"
           $env:GIT_COMMIT_HASH=(git rev-parse HEAD)
+          which rustup
           cd flutter/packages/zenith
           flutter build windows -v --build-number=$env:GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$env:GIT_COMMIT_HASH
 
