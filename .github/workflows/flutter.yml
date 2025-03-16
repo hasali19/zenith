@@ -146,7 +146,7 @@ jobs:
 
       - name: Install corrosion
         run: |
-          wget https://github.com/hasali19/corrosion-build/releases/download/autobuild-2022-12-29-17-03/corrosion-win.tar.gz
+          wget https://github.com/hasali19/corrosion-build/releases/download/autobuild-2025-03-16-22-00/corrosion-win.tar.gz
           tar -xvf corrosion-win.tar.gz
           mv corrosion-win 'C:\Program Files (x86)\Corrosion'
 
