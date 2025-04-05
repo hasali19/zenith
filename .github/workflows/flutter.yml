@@ -207,6 +207,72 @@ jobs:
           name: zenith-flutter-windows-appinstaller
           path: flutter/packages/zenith/zenith.appinstaller
 
+  build_windows_flion:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: beta
+
+      - name: Install wget
+        run: |
+          choco install wget
+
+      - name: Install flion
+        run: cargo install --git https://github.com/hasali19/flion flion-cli
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Download mpv
+        run: |
+          wget https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-v3-20240929-git-c3d9243.7z/download
+          7z x download -ompv
+          cd mpv
+
+      - name: Fetch dart packages
+        run: |
+          cd flutter
+          flutter pub get
+
+      - name: Build windows app
+        run: |
+          $env:MPV_DIR="$(pwd)\mpv"
+          $env:GIT_COMMIT_HASH=(git rev-parse HEAD)
+          cd flutter/packages/zenith/flion
+          flion build --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zenith-flutter-windows
+          path: flutter/packages/zenith/build/windows/x64/runner/Release
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build msix package
+        run: |
+          $env:MPV_DIR="$(pwd)\mpv"
+          cd flutter/packages/zenith
+          $version = (cat .\pubspec.yaml | select-string -pattern '^version: (.+)').Matches[0].Groups[1].Value.Split('+')[0].Trim()
+          $version = "$version.$env:GITHUB_RUN_NUMBER"
+          echo "Building MSIX package version $version"
+          dart run msix:create --display-name 'Zenith (Flion)' --identity-name 'dev.hasali.zenith-flion' --version 0.0.0.0 --publisher 'CN=hasali19, C=UK' --sign-msix false --build-windows false
+          [System.IO.File]::WriteAllBytes("$(pwd)\cert.pfx", [Convert]::FromBase64String("${{ secrets.CODE_SIGNING_CERT_PFX }}"))
+          signtool sign /fd SHA256 /a /f "$(pwd)\cert.pfx" /p '${{ secrets.CODE_SIGNING_CERT_PASSWORD }}' .\build\windows\x64\runner\Release\zenith.msix
+          echo "Generating appinstaller"
+          (cat flion\zenith.appinstaller) -replace '%VERSION%', $version > zenith.appinstaller
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zenith-flutter-flion-msix
+          path: flutter/packages/zenith/build/windows/x64/runner/Release/zenith.msix
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zenith-flutter-flion-appinstaller
+          path: flutter/packages/zenith/zenith.appinstaller
+
   release:
     runs-on: ubuntu-latest
     if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
