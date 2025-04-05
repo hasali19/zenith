@@ -142,18 +142,18 @@ class HeaderContent extends ConsumerWidget {
       if (state.item.director != null)
         TableRow(
           children: [
-            const TableCell(
+            TableCell(
                 child: Text('Director', style: TextStyle(color: Colors.grey))),
-            const TableCell(child: SizedBox()),
+            TableCell(child: SizedBox()),
             TableCell(child: Text(state.item.director!)),
           ],
         ),
       if (state.item.genres.isNotEmpty)
         TableRow(
           children: [
-            const TableCell(
+            TableCell(
                 child: Text('Genres', style: TextStyle(color: Colors.grey))),
-            const TableCell(child: SizedBox()),
+            TableCell(child: SizedBox()),
             TableCell(child: Text(state.item.genres.join(', '))),
           ],
         ),

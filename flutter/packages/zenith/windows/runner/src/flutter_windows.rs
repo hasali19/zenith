@@ -41,6 +41,8 @@ impl FlutterDesktopViewController {
             dart_entrypoint: null(),
             dart_entrypoint_argc: args.len() as i32,
             dart_entrypoint_argv: argv.as_mut_ptr(),
+            gpu_preference: 0,
+            ui_thread_policy: 0,
         };
 
         let engine = unsafe { FlutterDesktopEngineCreate(&engine_properties) };

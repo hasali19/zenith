@@ -50,10 +50,10 @@ packages:
     dependency: transitive
     description:
       name: async
-      sha256: d2872f9c19731c2e5f10444b14686eb7cc85c76274bd6c16e1816bff9a3bab63
+      sha256: "758e6d74e971c3e5aceb4110bfd6698efc7f501675bcfe0c775459a8140750eb"
       url: "https://pub.dev"
     source: hosted
-    version: "2.12.0"
+    version: "2.13.0"
   audio_video_progress_bar:
     dependency: transitive
     description:
@@ -456,6 +456,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+  flion:
+    dependency: transitive
+    description:
+      path: "packages/flion"
+      ref: "573b2b07764d1c4a3c13a20618ca6df3ae1891e6"
+      resolved-ref: "573b2b07764d1c4a3c13a20618ca6df3ae1891e6"
+      url: "https://github.com/hasali19/flion.git"
+    source: git
+    version: "0.0.1"
   flutter:
     dependency: transitive
     description: flutter
@@ -1638,5 +1647,5 @@ packages:
     source: hosted
     version: "3.1.2"
 sdks:
-  dart: ">=3.7.0-0 <4.0.0"
+  dart: ">=3.8.0-171.0.dev <4.0.0"
   flutter: ">=3.24.0"
