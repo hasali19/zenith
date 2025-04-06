@@ -87,7 +87,7 @@ impl MpvPlayer {
 
     pub fn load_file(&self, url: &str) {
         let url = CString::new(url).unwrap();
-        let mut args = [s!("loadfile"), url.as_ptr(), ptr::null()];
+        let mut args = [s!("loadfile"), url.as_ptr(), s!("append"), ptr::null()];
         unsafe {
             mpv_command_async(self.mpv, 0, &mut args as *mut *const c_char);
         }

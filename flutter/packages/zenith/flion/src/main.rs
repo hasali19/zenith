@@ -19,20 +19,19 @@ use flion::{
     include_plugins,
 };
 use media_player::{MediaPlayer, MediaPlayerEvent, MediaTrack, MediaTrackType};
-use windows::UI::Composition::Compositor;
+use windows::UI::Composition::{Compositor, Visual};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
     DWM_SYSTEMBACKDROP_TYPE, DWMSBT_MAINWINDOW, DWMWA_SYSTEMBACKDROP_TYPE, DwmSetWindowAttribute,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExW, DefWindowProcW, HTTRANSPARENT, IDC_ARROW, LoadCursorW, MoveWindow,
-    RegisterClassExW, SW_SHOW, ShowWindow, WINDOW_EX_STYLE, WM_NCHITTEST, WNDCLASSEXW, WS_CHILD,
-    WS_CLIPSIBLINGS,
+    CreateWindowExW, DefWindowProcW, DestroyWindow, HTTRANSPARENT, IDC_ARROW, LoadCursorW,
+    MoveWindow, RegisterClassExW, SW_SHOW, ShowWindow, WINDOW_EX_STYLE, WM_NCHITTEST, WNDCLASSEXW,
+    WS_CHILD, WS_CLIPSIBLINGS,
 };
 use windows::core::{Interface, w};
-use windows_numerics::{Vector2, Vector3};
 use winit::dpi::LogicalSize;
-use winit::event_loop::{ControlFlow, EventLoopBuilder};
+use winit::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
 use winit::platform::windows::WindowBuilderExtWindows;
 use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use winit::window::WindowBuilder;
@@ -113,58 +112,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_platform_message_handler("zenith.hasali.uk/windowing", Box::new(WindowingPlugin))
         .with_platform_view_factory("video", {
             let event_loop = event_loop.create_proxy();
-            move |compositor: &Compositor, _id: i32, args: EncodableValue<'_>| {
-                let visual = compositor.CreateSpriteVisual()?;
-
+            move |compositor: &Compositor,
+                  _id: i32,
+                  args: EncodableValue<'_>|
+                  -> eyre::Result<Box<dyn PlatformView>> {
                 let player = *args.as_i64().unwrap() as *const MediaPlayer;
 
-                let mpv_window = unsafe {
-                    CreateWindowExW(
-                        WINDOW_EX_STYLE::default(),
-                        w!("MpvWindow"),
-                        w!("mpv window"),
-                        WS_CHILD | WS_CLIPSIBLINGS,
-                        0,
-                        0,
-                        300,
-                        300,
-                        Some(HWND(parent_hwnd as _)),
-                        None,
-                        None,
-                        None,
-                    )?
-                };
-
-                unsafe {
-                    let _ = ShowWindow(mpv_window, SW_SHOW);
-                    (*player).mpv().set_property("wid", mpv_window.0 as isize);
-                }
-
-                let mpv_window = mpv_window.0 as usize;
-
-                Ok(PlatformView {
-                    visual: visual.cast()?,
-                    on_update: Box::new({
-                        let event_loop = event_loop.clone();
-                        move |args| {
-                            visual.SetSize(Vector2 {
-                                X: args.width as f32,
-                                Y: args.height as f32,
-                            })?;
-
-                            visual.SetOffset(Vector3 {
-                                X: args.x as f32,
-                                Y: args.y as f32,
-                                Z: 0.0,
-                            })?;
-
-                            let _ = event_loop
-                                .send_event(AppEvent::UpdateMpvWindow(mpv_window, args.clone()));
-
-                            Ok(())
-                        }
-                    }),
-                })
+                Ok(Box::new(VideoPlayerView::new(
+                    unsafe { &*player },
+                    compositor,
+                    HWND(parent_hwnd as _),
+                    event_loop.clone(),
+                )?))
             }
         })
         .build(window.clone(), {
@@ -253,7 +212,7 @@ impl StandardMethodHandler for VideoPlayerPlugin {
     fn handle(
         &self,
         method: &str,
-        _args: EncodableValue,
+        args: EncodableValue,
         reply: flion::standard_method_channel::StandardMethodReply,
     ) {
         match method {
@@ -351,8 +310,20 @@ impl StandardMethodHandler for VideoPlayerPlugin {
 
                 reply.success(&EncodableValue::I64(player_ref as i64));
             }
-            "createVideoSurface" => {
-                reply.success(&EncodableValue::I64(0));
+            "destroyPlayer" => {
+                let args = args.as_map().unwrap();
+
+                let player = *args
+                    .get(&EncodableValue::Str("player"))
+                    .unwrap()
+                    .as_i64()
+                    .unwrap();
+
+                let player = unsafe { (player as *const MediaPlayer).as_ref().unwrap() };
+
+                player.quit();
+
+                reply.success(&EncodableValue::Null);
             }
             "getProcs" => {
                 macro_rules! proc {
@@ -440,4 +411,72 @@ fn build_tracks_list(tracks: &[MediaTrack]) -> EncodableValue<'_> {
             })
             .collect(),
     )
+}
+
+struct VideoPlayerView {
+    visual: Visual,
+    event_loop: EventLoopProxy<AppEvent>,
+    window: usize,
+}
+
+impl VideoPlayerView {
+    pub fn new(
+        player: &MediaPlayer,
+        compositor: &Compositor,
+        parent: HWND,
+        event_loop: EventLoopProxy<AppEvent>,
+    ) -> eyre::Result<VideoPlayerView> {
+        let visual = compositor.CreateSpriteVisual()?;
+
+        let mpv_window = unsafe {
+            CreateWindowExW(
+                WINDOW_EX_STYLE::default(),
+                w!("MpvWindow"),
+                w!("mpv window"),
+                WS_CHILD | WS_CLIPSIBLINGS,
+                0,
+                0,
+                300,
+                300,
+                Some(parent),
+                None,
+                None,
+                None,
+            )?
+        };
+
+        unsafe {
+            let _ = ShowWindow(mpv_window, SW_SHOW);
+        }
+
+        player.mpv().set_property("wid", mpv_window.0 as isize);
+
+        Ok(VideoPlayerView {
+            visual: visual.cast()?,
+            event_loop,
+            window: mpv_window.0 as usize,
+        })
+    }
+}
+
+impl PlatformView for VideoPlayerView {
+    fn visual(&mut self) -> &windows::UI::Composition::Visual {
+        &self.visual
+    }
+
+    fn update(&mut self, args: &flion::PlatformViewUpdateArgs) -> eyre::Result<()> {
+        let _ = self
+            .event_loop
+            .send_event(AppEvent::UpdateMpvWindow(self.window, args.clone()));
+
+        Ok(())
+    }
+}
+
+impl Drop for VideoPlayerView {
+    fn drop(&mut self) {
+        unsafe {
+            DestroyWindow(HWND(self.window as _)).unwrap();
+        }
+    }
 }
