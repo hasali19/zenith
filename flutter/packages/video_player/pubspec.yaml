@@ -17,6 +17,11 @@ dependencies:
     sdk: flutter
 
   ffi: ^2.0.1
+  flion:
+    git:
+      url: https://github.com/hasali19/flion.git
+      ref: 573b2b07764d1c4a3c13a20618ca6df3ae1891e6
+      path: packages/flion
   flutter_hooks: ^0.20.5
   http: ^1.1.0
   plugin_platform_interface: ^2.1.2
@@ -34,6 +39,7 @@ flutter:
         package: dev.hasali.zenith.video_player
         pluginClass: VideoPlayerPlugin
         dartPluginClass: VideoPlayerAndroid
+      flion:
       web:
         pluginClass: VideoPlayerWeb
         fileName: video_player_web.dart

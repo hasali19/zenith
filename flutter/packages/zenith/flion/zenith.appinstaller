@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AppInstaller
+    xmlns="http://schemas.microsoft.com/appx/appinstaller/2018"
+    Version="%VERSION%"
+    Uri="https://github.com/hasali19/zenith/releases/download/flutter%2Flatest/zenith-flion.appinstaller">
+
+    <MainPackage
+        Name="dev.hasali.zenith_flion"
+        Publisher="CN=hasali19, C=UK"
+        Version="%VERSION%"
+        ProcessorArchitecture="x64"
+        Uri="https://github.com/hasali19/zenith/releases/download/flutter%2Flatest/zenith-flion.msix" />
+
+    <UpdateSettings>
+        <AutomaticBackgroundTask />
+    </UpdateSettings>
+
+</AppInstaller>

@@ -1,113 +1,101 @@
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
+import 'package:flion/flion.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../video_player_platform_interface.dart';
+import 'ffi.dart';
 
 const _channel = MethodChannel('video_player');
 
-final class FfiVideoItem extends Struct {
-  external Pointer<Utf8> url;
-  external Pointer<Utf8> title;
-  external Pointer<Utf8> subtitle;
-  @IntPtr()
-  external int externalSubtitlesCount;
-  external Pointer<FfiExternalSubtitle> externalSubtitles;
-}
-
-final class FfiExternalSubtitle extends Struct {
-  external Pointer<Utf8> url;
-  external Pointer<Utf8> title;
-  external Pointer<Utf8> language;
-}
-
-final DynamicLibrary _lib = DynamicLibrary.open('video_player.dll');
-final int Function(int surface) ffiGetTextureId = _lib
-    .lookup<NativeFunction<IntPtr Function(IntPtr)>>('get_texture_id')
-    .asFunction();
-final void Function(int player, Pointer<Pointer<Utf8>> headers, int headerCount)
-    ffiSetHttpHeaders = _lib
-        .lookup<
-            NativeFunction<
-                Void Function(IntPtr, Pointer<Pointer<Utf8>>,
-                    UintPtr)>>('set_http_headers')
-        .asFunction();
-final void Function(int player, Pointer<FfiVideoItem> items, int itemCount,
-        int startIndex, double startPosition) ffiLoad =
-    _lib
-        .lookup<
-            NativeFunction<
-                Void Function(IntPtr, Pointer<FfiVideoItem>, UintPtr, Uint32,
-                    Double)>>('load')
-        .asFunction();
-final void Function(int player, int index) ffiSetAudioTrack = _lib
-    .lookup<NativeFunction<Void Function(IntPtr, Int32)>>('set_audio_track')
-    .asFunction();
-final void Function(int player, int id) ffiSetSubtitleTrack = _lib
-    .lookup<NativeFunction<Void Function(IntPtr, Int64)>>('set_subtitle_track')
-    .asFunction();
-final void Function(int player) ffiPause =
-    _lib.lookup<NativeFunction<Void Function(IntPtr)>>('pause').asFunction();
-final void Function(int player) ffiPlay =
-    _lib.lookup<NativeFunction<Void Function(IntPtr)>>('play').asFunction();
-final void Function(int player) ffiPlaylistNext = _lib
-    .lookup<NativeFunction<Void Function(IntPtr)>>('playlist_next')
-    .asFunction();
-final void Function(int player) ffiPlaylistPrev = _lib
-    .lookup<NativeFunction<Void Function(IntPtr)>>('playlist_prev')
-    .asFunction();
-final void Function(int player, double position) ffiSeekTo = _lib
-    .lookup<NativeFunction<Void Function(IntPtr, Double)>>('seek_to')
-    .asFunction();
-final void Function(int player, double speed) ffiSetSpeed = _lib
-    .lookup<NativeFunction<Void Function(IntPtr, Double)>>('set_speed')
-    .asFunction();
-final void Function(int player, int size) ffiSetSubtitleFontSize = _lib
-    .lookup<NativeFunction<Void Function(IntPtr, Int64)>>(
-        'set_subtitle_font_size')
-    .asFunction();
-
 class VideoPlayerWindows extends VideoPlayerPlatform {
+  static DynamicLibrary? _lib;
+
   static registerWith() {
     VideoPlayerPlatform.instance = VideoPlayerWindows();
+    try {
+      _lib = DynamicLibrary.open('video_player.dll');
+    } catch (e) {
+      print('Could not open video_player.dll');
+    }
   }
 
   @override
   Future<VideoController> createController(
       {Map<String, String>? headers}) async {
-    final int player = await _channel.invokeMethod('createPlayer');
-
-    if (headers != null) {
-      final pHeaders = calloc<Pointer<Utf8>>(headers.length);
-
-      for (final (i, MapEntry(key: name, :value)) in headers.entries.indexed) {
-        pHeaders[i] = '$name: $value'.toNativeUtf8();
-      }
-
-      ffiSetHttpHeaders(player, pHeaders, headers.length);
-
-      for (var i = 0; i < headers.length; i++) {
-        calloc.free(pHeaders[i]);
-      }
-
-      calloc.free(pHeaders);
+    VideoPlayerSymbolLoader loader;
+    if (_lib case DynamicLibrary lib) {
+      loader = <T extends NativeType>(name) => lib.lookup<T>(name);
+    } else {
+      final procs = await _channel.invokeMapMethod('getProcs');
+      loader =
+          <T extends NativeType>(name) => Pointer.fromAddress(procs![name]);
     }
 
-    final int surface =
-        await _channel.invokeMethod('createVideoSurface', {'player': player});
+    final procs = VideoPlayerProcs(loader);
 
-    return VideoControllerWindows(player, surface);
+    final controller = VideoControllerWindows(procs);
+    await controller.init(headers, _lib == null);
+    return controller;
   }
 
   @override
   Widget buildView(VideoController controller) {
     if (controller is VideoControllerWindows) {
-      return Texture(textureId: controller.textureId);
+      final surface = controller.surface;
+      if (surface is _TextureSurface) {
+        return Texture(textureId: surface.textureId);
+      } else if (surface is _FlionPlatformViewSurface) {
+        return FlionPlatformView(controller: surface.controller);
+      }
+      throw Exception('Unknow surface type: $surface');
     } else {
       throw ArgumentError.value(controller, 'controller');
     }
+  }
+}
+
+abstract class VideoSurface {
+  int get textureId;
+
+  Future<void> preDestroy();
+  Future<void> postDestroy();
+}
+
+class _TextureSurface implements VideoSurface {
+  final int surface;
+  final VideoPlayerProcs procs;
+
+  const _TextureSurface(this.surface, this.procs);
+
+  @override
+  int get textureId => procs.getTextureId(surface);
+
+  @override
+  Future<void> preDestroy() async {
+    await _channel.invokeMethod('destroyVideoSurface', {'surface': surface});
+  }
+
+  @override
+  Future<void> postDestroy() async {}
+}
+
+class _FlionPlatformViewSurface implements VideoSurface {
+  final FlionPlatformViewController controller;
+
+  const _FlionPlatformViewSurface(this.controller);
+
+  @override
+  int get textureId => 0;
+
+  @override
+  Future<void> preDestroy() async {}
+
+  @override
+  Future<void> postDestroy() async {
+    controller.dispose();
   }
 }
 
@@ -119,10 +107,11 @@ enum PlayerMsgKind {
 }
 
 class VideoControllerWindows extends VideoController with ChangeNotifier {
-  final int player;
-  final int surface;
+  final VideoPlayerProcs procs;
 
-  late final int textureId;
+  late final VideoSurface surface;
+  late final int player;
+  late final _SubtitleStyleOptions _subtitleStyle;
 
   final _positionHandler = MediaPositionHandler();
 
@@ -130,10 +119,8 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
   List<AudioTrack> _audioTracks = [];
   List<SubtitleTrack> _subtitleTracks = [];
   String? _activeSubtitleTrack;
-  _SubtitleStyleOptions _subtitleStyle;
 
-  VideoControllerWindows(this.player, this.surface)
-      : _subtitleStyle = _SubtitleStyleOptions(player: player, size: 40) {
+  VideoControllerWindows(this.procs) {
     _channel.setMethodCallHandler((call) async {
       bool skipNotify = false;
 
@@ -211,8 +198,6 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
         notifyListeners();
       }
     });
-
-    textureId = ffiGetTextureId(surface);
   }
 
   bool _playing = false;
@@ -229,17 +214,17 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
 
   @override
   set position(value) {
-    ffiSeekTo(player, value);
+    procs.seekTo(player, value);
   }
 
   @override
   void dispose() {
     super.dispose();
     Future.microtask(() async {
-      await _channel.invokeMethod('destroyVideoSurface', {'surface': surface});
+      await surface.preDestroy();
       await _channel.invokeMethod('destroyPlayer', {'player': player});
+      await surface.postDestroy();
     });
-    _channel.setMethodCallHandler(null);
   }
 
   @override
@@ -251,6 +236,39 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
 
   @override
   double get playbackSpeed => _playbackSpeed;
+
+  Future<void> init(Map<String, String>? headers, bool isFlion) async {
+    player = await _channel.invokeMethod('createPlayer');
+
+    if (headers != null) {
+      final pHeaders = calloc<Pointer<Utf8>>(headers.length);
+
+      for (final (i, MapEntry(key: name, :value)) in headers.entries.indexed) {
+        pHeaders[i] = '$name: $value'.toNativeUtf8();
+      }
+
+      procs.setHttpHeaders(player, pHeaders, headers.length);
+
+      for (var i = 0; i < headers.length; i++) {
+        calloc.free(pHeaders[i]);
+      }
+
+      calloc.free(pHeaders);
+    }
+
+    if (isFlion) {
+      final viewController = FlionPlatformViewController();
+      await viewController.init(type: 'video', args: player);
+      surface = _FlionPlatformViewSurface(viewController);
+    } else {
+      final surfaceId =
+          await _channel.invokeMethod('createVideoSurface', {'player': player});
+      surface = _TextureSurface(surfaceId, procs);
+    }
+
+    _subtitleStyle =
+        _SubtitleStyleOptions(procs: procs, player: player, size: 40);
+  }
 
   @override
   void load(List<VideoItem> items, int startIndex, double startPosition) {
@@ -285,7 +303,7 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
         }
       }
 
-      ffiLoad(player, pItems, items.length, startIndex, startPosition);
+      procs.load(player, pItems, items.length, startIndex, startPosition);
     });
 
     _state = VideoState.active;
@@ -298,7 +316,7 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
 
   @override
   void pause() {
-    ffiPause(player);
+    procs.pause(player);
     notifyListeners();
   }
 
@@ -308,18 +326,18 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
 
   @override
   void play() {
-    ffiPlay(player);
+    procs.play(player);
     notifyListeners();
   }
 
   @override
   void seekToNextItem() {
-    ffiPlaylistNext(player);
+    procs.playlistNext(player);
   }
 
   @override
   void seekToPreviousItem() {
-    ffiPlaylistPrev(player);
+    procs.playlistPrev(player);
   }
 
   @override
@@ -329,22 +347,22 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
 
   @override
   void setAudioTrack(int index) {
-    ffiSetAudioTrack(player, index);
+    procs.setAudioTrack(player, index);
   }
 
   @override
   void setSubtitleTrack(String? trackId) {
     if (_playlist == null) return;
     if (trackId == null) {
-      ffiSetSubtitleTrack(player, -1);
+      procs.setSubtitleTrack(player, -1);
     } else {
-      ffiSetSubtitleTrack(player, int.parse(trackId));
+      procs.setSubtitleTrack(player, int.parse(trackId));
     }
   }
 
   @override
   void setPlaybackSpeed(double speed) {
-    ffiSetSpeed(player, speed);
+    procs.setSpeed(player, speed);
   }
 
   @override
@@ -368,14 +386,17 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
 }
 
 class _SubtitleStyleOptions extends SubtitleStyleOptions with ChangeNotifier {
+  final VideoPlayerProcs _procs;
   final int _player;
 
   int _size;
 
   _SubtitleStyleOptions({
+    required VideoPlayerProcs procs,
     required int player,
     required int size,
-  })  : _player = player,
+  })  : _procs = procs,
+        _player = player,
         _size = size;
 
   @override
@@ -383,7 +404,7 @@ class _SubtitleStyleOptions extends SubtitleStyleOptions with ChangeNotifier {
 
   @override
   set size(int value) {
-    ffiSetSubtitleFontSize(_player, value);
+    _procs.setSubtitleFontSize(_player, value);
   }
 
   void _setSize(int size) {

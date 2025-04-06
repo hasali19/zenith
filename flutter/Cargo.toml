@@ -5,7 +5,7 @@ members = [
     "packages/zenith/windows/runner",
     "packages/video_player",
 ]
-exclude = ["windows/flutter"]
+exclude = ["windows/flutter", "packages/zenith/flion"]
 
 [workspace.dependencies]
 flutter-desktop-messenger = { path = "crates/flutter-desktop-messenger" }

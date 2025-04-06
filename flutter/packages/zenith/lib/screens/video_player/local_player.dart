@@ -118,7 +118,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     return PopScope(
       onPopInvokedWithResult: _onPopInvoked,
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.transparent,
         body: content,
       ),
     );
