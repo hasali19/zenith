@@ -59,6 +59,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let event_loop = EventLoopBuilder::<AppEvent>::with_user_event().build()?;
 
     let window = WindowBuilder::new()
+        .with_title("Zenith")
         .with_inner_size(LogicalSize::new(1280, 720))
         .with_no_redirection_bitmap(true)
         .build(&event_loop)?;
