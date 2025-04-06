@@ -306,6 +306,10 @@ jobs:
           cp artifacts/zenith-flutter-windows-msix/zenith.msix release_artifacts/zenith-windows.msix
           cp artifacts/zenith-flutter-windows-appinstaller/zenith.appinstaller release_artifacts/zenith-windows.appinstaller
 
+          echo "Preparing flion msix package"
+          cp artifacts/zenith-flutter-flion-msix/zenith.msix release_artifacts/zenith-flion.msix
+          cp artifacts/zenith-flutter-flion-appinstaller/zenith.appinstaller release_artifacts/zenith-flion.appinstaller
+
           echo "Preparing android apks"
           cp artifacts/zenith-flutter-android/app-arm64-v8a-release.apk release_artifacts/zenith-arm64-v8a-release.apk
           cp artifacts/zenith-flutter-android/app-armeabi-v7a-release.apk release_artifacts/zenith-armeabi-v7a-release.apk
