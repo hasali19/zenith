@@ -5,7 +5,7 @@
     Uri="https://github.com/hasali19/zenith/releases/download/flutter%2Flatest/zenith-flion.appinstaller">
 
     <MainPackage
-        Name="dev.hasali.zenith_flion"
+        Name="dev.hasali.zenith-flion"
         Publisher="CN=hasali19, C=UK"
         Version="%VERSION%"
         ProcessorArchitecture="x64"
