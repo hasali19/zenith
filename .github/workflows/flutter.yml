@@ -245,6 +245,8 @@ jobs:
           mkdir ../build/windows/x64/runner/Release
           cp target/release/*.exe,target/release/*.dll,target/release/icudtl.dat ../build/windows/x64/runner/Release
           cp $env:MPV_DIR\libmpv-2.dll ../build/windows/x64/runner/Release
+          cp -r ../build/flutter_assets ../build/windows/x64/runner/Release/data/flutter_assets
+          cp ../build/flion/app.so ../build/windows/x64/runner/Release/data
 
       - uses: actions/upload-artifact@v4
         with:
