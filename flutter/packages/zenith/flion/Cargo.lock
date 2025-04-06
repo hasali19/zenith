@@ -437,7 +437,7 @@ dependencies = [
 [[package]]
 name = "flion"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/flion#5406789afde09f4178e52e4c444322127d19c937"
+source = "git+https://github.com/hasali19/flion#e1cd3f00426dfb530fe5b118a28cba1f0f6a9c39"
 dependencies = [
  "bitflags 2.9.0",
  "byteorder",
@@ -462,12 +462,12 @@ dependencies = [
 [[package]]
 name = "flion-build"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/flion#5406789afde09f4178e52e4c444322127d19c937"
+source = "git+https://github.com/hasali19/flion#e1cd3f00426dfb530fe5b118a28cba1f0f6a9c39"
 
 [[package]]
 name = "flutter-embedder"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/flion#5406789afde09f4178e52e4c444322127d19c937"
+source = "git+https://github.com/hasali19/flion#e1cd3f00426dfb530fe5b118a28cba1f0f6a9c39"
 
 [[package]]
 name = "foreign-types"
@@ -932,7 +932,7 @@ checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
 [[package]]
 name = "plugins-compat"
 version = "0.1.0"
-source = "git+https://github.com/hasali19/flion#5406789afde09f4178e52e4c444322127d19c937"
+source = "git+https://github.com/hasali19/flion#e1cd3f00426dfb530fe5b118a28cba1f0f6a9c39"
 
 [[package]]
 name = "polling"
