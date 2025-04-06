@@ -242,6 +242,8 @@ jobs:
           $env:GIT_COMMIT_HASH=(git rev-parse HEAD)
           cd flutter/packages/zenith/flion
           flion build --release
+          mkdir ../build/windows/x64/runner/Release
+          cp target/release/*.exe,target/release/*.dll,target/release/icudtl.dat ../build/windows/x64/runner/Release
 
       - uses: actions/upload-artifact@v4
         with:
