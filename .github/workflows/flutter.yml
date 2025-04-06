@@ -207,7 +207,7 @@ jobs:
           name: zenith-flutter-windows-appinstaller
           path: flutter/packages/zenith/zenith.appinstaller
 
-  build_windows_flion:
+  build_flion:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -283,6 +283,7 @@ jobs:
       - build_android
       - build_web
       - build_windows
+      - build_flion
     concurrency:
       group: flutter-release
       cancel-in-progress: true
