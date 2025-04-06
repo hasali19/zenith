@@ -34,7 +34,7 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
 use winit::platform::windows::WindowBuilderExtWindows;
 use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
-use winit::window::WindowBuilder;
+use winit::window::{Fullscreen, Window, WindowBuilder};
 
 include_plugins!();
 
@@ -109,7 +109,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut engine = env
         .new_engine_builder()
         .with_plugins(PLUGINS)
-        .with_platform_message_handler("zenith.hasali.uk/windowing", Box::new(WindowingPlugin))
         .with_platform_view_factory("video", {
             let event_loop = event_loop.create_proxy();
             move |compositor: &Compositor,
@@ -134,6 +133,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
             }
         })?;
+
+    engine.set_platform_message_handler(
+        "zenith.hasali.uk/windowing",
+        WindowingPlugin {
+            window: window.clone(),
+        },
+    );
 
     engine.set_platform_message_handler(
         "video_player",
@@ -181,17 +187,26 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-struct WindowingPlugin;
+struct WindowingPlugin {
+    window: Rc<Window>,
+}
 
 impl StandardMethodHandler for WindowingPlugin {
     fn handle(
         &self,
         method: &str,
-        _args: flion::codec::EncodableValue,
+        args: flion::codec::EncodableValue,
         reply: flion::standard_method_channel::StandardMethodReply,
     ) {
         match method {
             "isWindowed" => reply.success(&EncodableValue::Bool(true)),
+            "setFullscreen" => {
+                self.window.set_fullscreen(
+                    args.as_bool()
+                        .expect("setFullscreen arg must be bool")
+                        .then_some(Fullscreen::Borderless(None)),
+                );
+            }
             _ => reply.not_implemented(),
         }
     }
