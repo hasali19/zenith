@@ -247,7 +247,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: zenith-flutter-windows
+          name: zenith-flutter-flion
           path: flutter/packages/zenith/build/windows/x64/runner/Release
 
       - uses: ilammy/msvc-dev-cmd@v1
