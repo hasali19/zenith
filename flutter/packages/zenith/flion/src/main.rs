@@ -15,19 +15,19 @@ use std::rc::Rc;
 use flion::codec::EncodableValue;
 use flion::standard_method_channel::StandardMethodHandler;
 use flion::{
-    BinaryMessenger, FlionEngineEnvironment, PlatformTask, PlatformView, TaskRunnerExecutor,
-    include_plugins,
+    BinaryMessenger, CompositorContext, FlionEngineEnvironment, PlatformTask, PlatformView,
+    TaskRunnerExecutor, include_plugins,
 };
 use media_player::{MediaPlayer, MediaPlayerEvent, MediaTrack, MediaTrackType};
-use windows::UI::Composition::{Compositor, Visual};
-use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
+use windows::Win32::Foundation::{COLORREF, HWND, LPARAM, LRESULT, WPARAM};
+use windows::Win32::Graphics::DirectComposition::{IDCompositionDevice, IDCompositionVisual};
 use windows::Win32::Graphics::Dwm::{
     DWM_SYSTEMBACKDROP_TYPE, DWMSBT_MAINWINDOW, DWMWA_SYSTEMBACKDROP_TYPE, DwmSetWindowAttribute,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExW, DefWindowProcW, DestroyWindow, HTTRANSPARENT, IDC_ARROW, LoadCursorW,
-    MoveWindow, RegisterClassExW, SW_SHOW, ShowWindow, WINDOW_EX_STYLE, WM_NCHITTEST, WNDCLASSEXW,
-    WS_CHILD, WS_CLIPSIBLINGS,
+    CreateWindowExW, DefWindowProcW, DestroyWindow, HTTRANSPARENT, IDC_ARROW, LWA_ALPHA,
+    LoadCursorW, MoveWindow, RegisterClassExW, SW_SHOW, SetLayeredWindowAttributes, ShowWindow,
+    WM_NCHITTEST, WNDCLASSEXW, WS_CHILD, WS_CLIPSIBLINGS, WS_EX_LAYERED,
 };
 use windows::core::{Interface, w};
 use winit::dpi::LogicalSize;
@@ -112,7 +112,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_plugins(PLUGINS)
         .with_platform_view_factory("video", {
             let event_loop = event_loop.create_proxy();
-            move |compositor: &Compositor,
+            move |context: CompositorContext,
                   _id: i32,
                   args: EncodableValue<'_>|
                   -> eyre::Result<Box<dyn PlatformView>> {
@@ -120,7 +120,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
                 Ok(Box::new(VideoPlayerView::new(
                     unsafe { &*player },
-                    compositor,
+                    context.composition_device,
                     HWND(parent_hwnd as _),
                     event_loop.clone(),
                 )?))
@@ -430,23 +430,26 @@ fn build_tracks_list(tracks: &[MediaTrack]) -> EncodableValue<'_> {
 }
 
 struct VideoPlayerView {
-    visual: Visual,
+    visual: IDCompositionVisual,
     event_loop: EventLoopProxy<AppEvent>,
     window: usize,
 }
 
+unsafe impl Send for VideoPlayerView {}
+unsafe impl Sync for VideoPlayerView {}
+
 impl VideoPlayerView {
     pub fn new(
         player: &MediaPlayer,
-        compositor: &Compositor,
+        composition_device: &IDCompositionDevice,
         parent: HWND,
         event_loop: EventLoopProxy<AppEvent>,
     ) -> eyre::Result<VideoPlayerView> {
-        let visual = compositor.CreateSpriteVisual()?;
+        let visual = unsafe { composition_device.CreateVisual()? };
 
         let mpv_window = unsafe {
             CreateWindowExW(
-                WINDOW_EX_STYLE::default(),
+                WS_EX_LAYERED,
                 w!("MpvWindow"),
                 w!("mpv window"),
                 WS_CHILD | WS_CLIPSIBLINGS,
@@ -461,8 +464,12 @@ impl VideoPlayerView {
             )?
         };
 
+        let surface = unsafe { composition_device.CreateSurfaceFromHwnd(mpv_window)? };
+
         unsafe {
+            SetLayeredWindowAttributes(mpv_window, COLORREF(0), 255, LWA_ALPHA)?;
             let _ = ShowWindow(mpv_window, SW_SHOW);
+            visual.SetContent(&surface)?;
         }
 
         player.mpv().set_property("wid", mpv_window.0 as isize);
@@ -476,7 +483,7 @@ impl VideoPlayerView {
 }
 
 impl PlatformView for VideoPlayerView {
-    fn visual(&mut self) -> &windows::UI::Composition::Visual {
+    fn visual(&mut self) -> &IDCompositionVisual {
         &self.visual
     }
 
