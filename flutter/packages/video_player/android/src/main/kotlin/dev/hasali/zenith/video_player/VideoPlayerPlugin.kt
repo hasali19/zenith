@@ -11,6 +11,7 @@ import androidx.media3.common.MediaItem.SubtitleConfiguration
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.common.Player.STATE_IDLE
 import androidx.media3.common.TrackGroup
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
@@ -451,6 +452,7 @@ private class PlayerInstance(
                     ExoPlayer.STATE_ENDED -> PlaybackState.Ended
                     else -> throw IllegalArgumentException("Unknown playback state: $playbackState")
                 }
+                println("Player has changed state: $playbackState")
                 onEvent?.invoke(Event.PlaybackStateChanged(state, player.currentPosition))
             }
 
@@ -578,6 +580,9 @@ private class PlayerInstance(
     }
 
     fun play() {
+        if (player.playbackState == STATE_IDLE) {
+            player.prepare()
+        }
         player.play()
     }
 
