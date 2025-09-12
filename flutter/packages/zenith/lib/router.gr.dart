@@ -375,6 +375,22 @@ class ShowsRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [TranscoderPage]
+class TranscoderRoute extends PageRouteInfo<void> {
+  const TranscoderRoute({List<PageRouteInfo>? children})
+    : super(TranscoderRoute.name, initialChildren: children);
+
+  static const String name = 'TranscoderRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const TranscoderPage();
+    },
+  );
+}
+
+/// generated route for
 /// [VideoPlayerScreen]
 class VideoPlayerRoute extends PageRouteInfo<VideoPlayerRouteArgs> {
   VideoPlayerRoute({

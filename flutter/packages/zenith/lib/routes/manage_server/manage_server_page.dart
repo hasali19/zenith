@@ -21,6 +21,13 @@ class ManageServerPage extends StatelessWidget {
               context.router.push(const ManageUsersRoute());
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.account_circle),
+            title: const Text('Transcoder'),
+            onTap: () {
+              context.router.push(const TranscoderRoute());
+            },
+          ),
         ],
       ),
     );

@@ -61,6 +61,7 @@ class AppRouter extends RootStackRouter {
               children: [
                 AutoRoute(page: ManageServerRoute.page, initial: true),
                 AutoRoute(path: 'users', page: ManageUsersRoute.page),
+                AutoRoute(path: 'transcoder', page: TranscoderRoute.page),
               ],
             ),
             AutoRoute(path: 'settings', page: SettingsRoute.page),

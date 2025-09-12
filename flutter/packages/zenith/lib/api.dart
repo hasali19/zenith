@@ -426,6 +426,37 @@ class CastConfig with _$CastConfig {
       _$CastConfigFromJson(json);
 }
 
+@freezed
+class TranscoderState with _$TranscoderState {
+  factory TranscoderState({
+    required List<TranscoderJob> queue,
+  }) = _TranscoderState;
+
+  factory TranscoderState.fromJson(Map<String, Object?> json) =>
+      _$TranscoderStateFromJson(json);
+}
+
+@Freezed(unionKey: 'state')
+sealed class TranscoderJob with _$TranscoderJob {
+  factory TranscoderJob.queued(
+    // ignore: invalid_annotation_target
+    @JsonKey(name: 'video_id') int videoId,
+    // ignore: invalid_annotation_target
+    @JsonKey(name: 'item_id') int itemId,
+  ) = Queued;
+
+  factory TranscoderJob.processing(
+    // ignore: invalid_annotation_target
+    @JsonKey(name: 'video_id') int videoId,
+    // ignore: invalid_annotation_target
+    @JsonKey(name: 'item_id') int itemId,
+    double progress,
+  ) = Processing;
+
+  factory TranscoderJob.fromJson(Map<String, Object?> json) =>
+      _$TranscoderJobFromJson(json);
+}
+
 final class AuthenticationObserver {
   void Function()? onLoggedIn;
   void Function()? onLoggedOut;
@@ -602,6 +633,25 @@ class ZenithApiClient {
     }
   }
 
+  Future<List<MediaItem>> fetchMediaItems(List<int> ids) async {
+    final res = await _client.get(
+      '/api/items',
+      queryParameters: {
+        'ids': ids,
+      },
+      options: Options(
+        listFormat: ListFormat.multiCompatible,
+      ),
+    );
+
+    if (res.statusCode == 200) {
+      final List<dynamic> json = res.data;
+      return json.map((e) => MediaItem.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to fetch media items');
+    }
+  }
+
   Future<List<MediaItem>> searchByName(String query,
       {List<MediaType>? types, int? limit}) async {
     types ??= [];
@@ -616,7 +666,7 @@ class ZenithApiClient {
       final List<dynamic> json = res.data;
       return json.map((e) => MediaItem.fromJson(e)).toList();
     } else {
-      throw Exception('Failed to fetch episodes');
+      throw Exception('Failed to fetch media items');
     }
   }
 
@@ -780,6 +830,15 @@ class ZenithApiClient {
     });
 
     await _client.post('/api/import/subtitle', data: formData);
+  }
+
+  Future<TranscoderState> fetchTranscoderState() async {
+    final res = await _client.get('/api/transcoder');
+    if (res.statusCode == 200) {
+      return TranscoderState.fromJson(res.data);
+    } else {
+      throw Exception('Failed to get transcoder state');
+    }
   }
 }
 

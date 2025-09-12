@@ -35,6 +35,49 @@ Map<String, dynamic> _$$CastConfigImplToJson(_$CastConfigImpl instance) =>
       'app_id': instance.appId,
     };
 
+_$TranscoderStateImpl _$$TranscoderStateImplFromJson(
+        Map<String, dynamic> json) =>
+    _$TranscoderStateImpl(
+      queue: (json['queue'] as List<dynamic>)
+          .map((e) => TranscoderJob.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+
+Map<String, dynamic> _$$TranscoderStateImplToJson(
+        _$TranscoderStateImpl instance) =>
+    <String, dynamic>{
+      'queue': instance.queue,
+    };
+
+_$QueuedImpl _$$QueuedImplFromJson(Map<String, dynamic> json) => _$QueuedImpl(
+      (json['video_id'] as num).toInt(),
+      (json['item_id'] as num).toInt(),
+      $type: json['state'] as String?,
+    );
+
+Map<String, dynamic> _$$QueuedImplToJson(_$QueuedImpl instance) =>
+    <String, dynamic>{
+      'video_id': instance.videoId,
+      'item_id': instance.itemId,
+      'state': instance.$type,
+    };
+
+_$ProcessingImpl _$$ProcessingImplFromJson(Map<String, dynamic> json) =>
+    _$ProcessingImpl(
+      (json['video_id'] as num).toInt(),
+      (json['item_id'] as num).toInt(),
+      (json['progress'] as num).toDouble(),
+      $type: json['state'] as String?,
+    );
+
+Map<String, dynamic> _$$ProcessingImplToJson(_$ProcessingImpl instance) =>
+    <String, dynamic>{
+      'video_id': instance.videoId,
+      'item_id': instance.itemId,
+      'progress': instance.progress,
+      'state': instance.$type,
+    };
+
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
