@@ -23,6 +23,7 @@ use crate::video_prober::{VideoInfo, VideoProber};
 
 #[derive(Clone, Serialize, Reflect)]
 pub struct Job {
+    pub item_id: i64,
     pub video_id: i64,
     #[serde(flatten)]
     pub state: JobState,
@@ -37,8 +38,9 @@ pub enum JobState {
 }
 
 impl Job {
-    pub fn new(video_id: i64) -> Job {
+    pub fn new(item_id: i64, video_id: i64) -> Job {
         Job {
+            item_id,
             video_id,
             state: JobState::Queued,
         }
@@ -46,6 +48,7 @@ impl Job {
 
     fn progress(&self, progress: f64) -> Job {
         Job {
+            item_id: self.item_id,
             video_id: self.video_id,
             state: JobState::Processing { progress },
         }
@@ -121,13 +124,13 @@ impl Transcoder {
     }
 
     pub async fn enqueue_all(&self) {
-        let ids: Vec<i64> = {
+        let ids: Vec<(i64, i64)> = {
             let mut conn = self.db.acquire().await.unwrap();
             db::videos::get_all_ids(&mut conn).await.unwrap()
         };
 
-        for id in ids {
-            self.enqueue(Job::new(id)).await;
+        for (item_id, video_id) in ids {
+            self.enqueue(Job::new(item_id, video_id)).await;
         }
     }
 

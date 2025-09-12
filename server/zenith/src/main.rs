@@ -143,8 +143,10 @@ async fn run_server() -> eyre::Result<()> {
                 match event {
                     LibraryEvent::MediaAdded(_, id) => metadata.enqueue_unmatched(id),
                     LibraryEvent::MediaRemoved(_, _) => {}
-                    LibraryEvent::VideoAdded(id) => {
-                        transcoder.enqueue(transcoder::Job::new(id)).await
+                    LibraryEvent::VideoAdded { media_id, video_id } => {
+                        transcoder
+                            .enqueue(transcoder::Job::new(media_id, video_id))
+                            .await
                     }
                 }
             }

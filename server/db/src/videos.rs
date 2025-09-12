@@ -1,8 +1,8 @@
 use crate::sql::{self, OnConflict, UpdateList};
 use crate::{ReadConnection, WriteConnection};
 
-pub async fn get_all_ids(conn: &mut ReadConnection) -> eyre::Result<Vec<i64>> {
-    sqlx::query_scalar("SELECT item_id FROM video_files")
+pub async fn get_all_ids(conn: &mut ReadConnection) -> eyre::Result<Vec<(i64, i64)>> {
+    sqlx::query_as("SELECT item_id, id FROM video_files")
         .fetch_all(conn)
         .await
         .map_err(Into::into)

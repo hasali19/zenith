@@ -4,6 +4,7 @@ use axum::Json;
 use axum::extract::Extension;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, sse};
+use db::Db;
 use serde::{Deserialize, Serialize};
 use serde_qs::axum::QsQuery;
 use speq::Reflect;
@@ -13,6 +14,7 @@ use tokio_stream::wrappers::BroadcastStream;
 
 use crate::api::ApiResult;
 use crate::api::error::bad_request;
+use crate::api::ext::OptionExt;
 use crate::transcoder::{self, Job, Transcoder};
 
 #[derive(Serialize, Reflect)]
@@ -75,10 +77,17 @@ pub struct TranscodeParams {
 #[response(status = 200)]
 pub async fn transcode(
     query: QsQuery<TranscodeParams>,
+    db: Extension<Db>,
     transcoder: Extension<Arc<Transcoder>>,
 ) -> ApiResult<impl IntoResponse> {
     match query.video_id {
-        Some(id) => transcoder.enqueue(Job::new(id)).await,
+        Some(id) => {
+            let video = db::video_files::get(&mut *db.acquire().await?, id)
+                .await?
+                .or_not_found("video not found")?;
+
+            transcoder.enqueue(Job::new(video.item_id, video.id)).await
+        }
         None if query.all => transcoder.enqueue_all().await,
         None => return Err(bad_request("no video to transcode")),
     }

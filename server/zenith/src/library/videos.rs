@@ -75,7 +75,9 @@ impl MediaLibrary {
 
         transaction.commit().await?;
 
-        let _ = self.notifier.send(LibraryEvent::VideoAdded(video_id));
+        let _ = self
+            .notifier
+            .send(LibraryEvent::VideoAdded { media_id, video_id });
 
         Ok(())
     }

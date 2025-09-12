@@ -26,7 +26,7 @@ use self::scanner::VideoFileType;
 pub enum LibraryEvent {
     MediaAdded(MediaItemType, i64),
     MediaRemoved(MediaItemType, i64),
-    VideoAdded(i64),
+    VideoAdded { media_id: i64, video_id: i64 },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
