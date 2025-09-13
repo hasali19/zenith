@@ -42,7 +42,7 @@ class TranscoderPage extends ConsumerWidget {
         title: const Text('Transcoder'),
       ),
       body: switch (state) {
-        AsyncData(value: final state) => CustomScrollView(
+        AsyncData(value: final state) when state.isNotEmpty => CustomScrollView(
             slivers: [
               SliverList.builder(
                 itemCount: state.length,
@@ -73,6 +73,7 @@ class TranscoderPage extends ConsumerWidget {
               ),
             ],
           ),
+        AsyncData(value: []) => Center(child: Text('Nothing in the queue')),
         AsyncError(:final error) => Center(child: Text(error.toString())),
         _ => const Center(child: CircularProgressIndicator()),
       },
