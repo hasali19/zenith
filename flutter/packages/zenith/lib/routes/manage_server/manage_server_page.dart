@@ -22,7 +22,7 @@ class ManageServerPage extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.account_circle),
+            leading: const Icon(Icons.av_timer),
             title: const Text('Transcoder'),
             onTap: () {
               context.router.push(const TranscoderRoute());
