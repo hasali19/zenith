@@ -50,6 +50,9 @@ impl TraktClient {
             .await?;
 
         if res.status().is_client_error() {
+            let status = res.status();
+            let body = res.text().await?;
+            tracing::error!("trakt error {}: {}", status, body);
             return Ok(None);
         }
 
