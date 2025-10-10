@@ -249,8 +249,13 @@ fn load_or_create_key(key_path: &Utf8Path) -> eyre::Result<Key> {
 }
 
 fn create_trakt_client(config: &config::Trakt) -> TraktClient {
+    let client = reqwest::Client::builder()
+        .user_agent("Zenith")
+        .build()
+        .unwrap();
+
     TraktClient {
-        client: reqwest::Client::new(),
+        client,
         base_url: config
             .base_url
             .as_deref()
