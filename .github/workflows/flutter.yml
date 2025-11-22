@@ -53,6 +53,7 @@ jobs:
 
       - run: |
           echo $ANDROID_KEYSTORE | base64 -d > keystore.jks
+          echo "$ANDROID_KEYSTORE_PASSWORD" | keytool -v -list -keystore keystore.jks
           export GIT_COMMIT_HASH=$(git rev-parse HEAD)
           flutter build apk --build-number=$GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH --split-per-abi
         working-directory: flutter/packages/zenith
