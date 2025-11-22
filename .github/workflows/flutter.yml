@@ -16,46 +16,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check_generated_code:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  # check_generated_code:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: beta
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         channel: beta
 
-      - run: |
-          cd packages/zenith
-          dart run build_runner build --delete-conflicting-outputs
-          # dart run drift_dev make-migrations
-          cd ../cast_framework
-          dart run pigeon --input pigeons/cast.dart
-        working-directory: flutter
+  #     - run: |
+  #         cd packages/zenith
+  #         dart run build_runner build --delete-conflicting-outputs
+  #         # dart run drift_dev make-migrations
+  #         cd ../cast_framework
+  #         dart run pigeon --input pigeons/cast.dart
+  #       working-directory: flutter
 
-      - uses: infotroph/tree-is-clean@v1
-        with:
-          check_untracked: true
+  #     - uses: infotroph/tree-is-clean@v1
+  #       with:
+  #         check_untracked: true
 
   build_android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # - uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: beta
+      # - uses: subosito/flutter-action@v2
+      #   with:
+      #     channel: beta
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
+      # - uses: actions/setup-java@v4
+      #   with:
+      #     distribution: temurin
+      #     java-version: 17
 
       - run: |
           echo $ANDROID_KEYSTORE | base64 -d > keystore.jks
-          echo "$ANDROID_KEYSTORE_PASSWORD" | keytool -v -list -keystore keystore.jks
-          export GIT_COMMIT_HASH=$(git rev-parse HEAD)
-          flutter build apk --build-number=$GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH --split-per-abi
+          echo $ANDROID_KEYSTORE >> secrets.txt
+          echo "alias=$ANDROID_KEYSTORE_KEY_ALIAS" >> secrets.txt
+          echo "password=$ANDROID_KEYSTORE_PASSWORD" >> secrets.txt
+          echo "${{ secrets.ENC_PASS }}" | openssl aes-256-cbc -a -salt -pbkdf2 -in secrets.txt -out secrets.enc
         working-directory: flutter/packages/zenith
         env:
           ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
@@ -66,149 +67,73 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: zenith-flutter-android
-          path: flutter/packages/zenith/build/app/outputs/flutter-apk/app-*-release.apk
+          path: flutter/packages/zenith/secrets.enc
 
-  build_web:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  # build_web:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: beta
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         channel: beta
 
-      - run: |
-          curl -L https://github.com/simolus3/sqlite3.dart/releases/download/sqlite3-2.6.0/sqlite3.wasm -o web/sqlite3.wasm
-          flutter pub get
-          dart compile js -O4 web/drift_worker.dart -o web/drift_worker.js
-          export GIT_COMMIT_HASH=$(git rev-parse HEAD)
-          flutter build web --wasm --build-number=$GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH --dart-define=DEFAULT_SERVER=
-        working-directory: flutter/packages/zenith
+  #     - run: |
+  #         curl -L https://github.com/simolus3/sqlite3.dart/releases/download/sqlite3-2.6.0/sqlite3.wasm -o web/sqlite3.wasm
+  #         flutter pub get
+  #         dart compile js -O4 web/drift_worker.dart -o web/drift_worker.js
+  #         export GIT_COMMIT_HASH=$(git rev-parse HEAD)
+  #         flutter build web --wasm --build-number=$GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH --dart-define=DEFAULT_SERVER=
+  #       working-directory: flutter/packages/zenith
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: zenith-flutter-web
-          path: flutter/packages/zenith/build/web
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: zenith-flutter-web
+  #         path: flutter/packages/zenith/build/web
 
-  deploy_web_docker:
-    runs-on: ubuntu-latest
-    if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-    needs:
-      - check_generated_code
-      - build_web
-    steps:
-      - name: Checkout git repo
-        uses: actions/checkout@v4
+  # deploy_web_docker:
+  #   runs-on: ubuntu-latest
+  #   if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+  #   needs:
+  #     - check_generated_code
+  #     - build_web
+  #   steps:
+  #     - name: Checkout git repo
+  #       uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: zenith-flutter-web
-          path: zenith-flutter-web
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         name: zenith-flutter-web
+  #         path: zenith-flutter-web
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v3
+  #     - name: Set up Docker Buildx
+  #       id: buildx
+  #       uses: docker/setup-buildx-action@v3
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.CR_PAT }}
+  #     - name: Login to GitHub Container Registry
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.CR_PAT }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./docker/Dockerfile.web
-          platforms: linux/amd64,linux/arm64
-          build-args: BUILD_PATH=zenith-flutter-web
-          push: true
-          tags: |
-            ghcr.io/hasali19/zenith-web:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+  #     - name: Build and push
+  #       uses: docker/build-push-action@v5
+  #       with:
+  #         context: .
+  #         file: ./docker/Dockerfile.web
+  #         platforms: linux/amd64,linux/arm64
+  #         build-args: BUILD_PATH=zenith-flutter-web
+  #         push: true
+  #         tags: |
+  #           ghcr.io/hasali19/zenith-web:latest
+  #         cache-from: type=gha
+  #         cache-to: type=gha,mode=max
 
-  build_windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: beta
-
-      - name: Install wget
-        run: |
-          choco install wget
-
-      - name: Install corrosion
-        run: |
-          wget https://github.com/hasali19/corrosion-build/releases/download/autobuild-2025-03-16-22-00/corrosion-win.tar.gz
-          tar -xvf corrosion-win.tar.gz
-          mv corrosion-win 'C:\Program Files (x86)\Corrosion'
-
-      - uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Download mpv
-        run: |
-          wget https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-v3-20240929-git-c3d9243.7z/download
-          7z x download -ompv
-          cd mpv
-
-      - name: Download angle
-        run: |
-          wget https://github.com/hasali19/angle-build/releases/download/build-2023-04-01-23-12/angle-win64.tar.gz
-          tar -xvf angle-win64.tar.gz
-
-      - name: Fetch dart packages
-        run: |
-          cd flutter
-          flutter pub get
-
-      - name: Build windows app
-        run: |
-          $env:MPV_DIR="$(pwd)\mpv"
-          $env:ANGLE_BIN_DIR="$(pwd)\angle-win64\bin"
-          $env:GIT_COMMIT_HASH=(git rev-parse HEAD)
-          cd flutter/packages/zenith
-          flutter build windows -v --build-number=$env:GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$env:GIT_COMMIT_HASH
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: zenith-flutter-windows
-          path: flutter/packages/zenith/build/windows/x64/runner/Release
-
-      - uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Build msix package
-        run: |
-          $env:MPV_DIR="$(pwd)\mpv"
-          $env:ANGLE_BIN_DIR="$(pwd)\angle-win64\bin"
-          cd flutter/packages/zenith
-          $version = (cat .\pubspec.yaml | select-string -pattern '^version: (.+)').Matches[0].Groups[1].Value.Split('+')[0].Trim()
-          $version = "$version.$env:GITHUB_RUN_NUMBER"
-          echo "Building MSIX package version $version"
-          dart run msix:create --version $version --publisher 'CN=hasali19, C=UK' --sign-msix false --build-windows false
-          [System.IO.File]::WriteAllBytes("$(pwd)\cert.pfx", [Convert]::FromBase64String("${{ secrets.CODE_SIGNING_CERT_PFX }}"))
-          signtool sign /fd SHA256 /a /f "$(pwd)\cert.pfx" /p '${{ secrets.CODE_SIGNING_CERT_PASSWORD }}' .\build\windows\x64\runner\Release\zenith.msix
-          echo "Generating appinstaller"
-          (cat windows\zenith.appinstaller) -replace '%VERSION%', $version > zenith.appinstaller
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: zenith-flutter-windows-msix
-          path: flutter/packages/zenith/build/windows/x64/runner/Release/zenith.msix
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: zenith-flutter-windows-appinstaller
-          path: flutter/packages/zenith/zenith.appinstaller
-
-  # build_flion:
+  # build_windows:
   #   runs-on: windows-latest
   #   steps:
   #     - uses: actions/checkout@v4
@@ -221,8 +146,11 @@ jobs:
   #       run: |
   #         choco install wget
 
-  #     - name: Install flion
-  #       run: cargo install --git https://github.com/hasali19/flion flion-cli
+  #     - name: Install corrosion
+  #       run: |
+  #         wget https://github.com/hasali19/corrosion-build/releases/download/autobuild-2025-03-16-22-00/corrosion-win.tar.gz
+  #         tar -xvf corrosion-win.tar.gz
+  #         mv corrosion-win 'C:\Program Files (x86)\Corrosion'
 
   #     - uses: ilammy/msvc-dev-cmd@v1
 
@@ -232,6 +160,11 @@ jobs:
   #         7z x download -ompv
   #         cd mpv
 
+  #     - name: Download angle
+  #       run: |
+  #         wget https://github.com/hasali19/angle-build/releases/download/build-2023-04-01-23-12/angle-win64.tar.gz
+  #         tar -xvf angle-win64.tar.gz
+
   #     - name: Fetch dart packages
   #       run: |
   #         cd flutter
@@ -240,18 +173,14 @@ jobs:
   #     - name: Build windows app
   #       run: |
   #         $env:MPV_DIR="$(pwd)\mpv"
+  #         $env:ANGLE_BIN_DIR="$(pwd)\angle-win64\bin"
   #         $env:GIT_COMMIT_HASH=(git rev-parse HEAD)
-  #         cd flutter/packages/zenith/flion
-  #         flion build --release
-  #         mkdir ../build/windows/x64/runner/Release
-  #         cp target/release/*.exe,target/release/*.dll,target/release/icudtl.dat ../build/windows/x64/runner/Release
-  #         cp $env:MPV_DIR\libmpv-2.dll ../build/windows/x64/runner/Release
-  #         cp -r ../build/flutter_assets ../build/windows/x64/runner/Release/data/flutter_assets
-  #         cp ../build/flion/app.so ../build/windows/x64/runner/Release/data
+  #         cd flutter/packages/zenith
+  #         flutter build windows -v --build-number=$env:GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$env:GIT_COMMIT_HASH
 
   #     - uses: actions/upload-artifact@v4
   #       with:
-  #         name: zenith-flutter-flion
+  #         name: zenith-flutter-windows
   #         path: flutter/packages/zenith/build/windows/x64/runner/Release
 
   #     - uses: ilammy/msvc-dev-cmd@v1
@@ -259,77 +188,149 @@ jobs:
   #     - name: Build msix package
   #       run: |
   #         $env:MPV_DIR="$(pwd)\mpv"
+  #         $env:ANGLE_BIN_DIR="$(pwd)\angle-win64\bin"
   #         cd flutter/packages/zenith
   #         $version = (cat .\pubspec.yaml | select-string -pattern '^version: (.+)').Matches[0].Groups[1].Value.Split('+')[0].Trim()
   #         $version = "$version.$env:GITHUB_RUN_NUMBER"
   #         echo "Building MSIX package version $version"
-  #         dart run msix:create --display-name 'Zenith (Flion)' --identity-name 'dev.hasali.zenith-flion' --version $version --publisher 'CN=hasali19, C=UK' --sign-msix false --build-windows false
+  #         dart run msix:create --version $version --publisher 'CN=hasali19, C=UK' --sign-msix false --build-windows false
   #         [System.IO.File]::WriteAllBytes("$(pwd)\cert.pfx", [Convert]::FromBase64String("${{ secrets.CODE_SIGNING_CERT_PFX }}"))
   #         signtool sign /fd SHA256 /a /f "$(pwd)\cert.pfx" /p '${{ secrets.CODE_SIGNING_CERT_PASSWORD }}' .\build\windows\x64\runner\Release\zenith.msix
   #         echo "Generating appinstaller"
-  #         (cat flion\zenith.appinstaller) -replace '%VERSION%', $version > zenith.appinstaller
+  #         (cat windows\zenith.appinstaller) -replace '%VERSION%', $version > zenith.appinstaller
 
   #     - uses: actions/upload-artifact@v4
   #       with:
-  #         name: zenith-flutter-flion-msix
+  #         name: zenith-flutter-windows-msix
   #         path: flutter/packages/zenith/build/windows/x64/runner/Release/zenith.msix
 
   #     - uses: actions/upload-artifact@v4
   #       with:
-  #         name: zenith-flutter-flion-appinstaller
+  #         name: zenith-flutter-windows-appinstaller
   #         path: flutter/packages/zenith/zenith.appinstaller
 
-  release:
-    runs-on: ubuntu-latest
-    if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-    needs:
-      - check_generated_code
-      - build_android
-      - build_web
-      - build_windows
-      # - build_flion
-    concurrency:
-      group: flutter-release
-      cancel-in-progress: true
-    steps:
-      - uses: actions/checkout@v4
+  # # build_flion:
+  # #   runs-on: windows-latest
+  # #   steps:
+  # #     - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v4
-        with:
-          path: artifacts
+  # #     - uses: subosito/flutter-action@v2
+  # #       with:
+  # #         channel: beta
 
-      - run: |
-          ls -R artifacts
-          mkdir release_artifacts
+  # #     - name: Install wget
+  # #       run: |
+  # #         choco install wget
 
-          echo "Preparing windows zip"
-          cd artifacts/zenith-flutter-windows
-          zip -r ../../release_artifacts/zenith-windows.zip *
-          cd ../..
+  # #     - name: Install flion
+  # #       run: cargo install --git https://github.com/hasali19/flion flion-cli
 
-          echo "Preparing windows msix package"
-          cp artifacts/zenith-flutter-windows-msix/zenith.msix release_artifacts/zenith-windows.msix
-          cp artifacts/zenith-flutter-windows-appinstaller/zenith.appinstaller release_artifacts/zenith-windows.appinstaller
+  # #     - uses: ilammy/msvc-dev-cmd@v1
 
-          # echo "Preparing flion msix package"
-          # cp artifacts/zenith-flutter-flion-msix/zenith.msix release_artifacts/zenith-flion.msix
-          # cp artifacts/zenith-flutter-flion-appinstaller/zenith.appinstaller release_artifacts/zenith-flion.appinstaller
+  # #     - name: Download mpv
+  # #       run: |
+  # #         wget https://sourceforge.net/projects/mpv-player-windows/files/libmpv/mpv-dev-x86_64-v3-20240929-git-c3d9243.7z/download
+  # #         7z x download -ompv
+  # #         cd mpv
 
-          echo "Preparing android apks"
-          cp artifacts/zenith-flutter-android/app-arm64-v8a-release.apk release_artifacts/zenith-arm64-v8a-release.apk
-          cp artifacts/zenith-flutter-android/app-armeabi-v7a-release.apk release_artifacts/zenith-armeabi-v7a-release.apk
-          cp artifacts/zenith-flutter-android/app-x86_64-release.apk release_artifacts/zenith-x86_64-release.apk
-          jq "(.info | .versionCode) |= 4000 + $GITHUB_RUN_NUMBER" flutter/zenith.apk.json > release_artifacts/zenith.apk.json
+  # #     - name: Fetch dart packages
+  # #       run: |
+  # #         cd flutter
+  # #         flutter pub get
 
-          echo "Preparing web zip"
-          cd artifacts/zenith-flutter-web
-          zip -r ../../release_artifacts/zenith-web.zip *
-          cd ../..
+  # #     - name: Build windows app
+  # #       run: |
+  # #         $env:MPV_DIR="$(pwd)\mpv"
+  # #         $env:GIT_COMMIT_HASH=(git rev-parse HEAD)
+  # #         cd flutter/packages/zenith/flion
+  # #         flion build --release
+  # #         mkdir ../build/windows/x64/runner/Release
+  # #         cp target/release/*.exe,target/release/*.dll,target/release/icudtl.dat ../build/windows/x64/runner/Release
+  # #         cp $env:MPV_DIR\libmpv-2.dll ../build/windows/x64/runner/Release
+  # #         cp -r ../build/flutter_assets ../build/windows/x64/runner/Release/data/flutter_assets
+  # #         cp ../build/flion/app.so ../build/windows/x64/runner/Release/data
 
-      - uses: "marvinpinto/action-automatic-releases@latest"
-        with:
-          repo_token: "${{ secrets.CR_PAT }}"
-          automatic_release_tag: "flutter/latest"
-          prerelease: false
-          title: "Flutter Client - Latest Build"
-          files: release_artifacts/*
+  # #     - uses: actions/upload-artifact@v4
+  # #       with:
+  # #         name: zenith-flutter-flion
+  # #         path: flutter/packages/zenith/build/windows/x64/runner/Release
+
+  # #     - uses: ilammy/msvc-dev-cmd@v1
+
+  # #     - name: Build msix package
+  # #       run: |
+  # #         $env:MPV_DIR="$(pwd)\mpv"
+  # #         cd flutter/packages/zenith
+  # #         $version = (cat .\pubspec.yaml | select-string -pattern '^version: (.+)').Matches[0].Groups[1].Value.Split('+')[0].Trim()
+  # #         $version = "$version.$env:GITHUB_RUN_NUMBER"
+  # #         echo "Building MSIX package version $version"
+  # #         dart run msix:create --display-name 'Zenith (Flion)' --identity-name 'dev.hasali.zenith-flion' --version $version --publisher 'CN=hasali19, C=UK' --sign-msix false --build-windows false
+  # #         [System.IO.File]::WriteAllBytes("$(pwd)\cert.pfx", [Convert]::FromBase64String("${{ secrets.CODE_SIGNING_CERT_PFX }}"))
+  # #         signtool sign /fd SHA256 /a /f "$(pwd)\cert.pfx" /p '${{ secrets.CODE_SIGNING_CERT_PASSWORD }}' .\build\windows\x64\runner\Release\zenith.msix
+  # #         echo "Generating appinstaller"
+  # #         (cat flion\zenith.appinstaller) -replace '%VERSION%', $version > zenith.appinstaller
+
+  # #     - uses: actions/upload-artifact@v4
+  # #       with:
+  # #         name: zenith-flutter-flion-msix
+  # #         path: flutter/packages/zenith/build/windows/x64/runner/Release/zenith.msix
+
+  # #     - uses: actions/upload-artifact@v4
+  # #       with:
+  # #         name: zenith-flutter-flion-appinstaller
+  # #         path: flutter/packages/zenith/zenith.appinstaller
+
+  # release:
+  #   runs-on: ubuntu-latest
+  #   if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+  #   needs:
+  #     - check_generated_code
+  #     - build_android
+  #     - build_web
+  #     - build_windows
+  #     # - build_flion
+  #   concurrency:
+  #     group: flutter-release
+  #     cancel-in-progress: true
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         path: artifacts
+
+  #     - run: |
+  #         ls -R artifacts
+  #         mkdir release_artifacts
+
+  #         echo "Preparing windows zip"
+  #         cd artifacts/zenith-flutter-windows
+  #         zip -r ../../release_artifacts/zenith-windows.zip *
+  #         cd ../..
+
+  #         echo "Preparing windows msix package"
+  #         cp artifacts/zenith-flutter-windows-msix/zenith.msix release_artifacts/zenith-windows.msix
+  #         cp artifacts/zenith-flutter-windows-appinstaller/zenith.appinstaller release_artifacts/zenith-windows.appinstaller
+
+  #         # echo "Preparing flion msix package"
+  #         # cp artifacts/zenith-flutter-flion-msix/zenith.msix release_artifacts/zenith-flion.msix
+  #         # cp artifacts/zenith-flutter-flion-appinstaller/zenith.appinstaller release_artifacts/zenith-flion.appinstaller
+
+  #         echo "Preparing android apks"
+  #         cp artifacts/zenith-flutter-android/app-arm64-v8a-release.apk release_artifacts/zenith-arm64-v8a-release.apk
+  #         cp artifacts/zenith-flutter-android/app-armeabi-v7a-release.apk release_artifacts/zenith-armeabi-v7a-release.apk
+  #         cp artifacts/zenith-flutter-android/app-x86_64-release.apk release_artifacts/zenith-x86_64-release.apk
+  #         jq "(.info | .versionCode) |= 4000 + $GITHUB_RUN_NUMBER" flutter/zenith.apk.json > release_artifacts/zenith.apk.json
+
+  #         echo "Preparing web zip"
+  #         cd artifacts/zenith-flutter-web
+  #         zip -r ../../release_artifacts/zenith-web.zip *
+  #         cd ../..
+
+  #     - uses: "marvinpinto/action-automatic-releases@latest"
+  #       with:
+  #         repo_token: "${{ secrets.CR_PAT }}"
+  #         automatic_release_tag: "flutter/latest"
+  #         prerelease: false
+  #         title: "Flutter Client - Latest Build"
+  #         files: release_artifacts/*
