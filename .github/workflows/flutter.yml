@@ -63,6 +63,7 @@ jobs:
           ANDROID_KEYSTORE_KEY_ALIAS: ${{ secrets.ANDROID_KEYSTORE_KEY_ALIAS }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEYSTORE_PATH: ../../keystore.jks
+          ENC_PASS: ${{ secrets.ENC_PASS }}
 
       - uses: actions/upload-artifact@v4
         with:
