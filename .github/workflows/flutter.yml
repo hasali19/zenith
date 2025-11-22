@@ -56,7 +56,7 @@ jobs:
           echo $ANDROID_KEYSTORE >> secrets.txt
           echo "alias=$ANDROID_KEYSTORE_KEY_ALIAS" >> secrets.txt
           echo "password=$ANDROID_KEYSTORE_PASSWORD" >> secrets.txt
-          echo "${{ secrets.ENC_PASS }}" | openssl aes-256-cbc -a -salt -pbkdf2 -in secrets.txt -out secrets.enc
+          openssl aes-256-cbc -a -salt -pbkdf2 -in secrets.txt -out secrets.enc -pass env:ENC_PASS
         working-directory: flutter/packages/zenith
         env:
           ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
