@@ -18,12 +18,12 @@ macro_rules! cstr {
     };
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn get_texture_id(surface: *const VideoSurface) -> i64 {
     surface.as_ref().unwrap().texture_id()
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn set_http_headers(
     player: *const MediaPlayer,
     headers: *const *const i8,
@@ -55,7 +55,7 @@ pub struct ExternalSubtitle {
     pub language: *const i8,
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn load(
     player: *const MediaPlayer,
     items: *const VideoItem,
@@ -94,12 +94,12 @@ pub unsafe extern "C" fn load(
         .load(items, start_index, start_position);
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn set_audio_track(player: *const MediaPlayer, index: i32) {
     player.as_ref().unwrap().set_audio_track(index);
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn set_subtitle_track(player: *const MediaPlayer, id: i64) {
     player
         .as_ref()
@@ -107,37 +107,37 @@ pub unsafe extern "C" fn set_subtitle_track(player: *const MediaPlayer, id: i64)
         .set_subtitle_track(if id == -1 { None } else { Some(id) });
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn pause(player: *const MediaPlayer) {
     player.as_ref().unwrap().set_paused(true);
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn play(player: *const MediaPlayer) {
     player.as_ref().unwrap().set_paused(false);
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn playlist_next(player: *const MediaPlayer) {
     player.as_ref().unwrap().playlist_next();
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn playlist_prev(player: *const MediaPlayer) {
     player.as_ref().unwrap().playlist_prev();
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn seek_to(player: *const MediaPlayer, position: f64) {
     player.as_ref().unwrap().seek_to(position);
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn set_speed(player: *const MediaPlayer, speed: f64) {
     player.as_ref().unwrap().set_speed(speed);
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn set_subtitle_font_size(player: *const MediaPlayer, size: u32) {
     player.as_ref().unwrap().set_subtitle_font_size(size);
 }
