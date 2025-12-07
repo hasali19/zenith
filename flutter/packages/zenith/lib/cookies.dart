@@ -39,7 +39,7 @@ class _StubCookieJar implements CookieJar {
 
 class _SecureCookieStorage implements Storage {
   final _store = const FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    aOptions: AndroidOptions(resetOnError: true),
   );
 
   @override
