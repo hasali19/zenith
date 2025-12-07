@@ -31,7 +31,7 @@ pub struct PathParser<'a> {
 }
 
 impl PathParser<'_> {
-    pub fn new(matchers: &[ImportMatcher]) -> PathParser {
+    pub fn new(matchers: &[ImportMatcher]) -> PathParser<'_> {
         PathParser { matchers }
     }
 

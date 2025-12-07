@@ -17,12 +17,6 @@ use crate::config::Config;
 use crate::{subtitles, util};
 
 #[derive(Deserialize)]
-#[serde(tag = "type")]
-pub enum ImportSource {
-    Upload,
-}
-
-#[derive(Deserialize)]
 pub struct ImportSubtitleRequest {
     #[serde(flatten)]
     data: ImportSubtitleRequestData,

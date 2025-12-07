@@ -10,7 +10,7 @@ pub struct SelectStatement<'a> {
     limit: Option<u32>,
 }
 
-pub fn select(table: &str) -> SelectStatement {
+pub fn select(table: &str) -> SelectStatement<'_> {
     SelectStatement {
         table,
         columns: &[],
@@ -172,7 +172,7 @@ pub struct InsertStatement<'a> {
     returning: Option<&'a [&'a str]>,
 }
 
-pub fn insert(table: &str) -> InsertStatement {
+pub fn insert(table: &str) -> InsertStatement<'_> {
     InsertStatement {
         table,
         columns: &[],
@@ -274,7 +274,7 @@ pub struct UpdateStatement<'a> {
     condition: Option<Condition<'a>>,
 }
 
-pub fn update(table: &str) -> UpdateStatement {
+pub fn update(table: &str) -> UpdateStatement<'_> {
     UpdateStatement {
         table,
         update: UpdateList::new(),

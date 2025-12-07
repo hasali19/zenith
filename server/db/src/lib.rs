@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 mod migrations;
 mod utils;
 
@@ -119,7 +117,7 @@ pub type ReadConnection = Connection<Read>;
 pub type WriteConnection = Connection<Write>;
 
 impl<T> Connection<T> {
-    pub async fn begin(&mut self) -> sqlx::Result<Transaction<T>> {
+    pub async fn begin(&mut self) -> sqlx::Result<Transaction<'_, T>> {
         use sqlx::Connection;
         self.0.begin().await.map(|t| Transaction(t, PhantomData))
     }
@@ -173,7 +171,7 @@ impl<T> Transaction<'_, T> {
 }
 
 impl Transaction<'_, Write> {
-    pub fn as_read(&mut self) -> &mut Transaction<Read> {
+    pub fn as_read(&mut self) -> &mut Transaction<'_, Read> {
         let transaction = &raw mut self.0;
         unsafe { &mut *transaction.cast::<Transaction<Read>>() }
     }

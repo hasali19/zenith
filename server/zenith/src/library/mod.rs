@@ -112,7 +112,7 @@ impl MediaLibrary {
         Ok(())
     }
 
-    fn parser(&self) -> PathParser {
+    fn parser(&self) -> PathParser<'_> {
         PathParser::new(&self.matchers)
     }
 }

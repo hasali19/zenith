@@ -98,10 +98,10 @@ fn build_route_spec(
         operation.summary = summary;
     }
 
-    if operation.tags.is_empty() {
-        if let Some(file_stem) = Utf8Path::new(route.src_file.as_ref()).file_stem() {
-            operation.tags = vec![file_stem.to_owned()]
-        }
+    if operation.tags.is_empty()
+        && let Some(file_stem) = Utf8Path::new(route.src_file.as_ref()).file_stem()
+    {
+        operation.tags = vec![file_stem.to_owned()]
     }
 
     for (i, param_name) in parse_path_params(&route.path.value).enumerate() {

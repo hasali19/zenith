@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
