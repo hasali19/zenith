@@ -1,4 +1,3 @@
-#![feature(let_chains, vec_into_raw_parts)]
 #![allow(clippy::missing_safety_doc)]
 
 mod media_player;
