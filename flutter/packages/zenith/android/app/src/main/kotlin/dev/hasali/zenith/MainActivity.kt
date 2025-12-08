@@ -5,12 +5,12 @@ import android.app.PictureInPictureParams
 import android.content.ComponentName
 import android.content.Intent
 import android.content.res.Configuration
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.view.WindowManager
 import android.widget.Toast
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -29,7 +29,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
-import androidx.core.net.toUri
 
 class MainActivity : FlutterActivity() {
 
@@ -265,8 +264,10 @@ class MainActivity : FlutterActivity() {
                             contentResolver.delete(uri, null, null)
                             result.success(null)
                         } catch (e: Exception) {
-                            Toast.makeText(context, "Failed to delete file", Toast.LENGTH_SHORT)
-                                .show()
+                            runOnUiThread {
+                                Toast.makeText(context, "Failed to delete file", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
                             result.error("error", e.message, null)
                         }
                     }
