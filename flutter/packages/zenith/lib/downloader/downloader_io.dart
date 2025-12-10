@@ -188,7 +188,8 @@ Future<void> _downloaderCallbackDispatcher() async {
       final String id = call.arguments['id'];
       final bool success = call.arguments['success'];
       if (success) {
-        await db.update(db.downloadedFiles).write(
+        await (db.update(db.downloadedFiles)..where((t) => t.id.equals(id)))
+            .write(
             DownloadedFilesCompanion(path: Value(call.arguments['uri'])));
       } else {
         await (db.delete(db.downloadedFiles)..where((t) => t.id.equals(id)))
