@@ -106,7 +106,7 @@ class ZenithDownloader extends BaseDownloader {
       await _db.transaction(() async {
         await _db
             .into(_db.mediaItems)
-            .insert(
+            .insertOnConflictUpdate(
               MediaItemsCompanion.insert(
                 id: Value(mediaItem.id),
                 type: switch (mediaItem.type) {
