@@ -1,0 +1,17 @@
+watch:
+    dart run build_runner watch
+
+[parallel]
+gen: build-runner-build pigeon-build
+
+[working-directory: 'packages/zenith']
+build-runner-build:
+    dart run build_runner build
+
+[working-directory: 'packages/zenith']
+make-migrations:
+    dart run drift_dev make-migrations
+
+[working-directory: 'packages/cast_framework']
+pigeon-build:
+    dart run pigeon --input pigeons/cast.dart
