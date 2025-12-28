@@ -230,8 +230,8 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
         title = item.name;
         subtitle = item.startDate?.year.toString();
       } else {
-        title = '${item.getSeasonEpisode()!}: ${item.name}';
-        subtitle = item.grandparent!.name;
+        title = '${item.getSeasonEpisode()}: ${item.name}';
+        subtitle = item.grandparent?.name;
       }
 
       final videoStream = item.videoFile?.streams
@@ -243,7 +243,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
           null => NetworkSource(_api.getVideoUrl(item.videoFile!.id)),
           final path => LocalFileSource(path),
         },
-        subtitles: item.videoFile!.subtitles
+        subtitles: (item.videoFile?.subtitles ?? [])
             .where(
               (s) =>
                   !controller.supportsEmbeddedSubtitles ||

@@ -65,6 +65,14 @@ class ZenithImage extends StatelessWidget {
       height: height,
       fit: fit,
       alignment: alignment,
+      imageErrorBuilder: (context, error, stackTrace) {
+        return Stack(
+          children: [
+            Placeholder(),
+            Center(child: Text('WIP')),
+          ],
+        );
+      },
     );
   }
 }

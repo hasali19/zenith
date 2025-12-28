@@ -241,28 +241,27 @@ class HeaderContent extends ConsumerWidget {
       ),
     );
 
-    final videoFile = state.item.videoFile;
-    if (videoFile != null) {
-      if (isDesktop) {
-        actions.add(const SizedBox(width: 16));
-      }
+    if (isDesktop) {
+      actions.add(const SizedBox(width: 16));
+    }
 
-      actions.add(
-        IconButton(
-          icon: Icon(
-            state.downloadedFile == null
-                ? Icons.cloud_download_outlined
-                : Icons.cloud_done_outlined,
-          ),
-          color: switch (state.downloadedFile) {
-            null => null,
-            final f when f.path == null => Colors.orange,
-            _ => Colors.green,
-          },
-          onPressed: () async {
-            final downloadedFile = state.downloadedFile;
-            if (downloadedFile == null) {
-              final videoFile = state.item.videoFile!;
+    final videoFile = state.item.videoFile;
+    actions.add(
+      IconButton(
+        icon: Icon(
+          state.downloadedFile == null
+              ? Icons.cloud_download_outlined
+              : Icons.cloud_done_outlined,
+        ),
+        color: switch (state.downloadedFile) {
+          null => null,
+          final f when f.path == null => Colors.orange,
+          _ => Colors.green,
+        },
+        onPressed: () async {
+          final downloadedFile = state.downloadedFile;
+          if (downloadedFile == null) {
+            if (videoFile != null) {
               final name = videoFile.path.split('/').last;
               ref
                   .read(zenithDownloaderProvider)
@@ -272,64 +271,64 @@ class HeaderContent extends ConsumerWidget {
                     videoFileId: videoFile.id,
                     fileName: name,
                   );
-            } else if (downloadedFile.path == null) {
-              final isCancelConfirmed = await showDialog<bool>(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: Text('Cancel download?'),
-                    actions: [
-                      TextButton(
-                        child: Text('No'),
-                        onPressed: () => Navigator.pop(context, false),
-                      ),
-                      TextButton(
-                        child: Text('Yes'),
-                        onPressed: () => Navigator.pop(context, true),
-                      ),
-                    ],
-                  );
-                },
-              );
-
-              if (isCancelConfirmed == true) {
-                ref
-                    .read(zenithDownloaderProvider)
-                    .cancelDownload(downloadedFile.id);
-              }
-            } else {
-              final isRemoveConfirmed = await showDialog<bool>(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: Text('Delete local file?'),
-                    actions: [
-                      TextButton(
-                        child: Text('Cancel'),
-                        onPressed: () => Navigator.pop(context, false),
-                      ),
-                      TextButton(
-                        child: Text('Delete'),
-                        onPressed: () => Navigator.pop(context, true),
-                      ),
-                    ],
-                  );
-                },
-              );
-
-              if (isRemoveConfirmed == true) {
-                ref
-                    .read(zenithDownloaderProvider)
-                    .removeDownloadedFile(downloadedFile.id);
-              }
             }
-          },
-        ),
-      );
+          } else if (downloadedFile.path == null) {
+            final isCancelConfirmed = await showDialog<bool>(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text('Cancel download?'),
+                  actions: [
+                    TextButton(
+                      child: Text('No'),
+                      onPressed: () => Navigator.pop(context, false),
+                    ),
+                    TextButton(
+                      child: Text('Yes'),
+                      onPressed: () => Navigator.pop(context, true),
+                    ),
+                  ],
+                );
+              },
+            );
 
-      if (isDesktop) {
-        actions.add(const SizedBox(width: 16));
-      }
+            if (isCancelConfirmed == true) {
+              ref
+                  .read(zenithDownloaderProvider)
+                  .cancelDownload(downloadedFile.id);
+            }
+          } else {
+            final isRemoveConfirmed = await showDialog<bool>(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text('Delete local file?'),
+                  actions: [
+                    TextButton(
+                      child: Text('Cancel'),
+                      onPressed: () => Navigator.pop(context, false),
+                    ),
+                    TextButton(
+                      child: Text('Delete'),
+                      onPressed: () => Navigator.pop(context, true),
+                    ),
+                  ],
+                );
+              },
+            );
+
+            if (isRemoveConfirmed == true) {
+              ref
+                  .read(zenithDownloaderProvider)
+                  .removeDownloadedFile(downloadedFile.id);
+            }
+          }
+        },
+      ),
+    );
+
+    if (isDesktop) {
+      actions.add(const SizedBox(width: 16));
     }
 
     actions.add(

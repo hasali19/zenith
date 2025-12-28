@@ -9,22 +9,32 @@ class Servers extends Table with TableInfo<Servers, ServersData> {
   final String? _alias;
   Servers(this.attachedDatabase, [this._alias]);
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
   late final GeneratedColumn<String> uuid = GeneratedColumn<String>(
-      'uuid', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+    'uuid',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
   late final GeneratedColumn<String> url = GeneratedColumn<String>(
-      'url', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+    'url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
   @override
   List<GeneratedColumn> get $columns => [id, uuid, url];
   @override
@@ -38,12 +48,18 @@ class Servers extends Table with TableInfo<Servers, ServersData> {
   ServersData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ServersData(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      uuid: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}uuid'])!,
-      url: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}url'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      uuid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uuid'],
+      )!,
+      url: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}url'],
+      )!,
     );
   }
 
@@ -68,15 +84,13 @@ class ServersData extends DataClass implements Insertable<ServersData> {
   }
 
   ServersCompanion toCompanion(bool nullToAbsent) {
-    return ServersCompanion(
-      id: Value(id),
-      uuid: Value(uuid),
-      url: Value(url),
-    );
+    return ServersCompanion(id: Value(id), uuid: Value(uuid), url: Value(url));
   }
 
-  factory ServersData.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory ServersData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ServersData(
       id: serializer.fromJson<int>(json['id']),
@@ -95,10 +109,10 @@ class ServersData extends DataClass implements Insertable<ServersData> {
   }
 
   ServersData copyWith({int? id, String? uuid, String? url}) => ServersData(
-        id: id ?? this.id,
-        uuid: uuid ?? this.uuid,
-        url: url ?? this.url,
-      );
+    id: id ?? this.id,
+    uuid: uuid ?? this.uuid,
+    url: url ?? this.url,
+  );
   ServersData copyWithCompanion(ServersCompanion data) {
     return ServersData(
       id: data.id.present ? data.id.value : this.id,
@@ -141,8 +155,8 @@ class ServersCompanion extends UpdateCompanion<ServersData> {
     this.id = const Value.absent(),
     required String uuid,
     required String url,
-  })  : uuid = Value(uuid),
-        url = Value(url);
+  }) : uuid = Value(uuid),
+       url = Value(url);
   static Insertable<ServersData> custom({
     Expression<int>? id,
     Expression<String>? uuid,
@@ -155,8 +169,11 @@ class ServersCompanion extends UpdateCompanion<ServersData> {
     });
   }
 
-  ServersCompanion copyWith(
-      {Value<int>? id, Value<String>? uuid, Value<String>? url}) {
+  ServersCompanion copyWith({
+    Value<int>? id,
+    Value<String>? uuid,
+    Value<String>? url,
+  }) {
     return ServersCompanion(
       id: id ?? this.id,
       uuid: uuid ?? this.uuid,
@@ -197,23 +214,48 @@ class DownloadedFiles extends Table
   final String? _alias;
   DownloadedFiles(this.attachedDatabase, [this._alias]);
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
-      'id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   late final GeneratedColumn<int> itemId = GeneratedColumn<int>(
-      'item_id', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+    'item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
   late final GeneratedColumn<int> videoFileId = GeneratedColumn<int>(
-      'video_file_id', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+    'video_file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
   late final GeneratedColumn<String> path = GeneratedColumn<String>(
-      'path', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
+    'path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, itemId, videoFileId, path, createdAt];
+  List<GeneratedColumn> get $columns => [
+    id,
+    itemId,
+    videoFileId,
+    path,
+    createdAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -225,16 +267,26 @@ class DownloadedFiles extends Table
   DownloadedFilesData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return DownloadedFilesData(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
-      itemId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}item_id'])!,
-      videoFileId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}video_file_id'])!,
-      path: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}path']),
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      itemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}item_id'],
+      )!,
+      videoFileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}video_file_id'],
+      )!,
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
     );
   }
 
@@ -251,12 +303,13 @@ class DownloadedFilesData extends DataClass
   final int videoFileId;
   final String? path;
   final DateTime createdAt;
-  const DownloadedFilesData(
-      {required this.id,
-      required this.itemId,
-      required this.videoFileId,
-      this.path,
-      required this.createdAt});
+  const DownloadedFilesData({
+    required this.id,
+    required this.itemId,
+    required this.videoFileId,
+    this.path,
+    required this.createdAt,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -280,8 +333,10 @@ class DownloadedFilesData extends DataClass
     );
   }
 
-  factory DownloadedFilesData.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory DownloadedFilesData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return DownloadedFilesData(
       id: serializer.fromJson<String>(json['id']),
@@ -303,25 +358,26 @@ class DownloadedFilesData extends DataClass
     };
   }
 
-  DownloadedFilesData copyWith(
-          {String? id,
-          int? itemId,
-          int? videoFileId,
-          Value<String?> path = const Value.absent(),
-          DateTime? createdAt}) =>
-      DownloadedFilesData(
-        id: id ?? this.id,
-        itemId: itemId ?? this.itemId,
-        videoFileId: videoFileId ?? this.videoFileId,
-        path: path.present ? path.value : this.path,
-        createdAt: createdAt ?? this.createdAt,
-      );
+  DownloadedFilesData copyWith({
+    String? id,
+    int? itemId,
+    int? videoFileId,
+    Value<String?> path = const Value.absent(),
+    DateTime? createdAt,
+  }) => DownloadedFilesData(
+    id: id ?? this.id,
+    itemId: itemId ?? this.itemId,
+    videoFileId: videoFileId ?? this.videoFileId,
+    path: path.present ? path.value : this.path,
+    createdAt: createdAt ?? this.createdAt,
+  );
   DownloadedFilesData copyWithCompanion(DownloadedFilesCompanion data) {
     return DownloadedFilesData(
       id: data.id.present ? data.id.value : this.id,
       itemId: data.itemId.present ? data.itemId.value : this.itemId,
-      videoFileId:
-          data.videoFileId.present ? data.videoFileId.value : this.videoFileId,
+      videoFileId: data.videoFileId.present
+          ? data.videoFileId.value
+          : this.videoFileId,
       path: data.path.present ? data.path.value : this.path,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -374,10 +430,10 @@ class DownloadedFilesCompanion extends UpdateCompanion<DownloadedFilesData> {
     this.path = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        itemId = Value(itemId),
-        videoFileId = Value(videoFileId),
-        createdAt = Value(createdAt);
+  }) : id = Value(id),
+       itemId = Value(itemId),
+       videoFileId = Value(videoFileId),
+       createdAt = Value(createdAt);
   static Insertable<DownloadedFilesData> custom({
     Expression<String>? id,
     Expression<int>? itemId,
@@ -396,13 +452,14 @@ class DownloadedFilesCompanion extends UpdateCompanion<DownloadedFilesData> {
     });
   }
 
-  DownloadedFilesCompanion copyWith(
-      {Value<String>? id,
-      Value<int>? itemId,
-      Value<int>? videoFileId,
-      Value<String?>? path,
-      Value<DateTime>? createdAt,
-      Value<int>? rowid}) {
+  DownloadedFilesCompanion copyWith({
+    Value<String>? id,
+    Value<int>? itemId,
+    Value<int>? videoFileId,
+    Value<String?>? path,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
     return DownloadedFilesCompanion(
       id: id ?? this.id,
       itemId: itemId ?? this.itemId,
@@ -459,8 +516,10 @@ class DatabaseAtV2 extends GeneratedDatabase {
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [servers, downloadedFiles];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    servers,
+    downloadedFiles,
+  ];
   @override
   int get schemaVersion => 2;
   @override
