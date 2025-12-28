@@ -31,3 +31,6 @@ web/dist/
 
 # Import directory
 /import
+
+# FVM Version Cache
+.fvm/
