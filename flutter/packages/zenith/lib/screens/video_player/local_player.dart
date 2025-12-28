@@ -141,7 +141,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
       }
     });
 
-    useValueChanged(_uiVisibilityController.isVisible, (_, void __) {
+    useValueChanged(_uiVisibilityController.isVisible, (_, void _) {
       platform.setSystemBarsVisible(_uiVisibilityController.isVisible);
     });
 

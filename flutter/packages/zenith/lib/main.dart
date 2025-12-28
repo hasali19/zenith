@@ -239,7 +239,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     }
   }
 
-  _checkForUpdates() async {
+  Future<void> _checkForUpdates() async {
     final update = await _updater.checkForUpdates();
     if (update != null && context.mounted) {
       await update.install();

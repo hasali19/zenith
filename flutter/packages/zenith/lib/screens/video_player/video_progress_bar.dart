@@ -108,7 +108,7 @@ class _VideoProgressBarState extends State<VideoProgressBar> {
           buffered: progress,
           barHeight: 4,
           progressBarColor: Colors.white,
-          baseBarColor: Colors.white.withOpacity(0.24),
+          baseBarColor: Colors.white.withAlpha(61),
           thumbColor: Colors.white,
           thumbRadius: 7,
           thumbGlowRadius: 25,

@@ -237,7 +237,7 @@ class _BackdropBlur extends StatelessWidget {
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
       child: Container(
-        decoration: BoxDecoration(color: color.withOpacity(0.5)),
+        decoration: BoxDecoration(color: color.withAlpha(127)),
         child: child,
       ),
     );

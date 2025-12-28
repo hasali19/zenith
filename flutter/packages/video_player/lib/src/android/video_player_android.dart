@@ -10,7 +10,7 @@ const _methodChannel = MethodChannel('video_player');
 const _eventChannel = EventChannel('video_player/events');
 
 class VideoPlayerAndroid extends VideoPlayerPlatform {
-  static registerWith() {
+  static void registerWith() {
     VideoPlayerPlatform.instance = VideoPlayerAndroid();
   }
 

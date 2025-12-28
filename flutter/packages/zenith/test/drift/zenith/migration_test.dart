@@ -44,7 +44,7 @@ void main() {
   // information, see https://drift.simonbinder.eu/migrations/tests/#verifying-data-integrity
   // TODO: This generated template shows how these tests could be written. Adopt
   // it to your own needs when testing migrations with data integrity.
-  test("migration from v1 to v2 does not corrupt data", () async {
+  test('migration from v1 to v2 does not corrupt data', () async {
     // Add data to insert into the old database, and the expected rows after the
     // migration.
     // TODO: Fill these lists

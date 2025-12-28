@@ -136,7 +136,9 @@ class ManageUsersPage extends ConsumerWidget {
                           final api = ref.read(apiProvider);
                           final url =
                               '${api.baseUrl}/#/login/register?code=${registration.code}';
-                          Share.share(url);
+                          SharePlus.instance.share(
+                            ShareParams(uri: Uri.parse(url)),
+                          );
                         },
                       ),
                       onSecondaryTapUp: (details) {

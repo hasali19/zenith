@@ -94,26 +94,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       title: const Text('Choose theme'),
                       content: StatefulBuilder(
                         builder: (context, setState) {
-                          return SingleChildScrollView(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: AppThemeMode.values
-                                  .map(
-                                    (value) => RadioListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      value: value,
-                                      title: Text(value.label),
-                                      groupValue: selected,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          if (value != null) {
-                                            selected = value;
-                                          }
-                                        });
-                                      },
-                                    ),
-                                  )
-                                  .toList(),
+                          return RadioGroup<AppThemeMode>(
+                            groupValue: selected,
+                            onChanged: (value) {
+                              setState(() {
+                                if (value != null) {
+                                  selected = value;
+                                }
+                              });
+                            },
+                            child: SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: AppThemeMode.values
+                                    .map(
+                                      (value) => RadioListTile(
+                                        contentPadding: EdgeInsets.zero,
+                                        value: value,
+                                        title: Text(value.label),
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
                             ),
                           );
                         },

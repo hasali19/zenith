@@ -13,7 +13,7 @@ const _channel = MethodChannel('video_player');
 class VideoPlayerWindows extends VideoPlayerPlatform {
   static DynamicLibrary? _lib;
 
-  static registerWith() {
+  static void registerWith() {
     VideoPlayerPlatform.instance = VideoPlayerWindows();
     try {
       _lib = DynamicLibrary.open('video_player.dll');

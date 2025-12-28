@@ -49,7 +49,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                     DropdownMenuItem(value: 'http', child: Text('http')),
                     DropdownMenuItem(value: 'https', child: Text('https')),
                   ],
-                  value: _scheme,
+                  initialValue: _scheme,
                   onChanged: (value) => setState(() {
                     _scheme = value!;
                   }),

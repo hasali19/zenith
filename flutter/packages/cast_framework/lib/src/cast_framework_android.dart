@@ -6,7 +6,7 @@ import 'cast_framework_platform_interface.dart';
 final _api = cast.CastApi();
 
 class CastFrameworkAndroid extends CastFrameworkPlatform {
-  static registerWith() {
+  static void registerWith() {
     CastFrameworkPlatform.instance = CastFrameworkAndroid();
   }
 
