@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:zenith/api.dart';
-import 'package:zenith/database/database.dart';
+import 'package:zenith/database/database.dart' as db;
 
 part 'item_details_state.freezed.dart';
 
@@ -14,7 +14,7 @@ abstract class ItemDetailsState with _$ItemDetailsState {
     required PlayableState? playable,
     required bool isWatched,
     required String? durationText,
-    required DownloadedFile? downloadedFile,
+    required db.DownloadedFile? downloadedFile,
   }) = _ItemDetailsState;
 }
 
