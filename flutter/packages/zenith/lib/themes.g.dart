@@ -15,15 +15,15 @@ final themesProvider = ThemesProvider._();
 final class ThemesProvider extends $FunctionalProvider<Themes, Themes, Themes>
     with $Provider<Themes> {
   ThemesProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'themesProvider',
-          isAutoDispose: true,
-          dependencies: <ProviderOrFamily>[],
-          $allTransitiveDependencies: <ProviderOrFamily>[],
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'themesProvider',
+        isAutoDispose: true,
+        dependencies: <ProviderOrFamily>[],
+        $allTransitiveDependencies: <ProviderOrFamily>[],
+      );
 
   @override
   String debugGetCreateSourceHash() => _$themesHash();

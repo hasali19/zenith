@@ -7,10 +7,10 @@ part of 'api.dart';
 // **************************************************************************
 
 _AccessToken _$AccessTokenFromJson(Map<String, dynamic> json) => _AccessToken(
-      owner: $enumDecode(_$AccessTokenOwnerEnumMap, json['owner']),
-      name: json['name'] as String,
-      token: json['token'] as String,
-    );
+  owner: $enumDecode(_$AccessTokenOwnerEnumMap, json['owner']),
+  name: json['name'] as String,
+  token: json['token'] as String,
+);
 
 Map<String, dynamic> _$AccessTokenToJson(_AccessToken instance) =>
     <String, dynamic>{
@@ -24,14 +24,11 @@ const _$AccessTokenOwnerEnumMap = {
   AccessTokenOwner.user: 'user',
 };
 
-_CastConfig _$CastConfigFromJson(Map<String, dynamic> json) => _CastConfig(
-      appId: json['app_id'] as String?,
-    );
+_CastConfig _$CastConfigFromJson(Map<String, dynamic> json) =>
+    _CastConfig(appId: json['app_id'] as String?);
 
 Map<String, dynamic> _$CastConfigToJson(_CastConfig instance) =>
-    <String, dynamic>{
-      'app_id': instance.appId,
-    };
+    <String, dynamic>{'app_id': instance.appId};
 
 _TranscoderState _$TranscoderStateFromJson(Map<String, dynamic> json) =>
     _TranscoderState(
@@ -41,28 +38,26 @@ _TranscoderState _$TranscoderStateFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$TranscoderStateToJson(_TranscoderState instance) =>
-    <String, dynamic>{
-      'queue': instance.queue,
-    };
+    <String, dynamic>{'queue': instance.queue};
 
 Queued _$QueuedFromJson(Map<String, dynamic> json) => Queued(
-      (json['video_id'] as num).toInt(),
-      (json['item_id'] as num).toInt(),
-      $type: json['state'] as String?,
-    );
+  (json['video_id'] as num).toInt(),
+  (json['item_id'] as num).toInt(),
+  $type: json['state'] as String?,
+);
 
 Map<String, dynamic> _$QueuedToJson(Queued instance) => <String, dynamic>{
-      'video_id': instance.videoId,
-      'item_id': instance.itemId,
-      'state': instance.$type,
-    };
+  'video_id': instance.videoId,
+  'item_id': instance.itemId,
+  'state': instance.$type,
+};
 
 Processing _$ProcessingFromJson(Map<String, dynamic> json) => Processing(
-      (json['video_id'] as num).toInt(),
-      (json['item_id'] as num).toInt(),
-      (json['progress'] as num).toDouble(),
-      $type: json['state'] as String?,
-    );
+  (json['video_id'] as num).toInt(),
+  (json['item_id'] as num).toInt(),
+  (json['progress'] as num).toDouble(),
+  $type: json['state'] as String?,
+);
 
 Map<String, dynamic> _$ProcessingToJson(Processing instance) =>
     <String, dynamic>{
@@ -82,18 +77,20 @@ Map<String, dynamic> _$ProcessingToJson(Processing instance) =>
 @ProviderFor(api)
 final apiProvider = ApiProvider._();
 
-final class ApiProvider extends $FunctionalProvider<ZenithApiClient,
-    ZenithApiClient, ZenithApiClient> with $Provider<ZenithApiClient> {
+final class ApiProvider
+    extends
+        $FunctionalProvider<ZenithApiClient, ZenithApiClient, ZenithApiClient>
+    with $Provider<ZenithApiClient> {
   ApiProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'apiProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'apiProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$apiHash();

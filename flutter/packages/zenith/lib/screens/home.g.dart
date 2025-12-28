@@ -12,19 +12,24 @@ part of 'home.dart';
 @ProviderFor(_state)
 final _stateProvider = _StateProvider._();
 
-final class _StateProvider extends $FunctionalProvider<
-        AsyncValue<HomeScreenData>, HomeScreenData, FutureOr<HomeScreenData>>
+final class _StateProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<HomeScreenData>,
+          HomeScreenData,
+          FutureOr<HomeScreenData>
+        >
     with $FutureModifier<HomeScreenData>, $FutureProvider<HomeScreenData> {
   _StateProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'_stateProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'_stateProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$_stateHash();
@@ -32,8 +37,8 @@ final class _StateProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<HomeScreenData> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<HomeScreenData> create(Ref ref) {

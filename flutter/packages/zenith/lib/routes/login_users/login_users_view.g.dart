@@ -12,19 +12,24 @@ part of 'login_users_view.dart';
 @ProviderFor(_users)
 final _usersProvider = _UsersProvider._();
 
-final class _UsersProvider extends $FunctionalProvider<AsyncValue<List<User>>,
-        List<User>, FutureOr<List<User>>>
+final class _UsersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<User>>,
+          List<User>,
+          FutureOr<List<User>>
+        >
     with $FutureModifier<List<User>>, $FutureProvider<List<User>> {
   _UsersProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'_usersProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'_usersProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$_usersHash();

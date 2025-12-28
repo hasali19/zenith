@@ -7,14 +7,11 @@ part of 'github.dart';
 // **************************************************************************
 
 GitReference _$GitReferenceFromJson(Map<String, dynamic> json) => GitReference(
-      object:
-          GitReferenceObject.fromJson(json['object'] as Map<String, dynamic>),
-    );
+  object: GitReferenceObject.fromJson(json['object'] as Map<String, dynamic>),
+);
 
 Map<String, dynamic> _$GitReferenceToJson(GitReference instance) =>
-    <String, dynamic>{
-      'object': instance.object,
-    };
+    <String, dynamic>{'object': instance.object};
 
 GitReferenceObject _$GitReferenceObjectFromJson(Map<String, dynamic> json) =>
     GitReferenceObject(
@@ -23,25 +20,22 @@ GitReferenceObject _$GitReferenceObjectFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$GitReferenceObjectToJson(GitReferenceObject instance) =>
-    <String, dynamic>{
-      'sha': instance.sha,
-      'type': instance.type,
-    };
+    <String, dynamic>{'sha': instance.sha, 'type': instance.type};
 
 Release _$ReleaseFromJson(Map<String, dynamic> json) => Release(
-      assets: (json['assets'] as List<dynamic>)
-          .map((e) => ReleaseAsset.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
+  assets: (json['assets'] as List<dynamic>)
+      .map((e) => ReleaseAsset.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
 
 Map<String, dynamic> _$ReleaseToJson(Release instance) => <String, dynamic>{
-      'assets': instance.assets,
-    };
+  'assets': instance.assets,
+};
 
 ReleaseAsset _$ReleaseAssetFromJson(Map<String, dynamic> json) => ReleaseAsset(
-      name: json['name'] as String,
-      browserDownloadUrl: json['browser_download_url'] as String,
-    );
+  name: json['name'] as String,
+  browserDownloadUrl: json['browser_download_url'] as String,
+);
 
 Map<String, dynamic> _$ReleaseAssetToJson(ReleaseAsset instance) =>
     <String, dynamic>{

@@ -13,18 +13,22 @@ part of 'media_route_controller_controller.dart';
 final mediaRouteControllerControllerProvider =
     MediaRouteControllerControllerProvider._();
 
-final class MediaRouteControllerControllerProvider extends $NotifierProvider<
-    MediaRouteControllerController, MediaRouteControllerState> {
+final class MediaRouteControllerControllerProvider
+    extends
+        $NotifierProvider<
+          MediaRouteControllerController,
+          MediaRouteControllerState
+        > {
   MediaRouteControllerControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'mediaRouteControllerControllerProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'mediaRouteControllerControllerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$mediaRouteControllerControllerHash();
@@ -53,11 +57,14 @@ abstract class _$MediaRouteControllerController
   void runBuild() {
     final ref =
         this.ref as $Ref<MediaRouteControllerState, MediaRouteControllerState>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<MediaRouteControllerState, MediaRouteControllerState>,
-        MediaRouteControllerState,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<MediaRouteControllerState, MediaRouteControllerState>,
+              MediaRouteControllerState,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

@@ -12,68 +12,38 @@ part of 'transcoder_page.dart';
 @ProviderFor(_data)
 final _dataProvider = _DataProvider._();
 
-final class _DataProvider extends $FunctionalProvider<
-        AsyncValue<
-            List<
-                (
-                  TranscoderJob,
-                  MediaItem,
-                )>>,
-        List<
-            (
-              TranscoderJob,
-              MediaItem,
-            )>,
-        FutureOr<
-            List<
-                (
-                  TranscoderJob,
-                  MediaItem,
-                )>>>
+final class _DataProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<(TranscoderJob, MediaItem)>>,
+          List<(TranscoderJob, MediaItem)>,
+          FutureOr<List<(TranscoderJob, MediaItem)>>
+        >
     with
-        $FutureModifier<
-            List<
-                (
-                  TranscoderJob,
-                  MediaItem,
-                )>>,
-        $FutureProvider<
-            List<
-                (
-                  TranscoderJob,
-                  MediaItem,
-                )>> {
+        $FutureModifier<List<(TranscoderJob, MediaItem)>>,
+        $FutureProvider<List<(TranscoderJob, MediaItem)>> {
   _DataProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'_dataProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'_dataProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$_dataHash();
 
   @$internal
   @override
-  $FutureProviderElement<
-      List<
-          (
-            TranscoderJob,
-            MediaItem,
-          )>> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+  $FutureProviderElement<List<(TranscoderJob, MediaItem)>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<
-      List<
-          (
-            TranscoderJob,
-            MediaItem,
-          )>> create(Ref ref) {
+  FutureOr<List<(TranscoderJob, MediaItem)>> create(Ref ref) {
     return _data(ref);
   }
 }

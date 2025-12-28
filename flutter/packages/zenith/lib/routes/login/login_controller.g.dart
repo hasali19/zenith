@@ -16,15 +16,15 @@ final class LoginRedirectPathProvider
     extends $FunctionalProvider<String?, String?, String?>
     with $Provider<String?> {
   LoginRedirectPathProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'loginRedirectPathProvider',
-          isAutoDispose: true,
-          dependencies: <ProviderOrFamily>[],
-          $allTransitiveDependencies: <ProviderOrFamily>[],
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'loginRedirectPathProvider',
+        isAutoDispose: true,
+        dependencies: <ProviderOrFamily>[],
+        $allTransitiveDependencies: <ProviderOrFamily>[],
+      );
 
   @override
   String debugGetCreateSourceHash() => _$loginRedirectPathHash();

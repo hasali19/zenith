@@ -46,12 +46,18 @@ mixin _$ZenithThemeTailorMixin on ThemeExtension<ZenithTheme> {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is ZenithTheme &&
-            const DeepCollectionEquality()
-                .equals(titleLarge, other.titleLarge) &&
-            const DeepCollectionEquality()
-                .equals(titleMedium, other.titleMedium) &&
-            const DeepCollectionEquality()
-                .equals(bodyMedium, other.bodyMedium) &&
+            const DeepCollectionEquality().equals(
+              titleLarge,
+              other.titleLarge,
+            ) &&
+            const DeepCollectionEquality().equals(
+              titleMedium,
+              other.titleMedium,
+            ) &&
+            const DeepCollectionEquality().equals(
+              bodyMedium,
+              other.bodyMedium,
+            ) &&
             const DeepCollectionEquality().equals(bodySmall, other.bodySmall));
   }
 

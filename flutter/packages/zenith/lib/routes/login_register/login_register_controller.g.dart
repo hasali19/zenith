@@ -15,15 +15,15 @@ final loginRegisterControllerProvider = LoginRegisterControllerProvider._();
 final class LoginRegisterControllerProvider
     extends $NotifierProvider<LoginRegisterController, LoginRegisterState> {
   LoginRegisterControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'loginRegisterControllerProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'loginRegisterControllerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$loginRegisterControllerHash();
@@ -50,11 +50,14 @@ abstract class _$LoginRegisterController extends $Notifier<LoginRegisterState> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<LoginRegisterState, LoginRegisterState>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<LoginRegisterState, LoginRegisterState>,
-        LoginRegisterState,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<LoginRegisterState, LoginRegisterState>,
+              LoginRegisterState,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }
