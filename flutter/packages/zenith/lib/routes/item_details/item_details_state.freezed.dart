@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,34 +9,71 @@ part of 'item_details_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
 mixin _$ItemDetailsState {
-  MediaItem get item => throw _privateConstructorUsedError;
-  ImageId? get poster => throw _privateConstructorUsedError;
-  ImageId? get backdrop => throw _privateConstructorUsedError;
-  List<EpisodeGroupState> get seasons => throw _privateConstructorUsedError;
-  PlayableState? get playable => throw _privateConstructorUsedError;
-  bool get isWatched => throw _privateConstructorUsedError;
-  String? get durationText => throw _privateConstructorUsedError;
-  DownloadedFile? get downloadedFile => throw _privateConstructorUsedError;
+  MediaItem get item;
+  ImageId? get poster;
+  ImageId? get backdrop;
+  List<EpisodeGroupState> get seasons;
+  PlayableState? get playable;
+  bool get isWatched;
+  String? get durationText;
+  DownloadedFile? get downloadedFile;
 
   /// Create a copy of ItemDetailsState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
   $ItemDetailsStateCopyWith<ItemDetailsState> get copyWith =>
-      throw _privateConstructorUsedError;
+      _$ItemDetailsStateCopyWithImpl<ItemDetailsState>(
+          this as ItemDetailsState, _$identity);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is ItemDetailsState &&
+            (identical(other.item, item) || other.item == item) &&
+            (identical(other.poster, poster) || other.poster == poster) &&
+            (identical(other.backdrop, backdrop) ||
+                other.backdrop == backdrop) &&
+            const DeepCollectionEquality().equals(other.seasons, seasons) &&
+            (identical(other.playable, playable) ||
+                other.playable == playable) &&
+            (identical(other.isWatched, isWatched) ||
+                other.isWatched == isWatched) &&
+            (identical(other.durationText, durationText) ||
+                other.durationText == durationText) &&
+            const DeepCollectionEquality()
+                .equals(other.downloadedFile, downloadedFile));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      item,
+      poster,
+      backdrop,
+      const DeepCollectionEquality().hash(seasons),
+      playable,
+      isWatched,
+      durationText,
+      const DeepCollectionEquality().hash(downloadedFile));
+
+  @override
+  String toString() {
+    return 'ItemDetailsState(item: $item, poster: $poster, backdrop: $backdrop, seasons: $seasons, playable: $playable, isWatched: $isWatched, durationText: $durationText, downloadedFile: $downloadedFile)';
+  }
 }
 
 /// @nodoc
-abstract class $ItemDetailsStateCopyWith<$Res> {
+abstract mixin class $ItemDetailsStateCopyWith<$Res> {
   factory $ItemDetailsStateCopyWith(
-          ItemDetailsState value, $Res Function(ItemDetailsState) then) =
-      _$ItemDetailsStateCopyWithImpl<$Res, ItemDetailsState>;
+          ItemDetailsState value, $Res Function(ItemDetailsState) _then) =
+      _$ItemDetailsStateCopyWithImpl;
   @useResult
   $Res call(
       {MediaItem item,
@@ -52,14 +89,12 @@ abstract class $ItemDetailsStateCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$ItemDetailsStateCopyWithImpl<$Res, $Val extends ItemDetailsState>
+class _$ItemDetailsStateCopyWithImpl<$Res>
     implements $ItemDetailsStateCopyWith<$Res> {
-  _$ItemDetailsStateCopyWithImpl(this._value, this._then);
+  _$ItemDetailsStateCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final ItemDetailsState _self;
+  final $Res Function(ItemDetailsState) _then;
 
   /// Create a copy of ItemDetailsState
   /// with the given fields replaced by the non-null parameter values.
@@ -75,40 +110,40 @@ class _$ItemDetailsStateCopyWithImpl<$Res, $Val extends ItemDetailsState>
     Object? durationText = freezed,
     Object? downloadedFile = freezed,
   }) {
-    return _then(_value.copyWith(
+    return _then(_self.copyWith(
       item: null == item
-          ? _value.item
+          ? _self.item
           : item // ignore: cast_nullable_to_non_nullable
               as MediaItem,
       poster: freezed == poster
-          ? _value.poster
+          ? _self.poster
           : poster // ignore: cast_nullable_to_non_nullable
               as ImageId?,
       backdrop: freezed == backdrop
-          ? _value.backdrop
+          ? _self.backdrop
           : backdrop // ignore: cast_nullable_to_non_nullable
               as ImageId?,
       seasons: null == seasons
-          ? _value.seasons
+          ? _self.seasons
           : seasons // ignore: cast_nullable_to_non_nullable
               as List<EpisodeGroupState>,
       playable: freezed == playable
-          ? _value.playable
+          ? _self.playable
           : playable // ignore: cast_nullable_to_non_nullable
               as PlayableState?,
       isWatched: null == isWatched
-          ? _value.isWatched
+          ? _self.isWatched
           : isWatched // ignore: cast_nullable_to_non_nullable
               as bool,
       durationText: freezed == durationText
-          ? _value.durationText
+          ? _self.durationText
           : durationText // ignore: cast_nullable_to_non_nullable
               as String?,
       downloadedFile: freezed == downloadedFile
-          ? _value.downloadedFile
+          ? _self.downloadedFile
           : downloadedFile // ignore: cast_nullable_to_non_nullable
               as DownloadedFile?,
-    ) as $Val);
+    ));
   }
 
   /// Create a copy of ItemDetailsState
@@ -116,101 +151,228 @@ class _$ItemDetailsStateCopyWithImpl<$Res, $Val extends ItemDetailsState>
   @override
   @pragma('vm:prefer-inline')
   $PlayableStateCopyWith<$Res>? get playable {
-    if (_value.playable == null) {
+    if (_self.playable == null) {
       return null;
     }
 
-    return $PlayableStateCopyWith<$Res>(_value.playable!, (value) {
-      return _then(_value.copyWith(playable: value) as $Val);
+    return $PlayableStateCopyWith<$Res>(_self.playable!, (value) {
+      return _then(_self.copyWith(playable: value));
     });
   }
 }
 
-/// @nodoc
-abstract class _$$ItemDetailsStateImplCopyWith<$Res>
-    implements $ItemDetailsStateCopyWith<$Res> {
-  factory _$$ItemDetailsStateImplCopyWith(_$ItemDetailsStateImpl value,
-          $Res Function(_$ItemDetailsStateImpl) then) =
-      __$$ItemDetailsStateImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call(
-      {MediaItem item,
-      ImageId? poster,
-      ImageId? backdrop,
-      List<EpisodeGroupState> seasons,
-      PlayableState? playable,
-      bool isWatched,
-      String? durationText,
-      DownloadedFile? downloadedFile});
+/// Adds pattern-matching-related methods to [ItemDetailsState].
+extension ItemDetailsStatePatterns on ItemDetailsState {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
 
-  @override
-  $PlayableStateCopyWith<$Res>? get playable;
-}
-
-/// @nodoc
-class __$$ItemDetailsStateImplCopyWithImpl<$Res>
-    extends _$ItemDetailsStateCopyWithImpl<$Res, _$ItemDetailsStateImpl>
-    implements _$$ItemDetailsStateImplCopyWith<$Res> {
-  __$$ItemDetailsStateImplCopyWithImpl(_$ItemDetailsStateImpl _value,
-      $Res Function(_$ItemDetailsStateImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of ItemDetailsState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? item = null,
-    Object? poster = freezed,
-    Object? backdrop = freezed,
-    Object? seasons = null,
-    Object? playable = freezed,
-    Object? isWatched = null,
-    Object? durationText = freezed,
-    Object? downloadedFile = freezed,
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_ItemDetailsState value)? $default, {
+    required TResult orElse(),
   }) {
-    return _then(_$ItemDetailsStateImpl(
-      item: null == item
-          ? _value.item
-          : item // ignore: cast_nullable_to_non_nullable
-              as MediaItem,
-      poster: freezed == poster
-          ? _value.poster
-          : poster // ignore: cast_nullable_to_non_nullable
-              as ImageId?,
-      backdrop: freezed == backdrop
-          ? _value.backdrop
-          : backdrop // ignore: cast_nullable_to_non_nullable
-              as ImageId?,
-      seasons: null == seasons
-          ? _value._seasons
-          : seasons // ignore: cast_nullable_to_non_nullable
-              as List<EpisodeGroupState>,
-      playable: freezed == playable
-          ? _value.playable
-          : playable // ignore: cast_nullable_to_non_nullable
-              as PlayableState?,
-      isWatched: null == isWatched
-          ? _value.isWatched
-          : isWatched // ignore: cast_nullable_to_non_nullable
-              as bool,
-      durationText: freezed == durationText
-          ? _value.durationText
-          : durationText // ignore: cast_nullable_to_non_nullable
-              as String?,
-      downloadedFile: freezed == downloadedFile
-          ? _value.downloadedFile
-          : downloadedFile // ignore: cast_nullable_to_non_nullable
-              as DownloadedFile?,
-    ));
+    final _that = this;
+    switch (_that) {
+      case _ItemDetailsState() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_ItemDetailsState value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ItemDetailsState():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_ItemDetailsState value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ItemDetailsState() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            MediaItem item,
+            ImageId? poster,
+            ImageId? backdrop,
+            List<EpisodeGroupState> seasons,
+            PlayableState? playable,
+            bool isWatched,
+            String? durationText,
+            DownloadedFile? downloadedFile)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _ItemDetailsState() when $default != null:
+        return $default(
+            _that.item,
+            _that.poster,
+            _that.backdrop,
+            _that.seasons,
+            _that.playable,
+            _that.isWatched,
+            _that.durationText,
+            _that.downloadedFile);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            MediaItem item,
+            ImageId? poster,
+            ImageId? backdrop,
+            List<EpisodeGroupState> seasons,
+            PlayableState? playable,
+            bool isWatched,
+            String? durationText,
+            DownloadedFile? downloadedFile)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ItemDetailsState():
+        return $default(
+            _that.item,
+            _that.poster,
+            _that.backdrop,
+            _that.seasons,
+            _that.playable,
+            _that.isWatched,
+            _that.durationText,
+            _that.downloadedFile);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            MediaItem item,
+            ImageId? poster,
+            ImageId? backdrop,
+            List<EpisodeGroupState> seasons,
+            PlayableState? playable,
+            bool isWatched,
+            String? durationText,
+            DownloadedFile? downloadedFile)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ItemDetailsState() when $default != null:
+        return $default(
+            _that.item,
+            _that.poster,
+            _that.backdrop,
+            _that.seasons,
+            _that.playable,
+            _that.isWatched,
+            _that.durationText,
+            _that.downloadedFile);
+      case _:
+        return null;
+    }
   }
 }
 
 /// @nodoc
 
-class _$ItemDetailsStateImpl implements _ItemDetailsState {
-  _$ItemDetailsStateImpl(
+class _ItemDetailsState implements ItemDetailsState {
+  _ItemDetailsState(
       {required this.item,
       required this.poster,
       required this.backdrop,
@@ -244,16 +406,19 @@ class _$ItemDetailsStateImpl implements _ItemDetailsState {
   @override
   final DownloadedFile? downloadedFile;
 
+  /// Create a copy of ItemDetailsState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'ItemDetailsState(item: $item, poster: $poster, backdrop: $backdrop, seasons: $seasons, playable: $playable, isWatched: $isWatched, durationText: $durationText, downloadedFile: $downloadedFile)';
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$ItemDetailsStateCopyWith<_ItemDetailsState> get copyWith =>
+      __$ItemDetailsStateCopyWithImpl<_ItemDetailsState>(this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ItemDetailsStateImpl &&
+            other is _ItemDetailsState &&
             (identical(other.item, item) || other.item == item) &&
             (identical(other.poster, poster) || other.poster == poster) &&
             (identical(other.backdrop, backdrop) ||
@@ -281,141 +446,156 @@ class _$ItemDetailsStateImpl implements _ItemDetailsState {
       durationText,
       const DeepCollectionEquality().hash(downloadedFile));
 
-  /// Create a copy of ItemDetailsState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$ItemDetailsStateImplCopyWith<_$ItemDetailsStateImpl> get copyWith =>
-      __$$ItemDetailsStateImplCopyWithImpl<_$ItemDetailsStateImpl>(
-          this, _$identity);
-}
-
-abstract class _ItemDetailsState implements ItemDetailsState {
-  factory _ItemDetailsState(
-      {required final MediaItem item,
-      required final ImageId? poster,
-      required final ImageId? backdrop,
-      required final List<EpisodeGroupState> seasons,
-      required final PlayableState? playable,
-      required final bool isWatched,
-      required final String? durationText,
-      required final DownloadedFile? downloadedFile}) = _$ItemDetailsStateImpl;
-
-  @override
-  MediaItem get item;
-  @override
-  ImageId? get poster;
-  @override
-  ImageId? get backdrop;
-  @override
-  List<EpisodeGroupState> get seasons;
-  @override
-  PlayableState? get playable;
-  @override
-  bool get isWatched;
-  @override
-  String? get durationText;
-  @override
-  DownloadedFile? get downloadedFile;
-
-  /// Create a copy of ItemDetailsState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ItemDetailsStateImplCopyWith<_$ItemDetailsStateImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-mixin _$PlayableState {
-  int get id => throw _privateConstructorUsedError;
-  int? get seasonIndex => throw _privateConstructorUsedError;
-  double? get progress => throw _privateConstructorUsedError;
-  String? get caption => throw _privateConstructorUsedError;
-  bool get shouldResume => throw _privateConstructorUsedError;
-  double get playPosition => throw _privateConstructorUsedError;
-
-  /// Create a copy of PlayableState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $PlayableStateCopyWith<PlayableState> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $PlayableStateCopyWith<$Res> {
-  factory $PlayableStateCopyWith(
-          PlayableState value, $Res Function(PlayableState) then) =
-      _$PlayableStateCopyWithImpl<$Res, PlayableState>;
-  @useResult
-  $Res call(
-      {int id,
-      int? seasonIndex,
-      double? progress,
-      String? caption,
-      bool shouldResume,
-      double playPosition});
-}
-
-/// @nodoc
-class _$PlayableStateCopyWithImpl<$Res, $Val extends PlayableState>
-    implements $PlayableStateCopyWith<$Res> {
-  _$PlayableStateCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of PlayableState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? seasonIndex = freezed,
-    Object? progress = freezed,
-    Object? caption = freezed,
-    Object? shouldResume = null,
-    Object? playPosition = null,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      seasonIndex: freezed == seasonIndex
-          ? _value.seasonIndex
-          : seasonIndex // ignore: cast_nullable_to_non_nullable
-              as int?,
-      progress: freezed == progress
-          ? _value.progress
-          : progress // ignore: cast_nullable_to_non_nullable
-              as double?,
-      caption: freezed == caption
-          ? _value.caption
-          : caption // ignore: cast_nullable_to_non_nullable
-              as String?,
-      shouldResume: null == shouldResume
-          ? _value.shouldResume
-          : shouldResume // ignore: cast_nullable_to_non_nullable
-              as bool,
-      playPosition: null == playPosition
-          ? _value.playPosition
-          : playPosition // ignore: cast_nullable_to_non_nullable
-              as double,
-    ) as $Val);
+  String toString() {
+    return 'ItemDetailsState(item: $item, poster: $poster, backdrop: $backdrop, seasons: $seasons, playable: $playable, isWatched: $isWatched, durationText: $durationText, downloadedFile: $downloadedFile)';
   }
 }
 
 /// @nodoc
-abstract class _$$PlayableStateImplCopyWith<$Res>
-    implements $PlayableStateCopyWith<$Res> {
-  factory _$$PlayableStateImplCopyWith(
-          _$PlayableStateImpl value, $Res Function(_$PlayableStateImpl) then) =
-      __$$PlayableStateImplCopyWithImpl<$Res>;
+abstract mixin class _$ItemDetailsStateCopyWith<$Res>
+    implements $ItemDetailsStateCopyWith<$Res> {
+  factory _$ItemDetailsStateCopyWith(
+          _ItemDetailsState value, $Res Function(_ItemDetailsState) _then) =
+      __$ItemDetailsStateCopyWithImpl;
   @override
+  @useResult
+  $Res call(
+      {MediaItem item,
+      ImageId? poster,
+      ImageId? backdrop,
+      List<EpisodeGroupState> seasons,
+      PlayableState? playable,
+      bool isWatched,
+      String? durationText,
+      DownloadedFile? downloadedFile});
+
+  @override
+  $PlayableStateCopyWith<$Res>? get playable;
+}
+
+/// @nodoc
+class __$ItemDetailsStateCopyWithImpl<$Res>
+    implements _$ItemDetailsStateCopyWith<$Res> {
+  __$ItemDetailsStateCopyWithImpl(this._self, this._then);
+
+  final _ItemDetailsState _self;
+  final $Res Function(_ItemDetailsState) _then;
+
+  /// Create a copy of ItemDetailsState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? item = null,
+    Object? poster = freezed,
+    Object? backdrop = freezed,
+    Object? seasons = null,
+    Object? playable = freezed,
+    Object? isWatched = null,
+    Object? durationText = freezed,
+    Object? downloadedFile = freezed,
+  }) {
+    return _then(_ItemDetailsState(
+      item: null == item
+          ? _self.item
+          : item // ignore: cast_nullable_to_non_nullable
+              as MediaItem,
+      poster: freezed == poster
+          ? _self.poster
+          : poster // ignore: cast_nullable_to_non_nullable
+              as ImageId?,
+      backdrop: freezed == backdrop
+          ? _self.backdrop
+          : backdrop // ignore: cast_nullable_to_non_nullable
+              as ImageId?,
+      seasons: null == seasons
+          ? _self._seasons
+          : seasons // ignore: cast_nullable_to_non_nullable
+              as List<EpisodeGroupState>,
+      playable: freezed == playable
+          ? _self.playable
+          : playable // ignore: cast_nullable_to_non_nullable
+              as PlayableState?,
+      isWatched: null == isWatched
+          ? _self.isWatched
+          : isWatched // ignore: cast_nullable_to_non_nullable
+              as bool,
+      durationText: freezed == durationText
+          ? _self.durationText
+          : durationText // ignore: cast_nullable_to_non_nullable
+              as String?,
+      downloadedFile: freezed == downloadedFile
+          ? _self.downloadedFile
+          : downloadedFile // ignore: cast_nullable_to_non_nullable
+              as DownloadedFile?,
+    ));
+  }
+
+  /// Create a copy of ItemDetailsState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $PlayableStateCopyWith<$Res>? get playable {
+    if (_self.playable == null) {
+      return null;
+    }
+
+    return $PlayableStateCopyWith<$Res>(_self.playable!, (value) {
+      return _then(_self.copyWith(playable: value));
+    });
+  }
+}
+
+/// @nodoc
+mixin _$PlayableState {
+  int get id;
+  int? get seasonIndex;
+  double? get progress;
+  String? get caption;
+  bool get shouldResume;
+  double get playPosition;
+
+  /// Create a copy of PlayableState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $PlayableStateCopyWith<PlayableState> get copyWith =>
+      _$PlayableStateCopyWithImpl<PlayableState>(
+          this as PlayableState, _$identity);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is PlayableState &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.seasonIndex, seasonIndex) ||
+                other.seasonIndex == seasonIndex) &&
+            (identical(other.progress, progress) ||
+                other.progress == progress) &&
+            (identical(other.caption, caption) || other.caption == caption) &&
+            (identical(other.shouldResume, shouldResume) ||
+                other.shouldResume == shouldResume) &&
+            (identical(other.playPosition, playPosition) ||
+                other.playPosition == playPosition));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, id, seasonIndex, progress,
+      caption, shouldResume, playPosition);
+
+  @override
+  String toString() {
+    return 'PlayableState(id: $id, seasonIndex: $seasonIndex, progress: $progress, caption: $caption, shouldResume: $shouldResume, playPosition: $playPosition)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $PlayableStateCopyWith<$Res> {
+  factory $PlayableStateCopyWith(
+          PlayableState value, $Res Function(PlayableState) _then) =
+      _$PlayableStateCopyWithImpl;
   @useResult
   $Res call(
       {int id,
@@ -427,12 +607,12 @@ abstract class _$$PlayableStateImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$PlayableStateImplCopyWithImpl<$Res>
-    extends _$PlayableStateCopyWithImpl<$Res, _$PlayableStateImpl>
-    implements _$$PlayableStateImplCopyWith<$Res> {
-  __$$PlayableStateImplCopyWithImpl(
-      _$PlayableStateImpl _value, $Res Function(_$PlayableStateImpl) _then)
-      : super(_value, _then);
+class _$PlayableStateCopyWithImpl<$Res>
+    implements $PlayableStateCopyWith<$Res> {
+  _$PlayableStateCopyWithImpl(this._self, this._then);
+
+  final PlayableState _self;
+  final $Res Function(PlayableState) _then;
 
   /// Create a copy of PlayableState
   /// with the given fields replaced by the non-null parameter values.
@@ -446,39 +626,205 @@ class __$$PlayableStateImplCopyWithImpl<$Res>
     Object? shouldResume = null,
     Object? playPosition = null,
   }) {
-    return _then(_$PlayableStateImpl(
+    return _then(_self.copyWith(
       id: null == id
-          ? _value.id
+          ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
       seasonIndex: freezed == seasonIndex
-          ? _value.seasonIndex
+          ? _self.seasonIndex
           : seasonIndex // ignore: cast_nullable_to_non_nullable
               as int?,
       progress: freezed == progress
-          ? _value.progress
+          ? _self.progress
           : progress // ignore: cast_nullable_to_non_nullable
               as double?,
       caption: freezed == caption
-          ? _value.caption
+          ? _self.caption
           : caption // ignore: cast_nullable_to_non_nullable
               as String?,
       shouldResume: null == shouldResume
-          ? _value.shouldResume
+          ? _self.shouldResume
           : shouldResume // ignore: cast_nullable_to_non_nullable
               as bool,
       playPosition: null == playPosition
-          ? _value.playPosition
+          ? _self.playPosition
           : playPosition // ignore: cast_nullable_to_non_nullable
               as double,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [PlayableState].
+extension PlayableStatePatterns on PlayableState {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_PlayableState value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _PlayableState() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_PlayableState value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _PlayableState():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_PlayableState value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _PlayableState() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(int id, int? seasonIndex, double? progress,
+            String? caption, bool shouldResume, double playPosition)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _PlayableState() when $default != null:
+        return $default(_that.id, _that.seasonIndex, _that.progress,
+            _that.caption, _that.shouldResume, _that.playPosition);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(int id, int? seasonIndex, double? progress,
+            String? caption, bool shouldResume, double playPosition)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _PlayableState():
+        return $default(_that.id, _that.seasonIndex, _that.progress,
+            _that.caption, _that.shouldResume, _that.playPosition);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(int id, int? seasonIndex, double? progress,
+            String? caption, bool shouldResume, double playPosition)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _PlayableState() when $default != null:
+        return $default(_that.id, _that.seasonIndex, _that.progress,
+            _that.caption, _that.shouldResume, _that.playPosition);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 
-class _$PlayableStateImpl implements _PlayableState {
-  _$PlayableStateImpl(
+class _PlayableState implements PlayableState {
+  _PlayableState(
       {required this.id,
       required this.seasonIndex,
       required this.progress,
@@ -499,16 +845,19 @@ class _$PlayableStateImpl implements _PlayableState {
   @override
   final double playPosition;
 
+  /// Create a copy of PlayableState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'PlayableState(id: $id, seasonIndex: $seasonIndex, progress: $progress, caption: $caption, shouldResume: $shouldResume, playPosition: $playPosition)';
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$PlayableStateCopyWith<_PlayableState> get copyWith =>
+      __$PlayableStateCopyWithImpl<_PlayableState>(this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$PlayableStateImpl &&
+            other is _PlayableState &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.seasonIndex, seasonIndex) ||
                 other.seasonIndex == seasonIndex) &&
@@ -525,115 +874,126 @@ class _$PlayableStateImpl implements _PlayableState {
   int get hashCode => Object.hash(runtimeType, id, seasonIndex, progress,
       caption, shouldResume, playPosition);
 
-  /// Create a copy of PlayableState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$PlayableStateImplCopyWith<_$PlayableStateImpl> get copyWith =>
-      __$$PlayableStateImplCopyWithImpl<_$PlayableStateImpl>(this, _$identity);
-}
-
-abstract class _PlayableState implements PlayableState {
-  factory _PlayableState(
-      {required final int id,
-      required final int? seasonIndex,
-      required final double? progress,
-      required final String? caption,
-      required final bool shouldResume,
-      required final double playPosition}) = _$PlayableStateImpl;
-
-  @override
-  int get id;
-  @override
-  int? get seasonIndex;
-  @override
-  double? get progress;
-  @override
-  String? get caption;
-  @override
-  bool get shouldResume;
-  @override
-  double get playPosition;
-
-  /// Create a copy of PlayableState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$PlayableStateImplCopyWith<_$PlayableStateImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-mixin _$EpisodeGroupState {
-  String get name => throw _privateConstructorUsedError;
-  List<EpisodeState> get episodes => throw _privateConstructorUsedError;
-
-  /// Create a copy of EpisodeGroupState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $EpisodeGroupStateCopyWith<EpisodeGroupState> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $EpisodeGroupStateCopyWith<$Res> {
-  factory $EpisodeGroupStateCopyWith(
-          EpisodeGroupState value, $Res Function(EpisodeGroupState) then) =
-      _$EpisodeGroupStateCopyWithImpl<$Res, EpisodeGroupState>;
-  @useResult
-  $Res call({String name, List<EpisodeState> episodes});
-}
-
-/// @nodoc
-class _$EpisodeGroupStateCopyWithImpl<$Res, $Val extends EpisodeGroupState>
-    implements $EpisodeGroupStateCopyWith<$Res> {
-  _$EpisodeGroupStateCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of EpisodeGroupState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? name = null,
-    Object? episodes = null,
-  }) {
-    return _then(_value.copyWith(
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      episodes: null == episodes
-          ? _value.episodes
-          : episodes // ignore: cast_nullable_to_non_nullable
-              as List<EpisodeState>,
-    ) as $Val);
+  String toString() {
+    return 'PlayableState(id: $id, seasonIndex: $seasonIndex, progress: $progress, caption: $caption, shouldResume: $shouldResume, playPosition: $playPosition)';
   }
 }
 
 /// @nodoc
-abstract class _$$EpisodeGroupStateImplCopyWith<$Res>
-    implements $EpisodeGroupStateCopyWith<$Res> {
-  factory _$$EpisodeGroupStateImplCopyWith(_$EpisodeGroupStateImpl value,
-          $Res Function(_$EpisodeGroupStateImpl) then) =
-      __$$EpisodeGroupStateImplCopyWithImpl<$Res>;
+abstract mixin class _$PlayableStateCopyWith<$Res>
+    implements $PlayableStateCopyWith<$Res> {
+  factory _$PlayableStateCopyWith(
+          _PlayableState value, $Res Function(_PlayableState) _then) =
+      __$PlayableStateCopyWithImpl;
   @override
+  @useResult
+  $Res call(
+      {int id,
+      int? seasonIndex,
+      double? progress,
+      String? caption,
+      bool shouldResume,
+      double playPosition});
+}
+
+/// @nodoc
+class __$PlayableStateCopyWithImpl<$Res>
+    implements _$PlayableStateCopyWith<$Res> {
+  __$PlayableStateCopyWithImpl(this._self, this._then);
+
+  final _PlayableState _self;
+  final $Res Function(_PlayableState) _then;
+
+  /// Create a copy of PlayableState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? seasonIndex = freezed,
+    Object? progress = freezed,
+    Object? caption = freezed,
+    Object? shouldResume = null,
+    Object? playPosition = null,
+  }) {
+    return _then(_PlayableState(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      seasonIndex: freezed == seasonIndex
+          ? _self.seasonIndex
+          : seasonIndex // ignore: cast_nullable_to_non_nullable
+              as int?,
+      progress: freezed == progress
+          ? _self.progress
+          : progress // ignore: cast_nullable_to_non_nullable
+              as double?,
+      caption: freezed == caption
+          ? _self.caption
+          : caption // ignore: cast_nullable_to_non_nullable
+              as String?,
+      shouldResume: null == shouldResume
+          ? _self.shouldResume
+          : shouldResume // ignore: cast_nullable_to_non_nullable
+              as bool,
+      playPosition: null == playPosition
+          ? _self.playPosition
+          : playPosition // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+/// @nodoc
+mixin _$EpisodeGroupState {
+  String get name;
+  List<EpisodeState> get episodes;
+
+  /// Create a copy of EpisodeGroupState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $EpisodeGroupStateCopyWith<EpisodeGroupState> get copyWith =>
+      _$EpisodeGroupStateCopyWithImpl<EpisodeGroupState>(
+          this as EpisodeGroupState, _$identity);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is EpisodeGroupState &&
+            (identical(other.name, name) || other.name == name) &&
+            const DeepCollectionEquality().equals(other.episodes, episodes));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, name, const DeepCollectionEquality().hash(episodes));
+
+  @override
+  String toString() {
+    return 'EpisodeGroupState(name: $name, episodes: $episodes)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $EpisodeGroupStateCopyWith<$Res> {
+  factory $EpisodeGroupStateCopyWith(
+          EpisodeGroupState value, $Res Function(EpisodeGroupState) _then) =
+      _$EpisodeGroupStateCopyWithImpl;
   @useResult
   $Res call({String name, List<EpisodeState> episodes});
 }
 
 /// @nodoc
-class __$$EpisodeGroupStateImplCopyWithImpl<$Res>
-    extends _$EpisodeGroupStateCopyWithImpl<$Res, _$EpisodeGroupStateImpl>
-    implements _$$EpisodeGroupStateImplCopyWith<$Res> {
-  __$$EpisodeGroupStateImplCopyWithImpl(_$EpisodeGroupStateImpl _value,
-      $Res Function(_$EpisodeGroupStateImpl) _then)
-      : super(_value, _then);
+class _$EpisodeGroupStateCopyWithImpl<$Res>
+    implements $EpisodeGroupStateCopyWith<$Res> {
+  _$EpisodeGroupStateCopyWithImpl(this._self, this._then);
+
+  final EpisodeGroupState _self;
+  final $Res Function(EpisodeGroupState) _then;
 
   /// Create a copy of EpisodeGroupState
   /// with the given fields replaced by the non-null parameter values.
@@ -643,23 +1003,180 @@ class __$$EpisodeGroupStateImplCopyWithImpl<$Res>
     Object? name = null,
     Object? episodes = null,
   }) {
-    return _then(_$EpisodeGroupStateImpl(
+    return _then(_self.copyWith(
       name: null == name
-          ? _value.name
+          ? _self.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
       episodes: null == episodes
-          ? _value._episodes
+          ? _self.episodes
           : episodes // ignore: cast_nullable_to_non_nullable
               as List<EpisodeState>,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [EpisodeGroupState].
+extension EpisodeGroupStatePatterns on EpisodeGroupState {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_EpisodeGroupState value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _EpisodeGroupState() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_EpisodeGroupState value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _EpisodeGroupState():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_EpisodeGroupState value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _EpisodeGroupState() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(String name, List<EpisodeState> episodes)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _EpisodeGroupState() when $default != null:
+        return $default(_that.name, _that.episodes);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(String name, List<EpisodeState> episodes) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _EpisodeGroupState():
+        return $default(_that.name, _that.episodes);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(String name, List<EpisodeState> episodes)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _EpisodeGroupState() when $default != null:
+        return $default(_that.name, _that.episodes);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 
-class _$EpisodeGroupStateImpl implements _EpisodeGroupState {
-  _$EpisodeGroupStateImpl(
+class _EpisodeGroupState implements EpisodeGroupState {
+  _EpisodeGroupState(
       {required this.name, required final List<EpisodeState> episodes})
       : _episodes = episodes;
 
@@ -673,16 +1190,19 @@ class _$EpisodeGroupStateImpl implements _EpisodeGroupState {
     return EqualUnmodifiableListView(_episodes);
   }
 
+  /// Create a copy of EpisodeGroupState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'EpisodeGroupState(name: $name, episodes: $episodes)';
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$EpisodeGroupStateCopyWith<_EpisodeGroupState> get copyWith =>
+      __$EpisodeGroupStateCopyWithImpl<_EpisodeGroupState>(this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$EpisodeGroupStateImpl &&
+            other is _EpisodeGroupState &&
             (identical(other.name, name) || other.name == name) &&
             const DeepCollectionEquality().equals(other._episodes, _episodes));
   }
@@ -691,116 +1211,98 @@ class _$EpisodeGroupStateImpl implements _EpisodeGroupState {
   int get hashCode => Object.hash(
       runtimeType, name, const DeepCollectionEquality().hash(_episodes));
 
-  /// Create a copy of EpisodeGroupState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$EpisodeGroupStateImplCopyWith<_$EpisodeGroupStateImpl> get copyWith =>
-      __$$EpisodeGroupStateImplCopyWithImpl<_$EpisodeGroupStateImpl>(
-          this, _$identity);
-}
-
-abstract class _EpisodeGroupState implements EpisodeGroupState {
-  factory _EpisodeGroupState(
-      {required final String name,
-      required final List<EpisodeState> episodes}) = _$EpisodeGroupStateImpl;
-
-  @override
-  String get name;
-  @override
-  List<EpisodeState> get episodes;
-
-  /// Create a copy of EpisodeGroupState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$EpisodeGroupStateImplCopyWith<_$EpisodeGroupStateImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-mixin _$EpisodeState {
-  int get id => throw _privateConstructorUsedError;
-  ImageId? get thumbnail => throw _privateConstructorUsedError;
-  String? get overview => throw _privateConstructorUsedError;
-  bool get isWatched => throw _privateConstructorUsedError;
-  String get title => throw _privateConstructorUsedError;
-
-  /// Create a copy of EpisodeState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $EpisodeStateCopyWith<EpisodeState> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $EpisodeStateCopyWith<$Res> {
-  factory $EpisodeStateCopyWith(
-          EpisodeState value, $Res Function(EpisodeState) then) =
-      _$EpisodeStateCopyWithImpl<$Res, EpisodeState>;
-  @useResult
-  $Res call(
-      {int id,
-      ImageId? thumbnail,
-      String? overview,
-      bool isWatched,
-      String title});
-}
-
-/// @nodoc
-class _$EpisodeStateCopyWithImpl<$Res, $Val extends EpisodeState>
-    implements $EpisodeStateCopyWith<$Res> {
-  _$EpisodeStateCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of EpisodeState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? thumbnail = freezed,
-    Object? overview = freezed,
-    Object? isWatched = null,
-    Object? title = null,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      thumbnail: freezed == thumbnail
-          ? _value.thumbnail
-          : thumbnail // ignore: cast_nullable_to_non_nullable
-              as ImageId?,
-      overview: freezed == overview
-          ? _value.overview
-          : overview // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isWatched: null == isWatched
-          ? _value.isWatched
-          : isWatched // ignore: cast_nullable_to_non_nullable
-              as bool,
-      title: null == title
-          ? _value.title
-          : title // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
+  String toString() {
+    return 'EpisodeGroupState(name: $name, episodes: $episodes)';
   }
 }
 
 /// @nodoc
-abstract class _$$EpisodeStateImplCopyWith<$Res>
-    implements $EpisodeStateCopyWith<$Res> {
-  factory _$$EpisodeStateImplCopyWith(
-          _$EpisodeStateImpl value, $Res Function(_$EpisodeStateImpl) then) =
-      __$$EpisodeStateImplCopyWithImpl<$Res>;
+abstract mixin class _$EpisodeGroupStateCopyWith<$Res>
+    implements $EpisodeGroupStateCopyWith<$Res> {
+  factory _$EpisodeGroupStateCopyWith(
+          _EpisodeGroupState value, $Res Function(_EpisodeGroupState) _then) =
+      __$EpisodeGroupStateCopyWithImpl;
   @override
+  @useResult
+  $Res call({String name, List<EpisodeState> episodes});
+}
+
+/// @nodoc
+class __$EpisodeGroupStateCopyWithImpl<$Res>
+    implements _$EpisodeGroupStateCopyWith<$Res> {
+  __$EpisodeGroupStateCopyWithImpl(this._self, this._then);
+
+  final _EpisodeGroupState _self;
+  final $Res Function(_EpisodeGroupState) _then;
+
+  /// Create a copy of EpisodeGroupState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? name = null,
+    Object? episodes = null,
+  }) {
+    return _then(_EpisodeGroupState(
+      name: null == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      episodes: null == episodes
+          ? _self._episodes
+          : episodes // ignore: cast_nullable_to_non_nullable
+              as List<EpisodeState>,
+    ));
+  }
+}
+
+/// @nodoc
+mixin _$EpisodeState {
+  int get id;
+  ImageId? get thumbnail;
+  String? get overview;
+  bool get isWatched;
+  String get title;
+
+  /// Create a copy of EpisodeState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $EpisodeStateCopyWith<EpisodeState> get copyWith =>
+      _$EpisodeStateCopyWithImpl<EpisodeState>(
+          this as EpisodeState, _$identity);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is EpisodeState &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.thumbnail, thumbnail) ||
+                other.thumbnail == thumbnail) &&
+            (identical(other.overview, overview) ||
+                other.overview == overview) &&
+            (identical(other.isWatched, isWatched) ||
+                other.isWatched == isWatched) &&
+            (identical(other.title, title) || other.title == title));
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, id, thumbnail, overview, isWatched, title);
+
+  @override
+  String toString() {
+    return 'EpisodeState(id: $id, thumbnail: $thumbnail, overview: $overview, isWatched: $isWatched, title: $title)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $EpisodeStateCopyWith<$Res> {
+  factory $EpisodeStateCopyWith(
+          EpisodeState value, $Res Function(EpisodeState) _then) =
+      _$EpisodeStateCopyWithImpl;
   @useResult
   $Res call(
       {int id,
@@ -811,12 +1313,11 @@ abstract class _$$EpisodeStateImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$EpisodeStateImplCopyWithImpl<$Res>
-    extends _$EpisodeStateCopyWithImpl<$Res, _$EpisodeStateImpl>
-    implements _$$EpisodeStateImplCopyWith<$Res> {
-  __$$EpisodeStateImplCopyWithImpl(
-      _$EpisodeStateImpl _value, $Res Function(_$EpisodeStateImpl) _then)
-      : super(_value, _then);
+class _$EpisodeStateCopyWithImpl<$Res> implements $EpisodeStateCopyWith<$Res> {
+  _$EpisodeStateCopyWithImpl(this._self, this._then);
+
+  final EpisodeState _self;
+  final $Res Function(EpisodeState) _then;
 
   /// Create a copy of EpisodeState
   /// with the given fields replaced by the non-null parameter values.
@@ -829,35 +1330,201 @@ class __$$EpisodeStateImplCopyWithImpl<$Res>
     Object? isWatched = null,
     Object? title = null,
   }) {
-    return _then(_$EpisodeStateImpl(
+    return _then(_self.copyWith(
       id: null == id
-          ? _value.id
+          ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
       thumbnail: freezed == thumbnail
-          ? _value.thumbnail
+          ? _self.thumbnail
           : thumbnail // ignore: cast_nullable_to_non_nullable
               as ImageId?,
       overview: freezed == overview
-          ? _value.overview
+          ? _self.overview
           : overview // ignore: cast_nullable_to_non_nullable
               as String?,
       isWatched: null == isWatched
-          ? _value.isWatched
+          ? _self.isWatched
           : isWatched // ignore: cast_nullable_to_non_nullable
               as bool,
       title: null == title
-          ? _value.title
+          ? _self.title
           : title // ignore: cast_nullable_to_non_nullable
               as String,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [EpisodeState].
+extension EpisodeStatePatterns on EpisodeState {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_EpisodeState value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _EpisodeState() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_EpisodeState value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _EpisodeState():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_EpisodeState value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _EpisodeState() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(int id, ImageId? thumbnail, String? overview,
+            bool isWatched, String title)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _EpisodeState() when $default != null:
+        return $default(_that.id, _that.thumbnail, _that.overview,
+            _that.isWatched, _that.title);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(int id, ImageId? thumbnail, String? overview,
+            bool isWatched, String title)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _EpisodeState():
+        return $default(_that.id, _that.thumbnail, _that.overview,
+            _that.isWatched, _that.title);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(int id, ImageId? thumbnail, String? overview,
+            bool isWatched, String title)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _EpisodeState() when $default != null:
+        return $default(_that.id, _that.thumbnail, _that.overview,
+            _that.isWatched, _that.title);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 
-class _$EpisodeStateImpl implements _EpisodeState {
-  _$EpisodeStateImpl(
+class _EpisodeState implements EpisodeState {
+  _EpisodeState(
       {required this.id,
       required this.thumbnail,
       required this.overview,
@@ -875,16 +1542,19 @@ class _$EpisodeStateImpl implements _EpisodeState {
   @override
   final String title;
 
+  /// Create a copy of EpisodeState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'EpisodeState(id: $id, thumbnail: $thumbnail, overview: $overview, isWatched: $isWatched, title: $title)';
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$EpisodeStateCopyWith<_EpisodeState> get copyWith =>
+      __$EpisodeStateCopyWithImpl<_EpisodeState>(this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$EpisodeStateImpl &&
+            other is _EpisodeState &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.thumbnail, thumbnail) ||
                 other.thumbnail == thumbnail) &&
@@ -899,38 +1569,70 @@ class _$EpisodeStateImpl implements _EpisodeState {
   int get hashCode =>
       Object.hash(runtimeType, id, thumbnail, overview, isWatched, title);
 
+  @override
+  String toString() {
+    return 'EpisodeState(id: $id, thumbnail: $thumbnail, overview: $overview, isWatched: $isWatched, title: $title)';
+  }
+}
+
+/// @nodoc
+abstract mixin class _$EpisodeStateCopyWith<$Res>
+    implements $EpisodeStateCopyWith<$Res> {
+  factory _$EpisodeStateCopyWith(
+          _EpisodeState value, $Res Function(_EpisodeState) _then) =
+      __$EpisodeStateCopyWithImpl;
+  @override
+  @useResult
+  $Res call(
+      {int id,
+      ImageId? thumbnail,
+      String? overview,
+      bool isWatched,
+      String title});
+}
+
+/// @nodoc
+class __$EpisodeStateCopyWithImpl<$Res>
+    implements _$EpisodeStateCopyWith<$Res> {
+  __$EpisodeStateCopyWithImpl(this._self, this._then);
+
+  final _EpisodeState _self;
+  final $Res Function(_EpisodeState) _then;
+
   /// Create a copy of EpisodeState
   /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$EpisodeStateImplCopyWith<_$EpisodeStateImpl> get copyWith =>
-      __$$EpisodeStateImplCopyWithImpl<_$EpisodeStateImpl>(this, _$identity);
+  $Res call({
+    Object? id = null,
+    Object? thumbnail = freezed,
+    Object? overview = freezed,
+    Object? isWatched = null,
+    Object? title = null,
+  }) {
+    return _then(_EpisodeState(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      thumbnail: freezed == thumbnail
+          ? _self.thumbnail
+          : thumbnail // ignore: cast_nullable_to_non_nullable
+              as ImageId?,
+      overview: freezed == overview
+          ? _self.overview
+          : overview // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isWatched: null == isWatched
+          ? _self.isWatched
+          : isWatched // ignore: cast_nullable_to_non_nullable
+              as bool,
+      title: null == title
+          ? _self.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
 }
 
-abstract class _EpisodeState implements EpisodeState {
-  factory _EpisodeState(
-      {required final int id,
-      required final ImageId? thumbnail,
-      required final String? overview,
-      required final bool isWatched,
-      required final String title}) = _$EpisodeStateImpl;
-
-  @override
-  int get id;
-  @override
-  ImageId? get thumbnail;
-  @override
-  String? get overview;
-  @override
-  bool get isWatched;
-  @override
-  String get title;
-
-  /// Create a copy of EpisodeState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$EpisodeStateImplCopyWith<_$EpisodeStateImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+// dart format on

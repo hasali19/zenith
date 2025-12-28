@@ -6,173 +6,109 @@ part of 'item_details_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$itemDetailsControllerHash() =>
-    r'1916cd99e29abcd5845aa4f1e8d7ac65c4ba9f1d';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-abstract class _$ItemDetailsController
-    extends BuildlessAutoDisposeNotifier<AsyncValue<ItemDetailsState>> {
-  late final int id;
-
-  AsyncValue<ItemDetailsState> build(
-    int id,
-  );
-}
-
-/// See also [ItemDetailsController].
 @ProviderFor(ItemDetailsController)
-const itemDetailsControllerProvider = ItemDetailsControllerFamily();
+final itemDetailsControllerProvider = ItemDetailsControllerFamily._();
 
-/// See also [ItemDetailsController].
-class ItemDetailsControllerFamily extends Family<AsyncValue<ItemDetailsState>> {
-  /// See also [ItemDetailsController].
-  const ItemDetailsControllerFamily();
-
-  /// See also [ItemDetailsController].
-  ItemDetailsControllerProvider call(
-    int id,
-  ) {
-    return ItemDetailsControllerProvider(
-      id,
-    );
-  }
-
-  @override
-  ItemDetailsControllerProvider getProviderOverride(
-    covariant ItemDetailsControllerProvider provider,
-  ) {
-    return call(
-      provider.id,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'itemDetailsControllerProvider';
-}
-
-/// See also [ItemDetailsController].
-class ItemDetailsControllerProvider extends AutoDisposeNotifierProviderImpl<
+final class ItemDetailsControllerProvider extends $NotifierProvider<
     ItemDetailsController, AsyncValue<ItemDetailsState>> {
-  /// See also [ItemDetailsController].
-  ItemDetailsControllerProvider(
-    int id,
-  ) : this._internal(
-          () => ItemDetailsController()..id = id,
-          from: itemDetailsControllerProvider,
+  ItemDetailsControllerProvider._(
+      {required ItemDetailsControllerFamily super.from,
+      required int super.argument})
+      : super(
+          retry: null,
           name: r'itemDetailsControllerProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$itemDetailsControllerHash,
-          dependencies: ItemDetailsControllerFamily._dependencies,
-          allTransitiveDependencies:
-              ItemDetailsControllerFamily._allTransitiveDependencies,
-          id: id,
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
         );
 
-  ItemDetailsControllerProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.id,
-  }) : super.internal();
-
-  final int id;
+  @override
+  String debugGetCreateSourceHash() => _$itemDetailsControllerHash();
 
   @override
-  AsyncValue<ItemDetailsState> runNotifierBuild(
-    covariant ItemDetailsController notifier,
-  ) {
-    return notifier.build(
-      id,
-    );
+  String toString() {
+    return r'itemDetailsControllerProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  Override overrideWith(ItemDetailsController Function() create) {
-    return ProviderOverride(
+  ItemDetailsController create() => ItemDetailsController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AsyncValue<ItemDetailsState> value) {
+    return $ProviderOverride(
       origin: this,
-      override: ItemDetailsControllerProvider._internal(
-        () => create()..id = id,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        id: id,
-      ),
+      providerOverride: $SyncValueProvider<AsyncValue<ItemDetailsState>>(value),
     );
-  }
-
-  @override
-  AutoDisposeNotifierProviderElement<ItemDetailsController,
-      AsyncValue<ItemDetailsState>> createElement() {
-    return _ItemDetailsControllerProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is ItemDetailsControllerProvider && other.id == id;
+    return other is ItemDetailsControllerProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, id.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ItemDetailsControllerRef
-    on AutoDisposeNotifierProviderRef<AsyncValue<ItemDetailsState>> {
-  /// The parameter `id` of this provider.
-  int get id;
-}
+String _$itemDetailsControllerHash() =>
+    r'dc4eae35eaf9774e83844ade09c1f22dce71664e';
 
-class _ItemDetailsControllerProviderElement
-    extends AutoDisposeNotifierProviderElement<ItemDetailsController,
-        AsyncValue<ItemDetailsState>> with ItemDetailsControllerRef {
-  _ItemDetailsControllerProviderElement(super.provider);
+final class ItemDetailsControllerFamily extends $Family
+    with
+        $ClassFamilyOverride<
+            ItemDetailsController,
+            AsyncValue<ItemDetailsState>,
+            AsyncValue<ItemDetailsState>,
+            AsyncValue<ItemDetailsState>,
+            int> {
+  ItemDetailsControllerFamily._()
+      : super(
+          retry: null,
+          name: r'itemDetailsControllerProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  ItemDetailsControllerProvider call(
+    int id,
+  ) =>
+      ItemDetailsControllerProvider._(argument: id, from: this);
 
   @override
-  int get id => (origin as ItemDetailsControllerProvider).id;
+  String toString() => r'itemDetailsControllerProvider';
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+
+abstract class _$ItemDetailsController
+    extends $Notifier<AsyncValue<ItemDetailsState>> {
+  late final _$args = ref.$arg as int;
+  int get id => _$args;
+
+  AsyncValue<ItemDetailsState> build(
+    int id,
+  );
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref
+        as $Ref<AsyncValue<ItemDetailsState>, AsyncValue<ItemDetailsState>>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<ItemDetailsState>, AsyncValue<ItemDetailsState>>,
+        AsyncValue<ItemDetailsState>,
+        Object?,
+        Object?>;
+    element.handleCreate(
+        ref,
+        () => build(
+              _$args,
+            ));
+  }
+}

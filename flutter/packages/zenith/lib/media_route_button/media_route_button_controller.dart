@@ -6,7 +6,7 @@ part 'media_route_button_controller.freezed.dart';
 part 'media_route_button_controller.g.dart';
 
 @freezed
-class MediaRouteButtonState with _$MediaRouteButtonState {
+abstract class MediaRouteButtonState with _$MediaRouteButtonState {
   factory MediaRouteButtonState({required bool isConnected}) =
       _MediaRouteButtonState;
 }

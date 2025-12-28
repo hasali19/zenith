@@ -7,7 +7,7 @@ part 'video_player_view_controller.freezed.dart';
 part 'video_player_view_controller.g.dart';
 
 @freezed
-class Playlist with _$Playlist {
+abstract class Playlist with _$Playlist {
   factory Playlist({
     required List<MediaItem> items,
     required int start,
@@ -20,7 +20,7 @@ enum PlaybackLocation {
 }
 
 @freezed
-class VideoPlayerState with _$VideoPlayerState {
+abstract class VideoPlayerState with _$VideoPlayerState {
   factory VideoPlayerState({
     required PlaybackLocation location,
     Playlist? playlist,

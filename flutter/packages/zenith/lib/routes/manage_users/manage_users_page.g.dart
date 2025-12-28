@@ -6,23 +6,70 @@ part of 'manage_users_page.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$dataHash() => r'a514927f6317727b0c2dc32e9a8d7badcfc0a6ec';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [_data].
 @ProviderFor(_data)
-final _dataProvider = AutoDisposeFutureProvider<
-    ({List<User> users, List<UserRegistration> registrations})>.internal(
-  _data,
-  name: r'_dataProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$dataHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final _dataProvider = _DataProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef _DataRef = AutoDisposeFutureProviderRef<
-    ({List<User> users, List<UserRegistration> registrations})>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class _DataProvider extends $FunctionalProvider<
+        AsyncValue<
+            ({
+              List<UserRegistration> registrations,
+              List<User> users,
+            })>,
+        ({
+          List<UserRegistration> registrations,
+          List<User> users,
+        }),
+        FutureOr<
+            ({
+              List<UserRegistration> registrations,
+              List<User> users,
+            })>>
+    with
+        $FutureModifier<
+            ({
+              List<UserRegistration> registrations,
+              List<User> users,
+            })>,
+        $FutureProvider<
+            ({
+              List<UserRegistration> registrations,
+              List<User> users,
+            })> {
+  _DataProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'_dataProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$_dataHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<
+      ({
+        List<UserRegistration> registrations,
+        List<User> users,
+      })> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<
+      ({
+        List<UserRegistration> registrations,
+        List<User> users,
+      })> create(Ref ref) {
+    return _data(ref);
+  }
+}
+
+String _$_dataHash() => r'a514927f6317727b0c2dc32e9a8d7badcfc0a6ec';

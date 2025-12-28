@@ -14,7 +14,7 @@ part of 'router.dart';
 /// [HomeScreen]
 class HomeRoute extends PageRouteInfo<void> {
   const HomeRoute({List<PageRouteInfo>? children})
-    : super(HomeRoute.name, initialChildren: children);
+      : super(HomeRoute.name, initialChildren: children);
 
   static const String name = 'HomeRoute';
 
@@ -30,12 +30,12 @@ class HomeRoute extends PageRouteInfo<void> {
 /// [ItemDetailsPage]
 class ItemDetailsRoute extends PageRouteInfo<ItemDetailsRouteArgs> {
   ItemDetailsRoute({Key? key, required int id, List<PageRouteInfo>? children})
-    : super(
-        ItemDetailsRoute.name,
-        args: ItemDetailsRouteArgs(key: key, id: id),
-        rawPathParams: {'id': id},
-        initialChildren: children,
-      );
+      : super(
+          ItemDetailsRoute.name,
+          args: ItemDetailsRouteArgs(key: key, id: id),
+          rawPathParams: {'id': id},
+          initialChildren: children,
+        );
 
   static const String name = 'ItemDetailsRoute';
 
@@ -62,13 +62,23 @@ class ItemDetailsRouteArgs {
   String toString() {
     return 'ItemDetailsRouteArgs{key: $key, id: $id}';
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! ItemDetailsRouteArgs) return false;
+    return key == other.key && id == other.id;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ id.hashCode;
 }
 
 /// generated route for
 /// [LibraryPage]
 class LibraryRoute extends PageRouteInfo<void> {
   const LibraryRoute({List<PageRouteInfo>? children})
-    : super(LibraryRoute.name, initialChildren: children);
+      : super(LibraryRoute.name, initialChildren: children);
 
   static const String name = 'LibraryRoute';
 
@@ -84,7 +94,7 @@ class LibraryRoute extends PageRouteInfo<void> {
 /// [LibraryTabsPage]
 class LibraryTabsRoute extends PageRouteInfo<void> {
   const LibraryTabsRoute({List<PageRouteInfo>? children})
-    : super(LibraryTabsRoute.name, initialChildren: children);
+      : super(LibraryTabsRoute.name, initialChildren: children);
 
   static const String name = 'LibraryTabsRoute';
 
@@ -100,12 +110,12 @@ class LibraryTabsRoute extends PageRouteInfo<void> {
 /// [LoginPage]
 class LoginRoute extends PageRouteInfo<LoginRouteArgs> {
   LoginRoute({Key? key, String? redirect, List<PageRouteInfo>? children})
-    : super(
-        LoginRoute.name,
-        args: LoginRouteArgs(key: key, redirect: redirect),
-        rawQueryParams: {'redirect': redirect},
-        initialChildren: children,
-      );
+      : super(
+          LoginRoute.name,
+          args: LoginRouteArgs(key: key, redirect: redirect),
+          rawQueryParams: {'redirect': redirect},
+          initialChildren: children,
+        );
 
   static const String name = 'LoginRoute';
 
@@ -114,8 +124,8 @@ class LoginRoute extends PageRouteInfo<LoginRouteArgs> {
     builder: (data) {
       final queryParams = data.queryParams;
       final args = data.argsAs<LoginRouteArgs>(
-        orElse:
-            () => LoginRouteArgs(redirect: queryParams.optString('redirect')),
+        orElse: () =>
+            LoginRouteArgs(redirect: queryParams.optString('redirect')),
       );
       return LoginPage(key: args.key, redirect: args.redirect);
     },
@@ -133,6 +143,16 @@ class LoginRouteArgs {
   String toString() {
     return 'LoginRouteArgs{key: $key, redirect: $redirect}';
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! LoginRouteArgs) return false;
+    return key == other.key && redirect == other.redirect;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ redirect.hashCode;
 }
 
 /// generated route for
@@ -144,11 +164,11 @@ class LoginRegisterRoute extends PageRouteInfo<LoginRegisterRouteArgs> {
     String? code,
     List<PageRouteInfo>? children,
   }) : super(
-         LoginRegisterRoute.name,
-         args: LoginRegisterRouteArgs(key: key, initial: initial, code: code),
-         rawQueryParams: {'initial': initial, 'code': code},
-         initialChildren: children,
-       );
+          LoginRegisterRoute.name,
+          args: LoginRegisterRouteArgs(key: key, initial: initial, code: code),
+          rawQueryParams: {'initial': initial, 'code': code},
+          initialChildren: children,
+        );
 
   static const String name = 'LoginRegisterRoute';
 
@@ -157,11 +177,10 @@ class LoginRegisterRoute extends PageRouteInfo<LoginRegisterRouteArgs> {
     builder: (data) {
       final queryParams = data.queryParams;
       final args = data.argsAs<LoginRegisterRouteArgs>(
-        orElse:
-            () => LoginRegisterRouteArgs(
-              initial: queryParams.getBool('initial', false),
-              code: queryParams.optString('code'),
-            ),
+        orElse: () => LoginRegisterRouteArgs(
+          initial: queryParams.getBool('initial', false),
+          code: queryParams.optString('code'),
+        ),
       );
       return LoginRegisterPage(
         key: args.key,
@@ -185,6 +204,16 @@ class LoginRegisterRouteArgs {
   String toString() {
     return 'LoginRegisterRouteArgs{key: $key, initial: $initial, code: $code}';
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! LoginRegisterRouteArgs) return false;
+    return key == other.key && initial == other.initial && code == other.code;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ initial.hashCode ^ code.hashCode;
 }
 
 /// generated route for
@@ -195,11 +224,11 @@ class LoginUserRoute extends PageRouteInfo<LoginUserRouteArgs> {
     required String? username,
     List<PageRouteInfo>? children,
   }) : super(
-         LoginUserRoute.name,
-         args: LoginUserRouteArgs(key: key, username: username),
-         rawQueryParams: {'username': username},
-         initialChildren: children,
-       );
+          LoginUserRoute.name,
+          args: LoginUserRouteArgs(key: key, username: username),
+          rawQueryParams: {'username': username},
+          initialChildren: children,
+        );
 
   static const String name = 'LoginUserRoute';
 
@@ -208,9 +237,8 @@ class LoginUserRoute extends PageRouteInfo<LoginUserRouteArgs> {
     builder: (data) {
       final queryParams = data.queryParams;
       final args = data.argsAs<LoginUserRouteArgs>(
-        orElse:
-            () =>
-                LoginUserRouteArgs(username: queryParams.optString('username')),
+        orElse: () =>
+            LoginUserRouteArgs(username: queryParams.optString('username')),
       );
       return LoginUserPage(key: args.key, username: args.username);
     },
@@ -228,13 +256,23 @@ class LoginUserRouteArgs {
   String toString() {
     return 'LoginUserRouteArgs{key: $key, username: $username}';
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! LoginUserRouteArgs) return false;
+    return key == other.key && username == other.username;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ username.hashCode;
 }
 
 /// generated route for
 /// [LoginUsersPage]
 class LoginUsersRoute extends PageRouteInfo<void> {
   const LoginUsersRoute({List<PageRouteInfo>? children})
-    : super(LoginUsersRoute.name, initialChildren: children);
+      : super(LoginUsersRoute.name, initialChildren: children);
 
   static const String name = 'LoginUsersRoute';
 
@@ -250,7 +288,7 @@ class LoginUsersRoute extends PageRouteInfo<void> {
 /// [MainScreen]
 class MainRoute extends PageRouteInfo<void> {
   const MainRoute({List<PageRouteInfo>? children})
-    : super(MainRoute.name, initialChildren: children);
+      : super(MainRoute.name, initialChildren: children);
 
   static const String name = 'MainRoute';
 
@@ -266,7 +304,7 @@ class MainRoute extends PageRouteInfo<void> {
 /// [ManageServerPage]
 class ManageServerRoute extends PageRouteInfo<void> {
   const ManageServerRoute({List<PageRouteInfo>? children})
-    : super(ManageServerRoute.name, initialChildren: children);
+      : super(ManageServerRoute.name, initialChildren: children);
 
   static const String name = 'ManageServerRoute';
 
@@ -282,7 +320,7 @@ class ManageServerRoute extends PageRouteInfo<void> {
 /// [ManageServerShellPage]
 class ManageServerShellRoute extends PageRouteInfo<void> {
   const ManageServerShellRoute({List<PageRouteInfo>? children})
-    : super(ManageServerShellRoute.name, initialChildren: children);
+      : super(ManageServerShellRoute.name, initialChildren: children);
 
   static const String name = 'ManageServerShellRoute';
 
@@ -298,7 +336,7 @@ class ManageServerShellRoute extends PageRouteInfo<void> {
 /// [ManageUsersPage]
 class ManageUsersRoute extends PageRouteInfo<void> {
   const ManageUsersRoute({List<PageRouteInfo>? children})
-    : super(ManageUsersRoute.name, initialChildren: children);
+      : super(ManageUsersRoute.name, initialChildren: children);
 
   static const String name = 'ManageUsersRoute';
 
@@ -314,7 +352,7 @@ class ManageUsersRoute extends PageRouteInfo<void> {
 /// [MoviesScreen]
 class MoviesRoute extends PageRouteInfo<void> {
   const MoviesRoute({List<PageRouteInfo>? children})
-    : super(MoviesRoute.name, initialChildren: children);
+      : super(MoviesRoute.name, initialChildren: children);
 
   static const String name = 'MoviesRoute';
 
@@ -330,7 +368,7 @@ class MoviesRoute extends PageRouteInfo<void> {
 /// [SettingsScreen]
 class SettingsRoute extends PageRouteInfo<void> {
   const SettingsRoute({List<PageRouteInfo>? children})
-    : super(SettingsRoute.name, initialChildren: children);
+      : super(SettingsRoute.name, initialChildren: children);
 
   static const String name = 'SettingsRoute';
 
@@ -346,7 +384,7 @@ class SettingsRoute extends PageRouteInfo<void> {
 /// [SetupScreen]
 class SetupRoute extends PageRouteInfo<void> {
   const SetupRoute({List<PageRouteInfo>? children})
-    : super(SetupRoute.name, initialChildren: children);
+      : super(SetupRoute.name, initialChildren: children);
 
   static const String name = 'SetupRoute';
 
@@ -362,7 +400,7 @@ class SetupRoute extends PageRouteInfo<void> {
 /// [ShowsScreen]
 class ShowsRoute extends PageRouteInfo<void> {
   const ShowsRoute({List<PageRouteInfo>? children})
-    : super(ShowsRoute.name, initialChildren: children);
+      : super(ShowsRoute.name, initialChildren: children);
 
   static const String name = 'ShowsRoute';
 
@@ -378,7 +416,7 @@ class ShowsRoute extends PageRouteInfo<void> {
 /// [TranscoderPage]
 class TranscoderRoute extends PageRouteInfo<void> {
   const TranscoderRoute({List<PageRouteInfo>? children})
-    : super(TranscoderRoute.name, initialChildren: children);
+      : super(TranscoderRoute.name, initialChildren: children);
 
   static const String name = 'TranscoderRoute';
 
@@ -399,16 +437,16 @@ class VideoPlayerRoute extends PageRouteInfo<VideoPlayerRouteArgs> {
     double startPosition = 0,
     List<PageRouteInfo>? children,
   }) : super(
-         VideoPlayerRoute.name,
-         args: VideoPlayerRouteArgs(
-           key: key,
-           id: id,
-           startPosition: startPosition,
-         ),
-         rawPathParams: {'id': id},
-         rawQueryParams: {'startPosition': startPosition},
-         initialChildren: children,
-       );
+          VideoPlayerRoute.name,
+          args: VideoPlayerRouteArgs(
+            key: key,
+            id: id,
+            startPosition: startPosition,
+          ),
+          rawPathParams: {'id': id},
+          rawQueryParams: {'startPosition': startPosition},
+          initialChildren: children,
+        );
 
   static const String name = 'VideoPlayerRoute';
 
@@ -418,11 +456,10 @@ class VideoPlayerRoute extends PageRouteInfo<VideoPlayerRouteArgs> {
       final pathParams = data.inheritedPathParams;
       final queryParams = data.queryParams;
       final args = data.argsAs<VideoPlayerRouteArgs>(
-        orElse:
-            () => VideoPlayerRouteArgs(
-              id: pathParams.getInt('id'),
-              startPosition: queryParams.getDouble('startPosition', 0),
-            ),
+        orElse: () => VideoPlayerRouteArgs(
+          id: pathParams.getInt('id'),
+          startPosition: queryParams.getDouble('startPosition', 0),
+        ),
       );
       return VideoPlayerScreen(
         key: args.key,
@@ -450,4 +487,16 @@ class VideoPlayerRouteArgs {
   String toString() {
     return 'VideoPlayerRouteArgs{key: $key, id: $id, startPosition: $startPosition}';
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! VideoPlayerRouteArgs) return false;
+    return key == other.key &&
+        id == other.id &&
+        startPosition == other.startPosition;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ id.hashCode ^ startPosition.hashCode;
 }

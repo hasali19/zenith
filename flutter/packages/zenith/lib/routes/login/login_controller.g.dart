@@ -6,22 +6,46 @@ part of 'login_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$loginRedirectPathHash() => r'1c0d5a1233875cb21c0b439c2887c412f32aabc8';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [loginRedirectPath].
 @ProviderFor(loginRedirectPath)
-final loginRedirectPathProvider = AutoDisposeProvider<String?>.internal(
-  loginRedirectPath,
-  name: r'loginRedirectPathProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$loginRedirectPathHash,
-  dependencies: const <ProviderOrFamily>[],
-  allTransitiveDependencies: const <ProviderOrFamily>{},
-);
+final loginRedirectPathProvider = LoginRedirectPathProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef LoginRedirectPathRef = AutoDisposeProviderRef<String?>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class LoginRedirectPathProvider
+    extends $FunctionalProvider<String?, String?, String?>
+    with $Provider<String?> {
+  LoginRedirectPathProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'loginRedirectPathProvider',
+          isAutoDispose: true,
+          dependencies: <ProviderOrFamily>[],
+          $allTransitiveDependencies: <ProviderOrFamily>[],
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$loginRedirectPathHash();
+
+  @$internal
+  @override
+  $ProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  String? create(Ref ref) {
+    return loginRedirectPath(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String?>(value),
+    );
+  }
+}
+
+String _$loginRedirectPathHash() => r'6075a313a339b1e09a6608447f52a5138e7987e9';

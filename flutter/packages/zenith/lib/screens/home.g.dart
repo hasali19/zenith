@@ -6,21 +6,39 @@ part of 'home.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$stateHash() => r'61296860eadd3fd62f6d152ba071caaf79c538b1';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [_state].
 @ProviderFor(_state)
-final _stateProvider = AutoDisposeFutureProvider<HomeScreenData>.internal(
-  _state,
-  name: r'_stateProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$stateHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final _stateProvider = _StateProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef _StateRef = AutoDisposeFutureProviderRef<HomeScreenData>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class _StateProvider extends $FunctionalProvider<
+        AsyncValue<HomeScreenData>, HomeScreenData, FutureOr<HomeScreenData>>
+    with $FutureModifier<HomeScreenData>, $FutureProvider<HomeScreenData> {
+  _StateProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'_stateProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$_stateHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<HomeScreenData> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<HomeScreenData> create(Ref ref) {
+    return _state(ref);
+  }
+}
+
+String _$_stateHash() => r'61296860eadd3fd62f6d152ba071caaf79c538b1';

@@ -19,7 +19,7 @@ part 'home.freezed.dart';
 part 'home.g.dart';
 
 @freezed
-class HomeScreenData with _$HomeScreenData {
+abstract class HomeScreenData with _$HomeScreenData {
   factory HomeScreenData({
     required List<MediaItem> continueWatching,
     required List<MediaItem> recentMovies,

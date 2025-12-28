@@ -402,7 +402,7 @@ enum AccessTokenOwner {
 }
 
 @freezed
-class AccessToken with _$AccessToken {
+abstract class AccessToken with _$AccessToken {
   factory AccessToken({
     required AccessTokenOwner owner,
     required String name,
@@ -416,7 +416,7 @@ class AccessToken with _$AccessToken {
 enum SubtitleFormat { webvtt }
 
 @freezed
-class CastConfig with _$CastConfig {
+abstract class CastConfig with _$CastConfig {
   factory CastConfig({
     // ignore: invalid_annotation_target
     @JsonKey(name: 'app_id') required String? appId,
@@ -427,7 +427,7 @@ class CastConfig with _$CastConfig {
 }
 
 @freezed
-class TranscoderState with _$TranscoderState {
+abstract class TranscoderState with _$TranscoderState {
   factory TranscoderState({
     required List<TranscoderJob> queue,
   }) = _TranscoderState;
@@ -843,6 +843,6 @@ class ZenithApiClient {
 }
 
 @Riverpod(keepAlive: true)
-ZenithApiClient api(ApiRef ref) {
+ZenithApiClient api(Ref ref) {
   throw UnimplementedError();
 }

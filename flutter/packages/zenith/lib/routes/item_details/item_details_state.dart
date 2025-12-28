@@ -5,7 +5,7 @@ import 'package:zenith/database/database.dart';
 part 'item_details_state.freezed.dart';
 
 @freezed
-class ItemDetailsState with _$ItemDetailsState {
+abstract class ItemDetailsState with _$ItemDetailsState {
   factory ItemDetailsState({
     required MediaItem item,
     required ImageId? poster,
@@ -19,7 +19,7 @@ class ItemDetailsState with _$ItemDetailsState {
 }
 
 @freezed
-class PlayableState with _$PlayableState {
+abstract class PlayableState with _$PlayableState {
   factory PlayableState({
     required int id,
     required int? seasonIndex,
@@ -31,7 +31,7 @@ class PlayableState with _$PlayableState {
 }
 
 @freezed
-class EpisodeGroupState with _$EpisodeGroupState {
+abstract class EpisodeGroupState with _$EpisodeGroupState {
   factory EpisodeGroupState({
     required String name,
     required List<EpisodeState> episodes,
@@ -39,7 +39,7 @@ class EpisodeGroupState with _$EpisodeGroupState {
 }
 
 @freezed
-class EpisodeState with _$EpisodeState {
+abstract class EpisodeState with _$EpisodeState {
   factory EpisodeState({
     required int id,
     required ImageId? thumbnail,

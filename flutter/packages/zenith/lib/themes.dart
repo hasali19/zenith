@@ -10,6 +10,6 @@ class Themes {
 }
 
 @Riverpod(dependencies: [])
-Themes themes(ThemesRef ref) {
+Themes themes(Ref ref) {
   throw UnimplementedError();
 }

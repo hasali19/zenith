@@ -41,7 +41,7 @@ class MediaLibraryItem {
 }
 
 class MediaLibraryScreen extends ConsumerWidget {
-  final ProviderBase<AsyncValue<List<MediaLibraryItem>>> provider;
+  final FutureProvider<List<MediaLibraryItem>> provider;
   final IconData posterFallback;
   final Future<void> Function() onRefresh;
   final void Function(MediaLibraryItem item) onItemTap;

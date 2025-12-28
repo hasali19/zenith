@@ -6,175 +6,102 @@ part of 'video_player_view_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$videoPlayerViewControllerHash() =>
-    r'47441562cc092f4af6200a890e5d1aa9cd0cf871';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-abstract class _$VideoPlayerViewController
-    extends BuildlessAutoDisposeAsyncNotifier<VideoPlayerState> {
-  late final int id;
-
-  FutureOr<VideoPlayerState> build(
-    int id,
-  );
-}
-
-/// See also [VideoPlayerViewController].
 @ProviderFor(VideoPlayerViewController)
-const videoPlayerViewControllerProvider = VideoPlayerViewControllerFamily();
+final videoPlayerViewControllerProvider = VideoPlayerViewControllerFamily._();
 
-/// See also [VideoPlayerViewController].
-class VideoPlayerViewControllerFamily
-    extends Family<AsyncValue<VideoPlayerState>> {
-  /// See also [VideoPlayerViewController].
-  const VideoPlayerViewControllerFamily();
-
-  /// See also [VideoPlayerViewController].
-  VideoPlayerViewControllerProvider call(
-    int id,
-  ) {
-    return VideoPlayerViewControllerProvider(
-      id,
-    );
-  }
-
-  @override
-  VideoPlayerViewControllerProvider getProviderOverride(
-    covariant VideoPlayerViewControllerProvider provider,
-  ) {
-    return call(
-      provider.id,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'videoPlayerViewControllerProvider';
-}
-
-/// See also [VideoPlayerViewController].
-class VideoPlayerViewControllerProvider
-    extends AutoDisposeAsyncNotifierProviderImpl<VideoPlayerViewController,
-        VideoPlayerState> {
-  /// See also [VideoPlayerViewController].
-  VideoPlayerViewControllerProvider(
-    int id,
-  ) : this._internal(
-          () => VideoPlayerViewController()..id = id,
-          from: videoPlayerViewControllerProvider,
+final class VideoPlayerViewControllerProvider extends $AsyncNotifierProvider<
+    VideoPlayerViewController, VideoPlayerState> {
+  VideoPlayerViewControllerProvider._(
+      {required VideoPlayerViewControllerFamily super.from,
+      required int super.argument})
+      : super(
+          retry: null,
           name: r'videoPlayerViewControllerProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$videoPlayerViewControllerHash,
-          dependencies: VideoPlayerViewControllerFamily._dependencies,
-          allTransitiveDependencies:
-              VideoPlayerViewControllerFamily._allTransitiveDependencies,
-          id: id,
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
         );
 
-  VideoPlayerViewControllerProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.id,
-  }) : super.internal();
-
-  final int id;
+  @override
+  String debugGetCreateSourceHash() => _$videoPlayerViewControllerHash();
 
   @override
-  FutureOr<VideoPlayerState> runNotifierBuild(
-    covariant VideoPlayerViewController notifier,
-  ) {
-    return notifier.build(
-      id,
-    );
+  String toString() {
+    return r'videoPlayerViewControllerProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  Override overrideWith(VideoPlayerViewController Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: VideoPlayerViewControllerProvider._internal(
-        () => create()..id = id,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        id: id,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeAsyncNotifierProviderElement<VideoPlayerViewController,
-      VideoPlayerState> createElement() {
-    return _VideoPlayerViewControllerProviderElement(this);
-  }
+  VideoPlayerViewController create() => VideoPlayerViewController();
 
   @override
   bool operator ==(Object other) {
-    return other is VideoPlayerViewControllerProvider && other.id == id;
+    return other is VideoPlayerViewControllerProvider &&
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, id.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin VideoPlayerViewControllerRef
-    on AutoDisposeAsyncNotifierProviderRef<VideoPlayerState> {
-  /// The parameter `id` of this provider.
-  int get id;
-}
+String _$videoPlayerViewControllerHash() =>
+    r'47441562cc092f4af6200a890e5d1aa9cd0cf871';
 
-class _VideoPlayerViewControllerProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<VideoPlayerViewController,
-        VideoPlayerState> with VideoPlayerViewControllerRef {
-  _VideoPlayerViewControllerProviderElement(super.provider);
+final class VideoPlayerViewControllerFamily extends $Family
+    with
+        $ClassFamilyOverride<
+            VideoPlayerViewController,
+            AsyncValue<VideoPlayerState>,
+            VideoPlayerState,
+            FutureOr<VideoPlayerState>,
+            int> {
+  VideoPlayerViewControllerFamily._()
+      : super(
+          retry: null,
+          name: r'videoPlayerViewControllerProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  VideoPlayerViewControllerProvider call(
+    int id,
+  ) =>
+      VideoPlayerViewControllerProvider._(argument: id, from: this);
 
   @override
-  int get id => (origin as VideoPlayerViewControllerProvider).id;
+  String toString() => r'videoPlayerViewControllerProvider';
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+
+abstract class _$VideoPlayerViewController
+    extends $AsyncNotifier<VideoPlayerState> {
+  late final _$args = ref.$arg as int;
+  int get id => _$args;
+
+  FutureOr<VideoPlayerState> build(
+    int id,
+  );
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<VideoPlayerState>, VideoPlayerState>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<VideoPlayerState>, VideoPlayerState>,
+        AsyncValue<VideoPlayerState>,
+        Object?,
+        Object?>;
+    element.handleCreate(
+        ref,
+        () => build(
+              _$args,
+            ));
+  }
+}

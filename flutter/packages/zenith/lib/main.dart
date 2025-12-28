@@ -5,6 +5,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:logger/logger.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -74,7 +75,7 @@ Future<void> main() async {
   ));
 }
 
-class _LoggingProviderObserver extends ProviderObserver {
+final class _LoggingProviderObserver extends ProviderObserver {
   final _logger = Logger(
     printer: PrettyPrinter(
       methodCount: 0,
@@ -83,21 +84,19 @@ class _LoggingProviderObserver extends ProviderObserver {
   );
 
   @override
-  void didAddProvider(ProviderBase<Object?> provider, Object? value,
-      ProviderContainer container) {
-    _logger.d('created ${provider.name} : $value');
+  void didAddProvider(ProviderObserverContext context, Object? value) {
+    _logger.d('created ${context.provider.name} : $value');
   }
 
   @override
-  void didUpdateProvider(ProviderBase<Object?> provider, Object? previousValue,
-      Object? newValue, ProviderContainer container) {
-    _logger.d('updated ${provider.name} : $newValue');
+  void didUpdateProvider(ProviderObserverContext context, Object? previousValue,
+      Object? newValue) {
+    _logger.d('updated ${context.provider.name} : $previousValue => $newValue');
   }
 
   @override
-  void didDisposeProvider(
-      ProviderBase<Object?> provider, ProviderContainer container) {
-    _logger.d('disposed ${provider.name}');
+  void didDisposeProvider(ProviderObserverContext context) {
+    _logger.d('disposed ${context.provider.name}');
   }
 }
 

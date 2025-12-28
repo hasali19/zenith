@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,147 +9,30 @@ part of 'api.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
-AccessToken _$AccessTokenFromJson(Map<String, dynamic> json) {
-  return _AccessToken.fromJson(json);
-}
 
 /// @nodoc
 mixin _$AccessToken {
-  AccessTokenOwner get owner => throw _privateConstructorUsedError;
-  String get name => throw _privateConstructorUsedError;
-  String get token => throw _privateConstructorUsedError;
-
-  /// Serializes this AccessToken to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  AccessTokenOwner get owner;
+  String get name;
+  String get token;
 
   /// Create a copy of AccessToken
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
   $AccessTokenCopyWith<AccessToken> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+      _$AccessTokenCopyWithImpl<AccessToken>(this as AccessToken, _$identity);
 
-/// @nodoc
-abstract class $AccessTokenCopyWith<$Res> {
-  factory $AccessTokenCopyWith(
-          AccessToken value, $Res Function(AccessToken) then) =
-      _$AccessTokenCopyWithImpl<$Res, AccessToken>;
-  @useResult
-  $Res call({AccessTokenOwner owner, String name, String token});
-}
-
-/// @nodoc
-class _$AccessTokenCopyWithImpl<$Res, $Val extends AccessToken>
-    implements $AccessTokenCopyWith<$Res> {
-  _$AccessTokenCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of AccessToken
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? owner = null,
-    Object? name = null,
-    Object? token = null,
-  }) {
-    return _then(_value.copyWith(
-      owner: null == owner
-          ? _value.owner
-          : owner // ignore: cast_nullable_to_non_nullable
-              as AccessTokenOwner,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      token: null == token
-          ? _value.token
-          : token // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$AccessTokenImplCopyWith<$Res>
-    implements $AccessTokenCopyWith<$Res> {
-  factory _$$AccessTokenImplCopyWith(
-          _$AccessTokenImpl value, $Res Function(_$AccessTokenImpl) then) =
-      __$$AccessTokenImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({AccessTokenOwner owner, String name, String token});
-}
-
-/// @nodoc
-class __$$AccessTokenImplCopyWithImpl<$Res>
-    extends _$AccessTokenCopyWithImpl<$Res, _$AccessTokenImpl>
-    implements _$$AccessTokenImplCopyWith<$Res> {
-  __$$AccessTokenImplCopyWithImpl(
-      _$AccessTokenImpl _value, $Res Function(_$AccessTokenImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of AccessToken
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? owner = null,
-    Object? name = null,
-    Object? token = null,
-  }) {
-    return _then(_$AccessTokenImpl(
-      owner: null == owner
-          ? _value.owner
-          : owner // ignore: cast_nullable_to_non_nullable
-              as AccessTokenOwner,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      token: null == token
-          ? _value.token
-          : token // ignore: cast_nullable_to_non_nullable
-              as String,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$AccessTokenImpl implements _AccessToken {
-  _$AccessTokenImpl(
-      {required this.owner, required this.name, required this.token});
-
-  factory _$AccessTokenImpl.fromJson(Map<String, dynamic> json) =>
-      _$$AccessTokenImplFromJson(json);
-
-  @override
-  final AccessTokenOwner owner;
-  @override
-  final String name;
-  @override
-  final String token;
-
-  @override
-  String toString() {
-    return 'AccessToken(owner: $owner, name: $name, token: $token)';
-  }
+  /// Serializes this AccessToken to a JSON map.
+  Map<String, dynamic> toJson();
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$AccessTokenImpl &&
+            other is AccessToken &&
             (identical(other.owner, owner) || other.owner == owner) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.token, token) || other.token == token));
@@ -159,159 +42,328 @@ class _$AccessTokenImpl implements _AccessToken {
   @override
   int get hashCode => Object.hash(runtimeType, owner, name, token);
 
-  /// Create a copy of AccessToken
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$AccessTokenImplCopyWith<_$AccessTokenImpl> get copyWith =>
-      __$$AccessTokenImplCopyWithImpl<_$AccessTokenImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$AccessTokenImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _AccessToken implements AccessToken {
-  factory _AccessToken(
-      {required final AccessTokenOwner owner,
-      required final String name,
-      required final String token}) = _$AccessTokenImpl;
-
-  factory _AccessToken.fromJson(Map<String, dynamic> json) =
-      _$AccessTokenImpl.fromJson;
-
-  @override
-  AccessTokenOwner get owner;
-  @override
-  String get name;
-  @override
-  String get token;
-
-  /// Create a copy of AccessToken
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$AccessTokenImplCopyWith<_$AccessTokenImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-CastConfig _$CastConfigFromJson(Map<String, dynamic> json) {
-  return _CastConfig.fromJson(json);
-}
-
-/// @nodoc
-mixin _$CastConfig {
-// ignore: invalid_annotation_target
-  @JsonKey(name: 'app_id')
-  String? get appId => throw _privateConstructorUsedError;
-
-  /// Serializes this CastConfig to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of CastConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $CastConfigCopyWith<CastConfig> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $CastConfigCopyWith<$Res> {
-  factory $CastConfigCopyWith(
-          CastConfig value, $Res Function(CastConfig) then) =
-      _$CastConfigCopyWithImpl<$Res, CastConfig>;
-  @useResult
-  $Res call({@JsonKey(name: 'app_id') String? appId});
-}
-
-/// @nodoc
-class _$CastConfigCopyWithImpl<$Res, $Val extends CastConfig>
-    implements $CastConfigCopyWith<$Res> {
-  _$CastConfigCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of CastConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? appId = freezed,
-  }) {
-    return _then(_value.copyWith(
-      appId: freezed == appId
-          ? _value.appId
-          : appId // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
+  String toString() {
+    return 'AccessToken(owner: $owner, name: $name, token: $token)';
   }
 }
 
 /// @nodoc
-abstract class _$$CastConfigImplCopyWith<$Res>
-    implements $CastConfigCopyWith<$Res> {
-  factory _$$CastConfigImplCopyWith(
-          _$CastConfigImpl value, $Res Function(_$CastConfigImpl) then) =
-      __$$CastConfigImplCopyWithImpl<$Res>;
-  @override
+abstract mixin class $AccessTokenCopyWith<$Res> {
+  factory $AccessTokenCopyWith(
+          AccessToken value, $Res Function(AccessToken) _then) =
+      _$AccessTokenCopyWithImpl;
   @useResult
-  $Res call({@JsonKey(name: 'app_id') String? appId});
+  $Res call({AccessTokenOwner owner, String name, String token});
 }
 
 /// @nodoc
-class __$$CastConfigImplCopyWithImpl<$Res>
-    extends _$CastConfigCopyWithImpl<$Res, _$CastConfigImpl>
-    implements _$$CastConfigImplCopyWith<$Res> {
-  __$$CastConfigImplCopyWithImpl(
-      _$CastConfigImpl _value, $Res Function(_$CastConfigImpl) _then)
-      : super(_value, _then);
+class _$AccessTokenCopyWithImpl<$Res> implements $AccessTokenCopyWith<$Res> {
+  _$AccessTokenCopyWithImpl(this._self, this._then);
 
-  /// Create a copy of CastConfig
+  final AccessToken _self;
+  final $Res Function(AccessToken) _then;
+
+  /// Create a copy of AccessToken
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? appId = freezed,
+    Object? owner = null,
+    Object? name = null,
+    Object? token = null,
   }) {
-    return _then(_$CastConfigImpl(
-      appId: freezed == appId
-          ? _value.appId
-          : appId // ignore: cast_nullable_to_non_nullable
-              as String?,
+    return _then(_self.copyWith(
+      owner: null == owner
+          ? _self.owner
+          : owner // ignore: cast_nullable_to_non_nullable
+              as AccessTokenOwner,
+      name: null == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      token: null == token
+          ? _self.token
+          : token // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
+  }
+}
+
+/// Adds pattern-matching-related methods to [AccessToken].
+extension AccessTokenPatterns on AccessToken {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_AccessToken value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _AccessToken() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_AccessToken value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _AccessToken():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_AccessToken value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _AccessToken() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(AccessTokenOwner owner, String name, String token)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _AccessToken() when $default != null:
+        return $default(_that.owner, _that.name, _that.token);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(AccessTokenOwner owner, String name, String token)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _AccessToken():
+        return $default(_that.owner, _that.name, _that.token);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(AccessTokenOwner owner, String name, String token)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _AccessToken() when $default != null:
+        return $default(_that.owner, _that.name, _that.token);
+      case _:
+        return null;
+    }
   }
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$CastConfigImpl implements _CastConfig {
-  _$CastConfigImpl({@JsonKey(name: 'app_id') required this.appId});
-
-  factory _$CastConfigImpl.fromJson(Map<String, dynamic> json) =>
-      _$$CastConfigImplFromJson(json);
-
-// ignore: invalid_annotation_target
-  @override
-  @JsonKey(name: 'app_id')
-  final String? appId;
+class _AccessToken implements AccessToken {
+  _AccessToken({required this.owner, required this.name, required this.token});
+  factory _AccessToken.fromJson(Map<String, dynamic> json) =>
+      _$AccessTokenFromJson(json);
 
   @override
-  String toString() {
-    return 'CastConfig(appId: $appId)';
+  final AccessTokenOwner owner;
+  @override
+  final String name;
+  @override
+  final String token;
+
+  /// Create a copy of AccessToken
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$AccessTokenCopyWith<_AccessToken> get copyWith =>
+      __$AccessTokenCopyWithImpl<_AccessToken>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$AccessTokenToJson(
+      this,
+    );
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$CastConfigImpl &&
+            other is _AccessToken &&
+            (identical(other.owner, owner) || other.owner == owner) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.token, token) || other.token == token));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, owner, name, token);
+
+  @override
+  String toString() {
+    return 'AccessToken(owner: $owner, name: $name, token: $token)';
+  }
+}
+
+/// @nodoc
+abstract mixin class _$AccessTokenCopyWith<$Res>
+    implements $AccessTokenCopyWith<$Res> {
+  factory _$AccessTokenCopyWith(
+          _AccessToken value, $Res Function(_AccessToken) _then) =
+      __$AccessTokenCopyWithImpl;
+  @override
+  @useResult
+  $Res call({AccessTokenOwner owner, String name, String token});
+}
+
+/// @nodoc
+class __$AccessTokenCopyWithImpl<$Res> implements _$AccessTokenCopyWith<$Res> {
+  __$AccessTokenCopyWithImpl(this._self, this._then);
+
+  final _AccessToken _self;
+  final $Res Function(_AccessToken) _then;
+
+  /// Create a copy of AccessToken
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? owner = null,
+    Object? name = null,
+    Object? token = null,
+  }) {
+    return _then(_AccessToken(
+      owner: null == owner
+          ? _self.owner
+          : owner // ignore: cast_nullable_to_non_nullable
+              as AccessTokenOwner,
+      name: null == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      token: null == token
+          ? _self.token
+          : token // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+mixin _$CastConfig {
+// ignore: invalid_annotation_target
+  @JsonKey(name: 'app_id')
+  String? get appId;
+
+  /// Create a copy of CastConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $CastConfigCopyWith<CastConfig> get copyWith =>
+      _$CastConfigCopyWithImpl<CastConfig>(this as CastConfig, _$identity);
+
+  /// Serializes this CastConfig to a JSON map.
+  Map<String, dynamic> toJson();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is CastConfig &&
             (identical(other.appId, appId) || other.appId == appId));
   }
 
@@ -319,113 +371,330 @@ class _$CastConfigImpl implements _CastConfig {
   @override
   int get hashCode => Object.hash(runtimeType, appId);
 
-  /// Create a copy of CastConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$CastConfigImplCopyWith<_$CastConfigImpl> get copyWith =>
-      __$$CastConfigImplCopyWithImpl<_$CastConfigImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$CastConfigImplToJson(
-      this,
-    );
+  String toString() {
+    return 'CastConfig(appId: $appId)';
   }
 }
 
-abstract class _CastConfig implements CastConfig {
-  factory _CastConfig({@JsonKey(name: 'app_id') required final String? appId}) =
-      _$CastConfigImpl;
+/// @nodoc
+abstract mixin class $CastConfigCopyWith<$Res> {
+  factory $CastConfigCopyWith(
+          CastConfig value, $Res Function(CastConfig) _then) =
+      _$CastConfigCopyWithImpl;
+  @useResult
+  $Res call({@JsonKey(name: 'app_id') String? appId});
+}
 
-  factory _CastConfig.fromJson(Map<String, dynamic> json) =
-      _$CastConfigImpl.fromJson;
+/// @nodoc
+class _$CastConfigCopyWithImpl<$Res> implements $CastConfigCopyWith<$Res> {
+  _$CastConfigCopyWithImpl(this._self, this._then);
+
+  final CastConfig _self;
+  final $Res Function(CastConfig) _then;
+
+  /// Create a copy of CastConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? appId = freezed,
+  }) {
+    return _then(_self.copyWith(
+      appId: freezed == appId
+          ? _self.appId
+          : appId // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// Adds pattern-matching-related methods to [CastConfig].
+extension CastConfigPatterns on CastConfig {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_CastConfig value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _CastConfig() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_CastConfig value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CastConfig():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_CastConfig value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CastConfig() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(@JsonKey(name: 'app_id') String? appId)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _CastConfig() when $default != null:
+        return $default(_that.appId);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(@JsonKey(name: 'app_id') String? appId) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CastConfig():
+        return $default(_that.appId);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(@JsonKey(name: 'app_id') String? appId)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CastConfig() when $default != null:
+        return $default(_that.appId);
+      case _:
+        return null;
+    }
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _CastConfig implements CastConfig {
+  _CastConfig({@JsonKey(name: 'app_id') required this.appId});
+  factory _CastConfig.fromJson(Map<String, dynamic> json) =>
+      _$CastConfigFromJson(json);
 
 // ignore: invalid_annotation_target
   @override
   @JsonKey(name: 'app_id')
-  String? get appId;
+  final String? appId;
 
   /// Create a copy of CastConfig
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$CastConfigImplCopyWith<_$CastConfigImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-TranscoderState _$TranscoderStateFromJson(Map<String, dynamic> json) {
-  return _TranscoderState.fromJson(json);
-}
-
-/// @nodoc
-mixin _$TranscoderState {
-  List<TranscoderJob> get queue => throw _privateConstructorUsedError;
-
-  /// Serializes this TranscoderState to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of TranscoderState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $TranscoderStateCopyWith<TranscoderState> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $TranscoderStateCopyWith<$Res> {
-  factory $TranscoderStateCopyWith(
-          TranscoderState value, $Res Function(TranscoderState) then) =
-      _$TranscoderStateCopyWithImpl<$Res, TranscoderState>;
-  @useResult
-  $Res call({List<TranscoderJob> queue});
-}
-
-/// @nodoc
-class _$TranscoderStateCopyWithImpl<$Res, $Val extends TranscoderState>
-    implements $TranscoderStateCopyWith<$Res> {
-  _$TranscoderStateCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of TranscoderState
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
+  _$CastConfigCopyWith<_CastConfig> get copyWith =>
+      __$CastConfigCopyWithImpl<_CastConfig>(this, _$identity);
+
   @override
-  $Res call({
-    Object? queue = null,
-  }) {
-    return _then(_value.copyWith(
-      queue: null == queue
-          ? _value.queue
-          : queue // ignore: cast_nullable_to_non_nullable
-              as List<TranscoderJob>,
-    ) as $Val);
+  Map<String, dynamic> toJson() {
+    return _$CastConfigToJson(
+      this,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _CastConfig &&
+            (identical(other.appId, appId) || other.appId == appId));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, appId);
+
+  @override
+  String toString() {
+    return 'CastConfig(appId: $appId)';
   }
 }
 
 /// @nodoc
-abstract class _$$TranscoderStateImplCopyWith<$Res>
-    implements $TranscoderStateCopyWith<$Res> {
-  factory _$$TranscoderStateImplCopyWith(_$TranscoderStateImpl value,
-          $Res Function(_$TranscoderStateImpl) then) =
-      __$$TranscoderStateImplCopyWithImpl<$Res>;
+abstract mixin class _$CastConfigCopyWith<$Res>
+    implements $CastConfigCopyWith<$Res> {
+  factory _$CastConfigCopyWith(
+          _CastConfig value, $Res Function(_CastConfig) _then) =
+      __$CastConfigCopyWithImpl;
   @override
+  @useResult
+  $Res call({@JsonKey(name: 'app_id') String? appId});
+}
+
+/// @nodoc
+class __$CastConfigCopyWithImpl<$Res> implements _$CastConfigCopyWith<$Res> {
+  __$CastConfigCopyWithImpl(this._self, this._then);
+
+  final _CastConfig _self;
+  final $Res Function(_CastConfig) _then;
+
+  /// Create a copy of CastConfig
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? appId = freezed,
+  }) {
+    return _then(_CastConfig(
+      appId: freezed == appId
+          ? _self.appId
+          : appId // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+mixin _$TranscoderState {
+  List<TranscoderJob> get queue;
+
+  /// Create a copy of TranscoderState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $TranscoderStateCopyWith<TranscoderState> get copyWith =>
+      _$TranscoderStateCopyWithImpl<TranscoderState>(
+          this as TranscoderState, _$identity);
+
+  /// Serializes this TranscoderState to a JSON map.
+  Map<String, dynamic> toJson();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is TranscoderState &&
+            const DeepCollectionEquality().equals(other.queue, queue));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(queue));
+
+  @override
+  String toString() {
+    return 'TranscoderState(queue: $queue)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $TranscoderStateCopyWith<$Res> {
+  factory $TranscoderStateCopyWith(
+          TranscoderState value, $Res Function(TranscoderState) _then) =
+      _$TranscoderStateCopyWithImpl;
   @useResult
   $Res call({List<TranscoderJob> queue});
 }
 
 /// @nodoc
-class __$$TranscoderStateImplCopyWithImpl<$Res>
-    extends _$TranscoderStateCopyWithImpl<$Res, _$TranscoderStateImpl>
-    implements _$$TranscoderStateImplCopyWith<$Res> {
-  __$$TranscoderStateImplCopyWithImpl(
-      _$TranscoderStateImpl _value, $Res Function(_$TranscoderStateImpl) _then)
-      : super(_value, _then);
+class _$TranscoderStateCopyWithImpl<$Res>
+    implements $TranscoderStateCopyWith<$Res> {
+  _$TranscoderStateCopyWithImpl(this._self, this._then);
+
+  final TranscoderState _self;
+  final $Res Function(TranscoderState) _then;
 
   /// Create a copy of TranscoderState
   /// with the given fields replaced by the non-null parameter values.
@@ -434,23 +703,178 @@ class __$$TranscoderStateImplCopyWithImpl<$Res>
   $Res call({
     Object? queue = null,
   }) {
-    return _then(_$TranscoderStateImpl(
+    return _then(_self.copyWith(
       queue: null == queue
-          ? _value._queue
+          ? _self.queue
           : queue // ignore: cast_nullable_to_non_nullable
               as List<TranscoderJob>,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [TranscoderState].
+extension TranscoderStatePatterns on TranscoderState {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_TranscoderState value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _TranscoderState() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_TranscoderState value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _TranscoderState():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_TranscoderState value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _TranscoderState() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(List<TranscoderJob> queue)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _TranscoderState() when $default != null:
+        return $default(_that.queue);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(List<TranscoderJob> queue) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _TranscoderState():
+        return $default(_that.queue);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(List<TranscoderJob> queue)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _TranscoderState() when $default != null:
+        return $default(_that.queue);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 @JsonSerializable()
-class _$TranscoderStateImpl implements _TranscoderState {
-  _$TranscoderStateImpl({required final List<TranscoderJob> queue})
-      : _queue = queue;
-
-  factory _$TranscoderStateImpl.fromJson(Map<String, dynamic> json) =>
-      _$$TranscoderStateImplFromJson(json);
+class _TranscoderState implements TranscoderState {
+  _TranscoderState({required final List<TranscoderJob> queue}) : _queue = queue;
+  factory _TranscoderState.fromJson(Map<String, dynamic> json) =>
+      _$TranscoderStateFromJson(json);
 
   final List<TranscoderJob> _queue;
   @override
@@ -460,16 +884,26 @@ class _$TranscoderStateImpl implements _TranscoderState {
     return EqualUnmodifiableListView(_queue);
   }
 
+  /// Create a copy of TranscoderState
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'TranscoderState(queue: $queue)';
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$TranscoderStateCopyWith<_TranscoderState> get copyWith =>
+      __$TranscoderStateCopyWithImpl<_TranscoderState>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$TranscoderStateToJson(
+      this,
+    );
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$TranscoderStateImpl &&
+            other is _TranscoderState &&
             const DeepCollectionEquality().equals(other._queue, _queue));
   }
 
@@ -478,39 +912,45 @@ class _$TranscoderStateImpl implements _TranscoderState {
   int get hashCode =>
       Object.hash(runtimeType, const DeepCollectionEquality().hash(_queue));
 
-  /// Create a copy of TranscoderState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$TranscoderStateImplCopyWith<_$TranscoderStateImpl> get copyWith =>
-      __$$TranscoderStateImplCopyWithImpl<_$TranscoderStateImpl>(
-          this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$TranscoderStateImplToJson(
-      this,
-    );
+  String toString() {
+    return 'TranscoderState(queue: $queue)';
   }
 }
 
-abstract class _TranscoderState implements TranscoderState {
-  factory _TranscoderState({required final List<TranscoderJob> queue}) =
-      _$TranscoderStateImpl;
-
-  factory _TranscoderState.fromJson(Map<String, dynamic> json) =
-      _$TranscoderStateImpl.fromJson;
-
+/// @nodoc
+abstract mixin class _$TranscoderStateCopyWith<$Res>
+    implements $TranscoderStateCopyWith<$Res> {
+  factory _$TranscoderStateCopyWith(
+          _TranscoderState value, $Res Function(_TranscoderState) _then) =
+      __$TranscoderStateCopyWithImpl;
   @override
-  List<TranscoderJob> get queue;
+  @useResult
+  $Res call({List<TranscoderJob> queue});
+}
+
+/// @nodoc
+class __$TranscoderStateCopyWithImpl<$Res>
+    implements _$TranscoderStateCopyWith<$Res> {
+  __$TranscoderStateCopyWithImpl(this._self, this._then);
+
+  final _TranscoderState _self;
+  final $Res Function(_TranscoderState) _then;
 
   /// Create a copy of TranscoderState
   /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$TranscoderStateImplCopyWith<_$TranscoderStateImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? queue = null,
+  }) {
+    return _then(_TranscoderState(
+      queue: null == queue
+          ? _self._queue
+          : queue // ignore: cast_nullable_to_non_nullable
+              as List<TranscoderJob>,
+    ));
+  }
 }
 
 TranscoderJob _$TranscoderJobFromJson(Map<String, dynamic> json) {
@@ -530,188 +970,26 @@ TranscoderJob _$TranscoderJobFromJson(Map<String, dynamic> json) {
 mixin _$TranscoderJob {
 // ignore: invalid_annotation_target
   @JsonKey(name: 'video_id')
-  int get videoId =>
-      throw _privateConstructorUsedError; // ignore: invalid_annotation_target
+  int get videoId; // ignore: invalid_annotation_target
   @JsonKey(name: 'item_id')
-  int get itemId => throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId)
-        queued,
-    required TResult Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId, double progress)
-        processing,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId)?
-        queued,
-    TResult? Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId, double progress)?
-        processing,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId)?
-        queued,
-    TResult Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId, double progress)?
-        processing,
-    required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(Queued value) queued,
-    required TResult Function(Processing value) processing,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(Queued value)? queued,
-    TResult? Function(Processing value)? processing,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(Queued value)? queued,
-    TResult Function(Processing value)? processing,
-    required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
-
-  /// Serializes this TranscoderJob to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  int get itemId;
 
   /// Create a copy of TranscoderJob
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
   $TranscoderJobCopyWith<TranscoderJob> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+      _$TranscoderJobCopyWithImpl<TranscoderJob>(
+          this as TranscoderJob, _$identity);
 
-/// @nodoc
-abstract class $TranscoderJobCopyWith<$Res> {
-  factory $TranscoderJobCopyWith(
-          TranscoderJob value, $Res Function(TranscoderJob) then) =
-      _$TranscoderJobCopyWithImpl<$Res, TranscoderJob>;
-  @useResult
-  $Res call(
-      {@JsonKey(name: 'video_id') int videoId,
-      @JsonKey(name: 'item_id') int itemId});
-}
-
-/// @nodoc
-class _$TranscoderJobCopyWithImpl<$Res, $Val extends TranscoderJob>
-    implements $TranscoderJobCopyWith<$Res> {
-  _$TranscoderJobCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of TranscoderJob
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? videoId = null,
-    Object? itemId = null,
-  }) {
-    return _then(_value.copyWith(
-      videoId: null == videoId
-          ? _value.videoId
-          : videoId // ignore: cast_nullable_to_non_nullable
-              as int,
-      itemId: null == itemId
-          ? _value.itemId
-          : itemId // ignore: cast_nullable_to_non_nullable
-              as int,
-    ) as $Val);
-  }
-}
-
-/// @nodoc
-abstract class _$$QueuedImplCopyWith<$Res>
-    implements $TranscoderJobCopyWith<$Res> {
-  factory _$$QueuedImplCopyWith(
-          _$QueuedImpl value, $Res Function(_$QueuedImpl) then) =
-      __$$QueuedImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call(
-      {@JsonKey(name: 'video_id') int videoId,
-      @JsonKey(name: 'item_id') int itemId});
-}
-
-/// @nodoc
-class __$$QueuedImplCopyWithImpl<$Res>
-    extends _$TranscoderJobCopyWithImpl<$Res, _$QueuedImpl>
-    implements _$$QueuedImplCopyWith<$Res> {
-  __$$QueuedImplCopyWithImpl(
-      _$QueuedImpl _value, $Res Function(_$QueuedImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of TranscoderJob
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? videoId = null,
-    Object? itemId = null,
-  }) {
-    return _then(_$QueuedImpl(
-      null == videoId
-          ? _value.videoId
-          : videoId // ignore: cast_nullable_to_non_nullable
-              as int,
-      null == itemId
-          ? _value.itemId
-          : itemId // ignore: cast_nullable_to_non_nullable
-              as int,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _$QueuedImpl implements Queued {
-  _$QueuedImpl(@JsonKey(name: 'video_id') this.videoId,
-      @JsonKey(name: 'item_id') this.itemId,
-      {final String? $type})
-      : $type = $type ?? 'queued';
-
-  factory _$QueuedImpl.fromJson(Map<String, dynamic> json) =>
-      _$$QueuedImplFromJson(json);
-
-// ignore: invalid_annotation_target
-  @override
-  @JsonKey(name: 'video_id')
-  final int videoId;
-// ignore: invalid_annotation_target
-  @override
-  @JsonKey(name: 'item_id')
-  final int itemId;
-
-  @JsonKey(name: 'state')
-  final String $type;
-
-  @override
-  String toString() {
-    return 'TranscoderJob.queued(videoId: $videoId, itemId: $itemId)';
-  }
+  /// Serializes this TranscoderJob to a JSON map.
+  Map<String, dynamic> toJson();
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$QueuedImpl &&
+            other is TranscoderJob &&
             (identical(other.videoId, videoId) || other.videoId == videoId) &&
             (identical(other.itemId, itemId) || other.itemId == itemId));
   }
@@ -720,41 +998,150 @@ class _$QueuedImpl implements Queued {
   @override
   int get hashCode => Object.hash(runtimeType, videoId, itemId);
 
+  @override
+  String toString() {
+    return 'TranscoderJob(videoId: $videoId, itemId: $itemId)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $TranscoderJobCopyWith<$Res> {
+  factory $TranscoderJobCopyWith(
+          TranscoderJob value, $Res Function(TranscoderJob) _then) =
+      _$TranscoderJobCopyWithImpl;
+  @useResult
+  $Res call(
+      {@JsonKey(name: 'video_id') int videoId,
+      @JsonKey(name: 'item_id') int itemId});
+}
+
+/// @nodoc
+class _$TranscoderJobCopyWithImpl<$Res>
+    implements $TranscoderJobCopyWith<$Res> {
+  _$TranscoderJobCopyWithImpl(this._self, this._then);
+
+  final TranscoderJob _self;
+  final $Res Function(TranscoderJob) _then;
+
   /// Create a copy of TranscoderJob
   /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
   @pragma('vm:prefer-inline')
-  _$$QueuedImplCopyWith<_$QueuedImpl> get copyWith =>
-      __$$QueuedImplCopyWithImpl<_$QueuedImpl>(this, _$identity);
-
   @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId)
-        queued,
-    required TResult Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId, double progress)
-        processing,
+  $Res call({
+    Object? videoId = null,
+    Object? itemId = null,
   }) {
-    return queued(videoId, itemId);
+    return _then(_self.copyWith(
+      videoId: null == videoId
+          ? _self.videoId
+          : videoId // ignore: cast_nullable_to_non_nullable
+              as int,
+      itemId: null == itemId
+          ? _self.itemId
+          : itemId // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// Adds pattern-matching-related methods to [TranscoderJob].
+extension TranscoderJobPatterns on TranscoderJob {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(Queued value)? queued,
+    TResult Function(Processing value)? processing,
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case Queued() when queued != null:
+        return queued(_that);
+      case Processing() when processing != null:
+        return processing(_that);
+      case _:
+        return orElse();
+    }
   }
 
-  @override
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
   @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId)?
-        queued,
-    TResult? Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId, double progress)?
-        processing,
+  TResult map<TResult extends Object?>({
+    required TResult Function(Queued value) queued,
+    required TResult Function(Processing value) processing,
   }) {
-    return queued?.call(videoId, itemId);
+    final _that = this;
+    switch (_that) {
+      case Queued():
+        return queued(_that);
+      case Processing():
+        return processing(_that);
+    }
   }
 
-  @override
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(Queued value)? queued,
+    TResult? Function(Processing value)? processing,
+  }) {
+    final _that = this;
+    switch (_that) {
+      case Queued() when queued != null:
+        return queued(_that);
+      case Processing() when processing != null:
+        return processing(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(@JsonKey(name: 'video_id') int videoId,
@@ -765,131 +1152,89 @@ class _$QueuedImpl implements Queued {
         processing,
     required TResult orElse(),
   }) {
-    if (queued != null) {
-      return queued(videoId, itemId);
+    final _that = this;
+    switch (_that) {
+      case Queued() when queued != null:
+        return queued(_that.videoId, _that.itemId);
+      case Processing() when processing != null:
+        return processing(_that.videoId, _that.itemId, _that.progress);
+      case _:
+        return orElse();
     }
-    return orElse();
   }
 
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(Queued value) queued,
-    required TResult Function(Processing value) processing,
-  }) {
-    return queued(this);
-  }
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
 
-  @override
   @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(Queued value)? queued,
-    TResult? Function(Processing value)? processing,
+  TResult when<TResult extends Object?>({
+    required TResult Function(@JsonKey(name: 'video_id') int videoId,
+            @JsonKey(name: 'item_id') int itemId)
+        queued,
+    required TResult Function(@JsonKey(name: 'video_id') int videoId,
+            @JsonKey(name: 'item_id') int itemId, double progress)
+        processing,
   }) {
-    return queued?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(Queued value)? queued,
-    TResult Function(Processing value)? processing,
-    required TResult orElse(),
-  }) {
-    if (queued != null) {
-      return queued(this);
+    final _that = this;
+    switch (_that) {
+      case Queued():
+        return queued(_that.videoId, _that.itemId);
+      case Processing():
+        return processing(_that.videoId, _that.itemId, _that.progress);
     }
-    return orElse();
   }
 
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$QueuedImplToJson(
-      this,
-    );
-  }
-}
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
 
-abstract class Queued implements TranscoderJob {
-  factory Queued(@JsonKey(name: 'video_id') final int videoId,
-      @JsonKey(name: 'item_id') final int itemId) = _$QueuedImpl;
-
-  factory Queued.fromJson(Map<String, dynamic> json) = _$QueuedImpl.fromJson;
-
-// ignore: invalid_annotation_target
-  @override
-  @JsonKey(name: 'video_id')
-  int get videoId; // ignore: invalid_annotation_target
-  @override
-  @JsonKey(name: 'item_id')
-  int get itemId;
-
-  /// Create a copy of TranscoderJob
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$QueuedImplCopyWith<_$QueuedImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class _$$ProcessingImplCopyWith<$Res>
-    implements $TranscoderJobCopyWith<$Res> {
-  factory _$$ProcessingImplCopyWith(
-          _$ProcessingImpl value, $Res Function(_$ProcessingImpl) then) =
-      __$$ProcessingImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call(
-      {@JsonKey(name: 'video_id') int videoId,
-      @JsonKey(name: 'item_id') int itemId,
-      double progress});
-}
-
-/// @nodoc
-class __$$ProcessingImplCopyWithImpl<$Res>
-    extends _$TranscoderJobCopyWithImpl<$Res, _$ProcessingImpl>
-    implements _$$ProcessingImplCopyWith<$Res> {
-  __$$ProcessingImplCopyWithImpl(
-      _$ProcessingImpl _value, $Res Function(_$ProcessingImpl) _then)
-      : super(_value, _then);
-
-  /// Create a copy of TranscoderJob
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? videoId = null,
-    Object? itemId = null,
-    Object? progress = null,
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(@JsonKey(name: 'video_id') int videoId,
+            @JsonKey(name: 'item_id') int itemId)?
+        queued,
+    TResult? Function(@JsonKey(name: 'video_id') int videoId,
+            @JsonKey(name: 'item_id') int itemId, double progress)?
+        processing,
   }) {
-    return _then(_$ProcessingImpl(
-      null == videoId
-          ? _value.videoId
-          : videoId // ignore: cast_nullable_to_non_nullable
-              as int,
-      null == itemId
-          ? _value.itemId
-          : itemId // ignore: cast_nullable_to_non_nullable
-              as int,
-      null == progress
-          ? _value.progress
-          : progress // ignore: cast_nullable_to_non_nullable
-              as double,
-    ));
+    final _that = this;
+    switch (_that) {
+      case Queued() when queued != null:
+        return queued(_that.videoId, _that.itemId);
+      case Processing() when processing != null:
+        return processing(_that.videoId, _that.itemId, _that.progress);
+      case _:
+        return null;
+    }
   }
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$ProcessingImpl implements Processing {
-  _$ProcessingImpl(@JsonKey(name: 'video_id') this.videoId,
-      @JsonKey(name: 'item_id') this.itemId, this.progress,
+class Queued implements TranscoderJob {
+  Queued(@JsonKey(name: 'video_id') this.videoId,
+      @JsonKey(name: 'item_id') this.itemId,
       {final String? $type})
-      : $type = $type ?? 'processing';
-
-  factory _$ProcessingImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ProcessingImplFromJson(json);
+      : $type = $type ?? 'queued';
+  factory Queued.fromJson(Map<String, dynamic> json) => _$QueuedFromJson(json);
 
 // ignore: invalid_annotation_target
   @override
@@ -899,22 +1244,127 @@ class _$ProcessingImpl implements Processing {
   @override
   @JsonKey(name: 'item_id')
   final int itemId;
-  @override
-  final double progress;
 
   @JsonKey(name: 'state')
   final String $type;
 
+  /// Create a copy of TranscoderJob
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'TranscoderJob.processing(videoId: $videoId, itemId: $itemId, progress: $progress)';
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $QueuedCopyWith<Queued> get copyWith =>
+      _$QueuedCopyWithImpl<Queued>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$QueuedToJson(
+      this,
+    );
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ProcessingImpl &&
+            other is Queued &&
+            (identical(other.videoId, videoId) || other.videoId == videoId) &&
+            (identical(other.itemId, itemId) || other.itemId == itemId));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, videoId, itemId);
+
+  @override
+  String toString() {
+    return 'TranscoderJob.queued(videoId: $videoId, itemId: $itemId)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $QueuedCopyWith<$Res>
+    implements $TranscoderJobCopyWith<$Res> {
+  factory $QueuedCopyWith(Queued value, $Res Function(Queued) _then) =
+      _$QueuedCopyWithImpl;
+  @override
+  @useResult
+  $Res call(
+      {@JsonKey(name: 'video_id') int videoId,
+      @JsonKey(name: 'item_id') int itemId});
+}
+
+/// @nodoc
+class _$QueuedCopyWithImpl<$Res> implements $QueuedCopyWith<$Res> {
+  _$QueuedCopyWithImpl(this._self, this._then);
+
+  final Queued _self;
+  final $Res Function(Queued) _then;
+
+  /// Create a copy of TranscoderJob
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? videoId = null,
+    Object? itemId = null,
+  }) {
+    return _then(Queued(
+      null == videoId
+          ? _self.videoId
+          : videoId // ignore: cast_nullable_to_non_nullable
+              as int,
+      null == itemId
+          ? _self.itemId
+          : itemId // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class Processing implements TranscoderJob {
+  Processing(@JsonKey(name: 'video_id') this.videoId,
+      @JsonKey(name: 'item_id') this.itemId, this.progress,
+      {final String? $type})
+      : $type = $type ?? 'processing';
+  factory Processing.fromJson(Map<String, dynamic> json) =>
+      _$ProcessingFromJson(json);
+
+// ignore: invalid_annotation_target
+  @override
+  @JsonKey(name: 'video_id')
+  final int videoId;
+// ignore: invalid_annotation_target
+  @override
+  @JsonKey(name: 'item_id')
+  final int itemId;
+  final double progress;
+
+  @JsonKey(name: 'state')
+  final String $type;
+
+  /// Create a copy of TranscoderJob
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $ProcessingCopyWith<Processing> get copyWith =>
+      _$ProcessingCopyWithImpl<Processing>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$ProcessingToJson(
+      this,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is Processing &&
             (identical(other.videoId, videoId) || other.videoId == videoId) &&
             (identical(other.itemId, itemId) || other.itemId == itemId) &&
             (identical(other.progress, progress) ||
@@ -925,118 +1375,57 @@ class _$ProcessingImpl implements Processing {
   @override
   int get hashCode => Object.hash(runtimeType, videoId, itemId, progress);
 
+  @override
+  String toString() {
+    return 'TranscoderJob.processing(videoId: $videoId, itemId: $itemId, progress: $progress)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $ProcessingCopyWith<$Res>
+    implements $TranscoderJobCopyWith<$Res> {
+  factory $ProcessingCopyWith(
+          Processing value, $Res Function(Processing) _then) =
+      _$ProcessingCopyWithImpl;
+  @override
+  @useResult
+  $Res call(
+      {@JsonKey(name: 'video_id') int videoId,
+      @JsonKey(name: 'item_id') int itemId,
+      double progress});
+}
+
+/// @nodoc
+class _$ProcessingCopyWithImpl<$Res> implements $ProcessingCopyWith<$Res> {
+  _$ProcessingCopyWithImpl(this._self, this._then);
+
+  final Processing _self;
+  final $Res Function(Processing) _then;
+
   /// Create a copy of TranscoderJob
   /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$ProcessingImplCopyWith<_$ProcessingImpl> get copyWith =>
-      __$$ProcessingImplCopyWithImpl<_$ProcessingImpl>(this, _$identity);
-
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId)
-        queued,
-    required TResult Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId, double progress)
-        processing,
+  $Res call({
+    Object? videoId = null,
+    Object? itemId = null,
+    Object? progress = null,
   }) {
-    return processing(videoId, itemId, progress);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId)?
-        queued,
-    TResult? Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId, double progress)?
-        processing,
-  }) {
-    return processing?.call(videoId, itemId, progress);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId)?
-        queued,
-    TResult Function(@JsonKey(name: 'video_id') int videoId,
-            @JsonKey(name: 'item_id') int itemId, double progress)?
-        processing,
-    required TResult orElse(),
-  }) {
-    if (processing != null) {
-      return processing(videoId, itemId, progress);
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(Queued value) queued,
-    required TResult Function(Processing value) processing,
-  }) {
-    return processing(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(Queued value)? queued,
-    TResult? Function(Processing value)? processing,
-  }) {
-    return processing?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(Queued value)? queued,
-    TResult Function(Processing value)? processing,
-    required TResult orElse(),
-  }) {
-    if (processing != null) {
-      return processing(this);
-    }
-    return orElse();
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$ProcessingImplToJson(
-      this,
-    );
+    return _then(Processing(
+      null == videoId
+          ? _self.videoId
+          : videoId // ignore: cast_nullable_to_non_nullable
+              as int,
+      null == itemId
+          ? _self.itemId
+          : itemId // ignore: cast_nullable_to_non_nullable
+              as int,
+      null == progress
+          ? _self.progress
+          : progress // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
   }
 }
 
-abstract class Processing implements TranscoderJob {
-  factory Processing(
-      @JsonKey(name: 'video_id') final int videoId,
-      @JsonKey(name: 'item_id') final int itemId,
-      final double progress) = _$ProcessingImpl;
-
-  factory Processing.fromJson(Map<String, dynamic> json) =
-      _$ProcessingImpl.fromJson;
-
-// ignore: invalid_annotation_target
-  @override
-  @JsonKey(name: 'video_id')
-  int get videoId; // ignore: invalid_annotation_target
-  @override
-  @JsonKey(name: 'item_id')
-  int get itemId;
-  double get progress;
-
-  /// Create a copy of TranscoderJob
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$ProcessingImplCopyWith<_$ProcessingImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+// dart format on

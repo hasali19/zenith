@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,79 +9,63 @@ part of 'home.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
 
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
 /// @nodoc
-mixin _$HomeScreenData {
-  List<MediaItem> get continueWatching => throw _privateConstructorUsedError;
-  List<MediaItem> get recentMovies => throw _privateConstructorUsedError;
-  List<MediaItem> get recentShows => throw _privateConstructorUsedError;
+mixin _$HomeScreenData implements DiagnosticableTreeMixin {
+  List<MediaItem> get continueWatching;
+  List<MediaItem> get recentMovies;
+  List<MediaItem> get recentShows;
 
   /// Create a copy of HomeScreenData
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $HomeScreenDataCopyWith<HomeScreenData> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $HomeScreenDataCopyWith<$Res> {
-  factory $HomeScreenDataCopyWith(
-          HomeScreenData value, $Res Function(HomeScreenData) then) =
-      _$HomeScreenDataCopyWithImpl<$Res, HomeScreenData>;
-  @useResult
-  $Res call(
-      {List<MediaItem> continueWatching,
-      List<MediaItem> recentMovies,
-      List<MediaItem> recentShows});
-}
-
-/// @nodoc
-class _$HomeScreenDataCopyWithImpl<$Res, $Val extends HomeScreenData>
-    implements $HomeScreenDataCopyWith<$Res> {
-  _$HomeScreenDataCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of HomeScreenData
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
+  $HomeScreenDataCopyWith<HomeScreenData> get copyWith =>
+      _$HomeScreenDataCopyWithImpl<HomeScreenData>(
+          this as HomeScreenData, _$identity);
+
   @override
-  $Res call({
-    Object? continueWatching = null,
-    Object? recentMovies = null,
-    Object? recentShows = null,
-  }) {
-    return _then(_value.copyWith(
-      continueWatching: null == continueWatching
-          ? _value.continueWatching
-          : continueWatching // ignore: cast_nullable_to_non_nullable
-              as List<MediaItem>,
-      recentMovies: null == recentMovies
-          ? _value.recentMovies
-          : recentMovies // ignore: cast_nullable_to_non_nullable
-              as List<MediaItem>,
-      recentShows: null == recentShows
-          ? _value.recentShows
-          : recentShows // ignore: cast_nullable_to_non_nullable
-              as List<MediaItem>,
-    ) as $Val);
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    properties
+      ..add(DiagnosticsProperty('type', 'HomeScreenData'))
+      ..add(DiagnosticsProperty('continueWatching', continueWatching))
+      ..add(DiagnosticsProperty('recentMovies', recentMovies))
+      ..add(DiagnosticsProperty('recentShows', recentShows));
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is HomeScreenData &&
+            const DeepCollectionEquality()
+                .equals(other.continueWatching, continueWatching) &&
+            const DeepCollectionEquality()
+                .equals(other.recentMovies, recentMovies) &&
+            const DeepCollectionEquality()
+                .equals(other.recentShows, recentShows));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(continueWatching),
+      const DeepCollectionEquality().hash(recentMovies),
+      const DeepCollectionEquality().hash(recentShows));
+
+  @override
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
+    return 'HomeScreenData(continueWatching: $continueWatching, recentMovies: $recentMovies, recentShows: $recentShows)';
   }
 }
 
 /// @nodoc
-abstract class _$$HomeScreenDataImplCopyWith<$Res>
-    implements $HomeScreenDataCopyWith<$Res> {
-  factory _$$HomeScreenDataImplCopyWith(_$HomeScreenDataImpl value,
-          $Res Function(_$HomeScreenDataImpl) then) =
-      __$$HomeScreenDataImplCopyWithImpl<$Res>;
-  @override
+abstract mixin class $HomeScreenDataCopyWith<$Res> {
+  factory $HomeScreenDataCopyWith(
+          HomeScreenData value, $Res Function(HomeScreenData) _then) =
+      _$HomeScreenDataCopyWithImpl;
   @useResult
   $Res call(
       {List<MediaItem> continueWatching,
@@ -90,12 +74,12 @@ abstract class _$$HomeScreenDataImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$HomeScreenDataImplCopyWithImpl<$Res>
-    extends _$HomeScreenDataCopyWithImpl<$Res, _$HomeScreenDataImpl>
-    implements _$$HomeScreenDataImplCopyWith<$Res> {
-  __$$HomeScreenDataImplCopyWithImpl(
-      _$HomeScreenDataImpl _value, $Res Function(_$HomeScreenDataImpl) _then)
-      : super(_value, _then);
+class _$HomeScreenDataCopyWithImpl<$Res>
+    implements $HomeScreenDataCopyWith<$Res> {
+  _$HomeScreenDataCopyWithImpl(this._self, this._then);
+
+  final HomeScreenData _self;
+  final $Res Function(HomeScreenData) _then;
 
   /// Create a copy of HomeScreenData
   /// with the given fields replaced by the non-null parameter values.
@@ -106,29 +90,193 @@ class __$$HomeScreenDataImplCopyWithImpl<$Res>
     Object? recentMovies = null,
     Object? recentShows = null,
   }) {
-    return _then(_$HomeScreenDataImpl(
+    return _then(_self.copyWith(
       continueWatching: null == continueWatching
-          ? _value._continueWatching
+          ? _self.continueWatching
           : continueWatching // ignore: cast_nullable_to_non_nullable
               as List<MediaItem>,
       recentMovies: null == recentMovies
-          ? _value._recentMovies
+          ? _self.recentMovies
           : recentMovies // ignore: cast_nullable_to_non_nullable
               as List<MediaItem>,
       recentShows: null == recentShows
-          ? _value._recentShows
+          ? _self.recentShows
           : recentShows // ignore: cast_nullable_to_non_nullable
               as List<MediaItem>,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [HomeScreenData].
+extension HomeScreenDataPatterns on HomeScreenData {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_HomeScreenData value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _HomeScreenData() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_HomeScreenData value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _HomeScreenData():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_HomeScreenData value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _HomeScreenData() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(List<MediaItem> continueWatching,
+            List<MediaItem> recentMovies, List<MediaItem> recentShows)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _HomeScreenData() when $default != null:
+        return $default(
+            _that.continueWatching, _that.recentMovies, _that.recentShows);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(List<MediaItem> continueWatching,
+            List<MediaItem> recentMovies, List<MediaItem> recentShows)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _HomeScreenData():
+        return $default(
+            _that.continueWatching, _that.recentMovies, _that.recentShows);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(List<MediaItem> continueWatching,
+            List<MediaItem> recentMovies, List<MediaItem> recentShows)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _HomeScreenData() when $default != null:
+        return $default(
+            _that.continueWatching, _that.recentMovies, _that.recentShows);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 
-class _$HomeScreenDataImpl
-    with DiagnosticableTreeMixin
-    implements _HomeScreenData {
-  _$HomeScreenDataImpl(
+class _HomeScreenData with DiagnosticableTreeMixin implements HomeScreenData {
+  _HomeScreenData(
       {required final List<MediaItem> continueWatching,
       required final List<MediaItem> recentMovies,
       required final List<MediaItem> recentShows})
@@ -161,14 +309,16 @@ class _$HomeScreenDataImpl
     return EqualUnmodifiableListView(_recentShows);
   }
 
+  /// Create a copy of HomeScreenData
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'HomeScreenData(continueWatching: $continueWatching, recentMovies: $recentMovies, recentShows: $recentShows)';
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$HomeScreenDataCopyWith<_HomeScreenData> get copyWith =>
+      __$HomeScreenDataCopyWithImpl<_HomeScreenData>(this, _$identity);
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
     properties
       ..add(DiagnosticsProperty('type', 'HomeScreenData'))
       ..add(DiagnosticsProperty('continueWatching', continueWatching))
@@ -180,7 +330,7 @@ class _$HomeScreenDataImpl
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$HomeScreenDataImpl &&
+            other is _HomeScreenData &&
             const DeepCollectionEquality()
                 .equals(other._continueWatching, _continueWatching) &&
             const DeepCollectionEquality()
@@ -196,33 +346,58 @@ class _$HomeScreenDataImpl
       const DeepCollectionEquality().hash(_recentMovies),
       const DeepCollectionEquality().hash(_recentShows));
 
+  @override
+  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
+    return 'HomeScreenData(continueWatching: $continueWatching, recentMovies: $recentMovies, recentShows: $recentShows)';
+  }
+}
+
+/// @nodoc
+abstract mixin class _$HomeScreenDataCopyWith<$Res>
+    implements $HomeScreenDataCopyWith<$Res> {
+  factory _$HomeScreenDataCopyWith(
+          _HomeScreenData value, $Res Function(_HomeScreenData) _then) =
+      __$HomeScreenDataCopyWithImpl;
+  @override
+  @useResult
+  $Res call(
+      {List<MediaItem> continueWatching,
+      List<MediaItem> recentMovies,
+      List<MediaItem> recentShows});
+}
+
+/// @nodoc
+class __$HomeScreenDataCopyWithImpl<$Res>
+    implements _$HomeScreenDataCopyWith<$Res> {
+  __$HomeScreenDataCopyWithImpl(this._self, this._then);
+
+  final _HomeScreenData _self;
+  final $Res Function(_HomeScreenData) _then;
+
   /// Create a copy of HomeScreenData
   /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
-  _$$HomeScreenDataImplCopyWith<_$HomeScreenDataImpl> get copyWith =>
-      __$$HomeScreenDataImplCopyWithImpl<_$HomeScreenDataImpl>(
-          this, _$identity);
+  $Res call({
+    Object? continueWatching = null,
+    Object? recentMovies = null,
+    Object? recentShows = null,
+  }) {
+    return _then(_HomeScreenData(
+      continueWatching: null == continueWatching
+          ? _self._continueWatching
+          : continueWatching // ignore: cast_nullable_to_non_nullable
+              as List<MediaItem>,
+      recentMovies: null == recentMovies
+          ? _self._recentMovies
+          : recentMovies // ignore: cast_nullable_to_non_nullable
+              as List<MediaItem>,
+      recentShows: null == recentShows
+          ? _self._recentShows
+          : recentShows // ignore: cast_nullable_to_non_nullable
+              as List<MediaItem>,
+    ));
+  }
 }
 
-abstract class _HomeScreenData implements HomeScreenData {
-  factory _HomeScreenData(
-      {required final List<MediaItem> continueWatching,
-      required final List<MediaItem> recentMovies,
-      required final List<MediaItem> recentShows}) = _$HomeScreenDataImpl;
-
-  @override
-  List<MediaItem> get continueWatching;
-  @override
-  List<MediaItem> get recentMovies;
-  @override
-  List<MediaItem> get recentShows;
-
-  /// Create a copy of HomeScreenData
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$HomeScreenDataImplCopyWith<_$HomeScreenDataImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+// dart format on

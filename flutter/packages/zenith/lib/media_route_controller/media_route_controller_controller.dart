@@ -8,7 +8,7 @@ part 'media_route_controller_controller.g.dart';
 typedef CastMediaStatus = cast.MediaStatus;
 
 @freezed
-class MediaRouteControllerState with _$MediaRouteControllerState {
+abstract class MediaRouteControllerState with _$MediaRouteControllerState {
   factory MediaRouteControllerState({
     required cast.MediaRoute? route,
     required CastMediaStatus? mediaStatus,

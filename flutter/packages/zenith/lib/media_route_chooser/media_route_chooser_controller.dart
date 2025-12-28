@@ -6,7 +6,7 @@ part 'media_route_chooser_controller.freezed.dart';
 part 'media_route_chooser_controller.g.dart';
 
 @freezed
-class MediaRouteChooserState with _$MediaRouteChooserState {
+abstract class MediaRouteChooserState with _$MediaRouteChooserState {
   factory MediaRouteChooserState({
     required List<MediaRoute> routes,
     required String? requestedId,

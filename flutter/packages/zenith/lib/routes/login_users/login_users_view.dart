@@ -9,7 +9,7 @@ import 'package:zenith/router.dart';
 part 'login_users_view.g.dart';
 
 @riverpod
-Future<List<User>> _users(_UsersRef ref) async {
+Future<List<User>> _users(Ref ref) async {
   final api = ref.watch(apiProvider);
   return await api.fetchUsers();
 }

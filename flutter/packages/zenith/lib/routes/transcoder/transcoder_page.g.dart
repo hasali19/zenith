@@ -6,23 +6,76 @@ part of 'transcoder_page.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$dataHash() => r'6c30cc962a0d091c4559d83619dd82c1cfa2b30a';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [_data].
 @ProviderFor(_data)
-final _dataProvider =
-    AutoDisposeFutureProvider<List<(TranscoderJob, MediaItem)>>.internal(
-  _data,
-  name: r'_dataProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$dataHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final _dataProvider = _DataProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef _DataRef
-    = AutoDisposeFutureProviderRef<List<(TranscoderJob, MediaItem)>>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class _DataProvider extends $FunctionalProvider<
+        AsyncValue<
+            List<
+                (
+                  TranscoderJob,
+                  MediaItem,
+                )>>,
+        List<
+            (
+              TranscoderJob,
+              MediaItem,
+            )>,
+        FutureOr<
+            List<
+                (
+                  TranscoderJob,
+                  MediaItem,
+                )>>>
+    with
+        $FutureModifier<
+            List<
+                (
+                  TranscoderJob,
+                  MediaItem,
+                )>>,
+        $FutureProvider<
+            List<
+                (
+                  TranscoderJob,
+                  MediaItem,
+                )>> {
+  _DataProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'_dataProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$_dataHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<
+      List<
+          (
+            TranscoderJob,
+            MediaItem,
+          )>> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<
+      List<
+          (
+            TranscoderJob,
+            MediaItem,
+          )>> create(Ref ref) {
+    return _data(ref);
+  }
+}
+
+String _$_dataHash() => r'6c30cc962a0d091c4559d83619dd82c1cfa2b30a';

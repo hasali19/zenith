@@ -120,7 +120,7 @@ class ItemDetailsController extends _$ItemDetailsController {
   }
 
   void setIsWatched(bool isWatched) async {
-    final id = state.valueOrNull?.item.id;
+    final id = state.value?.item.id;
     if (id == null) return;
 
     await _api.updateUserData(id, VideoUserDataPatch(isWatched: isWatched));
@@ -129,7 +129,7 @@ class ItemDetailsController extends _$ItemDetailsController {
   }
 
   void findMetadataMatch() async {
-    final id = state.valueOrNull?.item.id;
+    final id = state.value?.item.id;
     if (id == null) return;
 
     await _api.findMetadataMatch(id);
@@ -138,7 +138,7 @@ class ItemDetailsController extends _$ItemDetailsController {
   }
 
   void refreshMetadata() async {
-    final id = state.valueOrNull?.item.id;
+    final id = state.value?.item.id;
     if (id == null) return;
 
     await _api.refreshMetadata(id);

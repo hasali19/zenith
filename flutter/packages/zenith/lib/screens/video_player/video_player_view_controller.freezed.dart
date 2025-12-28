@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,80 +9,54 @@ part of 'video_player_view_controller.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
 mixin _$Playlist {
-  List<MediaItem> get items => throw _privateConstructorUsedError;
-  int get start => throw _privateConstructorUsedError;
+  List<MediaItem> get items;
+  int get start;
 
   /// Create a copy of Playlist
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  $PlaylistCopyWith<Playlist> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $PlaylistCopyWith<$Res> {
-  factory $PlaylistCopyWith(Playlist value, $Res Function(Playlist) then) =
-      _$PlaylistCopyWithImpl<$Res, Playlist>;
-  @useResult
-  $Res call({List<MediaItem> items, int start});
-}
-
-/// @nodoc
-class _$PlaylistCopyWithImpl<$Res, $Val extends Playlist>
-    implements $PlaylistCopyWith<$Res> {
-  _$PlaylistCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of Playlist
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
+  $PlaylistCopyWith<Playlist> get copyWith =>
+      _$PlaylistCopyWithImpl<Playlist>(this as Playlist, _$identity);
+
   @override
-  $Res call({
-    Object? items = null,
-    Object? start = null,
-  }) {
-    return _then(_value.copyWith(
-      items: null == items
-          ? _value.items
-          : items // ignore: cast_nullable_to_non_nullable
-              as List<MediaItem>,
-      start: null == start
-          ? _value.start
-          : start // ignore: cast_nullable_to_non_nullable
-              as int,
-    ) as $Val);
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is Playlist &&
+            const DeepCollectionEquality().equals(other.items, items) &&
+            (identical(other.start, start) || other.start == start));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, const DeepCollectionEquality().hash(items), start);
+
+  @override
+  String toString() {
+    return 'Playlist(items: $items, start: $start)';
   }
 }
 
 /// @nodoc
-abstract class _$$PlaylistImplCopyWith<$Res>
-    implements $PlaylistCopyWith<$Res> {
-  factory _$$PlaylistImplCopyWith(
-          _$PlaylistImpl value, $Res Function(_$PlaylistImpl) then) =
-      __$$PlaylistImplCopyWithImpl<$Res>;
-  @override
+abstract mixin class $PlaylistCopyWith<$Res> {
+  factory $PlaylistCopyWith(Playlist value, $Res Function(Playlist) _then) =
+      _$PlaylistCopyWithImpl;
   @useResult
   $Res call({List<MediaItem> items, int start});
 }
 
 /// @nodoc
-class __$$PlaylistImplCopyWithImpl<$Res>
-    extends _$PlaylistCopyWithImpl<$Res, _$PlaylistImpl>
-    implements _$$PlaylistImplCopyWith<$Res> {
-  __$$PlaylistImplCopyWithImpl(
-      _$PlaylistImpl _value, $Res Function(_$PlaylistImpl) _then)
-      : super(_value, _then);
+class _$PlaylistCopyWithImpl<$Res> implements $PlaylistCopyWith<$Res> {
+  _$PlaylistCopyWithImpl(this._self, this._then);
+
+  final Playlist _self;
+  final $Res Function(Playlist) _then;
 
   /// Create a copy of Playlist
   /// with the given fields replaced by the non-null parameter values.
@@ -92,23 +66,180 @@ class __$$PlaylistImplCopyWithImpl<$Res>
     Object? items = null,
     Object? start = null,
   }) {
-    return _then(_$PlaylistImpl(
+    return _then(_self.copyWith(
       items: null == items
-          ? _value._items
+          ? _self.items
           : items // ignore: cast_nullable_to_non_nullable
               as List<MediaItem>,
       start: null == start
-          ? _value.start
+          ? _self.start
           : start // ignore: cast_nullable_to_non_nullable
               as int,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [Playlist].
+extension PlaylistPatterns on Playlist {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_Playlist value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _Playlist() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_Playlist value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Playlist():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_Playlist value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Playlist() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(List<MediaItem> items, int start)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _Playlist() when $default != null:
+        return $default(_that.items, _that.start);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(List<MediaItem> items, int start) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Playlist():
+        return $default(_that.items, _that.start);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(List<MediaItem> items, int start)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Playlist() when $default != null:
+        return $default(_that.items, _that.start);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 
-class _$PlaylistImpl implements _Playlist {
-  _$PlaylistImpl({required final List<MediaItem> items, required this.start})
+class _Playlist implements Playlist {
+  _Playlist({required final List<MediaItem> items, required this.start})
       : _items = items;
 
   final List<MediaItem> _items;
@@ -122,16 +253,19 @@ class _$PlaylistImpl implements _Playlist {
   @override
   final int start;
 
+  /// Create a copy of Playlist
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'Playlist(items: $items, start: $start)';
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$PlaylistCopyWith<_Playlist> get copyWith =>
+      __$PlaylistCopyWithImpl<_Playlist>(this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$PlaylistImpl &&
+            other is _Playlist &&
             const DeepCollectionEquality().equals(other._items, _items) &&
             (identical(other.start, start) || other.start == start));
   }
@@ -140,164 +274,68 @@ class _$PlaylistImpl implements _Playlist {
   int get hashCode => Object.hash(
       runtimeType, const DeepCollectionEquality().hash(_items), start);
 
-  /// Create a copy of Playlist
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
-  _$$PlaylistImplCopyWith<_$PlaylistImpl> get copyWith =>
-      __$$PlaylistImplCopyWithImpl<_$PlaylistImpl>(this, _$identity);
-}
-
-abstract class _Playlist implements Playlist {
-  factory _Playlist(
-      {required final List<MediaItem> items,
-      required final int start}) = _$PlaylistImpl;
-
-  @override
-  List<MediaItem> get items;
-  @override
-  int get start;
-
-  /// Create a copy of Playlist
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$PlaylistImplCopyWith<_$PlaylistImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-mixin _$VideoPlayerState {
-  PlaybackLocation get location => throw _privateConstructorUsedError;
-  Playlist? get playlist => throw _privateConstructorUsedError;
-
-  /// Create a copy of VideoPlayerState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $VideoPlayerStateCopyWith<VideoPlayerState> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $VideoPlayerStateCopyWith<$Res> {
-  factory $VideoPlayerStateCopyWith(
-          VideoPlayerState value, $Res Function(VideoPlayerState) then) =
-      _$VideoPlayerStateCopyWithImpl<$Res, VideoPlayerState>;
-  @useResult
-  $Res call({PlaybackLocation location, Playlist? playlist});
-
-  $PlaylistCopyWith<$Res>? get playlist;
-}
-
-/// @nodoc
-class _$VideoPlayerStateCopyWithImpl<$Res, $Val extends VideoPlayerState>
-    implements $VideoPlayerStateCopyWith<$Res> {
-  _$VideoPlayerStateCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  /// Create a copy of VideoPlayerState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? location = null,
-    Object? playlist = freezed,
-  }) {
-    return _then(_value.copyWith(
-      location: null == location
-          ? _value.location
-          : location // ignore: cast_nullable_to_non_nullable
-              as PlaybackLocation,
-      playlist: freezed == playlist
-          ? _value.playlist
-          : playlist // ignore: cast_nullable_to_non_nullable
-              as Playlist?,
-    ) as $Val);
-  }
-
-  /// Create a copy of VideoPlayerState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $PlaylistCopyWith<$Res>? get playlist {
-    if (_value.playlist == null) {
-      return null;
-    }
-
-    return $PlaylistCopyWith<$Res>(_value.playlist!, (value) {
-      return _then(_value.copyWith(playlist: value) as $Val);
-    });
+  String toString() {
+    return 'Playlist(items: $items, start: $start)';
   }
 }
 
 /// @nodoc
-abstract class _$$VideoPlayerStateImplCopyWith<$Res>
-    implements $VideoPlayerStateCopyWith<$Res> {
-  factory _$$VideoPlayerStateImplCopyWith(_$VideoPlayerStateImpl value,
-          $Res Function(_$VideoPlayerStateImpl) then) =
-      __$$VideoPlayerStateImplCopyWithImpl<$Res>;
+abstract mixin class _$PlaylistCopyWith<$Res>
+    implements $PlaylistCopyWith<$Res> {
+  factory _$PlaylistCopyWith(_Playlist value, $Res Function(_Playlist) _then) =
+      __$PlaylistCopyWithImpl;
   @override
   @useResult
-  $Res call({PlaybackLocation location, Playlist? playlist});
-
-  @override
-  $PlaylistCopyWith<$Res>? get playlist;
+  $Res call({List<MediaItem> items, int start});
 }
 
 /// @nodoc
-class __$$VideoPlayerStateImplCopyWithImpl<$Res>
-    extends _$VideoPlayerStateCopyWithImpl<$Res, _$VideoPlayerStateImpl>
-    implements _$$VideoPlayerStateImplCopyWith<$Res> {
-  __$$VideoPlayerStateImplCopyWithImpl(_$VideoPlayerStateImpl _value,
-      $Res Function(_$VideoPlayerStateImpl) _then)
-      : super(_value, _then);
+class __$PlaylistCopyWithImpl<$Res> implements _$PlaylistCopyWith<$Res> {
+  __$PlaylistCopyWithImpl(this._self, this._then);
 
-  /// Create a copy of VideoPlayerState
+  final _Playlist _self;
+  final $Res Function(_Playlist) _then;
+
+  /// Create a copy of Playlist
   /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
   @override
+  @pragma('vm:prefer-inline')
   $Res call({
-    Object? location = null,
-    Object? playlist = freezed,
+    Object? items = null,
+    Object? start = null,
   }) {
-    return _then(_$VideoPlayerStateImpl(
-      location: null == location
-          ? _value.location
-          : location // ignore: cast_nullable_to_non_nullable
-              as PlaybackLocation,
-      playlist: freezed == playlist
-          ? _value.playlist
-          : playlist // ignore: cast_nullable_to_non_nullable
-              as Playlist?,
+    return _then(_Playlist(
+      items: null == items
+          ? _self._items
+          : items // ignore: cast_nullable_to_non_nullable
+              as List<MediaItem>,
+      start: null == start
+          ? _self.start
+          : start // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
 
 /// @nodoc
+mixin _$VideoPlayerState {
+  PlaybackLocation get location;
+  Playlist? get playlist;
 
-class _$VideoPlayerStateImpl implements _VideoPlayerState {
-  _$VideoPlayerStateImpl({required this.location, this.playlist});
-
-  @override
-  final PlaybackLocation location;
-  @override
-  final Playlist? playlist;
-
-  @override
-  String toString() {
-    return 'VideoPlayerState(location: $location, playlist: $playlist)';
-  }
+  /// Create a copy of VideoPlayerState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $VideoPlayerStateCopyWith<VideoPlayerState> get copyWith =>
+      _$VideoPlayerStateCopyWithImpl<VideoPlayerState>(
+          this as VideoPlayerState, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$VideoPlayerStateImpl &&
+            other is VideoPlayerState &&
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.playlist, playlist) ||
@@ -307,30 +345,316 @@ class _$VideoPlayerStateImpl implements _VideoPlayerState {
   @override
   int get hashCode => Object.hash(runtimeType, location, playlist);
 
+  @override
+  String toString() {
+    return 'VideoPlayerState(location: $location, playlist: $playlist)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $VideoPlayerStateCopyWith<$Res> {
+  factory $VideoPlayerStateCopyWith(
+          VideoPlayerState value, $Res Function(VideoPlayerState) _then) =
+      _$VideoPlayerStateCopyWithImpl;
+  @useResult
+  $Res call({PlaybackLocation location, Playlist? playlist});
+
+  $PlaylistCopyWith<$Res>? get playlist;
+}
+
+/// @nodoc
+class _$VideoPlayerStateCopyWithImpl<$Res>
+    implements $VideoPlayerStateCopyWith<$Res> {
+  _$VideoPlayerStateCopyWithImpl(this._self, this._then);
+
+  final VideoPlayerState _self;
+  final $Res Function(VideoPlayerState) _then;
+
   /// Create a copy of VideoPlayerState
   /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? location = null,
+    Object? playlist = freezed,
+  }) {
+    return _then(_self.copyWith(
+      location: null == location
+          ? _self.location
+          : location // ignore: cast_nullable_to_non_nullable
+              as PlaybackLocation,
+      playlist: freezed == playlist
+          ? _self.playlist
+          : playlist // ignore: cast_nullable_to_non_nullable
+              as Playlist?,
+    ));
+  }
+
+  /// Create a copy of VideoPlayerState
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  _$$VideoPlayerStateImplCopyWith<_$VideoPlayerStateImpl> get copyWith =>
-      __$$VideoPlayerStateImplCopyWithImpl<_$VideoPlayerStateImpl>(
-          this, _$identity);
+  $PlaylistCopyWith<$Res>? get playlist {
+    if (_self.playlist == null) {
+      return null;
+    }
+
+    return $PlaylistCopyWith<$Res>(_self.playlist!, (value) {
+      return _then(_self.copyWith(playlist: value));
+    });
+  }
 }
 
-abstract class _VideoPlayerState implements VideoPlayerState {
-  factory _VideoPlayerState(
-      {required final PlaybackLocation location,
-      final Playlist? playlist}) = _$VideoPlayerStateImpl;
+/// Adds pattern-matching-related methods to [VideoPlayerState].
+extension VideoPlayerStatePatterns on VideoPlayerState {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_VideoPlayerState value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _VideoPlayerState() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_VideoPlayerState value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _VideoPlayerState():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_VideoPlayerState value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _VideoPlayerState() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(PlaybackLocation location, Playlist? playlist)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _VideoPlayerState() when $default != null:
+        return $default(_that.location, _that.playlist);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(PlaybackLocation location, Playlist? playlist) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _VideoPlayerState():
+        return $default(_that.location, _that.playlist);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(PlaybackLocation location, Playlist? playlist)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _VideoPlayerState() when $default != null:
+        return $default(_that.location, _that.playlist);
+      case _:
+        return null;
+    }
+  }
+}
+
+/// @nodoc
+
+class _VideoPlayerState implements VideoPlayerState {
+  _VideoPlayerState({required this.location, this.playlist});
 
   @override
-  PlaybackLocation get location;
+  final PlaybackLocation location;
   @override
-  Playlist? get playlist;
+  final Playlist? playlist;
 
   /// Create a copy of VideoPlayerState
   /// with the given fields replaced by the non-null parameter values.
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$VideoPlayerStateImplCopyWith<_$VideoPlayerStateImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  @pragma('vm:prefer-inline')
+  _$VideoPlayerStateCopyWith<_VideoPlayerState> get copyWith =>
+      __$VideoPlayerStateCopyWithImpl<_VideoPlayerState>(this, _$identity);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _VideoPlayerState &&
+            (identical(other.location, location) ||
+                other.location == location) &&
+            (identical(other.playlist, playlist) ||
+                other.playlist == playlist));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, location, playlist);
+
+  @override
+  String toString() {
+    return 'VideoPlayerState(location: $location, playlist: $playlist)';
+  }
 }
+
+/// @nodoc
+abstract mixin class _$VideoPlayerStateCopyWith<$Res>
+    implements $VideoPlayerStateCopyWith<$Res> {
+  factory _$VideoPlayerStateCopyWith(
+          _VideoPlayerState value, $Res Function(_VideoPlayerState) _then) =
+      __$VideoPlayerStateCopyWithImpl;
+  @override
+  @useResult
+  $Res call({PlaybackLocation location, Playlist? playlist});
+
+  @override
+  $PlaylistCopyWith<$Res>? get playlist;
+}
+
+/// @nodoc
+class __$VideoPlayerStateCopyWithImpl<$Res>
+    implements _$VideoPlayerStateCopyWith<$Res> {
+  __$VideoPlayerStateCopyWithImpl(this._self, this._then);
+
+  final _VideoPlayerState _self;
+  final $Res Function(_VideoPlayerState) _then;
+
+  /// Create a copy of VideoPlayerState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? location = null,
+    Object? playlist = freezed,
+  }) {
+    return _then(_VideoPlayerState(
+      location: null == location
+          ? _self.location
+          : location // ignore: cast_nullable_to_non_nullable
+              as PlaybackLocation,
+      playlist: freezed == playlist
+          ? _self.playlist
+          : playlist // ignore: cast_nullable_to_non_nullable
+              as Playlist?,
+    ));
+  }
+
+  /// Create a copy of VideoPlayerState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $PlaylistCopyWith<$Res>? get playlist {
+    if (_self.playlist == null) {
+      return null;
+    }
+
+    return $PlaylistCopyWith<$Res>(_self.playlist!, (value) {
+      return _then(_self.copyWith(playlist: value));
+    });
+  }
+}
+
+// dart format on
