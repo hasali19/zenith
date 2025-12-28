@@ -56,6 +56,7 @@ class ZenithDownloader extends BaseDownloader {
     required String fileName,
   }) async {
     final url = getUrl(itemId, videoFileId);
+    final mediaItem = await this.api.fetchMediaItem(itemId);
 
     if (Platform.isAndroid) {
       await _ensureInit();
@@ -101,16 +102,40 @@ class ZenithDownloader extends BaseDownloader {
       }
 
       final id = _uuid.v4();
-      await _db
-          .into(_db.downloadedFiles)
-          .insert(
-            DownloadedFilesCompanion.insert(
-              id: id,
-              itemId: itemId,
-              videoFileId: videoFileId,
-              createdAt: DateTime.now(),
-            ),
-          );
+
+      await _db.transaction(() async {
+        await _db
+            .into(_db.mediaItems)
+            .insert(
+              MediaItemsCompanion.insert(
+                id: Value(mediaItem.id),
+                type: switch (mediaItem.type) {
+                  .movie => .movie,
+                  .show => .show,
+                  .season => .season,
+                  .episode => .episode,
+                },
+                name: mediaItem.name,
+                overview: Value(mediaItem.overview),
+                startDate: Value(mediaItem.startDate?._formatISODate()),
+                endDate: Value(mediaItem.endDate?._formatISODate()),
+                poster: Value(mediaItem.poster?.value),
+                backdrop: Value(mediaItem.backdrop?.value),
+                thumbnail: Value(mediaItem.thumbnail?.value),
+              ),
+            );
+
+        await _db
+            .into(_db.downloadedFiles)
+            .insert(
+              DownloadedFilesCompanion.insert(
+                id: id,
+                itemId: itemId,
+                videoFileId: videoFileId,
+                createdAt: DateTime.now(),
+              ),
+            );
+      });
 
       await _channel.invokeMethod('enqueue', {
         'id': id,
@@ -215,4 +240,10 @@ Future<void> _downloaderCallbackDispatcher() async {
   });
 
   await _channel.invokeMethod('ready');
+}
+
+extension on DateTime {
+  String _formatISODate() {
+    return '$year-$month-$day';
+  }
 }

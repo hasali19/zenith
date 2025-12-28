@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/api.dart';
-import 'package:zenith/database/database.dart';
+import 'package:zenith/database/database.dart' as db;
 import 'package:zenith/routes/item_details/item_details_state.dart';
 
 part 'item_details_controller.g.dart';
@@ -11,10 +11,10 @@ part 'item_details_controller.g.dart';
 class ItemDetailsController extends _$ItemDetailsController {
   AsyncValue<MediaItem> _item = AsyncLoading();
   AsyncValue<List<(MediaItem, List<MediaItem>)>> _seasons = AsyncLoading();
-  AsyncValue<DownloadedFile?> _download = AsyncLoading();
+  AsyncValue<db.DownloadedFile?> _download = AsyncLoading();
 
   late final _api = ref.watch(apiProvider);
-  late final _db = ref.watch(databaseProvider);
+  late final _db = ref.watch(db.databaseProvider);
 
   @override
   AsyncValue<ItemDetailsState> build(int id) {
@@ -44,14 +44,49 @@ class ItemDetailsController extends _$ItemDetailsController {
   }
 
   Future<void> _refreshApi() async {
-    final MediaItem item;
+    MediaItem item;
+    bool isOffline = false;
     try {
       item = await _api.fetchMediaItem(id);
-      _item = AsyncData(item);
     } catch (e, s) {
-      _item = AsyncError(e, s);
-      return _updateState();
+      final offlineItemQuery = _db.select(_db.mediaItems)
+        ..where((m) => m.id.equals(id));
+      final offlineItem = await offlineItemQuery.getSingleOrNull();
+      if (offlineItem == null) {
+        _item = AsyncError(e, s);
+        return _updateState();
+      } else {
+        isOffline = true;
+        item = MediaItem(
+          id: id,
+          type: switch (offlineItem.type) {
+            .movie => .movie,
+            .show => .show,
+            .season => .season,
+            .episode => .episode,
+          },
+          name: offlineItem.name,
+          overview: offlineItem.overview,
+          startDate: DateTime.tryParse(offlineItem.startDate ?? ''),
+          endDate: DateTime.tryParse(offlineItem.endDate ?? ''),
+          poster: offlineItem.poster as ImageId?,
+          backdrop: offlineItem.backdrop as ImageId?,
+          thumbnail: offlineItem.thumbnail as ImageId?,
+          parent: null,
+          grandparent: null,
+          videoFile: null,
+          videoUserData: null,
+          collectionUserData: null,
+          genres: [],
+          ageRating: null,
+          trailer: null,
+          director: null,
+          cast: [],
+        );
+      }
     }
+
+    _item = AsyncData(item);
 
     try {
       final seasons = <(MediaItem, List<MediaItem>)>[];
@@ -65,8 +100,12 @@ class ItemDetailsController extends _$ItemDetailsController {
 
       _seasons = AsyncData(seasons);
     } catch (e, s) {
-      _seasons = AsyncError(e, s);
-      return _updateState();
+      if (isOffline) {
+        _seasons = AsyncData([]);
+      } else {
+        _seasons = AsyncError(e, s);
+        return _updateState();
+      }
     }
 
     _updateState();
@@ -174,7 +213,7 @@ PlayableState? _getPlayableForItem(
 
   final currentProgress = () {
     final position = playable.videoUserData?.position ?? 0;
-    final duration = playable.videoFile!.duration;
+    final duration = playable.videoFile?.duration ?? 0;
     final progress = position / duration;
     if (progress > 0.05 && progress < 0.9) {
       return progress;
@@ -184,7 +223,7 @@ PlayableState? _getPlayableForItem(
 
   final remainingProgress = () {
     final position = playable.videoUserData?.position ?? 0;
-    final duration = playable.videoFile!.duration;
+    final duration = playable.videoFile?.duration ?? 0;
     return duration - position;
   }();
 

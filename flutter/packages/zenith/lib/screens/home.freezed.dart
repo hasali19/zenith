@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$HomeScreenData implements DiagnosticableTreeMixin {
 
- List<MediaItem> get continueWatching; List<MediaItem> get recentMovies; List<MediaItem> get recentShows;
+ List<MediaItem> get continueWatching; List<MediaItem> get recentMovies; List<MediaItem> get recentShows; List<db.MediaItem> get offlineItems;
 /// Create a copy of HomeScreenData
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,21 +26,21 @@ $HomeScreenDataCopyWith<HomeScreenData> get copyWith => _$HomeScreenDataCopyWith
 void debugFillProperties(DiagnosticPropertiesBuilder properties) {
   properties
     ..add(DiagnosticsProperty('type', 'HomeScreenData'))
-    ..add(DiagnosticsProperty('continueWatching', continueWatching))..add(DiagnosticsProperty('recentMovies', recentMovies))..add(DiagnosticsProperty('recentShows', recentShows));
+    ..add(DiagnosticsProperty('continueWatching', continueWatching))..add(DiagnosticsProperty('recentMovies', recentMovies))..add(DiagnosticsProperty('recentShows', recentShows))..add(DiagnosticsProperty('offlineItems', offlineItems));
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeScreenData&&const DeepCollectionEquality().equals(other.continueWatching, continueWatching)&&const DeepCollectionEquality().equals(other.recentMovies, recentMovies)&&const DeepCollectionEquality().equals(other.recentShows, recentShows));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HomeScreenData&&const DeepCollectionEquality().equals(other.continueWatching, continueWatching)&&const DeepCollectionEquality().equals(other.recentMovies, recentMovies)&&const DeepCollectionEquality().equals(other.recentShows, recentShows)&&const DeepCollectionEquality().equals(other.offlineItems, offlineItems));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(continueWatching),const DeepCollectionEquality().hash(recentMovies),const DeepCollectionEquality().hash(recentShows));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(continueWatching),const DeepCollectionEquality().hash(recentMovies),const DeepCollectionEquality().hash(recentShows),const DeepCollectionEquality().hash(offlineItems));
 
 @override
 String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
-  return 'HomeScreenData(continueWatching: $continueWatching, recentMovies: $recentMovies, recentShows: $recentShows)';
+  return 'HomeScreenData(continueWatching: $continueWatching, recentMovies: $recentMovies, recentShows: $recentShows, offlineItems: $offlineItems)';
 }
 
 
@@ -51,7 +51,7 @@ abstract mixin class $HomeScreenDataCopyWith<$Res>  {
   factory $HomeScreenDataCopyWith(HomeScreenData value, $Res Function(HomeScreenData) _then) = _$HomeScreenDataCopyWithImpl;
 @useResult
 $Res call({
- List<MediaItem> continueWatching, List<MediaItem> recentMovies, List<MediaItem> recentShows
+ List<MediaItem> continueWatching, List<MediaItem> recentMovies, List<MediaItem> recentShows, List<db.MediaItem> offlineItems
 });
 
 
@@ -68,12 +68,13 @@ class _$HomeScreenDataCopyWithImpl<$Res>
 
 /// Create a copy of HomeScreenData
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? continueWatching = null,Object? recentMovies = null,Object? recentShows = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? continueWatching = null,Object? recentMovies = null,Object? recentShows = null,Object? offlineItems = null,}) {
   return _then(_self.copyWith(
 continueWatching: null == continueWatching ? _self.continueWatching : continueWatching // ignore: cast_nullable_to_non_nullable
 as List<MediaItem>,recentMovies: null == recentMovies ? _self.recentMovies : recentMovies // ignore: cast_nullable_to_non_nullable
 as List<MediaItem>,recentShows: null == recentShows ? _self.recentShows : recentShows // ignore: cast_nullable_to_non_nullable
-as List<MediaItem>,
+as List<MediaItem>,offlineItems: null == offlineItems ? _self.offlineItems : offlineItems // ignore: cast_nullable_to_non_nullable
+as List<db.MediaItem>,
   ));
 }
 
@@ -158,10 +159,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<MediaItem> continueWatching,  List<MediaItem> recentMovies,  List<MediaItem> recentShows)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<MediaItem> continueWatching,  List<MediaItem> recentMovies,  List<MediaItem> recentShows,  List<db.MediaItem> offlineItems)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _HomeScreenData() when $default != null:
-return $default(_that.continueWatching,_that.recentMovies,_that.recentShows);case _:
+return $default(_that.continueWatching,_that.recentMovies,_that.recentShows,_that.offlineItems);case _:
   return orElse();
 
 }
@@ -179,10 +180,10 @@ return $default(_that.continueWatching,_that.recentMovies,_that.recentShows);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<MediaItem> continueWatching,  List<MediaItem> recentMovies,  List<MediaItem> recentShows)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<MediaItem> continueWatching,  List<MediaItem> recentMovies,  List<MediaItem> recentShows,  List<db.MediaItem> offlineItems)  $default,) {final _that = this;
 switch (_that) {
 case _HomeScreenData():
-return $default(_that.continueWatching,_that.recentMovies,_that.recentShows);case _:
+return $default(_that.continueWatching,_that.recentMovies,_that.recentShows,_that.offlineItems);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +200,10 @@ return $default(_that.continueWatching,_that.recentMovies,_that.recentShows);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<MediaItem> continueWatching,  List<MediaItem> recentMovies,  List<MediaItem> recentShows)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<MediaItem> continueWatching,  List<MediaItem> recentMovies,  List<MediaItem> recentShows,  List<db.MediaItem> offlineItems)?  $default,) {final _that = this;
 switch (_that) {
 case _HomeScreenData() when $default != null:
-return $default(_that.continueWatching,_that.recentMovies,_that.recentShows);case _:
+return $default(_that.continueWatching,_that.recentMovies,_that.recentShows,_that.offlineItems);case _:
   return null;
 
 }
@@ -214,7 +215,7 @@ return $default(_that.continueWatching,_that.recentMovies,_that.recentShows);cas
 
 
 class _HomeScreenData with DiagnosticableTreeMixin implements HomeScreenData {
-   _HomeScreenData({required final  List<MediaItem> continueWatching, required final  List<MediaItem> recentMovies, required final  List<MediaItem> recentShows}): _continueWatching = continueWatching,_recentMovies = recentMovies,_recentShows = recentShows;
+   _HomeScreenData({required final  List<MediaItem> continueWatching, required final  List<MediaItem> recentMovies, required final  List<MediaItem> recentShows, required final  List<db.MediaItem> offlineItems}): _continueWatching = continueWatching,_recentMovies = recentMovies,_recentShows = recentShows,_offlineItems = offlineItems;
   
 
  final  List<MediaItem> _continueWatching;
@@ -238,6 +239,13 @@ class _HomeScreenData with DiagnosticableTreeMixin implements HomeScreenData {
   return EqualUnmodifiableListView(_recentShows);
 }
 
+ final  List<db.MediaItem> _offlineItems;
+@override List<db.MediaItem> get offlineItems {
+  if (_offlineItems is EqualUnmodifiableListView) return _offlineItems;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_offlineItems);
+}
+
 
 /// Create a copy of HomeScreenData
 /// with the given fields replaced by the non-null parameter values.
@@ -250,21 +258,21 @@ _$HomeScreenDataCopyWith<_HomeScreenData> get copyWith => __$HomeScreenDataCopyW
 void debugFillProperties(DiagnosticPropertiesBuilder properties) {
   properties
     ..add(DiagnosticsProperty('type', 'HomeScreenData'))
-    ..add(DiagnosticsProperty('continueWatching', continueWatching))..add(DiagnosticsProperty('recentMovies', recentMovies))..add(DiagnosticsProperty('recentShows', recentShows));
+    ..add(DiagnosticsProperty('continueWatching', continueWatching))..add(DiagnosticsProperty('recentMovies', recentMovies))..add(DiagnosticsProperty('recentShows', recentShows))..add(DiagnosticsProperty('offlineItems', offlineItems));
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HomeScreenData&&const DeepCollectionEquality().equals(other._continueWatching, _continueWatching)&&const DeepCollectionEquality().equals(other._recentMovies, _recentMovies)&&const DeepCollectionEquality().equals(other._recentShows, _recentShows));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HomeScreenData&&const DeepCollectionEquality().equals(other._continueWatching, _continueWatching)&&const DeepCollectionEquality().equals(other._recentMovies, _recentMovies)&&const DeepCollectionEquality().equals(other._recentShows, _recentShows)&&const DeepCollectionEquality().equals(other._offlineItems, _offlineItems));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_continueWatching),const DeepCollectionEquality().hash(_recentMovies),const DeepCollectionEquality().hash(_recentShows));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_continueWatching),const DeepCollectionEquality().hash(_recentMovies),const DeepCollectionEquality().hash(_recentShows),const DeepCollectionEquality().hash(_offlineItems));
 
 @override
 String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
-  return 'HomeScreenData(continueWatching: $continueWatching, recentMovies: $recentMovies, recentShows: $recentShows)';
+  return 'HomeScreenData(continueWatching: $continueWatching, recentMovies: $recentMovies, recentShows: $recentShows, offlineItems: $offlineItems)';
 }
 
 
@@ -275,7 +283,7 @@ abstract mixin class _$HomeScreenDataCopyWith<$Res> implements $HomeScreenDataCo
   factory _$HomeScreenDataCopyWith(_HomeScreenData value, $Res Function(_HomeScreenData) _then) = __$HomeScreenDataCopyWithImpl;
 @override @useResult
 $Res call({
- List<MediaItem> continueWatching, List<MediaItem> recentMovies, List<MediaItem> recentShows
+ List<MediaItem> continueWatching, List<MediaItem> recentMovies, List<MediaItem> recentShows, List<db.MediaItem> offlineItems
 });
 
 
@@ -292,12 +300,13 @@ class __$HomeScreenDataCopyWithImpl<$Res>
 
 /// Create a copy of HomeScreenData
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? continueWatching = null,Object? recentMovies = null,Object? recentShows = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? continueWatching = null,Object? recentMovies = null,Object? recentShows = null,Object? offlineItems = null,}) {
   return _then(_HomeScreenData(
 continueWatching: null == continueWatching ? _self._continueWatching : continueWatching // ignore: cast_nullable_to_non_nullable
 as List<MediaItem>,recentMovies: null == recentMovies ? _self._recentMovies : recentMovies // ignore: cast_nullable_to_non_nullable
 as List<MediaItem>,recentShows: null == recentShows ? _self._recentShows : recentShows // ignore: cast_nullable_to_non_nullable
-as List<MediaItem>,
+as List<MediaItem>,offlineItems: null == offlineItems ? _self._offlineItems : offlineItems // ignore: cast_nullable_to_non_nullable
+as List<db.MediaItem>,
   ));
 }
 

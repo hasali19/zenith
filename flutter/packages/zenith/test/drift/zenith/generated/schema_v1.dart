@@ -10,23 +10,48 @@ class DownloadedFiles extends Table
   final String? _alias;
   DownloadedFiles(this.attachedDatabase, [this._alias]);
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
-      'id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   late final GeneratedColumn<int> itemId = GeneratedColumn<int>(
-      'item_id', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+    'item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
   late final GeneratedColumn<int> videoFileId = GeneratedColumn<int>(
-      'video_file_id', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+    'video_file_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
   late final GeneratedColumn<String> path = GeneratedColumn<String>(
-      'path', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
+    'path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, itemId, videoFileId, path, createdAt];
+  List<GeneratedColumn> get $columns => [
+    id,
+    itemId,
+    videoFileId,
+    path,
+    createdAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -38,16 +63,26 @@ class DownloadedFiles extends Table
   DownloadedFilesData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return DownloadedFilesData(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
-      itemId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}item_id'])!,
-      videoFileId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}video_file_id'])!,
-      path: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}path']),
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      itemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}item_id'],
+      )!,
+      videoFileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}video_file_id'],
+      )!,
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
     );
   }
 
@@ -64,12 +99,13 @@ class DownloadedFilesData extends DataClass
   final int videoFileId;
   final String? path;
   final DateTime createdAt;
-  const DownloadedFilesData(
-      {required this.id,
-      required this.itemId,
-      required this.videoFileId,
-      this.path,
-      required this.createdAt});
+  const DownloadedFilesData({
+    required this.id,
+    required this.itemId,
+    required this.videoFileId,
+    this.path,
+    required this.createdAt,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -93,8 +129,10 @@ class DownloadedFilesData extends DataClass
     );
   }
 
-  factory DownloadedFilesData.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory DownloadedFilesData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return DownloadedFilesData(
       id: serializer.fromJson<String>(json['id']),
@@ -116,25 +154,26 @@ class DownloadedFilesData extends DataClass
     };
   }
 
-  DownloadedFilesData copyWith(
-          {String? id,
-          int? itemId,
-          int? videoFileId,
-          Value<String?> path = const Value.absent(),
-          DateTime? createdAt}) =>
-      DownloadedFilesData(
-        id: id ?? this.id,
-        itemId: itemId ?? this.itemId,
-        videoFileId: videoFileId ?? this.videoFileId,
-        path: path.present ? path.value : this.path,
-        createdAt: createdAt ?? this.createdAt,
-      );
+  DownloadedFilesData copyWith({
+    String? id,
+    int? itemId,
+    int? videoFileId,
+    Value<String?> path = const Value.absent(),
+    DateTime? createdAt,
+  }) => DownloadedFilesData(
+    id: id ?? this.id,
+    itemId: itemId ?? this.itemId,
+    videoFileId: videoFileId ?? this.videoFileId,
+    path: path.present ? path.value : this.path,
+    createdAt: createdAt ?? this.createdAt,
+  );
   DownloadedFilesData copyWithCompanion(DownloadedFilesCompanion data) {
     return DownloadedFilesData(
       id: data.id.present ? data.id.value : this.id,
       itemId: data.itemId.present ? data.itemId.value : this.itemId,
-      videoFileId:
-          data.videoFileId.present ? data.videoFileId.value : this.videoFileId,
+      videoFileId: data.videoFileId.present
+          ? data.videoFileId.value
+          : this.videoFileId,
       path: data.path.present ? data.path.value : this.path,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -187,10 +226,10 @@ class DownloadedFilesCompanion extends UpdateCompanion<DownloadedFilesData> {
     this.path = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        itemId = Value(itemId),
-        videoFileId = Value(videoFileId),
-        createdAt = Value(createdAt);
+  }) : id = Value(id),
+       itemId = Value(itemId),
+       videoFileId = Value(videoFileId),
+       createdAt = Value(createdAt);
   static Insertable<DownloadedFilesData> custom({
     Expression<String>? id,
     Expression<int>? itemId,
@@ -209,13 +248,14 @@ class DownloadedFilesCompanion extends UpdateCompanion<DownloadedFilesData> {
     });
   }
 
-  DownloadedFilesCompanion copyWith(
-      {Value<String>? id,
-      Value<int>? itemId,
-      Value<int>? videoFileId,
-      Value<String?>? path,
-      Value<DateTime>? createdAt,
-      Value<int>? rowid}) {
+  DownloadedFilesCompanion copyWith({
+    Value<String>? id,
+    Value<int>? itemId,
+    Value<int>? videoFileId,
+    Value<String?>? path,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
     return DownloadedFilesCompanion(
       id: id ?? this.id,
       itemId: itemId ?? this.itemId,

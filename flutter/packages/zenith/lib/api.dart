@@ -116,7 +116,10 @@ class MediaItem {
 
   bool get shouldResume {
     final position = videoUserData?.position ?? 0;
-    final duration = videoFile!.duration;
+    final duration = videoFile?.duration;
+    if (duration == null) {
+      return false;
+    }
     return position > 0.05 * duration && position < 0.9 * duration;
   }
 }

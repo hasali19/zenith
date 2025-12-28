@@ -81,28 +81,32 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
 
     Future.microtask(() async {
       final api = ref.read(apiProvider);
-      final token = await api.getAccessToken(
-        AccessTokenOwner.system,
-        'cast',
-        create: true,
-      );
-      if (CastFrameworkPlatform.instance.isSupported) {
-        CastFrameworkPlatform.instance.remoteMediaClient.sendMessage(
-          'urn:x-cast:dev.hasali.zenith',
-          jsonEncode({
-            'type': 'init',
-            'token': token.token,
-            'server': api.baseUrl,
-          }),
+      try {
+        final token = await api.getAccessToken(
+          AccessTokenOwner.system,
+          'cast',
+          create: true,
         );
+        if (CastFrameworkPlatform.instance.isSupported) {
+          CastFrameworkPlatform.instance.remoteMediaClient.sendMessage(
+            'urn:x-cast:dev.hasali.zenith',
+            jsonEncode({
+              'type': 'init',
+              'token': token.token,
+              'server': api.baseUrl,
+            }),
+          );
 
-        CastFrameworkPlatform.instance.remoteMediaClient.sendMessage(
-          'urn:x-cast:dev.hasali.zenith',
-          jsonEncode({
-            'type': 'focus-item-details',
-            'id': widget.state.item.id,
-          }),
-        );
+          CastFrameworkPlatform.instance.remoteMediaClient.sendMessage(
+            'urn:x-cast:dev.hasali.zenith',
+            jsonEncode({
+              'type': 'focus-item-details',
+              'id': widget.state.item.id,
+            }),
+          );
+        }
+      } catch (e) {
+        print('Failed to sync focused item to cast device: $e');
       }
     });
   }
