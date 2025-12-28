@@ -32,7 +32,9 @@ class HeaderLayout extends MultiChildRenderObjectWidget {
 
   @override
   void updateRenderObject(
-      BuildContext context, covariant RenderHeaderLayout renderObject) {
+    BuildContext context,
+    covariant RenderHeaderLayout renderObject,
+  ) {
     renderObject
       ..posterWidth = posterWidth
       ..padding = padding
@@ -91,18 +93,22 @@ class RenderHeaderLayout extends RenderBox
 
       backdrop.layout(BoxConstraints.tight(Size.zero));
 
-      final lColConstraints =
-          BoxConstraints(minWidth: posterWidth, maxWidth: posterWidth);
+      final lColConstraints = BoxConstraints(
+        minWidth: posterWidth,
+        maxWidth: posterWidth,
+      );
 
       poster.layout(lColConstraints, parentUsesSize: true);
       posterData.offset = Offset(padding, padding);
 
       final rColConstraints = BoxConstraints(
-          maxWidth: constraints.maxWidth -
-              posterData.offset.dx -
-              posterWidth -
-              separation -
-              padding);
+        maxWidth:
+            constraints.maxWidth -
+            posterData.offset.dx -
+            posterWidth -
+            separation -
+            padding,
+      );
 
       title.layout(rColConstraints, parentUsesSize: true);
       titleData.offset =
@@ -111,18 +117,23 @@ class RenderHeaderLayout extends RenderBox
       playButton.layout(rColConstraints, parentUsesSize: true);
 
       actions.layout(
-          rColConstraints.copyWith(
-              maxWidth: rColConstraints.maxWidth - playButton.size.width - 16),
-          parentUsesSize: true);
-      actionsData.offset = titleData.offset +
+        rColConstraints.copyWith(
+          maxWidth: rColConstraints.maxWidth - playButton.size.width - 16,
+        ),
+        parentUsesSize: true,
+      );
+      actionsData.offset =
+          titleData.offset +
           Offset(playButton.size.width + 16, title.size.height + 24);
 
-      playButtonData.offset = titleData.offset +
+      playButtonData.offset =
+          titleData.offset +
           Offset(
-              0,
-              title.size.height +
-                  24 +
-                  (actions.size.height - playButton.size.height) / 2);
+            0,
+            title.size.height +
+                24 +
+                (actions.size.height - playButton.size.height) / 2,
+          );
 
       body.layout(rColConstraints, parentUsesSize: true);
       bodyData.offset =
@@ -135,39 +146,49 @@ class RenderHeaderLayout extends RenderBox
     } else {
       backdropData.visible = true;
 
-      backdrop.layout(constraints.copyWith(minWidth: constraints.maxWidth),
-          parentUsesSize: true);
+      backdrop.layout(
+        constraints.copyWith(minWidth: constraints.maxWidth),
+        parentUsesSize: true,
+      );
 
-      final lColConstraints =
-          BoxConstraints(minWidth: posterWidth, maxWidth: posterWidth);
+      final lColConstraints = BoxConstraints(
+        minWidth: posterWidth,
+        maxWidth: posterWidth,
+      );
 
       poster.layout(lColConstraints, parentUsesSize: true);
       playButton.layout(lColConstraints, parentUsesSize: true);
 
       final rColConstraints = BoxConstraints(
-          maxWidth: constraints.maxWidth -
-              padding -
-              posterWidth -
-              separation -
-              padding);
+        maxWidth:
+            constraints.maxWidth - padding - posterWidth - separation - padding,
+      );
 
       title.layout(rColConstraints, parentUsesSize: true);
       actions.layout(rColConstraints, parentUsesSize: true);
-      body.layout(BoxConstraints(maxWidth: constraints.maxWidth - padding * 2),
-          parentUsesSize: true);
+      body.layout(
+        BoxConstraints(maxWidth: constraints.maxWidth - padding * 2),
+        parentUsesSize: true,
+      );
 
-      final titleOffset =
-          Offset(poster.size.width + padding + 16, backdrop.size.height + 8);
+      final titleOffset = Offset(
+        poster.size.width + padding + 16,
+        backdrop.size.height + 8,
+      );
 
       final posterOffset = Offset(
-          padding, titleOffset.dy - poster.size.height + title.size.height);
+        padding,
+        titleOffset.dy - poster.size.height + title.size.height,
+      );
       final playButtonOffset = posterOffset + Offset(0, poster.size.height + 8);
 
-      final actionsOffset = titleOffset +
+      final actionsOffset =
+          titleOffset +
           Offset(
-              rColConstraints.maxWidth -
-                  actions.getMinIntrinsicWidth(double.infinity),
-              title.size.height + 8);
+            rColConstraints.maxWidth -
+                actions.getMinIntrinsicWidth(double.infinity),
+            title.size.height + 8,
+          );
       final bodyOffset =
           playButtonOffset + Offset(0, playButton.size.height + 16);
 
@@ -179,7 +200,9 @@ class RenderHeaderLayout extends RenderBox
       playButtonData.offset = playButtonOffset;
 
       size = Size(
-          constraints.maxWidth, bodyOffset.dy + body.size.height + padding);
+        constraints.maxWidth,
+        bodyOffset.dy + body.size.height + padding,
+      );
     }
   }
 
@@ -201,7 +224,8 @@ class RenderHeaderLayout extends RenderBox
     while (child != null) {
       // The x, y parameters have the top left of the node's box as the origin.
       final childParentData = child.parentData! as _HeaderChild;
-      final bool isHit = childParentData.visible &&
+      final bool isHit =
+          childParentData.visible &&
           result.addWithPaintOffset(
             offset: childParentData.offset,
             position: position,

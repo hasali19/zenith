@@ -154,8 +154,9 @@ class _SubtitlesDropdownMenuButton extends HookWidget {
 
     SubtitleTrack? activeTrack;
     if (activeTrackId != null) {
-      activeTrack =
-          subtitles.where((track) => track.id == activeTrackId).firstOrNull;
+      activeTrack = subtitles
+          .where((track) => track.id == activeTrackId)
+          .firstOrNull;
     }
 
     return MenuAnchor(
@@ -191,8 +192,9 @@ class _SubtitlesDropdownMenuButton extends HookWidget {
   Widget _buildNoneMenuItem() {
     return MenuItemButton(
       trailingIcon: activeTrackId == null ? const Icon(Icons.check) : null,
-      onPressed:
-          activeTrackId == null ? null : () => onSubtitleTrackSelected(null),
+      onPressed: activeTrackId == null
+          ? null
+          : () => onSubtitleTrackSelected(null),
       child: const Text('None'),
     );
   }
@@ -203,25 +205,26 @@ class _SubtitlesDropdownMenuButton extends HookWidget {
       onPressed: track.id == activeTrackId
           ? null
           : () => onSubtitleTrackSelected(track),
-      child: Builder(builder: (context) {
-        final defaultStyle = DefaultTextStyle.of(context).style;
-        final secondaryTextStyle = Theme.of(context)
-            .textTheme
-            .bodySmall!
-            .copyWith(color: defaultStyle.color);
+      child: Builder(
+        builder: (context) {
+          final defaultStyle = DefaultTextStyle.of(context).style;
+          final secondaryTextStyle = Theme.of(
+            context,
+          ).textTheme.bodySmall!.copyWith(color: defaultStyle.color);
 
-        return ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: 150),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(track.language!),
-              if (track.label case String label)
-                Text(label, style: secondaryTextStyle),
-            ],
-          ),
-        );
-      }),
+          return ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 150),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(track.language!),
+                if (track.label case String label)
+                  Text(label, style: secondaryTextStyle),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

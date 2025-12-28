@@ -17,10 +17,7 @@ class MediaTitle extends StatelessWidget {
             '${item.getSeasonEpisode()!}: ${item.name}',
             style: context.zenithTheme.titleMedium,
           ),
-          Text(
-            item.grandparent!.name,
-            style: context.zenithTheme.bodyMedium,
-          ),
+          Text(item.grandparent!.name, style: context.zenithTheme.bodyMedium),
         ],
       );
     } else {

@@ -93,19 +93,17 @@ class _CastListItem extends StatelessWidget {
   Widget _buildProfileImage() {
     return switch (castMember.profile) {
       null => SizedBox(
-          width: itemWidth,
-          height: itemHeight,
-          child: const Center(
-            child: Icon(Icons.person, size: 48),
-          ),
-        ),
+        width: itemWidth,
+        height: itemHeight,
+        child: const Center(child: Icon(Icons.person, size: 48)),
+      ),
       final profile => ZenithApiImage(
-          id: profile,
-          requestWidth: mediaProfileImageWidth,
-          width: itemWidth,
-          height: itemHeight,
-          fit: BoxFit.cover,
-        ),
+        id: profile,
+        requestWidth: mediaProfileImageWidth,
+        width: itemWidth,
+        height: itemHeight,
+        fit: BoxFit.cover,
+      ),
     };
   }
 

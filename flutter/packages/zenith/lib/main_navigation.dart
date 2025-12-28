@@ -6,10 +6,7 @@ import 'package:zenith/router.dart';
 class MainNavigationDrawer extends ConsumerWidget {
   final void Function() onLogoutTap;
 
-  const MainNavigationDrawer({
-    super.key,
-    required this.onLogoutTap,
-  });
+  const MainNavigationDrawer({super.key, required this.onLogoutTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -45,14 +42,8 @@ class MainNavigationDrawer extends ConsumerWidget {
           icon: Icon(Icons.movie),
           label: Text('Movies'),
         ),
-        NavigationDrawerDestination(
-          icon: Icon(Icons.tv),
-          label: Text('Shows'),
-        ),
-        Padding(
-          padding: EdgeInsets.fromLTRB(28, 16, 28, 10),
-          child: Divider(),
-        ),
+        NavigationDrawerDestination(icon: Icon(Icons.tv), label: Text('Shows')),
+        Padding(padding: EdgeInsets.fromLTRB(28, 16, 28, 10), child: Divider()),
         NavigationDrawerDestination(
           icon: Icon(Icons.dns),
           label: Text('Server'),
@@ -90,10 +81,7 @@ class MainNavigationDrawer extends ConsumerWidget {
 class NavigationDrawerHeadline extends StatelessWidget {
   final String text;
 
-  const NavigationDrawerHeadline({
-    super.key,
-    required this.text,
-  });
+  const NavigationDrawerHeadline({super.key, required this.text});
 
   @override
   Widget build(BuildContext context) {

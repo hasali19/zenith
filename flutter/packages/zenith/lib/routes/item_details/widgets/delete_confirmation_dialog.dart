@@ -27,7 +27,8 @@ class _DeleteConfirmationDialogState
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-                'Are you sure you want to permanently delete this item?'),
+              'Are you sure you want to permanently delete this item?',
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -69,7 +70,8 @@ class _DeleteConfirmationDialogState
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to delete media item')));
+          const SnackBar(content: Text('Failed to delete media item')),
+        );
       }
     } finally {
       setState(() => _isInProgress = false);

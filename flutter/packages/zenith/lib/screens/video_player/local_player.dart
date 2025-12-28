@@ -73,7 +73,9 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     platform.setExtendIntoCutout(true);
 
     _progressReportTimer = Timer.periodic(
-        const Duration(seconds: 5), (timer) => _onProgressReporterTick());
+      const Duration(seconds: 5),
+      (timer) => _onProgressReporterTick(),
+    );
 
     _uiVisibilityController.setAutoHideEnabled(true);
     _uiVisibilityController.finishUiInteraction();
@@ -101,10 +103,11 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
         final stableSystemBarInsets =
             physicalInsets / context.mq.devicePixelRatio;
         final insets = EdgeInsets.fromLTRB(
-            max(stableSystemBarInsets.left, context.mq.padding.left),
-            max(stableSystemBarInsets.top, context.mq.padding.top),
-            max(stableSystemBarInsets.right, context.mq.padding.right),
-            max(stableSystemBarInsets.bottom, context.mq.padding.bottom));
+          max(stableSystemBarInsets.left, context.mq.padding.left),
+          max(stableSystemBarInsets.top, context.mq.padding.top),
+          max(stableSystemBarInsets.right, context.mq.padding.right),
+          max(stableSystemBarInsets.bottom, context.mq.padding.bottom),
+        );
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(padding: insets),
           child: child!,
@@ -117,16 +120,15 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
 
     return PopScope(
       onPopInvokedWithResult: _onPopInvoked,
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: content,
-      ),
+      child: Scaffold(backgroundColor: Colors.black, body: content),
     );
   }
 
   Widget _buildPlayer(VideoController controller) {
     final isUiVisible = useListenableSelector(
-        _uiVisibilityController, () => _uiVisibilityController.isVisible);
+      _uiVisibilityController,
+      () => _uiVisibilityController.isVisible,
+    );
 
     final isRouteCurrent = ModalRoute.of(context)?.isCurrent == true;
 
@@ -165,7 +167,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
                 behavior: HitTestBehavior.opaque,
                 onTap: _uiVisibilityController.toggle,
                 child: _buildUi(isUiVisible),
-              )
+              ),
             ],
           ),
         ),
@@ -180,25 +182,23 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
         final controller = _controller!;
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: child,
-          ),
+          transitionBuilder: (child, animation) =>
+              FadeTransition(opacity: animation, child: child),
           child: switch (_uiVisibilityController.isVisible && !isInPipMode) {
             false => const SizedBox.expand(),
             true => ListenableBuilder(
-                listenable: controller,
-                builder: (context, child) => VideoPlayerUi(
-                  title: MediaTitle(item: currentItem),
-                  controller: controller,
-                  isOffline: _playlist?[controller.currentItemIndex].source
-                      is LocalFileSource,
-                  onInteractionStart:
-                      _uiVisibilityController.startUiInteraction,
-                  onInteractionEnd: _uiVisibilityController.finishUiInteraction,
-                  onSeekToNext: _onSeekToNext,
-                ),
+              listenable: controller,
+              builder: (context, child) => VideoPlayerUi(
+                title: MediaTitle(item: currentItem),
+                controller: controller,
+                isOffline:
+                    _playlist?[controller.currentItemIndex].source
+                        is LocalFileSource,
+                onInteractionStart: _uiVisibilityController.startUiInteraction,
+                onInteractionEnd: _uiVisibilityController.finishUiInteraction,
+                onSeekToNext: _onSeekToNext,
               ),
+            ),
           },
         );
       },
@@ -211,14 +211,15 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     final controller = await VideoPlayerPlatform.instance.createController(
       headers: {
         'Cookie': CookieManager.getCookies(
-            await cookies.loadForRequest(Uri.parse(_api.baseUrl)))
+          await cookies.loadForRequest(Uri.parse(_api.baseUrl)),
+        ),
       },
     );
 
     final itemIds = widget.items.map((item) => item.id).toList();
-    final downloadedFiles = await (_db.select(_db.downloadedFiles)
-          ..where((f) => f.itemId.isIn(itemIds) & f.path.isNotNull()))
-        .get();
+    final downloadedFiles = await (_db.select(
+      _db.downloadedFiles,
+    )..where((f) => f.itemId.isIn(itemIds) & f.path.isNotNull())).get();
 
     final downloadsMap = {for (final f in downloadedFiles) f.itemId: f.path};
 
@@ -233,8 +234,9 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
         subtitle = item.grandparent!.name;
       }
 
-      final videoStream =
-          item.videoFile?.streams.whereType<api.VideoStreamInfo>().firstOrNull;
+      final videoStream = item.videoFile?.streams
+          .whereType<api.VideoStreamInfo>()
+          .firstOrNull;
 
       return VideoItem(
         source: switch (downloadsMap[item.id]) {
@@ -242,8 +244,11 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
           final path => LocalFileSource(path),
         },
         subtitles: item.videoFile!.subtitles
-            .where((s) =>
-                !controller.supportsEmbeddedSubtitles || s.streamIndex == null)
+            .where(
+              (s) =>
+                  !controller.supportsEmbeddedSubtitles ||
+                  s.streamIndex == null,
+            )
             .map((s) => subtitleFromApi(_api, s))
             .toList(),
         metadata: MediaMetadata(
@@ -273,8 +278,10 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
       _uiVisibilityController.setVideoController(controller);
     });
 
-    _applyCropRectsSubscription =
-        ref.listenManual(applyCropRectsProvider, (previous, value) {
+    _applyCropRectsSubscription = ref.listenManual(applyCropRectsProvider, (
+      previous,
+      value,
+    ) {
       controller.isUsingCropRects = value;
     });
 
@@ -336,7 +343,9 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
   void _onSeekToNext() {
     if (ref.read(setWatchedOnSkipProvider)) {
       _api.updateUserData(
-          currentItem.id, api.VideoUserDataPatch(isWatched: true));
+        currentItem.id,
+        api.VideoUserDataPatch(isWatched: true),
+      );
     }
   }
 

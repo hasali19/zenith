@@ -32,7 +32,8 @@ class MediaRouteChooserController extends _$MediaRouteChooserController {
     _mediaRouter.selectedRoute.addListener(_onSelectedRouteChanged);
 
     Future.microtask(
-        () => _mediaRouter.startRouteScanning(RoutesScanningMode.active));
+      () => _mediaRouter.startRouteScanning(RoutesScanningMode.active),
+    );
 
     ref.onDispose(() async {
       _mediaRouter.routes.removeListener(_onRoutesChanged);
@@ -48,8 +49,9 @@ class MediaRouteChooserController extends _$MediaRouteChooserController {
   }
 
   void _onSelectedRouteChanged() {
-    state =
-        state.copyWith(isConnected: _mediaRouter.selectedRoute.value != null);
+    state = state.copyWith(
+      isConnected: _mediaRouter.selectedRoute.value != null,
+    );
   }
 
   Future<void> selectRoute(MediaRoute route) async {

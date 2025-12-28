@@ -9,12 +9,7 @@ import 'package:zenith/format_utils.dart';
 part 'api.freezed.dart';
 part 'api.g.dart';
 
-enum MediaType {
-  movie,
-  show,
-  season,
-  episode,
-}
+enum MediaType { movie, show, season, episode }
 
 final _mediaTypeMap = {for (final v in MediaType.values) v.name: v};
 
@@ -88,22 +83,23 @@ class MediaItem {
       videoFile: json['video_file'] != null
           ? VideoFile.fromJson(json['video_file'])
           : null,
-      videoUserData: (type == MediaType.movie || type == MediaType.episode) &&
+      videoUserData:
+          (type == MediaType.movie || type == MediaType.episode) &&
               json['user_data'] != null
           ? VideoUserData.fromJson(json['user_data'])
           : null,
       collectionUserData:
           (type == MediaType.show || type == MediaType.season) &&
-                  json['user_data'] != null
-              ? CollectionUserData.fromJson(json['user_data'])
-              : null,
+              json['user_data'] != null
+          ? CollectionUserData.fromJson(json['user_data'])
+          : null,
       genres: List<String>.from(json['genres']),
       ageRating: json['age_rating'],
       trailer: json['trailer'],
       director: json['director'],
-      cast: List<dynamic>.from(json['cast'])
-          .map((json) => CastMember.fromJson(json))
-          .toList(),
+      cast: List<dynamic>.from(
+        json['cast'],
+      ).map((json) => CastMember.fromJson(json)).toList(),
     );
   }
 
@@ -148,9 +144,10 @@ class CastMember {
   });
 
   factory CastMember.fromJson(Map<String, dynamic> json) => CastMember(
-      name: json['name'],
-      character: json['character'],
-      profile: json['profile']);
+    name: json['name'],
+    character: json['character'],
+    profile: json['profile'],
+  );
 }
 
 class SubtitleTrack {
@@ -169,12 +166,12 @@ class SubtitleTrack {
   });
 
   factory SubtitleTrack.fromJson(Map<String, dynamic> json) => SubtitleTrack(
-        id: json['id'],
-        streamIndex: json['stream_index'],
-        format: json['format'],
-        title: json['title'],
-        language: json['language'],
-      );
+    id: json['id'],
+    streamIndex: json['stream_index'],
+    format: json['format'],
+    title: json['title'],
+    language: json['language'],
+  );
 }
 
 abstract class StreamInfo {
@@ -313,9 +310,7 @@ class VideoUserData {
 class CollectionUserData {
   final int unwatched;
 
-  CollectionUserData({
-    required this.unwatched,
-  });
+  CollectionUserData({required this.unwatched});
 
   factory CollectionUserData.fromJson(Map<String, dynamic> json) =>
       CollectionUserData(unwatched: json['unwatched']);
@@ -343,11 +338,11 @@ class Collection {
   });
 
   factory Collection.fromJson(Map<String, dynamic> json) => Collection(
-        id: json['id'],
-        name: json['name'],
-        overview: json['overview'],
-        poster: json['poster'],
-      );
+    id: json['id'],
+    name: json['name'],
+    overview: json['overview'],
+    poster: json['poster'],
+  );
 }
 
 class FixMetadataMatch {
@@ -355,26 +350,17 @@ class FixMetadataMatch {
   final int? season;
   final int? episode;
 
-  FixMetadataMatch({
-    this.tmdbId,
-    this.season,
-    this.episode,
-  });
+  FixMetadataMatch({this.tmdbId, this.season, this.episode});
 }
 
 class User {
   final int id;
   final String username;
 
-  User({
-    required this.id,
-    required this.username,
-  });
+  User({required this.id, required this.username});
 
-  factory User.fromJson(Map<String, dynamic> json) => User(
-        id: json['id'],
-        username: json['username'],
-      );
+  factory User.fromJson(Map<String, dynamic> json) =>
+      User(id: json['id'], username: json['username']);
 }
 
 class UserRegistration {
@@ -396,10 +382,7 @@ class UserRegistration {
       );
 }
 
-enum AccessTokenOwner {
-  system,
-  user,
-}
+enum AccessTokenOwner { system, user }
 
 @freezed
 abstract class AccessToken with _$AccessToken {
@@ -428,9 +411,8 @@ abstract class CastConfig with _$CastConfig {
 
 @freezed
 abstract class TranscoderState with _$TranscoderState {
-  factory TranscoderState({
-    required List<TranscoderJob> queue,
-  }) = _TranscoderState;
+  factory TranscoderState({required List<TranscoderJob> queue}) =
+      _TranscoderState;
 
   factory TranscoderState.fromJson(Map<String, Object?> json) =>
       _$TranscoderStateFromJson(json);
@@ -471,7 +453,7 @@ class ZenithApiClient {
   bool? _isLoggedIn;
 
   ZenithApiClient(this._client, {AuthenticationObserver? authObserver})
-      : _authObserver = authObserver ?? AuthenticationObserver();
+    : _authObserver = authObserver ?? AuthenticationObserver();
 
   String get baseUrl => _client.options.baseUrl;
 
@@ -511,14 +493,17 @@ class ZenithApiClient {
     }
   }
 
-  Future<void> createUser(String username, String password,
-      [String? code]) async {
+  Future<void> createUser(
+    String username,
+    String password, [
+    String? code,
+  ]) async {
     final res = await _client.post(
       '/api/users',
       data: {
         'username': username,
         'password': password,
-        'registration_code': code
+        'registration_code': code,
       },
     );
 
@@ -636,12 +621,8 @@ class ZenithApiClient {
   Future<List<MediaItem>> fetchMediaItems(List<int> ids) async {
     final res = await _client.get(
       '/api/items',
-      queryParameters: {
-        'ids': ids,
-      },
-      options: Options(
-        listFormat: ListFormat.multiCompatible,
-      ),
+      queryParameters: {'ids': ids},
+      options: Options(listFormat: ListFormat.multiCompatible),
     );
 
     if (res.statusCode == 200) {
@@ -652,15 +633,21 @@ class ZenithApiClient {
     }
   }
 
-  Future<List<MediaItem>> searchByName(String query,
-      {List<MediaType>? types, int? limit}) async {
+  Future<List<MediaItem>> searchByName(
+    String query, {
+    List<MediaType>? types,
+    int? limit,
+  }) async {
     types ??= [];
 
-    final res = await _client.get('/api/items', queryParameters: {
-      'name': query,
-      if (types.isNotEmpty) 'item_type': types.map((t) => t.name).toList(),
-      if (limit != null) 'limit': limit,
-    });
+    final res = await _client.get(
+      '/api/items',
+      queryParameters: {
+        'name': query,
+        if (types.isNotEmpty) 'item_type': types.map((t) => t.name).toList(),
+        if (limit != null) 'limit': limit,
+      },
+    );
 
     if (res.statusCode == 200) {
       final List<dynamic> json = res.data;
@@ -671,8 +658,10 @@ class ZenithApiClient {
   }
 
   Future<void> deleteMediaItem(int id, {bool removeFiles = false}) async {
-    await _client.delete('/api/items/$id',
-        queryParameters: {if (removeFiles) 'remove_files': 'true'});
+    await _client.delete(
+      '/api/items/$id',
+      queryParameters: {if (removeFiles) 'remove_files': 'true'},
+    );
   }
 
   Future<List<MediaItem>> fetchContinueWatching() async {
@@ -705,10 +694,7 @@ class ZenithApiClient {
   }
 
   Future<Collection> createCollection(String name) async {
-    final res = await _client.post(
-      '/api/collections',
-      data: {'name': name},
-    );
+    final res = await _client.post('/api/collections', data: {'name': name});
     if (res.statusCode == 200) {
       final dynamic json = res.data;
       return Collection.fromJson(json);
@@ -728,8 +714,9 @@ class ZenithApiClient {
   }
 
   Future<List<MediaItem>> fetchCollectionItems(int id) async {
-    final res = await _client
-        .get('/api/items?collection_id=$id&sort_by[]=collection_index');
+    final res = await _client.get(
+      '/api/items?collection_id=$id&sort_by[]=collection_index',
+    );
     if (res.statusCode == 200) {
       final List<dynamic> json = res.data;
       return json.map((e) => MediaItem.fromJson(e)).toList();
@@ -739,10 +726,7 @@ class ZenithApiClient {
   }
 
   Future<void> updateCollection(int id, List<int> itemIds) async {
-    await _client.put(
-      '/api/collections/$id',
-      data: {'items': itemIds},
-    );
+    await _client.put('/api/collections/$id', data: {'items': itemIds});
   }
 
   Future<void> deleteCollection(int id) async {
@@ -766,10 +750,12 @@ class ZenithApiClient {
   }
 
   String getImageUrl(ImageId id, {required int? width}) {
-    return Uri.parse(_client.options.baseUrl).replace(
-      path: 'api/images/${id.value}',
-      queryParameters: {if (width != null) 'width': width.toString()},
-    ).toString();
+    return Uri.parse(_client.options.baseUrl)
+        .replace(
+          path: 'api/images/${id.value}',
+          queryParameters: {if (width != null) 'width': width.toString()},
+        )
+        .toString();
   }
 
   Future updateProgress(int id, int position) async {
@@ -779,20 +765,19 @@ class ZenithApiClient {
   Future updateUserData(int id, VideoUserDataPatch data) async {
     await _client.patch(
       '/api/items/$id/user_data',
-      data: {
-        'is_watched': data.isWatched,
-        'position': data.position,
-      },
+      data: {'is_watched': data.isWatched, 'position': data.position},
     );
   }
 
-  Future<AccessToken> getAccessToken(AccessTokenOwner owner, String name,
-      {bool create = false}) async {
-    final res = await _client.post('/api/auth/token', queryParameters: {
-      'owner': owner.name,
-      'name': name,
-      'create': create,
-    });
+  Future<AccessToken> getAccessToken(
+    AccessTokenOwner owner,
+    String name, {
+    bool create = false,
+  }) async {
+    final res = await _client.post(
+      '/api/auth/token',
+      queryParameters: {'owner': owner.name, 'name': name, 'create': create},
+    );
     if (res.statusCode == 200) {
       return AccessToken.fromJson(res.data);
     } else {
@@ -810,23 +795,29 @@ class ZenithApiClient {
   }
 
   Future<void> importSubtitleFile(
-      int videoId, String fileName, Uint8List bytes) async {
+    int videoId,
+    String fileName,
+    Uint8List bytes,
+  ) async {
     final formData = FormData.fromMap({
       'data': jsonEncode({
         'video_id': videoId,
         'title': fileName,
         'language': 'eng',
       }),
-      'file':
-          MultipartFile.fromBytes(bytes, filename: fileName, contentType: () {
-        if (fileName.endsWith('vtt')) {
-          return DioMediaType.parse('web/vtt');
-        } else if (fileName.endsWith('srt')) {
-          return DioMediaType.parse('application/x-subrip');
-        } else {
-          throw ArgumentError('unsupported file type: $fileName');
-        }
-      }()),
+      'file': MultipartFile.fromBytes(
+        bytes,
+        filename: fileName,
+        contentType: () {
+          if (fileName.endsWith('vtt')) {
+            return DioMediaType.parse('web/vtt');
+          } else if (fileName.endsWith('srt')) {
+            return DioMediaType.parse('application/x-subrip');
+          } else {
+            throw ArgumentError('unsupported file type: $fileName');
+          }
+        }(),
+      ),
     });
 
     await _client.post('/api/import/subtitle', data: formData);

@@ -50,7 +50,8 @@ class _LoginRegisterViewState extends ConsumerState<LoginRegisterView> {
         ScaffoldMessenger.of(context)
           ..clearSnackBars()
           ..showSnackBar(
-              const SnackBar(content: Text('Failed to create user')));
+            const SnackBar(content: Text('Failed to create user')),
+          );
       }
     });
 
@@ -71,8 +72,9 @@ class _LoginRegisterViewState extends ConsumerState<LoginRegisterView> {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: TextField(
                       controller: _code,
-                      decoration:
-                          const InputDecoration(labelText: 'Registration code'),
+                      decoration: const InputDecoration(
+                        labelText: 'Registration code',
+                      ),
                       enabled: widget.code == null,
                     ),
                   ),

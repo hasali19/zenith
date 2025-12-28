@@ -28,17 +28,19 @@ class LoginUsersView extends StatelessWidget {
 
               ref.listen(_usersProvider, (previous, next) {
                 if ((previous == null || !previous.hasError) && next.hasError) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: const Text('Failed to retrieve users list'),
-                    behavior: SnackBarBehavior.floating,
-                    duration: const Duration(days: 365),
-                    action: SnackBarAction(
-                      label: 'Retry',
-                      onPressed: () {
-                        ref.invalidate(_usersProvider);
-                      },
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Failed to retrieve users list'),
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(days: 365),
+                      action: SnackBarAction(
+                        label: 'Retry',
+                        onPressed: () {
+                          ref.invalidate(_usersProvider);
+                        },
+                      ),
                     ),
-                  ));
+                  );
                 }
 
                 if (next case AsyncData(value: [])) {
@@ -61,7 +63,10 @@ class LoginUsersView extends StatelessWidget {
   }
 
   Widget _buildSuccess(
-      BuildContext context, List<User> data, bool isRefreshing) {
+    BuildContext context,
+    List<User> data,
+    bool isRefreshing,
+  ) {
     final textDisplaySmall = Theme.of(context).textTheme.displaySmall;
     final users = data.map(
       (user) => _UserListCard(
@@ -121,11 +126,7 @@ class _UserListCard extends StatelessWidget {
       elevation: elevated ? null : 0,
       color: elevated ? null : Colors.transparent,
       clipBehavior: Clip.antiAlias,
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(text),
-        onTap: onTap,
-      ),
+      child: ListTile(leading: Icon(icon), title: Text(text), onTap: onTap),
     );
   }
 }

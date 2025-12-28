@@ -28,17 +28,14 @@ class ZenithDownloader extends BaseDownloader {
   bool _isInit = false;
   Future<void>? _initFuture;
 
-  ZenithDownloader(
-    this._cookies,
-    super.api,
-    this._db,
-  );
+  ZenithDownloader(this._cookies, super.api, this._db);
 
   Future<void> _ensureInit() async {
     if (!_isInit) {
       _initFuture ??= Future(() async {
-        final handle =
-            PluginUtilities.getCallbackHandle(_downloaderCallbackDispatcher);
+        final handle = PluginUtilities.getCallbackHandle(
+          _downloaderCallbackDispatcher,
+        );
 
         await _channel.invokeMethod('init', {
           'callbackDispatcherHandle': handle!.toRawHandle(),
@@ -72,7 +69,8 @@ class ZenithDownloader extends BaseDownloader {
             builder: (context) => AlertDialog(
               title: const Text('Notifications'),
               content: const Text(
-                  'Permission required to show progress notification for file downloads.'),
+                'Permission required to show progress notification for file downloads.',
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -87,14 +85,17 @@ class ZenithDownloader extends BaseDownloader {
 
       if (!status.isGranted) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content:
-                const Text('Missing notification permission for downloads'),
-            action: SnackBarAction(
-              label: 'Grant',
-              onPressed: () => openAppSettings(),
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Missing notification permission for downloads',
+              ),
+              action: SnackBarAction(
+                label: 'Grant',
+                onPressed: () => openAppSettings(),
+              ),
             ),
-          ));
+          );
         }
         return;
       }
@@ -102,26 +103,31 @@ class ZenithDownloader extends BaseDownloader {
       final id = _uuid.v4();
       await _db
           .into(_db.downloadedFiles)
-          .insert(DownloadedFilesCompanion.insert(
-            id: id,
-            itemId: itemId,
-            videoFileId: videoFileId,
-            createdAt: DateTime.now(),
-          ));
+          .insert(
+            DownloadedFilesCompanion.insert(
+              id: id,
+              itemId: itemId,
+              videoFileId: videoFileId,
+              createdAt: DateTime.now(),
+            ),
+          );
 
       await _channel.invokeMethod('enqueue', {
         'id': id,
         'uri': url,
         'cookies': CookieManager.getCookies(
-            await _cookies.loadForRequest(Uri.parse(url))),
+          await _cookies.loadForRequest(Uri.parse(url)),
+        ),
         'filename': fileName,
       });
     } else {
       // TODO: This is a hack, we need a proper in-app downloader that passes
       // the necessary auth headers.
-      final token = await this
-          .api
-          .getAccessToken(AccessTokenOwner.system, 'cast', create: true);
+      final token = await this.api.getAccessToken(
+        AccessTokenOwner.system,
+        'cast',
+        create: true,
+      );
 
       String withToken(String url) {
         final uri = Uri.parse(url);
@@ -129,8 +135,10 @@ class ZenithDownloader extends BaseDownloader {
         return uri.replace(queryParameters: params).toString();
       }
 
-      launchUrl(Uri.parse(withToken(url)),
-          mode: LaunchMode.externalApplication);
+      launchUrl(
+        Uri.parse(withToken(url)),
+        mode: LaunchMode.externalApplication,
+      );
     }
   }
 
@@ -147,9 +155,9 @@ class ZenithDownloader extends BaseDownloader {
   void removeDownloadedFile(String id) async {
     assert(Platform.isAndroid);
 
-    final file = await (_db.select(_db.downloadedFiles)
-          ..where((f) => f.id.equals(id)))
-        .getSingleOrNull();
+    final file = await (_db.select(
+      _db.downloadedFiles,
+    )..where((f) => f.id.equals(id))).getSingleOrNull();
 
     if (file == null) {
       return;
@@ -159,8 +167,11 @@ class ZenithDownloader extends BaseDownloader {
       try {
         await _channel.invokeMethod('deleteFile', {'uri': file.path});
       } catch (e, s) {
-        _logger.w('failed to delete file: ${file.path}',
-            error: e, stackTrace: s);
+        _logger.w(
+          'failed to delete file: ${file.path}',
+          error: e,
+          stackTrace: s,
+        );
       }
     }
 
@@ -188,12 +199,15 @@ Future<void> _downloaderCallbackDispatcher() async {
       final String id = call.arguments['id'];
       final bool success = call.arguments['success'];
       if (success) {
-        await (db.update(db.downloadedFiles)..where((t) => t.id.equals(id)))
-            .write(
-            DownloadedFilesCompanion(path: Value(call.arguments['uri'])));
+        await (db.update(
+          db.downloadedFiles,
+        )..where((t) => t.id.equals(id))).write(
+          DownloadedFilesCompanion(path: Value(call.arguments['uri'])),
+        );
       } else {
-        await (db.delete(db.downloadedFiles)..where((t) => t.id.equals(id)))
-            .go();
+        await (db.delete(
+          db.downloadedFiles,
+        )..where((t) => t.id.equals(id))).go();
       }
     } else {
       throw UnimplementedError();

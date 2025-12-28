@@ -24,8 +24,5 @@ class TextOneLine extends Text {
     super.semanticsLabel,
     TextWidthBasis super.textWidthBasis = TextWidthBasis.parent,
     super.textHeightBehavior,
-  }) : super(
-          softWrap: false,
-          maxLines: 1,
-        );
+  }) : super(softWrap: false, maxLines: 1);
 }

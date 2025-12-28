@@ -34,9 +34,7 @@ class EpisodesList extends StatelessWidget {
             group: group,
             onEpisodePressed: onEpisodePressed,
           ),
-        SliverToBoxAdapter(
-          child: SizedBox(height: isDesktop ? 128 : 16),
-        ),
+        SliverToBoxAdapter(child: SizedBox(height: isDesktop ? 128 : 16)),
       ],
     );
   }
@@ -92,7 +90,8 @@ class _EpisodesListInnerState extends State<_EpisodesListInner> {
               ? const EdgeInsets.symmetric(horizontal: 112)
               : EdgeInsets.zero,
           child: ListTile(
-            contentPadding: EdgeInsets.only(top: 8, bottom: 8) +
+            contentPadding:
+                EdgeInsets.only(top: 8, bottom: 8) +
                 EdgeInsets.symmetric(horizontal: 16),
             title: Text(_group.name, style: theme.textTheme.headlineMedium),
             trailing: AnimatedBuilder(
@@ -118,7 +117,8 @@ class _EpisodesListInnerState extends State<_EpisodesListInner> {
         sliver: SliverGrid(
           gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
             maxCrossAxisExtent: 700.0,
-            childAspectRatio: width /
+            childAspectRatio:
+                width /
                 (width / 700.0).ceil() /
                 (thumbnailWidth * (9.0 / 16.0) + 16),
           ),
@@ -174,8 +174,10 @@ class _EpisodeListItem extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TextOneLine(episode.title,
-                            style: context.zenithTheme.titleMedium),
+                        TextOneLine(
+                          episode.title,
+                          style: context.zenithTheme.titleMedium,
+                        ),
                         const SizedBox(height: 8),
                         Flexible(
                           child: Text(
@@ -197,7 +199,7 @@ class _EpisodeListItem extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(onTap: onPressed),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -222,21 +224,23 @@ class _EpisodeThumbnail extends StatelessWidget {
       type: MaterialType.card,
       clipBehavior: Clip.hardEdge,
       borderRadius: const BorderRadius.all(Radius.circular(8)),
-      child: Stack(children: [
-        switch (imageId) {
-          null => const Icon(Icons.video_file, size: 48),
-          final imageId => Positioned.fill(
+      child: Stack(
+        children: [
+          switch (imageId) {
+            null => const Icon(Icons.video_file, size: 48),
+            final imageId => Positioned.fill(
               child: ZenithApiImage(id: imageId!, requestWidth: imageWidth),
-            )
-        },
-        if (isWatched)
-          Container(
-            color: Colors.black.withAlpha(127),
-            child: const Center(
-              child: Icon(Icons.check, size: 36, color: Colors.white),
             ),
-          ),
-      ]),
+          },
+          if (isWatched)
+            Container(
+              color: Colors.black.withAlpha(127),
+              child: const Center(
+                child: Icon(Icons.check, size: 36, color: Colors.white),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -15,10 +15,12 @@ class VideoPlayerAndroid extends VideoPlayerPlatform {
   }
 
   @override
-  Future<VideoController> createController(
-      {Map<String, String>? headers}) async {
-    final int id =
-        await _methodChannel.invokeMethod('create', {'headers': headers});
+  Future<VideoController> createController({
+    Map<String, String>? headers,
+  }) async {
+    final int id = await _methodChannel.invokeMethod('create', {
+      'headers': headers,
+    });
     return VideoControllerAndroid(id);
   }
 
@@ -121,10 +123,7 @@ class _VideoClipper extends CustomClipper<Rect> {
 }
 
 class _SubtitleView extends HookWidget {
-  const _SubtitleView({
-    required this.events,
-    required this.style,
-  });
+  const _SubtitleView({required this.events, required this.style});
 
   final Stream<String?> events;
   final SubtitleStyleOptions style;
@@ -133,16 +132,17 @@ class _SubtitleView extends HookWidget {
   Widget build(BuildContext context) {
     final style = useListenable(this.style);
 
-    final textStyle = Theme.of(context)
-        .textTheme
-        .titleLarge!
-        .copyWith(fontSize: style.size.toDouble());
+    final theme = Theme.of(context);
+    final textStyle = theme.textTheme.titleLarge!.copyWith(
+      fontSize: style.size.toDouble(),
+    );
 
     final outlineStyle = textStyle.copyWith(
-        foreground: Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2
-          ..color = Colors.black);
+      foreground: Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = Colors.black,
+    );
 
     return Align(
       alignment: Alignment.bottomCenter,
@@ -257,8 +257,10 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
 
   @override
   set position(value) {
-    _methodChannel.invokeMethod(
-        'seekTo', {'id': id, 'position': (value * 1000.0).toInt()});
+    _methodChannel.invokeMethod('seekTo', {
+      'id': id,
+      'position': (value * 1000.0).toInt(),
+    });
   }
 
   @override
@@ -311,19 +313,23 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
         for (final (index, track) in tracks.indexed) {
           switch (track['type']) {
             case 2:
-              _audioTracks.add(AudioTrack(
-                index: index,
-                language: track['lang'],
-                codec: track['codec'],
-              ));
+              _audioTracks.add(
+                AudioTrack(
+                  index: index,
+                  language: track['lang'],
+                  codec: track['codec'],
+                ),
+              );
               break;
 
             case 3:
-              _subtitleTracks.add(SubtitleTrack(
-                id: track['id'],
-                label: track['label'],
-                language: track['lang'],
-              ));
+              _subtitleTracks.add(
+                SubtitleTrack(
+                  id: track['id'],
+                  label: track['label'],
+                  language: track['lang'],
+                ),
+              );
               break;
           }
         }
@@ -355,12 +361,12 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
   @override
   void load(List<VideoItem> items, int startIndex, double startPosition) async {
     toSubtitleDto(ExternalSubtitleTrack track) => {
-          'id': track.id,
-          'src': track.src,
-          'mimeType': track.mimeType,
-          'title': track.title,
-          'language': track.language
-        };
+      'id': track.id,
+      'src': track.src,
+      'mimeType': track.mimeType,
+      'title': track.title,
+      'language': track.language,
+    };
 
     toItemDto(VideoItem item) {
       return {
@@ -377,15 +383,12 @@ class VideoControllerAndroid extends VideoController with ChangeNotifier {
       };
     }
 
-    await _methodChannel.invokeMethod(
-      'load',
-      {
-        'id': id,
-        'items': items.map(toItemDto).toList(),
-        'startIndex': startIndex,
-        'startPosition': (startPosition * 1000).toInt(),
-      },
-    );
+    await _methodChannel.invokeMethod('load', {
+      'id': id,
+      'items': items.map(toItemDto).toList(),
+      'startIndex': startIndex,
+      'startPosition': (startPosition * 1000).toInt(),
+    });
 
     _cropRects = items.map((item) => item.cropRect).toList();
     _cropRect.value = items[startIndex].cropRect;

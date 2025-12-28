@@ -69,8 +69,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final desktop = MediaQuery.of(context).isDesktop;
 
-    final sectionTitlePadding =
-        EdgeInsets.symmetric(horizontal: desktop ? 32 : 16, vertical: 12);
+    final sectionTitlePadding = EdgeInsets.symmetric(
+      horizontal: desktop ? 32 : 16,
+      vertical: 12,
+    );
     final sectionListSpacing = desktop ? 16.0 : 8.0;
     const sectionEndPadding = 0.0;
 
@@ -86,32 +88,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       List<MediaItem> items,
       String title,
       IconData posterFallback,
-    ) =>
-        Section<MediaItem>(
-          title: title,
-          titlePadding: sectionTitlePadding,
-          listSpacing: sectionListSpacing,
-          listItemWidth: posterItemWidth,
-          listItemHeight: posterItemHeight,
-          endPadding: sectionEndPadding,
-          items: items,
-          itemBuilder: (context, item) => PosterItem(
-            imageId: item.poster,
-            requestWidth: mediaPosterImageWidth,
-            fallbackIcon: posterFallback,
-            title: item.name,
-            subtitle: item.startDate?.year.toString() ?? '',
-            isWatched: true, // hide new icon since they're all new
-            infoSeparator: posterItemInfoSeparator,
-            onTap: () => _navigateToItem(item),
-          ),
-        );
+    ) => Section<MediaItem>(
+      title: title,
+      titlePadding: sectionTitlePadding,
+      listSpacing: sectionListSpacing,
+      listItemWidth: posterItemWidth,
+      listItemHeight: posterItemHeight,
+      endPadding: sectionEndPadding,
+      items: items,
+      itemBuilder: (context, item) => PosterItem(
+        imageId: item.poster,
+        requestWidth: mediaPosterImageWidth,
+        fallbackIcon: posterFallback,
+        title: item.name,
+        subtitle: item.startDate?.year.toString() ?? '',
+        isWatched: true, // hide new icon since they're all new
+        infoSeparator: posterItemInfoSeparator,
+        onTap: () => _navigateToItem(item),
+      ),
+    );
 
     final state = ref.watch(_stateProvider);
     return state.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stackTrace) => Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -146,7 +145,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   subtitle: item.type == MediaType.episode
                       ? '${item.getSeasonEpisode()!}: ${item.grandparent!.name}'
                       : item.startDate?.year.toString() ?? '',
-                  progress: (item.videoUserData?.position ?? 0) /
+                  progress:
+                      (item.videoUserData?.position ?? 0) /
                       (item.videoFile?.duration ?? 1),
                   padding: thumbnailItemPadding,
                   onTap: () => _navigateToItem(item),
@@ -154,10 +154,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             if (data.recentMovies.isNotEmpty)
               buildPosterItemSection(
-                  data.recentMovies, 'Recent Movies', Icons.movie),
+                data.recentMovies,
+                'Recent Movies',
+                Icons.movie,
+              ),
             if (data.recentShows.isNotEmpty)
               buildPosterItemSection(
-                  data.recentShows, 'Recent Shows', Icons.tv),
+                data.recentShows,
+                'Recent Shows',
+                Icons.tv,
+              ),
           ],
         ),
       ),
@@ -196,13 +202,15 @@ class _SectionState<T> extends State<Section<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final titleStyle =
-        context.zenithTheme.titleMedium.copyWith(fontWeight: FontWeight.bold);
+    final titleStyle = context.zenithTheme.titleMedium.copyWith(
+      fontWeight: FontWeight.bold,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: widget.titlePadding +
+          padding:
+              widget.titlePadding +
               context.mq.padding.copyWith(top: 0, bottom: 0),
           child: Text(widget.title, style: titleStyle),
         ),
@@ -217,9 +225,9 @@ class _SectionState<T> extends State<Section<T>> {
     return SizedBox(
       height: widget.listItemHeight + scrollbarHeight,
       child: ScrollbarTheme(
-        data: ScrollbarTheme.of(context).copyWith(
-          mainAxisMargin: widget.listSpacing * 2,
-        ),
+        data: ScrollbarTheme.of(
+          context,
+        ).copyWith(mainAxisMargin: widget.listSpacing * 2),
         child: Scrollbar(
           controller: _scrollController,
           child: Padding(
@@ -228,7 +236,7 @@ class _SectionState<T> extends State<Section<T>> {
               controller: _scrollController,
               padding:
                   EdgeInsets.symmetric(horizontal: widget.listSpacing * 2) +
-                      context.mq.padding.copyWith(top: 0, bottom: 0),
+                  context.mq.padding.copyWith(top: 0, bottom: 0),
               separatorBuilder: (context, index) =>
                   SizedBox(width: widget.listSpacing),
               scrollDirection: Axis.horizontal,
@@ -270,10 +278,12 @@ class ContinueWatchingCard extends StatelessWidget {
     final theme = Theme.of(context);
     final cardTheme = theme.cardTheme;
 
-    final titleStyle =
-        context.zenithTheme.bodyMedium.copyWith(color: Colors.white);
-    final subtitleStyle =
-        context.zenithTheme.bodySmall.copyWith(color: Colors.white);
+    final titleStyle = context.zenithTheme.bodyMedium.copyWith(
+      color: Colors.white,
+    );
+    final subtitleStyle = context.zenithTheme.bodySmall.copyWith(
+      color: Colors.white,
+    );
 
     return AspectRatio(
       aspectRatio: 16 / 9,
@@ -287,8 +297,10 @@ class ContinueWatchingCard extends StatelessWidget {
               shape: cardTheme.shape,
               child: switch (imageId) {
                 null => Center(child: Icon(Icons.video_file, size: 40)),
-                final imageId =>
-                  ZenithApiImage(id: imageId, requestWidth: requestWidth)
+                final imageId => ZenithApiImage(
+                  id: imageId,
+                  requestWidth: requestWidth,
+                ),
               },
             ),
           ),
@@ -317,7 +329,7 @@ class ContinueWatchingCard extends StatelessWidget {
                             backgroundColor: Colors.white,
                           ),
                         ),
-                      ]
+                      ],
                     ],
                   ),
                 ),

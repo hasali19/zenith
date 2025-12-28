@@ -50,10 +50,18 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
 
   void _loadMedia() async {
     final playerState = CastFrameworkPlatform
-        .instance.remoteMediaClient.mediaStatus.value?.playerState;
+        .instance
+        .remoteMediaClient
+        .mediaStatus
+        .value
+        ?.playerState;
     if (playerState != null && playerState != PlayerState.idle) {
       final customDataJson = CastFrameworkPlatform
-          .instance.remoteMediaClient.mediaInfo.value?.customDataJson;
+          .instance
+          .remoteMediaClient
+          .mediaInfo
+          .value
+          ?.customDataJson;
       if (customDataJson != null) {
         final customData = jsonDecode(customDataJson);
         if (customData['id'] == widget.items[widget.startIndex].id) {
@@ -62,8 +70,11 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
       }
     }
 
-    final token = await _api.getAccessToken(api.AccessTokenOwner.system, 'cast',
-        create: true);
+    final token = await _api.getAccessToken(
+      api.AccessTokenOwner.system,
+      'cast',
+      create: true,
+    );
 
     _controller.setInitData(_api.baseUrl, token.token);
 
@@ -84,13 +95,18 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
         .map(
           (item) => video_player.VideoItem(
             source: video_player.NetworkSource(
-                withToken(_api.getVideoUrl(item.videoFile!.id))),
+              withToken(_api.getVideoUrl(item.videoFile!.id)),
+            ),
             subtitles: (item.videoFile?.subtitles ?? [])
                 .map(
                   (track) => video_player.ExternalSubtitleTrack(
                     id: track.id.toString(),
-                    src: withToken(_api.getSubtitleUrl(track.id,
-                        format: api.SubtitleFormat.webvtt)),
+                    src: withToken(
+                      _api.getSubtitleUrl(
+                        track.id,
+                        format: api.SubtitleFormat.webvtt,
+                      ),
+                    ),
                     mimeType: 'text/vtt',
                     title: track.title,
                     language: track.language,
@@ -103,17 +119,17 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
               seasonNumber: item.grandparent?.index,
               episodeNumber: item.parent?.index,
               posterUrl: buildImageUrl(item.poster, mediaPosterImageWidth),
-              backdropUrl:
-                  buildImageUrl(item.backdrop, mediaBackdropImageWidth),
+              backdropUrl: buildImageUrl(
+                item.backdrop,
+                mediaBackdropImageWidth,
+              ),
               type: switch (item.type) {
                 api.MediaType.movie => video_player.MediaType.movie,
                 api.MediaType.episode => video_player.MediaType.tvShow,
                 _ => null,
               },
             ),
-            extra: {
-              'id': item.id,
-            },
+            extra: {'id': item.id},
           ),
         )
         .toList();
@@ -127,9 +143,7 @@ class _RemoteVideoPlayerState extends ConsumerState<RemoteVideoPlayer> {
       body: Stack(
         children: [
           if (item.backdrop case api.ImageId id)
-            Positioned.fill(
-              child: ZenithApiImage(id: id, requestWidth: 780),
-            ),
+            Positioned.fill(child: ZenithApiImage(id: id, requestWidth: 780)),
           ListenableBuilder(
             listenable: _controller,
             builder: (context, child) {
@@ -169,10 +183,12 @@ class RemoteVideoController extends video_player.VideoController
 
   @override
   set position(double value) {
-    _client.seek(MediaSeekOptions(
-      position: (value * 1000).toInt(),
-      resumeState: ResumeState.unchanged,
-    ));
+    _client.seek(
+      MediaSeekOptions(
+        position: (value * 1000).toInt(),
+        resumeState: ResumeState.unchanged,
+      ),
+    );
   }
 
   void init() {
@@ -221,78 +237,78 @@ class RemoteVideoController extends video_player.VideoController
   ) async {
     await _client.sendMessage(
       'urn:x-cast:dev.hasali.zenith',
-      jsonEncode({
-        'type': 'init',
-        'token': _token,
-        'server': _server,
-      }),
+      jsonEncode({'type': 'init', 'token': _token, 'server': _server}),
     );
 
-    await _client.load(MediaLoadRequestData(
-      queueData: MediaQueueData(
-        items: items
-            .map(
-              (item) => MediaQueueItem(
-                mediaInfo: MediaInfo(
-                  url: switch (item.source) {
-                    video_player.NetworkSource(:final url) => url,
-                    video_player.LocalFileSource() =>
-                      throw UnimplementedError(),
-                  },
-                  mediaTracks: item.subtitles
-                      .map(
-                        (track) => MediaTrack(
-                          // TODO: This assumes id is an integer which may not be correct. We should generate our own integer ids and store a mapping instead.
-                          trackId: int.parse(track.id),
-                          type: MediaTrackType.text,
-                          contentId: track.src,
-                          subtype: MediaTrackSubtype.subtitles,
-                          name: track.title,
-                          language: track.language,
-                        ),
-                      )
-                      .toList(),
-                  metadata: MediaMetadata(
-                    mediaType: switch (item.metadata.type) {
-                      video_player.MediaType.movie => MediaType.movie,
-                      video_player.MediaType.tvShow => MediaType.tvShow,
-                      _ => MediaType.unknown,
+    await _client.load(
+      MediaLoadRequestData(
+        queueData: MediaQueueData(
+          items: items
+              .map(
+                (item) => MediaQueueItem(
+                  mediaInfo: MediaInfo(
+                    url: switch (item.source) {
+                      video_player.NetworkSource(:final url) => url,
+                      video_player.LocalFileSource() =>
+                        throw UnimplementedError(),
                     },
-                    title: item.metadata.title,
-                    seriesTitle: item.metadata.seriesTitle,
-                    seasonNumber: item.metadata.seasonNumber,
-                    episodeNumber: item.metadata.episodeNumber,
-                    poster: switch (item.metadata.posterUrl) {
-                      null => null,
-                      final url => MediaMetadataImage(
+                    mediaTracks: item.subtitles
+                        .map(
+                          (track) => MediaTrack(
+                            // TODO: This assumes id is an integer which may not be correct. We should generate our own integer ids and store a mapping instead.
+                            trackId: int.parse(track.id),
+                            type: MediaTrackType.text,
+                            contentId: track.src,
+                            subtype: MediaTrackSubtype.subtitles,
+                            name: track.title,
+                            language: track.language,
+                          ),
+                        )
+                        .toList(),
+                    metadata: MediaMetadata(
+                      mediaType: switch (item.metadata.type) {
+                        video_player.MediaType.movie => MediaType.movie,
+                        video_player.MediaType.tvShow => MediaType.tvShow,
+                        _ => MediaType.unknown,
+                      },
+                      title: item.metadata.title,
+                      seriesTitle: item.metadata.seriesTitle,
+                      seasonNumber: item.metadata.seasonNumber,
+                      episodeNumber: item.metadata.episodeNumber,
+                      poster: switch (item.metadata.posterUrl) {
+                        null => null,
+                        final url => MediaMetadataImage(
                           url: url,
                           width: 0,
                           height: 0,
                         ),
-                    },
-                    backdrop: switch (item.metadata.backdropUrl) {
-                      null => null,
-                      final url => MediaMetadataImage(
+                      },
+                      backdrop: switch (item.metadata.backdropUrl) {
+                        null => null,
+                        final url => MediaMetadataImage(
                           url: url,
                           width: 0,
                           height: 0,
                         ),
-                    },
+                      },
+                    ),
                   ),
+                  autoPlay: true,
+                  customDataJson: jsonEncode(item.extra),
                 ),
-                autoPlay: true,
-                customDataJson: jsonEncode(item.extra),
-              ),
-            )
-            .toList(),
-        startIndex: startIndex,
+              )
+              .toList(),
+          startIndex: startIndex,
+        ),
       ),
-    ));
+    );
 
-    _client.seek(MediaSeekOptions(
-      position: (startPosition * 1000).toInt(),
-      resumeState: ResumeState.unchanged,
-    ));
+    _client.seek(
+      MediaSeekOptions(
+        position: (startPosition * 1000).toInt(),
+        resumeState: ResumeState.unchanged,
+      ),
+    );
   }
 
   @override
@@ -344,16 +360,16 @@ class RemoteVideoController extends video_player.VideoController
 
   @override
   video_player.VideoState get state => switch (_mediaStatus?.playerState) {
-        null => video_player.VideoState.idle,
-        PlayerState.idle when _mediaStatus?.idleReason == IdleReason.finished =>
-          video_player.VideoState.ended,
-        PlayerState.idle => video_player.VideoState.idle,
-        PlayerState.buffering => video_player.VideoState.active,
-        PlayerState.loading => video_player.VideoState.active,
-        PlayerState.paused => video_player.VideoState.active,
-        PlayerState.playing => video_player.VideoState.active,
-        PlayerState.unknown => video_player.VideoState.idle,
-      };
+    null => video_player.VideoState.idle,
+    PlayerState.idle when _mediaStatus?.idleReason == IdleReason.finished =>
+      video_player.VideoState.ended,
+    PlayerState.idle => video_player.VideoState.idle,
+    PlayerState.buffering => video_player.VideoState.active,
+    PlayerState.loading => video_player.VideoState.active,
+    PlayerState.paused => video_player.VideoState.active,
+    PlayerState.playing => video_player.VideoState.active,
+    PlayerState.unknown => video_player.VideoState.idle,
+  };
 
   @override
   bool get supportsAudioTrackSelection => false;
@@ -403,11 +419,13 @@ class RemoteVideoController extends video_player.VideoController
     for (final track in mediaTracks) {
       if (track.type != MediaTrackType.text) continue;
 
-      currentSubtitleTracks.add(video_player.SubtitleTrack(
-        id: track.trackId.toString(),
-        language: track.language,
-        label: track.name,
-      ));
+      currentSubtitleTracks.add(
+        video_player.SubtitleTrack(
+          id: track.trackId.toString(),
+          language: track.language,
+          label: track.name,
+        ),
+      );
 
       _subtitleTrackIds.add(track.trackId);
     }

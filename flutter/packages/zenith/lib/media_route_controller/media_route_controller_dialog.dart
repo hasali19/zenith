@@ -58,8 +58,12 @@ class _MediaRouteControllerDialogState
     final controller = StreamController<_VideoProgress>();
 
     controller.add(getProgress());
-    controller.addStream(Stream.periodic(
-        const Duration(milliseconds: 500), (count) => getProgress()));
+    controller.addStream(
+      Stream.periodic(
+        const Duration(milliseconds: 500),
+        (count) => getProgress(),
+      ),
+    );
 
     return controller.stream;
   }
@@ -89,86 +93,91 @@ class _MediaRouteControllerDialogState
       contentPadding: const EdgeInsets.only(top: 16),
       content: switch ((state.mediaStatus, state.mediaInfo)) {
         (null, _) ||
-        (MediaStatus(playerState: PlayerState.idle), _) =>
-          Container(
-            color: Colors.black.withAlpha(30),
-            padding:
-                const EdgeInsets.only(left: 20, right: 20, top: 16, bottom: 16),
-            child: const Text('No media selected'),
+        (MediaStatus(playerState: PlayerState.idle), _) => Container(
+          color: Colors.black.withAlpha(30),
+          padding: const EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 16,
+            bottom: 16,
           ),
+          child: const Text('No media selected'),
+        ),
         (final mediaStatus, final mediaInfo) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (mediaInfo?.metadata?.backdrop != null)
-                Flexible(
-                  child: ZenithImage(
-                    image: NetworkImage(mediaInfo!.metadata!.backdrop!.url),
-                  ),
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (mediaInfo?.metadata?.backdrop != null)
+              Flexible(
+                child: ZenithImage(
+                  image: NetworkImage(mediaInfo!.metadata!.backdrop!.url),
                 ),
-              const SizedBox(height: 8),
+              ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                mediaInfo?.metadata?.title ?? 'Unknown',
+                style: Theme.of(context).textTheme.titleLarge,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            if (mediaInfo!.metadata?.seriesTitle != null)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  mediaInfo?.metadata?.title ?? 'Unknown',
-                  style: Theme.of(context).textTheme.titleLarge,
+                  '${formatSeasonEpisode(mediaInfo.metadata!.seasonNumber!, mediaInfo.metadata!.episodeNumber!)} - ${mediaInfo.metadata!.seriesTitle!}',
+                  style: Theme.of(context).textTheme.titleMedium,
                   textAlign: TextAlign.center,
                 ),
               ),
-              if (mediaInfo!.metadata?.seriesTitle != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    '${formatSeasonEpisode(mediaInfo.metadata!.seasonNumber!, mediaInfo.metadata!.episodeNumber!)} - ${mediaInfo.metadata!.seriesTitle!}',
-                    style: Theme.of(context).textTheme.titleMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: StreamBuilder(
-                  stream: _progress,
-                  builder: (context, snapshot) => ProgressBar(
-                    progress: snapshot.data?.progress ?? Duration.zero,
-                    total: snapshot.data?.total ?? Duration.zero,
-                    barHeight: 4,
-                    thumbRadius: 7,
-                    thumbGlowRadius: 25,
-                    timeLabelLocation: TimeLabelLocation.none,
-                    onSeek: (value) => _client.seek(MediaSeekOptions(
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: StreamBuilder(
+                stream: _progress,
+                builder: (context, snapshot) => ProgressBar(
+                  progress: snapshot.data?.progress ?? Duration.zero,
+                  total: snapshot.data?.total ?? Duration.zero,
+                  barHeight: 4,
+                  thumbRadius: 7,
+                  thumbGlowRadius: 25,
+                  timeLabelLocation: TimeLabelLocation.none,
+                  onSeek: (value) => _client.seek(
+                    MediaSeekOptions(
                       position: value.inMilliseconds,
                       resumeState: ResumeState.unchanged,
-                    )),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    PlayPauseButton(
-                      isPlaying: mediaStatus!.playerState != PlayerState.paused,
-                      onSetPlaying: (playing) {
-                        if (mediaStatus.playerState != PlayerState.paused) {
-                          _client.pause();
-                        } else {
-                          _client.play();
-                        }
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.stop),
-                      onPressed: () {
-                        _client.stop();
-                      },
-                    ),
-                  ],
-                ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  PlayPauseButton(
+                    isPlaying: mediaStatus!.playerState != PlayerState.paused,
+                    onSetPlaying: (playing) {
+                      if (mediaStatus.playerState != PlayerState.paused) {
+                        _client.pause();
+                      } else {
+                        _client.play();
+                      }
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.stop),
+                    onPressed: () {
+                      _client.stop();
+                    },
+                  ),
+                ],
               ),
-            ],
-          )
+            ),
+          ],
+        ),
       },
       actions: [
         TextButton(

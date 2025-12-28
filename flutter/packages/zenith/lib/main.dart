@@ -34,53 +34,47 @@ Future<void> main() async {
   final packageInfo = await PackageInfo.fromPlatform();
 
   final db = AppDatabase();
-  final servers = ServersList(
-    db,
-    await db.select(db.servers).get(),
-  );
+  final servers = ServersList(db, await db.select(db.servers).get());
 
-  runApp(ProviderScope(
-    observers: [
-      if (kDebugMode) _LoggingProviderObserver(),
-    ],
-    overrides: [
-      preferencesProvider.overrideWithValue(prefs),
-      databaseProvider.overrideWithValue(db),
-      serversProvider.overrideWithValue(servers),
-      windowProvider.overrideWithValue(window),
-      apiProvider.overrideWith((ref) {
-        final activeServer = ref.watch(activeServerProvider);
-        if (activeServer != null) {
-          final client = createDioClient(
-            activeServer.url,
-            ref.watch(cookieJarProvider),
-            packageInfo,
-          );
-          DioImage.defaultDio = client;
-          return ZenithApiClient(
-            client,
-            authObserver: AuthenticationObserver(
-              onLoggedIn: () =>
-                  ref.read(_authStateProvider.notifier).state = true,
-              onLoggedOut: () =>
-                  ref.read(_authStateProvider.notifier).state = false,
-            ),
-          );
-        } else {
-          throw UnimplementedError();
-        }
-      }),
-    ],
-    child: const ZenithApp(),
-  ));
+  runApp(
+    ProviderScope(
+      observers: [if (kDebugMode) _LoggingProviderObserver()],
+      overrides: [
+        preferencesProvider.overrideWithValue(prefs),
+        databaseProvider.overrideWithValue(db),
+        serversProvider.overrideWithValue(servers),
+        windowProvider.overrideWithValue(window),
+        apiProvider.overrideWith((ref) {
+          final activeServer = ref.watch(activeServerProvider);
+          if (activeServer != null) {
+            final client = createDioClient(
+              activeServer.url,
+              ref.watch(cookieJarProvider),
+              packageInfo,
+            );
+            DioImage.defaultDio = client;
+            return ZenithApiClient(
+              client,
+              authObserver: AuthenticationObserver(
+                onLoggedIn: () =>
+                    ref.read(_authStateProvider.notifier).state = true,
+                onLoggedOut: () =>
+                    ref.read(_authStateProvider.notifier).state = false,
+              ),
+            );
+          } else {
+            throw UnimplementedError();
+          }
+        }),
+      ],
+      child: const ZenithApp(),
+    ),
+  );
 }
 
 final class _LoggingProviderObserver extends ProviderObserver {
   final _logger = Logger(
-    printer: PrettyPrinter(
-      methodCount: 0,
-      noBoxingByDefault: true,
-    ),
+    printer: PrettyPrinter(methodCount: 0, noBoxingByDefault: true),
   );
 
   @override
@@ -89,8 +83,11 @@ final class _LoggingProviderObserver extends ProviderObserver {
   }
 
   @override
-  void didUpdateProvider(ProviderObserverContext context, Object? previousValue,
-      Object? newValue) {
+  void didUpdateProvider(
+    ProviderObserverContext context,
+    Object? previousValue,
+    Object? newValue,
+  ) {
     _logger.d('updated ${context.provider.name} : $previousValue => $newValue');
   }
 
@@ -135,44 +132,57 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
           final castConfig = await api.fetchCastConfig();
           final castReceiverAppId = castConfig.appId;
           if (castReceiverAppId != null) {
-            await CastFrameworkPlatform.instance.mediaRouter
-                .init(receiverAppId: castReceiverAppId);
+            await CastFrameworkPlatform.instance.mediaRouter.init(
+              receiverAppId: castReceiverAppId,
+            );
           }
         }
       });
     }
 
     final useDynamicColor = ref.watch(enableDynamicColor);
-    return DynamicColorBuilder(builder: (light, dark) {
-      final lightTheme = _buildTheme(
-          context, Brightness.light, useDynamicColor ? light : null);
-      final darkTheme =
-          _buildTheme(context, Brightness.dark, useDynamicColor ? dark : null);
-      return ProviderScope(
-        overrides: [
-          themesProvider.overrideWithValue(Themes(lightTheme, darkTheme)),
-        ],
-        child: MaterialApp.router(
-          title: 'Zenith',
-          theme: lightTheme,
-          darkTheme: darkTheme,
-          themeMode: switch (ref.watch(themeMode)) {
-            AppThemeMode.light => ThemeMode.light,
-            AppThemeMode.dark => ThemeMode.dark,
-            AppThemeMode.system => ThemeMode.system,
-          },
-          routerConfig: _router.config(),
-        ),
-      );
-    });
+    return DynamicColorBuilder(
+      builder: (light, dark) {
+        final lightTheme = _buildTheme(
+          context,
+          Brightness.light,
+          useDynamicColor ? light : null,
+        );
+        final darkTheme = _buildTheme(
+          context,
+          Brightness.dark,
+          useDynamicColor ? dark : null,
+        );
+        return ProviderScope(
+          overrides: [
+            themesProvider.overrideWithValue(Themes(lightTheme, darkTheme)),
+          ],
+          child: MaterialApp.router(
+            title: 'Zenith',
+            theme: lightTheme,
+            darkTheme: darkTheme,
+            themeMode: switch (ref.watch(themeMode)) {
+              AppThemeMode.light => ThemeMode.light,
+              AppThemeMode.dark => ThemeMode.dark,
+              AppThemeMode.system => ThemeMode.system,
+            },
+            routerConfig: _router.config(),
+          ),
+        );
+      },
+    );
   }
 
   ThemeData _buildTheme(
-      BuildContext context, Brightness brightness, ColorScheme? colorScheme) {
+    BuildContext context,
+    Brightness brightness,
+    ColorScheme? colorScheme,
+  ) {
     final isDesktop = context.isDesktop;
     final baseTheme = ThemeData(
       brightness: brightness,
-      colorScheme: colorScheme ??
+      colorScheme:
+          colorScheme ??
           ColorScheme.fromSeed(
             seedColor: Colors.deepOrange,
             brightness: brightness,
@@ -192,14 +202,18 @@ class _ZenithAppState extends ConsumerState<ZenithApp> {
       ),
       extensions: [
         ZenithTheme(
-          titleLarge: baseTheme.textTheme.titleLarge!
-              .copyWith(fontSize: isDesktop ? 36 : 22),
-          titleMedium: baseTheme.textTheme.titleMedium!
-              .copyWith(fontSize: isDesktop ? 22 : 16),
-          bodySmall: baseTheme.textTheme.bodySmall!
-              .copyWith(fontSize: isDesktop ? 14 : 12),
-          bodyMedium: baseTheme.textTheme.bodyMedium!
-              .copyWith(fontSize: isDesktop ? 16 : 14),
+          titleLarge: baseTheme.textTheme.titleLarge!.copyWith(
+            fontSize: isDesktop ? 36 : 22,
+          ),
+          titleMedium: baseTheme.textTheme.titleMedium!.copyWith(
+            fontSize: isDesktop ? 22 : 16,
+          ),
+          bodySmall: baseTheme.textTheme.bodySmall!.copyWith(
+            fontSize: isDesktop ? 14 : 12,
+          ),
+          bodyMedium: baseTheme.textTheme.bodyMedium!.copyWith(
+            fontSize: isDesktop ? 16 : 14,
+          ),
         ),
       ],
     );
@@ -242,11 +256,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     }
 
     return AutoTabsRouter(
-      routes: const [
-        HomeRoute(),
-        ManageServerRoute(),
-        SettingsRoute(),
-      ],
+      routes: const [HomeRoute(), ManageServerRoute(), SettingsRoute()],
       transitionBuilder: (context, child, animation) => child,
       builder: (context, child) {
         if (desktop) {

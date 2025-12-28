@@ -10,13 +10,16 @@ part 'manage_users_page.g.dart';
 
 @riverpod
 Future<({List<User> users, List<UserRegistration> registrations})> _data(
-    Ref ref) async {
+  Ref ref,
+) async {
   final api = ref.watch(apiProvider);
-  final [users, registrations] =
-      await Future.wait([api.fetchUsers(), api.fetchUserRegistrations()]);
+  final [users, registrations] = await Future.wait([
+    api.fetchUsers(),
+    api.fetchUserRegistrations(),
+  ]);
   return (
     users: users as List<User>,
-    registrations: registrations as List<UserRegistration>
+    registrations: registrations as List<UserRegistration>,
   );
 }
 
@@ -28,64 +31,66 @@ class ManageUsersPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final users = ref.watch(_dataProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage users'),
-      ),
+      appBar: AppBar(title: const Text('Manage users')),
       body: switch (users) {
-        AsyncData(value: (:final users, :final registrations)) =>
-          CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-                  child: Text(
-                    'Users',
-                    style:
-                        TextStyle(color: Theme.of(context).colorScheme.primary),
+        AsyncData(value: (:final users, :final registrations)) => CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 16,
+                ),
+                child: Text(
+                  'Users',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
-              SliverList.builder(
-                itemCount: users.length,
-                itemBuilder: (context, index) {
-                  final user = users[index];
-                  return ListTile(
-                    leading: Icon(Icons.account_circle),
-                    title: Text(user.username),
-                  );
+            ),
+            SliverList.builder(
+              itemCount: users.length,
+              itemBuilder: (context, index) {
+                final user = users[index];
+                return ListTile(
+                  leading: Icon(Icons.account_circle),
+                  title: Text(user.username),
+                );
+              },
+            ),
+            const SliverToBoxAdapter(child: Divider()),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 16,
+                ),
+                child: Text(
+                  'Registrations',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: ListTile(
+                leading: const Icon(Icons.add_circle_outline),
+                title: const Text('Create registration code'),
+                onTap: () async {
+                  final api = ref.read(apiProvider);
+                  await api.createUserRegistration();
+                  ref.invalidate(_dataProvider);
                 },
               ),
-              const SliverToBoxAdapter(
-                child: Divider(),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-                  child: Text(
-                    'Registrations',
-                    style:
-                        TextStyle(color: Theme.of(context).colorScheme.primary),
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: ListTile(
-                  leading: const Icon(Icons.add_circle_outline),
-                  title: const Text('Create registration code'),
-                  onTap: () async {
-                    final api = ref.read(apiProvider);
-                    await api.createUserRegistration();
-                    ref.invalidate(_dataProvider);
-                  },
-                ),
-              ),
-              SliverList.builder(
-                itemCount: registrations.length,
-                itemBuilder: (context, index) {
-                  final registration = registrations[index];
-                  return Builder(builder: (context) {
+            ),
+            SliverList.builder(
+              itemCount: registrations.length,
+              itemBuilder: (context, index) {
+                final registration = registrations[index];
+                return Builder(
+                  builder: (context) {
                     return GestureDetector(
                       child: ListTile(
                         leading: Icon(Icons.account_circle),
@@ -97,11 +102,14 @@ class ManageUsersPage extends ConsumerWidget {
                               TextSpan(
                                 children: [
                                   TextSpan(
-                                      text: 'Expires: ',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
+                                    text: 'Expires: ',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   TextSpan(
-                                      text: registration.expiresAt.toString()),
+                                    text: registration.expiresAt.toString(),
+                                  ),
                                 ],
                               ),
                               maxLines: 1,
@@ -134,13 +142,16 @@ class ManageUsersPage extends ConsumerWidget {
                       onSecondaryTapUp: (details) {
                         final RenderBox box =
                             context.findRenderObject()! as RenderBox;
-                        final RenderBox overlay = Navigator.of(context)
-                            .overlay!
-                            .context
-                            .findRenderObject()! as RenderBox;
+                        final RenderBox overlay =
+                            Navigator.of(
+                                  context,
+                                ).overlay!.context.findRenderObject()!
+                                as RenderBox;
 
-                        var offset = box.localToGlobal(details.localPosition,
-                            ancestor: overlay);
+                        var offset = box.localToGlobal(
+                          details.localPosition,
+                          ancestor: overlay,
+                        );
                         showMenu(
                           context: context,
                           items: [
@@ -161,11 +172,12 @@ class ManageUsersPage extends ConsumerWidget {
                         );
                       },
                     );
-                  });
-                },
-              ),
-            ],
-          ),
+                  },
+                );
+              },
+            ),
+          ],
+        ),
         AsyncError(:final error) => Center(child: Text(error.toString())),
         _ => const Center(child: CircularProgressIndicator()),
       },

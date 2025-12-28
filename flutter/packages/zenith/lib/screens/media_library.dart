@@ -24,20 +24,21 @@ class MediaLibraryItem {
   });
 
   factory MediaLibraryItem.fromMediaItem(
-          MediaItem item, ZenithApiClient client) =>
-      MediaLibraryItem(
-        id: item.id,
-        title: item.name,
-        subtitle: item.startDate?.year.toString(),
-        poster: item.poster,
-        isWatched: () {
-          if (item.type == MediaType.show) {
-            return item.collectionUserData?.unwatched == 0;
-          } else {
-            return item.videoUserData?.isWatched ?? false;
-          }
-        }(),
-      );
+    MediaItem item,
+    ZenithApiClient client,
+  ) => MediaLibraryItem(
+    id: item.id,
+    title: item.name,
+    subtitle: item.startDate?.year.toString(),
+    poster: item.poster,
+    isWatched: () {
+      if (item.type == MediaType.show) {
+        return item.collectionUserData?.unwatched == 0;
+      } else {
+        return item.videoUserData?.isWatched ?? false;
+      }
+    }(),
+  );
 }
 
 class MediaLibraryScreen extends ConsumerWidget {
@@ -94,57 +95,63 @@ class MediaItemGrid extends StatelessWidget {
     final desktop = MediaQuery.of(context).isDesktop;
     return Padding(
       padding: context.mq.padding.copyWith(top: 0, bottom: 0),
-      child: LayoutBuilder(builder: ((context, constraints) {
-        final maxColWidth = desktop ? 240.0 : 150.0;
-        final gridPadding = desktop ? 24.0 : 12.0;
-        final itemSpacing = desktop ? 16.0 : 8.0;
+      child: LayoutBuilder(
+        builder: ((context, constraints) {
+          final maxColWidth = desktop ? 240.0 : 150.0;
+          final gridPadding = desktop ? 24.0 : 12.0;
+          final itemSpacing = desktop ? 16.0 : 8.0;
 
-        final gridWidth = constraints.maxWidth - gridPadding * 2;
-        final cols = (gridWidth / (maxColWidth + itemSpacing * 2)).ceil();
-        final colWidth = gridWidth / cols;
-        final infoTopPadding = desktop ? 16.0 : 8.0;
+          final gridWidth = constraints.maxWidth - gridPadding * 2;
+          final cols = (gridWidth / (maxColWidth + itemSpacing * 2)).ceil();
+          final colWidth = gridWidth / cols;
+          final infoTopPadding = desktop ? 16.0 : 8.0;
 
-        return RefreshIndicator(
-          triggerMode: RefreshIndicatorTriggerMode.anywhere,
-          onRefresh: onRefresh,
-          child: ListView.builder(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.all(gridPadding),
-            itemCount: (items.length / cols).ceil(),
-            itemBuilder: (context, rowIndex) {
-              final columns = <Widget>[];
-              final maxItemIndex =
-                  math.min((rowIndex + 1) * cols, items.length);
+          return RefreshIndicator(
+            triggerMode: RefreshIndicatorTriggerMode.anywhere,
+            onRefresh: onRefresh,
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.all(gridPadding),
+              itemCount: (items.length / cols).ceil(),
+              itemBuilder: (context, rowIndex) {
+                final columns = <Widget>[];
+                final maxItemIndex = math.min(
+                  (rowIndex + 1) * cols,
+                  items.length,
+                );
 
-              for (var i = rowIndex * cols; i < maxItemIndex; i++) {
-                final item = items[i];
-                columns.add(Container(
-                  width: colWidth,
-                  padding: EdgeInsets.all(itemSpacing / 2),
-                  child: PosterItem(
-                    imageId: item.poster,
-                    requestWidth: mediaPosterImageWidth,
-                    infoSeparator: infoTopPadding,
-                    fallbackIcon: posterFallback,
-                    title: item.title,
-                    subtitle: item.subtitle,
-                    isWatched: item.isWatched,
-                    onTap: () => onItemTap(item),
-                    onLongPress: onItemLongPress != null
-                        ? () => onItemLongPress!(item)
-                        : null,
-                  ),
-                ));
-              }
+                for (var i = rowIndex * cols; i < maxItemIndex; i++) {
+                  final item = items[i];
+                  columns.add(
+                    Container(
+                      width: colWidth,
+                      padding: EdgeInsets.all(itemSpacing / 2),
+                      child: PosterItem(
+                        imageId: item.poster,
+                        requestWidth: mediaPosterImageWidth,
+                        infoSeparator: infoTopPadding,
+                        fallbackIcon: posterFallback,
+                        title: item.title,
+                        subtitle: item.subtitle,
+                        isWatched: item.isWatched,
+                        onTap: () => onItemTap(item),
+                        onLongPress: onItemLongPress != null
+                            ? () => onItemLongPress!(item)
+                            : null,
+                      ),
+                    ),
+                  );
+                }
 
-              return Padding(
-                padding: EdgeInsets.symmetric(vertical: itemSpacing / 2),
-                child: Row(children: columns),
-              );
-            },
-          ),
-        );
-      })),
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: itemSpacing / 2),
+                  child: Row(children: columns),
+                );
+              },
+            ),
+          );
+        }),
+      ),
     );
   }
 }

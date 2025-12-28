@@ -16,7 +16,10 @@ class LoginRegisterController extends _$LoginRegisterController {
     final api = ref.read(apiProvider);
     try {
       await api.createUser(
-          username, password, code != null && code.isNotEmpty ? code : null);
+        username,
+        password,
+        code != null && code.isNotEmpty ? code : null,
+      );
       state = LoginRegisterSuccess();
     } catch (e) {
       state = LoginRegisterFailure();

@@ -5,10 +5,7 @@ import 'package:zenith/api.dart';
 class FixEpisodeMatchDialog extends ConsumerStatefulWidget {
   final MediaItem item;
 
-  const FixEpisodeMatchDialog({
-    super.key,
-    required this.item,
-  });
+  const FixEpisodeMatchDialog({super.key, required this.item});
 
   @override
   ConsumerState<FixEpisodeMatchDialog> createState() =>
@@ -22,10 +19,12 @@ class _FixEpisodeMatchDialogState extends ConsumerState<FixEpisodeMatchDialog> {
   @override
   void initState() {
     super.initState();
-    _season =
-        TextEditingController(text: widget.item.grandparent!.index.toString());
-    _episode =
-        TextEditingController(text: widget.item.parent!.index.toString());
+    _season = TextEditingController(
+      text: widget.item.grandparent!.index.toString(),
+    );
+    _episode = TextEditingController(
+      text: widget.item.parent!.index.toString(),
+    );
   }
 
   @override
@@ -64,12 +63,12 @@ class _FixEpisodeMatchDialogState extends ConsumerState<FixEpisodeMatchDialog> {
             final season = int.parse(_season.text);
             final episode = int.parse(_episode.text);
 
-            await ref.read(apiProvider).fixMetadataMatch(
-                widget.item.id,
-                FixMetadataMatch(
-                  season: season,
-                  episode: episode,
-                ));
+            await ref
+                .read(apiProvider)
+                .fixMetadataMatch(
+                  widget.item.id,
+                  FixMetadataMatch(season: season, episode: episode),
+                );
 
             if (context.mounted) {
               Navigator.pop(context);

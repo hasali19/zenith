@@ -29,62 +29,62 @@ class AppRouter extends RootStackRouter {
 
   @override
   List<AutoRoute> get routes => [
+    AutoRoute(
+      path: '/',
+      page: MainRoute.page,
+      initial: true,
+      guards: [ServerSetupGuard(isServerSet), AuthGuard(isLoggedIn)],
+      children: [
         AutoRoute(
-          path: '/',
-          page: MainRoute.page,
+          page: LibraryRoute.page,
           initial: true,
-          guards: [ServerSetupGuard(isServerSet), AuthGuard(isLoggedIn)],
           children: [
             AutoRoute(
-              page: LibraryRoute.page,
+              page: LibraryTabsRoute.page,
               initial: true,
               children: [
-                AutoRoute(
-                  page: LibraryTabsRoute.page,
-                  initial: true,
-                  children: [
-                    AutoRoute(page: HomeRoute.page, initial: true),
-                    AutoRoute(path: 'movies', page: MoviesRoute.page),
-                    AutoRoute(path: 'shows', page: ShowsRoute.page),
-                  ],
-                ),
-                AutoRoute(
-                  path: 'items/:id',
-                  page: ItemDetailsRoute.page,
-                  usesPathAsKey: true,
-                ),
+                AutoRoute(page: HomeRoute.page, initial: true),
+                AutoRoute(path: 'movies', page: MoviesRoute.page),
+                AutoRoute(path: 'shows', page: ShowsRoute.page),
               ],
             ),
             AutoRoute(
-              path: 'server',
-              page: ManageServerShellRoute.page,
-              children: [
-                AutoRoute(page: ManageServerRoute.page, initial: true),
-                AutoRoute(path: 'users', page: ManageUsersRoute.page),
-                AutoRoute(path: 'transcoder', page: TranscoderRoute.page),
-              ],
+              path: 'items/:id',
+              page: ItemDetailsRoute.page,
+              usesPathAsKey: true,
             ),
-            AutoRoute(path: 'settings', page: SettingsRoute.page),
           ],
         ),
         AutoRoute(
-          path: '/player/:id',
-          page: VideoPlayerRoute.page,
-          usesPathAsKey: true,
-          guards: [ServerSetupGuard(isServerSet), AuthGuard(isLoggedIn)],
-        ),
-        AutoRoute(
-          path: '/login',
-          page: LoginRoute.page,
-          guards: [ServerSetupGuard(isServerSet)],
+          path: 'server',
+          page: ManageServerShellRoute.page,
           children: [
-            AutoRoute(page: LoginUsersRoute.page, initial: true),
-            AutoRoute(path: 'user', page: LoginUserRoute.page),
-            AutoRoute(path: 'register', page: LoginRegisterRoute.page),
+            AutoRoute(page: ManageServerRoute.page, initial: true),
+            AutoRoute(path: 'users', page: ManageUsersRoute.page),
+            AutoRoute(path: 'transcoder', page: TranscoderRoute.page),
           ],
         ),
-        AutoRoute(path: '/setup', page: SetupRoute.page),
-      ];
+        AutoRoute(path: 'settings', page: SettingsRoute.page),
+      ],
+    ),
+    AutoRoute(
+      path: '/player/:id',
+      page: VideoPlayerRoute.page,
+      usesPathAsKey: true,
+      guards: [ServerSetupGuard(isServerSet), AuthGuard(isLoggedIn)],
+    ),
+    AutoRoute(
+      path: '/login',
+      page: LoginRoute.page,
+      guards: [ServerSetupGuard(isServerSet)],
+      children: [
+        AutoRoute(page: LoginUsersRoute.page, initial: true),
+        AutoRoute(path: 'user', page: LoginUserRoute.page),
+        AutoRoute(path: 'register', page: LoginRegisterRoute.page),
+      ],
+    ),
+    AutoRoute(path: '/setup', page: SetupRoute.page),
+  ];
 }
 
 @RoutePage()
@@ -144,11 +144,7 @@ class LibraryTabsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AutoTabsRouter(
-      routes: const [
-        HomeRoute(),
-        MoviesRoute(),
-        ShowsRoute(),
-      ],
+      routes: const [HomeRoute(), MoviesRoute(), ShowsRoute()],
       builder: (context, child) {
         if (context.isDesktop) {
           return child;
@@ -169,8 +165,9 @@ class LibraryTabsPage extends ConsumerWidget {
                         child: const Text('Logout'),
                         onTap: () {
                           ref.read(apiProvider).logout();
-                          context.router
-                              .replaceAll([LoginRoute(redirect: null)]);
+                          context.router.replaceAll([
+                            LoginRoute(redirect: null),
+                          ]);
                         },
                       ),
                     ];
@@ -216,8 +213,10 @@ class _SearchButtonState extends ConsumerState<_SearchButton> {
         }
 
         final api = ref.read(apiProvider);
-        final results = (await api
-            .searchByName(_query!, types: [MediaType.movie, MediaType.show]));
+        final results = (await api.searchByName(
+          _query!,
+          types: [MediaType.movie, MediaType.show],
+        ));
 
         // If another search happened after this one, throw away these options.
         // Use the previous options instead and wait for the newer request to
@@ -236,7 +235,8 @@ class _SearchButtonState extends ConsumerState<_SearchButton> {
               margin: EdgeInsets.zero,
               clipBehavior: Clip.antiAlias,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4)),
+                borderRadius: BorderRadius.circular(4),
+              ),
               child: ZenithApiImage(
                 id: item.poster!,
                 requestWidth: mediaPosterImageWidth,

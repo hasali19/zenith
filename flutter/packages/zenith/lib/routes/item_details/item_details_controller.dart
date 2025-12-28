@@ -20,16 +20,19 @@ class ItemDetailsController extends _$ItemDetailsController {
   AsyncValue<ItemDetailsState> build(int id) {
     _refreshApi();
 
-    final downloadedFilesSubscription = (_db.select(_db.downloadedFiles)
-          ..where((d) => d.itemId.equals(id)))
-        .watch()
-        .listen((files) {
-      _download = AsyncData(files.firstOrNull);
-      _updateState();
-    }, onError: (e, s) {
-      _download = AsyncError(e, s);
-      _updateState();
-    });
+    final downloadedFilesSubscription =
+        (_db.select(
+          _db.downloadedFiles,
+        )..where((d) => d.itemId.equals(id))).watch().listen(
+          (files) {
+            _download = AsyncData(files.firstOrNull);
+            _updateState();
+          },
+          onError: (e, s) {
+            _download = AsyncError(e, s);
+            _updateState();
+          },
+        );
 
     ref.onDispose(downloadedFilesSubscription.cancel);
 
@@ -72,46 +75,49 @@ class ItemDetailsController extends _$ItemDetailsController {
   void _updateState() {
     switch ((_item, _seasons, _download)) {
       case (
-          AsyncData(value: final item),
-          AsyncData(value: final seasons),
-          AsyncData(value: final download)
-        ):
-        state = AsyncData(ItemDetailsState(
-          item: item,
-          poster: item.poster,
-          backdrop: item.backdrop,
-          seasons: seasons.map((seasonAndEpisodes) {
-            final (season, episodes) = seasonAndEpisodes;
-            return EpisodeGroupState(
-              name: season.name,
-              episodes: episodes
-                  .map((episode) => EpisodeState(
+        AsyncData(value: final item),
+        AsyncData(value: final seasons),
+        AsyncData(value: final download),
+      ):
+        state = AsyncData(
+          ItemDetailsState(
+            item: item,
+            poster: item.poster,
+            backdrop: item.backdrop,
+            seasons: seasons.map((seasonAndEpisodes) {
+              final (season, episodes) = seasonAndEpisodes;
+              return EpisodeGroupState(
+                name: season.name,
+                episodes: episodes
+                    .map(
+                      (episode) => EpisodeState(
                         id: episode.id,
                         thumbnail: episode.thumbnail,
                         overview: episode.overview,
                         isWatched: episode.videoUserData?.isWatched ?? false,
                         title: '${episode.parent!.index} - ${episode.name}',
-                      ))
-                  .toList(),
-            );
-          }).toList(),
-          playable: _getPlayableForItem(item, seasons),
-          isWatched: switch (item.type) {
-            MediaType.movie ||
-            MediaType.episode =>
-              item.videoUserData?.isWatched ?? false,
-            _ => item.collectionUserData?.unwatched == 0,
-          },
-          durationText: switch (item.videoFile) {
-            null => null,
-            final videoFile => _formatDuration(videoFile.duration),
-          },
-          downloadedFile: download,
-        ));
+                      ),
+                    )
+                    .toList(),
+              );
+            }).toList(),
+            playable: _getPlayableForItem(item, seasons),
+            isWatched: switch (item.type) {
+              MediaType.movie ||
+              MediaType.episode => item.videoUserData?.isWatched ?? false,
+              _ => item.collectionUserData?.unwatched == 0,
+            },
+            durationText: switch (item.videoFile) {
+              null => null,
+              final videoFile => _formatDuration(videoFile.duration),
+            },
+            downloadedFile: download,
+          ),
+        );
 
       case (AsyncError(:final error, :final stackTrace), _, _) ||
-            (_, AsyncError(:final error, :final stackTrace), _) ||
-            (_, _, AsyncError(:final error, :final stackTrace)):
+          (_, AsyncError(:final error, :final stackTrace), _) ||
+          (_, _, AsyncError(:final error, :final stackTrace)):
         state = AsyncError(error, stackTrace);
 
       default:
@@ -148,14 +154,19 @@ class ItemDetailsController extends _$ItemDetailsController {
 
   Future<void> uploadSubtitleFile(String fileName, Uint8List bytes) async {
     await _api.importSubtitleFile(
-        state.value!.item.videoFile!.id, fileName, bytes);
+      state.value!.item.videoFile!.id,
+      fileName,
+      bytes,
+    );
 
     refresh();
   }
 }
 
 PlayableState? _getPlayableForItem(
-    MediaItem item, List<(MediaItem, List<MediaItem>)> seasons) {
+  MediaItem item,
+  List<(MediaItem, List<MediaItem>)> seasons,
+) {
   final playable = _getPlayableMediaForItem(item, seasons);
   if (playable == null) {
     return null;
@@ -212,13 +223,16 @@ PlayableState? _getPlayableForItem(
     progress: currentProgress,
     caption: caption,
     shouldResume: playable.shouldResume,
-    playPosition:
-        playable.shouldResume ? playable.videoUserData?.position ?? 0 : 0,
+    playPosition: playable.shouldResume
+        ? playable.videoUserData?.position ?? 0
+        : 0,
   );
 }
 
 MediaItem? _getPlayableMediaForItem(
-    MediaItem item, List<(MediaItem, List<MediaItem>)> seasons) {
+  MediaItem item,
+  List<(MediaItem, List<MediaItem>)> seasons,
+) {
   if (item.type == MediaType.show) {
     MediaItem? lastWatched;
     int? lastWatchedS;
@@ -231,8 +245,9 @@ MediaItem? _getPlayableMediaForItem(
         if (lastWatched == null ||
             userData.lastWatchedAt != null &&
                 (lastWatched.videoUserData!.lastWatchedAt == null ||
-                    userData.lastWatchedAt!
-                        .isAfter(lastWatched.videoUserData!.lastWatchedAt!))) {
+                    userData.lastWatchedAt!.isAfter(
+                      lastWatched.videoUserData!.lastWatchedAt!,
+                    ))) {
           lastWatched = episode;
           lastWatchedS = s;
           lastWatchedE = e;

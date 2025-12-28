@@ -14,7 +14,9 @@ String _formatToMimeType(String? format) {
 }
 
 video_player.ExternalSubtitleTrack subtitleFromApi(
-    ZenithApiClient api, SubtitleTrack subtitle) {
+  ZenithApiClient api,
+  SubtitleTrack subtitle,
+) {
   return video_player.ExternalSubtitleTrack(
     id: subtitle.id.toString(),
     src: api.getSubtitleUrl(subtitle.id),

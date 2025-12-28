@@ -18,8 +18,9 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
   int nextId = 1;
 
   @override
-  Future<VideoController> createController(
-      {Map<String, String>? headers}) async {
+  Future<VideoController> createController({
+    Map<String, String>? headers,
+  }) async {
     final id = nextId++;
     final element = web.document.createElement('video') as web.HTMLVideoElement
       ..autoplay = true
@@ -30,7 +31,9 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
     element.setAttribute('disableRemotePlayback', 'true');
 
     platformViewRegistry.registerViewFactory(
-        'videoplayer-$id', (viewId) => element);
+      'videoplayer-$id',
+      (viewId) => element,
+    );
 
     return VideoControllerWeb(id, element);
   }
@@ -41,7 +44,8 @@ class VideoPlayerWeb extends VideoPlayerPlatform {
       return HtmlElementView(viewType: 'videoplayer-${controller.id}');
     } else {
       throw ArgumentError(
-          'controller must be an instance of VideoControllerWeb');
+        'controller must be an instance of VideoControllerWeb',
+      );
     }
   }
 }
@@ -59,7 +63,9 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
 
   VideoControllerWeb(this.id, this._element) {
     _element.addEventListener(
-        'durationchange', ((web.Event event) => notifyListeners()).toJS);
+      'durationchange',
+      ((web.Event event) => notifyListeners()).toJS,
+    );
     _element.onPause.listen((event) => notifyListeners());
     _element.onPlay.listen((event) => notifyListeners());
 
@@ -136,11 +142,13 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
     _activeTextTrack = null;
     _videoItem = item;
     _subtitleTracks = item.subtitles
-        .map((track) => SubtitleTrack(
-              id: track.id,
-              label: track.title,
-              language: track.language,
-            ))
+        .map(
+          (track) => SubtitleTrack(
+            id: track.id,
+            label: track.title,
+            language: track.language,
+          ),
+        )
         .toList();
 
     currentItemIndex = startIndex;
@@ -169,7 +177,8 @@ class VideoControllerWeb extends VideoController with ChangeNotifier {
   @override
   void setAudioTrack(int index) {
     throw UnsupportedError(
-        'Changing audio tracks is not supported by the web player');
+      'Changing audio tracks is not supported by the web player',
+    );
   }
 
   @override

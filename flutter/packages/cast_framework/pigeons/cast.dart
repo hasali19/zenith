@@ -1,13 +1,15 @@
 import 'package:pigeon/pigeon.dart';
 
-@ConfigurePigeon(PigeonOptions(
-  dartOut: 'lib/src/cast_api.g.dart',
-  kotlinOut:
-      'android/src/main/kotlin/dev/hasali/zenith/cast_framework/pigeon/CastApi.g.kt',
-  kotlinOptions: KotlinOptions(
-    package: 'dev.hasali.zenith.cast_framework.pigeon',
+@ConfigurePigeon(
+  PigeonOptions(
+    dartOut: 'lib/src/cast_api.g.dart',
+    kotlinOut:
+        'android/src/main/kotlin/dev/hasali/zenith/cast_framework/pigeon/CastApi.g.kt',
+    kotlinOptions: KotlinOptions(
+      package: 'dev.hasali.zenith.cast_framework.pigeon',
+    ),
   ),
-))
+)
 class MediaRoute {
   late String id;
   late String name;
@@ -15,11 +17,7 @@ class MediaRoute {
   late bool isSelected;
 }
 
-enum RoutesScanningMode {
-  none,
-  passive,
-  active,
-}
+enum RoutesScanningMode { none, passive, active }
 
 class MediaLoadRequestData {
   MediaInfo? mediaInfo;
@@ -49,22 +47,11 @@ class MediaQueueItem {
   String? customDataJson;
 }
 
-enum MediaQueueType {
-  generic,
-  tvSeries,
-  videoPlaylist,
-  movie,
-}
+enum MediaQueueType { generic, tvSeries, videoPlaylist, movie }
 
-enum MediaTrackType {
-  video,
-  audio,
-  text,
-}
+enum MediaTrackType { video, audio, text }
 
-enum MediaTrackSubtype {
-  subtitles,
-}
+enum MediaTrackSubtype { subtitles }
 
 class MediaTrack {
   late int trackId;
@@ -87,11 +74,7 @@ class MediaMetadata {
   MediaMetadata(this.mediaType);
 }
 
-enum MediaType {
-  movie,
-  tvShow,
-  unknown,
-}
+enum MediaType { movie, tvShow, unknown }
 
 class MediaMetadataImage {
   final String url;
@@ -101,11 +84,7 @@ class MediaMetadataImage {
   MediaMetadataImage({required this.url, this.width = 0, this.height = 0});
 }
 
-enum ResumeState {
-  pause,
-  play,
-  unchanged,
-}
+enum ResumeState { pause, play, unchanged }
 
 class MediaSeekOptions {
   int position;
@@ -140,22 +119,9 @@ abstract class CastApi {
   void stop();
 }
 
-enum IdleReason {
-  canceled,
-  error,
-  finished,
-  interrupted,
-  none,
-}
+enum IdleReason { canceled, error, finished, interrupted, none }
 
-enum PlayerState {
-  idle,
-  buffering,
-  loading,
-  paused,
-  playing,
-  unknown,
-}
+enum PlayerState { idle, buffering, loading, paused, playing, unknown }
 
 class MediaStatus {
   late PlayerState playerState;

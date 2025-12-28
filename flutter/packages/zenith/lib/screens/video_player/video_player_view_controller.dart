@@ -8,16 +8,11 @@ part 'video_player_view_controller.g.dart';
 
 @freezed
 abstract class Playlist with _$Playlist {
-  factory Playlist({
-    required List<MediaItem> items,
-    required int start,
-  }) = _Playlist;
+  factory Playlist({required List<MediaItem> items, required int start}) =
+      _Playlist;
 }
 
-enum PlaybackLocation {
-  local,
-  remote,
-}
+enum PlaybackLocation { local, remote }
 
 @freezed
 abstract class VideoPlayerState with _$VideoPlayerState {
@@ -45,8 +40,9 @@ class VideoPlayerViewController extends _$VideoPlayerViewController {
 
     final requestedItem = await api.fetchMediaItem(id);
     final playlist = switch (requestedItem.type) {
-      MediaType.episode =>
-        await api.fetchShowEpisodes(requestedItem.grandparent!.id),
+      MediaType.episode => await api.fetchShowEpisodes(
+        requestedItem.grandparent!.id,
+      ),
       _ => [requestedItem],
     };
 

@@ -32,8 +32,10 @@ class VideoProgressBar extends StatefulWidget {
 class _VideoProgressBarState extends State<VideoProgressBar> {
   late final Timer _timer;
 
-  VideoProgressData _progress =
-      VideoProgressData(total: Duration.zero, progress: Duration.zero);
+  VideoProgressData _progress = VideoProgressData(
+    total: Duration.zero,
+    progress: Duration.zero,
+  );
 
   @override
   void initState() {

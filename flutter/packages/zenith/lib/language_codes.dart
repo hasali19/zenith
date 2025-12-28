@@ -5,8 +5,9 @@ import 'package:flutter/services.dart' show rootBundle;
 final Map<String, String> _languageMap = {};
 
 Future loadLanguageCodes() async {
-  final List<dynamic> data =
-      jsonDecode(await rootBundle.loadString('assets/language-codes.json'));
+  final List<dynamic> data = jsonDecode(
+    await rootBundle.loadString('assets/language-codes.json'),
+  );
   for (final language in data) {
     final String names = language['English'];
     final name = names.split(';').first.trim();

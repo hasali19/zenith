@@ -9,9 +9,7 @@ class ManageServerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Server'),
-      ),
+      appBar: AppBar(title: const Text('Manage Server')),
       body: ListView(
         children: [
           ListTile(

@@ -20,17 +20,21 @@ class MediaRouteChooserDialog extends ConsumerWidget {
       content: SizedBox(
         width: double.maxFinite,
         child: _buildRouteList(
-            state,
-            context,
-            (route) => ref
-                .read(mediaRouteChooserControllerProvider.notifier)
-                .selectRoute(route)),
+          state,
+          context,
+          (route) => ref
+              .read(mediaRouteChooserControllerProvider.notifier)
+              .selectRoute(route),
+        ),
       ),
     );
   }
 
-  Widget _buildRouteList(MediaRouteChooserState state, BuildContext context,
-      void Function(MediaRoute) onTap) {
+  Widget _buildRouteList(
+    MediaRouteChooserState state,
+    BuildContext context,
+    void Function(MediaRoute) onTap,
+  ) {
     final routeListItems = state.routes
         .map(
           (route) => _buildRouteListItem(
@@ -41,10 +45,7 @@ class MediaRouteChooserDialog extends ConsumerWidget {
         )
         .toList();
 
-    return ListView(
-      shrinkWrap: true,
-      children: routeListItems,
-    );
+    return ListView(shrinkWrap: true, children: routeListItems);
   }
 
   Widget _buildRouteListItem(

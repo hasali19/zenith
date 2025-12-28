@@ -37,10 +37,7 @@ class ExternalSubtitleTrack {
   });
 }
 
-enum MediaType {
-  movie,
-  tvShow,
-}
+enum MediaType { movie, tvShow }
 
 final class MediaMetadata {
   final MediaType? type;
@@ -176,8 +173,9 @@ class MediaPositionHandler {
   double get positionMs {
     double position = _lastKnownPositionMs.toDouble();
     if (_isPlaying) {
-      final msSinceLastPosition =
-          DateTime.now().difference(_lastKnownPositionTime).inMilliseconds;
+      final msSinceLastPosition = DateTime.now()
+          .difference(_lastKnownPositionTime)
+          .inMilliseconds;
       position += msSinceLastPosition.toDouble() * _playbackSpeed;
     }
     return position;

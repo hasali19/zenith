@@ -40,50 +40,50 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onUpgrade: (m, from, to) async {
-          // Following the advice from https://drift.simonbinder.eu/Migrations/api/#general-tips
-          await customStatement('PRAGMA foreign_keys = OFF');
+    onUpgrade: (m, from, to) async {
+      // Following the advice from https://drift.simonbinder.eu/Migrations/api/#general-tips
+      await customStatement('PRAGMA foreign_keys = OFF');
 
-          await transaction(
-            () => VersionedSchema.runMigrationSteps(
-              migrator: m,
-              from: from,
-              to: to,
-              steps: _upgrade,
-            ),
-          );
-
-          if (kDebugMode) {
-            final wrongForeignKeys =
-                await customSelect('PRAGMA foreign_key_check').get();
-            assert(wrongForeignKeys.isEmpty,
-                '${wrongForeignKeys.map((e) => e.data)}');
-          }
-
-          await customStatement('PRAGMA foreign_keys = ON');
-        },
-        beforeOpen: (details) async {
-          if ((details.versionBefore ?? 0) < 2) {
-            final prefs = await SharedPreferences.getInstance();
-            final json = prefs.getString('servers');
-
-            final List<dynamic> servers = switch (json) {
-              null => [],
-              final json => jsonDecode(json),
-            };
-
-            for (final Map<String, dynamic> server in servers) {
-              await into(this.servers).insert(
-                ServersCompanion.insert(
-                  uuid: server['id'],
-                  url: server['url'],
-                ),
-                mode: InsertMode.insertOrReplace,
-              );
-            }
-          }
-        },
+      await transaction(
+        () => VersionedSchema.runMigrationSteps(
+          migrator: m,
+          from: from,
+          to: to,
+          steps: _upgrade,
+        ),
       );
+
+      if (kDebugMode) {
+        final wrongForeignKeys = await customSelect(
+          'PRAGMA foreign_key_check',
+        ).get();
+        assert(
+          wrongForeignKeys.isEmpty,
+          '${wrongForeignKeys.map((e) => e.data)}',
+        );
+      }
+
+      await customStatement('PRAGMA foreign_keys = ON');
+    },
+    beforeOpen: (details) async {
+      if ((details.versionBefore ?? 0) < 2) {
+        final prefs = await SharedPreferences.getInstance();
+        final json = prefs.getString('servers');
+
+        final List<dynamic> servers = switch (json) {
+          null => [],
+          final json => jsonDecode(json),
+        };
+
+        for (final Map<String, dynamic> server in servers) {
+          await into(this.servers).insert(
+            ServersCompanion.insert(uuid: server['id'], url: server['url']),
+            mode: InsertMode.insertOrReplace,
+          );
+        }
+      }
+    },
+  );
 
   static final _upgrade = migrationSteps(
     from1To2: (m, schema) async {

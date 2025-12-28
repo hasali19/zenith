@@ -3,17 +3,13 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'github.g.dart';
 
-final _client = Dio(BaseOptions(
-  baseUrl: 'https://api.github.com',
-));
+final _client = Dio(BaseOptions(baseUrl: 'https://api.github.com'));
 
 @JsonSerializable(fieldRename: FieldRename.snake)
 class GitReference {
   final GitReferenceObject object;
 
-  GitReference({
-    required this.object,
-  });
+  GitReference({required this.object});
 
   factory GitReference.fromJson(Map<String, dynamic> json) =>
       _$GitReferenceFromJson(json);
@@ -24,10 +20,7 @@ class GitReferenceObject {
   final String sha;
   final String type;
 
-  GitReferenceObject({
-    required this.sha,
-    required this.type,
-  });
+  GitReferenceObject({required this.sha, required this.type});
 
   factory GitReferenceObject.fromJson(Map<String, dynamic> json) =>
       _$GitReferenceObjectFromJson(json);
@@ -48,10 +41,7 @@ class ReleaseAsset {
   final String name;
   final String browserDownloadUrl;
 
-  ReleaseAsset({
-    required this.name,
-    required this.browserDownloadUrl,
-  });
+  ReleaseAsset({required this.name, required this.browserDownloadUrl});
 
   factory ReleaseAsset.fromJson(Map<String, dynamic> json) =>
       _$ReleaseAssetFromJson(json);
@@ -60,12 +50,14 @@ class ReleaseAsset {
 class GitHub {
   Future<GitReference> getGitRef(String ref) async {
     return GitReference.fromJson(
-        await _get(Uri.parse('/repos/hasali19/zenith/git/ref/$ref')));
+      await _get(Uri.parse('/repos/hasali19/zenith/git/ref/$ref')),
+    );
   }
 
   Future<Release> getRelease(String tag) async {
     return Release.fromJson(
-        await _get(Uri.parse('/repos/hasali19/zenith/releases/tags/$tag')));
+      await _get(Uri.parse('/repos/hasali19/zenith/releases/tags/$tag')),
+    );
   }
 
   Future<dynamic> _get(Uri uri) async {

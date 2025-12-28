@@ -28,12 +28,13 @@ class MediaRouteButtonController extends _$MediaRouteButtonController {
     return MediaRouteButtonState(
       isConnected:
           CastFrameworkPlatform.instance.mediaRouter.selectedRoute.value !=
-              null,
+          null,
     );
   }
 
   void _onSelectedRouteChanged() {
-    state =
-        state.copyWith(isConnected: _mediaRouter.selectedRoute.value != null);
+    state = state.copyWith(
+      isConnected: _mediaRouter.selectedRoute.value != null,
+    );
   }
 }

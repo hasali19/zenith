@@ -51,16 +51,13 @@ class HeaderContent extends ConsumerWidget {
       children: [
         HeaderLayout(
           backdrop: switch (state.backdrop) {
-            null => Container(
-                height: 300,
-                color: Colors.grey,
-              ),
+            null => Container(height: 300, color: Colors.grey),
             final backdrop => ZenithApiImage(
-                id: backdrop,
-                requestWidth: mediaBackdropImageWidth,
-                height: 300,
-                alignment: Alignment.topCenter,
-              ),
+              id: backdrop,
+              requestWidth: mediaBackdropImageWidth,
+              height: 300,
+              alignment: Alignment.topCenter,
+            ),
           },
           poster: Poster(
             imageId: state.poster,
@@ -119,21 +116,22 @@ class HeaderContent extends ConsumerWidget {
     final separated = <TextSpan>[];
     for (var i = 0; i < items.length; i++) {
       if (i > 0) {
-        separated.add(const TextSpan(children: [
-          WidgetSpan(child: SizedBox(width: 8)),
-          TextSpan(text: '•'),
-          WidgetSpan(child: SizedBox(width: 8)),
-        ]));
+        separated.add(
+          const TextSpan(
+            children: [
+              WidgetSpan(child: SizedBox(width: 8)),
+              TextSpan(text: '•'),
+              WidgetSpan(child: SizedBox(width: 8)),
+            ],
+          ),
+        );
       }
       separated.add(items[i]);
     }
 
     return Padding(
       padding: const EdgeInsets.only(top: 16.0),
-      child: Text.rich(TextSpan(
-        style: style,
-        children: separated,
-      )),
+      child: Text.rich(TextSpan(style: style, children: separated)),
     );
   }
 
@@ -143,7 +141,8 @@ class HeaderContent extends ConsumerWidget {
         TableRow(
           children: [
             TableCell(
-                child: Text('Director', style: TextStyle(color: Colors.grey))),
+              child: Text('Director', style: TextStyle(color: Colors.grey)),
+            ),
             TableCell(child: SizedBox()),
             TableCell(child: Text(state.item.director!)),
           ],
@@ -152,7 +151,8 @@ class HeaderContent extends ConsumerWidget {
         TableRow(
           children: [
             TableCell(
-                child: Text('Genres', style: TextStyle(color: Colors.grey))),
+              child: Text('Genres', style: TextStyle(color: Colors.grey)),
+            ),
             TableCell(child: SizedBox()),
             TableCell(child: Text(state.item.genres.join(', '))),
           ],
@@ -203,8 +203,10 @@ class HeaderContent extends ConsumerWidget {
                   onTap: () {
                     final trailer = state.item.trailer;
                     if (trailer != null) {
-                      launchUrl(Uri.parse(trailer),
-                          mode: LaunchMode.externalApplication);
+                      launchUrl(
+                        Uri.parse(trailer),
+                        mode: LaunchMode.externalApplication,
+                      );
                     }
                   },
                 ),
@@ -228,14 +230,16 @@ class HeaderContent extends ConsumerWidget {
     final isDesktop = context.isDesktop;
     final actions = <Widget>[];
 
-    actions.add(WatchedToggleButton(
-      isWatched: state.isWatched,
-      onChange: (v) {
-        ref
-            .read(itemDetailsControllerProvider(state.item.id).notifier)
-            .setIsWatched(v);
-      },
-    ));
+    actions.add(
+      WatchedToggleButton(
+        isWatched: state.isWatched,
+        onChange: (v) {
+          ref
+              .read(itemDetailsControllerProvider(state.item.id).notifier)
+              .setIsWatched(v);
+        },
+      ),
+    );
 
     final videoFile = state.item.videoFile;
     if (videoFile != null) {
@@ -243,91 +247,97 @@ class HeaderContent extends ConsumerWidget {
         actions.add(const SizedBox(width: 16));
       }
 
-      actions.add(IconButton(
-        icon: Icon(
-          state.downloadedFile == null
-              ? Icons.cloud_download_outlined
-              : Icons.cloud_done_outlined,
+      actions.add(
+        IconButton(
+          icon: Icon(
+            state.downloadedFile == null
+                ? Icons.cloud_download_outlined
+                : Icons.cloud_done_outlined,
+          ),
+          color: switch (state.downloadedFile) {
+            null => null,
+            final f when f.path == null => Colors.orange,
+            _ => Colors.green,
+          },
+          onPressed: () async {
+            final downloadedFile = state.downloadedFile;
+            if (downloadedFile == null) {
+              final videoFile = state.item.videoFile!;
+              final name = videoFile.path.split('/').last;
+              ref
+                  .read(zenithDownloaderProvider)
+                  .downloadFile(
+                    context,
+                    itemId: state.item.id,
+                    videoFileId: videoFile.id,
+                    fileName: name,
+                  );
+            } else if (downloadedFile.path == null) {
+              final isCancelConfirmed = await showDialog<bool>(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text('Cancel download?'),
+                    actions: [
+                      TextButton(
+                        child: Text('No'),
+                        onPressed: () => Navigator.pop(context, false),
+                      ),
+                      TextButton(
+                        child: Text('Yes'),
+                        onPressed: () => Navigator.pop(context, true),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (isCancelConfirmed == true) {
+                ref
+                    .read(zenithDownloaderProvider)
+                    .cancelDownload(downloadedFile.id);
+              }
+            } else {
+              final isRemoveConfirmed = await showDialog<bool>(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text('Delete local file?'),
+                    actions: [
+                      TextButton(
+                        child: Text('Cancel'),
+                        onPressed: () => Navigator.pop(context, false),
+                      ),
+                      TextButton(
+                        child: Text('Delete'),
+                        onPressed: () => Navigator.pop(context, true),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (isRemoveConfirmed == true) {
+                ref
+                    .read(zenithDownloaderProvider)
+                    .removeDownloadedFile(downloadedFile.id);
+              }
+            }
+          },
         ),
-        color: switch (state.downloadedFile) {
-          null => null,
-          final f when f.path == null => Colors.orange,
-          _ => Colors.green,
-        },
-        onPressed: () async {
-          final downloadedFile = state.downloadedFile;
-          if (downloadedFile == null) {
-            final videoFile = state.item.videoFile!;
-            final name = videoFile.path.split('/').last;
-            ref.read(zenithDownloaderProvider).downloadFile(
-                  context,
-                  itemId: state.item.id,
-                  videoFileId: videoFile.id,
-                  fileName: name,
-                );
-          } else if (downloadedFile.path == null) {
-            final isCancelConfirmed = await showDialog<bool>(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  title: Text('Cancel download?'),
-                  actions: [
-                    TextButton(
-                      child: Text('No'),
-                      onPressed: () => Navigator.pop(context, false),
-                    ),
-                    TextButton(
-                      child: Text('Yes'),
-                      onPressed: () => Navigator.pop(context, true),
-                    ),
-                  ],
-                );
-              },
-            );
-
-            if (isCancelConfirmed == true) {
-              ref
-                  .read(zenithDownloaderProvider)
-                  .cancelDownload(downloadedFile.id);
-            }
-          } else {
-            final isRemoveConfirmed = await showDialog<bool>(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  title: Text('Delete local file?'),
-                  actions: [
-                    TextButton(
-                      child: Text('Cancel'),
-                      onPressed: () => Navigator.pop(context, false),
-                    ),
-                    TextButton(
-                      child: Text('Delete'),
-                      onPressed: () => Navigator.pop(context, true),
-                    ),
-                  ],
-                );
-              },
-            );
-
-            if (isRemoveConfirmed == true) {
-              ref
-                  .read(zenithDownloaderProvider)
-                  .removeDownloadedFile(downloadedFile.id);
-            }
-          }
-        },
-      ));
+      );
 
       if (isDesktop) {
         actions.add(const SizedBox(width: 16));
       }
     }
 
-    actions.add(IconButton(
-      icon: const Icon(Icons.more_vert),
-      onPressed: () => _showOptionsMenu(context),
-    ));
+    actions.add(
+      IconButton(
+        icon: const Icon(Icons.more_vert),
+        onPressed: () => _showOptionsMenu(context),
+      ),
+    );
 
     return actions;
   }
@@ -404,10 +414,12 @@ class HeaderContent extends ConsumerWidget {
     final isDesktop = context.isDesktop;
     final bodyLarge = Theme.of(context).textTheme.bodyLarge;
 
-    final videoStreams =
-        videoInfo.streams.whereType<VideoStreamInfo>().toList();
-    final audioStreams =
-        videoInfo.streams.whereType<AudioStreamInfo>().toList();
+    final videoStreams = videoInfo.streams
+        .whereType<VideoStreamInfo>()
+        .toList();
+    final audioStreams = videoInfo.streams
+        .whereType<AudioStreamInfo>()
+        .toList();
 
     return Padding(
       padding: const EdgeInsets.only(top: 32),
@@ -446,10 +458,12 @@ class HeaderContent extends ConsumerWidget {
                   initialValue: audioStreams.first,
                   itemBuilder: (item) => _MenuItemEntry(
                     title: Text(
-                        "${tryResolveLanguageCode(item.language ?? "Unknown")} (${item.codec})"),
+                      "${tryResolveLanguageCode(item.language ?? "Unknown")} (${item.codec})",
+                    ),
                   ),
                   selectedItemBuilder: (context, item) => Text(
-                      "${tryResolveLanguageCode(item.language ?? "Unknown")} (${item.codec})"),
+                    "${tryResolveLanguageCode(item.language ?? "Unknown")} (${item.codec})",
+                  ),
                 ),
               ],
             ),
@@ -463,18 +477,19 @@ class HeaderContent extends ConsumerWidget {
                     initialValue: null,
                     itemBuilder: (item) {
                       if (item == null) {
-                        return _MenuItemEntry(
-                          title: Text('None'),
-                        );
+                        return _MenuItemEntry(title: Text('None'));
                       } else {
                         final title = item.title;
                         return _MenuItemEntry(
-                          title: Text(tryResolveLanguageCode(
-                              item.language ?? 'Unknown')),
+                          title: Text(
+                            tryResolveLanguageCode(item.language ?? 'Unknown'),
+                          ),
                           subtitle: title == null
                               ? null
-                              : TextOneLine(title,
-                                  style: TextTheme.of(context).bodySmall),
+                              : TextOneLine(
+                                  title,
+                                  style: TextTheme.of(context).bodySmall,
+                                ),
                         );
                       }
                     },
@@ -483,13 +498,17 @@ class HeaderContent extends ConsumerWidget {
                         return Text('None');
                       } else {
                         return Text(
-                            tryResolveLanguageCode(item.language ?? 'Unknown'));
+                          tryResolveLanguageCode(item.language ?? 'Unknown'),
+                        );
                       }
                     },
                     onUploadFile: (fileName, bytes) {
                       ref
-                          .read(itemDetailsControllerProvider(state.item.id)
-                              .notifier)
+                          .read(
+                            itemDetailsControllerProvider(
+                              state.item.id,
+                            ).notifier,
+                          )
                           .uploadSubtitleFile(fileName, bytes);
                     },
                   ),
@@ -580,11 +599,11 @@ class Poster extends StatelessWidget {
           child: AspectRatio(
             aspectRatio: 2.0 / 3.0,
             child: switch (imageId) {
-              null => Material(
-                  child: Icon(Icons.tv, size: 48),
-                ),
-              final imageId =>
-                ZenithApiImage(id: imageId, requestWidth: requestWidth)
+              null => Material(child: Icon(Icons.tv, size: 48)),
+              final imageId => ZenithApiImage(
+                id: imageId,
+                requestWidth: requestWidth,
+              ),
             },
           ),
         ),
@@ -596,8 +615,9 @@ class Poster extends StatelessWidget {
         if (caption != null)
           Material(
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius:
-                const BorderRadius.vertical(bottom: Radius.circular(16)),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(16),
+            ),
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -616,10 +636,7 @@ class Poster extends StatelessWidget {
 class Overview extends StatefulWidget {
   final String text;
 
-  const Overview({
-    super.key,
-    required this.text,
-  });
+  const Overview({super.key, required this.text});
 
   @override
   State<Overview> createState() => _OverviewState();
@@ -638,54 +655,65 @@ class _OverviewState extends State<Overview> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final style = theme.textTheme.bodyLarge!.copyWith(fontSize: 16);
-    return LayoutBuilder(builder: (context, size) {
-      final painter = TextPainter(
+    return LayoutBuilder(
+      builder: (context, size) {
+        final painter = TextPainter(
           text: TextSpan(text: widget.text, style: style),
           maxLines: 5,
-          textDirection: Directionality.of(context));
-      painter.layout(maxWidth: size.maxWidth);
-      if (!painter.didExceedMaxLines) {
-        return Text(widget.text, style: style);
-      }
-      return ExpandableNotifier(
-        controller: _controller,
-        child: Expandable(
-          collapsed: Column(
-            children: [
-              Text(widget.text,
-                  maxLines: 5, overflow: TextOverflow.ellipsis, style: style),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: InkWell(
-                    onTap: _controller.toggle,
-                    child: Text('More',
-                        style: TextStyle(color: theme.colorScheme.primary)),
+          textDirection: Directionality.of(context),
+        );
+        painter.layout(maxWidth: size.maxWidth);
+        if (!painter.didExceedMaxLines) {
+          return Text(widget.text, style: style);
+        }
+        return ExpandableNotifier(
+          controller: _controller,
+          child: Expandable(
+            collapsed: Column(
+              children: [
+                Text(
+                  widget.text,
+                  maxLines: 5,
+                  overflow: TextOverflow.ellipsis,
+                  style: style,
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: InkWell(
+                      onTap: _controller.toggle,
+                      child: Text(
+                        'More',
+                        style: TextStyle(color: theme.colorScheme.primary),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          expanded: Column(
-            children: [
-              Text(widget.text, style: style),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: InkWell(
-                    onTap: _controller.toggle,
-                    child: Text('Less',
-                        style: TextStyle(color: theme.colorScheme.primary)),
+              ],
+            ),
+            expanded: Column(
+              children: [
+                Text(widget.text, style: style),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: InkWell(
+                      onTap: _controller.toggle,
+                      child: Text(
+                        'Less',
+                        style: TextStyle(color: theme.colorScheme.primary),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }
 
@@ -693,10 +721,7 @@ final class _MenuItemEntry {
   final Widget title;
   final Widget? subtitle;
 
-  const _MenuItemEntry({
-    required this.title,
-    this.subtitle,
-  });
+  const _MenuItemEntry({required this.title, this.subtitle});
 }
 
 class _MenuButton<T> extends StatelessWidget {
@@ -736,17 +761,17 @@ class _MenuButton<T> extends StatelessWidget {
       );
     }
 
-    return Row(
-      children: [child],
-    );
+    return Row(children: [child]);
   }
 
   void _showPopupMenu(BuildContext context) {
     final RenderBox box = context.findRenderObject()! as RenderBox;
     final RenderBox overlay =
         Navigator.of(context).overlay!.context.findRenderObject()! as RenderBox;
-    final offset =
-        box.localToGlobal(Offset(0, box.size.height), ancestor: overlay);
+    final offset = box.localToGlobal(
+      Offset(0, box.size.height),
+      ancestor: overlay,
+    );
     showMenu(
       clipBehavior: Clip.antiAlias,
       position: RelativeRect.fromRect(
@@ -760,10 +785,7 @@ class _MenuButton<T> extends StatelessWidget {
           PopupMenuItem(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                title,
-                if (subtitle != null) subtitle,
-              ],
+              children: [title, if (subtitle != null) subtitle],
             ),
           ),
       ]),
@@ -781,12 +803,10 @@ class _MenuButton<T> extends StatelessWidget {
           builder: (context, scrollController) => ListView(
             controller: scrollController,
             children: buildBottomSheetItems(context, [
-              for (final _MenuItemEntry(:title, :subtitle)
-                  in items.map(itemBuilder))
-                ListTile(
-                  title: title,
-                  subtitle: subtitle,
-                ),
+              for (final _MenuItemEntry(:title, :subtitle) in items.map(
+                itemBuilder,
+              ))
+                ListTile(title: title, subtitle: subtitle),
             ]),
           ),
         );
@@ -801,7 +821,9 @@ class _MenuButton<T> extends StatelessWidget {
 
   @protected
   List<PopupMenuEntry> buildPopupEntries(
-      BuildContext context, List<PopupMenuEntry> entries) {
+    BuildContext context,
+    List<PopupMenuEntry> entries,
+  ) {
     return entries;
   }
 }
@@ -837,14 +859,13 @@ class _SubtitlesMenuButton extends _MenuButton {
 
   @override
   List<PopupMenuEntry> buildPopupEntries(
-      BuildContext context, List<PopupMenuEntry> entries) {
+    BuildContext context,
+    List<PopupMenuEntry> entries,
+  ) {
     return [
       ...entries,
       PopupMenuDivider(),
-      PopupMenuItem(
-        onTap: _onUploadTap,
-        child: Text('Upload'),
-      ),
+      PopupMenuItem(onTap: _onUploadTap, child: Text('Upload')),
     ];
   }
 

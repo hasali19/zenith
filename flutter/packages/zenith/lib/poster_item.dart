@@ -46,8 +46,10 @@ class PosterItem extends StatelessWidget {
                   shape: cardTheme.shape,
                   child: switch (imageId) {
                     null => Center(child: Icon(fallbackIcon, size: 40)),
-                    final imageId =>
-                      ZenithApiImage(id: imageId, requestWidth: requestWidth)
+                    final imageId => ZenithApiImage(
+                      id: imageId,
+                      requestWidth: requestWidth,
+                    ),
                   },
                 ),
               ),
@@ -66,10 +68,7 @@ class PosterItem extends StatelessWidget {
                   color: Colors.transparent,
                   clipBehavior: Clip.hardEdge,
                   shape: cardTheme.shape,
-                  child: InkWell(
-                    onTap: onTap,
-                    onLongPress: onLongPress,
-                  ),
+                  child: InkWell(onTap: onTap, onLongPress: onLongPress),
                 ),
               ),
             ],

@@ -29,7 +29,8 @@ class MediaRouteControllerController extends _$MediaRouteControllerController {
     _client.mediaInfo.addListener(_onMediaInfoChanged);
 
     Future.microtask(
-        () => _mediaRouter.startRouteScanning(cast.RoutesScanningMode.none));
+      () => _mediaRouter.startRouteScanning(cast.RoutesScanningMode.none),
+    );
 
     ref.onDispose(() async {
       _mediaRouter.selectedRoute.removeListener(_onSelectedRouteChanged);

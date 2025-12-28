@@ -121,8 +121,9 @@ class VideoPlayerUi extends HookConsumerWidget {
                       VideoProgressBar(
                         progress: () => VideoProgressData(
                           total: Duration(seconds: controller.duration.toInt()),
-                          progress:
-                              Duration(seconds: controller.position.toInt()),
+                          progress: Duration(
+                            seconds: controller.position.toInt(),
+                          ),
                         ),
                         onSeek: (position) =>
                             controller.position = position.inSeconds.toDouble(),
@@ -161,7 +162,8 @@ class VideoPlayerUi extends HookConsumerWidget {
             onShowVideoFitMenu: () {
               WoltModalSheet.of(context)
                 ..addOrReplacePage(
-                    _VideoFitMenuSheetPage(controller: controller))
+                  _VideoFitMenuSheetPage(controller: controller),
+                )
                 ..showNext();
             },
             onShowAudioTrackMenu: () {
@@ -204,18 +206,22 @@ class VideoPlayerUi extends HookConsumerWidget {
   }
 
   List<Widget> _buildAudioMenuItems(
-      BuildContext context, List<AudioTrack> audioTracks) {
+    BuildContext context,
+    List<AudioTrack> audioTracks,
+  ) {
     final items = <Widget>[];
 
     for (final track in audioTracks) {
-      items.add(ListTile(
-        title: Text(track.language),
-        subtitle: Text(track.codec),
-        onTap: () {
-          controller.setAudioTrack(track.index);
-          WoltModalSheet.of(context).popPage();
-        },
-      ));
+      items.add(
+        ListTile(
+          title: Text(track.language),
+          subtitle: Text(track.codec),
+          onTap: () {
+            controller.setAudioTrack(track.index);
+            WoltModalSheet.of(context).popPage();
+          },
+        ),
+      );
     }
 
     return items;
@@ -235,8 +241,9 @@ class VideoPlayerUi extends HookConsumerWidget {
       return ListTile(
         title: Text('${speed}x'),
         onTap: controller.playbackSpeed == speed ? null : onSetSpeed,
-        trailing:
-            controller.playbackSpeed != speed ? null : const Icon(Icons.check),
+        trailing: controller.playbackSpeed != speed
+            ? null
+            : const Icon(Icons.check),
       );
     }
 
@@ -251,9 +258,7 @@ class VideoPlayerUi extends HookConsumerWidget {
             ),
           ),
           mainContentSliversBuilder: (context) => [
-            SliverList.list(
-              children: speeds.map(buildListTile).toList(),
-            ),
+            SliverList.list(children: speeds.map(buildListTile).toList()),
           ],
         ),
       )
@@ -268,74 +273,70 @@ class _OptionsMenuSheetPage extends SliverWoltModalSheetPage {
     required void Function() onShowAudioTrackMenu,
     required void Function() onShowPlaybackSpeedMenu,
   }) : super(
-          hasTopBarLayer: false,
-          mainContentSliversBuilder: (context) {
-            return [
-              SliverList.list(
-                children: [
-                  if (controller.supportsVideoFitting)
-                    ListTile(
-                      leading: const Icon(Icons.aspect_ratio),
-                      title: const Text('Fit'),
-                      subtitle: Text(switch (controller.fit) {
-                        BoxFit.cover => 'Cover',
-                        BoxFit.contain => 'Contain',
-                        BoxFit.fitWidth => 'Fit Width',
-                        BoxFit.fitHeight => 'Fit Height',
-                        _ => 'Unknown',
-                      }),
-                      onTap: onShowVideoFitMenu,
-                    ),
-                  if (controller.supportsAudioTrackSelection &&
-                      controller.availableAudioTracks.length > 1)
-                    ListTile(
-                      leading: const Icon(Icons.audiotrack),
-                      title: const Text('Audio'),
-                      onTap: onShowAudioTrackMenu,
-                    ),
-                  ListTile(
-                    leading: const Icon(Icons.speed),
-                    title: const Text('Playback speed'),
-                    subtitle: Text('${controller.playbackSpeed}'),
-                    onTap: onShowPlaybackSpeedMenu,
-                  ),
-                  if (controller.subtitleStyle case SubtitleStyleOptions style)
-                    _SubtitlesSizeListTile(style: style),
-                ],
-              ),
-            ];
-          },
-        );
+         hasTopBarLayer: false,
+         mainContentSliversBuilder: (context) {
+           return [
+             SliverList.list(
+               children: [
+                 if (controller.supportsVideoFitting)
+                   ListTile(
+                     leading: const Icon(Icons.aspect_ratio),
+                     title: const Text('Fit'),
+                     subtitle: Text(switch (controller.fit) {
+                       BoxFit.cover => 'Cover',
+                       BoxFit.contain => 'Contain',
+                       BoxFit.fitWidth => 'Fit Width',
+                       BoxFit.fitHeight => 'Fit Height',
+                       _ => 'Unknown',
+                     }),
+                     onTap: onShowVideoFitMenu,
+                   ),
+                 if (controller.supportsAudioTrackSelection &&
+                     controller.availableAudioTracks.length > 1)
+                   ListTile(
+                     leading: const Icon(Icons.audiotrack),
+                     title: const Text('Audio'),
+                     onTap: onShowAudioTrackMenu,
+                   ),
+                 ListTile(
+                   leading: const Icon(Icons.speed),
+                   title: const Text('Playback speed'),
+                   subtitle: Text('${controller.playbackSpeed}'),
+                   onTap: onShowPlaybackSpeedMenu,
+                 ),
+                 if (controller.subtitleStyle case SubtitleStyleOptions style)
+                   _SubtitlesSizeListTile(style: style),
+               ],
+             ),
+           ];
+         },
+       );
 }
 
 class _VideoFitMenuSheetPage extends SliverWoltModalSheetPage {
   _VideoFitMenuSheetPage({required VideoController controller})
-      : super(
-          leadingNavBarWidget: Builder(
-            builder: (context) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  onPressed: WoltModalSheet.of(context).showPrevious,
-                ),
-              );
-            },
-          ),
-          mainContentSliversBuilder: (context) {
-            return [
-              VideoFitMenu(controller: controller),
-            ];
+    : super(
+        leadingNavBarWidget: Builder(
+          builder: (context) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: WoltModalSheet.of(context).showPrevious,
+              ),
+            );
           },
-        );
+        ),
+        mainContentSliversBuilder: (context) {
+          return [VideoFitMenu(controller: controller)];
+        },
+      );
 }
 
 class _SubtitlesSizeListTile extends ConsumerStatefulWidget {
   final SubtitleStyleOptions style;
 
-  const _SubtitlesSizeListTile({
-    required this.style,
-  });
+  const _SubtitlesSizeListTile({required this.style});
 
   @override
   ConsumerState<_SubtitlesSizeListTile> createState() =>
@@ -447,7 +448,7 @@ class _CenterControls extends ConsumerWidget {
                 width: primaryIconSize + 16,
                 height: primaryIconSize + 16,
                 child: const CircularProgressIndicator(color: Colors.white),
-              )
+              ),
           ],
         ),
         const SizedBox(width: 24),
@@ -474,10 +475,7 @@ class _CenterControls extends ConsumerWidget {
 class VideoFitMenu extends HookConsumerWidget {
   final VideoController controller;
 
-  const VideoFitMenu({
-    super.key,
-    required this.controller,
-  });
+  const VideoFitMenu({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -488,14 +486,18 @@ class VideoFitMenu extends HookConsumerWidget {
       (BoxFit.fitHeight, 'Fit Height', Symbols.fit_page_height),
     ];
 
-    final (isUsingCropRects, currentCropRect, currentFit) =
-        useListenableSelector(
-            controller,
-            () => (
-                  controller.isUsingCropRects,
-                  controller.currentCropRect,
-                  controller.fit,
-                ));
+    final (
+      isUsingCropRects,
+      currentCropRect,
+      currentFit,
+    ) = useListenableSelector(
+      controller,
+      () => (
+        controller.isUsingCropRects,
+        controller.currentCropRect,
+        controller.fit,
+      ),
+    );
 
     return SliverList.list(
       children: [

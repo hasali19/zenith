@@ -13,10 +13,11 @@ final _channel = const MethodChannel('zenith.hasali.dev/platform')
       isInPipMode.value = call.arguments;
     } else if (call.method == 'setStableSystemBarInsets') {
       stableSystemBarInsets.value = EdgeInsets.fromLTRB(
-          call.arguments['left'].toDouble(),
-          call.arguments['top'].toDouble(),
-          call.arguments['right'].toDouble(),
-          call.arguments['bottom'].toDouble());
+        call.arguments['left'].toDouble(),
+        call.arguments['top'].toDouble(),
+        call.arguments['right'].toDouble(),
+        call.arguments['bottom'].toDouble(),
+      );
     }
   });
 

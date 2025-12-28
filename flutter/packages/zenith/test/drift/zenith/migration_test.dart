@@ -61,8 +61,10 @@ void main() {
         batch.insertAll(oldDb.downloadedFiles, oldDownloadedFilesData);
       },
       validateItems: (newDb) async {
-        expect(expectedNewDownloadedFilesData,
-            await newDb.select(newDb.downloadedFiles).get());
+        expect(
+          expectedNewDownloadedFilesData,
+          await newDb.select(newDb.downloadedFiles).get(),
+        );
       },
     );
   });

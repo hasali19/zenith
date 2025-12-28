@@ -47,7 +47,9 @@ class _PlayPauseButtonState extends State<PlayPauseButton>
         type: MaterialType.transparency,
         child: IconButton(
           icon: AnimatedIcon(
-              icon: AnimatedIcons.play_pause, progress: _controller),
+            icon: AnimatedIcons.play_pause,
+            progress: _controller,
+          ),
           iconSize: widget.size,
           hoverColor: Colors.transparent,
           highlightColor: Colors.transparent,

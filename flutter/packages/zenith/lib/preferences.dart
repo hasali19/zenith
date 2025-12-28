@@ -21,8 +21,8 @@ class ServersList {
   List<Server> _servers;
 
   ServersList(AppDatabase db, List<Server> servers)
-      : _db = db,
-        _servers = servers;
+    : _db = db,
+      _servers = servers;
 
   List<Server> get servers => _servers;
 
@@ -32,8 +32,9 @@ class ServersList {
   }
 }
 
-final serversProvider =
-    Provider<ServersList>((ref) => throw UnimplementedError());
+final serversProvider = Provider<ServersList>(
+  (ref) => throw UnimplementedError(),
+);
 
 final activeServerProvider = Provider((ref) {
   if ((kDebugMode || kIsWeb) && const bool.hasEnvironment('DEFAULT_SERVER')) {
@@ -64,18 +65,14 @@ final enableUpdatesCheck = createPrefProvider<bool>(
   defaultValue: true,
 );
 
-enum AppThemeMode {
-  light,
-  dark,
-  system,
-}
+enum AppThemeMode { light, dark, system }
 
 extension AppThemeModeExt on AppThemeMode {
   String get label => switch (this) {
-        AppThemeMode.light => 'Light',
-        AppThemeMode.dark => 'Dark',
-        AppThemeMode.system => 'System default',
-      };
+    AppThemeMode.light => 'Light',
+    AppThemeMode.dark => 'Dark',
+    AppThemeMode.system => 'System default',
+  };
 }
 
 final themeMode = createMapPrefProvider<AppThemeMode>(
@@ -95,31 +92,27 @@ final enableDynamicColor = createPrefProvider<bool>(
   defaultValue: true,
 );
 
-enum PlayerSeekPresetDuration {
-  d5,
-  d10,
-  d30,
-}
+enum PlayerSeekPresetDuration { d5, d10, d30 }
 
 extension PlayerSeekPresetDurationExt on PlayerSeekPresetDuration {
   int get value => switch (this) {
-        PlayerSeekPresetDuration.d5 => 5,
-        PlayerSeekPresetDuration.d10 => 10,
-        PlayerSeekPresetDuration.d30 => 30,
-      };
+    PlayerSeekPresetDuration.d5 => 5,
+    PlayerSeekPresetDuration.d10 => 10,
+    PlayerSeekPresetDuration.d30 => 30,
+  };
 }
 
 final fastForwardDurationProvider =
     createMapPrefProvider<PlayerSeekPresetDuration>(
-  prefs: (ref) => ref.watch(preferencesProvider),
-  prefKey: 'fastForwardDuration',
-  mapFrom: (v) =>
-      PlayerSeekPresetDuration.values
-          .where((element) => element.name == v)
-          .firstOrNull ??
-      PlayerSeekPresetDuration.d30,
-  mapTo: (v) => v.name,
-);
+      prefs: (ref) => ref.watch(preferencesProvider),
+      prefKey: 'fastForwardDuration',
+      mapFrom: (v) =>
+          PlayerSeekPresetDuration.values
+              .where((element) => element.name == v)
+              .firstOrNull ??
+          PlayerSeekPresetDuration.d30,
+      mapTo: (v) => v.name,
+    );
 
 final rewindDurationProvider = createMapPrefProvider<PlayerSeekPresetDuration>(
   prefs: (ref) => ref.watch(preferencesProvider),

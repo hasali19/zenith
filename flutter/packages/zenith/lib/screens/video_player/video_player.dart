@@ -27,15 +27,15 @@ class VideoPlayerScreen extends ConsumerWidget {
         final Playlist(:items, start: startIndex) = data.playlist!;
         return switch (data.location) {
           PlaybackLocation.local => LocalVideoPlayer(
-              items: items,
-              startIndex: startIndex,
-              startPosition: startPosition,
-            ),
+            items: items,
+            startIndex: startIndex,
+            startPosition: startPosition,
+          ),
           PlaybackLocation.remote => RemoteVideoPlayer(
-              items: items,
-              startIndex: startIndex,
-              startPosition: startPosition,
-            ),
+            items: items,
+            startIndex: startIndex,
+            startPosition: startPosition,
+          ),
         };
       },
       orElse: () => const Center(child: CircularProgressIndicator()),

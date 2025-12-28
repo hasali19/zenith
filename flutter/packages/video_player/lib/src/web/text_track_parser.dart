@@ -2,8 +2,10 @@ import 'dart:math';
 
 import 'package:web/web.dart';
 
-final cueRegex =
-    RegExp(r'(?:\d+\n)?([\d\.,:]+)\s*-->\s*([\d\.,:]+)\r?\n', multiLine: true);
+final cueRegex = RegExp(
+  r'(?:\d+\n)?([\d\.,:]+)\s*-->\s*([\d\.,:]+)\r?\n',
+  multiLine: true,
+);
 
 abstract class TextTrackParser {
   List<TextTrackCue> parse(String data);
@@ -29,8 +31,13 @@ class SrtParser extends TextTrackParser {
     for (final section in sections) {
       final match = cueRegex.firstMatch(section);
       if (match != null) {
-        cues.add(VTTCue(_parseTime(match.group(1)!),
-            _parseTime(match.group(2)!), section.substring(match.end)));
+        cues.add(
+          VTTCue(
+            _parseTime(match.group(1)!),
+            _parseTime(match.group(2)!),
+            section.substring(match.end),
+          ),
+        );
       }
     }
 

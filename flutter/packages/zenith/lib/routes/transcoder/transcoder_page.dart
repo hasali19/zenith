@@ -23,8 +23,9 @@ Future<List<(TranscoderJob, MediaItem)>> _data(Ref ref) async {
     return [];
   }
 
-  final items = await api
-      .fetchMediaItems(transcoderState.queue.map((job) => job.itemId).toList());
+  final items = await api.fetchMediaItems(
+    transcoderState.queue.map((job) => job.itemId).toList(),
+  );
 
   return transcoderState.queue.indexed.map((e) => (e.$2, items[e.$1])).toList();
 }
@@ -38,41 +39,41 @@ class TranscoderPage extends ConsumerWidget {
     final state = ref.watch(_dataProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Transcoder'),
-      ),
+      appBar: AppBar(title: const Text('Transcoder')),
       body: switch (state) {
         AsyncData(value: final state) when state.isNotEmpty => CustomScrollView(
-            slivers: [
-              SliverList.builder(
-                itemCount: state.length,
-                itemBuilder: (context, index) {
-                  final user = state[index];
-                  return Column(
-                    children: [
-                      ListTile(
-                        leading: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ZenithApiImage(
-                            id: user.$2.poster!,
-                            requestWidth: 100,
-                          ),
+          slivers: [
+            SliverList.builder(
+              itemCount: state.length,
+              itemBuilder: (context, index) {
+                final user = state[index];
+                return Column(
+                  children: [
+                    ListTile(
+                      leading: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: ZenithApiImage(
+                          id: user.$2.poster!,
+                          requestWidth: 100,
                         ),
-                        title: Text(
-                            user.$2.videoFile?.path.split('/').lastOrNull ??
-                                'Unknown path'),
-                        subtitle: switch (user.$1) {
-                          Queued() => Text('Queued'),
-                          Processing(:final progress) =>
-                            LinearProgressIndicator(value: progress),
-                        },
                       ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
+                      title: Text(
+                        user.$2.videoFile?.path.split('/').lastOrNull ??
+                            'Unknown path',
+                      ),
+                      subtitle: switch (user.$1) {
+                        Queued() => Text('Queued'),
+                        Processing(:final progress) => LinearProgressIndicator(
+                          value: progress,
+                        ),
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
         AsyncData(value: []) => Center(child: Text('Nothing in the queue')),
         AsyncError(:final error) => Center(child: Text(error.toString())),
         _ => const Center(child: CircularProgressIndicator()),

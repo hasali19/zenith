@@ -26,10 +26,7 @@ import 'widgets/cast_list.dart';
 class ItemDetailsPage extends ConsumerWidget {
   final int id;
 
-  const ItemDetailsPage({
-    super.key,
-    @pathParam required this.id,
-  });
+  const ItemDetailsPage({super.key, @pathParam required this.id});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,30 +39,30 @@ class ItemDetailsPage extends ConsumerWidget {
         scrolledUnderElevation: 0,
         actions: [
           if (CastFrameworkPlatform.instance.isSupported)
-            const MediaRouteButton()
+            const MediaRouteButton(),
         ],
       ),
-      body: Consumer(builder: (context, ref, child) {
-        final model = ref.watch(itemDetailsControllerProvider(id));
-        return model.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => Center(child: Text('$error')),
-          data: (data) => _ItemDetailsContent(
-            state: data,
-            onRefresh: () =>
-                ref.read(itemDetailsControllerProvider(id).notifier).refresh(),
-          ),
-        );
-      }),
+      body: Consumer(
+        builder: (context, ref, child) {
+          final model = ref.watch(itemDetailsControllerProvider(id));
+          return model.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stackTrace) => Center(child: Text('$error')),
+            data: (data) => _ItemDetailsContent(
+              state: data,
+              onRefresh: () => ref
+                  .read(itemDetailsControllerProvider(id).notifier)
+                  .refresh(),
+            ),
+          );
+        },
+      ),
     );
   }
 }
 
 class _ItemDetailsContent extends ConsumerStatefulWidget {
-  const _ItemDetailsContent({
-    required this.state,
-    required this.onRefresh,
-  });
+  const _ItemDetailsContent({required this.state, required this.onRefresh});
 
   final ItemDetailsState state;
   final Future<void> Function() onRefresh;
@@ -82,31 +79,32 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
   void initState() {
     super.initState();
 
-    Future.microtask(
-      () async {
-        final api = ref.read(apiProvider);
-        final token = await api.getAccessToken(AccessTokenOwner.system, 'cast',
-            create: true);
-        if (CastFrameworkPlatform.instance.isSupported) {
-          CastFrameworkPlatform.instance.remoteMediaClient.sendMessage(
-            'urn:x-cast:dev.hasali.zenith',
-            jsonEncode({
-              'type': 'init',
-              'token': token.token,
-              'server': api.baseUrl,
-            }),
-          );
+    Future.microtask(() async {
+      final api = ref.read(apiProvider);
+      final token = await api.getAccessToken(
+        AccessTokenOwner.system,
+        'cast',
+        create: true,
+      );
+      if (CastFrameworkPlatform.instance.isSupported) {
+        CastFrameworkPlatform.instance.remoteMediaClient.sendMessage(
+          'urn:x-cast:dev.hasali.zenith',
+          jsonEncode({
+            'type': 'init',
+            'token': token.token,
+            'server': api.baseUrl,
+          }),
+        );
 
-          CastFrameworkPlatform.instance.remoteMediaClient.sendMessage(
-            'urn:x-cast:dev.hasali.zenith',
-            jsonEncode({
-              'type': 'focus-item-details',
-              'id': widget.state.item.id,
-            }),
-          );
-        }
-      },
-    );
+        CastFrameworkPlatform.instance.remoteMediaClient.sendMessage(
+          'urn:x-cast:dev.hasali.zenith',
+          jsonEncode({
+            'type': 'focus-item-details',
+            'id': widget.state.item.id,
+          }),
+        );
+      }
+    });
   }
 
   @override
@@ -124,10 +122,9 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
         return;
       }
 
-      pushRoute(VideoPlayerRoute(
-        id: item.id,
-        startPosition: item.playPosition,
-      ));
+      pushRoute(
+        VideoPlayerRoute(id: item.id, startPosition: item.playPosition),
+      );
     }
 
     void onEpisodePressed(EpisodeState episode) async {
@@ -200,9 +197,7 @@ class _ItemDetailsContentState extends ConsumerState<_ItemDetailsContent> {
   void _onFixEpisodeMatch() async {
     await showDialog(
       context: context,
-      builder: (context) => FixEpisodeMatchDialog(
-        item: widget.state.item,
-      ),
+      builder: (context) => FixEpisodeMatchDialog(item: widget.state.item),
     );
     _refresh.currentState?.show();
   }
@@ -242,9 +237,7 @@ class _BackdropBlur extends StatelessWidget {
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
       child: Container(
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.5),
-        ),
+        decoration: BoxDecoration(color: color.withOpacity(0.5)),
         child: child,
       ),
     );

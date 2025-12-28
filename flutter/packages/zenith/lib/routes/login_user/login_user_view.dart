@@ -37,8 +37,9 @@ class _LoginUserViewState extends ConsumerState<LoginUserView> {
       if (next case LoginUserSuccess()) {
         widget.onSuccess();
       } else if (next case LoginUserFailure()) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Login failed')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Login failed')));
       }
     });
 
@@ -73,8 +74,12 @@ class _LoginUserViewState extends ConsumerState<LoginUserView> {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    ref.read(loginUserControllerProvider.notifier).login(
-                        widget.username ?? _username.text, _password.text);
+                    ref
+                        .read(loginUserControllerProvider.notifier)
+                        .login(
+                          widget.username ?? _username.text,
+                          _password.text,
+                        );
                   },
                   child: const Text('Login'),
                 ),

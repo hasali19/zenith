@@ -74,8 +74,10 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
           if (servers.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 32, bottom: 8),
-              child: Text('Previously used',
-                  style: TextStyle(fontStyle: FontStyle.italic)),
+              child: Text(
+                'Previously used',
+                style: TextStyle(fontStyle: FontStyle.italic),
+              ),
             ),
           for (final server in servers)
             ListTile(
@@ -98,25 +100,20 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
       content = Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(
-              maxWidth: 800, minHeight: 300, maxHeight: 300),
+            maxWidth: 800,
+            minHeight: 300,
+            maxHeight: 300,
+          ),
           child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: content,
-            ),
+            child: Padding(padding: const EdgeInsets.all(32), child: content),
           ),
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Select server'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: content,
-      ),
+      appBar: AppBar(title: const Text('Select server')),
+      body: Padding(padding: const EdgeInsets.all(16), child: content),
     );
   }
 
@@ -128,16 +125,14 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     final url = '$_scheme://${_hostController.text}';
     final uri = Uri.tryParse(url);
     if (uri == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Invalid url: $url')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Invalid url: $url')));
     }
 
     final id = _uuid.v4();
     final servers = ref.read(serversProvider);
-    final server = ServersCompanion.insert(
-      uuid: id,
-      url: url,
-    );
+    final server = ServersCompanion.insert(uuid: id, url: url);
 
     // Insert new server in db
     await servers.addServer(server, InsertMode.insertOrReplace);

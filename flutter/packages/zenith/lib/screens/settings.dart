@@ -45,15 +45,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (update != null) {
       await update.install();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('No updates available'),
-        action: SnackBarAction(
-          label: 'OK',
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('No updates available'),
+          action: SnackBarAction(
+            label: 'OK',
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            },
+          ),
         ),
-      ));
+      );
     }
   }
 
@@ -62,10 +64,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final desktop = context.isDesktop;
     return CustomScrollView(
       slivers: [
-        SliverAppBar(
-          title: Text('Settings'),
-          floating: true,
-        ),
+        SliverAppBar(title: Text('Settings'), floating: true),
         SliverPadding(
           padding: desktop
               ? const EdgeInsets.symmetric(vertical: 16)
@@ -73,12 +72,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           sliver: SliverList(
             delegate: SliverChildListDelegate([
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 16,
+                ),
                 child: Text(
                   'Appearance',
-                  style:
-                      TextStyle(color: Theme.of(context).colorScheme.primary),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
               ),
               ListTile(
@@ -90,30 +92,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text('Choose theme'),
-                      content: StatefulBuilder(builder: (context, setState) {
-                        return SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: AppThemeMode.values
-                                .map(
-                                  (value) => RadioListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    value: value,
-                                    title: Text(value.label),
-                                    groupValue: selected,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        if (value != null) {
-                                          selected = value;
-                                        }
-                                      });
-                                    },
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                        );
-                      }),
+                      content: StatefulBuilder(
+                        builder: (context, setState) {
+                          return SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: AppThemeMode.values
+                                  .map(
+                                    (value) => RadioListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      value: value,
+                                      title: Text(value.label),
+                                      groupValue: selected,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          if (value != null) {
+                                            selected = value;
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          );
+                        },
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
@@ -142,34 +146,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 },
               ),
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 16,
+                ),
                 child: Text(
                   'Player',
-                  style:
-                      TextStyle(color: Theme.of(context).colorScheme.primary),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
               ),
               ListTile(
                 title: const Text('Fast forward duration'),
                 subtitle: Text(
-                    '${ref.watch(fastForwardDurationProvider).value} seconds'),
+                  '${ref.watch(fastForwardDurationProvider).value} seconds',
+                ),
                 onTap: () async {
                   final duration =
                       await showModalBottomSheet<PlayerSeekPresetDuration>(
-                    context: context,
-                    clipBehavior: Clip.antiAlias,
-                    builder: (context) => SafeArea(
-                      child: Wrap(
-                        children: PlayerSeekPresetDuration.values
-                            .map((e) => ListTile(
-                                  title: Text('${e.value} seconds'),
-                                  onTap: () => Navigator.pop(context, e),
-                                ))
-                            .toList(),
-                      ),
-                    ),
-                  );
+                        context: context,
+                        clipBehavior: Clip.antiAlias,
+                        builder: (context) => SafeArea(
+                          child: Wrap(
+                            children: PlayerSeekPresetDuration.values
+                                .map(
+                                  (e) => ListTile(
+                                    title: Text('${e.value} seconds'),
+                                    onTap: () => Navigator.pop(context, e),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
+                      );
                   if (duration != null) {
                     ref
                         .read(fastForwardDurationProvider.notifier)
@@ -179,24 +189,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               ListTile(
                 title: const Text('Rewind duration'),
-                subtitle:
-                    Text('${ref.watch(rewindDurationProvider).value} seconds'),
+                subtitle: Text(
+                  '${ref.watch(rewindDurationProvider).value} seconds',
+                ),
                 onTap: () async {
                   final duration =
                       await showModalBottomSheet<PlayerSeekPresetDuration>(
-                    context: context,
-                    clipBehavior: Clip.antiAlias,
-                    builder: (context) => SafeArea(
-                      child: Wrap(
-                        children: PlayerSeekPresetDuration.values
-                            .map((e) => ListTile(
-                                  title: Text('${e.value} seconds'),
-                                  onTap: () => Navigator.pop(context, e),
-                                ))
-                            .toList(),
-                      ),
-                    ),
-                  );
+                        context: context,
+                        clipBehavior: Clip.antiAlias,
+                        builder: (context) => SafeArea(
+                          child: Wrap(
+                            children: PlayerSeekPresetDuration.values
+                                .map(
+                                  (e) => ListTile(
+                                    title: Text('${e.value} seconds'),
+                                    onTap: () => Navigator.pop(context, e),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
+                      );
                   if (duration != null) {
                     ref.read(rewindDurationProvider.notifier).update(duration);
                   }
@@ -205,7 +218,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               CheckboxListTile(
                 title: const Text('Set watched on skip'),
                 subtitle: const Text(
-                    'When skipping forward in the playlist, mark the current video as watched'),
+                  'When skipping forward in the playlist, mark the current video as watched',
+                ),
                 value: ref.watch(setWatchedOnSkipProvider),
                 onChanged: (value) {
                   if (value != null) {
@@ -216,7 +230,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               CheckboxListTile(
                 title: const Text('Fix black bars'),
                 subtitle: const Text(
-                    'Use black region detection to crop out black bars from videos'),
+                  'Use black region detection to crop out black bars from videos',
+                ),
                 value: ref.watch(applyCropRectsProvider),
                 onChanged: (value) {
                   if (value != null) {
@@ -228,8 +243,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               if (!kIsWeb)
                 ListTile(
                   title: const Text('Server'),
-                  subtitle:
-                      Text(ref.watch(activeServerProvider)?.url ?? 'None'),
+                  subtitle: Text(
+                    ref.watch(activeServerProvider)?.url ?? 'None',
+                  ),
                   onTap: () async {
                     context.router.navigate(const SetupRoute());
                   },
@@ -252,8 +268,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               if (!kIsWeb)
                 CheckboxListTile(
                   title: const Text('Auto update check'),
-                  subtitle:
-                      const Text('Notify if an update is available on startup'),
+                  subtitle: const Text(
+                    'Notify if an update is available on startup',
+                  ),
                   value: ref.watch(enableUpdatesCheck),
                   onChanged: (value) {
                     if (value != null) {
@@ -264,8 +281,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               if (!kIsWeb)
                 ListTile(
                   title: const Text('Check for updates'),
-                  subtitle:
-                      const Text('Check immediately for available updates'),
+                  subtitle: const Text(
+                    'Check immediately for available updates',
+                  ),
                   onTap: () {
                     _checkForUpdates(context);
                   },

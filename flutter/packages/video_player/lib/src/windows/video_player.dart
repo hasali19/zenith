@@ -23,15 +23,16 @@ class VideoPlayerWindows extends VideoPlayerPlatform {
   }
 
   @override
-  Future<VideoController> createController(
-      {Map<String, String>? headers}) async {
+  Future<VideoController> createController({
+    Map<String, String>? headers,
+  }) async {
     VideoPlayerSymbolLoader loader;
     if (_lib case DynamicLibrary lib) {
       loader = <T extends NativeType>(name) => lib.lookup<T>(name);
     } else {
       final procs = await _channel.invokeMapMethod('getProcs');
-      loader =
-          <T extends NativeType>(name) => Pointer.fromAddress(procs![name]);
+      loader = <T extends NativeType>(name) =>
+          Pointer.fromAddress(procs![name]);
     }
 
     final procs = VideoPlayerProcs(loader);
@@ -99,12 +100,7 @@ class _FlionPlatformViewSurface implements VideoSurface {
   }
 }
 
-enum PlayerMsgKind {
-  durationChanged,
-  pausedChanged,
-  idleChanged,
-  videoEnded,
-}
+enum PlayerMsgKind { durationChanged, pausedChanged, idleChanged, videoEnded }
 
 class VideoControllerWindows extends VideoController with ChangeNotifier {
   final VideoPlayerProcs procs;
@@ -157,18 +153,22 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
         for (final (index, track) in tracks.indexed) {
           switch (track['type']) {
             case 2:
-              _audioTracks.add(AudioTrack(
-                index: index,
-                language: track['lang'] ?? 'Unknown',
-                codec: track['codec'] ?? 'Unknown',
-              ));
+              _audioTracks.add(
+                AudioTrack(
+                  index: index,
+                  language: track['lang'] ?? 'Unknown',
+                  codec: track['codec'] ?? 'Unknown',
+                ),
+              );
 
             case 3:
-              _subtitleTracks.add(SubtitleTrack(
-                id: track['id'].toString(),
-                label: track['title'],
-                language: track['lang'],
-              ));
+              _subtitleTracks.add(
+                SubtitleTrack(
+                  id: track['id'].toString(),
+                  label: track['title'],
+                  language: track['lang'],
+                ),
+              );
           }
         }
       }
@@ -261,13 +261,17 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
       await viewController.init(type: 'video', args: player);
       surface = _FlionPlatformViewSurface(viewController);
     } else {
-      final surfaceId =
-          await _channel.invokeMethod('createVideoSurface', {'player': player});
+      final surfaceId = await _channel.invokeMethod('createVideoSurface', {
+        'player': player,
+      });
       surface = _TextureSurface(surfaceId, procs);
     }
 
-    _subtitleStyle =
-        _SubtitleStyleOptions(procs: procs, player: player, size: 40);
+    _subtitleStyle = _SubtitleStyleOptions(
+      procs: procs,
+      player: player,
+      size: 40,
+    );
   }
 
   @override
@@ -282,24 +286,27 @@ class VideoControllerWindows extends VideoController with ChangeNotifier {
           LocalFileSource() => throw UnimplementedError(),
         };
         pItem.url = url.toNativeUtf8(allocator: alloc);
-        pItem.title = item.metadata.title?.toNativeUtf8(allocator: alloc) ??
+        pItem.title =
+            item.metadata.title?.toNativeUtf8(allocator: alloc) ??
             Pointer.fromAddress(0);
         pItem.subtitle =
             item.metadata.subtitle?.toNativeUtf8(allocator: alloc) ??
-                Pointer.fromAddress(0);
+            Pointer.fromAddress(0);
         pItem.externalSubtitlesCount = item.subtitles.length;
-        pItem.externalSubtitles =
-            alloc<FfiExternalSubtitle>(item.subtitles.length);
+        pItem.externalSubtitles = alloc<FfiExternalSubtitle>(
+          item.subtitles.length,
+        );
 
         for (final (j, sub) in item.subtitles.indexed) {
-          pItem.externalSubtitles[j].url =
-              sub.src.toNativeUtf8(allocator: alloc);
+          pItem.externalSubtitles[j].url = sub.src.toNativeUtf8(
+            allocator: alloc,
+          );
           pItem.externalSubtitles[j].title =
               sub.title?.toNativeUtf8(allocator: alloc) ??
-                  Pointer.fromAddress(0);
+              Pointer.fromAddress(0);
           pItem.externalSubtitles[j].language =
               sub.language?.toNativeUtf8(allocator: alloc) ??
-                  Pointer.fromAddress(0);
+              Pointer.fromAddress(0);
         }
       }
 
@@ -395,9 +402,9 @@ class _SubtitleStyleOptions extends SubtitleStyleOptions with ChangeNotifier {
     required VideoPlayerProcs procs,
     required int player,
     required int size,
-  })  : _procs = procs,
-        _player = player,
-        _size = size;
+  }) : _procs = procs,
+       _player = player,
+       _size = size;
 
   @override
   int get size => _size;
