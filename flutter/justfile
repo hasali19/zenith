@@ -1,3 +1,4 @@
+[working-directory: 'packages/zenith']
 watch:
     dart run build_runner watch
 
