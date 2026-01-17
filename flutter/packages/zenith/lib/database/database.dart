@@ -42,6 +42,10 @@ class MediaItems extends Table {
   TextColumn get poster => text().nullable()();
   TextColumn get backdrop => text().nullable()();
   TextColumn get thumbnail => text().nullable()();
+  IntColumn get parentId => integer().nullable()();
+  IntColumn get parentIndex => integer().nullable()();
+  IntColumn get grandparentId => integer().nullable()();
+  IntColumn get grandparentIndex => integer().nullable()();
 
   @override
   Set<Column<Object>>? get primaryKey => {id};

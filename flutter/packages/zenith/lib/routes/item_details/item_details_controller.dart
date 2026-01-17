@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/database/database.dart' as db;
@@ -49,14 +48,54 @@ class ItemDetailsController extends _$ItemDetailsController {
     try {
       item = await _api.fetchMediaItem(id);
     } catch (e, s) {
-      final offlineItemQuery = _db.select(_db.mediaItems)
-        ..where((m) => m.id.equals(id));
-      final offlineItem = await offlineItemQuery.getSingleOrNull();
-      if (offlineItem == null) {
+      final parentTable = _db.mediaItems.createAlias('parent');
+      final grandparentTable = _db.mediaItems.createAlias('grandparent');
+      final offlineItemQuery = _db.select(_db.mediaItems).join([
+        leftOuterJoin(
+          parentTable,
+          _db.mediaItems.parentId.equalsExp(parentTable.id),
+        ),
+        leftOuterJoin(
+          grandparentTable,
+          _db.mediaItems.grandparentId.equalsExp(grandparentTable.id),
+        ),
+      ])..where(_db.mediaItems.id.equals(id));
+
+      final offlineItemResult = await offlineItemQuery.getSingleOrNull();
+
+      if (offlineItemResult == null) {
         _item = AsyncError(e, s);
         return _updateState();
       } else {
         isOffline = true;
+
+        final offlineItem = offlineItemResult.readTable(_db.mediaItems);
+        final parentItem = offlineItemResult.readTableOrNull(parentTable);
+        final grandparentItem = offlineItemResult.readTableOrNull(
+          grandparentTable,
+        );
+
+        MediaItemParent? parent;
+        MediaItemParent? grandparent;
+
+        if ((parentItem, offlineItem.parentIndex) case (
+          final parentItem?,
+          final index?,
+        )) {
+          parent = MediaItemParent(parentItem.id, index, parentItem.name);
+        }
+
+        if ((grandparentItem, offlineItem.grandparentIndex) case (
+          final grandparentItem?,
+          final index?,
+        )) {
+          grandparent = MediaItemParent(
+            grandparentItem.id,
+            index,
+            grandparentItem.name,
+          );
+        }
+
         item = MediaItem(
           id: id,
           type: switch (offlineItem.type) {
@@ -72,8 +111,8 @@ class ItemDetailsController extends _$ItemDetailsController {
           poster: offlineItem.poster as ImageId?,
           backdrop: offlineItem.backdrop as ImageId?,
           thumbnail: offlineItem.thumbnail as ImageId?,
-          parent: null,
-          grandparent: null,
+          parent: parent,
+          grandparent: grandparent,
           videoFile: null,
           videoUserData: null,
           collectionUserData: null,

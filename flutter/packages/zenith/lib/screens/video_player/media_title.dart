@@ -9,15 +9,15 @@ class MediaTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (item.type == MediaType.episode) {
+    if ((item.getSeasonEpisode(), item.grandparent?.name) case (
+      final name?,
+      final showName?,
+    )) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${item.getSeasonEpisode()!}: ${item.name}',
-            style: context.zenithTheme.titleMedium,
-          ),
-          Text(item.grandparent!.name, style: context.zenithTheme.bodyMedium),
+          Text('$name: ${item.name}', style: context.zenithTheme.titleMedium),
+          Text(showName, style: context.zenithTheme.bodyMedium),
         ],
       );
     } else {

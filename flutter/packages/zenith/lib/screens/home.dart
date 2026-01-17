@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -26,7 +27,7 @@ abstract class HomeScreenData with _$HomeScreenData {
     required List<MediaItem> continueWatching,
     required List<MediaItem> recentMovies,
     required List<MediaItem> recentShows,
-    required List<db.MediaItem> offlineItems,
+    required List<MediaItem> offlineItems,
   }) = _HomeScreenData;
 }
 
@@ -49,13 +50,24 @@ Future<HomeScreenData> _state(Ref ref) async {
     // TODO: Show an error
   }
 
-  final offlineItemsQuery = database.select(database.mediaItems)
-    ..where(
-      (m) => m.id.isInQuery(
-        database.selectOnly(database.downloadedFiles)
-          ..addColumns([database.downloadedFiles.itemId]),
-      ),
-    );
+  final parentTable = database.mediaItems.createAlias('parent');
+  final grandparentTable = database.mediaItems.createAlias('grandparent');
+  final offlineItemsQuery =
+      database.select(database.mediaItems).addColumns([]).join([
+        drift.leftOuterJoin(
+          parentTable,
+          database.mediaItems.parentId.equalsExp(parentTable.id),
+        ),
+        drift.leftOuterJoin(
+          grandparentTable,
+          database.mediaItems.grandparentId.equalsExp(grandparentTable.id),
+        ),
+      ])..where(
+        database.mediaItems.id.isInQuery(
+          database.selectOnly(database.downloadedFiles)
+            ..addColumns([database.downloadedFiles.itemId]),
+        ),
+      );
 
   final offlineItems = await offlineItemsQuery.get();
 
@@ -63,7 +75,59 @@ Future<HomeScreenData> _state(Ref ref) async {
     continueWatching: continueWatching,
     recentMovies: movies,
     recentShows: shows,
-    offlineItems: offlineItems,
+    offlineItems: offlineItems.map((row) {
+      final item = row.readTable(database.mediaItems);
+      final parentItem = row.readTableOrNull(parentTable);
+      final grandparentItem = row.readTableOrNull(grandparentTable);
+
+      MediaItemParent? parent;
+      MediaItemParent? grandparent;
+
+      if ((parentItem, item.parentIndex) case (
+        final parentItem?,
+        final index?,
+      )) {
+        parent = MediaItemParent(parentItem.id, index, parentItem.name);
+      }
+
+      if ((grandparentItem, item.grandparentIndex) case (
+        final grandparentItem?,
+        final index?,
+      )) {
+        grandparent = MediaItemParent(
+          grandparentItem.id,
+          index,
+          grandparentItem.name,
+        );
+      }
+
+      return MediaItem(
+        id: item.id,
+        type: switch (item.type) {
+          .movie => .movie,
+          .show => .show,
+          .season => .season,
+          .episode => .episode,
+        },
+        name: item.name,
+        overview: item.overview,
+        startDate: DateTime.tryParse(item.startDate ?? ''),
+        endDate: DateTime.tryParse(item.endDate ?? ''),
+        poster: item.poster as ImageId?,
+        backdrop: item.backdrop as ImageId?,
+        thumbnail: item.thumbnail as ImageId?,
+        parent: parent,
+        grandparent: grandparent,
+        videoFile: null,
+        videoUserData: null,
+        collectionUserData: null,
+        genres: [],
+        ageRating: null,
+        trailer: null,
+        director: null,
+        cast: [],
+      );
+    }).toList(),
   );
 }
 
@@ -111,8 +175,23 @@ class HomeScreen extends ConsumerWidget {
         imageId: item.poster,
         requestWidth: mediaPosterImageWidth,
         fallbackIcon: posterFallback,
-        title: item.name,
-        subtitle: item.startDate?.year.toString() ?? '',
+        title: () {
+          if (item.grandparent?.name case final showName?) {
+            return showName;
+          }
+          return item.name;
+        }(),
+        subtitle: () {
+          if (item.startDate case final startDate?) {
+            return startDate.year.toString();
+          }
+
+          if (item.getSeasonEpisode() case final name?) {
+            return name;
+          }
+
+          return '';
+        }(),
         isWatched: true, // hide new icon since they're all new
         infoSeparator: posterItemInfoSeparator,
         onTap: () => _navigateToItem(context, ref, item.id),
@@ -176,28 +255,10 @@ class HomeScreen extends ConsumerWidget {
                 Icons.tv,
               ),
             if (data.offlineItems.isNotEmpty)
-              Section<db.MediaItem>(
-                title: 'Available Offline',
-                titlePadding: sectionTitlePadding,
-                listSpacing: sectionListSpacing,
-                listItemWidth: posterItemWidth,
-                listItemHeight: posterItemHeight,
-                endPadding: sectionEndPadding,
-                items: data.offlineItems,
-                itemBuilder: (context, item) => PosterItem(
-                  imageId: ImageId(item.poster!),
-                  requestWidth: mediaPosterImageWidth,
-                  fallbackIcon: Icons.movie,
-                  title: item.name,
-                  subtitle:
-                      DateTime.tryParse(
-                        item.startDate ?? '',
-                      )?.year.toString() ??
-                      '',
-                  isWatched: true, // hide new icon since they're all new
-                  infoSeparator: posterItemInfoSeparator,
-                  onTap: () => _navigateToItem(context, ref, item.id),
-                ),
+              buildPosterItemSection(
+                data.offlineItems,
+                'Available Offline',
+                Icons.movie,
               ),
           ],
         ),
