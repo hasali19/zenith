@@ -147,7 +147,12 @@ class RenderHeaderLayout extends RenderBox
       backdropData.visible = true;
 
       backdrop.layout(
-        constraints.copyWith(minWidth: constraints.maxWidth),
+        constraints.copyWith(
+          minWidth: constraints.maxWidth,
+          maxWidth: constraints.maxWidth,
+          minHeight: constraints.maxWidth * (9.0 / 16.0),
+          maxHeight: constraints.maxWidth * (9.0 / 16.0),
+        ),
         parentUsesSize: true,
       );
 

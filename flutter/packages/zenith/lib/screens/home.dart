@@ -1,6 +1,8 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:gap/gap.dart';
@@ -8,6 +10,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sized_context/sized_context.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/constants.dart';
+import 'package:zenith/database/database.dart' as db;
 import 'package:zenith/image.dart';
 import 'package:zenith/poster_item.dart';
 import 'package:zenith/responsive.dart';
@@ -24,49 +27,121 @@ abstract class HomeScreenData with _$HomeScreenData {
     required List<MediaItem> continueWatching,
     required List<MediaItem> recentMovies,
     required List<MediaItem> recentShows,
+    required List<MediaItem> offlineItems,
   }) = _HomeScreenData;
 }
 
 @riverpod
 Future<HomeScreenData> _state(Ref ref) async {
   final api = ref.watch(apiProvider);
+  final database = ref.watch(db.databaseProvider);
 
-  final results = await Future.wait([
-    api.fetchContinueWatching(),
-    api.fetchRecentMovies(),
-    api.fetchRecentShows(),
-  ]);
+  List<MediaItem> continueWatching = [];
+  List<MediaItem> movies = [];
+  List<MediaItem> shows = [];
+
+  try {
+    [continueWatching, movies, shows] = await Future.wait([
+      api.fetchContinueWatching(),
+      api.fetchRecentMovies(),
+      api.fetchRecentShows(),
+    ]);
+  } catch (e) {
+    // TODO: Show an error
+  }
+
+  final parentTable = database.mediaItems.createAlias('parent');
+  final grandparentTable = database.mediaItems.createAlias('grandparent');
+  final offlineItemsQuery =
+      database.select(database.mediaItems).addColumns([]).join([
+        drift.leftOuterJoin(
+          parentTable,
+          database.mediaItems.parentId.equalsExp(parentTable.id),
+        ),
+        drift.leftOuterJoin(
+          grandparentTable,
+          database.mediaItems.grandparentId.equalsExp(grandparentTable.id),
+        ),
+      ])..where(
+        database.mediaItems.id.isInQuery(
+          database.selectOnly(database.downloadedFiles)
+            ..addColumns([database.downloadedFiles.itemId]),
+        ),
+      );
+
+  final offlineItems = await offlineItemsQuery.get();
 
   return HomeScreenData(
-    continueWatching: results[0],
-    recentMovies: results[1],
-    recentShows: results[2],
+    continueWatching: continueWatching,
+    recentMovies: movies,
+    recentShows: shows,
+    offlineItems: offlineItems.map((row) {
+      final item = row.readTable(database.mediaItems);
+      final parentItem = row.readTableOrNull(parentTable);
+      final grandparentItem = row.readTableOrNull(grandparentTable);
+
+      MediaItemParent? parent;
+      MediaItemParent? grandparent;
+
+      if ((parentItem, item.parentIndex) case (
+        final parentItem?,
+        final index?,
+      )) {
+        parent = MediaItemParent(parentItem.id, index, parentItem.name);
+      }
+
+      if ((grandparentItem, item.grandparentIndex) case (
+        final grandparentItem?,
+        final index?,
+      )) {
+        grandparent = MediaItemParent(
+          grandparentItem.id,
+          index,
+          grandparentItem.name,
+        );
+      }
+
+      return MediaItem(
+        id: item.id,
+        type: switch (item.type) {
+          .movie => .movie,
+          .show => .show,
+          .season => .season,
+          .episode => .episode,
+        },
+        name: item.name,
+        overview: item.overview,
+        startDate: DateTime.tryParse(item.startDate ?? ''),
+        endDate: DateTime.tryParse(item.endDate ?? ''),
+        poster: item.poster as ImageId?,
+        backdrop: item.backdrop as ImageId?,
+        thumbnail: item.thumbnail as ImageId?,
+        parent: parent,
+        grandparent: grandparent,
+        videoFile: null,
+        videoUserData: null,
+        collectionUserData: null,
+        genres: [],
+        ageRating: null,
+        trailer: null,
+        director: null,
+        cast: [],
+      );
+    }).toList(),
   );
 }
 
 @RoutePage()
-class HomeScreen extends ConsumerStatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  ZenithApiClient get api => ref.watch(apiProvider);
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  void _navigateToItem(MediaItem item) async {
-    await context.router.push(ItemDetailsRoute(id: item.id));
+  void _navigateToItem(BuildContext context, WidgetRef ref, int itemId) async {
+    await context.router.push(ItemDetailsRoute(id: itemId));
     ref.invalidate(_stateProvider);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final desktop = MediaQuery.of(context).isDesktop;
 
     final sectionTitlePadding = EdgeInsets.symmetric(
@@ -100,11 +175,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         imageId: item.poster,
         requestWidth: mediaPosterImageWidth,
         fallbackIcon: posterFallback,
-        title: item.name,
-        subtitle: item.startDate?.year.toString() ?? '',
+        title: () {
+          if (item.grandparent?.name case final showName?) {
+            return showName;
+          }
+          return item.name;
+        }(),
+        subtitle: () {
+          if (item.startDate case final startDate?) {
+            return startDate.year.toString();
+          }
+
+          if (item.getSeasonEpisode() case final name?) {
+            return name;
+          }
+
+          return '';
+        }(),
         isWatched: true, // hide new icon since they're all new
         infoSeparator: posterItemInfoSeparator,
-        onTap: () => _navigateToItem(item),
+        onTap: () => _navigateToItem(context, ref, item.id),
       ),
     );
 
@@ -149,7 +239,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       (item.videoUserData?.position ?? 0) /
                       (item.videoFile?.duration ?? 1),
                   padding: thumbnailItemPadding,
-                  onTap: () => _navigateToItem(item),
+                  onTap: () => _navigateToItem(context, ref, item.id),
                 ),
               ),
             if (data.recentMovies.isNotEmpty)
@@ -164,6 +254,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 'Recent Shows',
                 Icons.tv,
               ),
+            if (data.offlineItems.isNotEmpty)
+              buildPosterItemSection(
+                data.offlineItems,
+                'Available Offline',
+                Icons.movie,
+              ),
           ],
         ),
       ),
@@ -171,7 +267,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-class Section<T> extends StatefulWidget {
+class Section<T> extends HookWidget {
   final String title;
   final List<T> items;
   final EdgeInsets titlePadding;
@@ -194,56 +290,55 @@ class Section<T> extends StatefulWidget {
   });
 
   @override
-  State<Section<T>> createState() => _SectionState<T>();
-}
-
-class _SectionState<T> extends State<Section<T>> {
-  final ScrollController _scrollController = ScrollController();
-
-  @override
   Widget build(BuildContext context) {
+    final scrollController = useScrollController();
+
     final titleStyle = context.zenithTheme.titleMedium.copyWith(
       fontWeight: FontWeight.bold,
     );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding:
-              widget.titlePadding +
-              context.mq.padding.copyWith(top: 0, bottom: 0),
-          child: Text(widget.title, style: titleStyle),
+              titlePadding + context.mq.padding.copyWith(top: 0, bottom: 0),
+          child: Text(title, style: titleStyle),
         ),
-        _buildContent(widget.items),
-        SizedBox(height: widget.endPadding),
+        _buildContent(context, scrollController, items),
+        SizedBox(height: endPadding),
       ],
     );
   }
 
-  Widget _buildContent(List<T> data) {
+  Widget _buildContent(
+    BuildContext context,
+    ScrollController scrollController,
+    List<T> data,
+  ) {
     const scrollbarHeight = 16.0;
     return SizedBox(
-      height: widget.listItemHeight + scrollbarHeight,
+      height: listItemHeight + scrollbarHeight,
       child: ScrollbarTheme(
         data: ScrollbarTheme.of(
           context,
-        ).copyWith(mainAxisMargin: widget.listSpacing * 2),
+        ).copyWith(mainAxisMargin: listSpacing * 2),
         child: Scrollbar(
-          controller: _scrollController,
+          controller: scrollController,
           child: Padding(
             padding: const EdgeInsets.only(bottom: scrollbarHeight),
             child: ListView.separated(
-              controller: _scrollController,
+              controller: scrollController,
               padding:
-                  EdgeInsets.symmetric(horizontal: widget.listSpacing * 2) +
+                  EdgeInsets.symmetric(horizontal: listSpacing * 2) +
                   context.mq.padding.copyWith(top: 0, bottom: 0),
               separatorBuilder: (context, index) =>
-                  SizedBox(width: widget.listSpacing),
+                  SizedBox(width: listSpacing),
               scrollDirection: Axis.horizontal,
               itemCount: data.length,
               itemBuilder: (context, index) => SizedBox(
-                width: widget.listItemWidth,
-                child: widget.itemBuilder(context, data[index]),
+                width: listItemWidth,
+                child: itemBuilder(context, data[index]),
               ),
             ),
           ),
