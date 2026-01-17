@@ -462,6 +462,50 @@ class $MediaItemsTable extends MediaItems
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _parentIdMeta = const VerificationMeta(
+    'parentId',
+  );
+  @override
+  late final GeneratedColumn<int> parentId = GeneratedColumn<int>(
+    'parent_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _parentIndexMeta = const VerificationMeta(
+    'parentIndex',
+  );
+  @override
+  late final GeneratedColumn<int> parentIndex = GeneratedColumn<int>(
+    'parent_index',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _grandparentIdMeta = const VerificationMeta(
+    'grandparentId',
+  );
+  @override
+  late final GeneratedColumn<int> grandparentId = GeneratedColumn<int>(
+    'grandparent_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _grandparentIndexMeta = const VerificationMeta(
+    'grandparentIndex',
+  );
+  @override
+  late final GeneratedColumn<int> grandparentIndex = GeneratedColumn<int>(
+    'grandparent_index',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -473,6 +517,10 @@ class $MediaItemsTable extends MediaItems
     poster,
     backdrop,
     thumbnail,
+    parentId,
+    parentIndex,
+    grandparentId,
+    grandparentIndex,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -533,6 +581,39 @@ class $MediaItemsTable extends MediaItems
         thumbnail.isAcceptableOrUnknown(data['thumbnail']!, _thumbnailMeta),
       );
     }
+    if (data.containsKey('parent_id')) {
+      context.handle(
+        _parentIdMeta,
+        parentId.isAcceptableOrUnknown(data['parent_id']!, _parentIdMeta),
+      );
+    }
+    if (data.containsKey('parent_index')) {
+      context.handle(
+        _parentIndexMeta,
+        parentIndex.isAcceptableOrUnknown(
+          data['parent_index']!,
+          _parentIndexMeta,
+        ),
+      );
+    }
+    if (data.containsKey('grandparent_id')) {
+      context.handle(
+        _grandparentIdMeta,
+        grandparentId.isAcceptableOrUnknown(
+          data['grandparent_id']!,
+          _grandparentIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('grandparent_index')) {
+      context.handle(
+        _grandparentIndexMeta,
+        grandparentIndex.isAcceptableOrUnknown(
+          data['grandparent_index']!,
+          _grandparentIndexMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -580,6 +661,22 @@ class $MediaItemsTable extends MediaItems
         DriftSqlType.string,
         data['${effectivePrefix}thumbnail'],
       ),
+      parentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}parent_id'],
+      ),
+      parentIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}parent_index'],
+      ),
+      grandparentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}grandparent_id'],
+      ),
+      grandparentIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}grandparent_index'],
+      ),
     );
   }
 
@@ -602,6 +699,10 @@ class MediaItem extends DataClass implements Insertable<MediaItem> {
   final String? poster;
   final String? backdrop;
   final String? thumbnail;
+  final int? parentId;
+  final int? parentIndex;
+  final int? grandparentId;
+  final int? grandparentIndex;
   const MediaItem({
     required this.id,
     required this.type,
@@ -612,6 +713,10 @@ class MediaItem extends DataClass implements Insertable<MediaItem> {
     this.poster,
     this.backdrop,
     this.thumbnail,
+    this.parentId,
+    this.parentIndex,
+    this.grandparentId,
+    this.grandparentIndex,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -639,6 +744,18 @@ class MediaItem extends DataClass implements Insertable<MediaItem> {
     if (!nullToAbsent || thumbnail != null) {
       map['thumbnail'] = Variable<String>(thumbnail);
     }
+    if (!nullToAbsent || parentId != null) {
+      map['parent_id'] = Variable<int>(parentId);
+    }
+    if (!nullToAbsent || parentIndex != null) {
+      map['parent_index'] = Variable<int>(parentIndex);
+    }
+    if (!nullToAbsent || grandparentId != null) {
+      map['grandparent_id'] = Variable<int>(grandparentId);
+    }
+    if (!nullToAbsent || grandparentIndex != null) {
+      map['grandparent_index'] = Variable<int>(grandparentIndex);
+    }
     return map;
   }
 
@@ -665,6 +782,18 @@ class MediaItem extends DataClass implements Insertable<MediaItem> {
       thumbnail: thumbnail == null && nullToAbsent
           ? const Value.absent()
           : Value(thumbnail),
+      parentId: parentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(parentId),
+      parentIndex: parentIndex == null && nullToAbsent
+          ? const Value.absent()
+          : Value(parentIndex),
+      grandparentId: grandparentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(grandparentId),
+      grandparentIndex: grandparentIndex == null && nullToAbsent
+          ? const Value.absent()
+          : Value(grandparentIndex),
     );
   }
 
@@ -685,6 +814,10 @@ class MediaItem extends DataClass implements Insertable<MediaItem> {
       poster: serializer.fromJson<String?>(json['poster']),
       backdrop: serializer.fromJson<String?>(json['backdrop']),
       thumbnail: serializer.fromJson<String?>(json['thumbnail']),
+      parentId: serializer.fromJson<int?>(json['parentId']),
+      parentIndex: serializer.fromJson<int?>(json['parentIndex']),
+      grandparentId: serializer.fromJson<int?>(json['grandparentId']),
+      grandparentIndex: serializer.fromJson<int?>(json['grandparentIndex']),
     );
   }
   @override
@@ -702,6 +835,10 @@ class MediaItem extends DataClass implements Insertable<MediaItem> {
       'poster': serializer.toJson<String?>(poster),
       'backdrop': serializer.toJson<String?>(backdrop),
       'thumbnail': serializer.toJson<String?>(thumbnail),
+      'parentId': serializer.toJson<int?>(parentId),
+      'parentIndex': serializer.toJson<int?>(parentIndex),
+      'grandparentId': serializer.toJson<int?>(grandparentId),
+      'grandparentIndex': serializer.toJson<int?>(grandparentIndex),
     };
   }
 
@@ -715,6 +852,10 @@ class MediaItem extends DataClass implements Insertable<MediaItem> {
     Value<String?> poster = const Value.absent(),
     Value<String?> backdrop = const Value.absent(),
     Value<String?> thumbnail = const Value.absent(),
+    Value<int?> parentId = const Value.absent(),
+    Value<int?> parentIndex = const Value.absent(),
+    Value<int?> grandparentId = const Value.absent(),
+    Value<int?> grandparentIndex = const Value.absent(),
   }) => MediaItem(
     id: id ?? this.id,
     type: type ?? this.type,
@@ -725,6 +866,14 @@ class MediaItem extends DataClass implements Insertable<MediaItem> {
     poster: poster.present ? poster.value : this.poster,
     backdrop: backdrop.present ? backdrop.value : this.backdrop,
     thumbnail: thumbnail.present ? thumbnail.value : this.thumbnail,
+    parentId: parentId.present ? parentId.value : this.parentId,
+    parentIndex: parentIndex.present ? parentIndex.value : this.parentIndex,
+    grandparentId: grandparentId.present
+        ? grandparentId.value
+        : this.grandparentId,
+    grandparentIndex: grandparentIndex.present
+        ? grandparentIndex.value
+        : this.grandparentIndex,
   );
   MediaItem copyWithCompanion(MediaItemsCompanion data) {
     return MediaItem(
@@ -737,6 +886,16 @@ class MediaItem extends DataClass implements Insertable<MediaItem> {
       poster: data.poster.present ? data.poster.value : this.poster,
       backdrop: data.backdrop.present ? data.backdrop.value : this.backdrop,
       thumbnail: data.thumbnail.present ? data.thumbnail.value : this.thumbnail,
+      parentId: data.parentId.present ? data.parentId.value : this.parentId,
+      parentIndex: data.parentIndex.present
+          ? data.parentIndex.value
+          : this.parentIndex,
+      grandparentId: data.grandparentId.present
+          ? data.grandparentId.value
+          : this.grandparentId,
+      grandparentIndex: data.grandparentIndex.present
+          ? data.grandparentIndex.value
+          : this.grandparentIndex,
     );
   }
 
@@ -751,7 +910,11 @@ class MediaItem extends DataClass implements Insertable<MediaItem> {
           ..write('endDate: $endDate, ')
           ..write('poster: $poster, ')
           ..write('backdrop: $backdrop, ')
-          ..write('thumbnail: $thumbnail')
+          ..write('thumbnail: $thumbnail, ')
+          ..write('parentId: $parentId, ')
+          ..write('parentIndex: $parentIndex, ')
+          ..write('grandparentId: $grandparentId, ')
+          ..write('grandparentIndex: $grandparentIndex')
           ..write(')'))
         .toString();
   }
@@ -767,6 +930,10 @@ class MediaItem extends DataClass implements Insertable<MediaItem> {
     poster,
     backdrop,
     thumbnail,
+    parentId,
+    parentIndex,
+    grandparentId,
+    grandparentIndex,
   );
   @override
   bool operator ==(Object other) =>
@@ -780,7 +947,11 @@ class MediaItem extends DataClass implements Insertable<MediaItem> {
           other.endDate == this.endDate &&
           other.poster == this.poster &&
           other.backdrop == this.backdrop &&
-          other.thumbnail == this.thumbnail);
+          other.thumbnail == this.thumbnail &&
+          other.parentId == this.parentId &&
+          other.parentIndex == this.parentIndex &&
+          other.grandparentId == this.grandparentId &&
+          other.grandparentIndex == this.grandparentIndex);
 }
 
 class MediaItemsCompanion extends UpdateCompanion<MediaItem> {
@@ -793,6 +964,10 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItem> {
   final Value<String?> poster;
   final Value<String?> backdrop;
   final Value<String?> thumbnail;
+  final Value<int?> parentId;
+  final Value<int?> parentIndex;
+  final Value<int?> grandparentId;
+  final Value<int?> grandparentIndex;
   const MediaItemsCompanion({
     this.id = const Value.absent(),
     this.type = const Value.absent(),
@@ -803,6 +978,10 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItem> {
     this.poster = const Value.absent(),
     this.backdrop = const Value.absent(),
     this.thumbnail = const Value.absent(),
+    this.parentId = const Value.absent(),
+    this.parentIndex = const Value.absent(),
+    this.grandparentId = const Value.absent(),
+    this.grandparentIndex = const Value.absent(),
   });
   MediaItemsCompanion.insert({
     this.id = const Value.absent(),
@@ -814,6 +993,10 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItem> {
     this.poster = const Value.absent(),
     this.backdrop = const Value.absent(),
     this.thumbnail = const Value.absent(),
+    this.parentId = const Value.absent(),
+    this.parentIndex = const Value.absent(),
+    this.grandparentId = const Value.absent(),
+    this.grandparentIndex = const Value.absent(),
   }) : type = Value(type),
        name = Value(name);
   static Insertable<MediaItem> custom({
@@ -826,6 +1009,10 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItem> {
     Expression<String>? poster,
     Expression<String>? backdrop,
     Expression<String>? thumbnail,
+    Expression<int>? parentId,
+    Expression<int>? parentIndex,
+    Expression<int>? grandparentId,
+    Expression<int>? grandparentIndex,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -837,6 +1024,10 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItem> {
       if (poster != null) 'poster': poster,
       if (backdrop != null) 'backdrop': backdrop,
       if (thumbnail != null) 'thumbnail': thumbnail,
+      if (parentId != null) 'parent_id': parentId,
+      if (parentIndex != null) 'parent_index': parentIndex,
+      if (grandparentId != null) 'grandparent_id': grandparentId,
+      if (grandparentIndex != null) 'grandparent_index': grandparentIndex,
     });
   }
 
@@ -850,6 +1041,10 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItem> {
     Value<String?>? poster,
     Value<String?>? backdrop,
     Value<String?>? thumbnail,
+    Value<int?>? parentId,
+    Value<int?>? parentIndex,
+    Value<int?>? grandparentId,
+    Value<int?>? grandparentIndex,
   }) {
     return MediaItemsCompanion(
       id: id ?? this.id,
@@ -861,6 +1056,10 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItem> {
       poster: poster ?? this.poster,
       backdrop: backdrop ?? this.backdrop,
       thumbnail: thumbnail ?? this.thumbnail,
+      parentId: parentId ?? this.parentId,
+      parentIndex: parentIndex ?? this.parentIndex,
+      grandparentId: grandparentId ?? this.grandparentId,
+      grandparentIndex: grandparentIndex ?? this.grandparentIndex,
     );
   }
 
@@ -896,6 +1095,18 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItem> {
     if (thumbnail.present) {
       map['thumbnail'] = Variable<String>(thumbnail.value);
     }
+    if (parentId.present) {
+      map['parent_id'] = Variable<int>(parentId.value);
+    }
+    if (parentIndex.present) {
+      map['parent_index'] = Variable<int>(parentIndex.value);
+    }
+    if (grandparentId.present) {
+      map['grandparent_id'] = Variable<int>(grandparentId.value);
+    }
+    if (grandparentIndex.present) {
+      map['grandparent_index'] = Variable<int>(grandparentIndex.value);
+    }
     return map;
   }
 
@@ -910,7 +1121,11 @@ class MediaItemsCompanion extends UpdateCompanion<MediaItem> {
           ..write('endDate: $endDate, ')
           ..write('poster: $poster, ')
           ..write('backdrop: $backdrop, ')
-          ..write('thumbnail: $thumbnail')
+          ..write('thumbnail: $thumbnail, ')
+          ..write('parentId: $parentId, ')
+          ..write('parentIndex: $parentIndex, ')
+          ..write('grandparentId: $grandparentId, ')
+          ..write('grandparentIndex: $grandparentIndex')
           ..write(')'))
         .toString();
   }
@@ -1393,6 +1608,10 @@ typedef $$MediaItemsTableCreateCompanionBuilder =
       Value<String?> poster,
       Value<String?> backdrop,
       Value<String?> thumbnail,
+      Value<int?> parentId,
+      Value<int?> parentIndex,
+      Value<int?> grandparentId,
+      Value<int?> grandparentIndex,
     });
 typedef $$MediaItemsTableUpdateCompanionBuilder =
     MediaItemsCompanion Function({
@@ -1405,6 +1624,10 @@ typedef $$MediaItemsTableUpdateCompanionBuilder =
       Value<String?> poster,
       Value<String?> backdrop,
       Value<String?> thumbnail,
+      Value<int?> parentId,
+      Value<int?> parentIndex,
+      Value<int?> grandparentId,
+      Value<int?> grandparentIndex,
     });
 
 class $$MediaItemsTableFilterComposer
@@ -1459,6 +1682,26 @@ class $$MediaItemsTableFilterComposer
 
   ColumnFilters<String> get thumbnail => $composableBuilder(
     column: $table.thumbnail,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get parentId => $composableBuilder(
+    column: $table.parentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get parentIndex => $composableBuilder(
+    column: $table.parentIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get grandparentId => $composableBuilder(
+    column: $table.grandparentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get grandparentIndex => $composableBuilder(
+    column: $table.grandparentIndex,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1516,6 +1759,26 @@ class $$MediaItemsTableOrderingComposer
     column: $table.thumbnail,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get parentId => $composableBuilder(
+    column: $table.parentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get parentIndex => $composableBuilder(
+    column: $table.parentIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get grandparentId => $composableBuilder(
+    column: $table.grandparentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get grandparentIndex => $composableBuilder(
+    column: $table.grandparentIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MediaItemsTableAnnotationComposer
@@ -1553,6 +1816,24 @@ class $$MediaItemsTableAnnotationComposer
 
   GeneratedColumn<String> get thumbnail =>
       $composableBuilder(column: $table.thumbnail, builder: (column) => column);
+
+  GeneratedColumn<int> get parentId =>
+      $composableBuilder(column: $table.parentId, builder: (column) => column);
+
+  GeneratedColumn<int> get parentIndex => $composableBuilder(
+    column: $table.parentIndex,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get grandparentId => $composableBuilder(
+    column: $table.grandparentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get grandparentIndex => $composableBuilder(
+    column: $table.grandparentIndex,
+    builder: (column) => column,
+  );
 }
 
 class $$MediaItemsTableTableManager
@@ -1595,6 +1876,10 @@ class $$MediaItemsTableTableManager
                 Value<String?> poster = const Value.absent(),
                 Value<String?> backdrop = const Value.absent(),
                 Value<String?> thumbnail = const Value.absent(),
+                Value<int?> parentId = const Value.absent(),
+                Value<int?> parentIndex = const Value.absent(),
+                Value<int?> grandparentId = const Value.absent(),
+                Value<int?> grandparentIndex = const Value.absent(),
               }) => MediaItemsCompanion(
                 id: id,
                 type: type,
@@ -1605,6 +1890,10 @@ class $$MediaItemsTableTableManager
                 poster: poster,
                 backdrop: backdrop,
                 thumbnail: thumbnail,
+                parentId: parentId,
+                parentIndex: parentIndex,
+                grandparentId: grandparentId,
+                grandparentIndex: grandparentIndex,
               ),
           createCompanionCallback:
               ({
@@ -1617,6 +1906,10 @@ class $$MediaItemsTableTableManager
                 Value<String?> poster = const Value.absent(),
                 Value<String?> backdrop = const Value.absent(),
                 Value<String?> thumbnail = const Value.absent(),
+                Value<int?> parentId = const Value.absent(),
+                Value<int?> parentIndex = const Value.absent(),
+                Value<int?> grandparentId = const Value.absent(),
+                Value<int?> grandparentIndex = const Value.absent(),
               }) => MediaItemsCompanion.insert(
                 id: id,
                 type: type,
@@ -1627,6 +1920,10 @@ class $$MediaItemsTableTableManager
                 poster: poster,
                 backdrop: backdrop,
                 thumbnail: thumbnail,
+                parentId: parentId,
+                parentIndex: parentIndex,
+                grandparentId: grandparentId,
+                grandparentIndex: grandparentIndex,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$HomeScreenData implements DiagnosticableTreeMixin {
 
- List<MediaItem> get continueWatching; List<MediaItem> get recentMovies; List<MediaItem> get recentShows; List<db.MediaItem> get offlineItems;
+ List<MediaItem> get continueWatching; List<MediaItem> get recentMovies; List<MediaItem> get recentShows; List<MediaItem> get offlineItems;
 /// Create a copy of HomeScreenData
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -51,7 +51,7 @@ abstract mixin class $HomeScreenDataCopyWith<$Res>  {
   factory $HomeScreenDataCopyWith(HomeScreenData value, $Res Function(HomeScreenData) _then) = _$HomeScreenDataCopyWithImpl;
 @useResult
 $Res call({
- List<MediaItem> continueWatching, List<MediaItem> recentMovies, List<MediaItem> recentShows, List<db.MediaItem> offlineItems
+ List<MediaItem> continueWatching, List<MediaItem> recentMovies, List<MediaItem> recentShows, List<MediaItem> offlineItems
 });
 
 
@@ -74,7 +74,7 @@ continueWatching: null == continueWatching ? _self.continueWatching : continueWa
 as List<MediaItem>,recentMovies: null == recentMovies ? _self.recentMovies : recentMovies // ignore: cast_nullable_to_non_nullable
 as List<MediaItem>,recentShows: null == recentShows ? _self.recentShows : recentShows // ignore: cast_nullable_to_non_nullable
 as List<MediaItem>,offlineItems: null == offlineItems ? _self.offlineItems : offlineItems // ignore: cast_nullable_to_non_nullable
-as List<db.MediaItem>,
+as List<MediaItem>,
   ));
 }
 
@@ -159,7 +159,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<MediaItem> continueWatching,  List<MediaItem> recentMovies,  List<MediaItem> recentShows,  List<db.MediaItem> offlineItems)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<MediaItem> continueWatching,  List<MediaItem> recentMovies,  List<MediaItem> recentShows,  List<MediaItem> offlineItems)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _HomeScreenData() when $default != null:
 return $default(_that.continueWatching,_that.recentMovies,_that.recentShows,_that.offlineItems);case _:
@@ -180,7 +180,7 @@ return $default(_that.continueWatching,_that.recentMovies,_that.recentShows,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<MediaItem> continueWatching,  List<MediaItem> recentMovies,  List<MediaItem> recentShows,  List<db.MediaItem> offlineItems)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<MediaItem> continueWatching,  List<MediaItem> recentMovies,  List<MediaItem> recentShows,  List<MediaItem> offlineItems)  $default,) {final _that = this;
 switch (_that) {
 case _HomeScreenData():
 return $default(_that.continueWatching,_that.recentMovies,_that.recentShows,_that.offlineItems);case _:
@@ -200,7 +200,7 @@ return $default(_that.continueWatching,_that.recentMovies,_that.recentShows,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<MediaItem> continueWatching,  List<MediaItem> recentMovies,  List<MediaItem> recentShows,  List<db.MediaItem> offlineItems)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<MediaItem> continueWatching,  List<MediaItem> recentMovies,  List<MediaItem> recentShows,  List<MediaItem> offlineItems)?  $default,) {final _that = this;
 switch (_that) {
 case _HomeScreenData() when $default != null:
 return $default(_that.continueWatching,_that.recentMovies,_that.recentShows,_that.offlineItems);case _:
@@ -215,7 +215,7 @@ return $default(_that.continueWatching,_that.recentMovies,_that.recentShows,_tha
 
 
 class _HomeScreenData with DiagnosticableTreeMixin implements HomeScreenData {
-   _HomeScreenData({required final  List<MediaItem> continueWatching, required final  List<MediaItem> recentMovies, required final  List<MediaItem> recentShows, required final  List<db.MediaItem> offlineItems}): _continueWatching = continueWatching,_recentMovies = recentMovies,_recentShows = recentShows,_offlineItems = offlineItems;
+   _HomeScreenData({required final  List<MediaItem> continueWatching, required final  List<MediaItem> recentMovies, required final  List<MediaItem> recentShows, required final  List<MediaItem> offlineItems}): _continueWatching = continueWatching,_recentMovies = recentMovies,_recentShows = recentShows,_offlineItems = offlineItems;
   
 
  final  List<MediaItem> _continueWatching;
@@ -239,8 +239,8 @@ class _HomeScreenData with DiagnosticableTreeMixin implements HomeScreenData {
   return EqualUnmodifiableListView(_recentShows);
 }
 
- final  List<db.MediaItem> _offlineItems;
-@override List<db.MediaItem> get offlineItems {
+ final  List<MediaItem> _offlineItems;
+@override List<MediaItem> get offlineItems {
   if (_offlineItems is EqualUnmodifiableListView) return _offlineItems;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_offlineItems);
@@ -283,7 +283,7 @@ abstract mixin class _$HomeScreenDataCopyWith<$Res> implements $HomeScreenDataCo
   factory _$HomeScreenDataCopyWith(_HomeScreenData value, $Res Function(_HomeScreenData) _then) = __$HomeScreenDataCopyWithImpl;
 @override @useResult
 $Res call({
- List<MediaItem> continueWatching, List<MediaItem> recentMovies, List<MediaItem> recentShows, List<db.MediaItem> offlineItems
+ List<MediaItem> continueWatching, List<MediaItem> recentMovies, List<MediaItem> recentShows, List<MediaItem> offlineItems
 });
 
 
@@ -306,7 +306,7 @@ continueWatching: null == continueWatching ? _self._continueWatching : continueW
 as List<MediaItem>,recentMovies: null == recentMovies ? _self._recentMovies : recentMovies // ignore: cast_nullable_to_non_nullable
 as List<MediaItem>,recentShows: null == recentShows ? _self._recentShows : recentShows // ignore: cast_nullable_to_non_nullable
 as List<MediaItem>,offlineItems: null == offlineItems ? _self._offlineItems : offlineItems // ignore: cast_nullable_to_non_nullable
-as List<db.MediaItem>,
+as List<MediaItem>,
   ));
 }
 

@@ -13,7 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/cookies.dart';
-import 'package:zenith/database/database.dart';
+import 'package:zenith/database/database.dart' hide MediaItem;
 import 'package:zenith/downloader/downloader_base.dart';
 
 const _channel = MethodChannel('zenith.hasali.dev/downloader');
@@ -56,7 +56,6 @@ class ZenithDownloader extends BaseDownloader {
     required String fileName,
   }) async {
     final url = getUrl(itemId, videoFileId);
-    final mediaItem = await this.api.fetchMediaItem(itemId);
 
     if (Platform.isAndroid) {
       await _ensureInit();
@@ -103,27 +102,46 @@ class ZenithDownloader extends BaseDownloader {
 
       final id = _uuid.v4();
 
+      final mediaItem = await this.api.fetchMediaItem(itemId);
+      final mediaItemsToCache = <MediaItem>[];
+
+      if (mediaItem.grandparent case MediaItemParent(:final id)) {
+        mediaItemsToCache.add(await this.api.fetchMediaItem(id));
+      }
+
+      if (mediaItem.parent case MediaItemParent(:final id)) {
+        mediaItemsToCache.add(await this.api.fetchMediaItem(id));
+      }
+
+      mediaItemsToCache.add(mediaItem);
+
       await _db.transaction(() async {
-        await _db
-            .into(_db.mediaItems)
-            .insertOnConflictUpdate(
-              MediaItemsCompanion.insert(
-                id: Value(mediaItem.id),
-                type: switch (mediaItem.type) {
-                  .movie => .movie,
-                  .show => .show,
-                  .season => .season,
-                  .episode => .episode,
-                },
-                name: mediaItem.name,
-                overview: Value(mediaItem.overview),
-                startDate: Value(mediaItem.startDate?._formatISODate()),
-                endDate: Value(mediaItem.endDate?._formatISODate()),
-                poster: Value(mediaItem.poster?.value),
-                backdrop: Value(mediaItem.backdrop?.value),
-                thumbnail: Value(mediaItem.thumbnail?.value),
-              ),
-            );
+        for (final mediaItem in mediaItemsToCache) {
+          await _db
+              .into(_db.mediaItems)
+              .insertOnConflictUpdate(
+                MediaItemsCompanion.insert(
+                  id: Value(mediaItem.id),
+                  type: switch (mediaItem.type) {
+                    .movie => .movie,
+                    .show => .show,
+                    .season => .season,
+                    .episode => .episode,
+                  },
+                  name: mediaItem.name,
+                  overview: Value(mediaItem.overview),
+                  startDate: Value(mediaItem.startDate?._formatISODate()),
+                  endDate: Value(mediaItem.endDate?._formatISODate()),
+                  poster: Value(mediaItem.poster?.value),
+                  backdrop: Value(mediaItem.backdrop?.value),
+                  thumbnail: Value(mediaItem.thumbnail?.value),
+                  parentId: Value(mediaItem.parent?.id),
+                  parentIndex: Value(mediaItem.parent?.index),
+                  grandparentId: Value(mediaItem.grandparent?.id),
+                  grandparentIndex: Value(mediaItem.grandparent?.index),
+                ),
+              );
+        }
 
         await _db
             .into(_db.downloadedFiles)
