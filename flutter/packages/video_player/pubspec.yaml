@@ -6,7 +6,7 @@ publish_to: none
 
 environment:
   sdk: ">=3.10.0 <4.0.0"
-  flutter: ">=2.11.0"
+  flutter: ">=3.3.0"
 
 resolution: workspace
 
@@ -26,6 +26,9 @@ dependencies:
   http: ^1.1.0
   plugin_platform_interface: ^2.1.2
   web: ^1.1.0
+  media_kit: ^1.2.6
+  media_kit_video: ^2.0.1
+  media_kit_libs_video: ^1.0.7
 
 dev_dependencies:
   flutter_test:
@@ -40,6 +43,8 @@ flutter:
         pluginClass: VideoPlayerPlugin
         dartPluginClass: VideoPlayerAndroid
       flion:
+      linux:
+        dartPluginClass: VideoPlayerLinux
       web:
         pluginClass: VideoPlayerWeb
         fileName: video_player_web.dart
