@@ -67,6 +67,29 @@ jobs:
           name: zenith-flutter-android
           path: flutter/packages/zenith/build/app/outputs/flutter-apk/app-*-release.apk
 
+  build_linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: beta
+
+      - run: |
+          sudo apt-get update -y
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev libsecret-1-dev libmpv-dev
+
+      - run: |
+          export GIT_COMMIT_HASH=$(git rev-parse HEAD)
+          flutter build linux --build-number=$GITHUB_RUN_NUMBER --dart-define=GIT_COMMIT_HASH=$GIT_COMMIT_HASH
+        working-directory: flutter/packages/zenith
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zenith-flutter-linux
+          path: flutter/packages/zenith/build/linux/x64/release/bundle
+
   build_web:
     runs-on: ubuntu-latest
     steps:
@@ -284,6 +307,7 @@ jobs:
     needs:
       - check_generated_code
       - build_android
+      - build_linux
       - build_web
       - build_windows
       # - build_flion
@@ -323,6 +347,11 @@ jobs:
           echo "Preparing web zip"
           cd artifacts/zenith-flutter-web
           zip -r ../../release_artifacts/zenith-web.zip *
+          cd ../..
+
+          echo "Preparing linux zip"
+          cd artifacts/zenith-flutter-linux
+          zip -r ../../release_artifacts/zenith-linux.zip *
           cd ../..
 
       - uses: "marvinpinto/action-automatic-releases@latest"
