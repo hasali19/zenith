@@ -300,7 +300,7 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     final position = controller.position.toInt();
     if (kReleaseMode &&
         controller.state == VideoState.active &&
-        controller.paused == false &&
+        !controller.paused &&
         position > 0) {
       // TODO: Be smarter about progress reporting
       // - report when playback state changes, after seeking, etc

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/api.dart';
 import 'package:zenith/database/database.dart' as db;
+import 'package:zenith/repo/media_items_repo.dart';
 import 'package:zenith/routes/item_details/item_details_state.dart';
 
 part 'item_details_controller.g.dart';
@@ -14,10 +15,11 @@ class ItemDetailsController extends _$ItemDetailsController {
 
   late final _api = ref.watch(apiProvider);
   late final _db = ref.watch(db.databaseProvider);
+  late final _mediaItemsRepo = ref.watch(mediaItemsRepoProvider);
 
   @override
   AsyncValue<ItemDetailsState> build(int id) {
-    _refreshApi();
+    _refreshData();
 
     final downloadedFilesSubscription =
         (_db.select(
@@ -39,90 +41,23 @@ class ItemDetailsController extends _$ItemDetailsController {
   }
 
   Future<void> refresh() {
-    return _refreshApi();
+    return _refreshData();
   }
 
-  Future<void> _refreshApi() async {
+  Future<void> _refreshData() async {
     MediaItem item;
-    bool isOffline = false;
+
     try {
-      item = await _api.fetchMediaItem(id);
-    } catch (e, s) {
-      final parentTable = _db.mediaItems.createAlias('parent');
-      final grandparentTable = _db.mediaItems.createAlias('grandparent');
-      final offlineItemQuery = _db.select(_db.mediaItems).join([
-        leftOuterJoin(
-          parentTable,
-          _db.mediaItems.parentId.equalsExp(parentTable.id),
-        ),
-        leftOuterJoin(
-          grandparentTable,
-          _db.mediaItems.grandparentId.equalsExp(grandparentTable.id),
-        ),
-      ])..where(_db.mediaItems.id.equals(id));
-
-      final offlineItemResult = await offlineItemQuery.getSingleOrNull();
-
-      if (offlineItemResult == null) {
-        _item = AsyncError(e, s);
-        return _updateState();
+      final maybeItem = await _mediaItemsRepo.getById(id);
+      if (maybeItem == null) {
+        throw Exception('No item found with id $id');
       } else {
-        isOffline = true;
-
-        final offlineItem = offlineItemResult.readTable(_db.mediaItems);
-        final parentItem = offlineItemResult.readTableOrNull(parentTable);
-        final grandparentItem = offlineItemResult.readTableOrNull(
-          grandparentTable,
-        );
-
-        MediaItemParent? parent;
-        MediaItemParent? grandparent;
-
-        if ((parentItem, offlineItem.parentIndex) case (
-          final parentItem?,
-          final index?,
-        )) {
-          parent = MediaItemParent(parentItem.id, index, parentItem.name);
-        }
-
-        if ((grandparentItem, offlineItem.grandparentIndex) case (
-          final grandparentItem?,
-          final index?,
-        )) {
-          grandparent = MediaItemParent(
-            grandparentItem.id,
-            index,
-            grandparentItem.name,
-          );
-        }
-
-        item = MediaItem(
-          id: id,
-          type: switch (offlineItem.type) {
-            .movie => .movie,
-            .show => .show,
-            .season => .season,
-            .episode => .episode,
-          },
-          name: offlineItem.name,
-          overview: offlineItem.overview,
-          startDate: DateTime.tryParse(offlineItem.startDate ?? ''),
-          endDate: DateTime.tryParse(offlineItem.endDate ?? ''),
-          poster: offlineItem.poster as ImageId?,
-          backdrop: offlineItem.backdrop as ImageId?,
-          thumbnail: offlineItem.thumbnail as ImageId?,
-          parent: parent,
-          grandparent: grandparent,
-          videoFile: null,
-          videoUserData: null,
-          collectionUserData: null,
-          genres: [],
-          ageRating: null,
-          trailer: null,
-          director: null,
-          cast: [],
-        );
+        item = maybeItem;
       }
+    } catch (e, s) {
+      _item = AsyncError(e, s);
+      _updateState();
+      return;
     }
 
     _item = AsyncData(item);
@@ -138,13 +73,8 @@ class ItemDetailsController extends _$ItemDetailsController {
       }
 
       _seasons = AsyncData(seasons);
-    } catch (e, s) {
-      if (isOffline) {
-        _seasons = AsyncData([]);
-      } else {
-        _seasons = AsyncError(e, s);
-        return _updateState();
-      }
+    } catch (e) {
+      _seasons = AsyncData([]);
     }
 
     _updateState();
