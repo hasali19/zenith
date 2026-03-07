@@ -175,6 +175,46 @@
             "default_dart": null,
             "default_client_dart": null,
             "dsl_features": []
+          },
+          {
+            "name": "parent_id",
+            "getter_name": "parentId",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "parent_index",
+            "getter_name": "parentIndex",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "grandparent_id",
+            "getter_name": "grandparentId",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "grandparent_index",
+            "getter_name": "grandparentIndex",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
           }
         ],
         "is_virtual": false,
@@ -263,7 +303,7 @@
       "sql": [
         {
           "dialect": "sqlite",
-          "sql": "CREATE TABLE IF NOT EXISTS \"media_items\" (\"id\" INTEGER NOT NULL, \"type\" INTEGER NOT NULL, \"name\" TEXT NOT NULL, \"overview\" TEXT NULL, \"start_date\" TEXT NULL, \"end_date\" TEXT NULL, \"poster\" TEXT NULL, \"backdrop\" TEXT NULL, \"thumbnail\" TEXT NULL, PRIMARY KEY (\"id\"));"
+          "sql": "CREATE TABLE IF NOT EXISTS \"media_items\" (\"id\" INTEGER NOT NULL, \"type\" INTEGER NOT NULL, \"name\" TEXT NOT NULL, \"overview\" TEXT NULL, \"start_date\" TEXT NULL, \"end_date\" TEXT NULL, \"poster\" TEXT NULL, \"backdrop\" TEXT NULL, \"thumbnail\" TEXT NULL, \"parent_id\" INTEGER NULL, \"parent_index\" INTEGER NULL, \"grandparent_id\" INTEGER NULL, \"grandparent_index\" INTEGER NULL, PRIMARY KEY (\"id\"));"
         }
       ]
     },
