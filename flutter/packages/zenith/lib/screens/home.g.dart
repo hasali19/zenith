@@ -46,4 +46,4 @@ final class _StateProvider
   }
 }
 
-String _$_stateHash() => r'61296860eadd3fd62f6d152ba071caaf79c538b1';
+String _$_stateHash() => r'58b0b144f1bc35e7fd286fa453227bb1ae7f6a7a';

@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ItemDetailsState {
 
- MediaItem get item; ImageId? get poster; ImageId? get backdrop; List<EpisodeGroupState> get seasons; PlayableState? get playable; bool get isWatched; String? get durationText; DownloadedFile? get downloadedFile;
+ MediaItem get item; ImageId? get poster; ImageId? get backdrop; List<EpisodeGroupState> get seasons; PlayableState? get playable; bool get isWatched; String? get durationText; db.DownloadedFile? get downloadedFile;
 /// Create a copy of ItemDetailsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -45,7 +45,7 @@ abstract mixin class $ItemDetailsStateCopyWith<$Res>  {
   factory $ItemDetailsStateCopyWith(ItemDetailsState value, $Res Function(ItemDetailsState) _then) = _$ItemDetailsStateCopyWithImpl;
 @useResult
 $Res call({
- MediaItem item, ImageId? poster, ImageId? backdrop, List<EpisodeGroupState> seasons, PlayableState? playable, bool isWatched, String? durationText, DownloadedFile? downloadedFile
+ MediaItem item, ImageId? poster, ImageId? backdrop, List<EpisodeGroupState> seasons, PlayableState? playable, bool isWatched, String? durationText, db.DownloadedFile? downloadedFile
 });
 
 
@@ -72,7 +72,7 @@ as List<EpisodeGroupState>,playable: freezed == playable ? _self.playable : play
 as PlayableState?,isWatched: null == isWatched ? _self.isWatched : isWatched // ignore: cast_nullable_to_non_nullable
 as bool,durationText: freezed == durationText ? _self.durationText : durationText // ignore: cast_nullable_to_non_nullable
 as String?,downloadedFile: freezed == downloadedFile ? _self.downloadedFile : downloadedFile // ignore: cast_nullable_to_non_nullable
-as DownloadedFile?,
+as db.DownloadedFile?,
   ));
 }
 /// Create a copy of ItemDetailsState
@@ -169,7 +169,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( MediaItem item,  ImageId? poster,  ImageId? backdrop,  List<EpisodeGroupState> seasons,  PlayableState? playable,  bool isWatched,  String? durationText,  DownloadedFile? downloadedFile)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( MediaItem item,  ImageId? poster,  ImageId? backdrop,  List<EpisodeGroupState> seasons,  PlayableState? playable,  bool isWatched,  String? durationText,  db.DownloadedFile? downloadedFile)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ItemDetailsState() when $default != null:
 return $default(_that.item,_that.poster,_that.backdrop,_that.seasons,_that.playable,_that.isWatched,_that.durationText,_that.downloadedFile);case _:
@@ -190,7 +190,7 @@ return $default(_that.item,_that.poster,_that.backdrop,_that.seasons,_that.playa
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( MediaItem item,  ImageId? poster,  ImageId? backdrop,  List<EpisodeGroupState> seasons,  PlayableState? playable,  bool isWatched,  String? durationText,  DownloadedFile? downloadedFile)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( MediaItem item,  ImageId? poster,  ImageId? backdrop,  List<EpisodeGroupState> seasons,  PlayableState? playable,  bool isWatched,  String? durationText,  db.DownloadedFile? downloadedFile)  $default,) {final _that = this;
 switch (_that) {
 case _ItemDetailsState():
 return $default(_that.item,_that.poster,_that.backdrop,_that.seasons,_that.playable,_that.isWatched,_that.durationText,_that.downloadedFile);case _:
@@ -210,7 +210,7 @@ return $default(_that.item,_that.poster,_that.backdrop,_that.seasons,_that.playa
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( MediaItem item,  ImageId? poster,  ImageId? backdrop,  List<EpisodeGroupState> seasons,  PlayableState? playable,  bool isWatched,  String? durationText,  DownloadedFile? downloadedFile)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( MediaItem item,  ImageId? poster,  ImageId? backdrop,  List<EpisodeGroupState> seasons,  PlayableState? playable,  bool isWatched,  String? durationText,  db.DownloadedFile? downloadedFile)?  $default,) {final _that = this;
 switch (_that) {
 case _ItemDetailsState() when $default != null:
 return $default(_that.item,_that.poster,_that.backdrop,_that.seasons,_that.playable,_that.isWatched,_that.durationText,_that.downloadedFile);case _:
@@ -241,7 +241,7 @@ class _ItemDetailsState implements ItemDetailsState {
 @override final  PlayableState? playable;
 @override final  bool isWatched;
 @override final  String? durationText;
-@override final  DownloadedFile? downloadedFile;
+@override final  db.DownloadedFile? downloadedFile;
 
 /// Create a copy of ItemDetailsState
 /// with the given fields replaced by the non-null parameter values.
@@ -273,7 +273,7 @@ abstract mixin class _$ItemDetailsStateCopyWith<$Res> implements $ItemDetailsSta
   factory _$ItemDetailsStateCopyWith(_ItemDetailsState value, $Res Function(_ItemDetailsState) _then) = __$ItemDetailsStateCopyWithImpl;
 @override @useResult
 $Res call({
- MediaItem item, ImageId? poster, ImageId? backdrop, List<EpisodeGroupState> seasons, PlayableState? playable, bool isWatched, String? durationText, DownloadedFile? downloadedFile
+ MediaItem item, ImageId? poster, ImageId? backdrop, List<EpisodeGroupState> seasons, PlayableState? playable, bool isWatched, String? durationText, db.DownloadedFile? downloadedFile
 });
 
 
@@ -300,7 +300,7 @@ as List<EpisodeGroupState>,playable: freezed == playable ? _self.playable : play
 as PlayableState?,isWatched: null == isWatched ? _self.isWatched : isWatched // ignore: cast_nullable_to_non_nullable
 as bool,durationText: freezed == durationText ? _self.durationText : durationText // ignore: cast_nullable_to_non_nullable
 as String?,downloadedFile: freezed == downloadedFile ? _self.downloadedFile : downloadedFile // ignore: cast_nullable_to_non_nullable
-as DownloadedFile?,
+as db.DownloadedFile?,
   ));
 }
 

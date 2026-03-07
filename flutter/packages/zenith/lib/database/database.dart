@@ -30,12 +30,33 @@ class DownloadedFiles extends Table {
   Set<Column<Object>>? get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [Servers, DownloadedFiles])
+enum MediaItemType { movie, show, season, episode }
+
+class MediaItems extends Table {
+  IntColumn get id => integer()();
+  IntColumn get type => intEnum<MediaItemType>()();
+  TextColumn get name => text()();
+  TextColumn get overview => text().nullable()();
+  TextColumn get startDate => text().nullable()();
+  TextColumn get endDate => text().nullable()();
+  TextColumn get poster => text().nullable()();
+  TextColumn get backdrop => text().nullable()();
+  TextColumn get thumbnail => text().nullable()();
+  IntColumn get parentId => integer().nullable()();
+  IntColumn get parentIndex => integer().nullable()();
+  IntColumn get grandparentId => integer().nullable()();
+  IntColumn get grandparentIndex => integer().nullable()();
+
+  @override
+  Set<Column<Object>>? get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [DownloadedFiles, MediaItems, Servers])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? createExecutor());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -87,6 +108,9 @@ class AppDatabase extends _$AppDatabase {
   static final _upgrade = migrationSteps(
     from1To2: (m, schema) async {
       await m.createTable(schema.servers);
+    },
+    from2To3: (m, schema) async {
+      await m.createTable(schema.mediaItems);
     },
   );
 }

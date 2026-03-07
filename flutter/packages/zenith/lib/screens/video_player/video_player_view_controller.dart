@@ -2,6 +2,7 @@ import 'package:cast_framework/cast_framework.dart' as cast;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/api.dart';
+import 'package:zenith/repo/media_items_repo.dart';
 
 part 'video_player_view_controller.freezed.dart';
 part 'video_player_view_controller.g.dart';
@@ -37,13 +38,30 @@ class VideoPlayerViewController extends _$VideoPlayerViewController {
   @override
   Future<VideoPlayerState> build(int id) async {
     final api = ref.watch(apiProvider);
+    final mediaItemsRepo = ref.watch(mediaItemsRepoProvider);
 
-    final requestedItem = await api.fetchMediaItem(id);
+    MediaItem? requestedItem = await mediaItemsRepo.getById(id);
+    if (requestedItem == null) {
+      throw Exception('No item found with id $id');
+    }
+
     final playlist = switch (requestedItem.type) {
-      MediaType.episode => await api.fetchShowEpisodes(
-        requestedItem.grandparent!.id,
+      .movie => [requestedItem],
+      .episode => await Future(() async {
+        if (requestedItem.grandparent case MediaItemParent show) {
+          try {
+            // TODO: Try to load from db
+            return await api.fetchShowEpisodes(show.id);
+          } catch (e) {
+            print('Failed to fetch episodes for show: $e');
+          }
+        }
+
+        return [requestedItem];
+      }),
+      .show || .season => throw ArgumentError(
+        'Cannot play this media type: ${requestedItem.type}',
       ),
-      _ => [requestedItem],
     };
 
     int startIndex = playlist.indexWhere((item) => item.id == requestedItem.id);

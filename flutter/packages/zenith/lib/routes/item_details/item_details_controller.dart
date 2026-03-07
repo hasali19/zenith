@@ -1,8 +1,8 @@
-import 'dart:typed_data';
-
+import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:zenith/api.dart';
-import 'package:zenith/database/database.dart';
+import 'package:zenith/database/database.dart' as db;
+import 'package:zenith/repo/media_items_repo.dart';
 import 'package:zenith/routes/item_details/item_details_state.dart';
 
 part 'item_details_controller.g.dart';
@@ -11,14 +11,15 @@ part 'item_details_controller.g.dart';
 class ItemDetailsController extends _$ItemDetailsController {
   AsyncValue<MediaItem> _item = AsyncLoading();
   AsyncValue<List<(MediaItem, List<MediaItem>)>> _seasons = AsyncLoading();
-  AsyncValue<DownloadedFile?> _download = AsyncLoading();
+  AsyncValue<db.DownloadedFile?> _download = AsyncLoading();
 
   late final _api = ref.watch(apiProvider);
-  late final _db = ref.watch(databaseProvider);
+  late final _db = ref.watch(db.databaseProvider);
+  late final _mediaItemsRepo = ref.watch(mediaItemsRepoProvider);
 
   @override
   AsyncValue<ItemDetailsState> build(int id) {
-    _refreshApi();
+    _refreshData();
 
     final downloadedFilesSubscription =
         (_db.select(
@@ -40,18 +41,26 @@ class ItemDetailsController extends _$ItemDetailsController {
   }
 
   Future<void> refresh() {
-    return _refreshApi();
+    return _refreshData();
   }
 
-  Future<void> _refreshApi() async {
-    final MediaItem item;
+  Future<void> _refreshData() async {
+    MediaItem item;
+
     try {
-      item = await _api.fetchMediaItem(id);
-      _item = AsyncData(item);
+      final maybeItem = await _mediaItemsRepo.getById(id);
+      if (maybeItem == null) {
+        throw Exception('No item found with id $id');
+      } else {
+        item = maybeItem;
+      }
     } catch (e, s) {
       _item = AsyncError(e, s);
-      return _updateState();
+      _updateState();
+      return;
     }
+
+    _item = AsyncData(item);
 
     try {
       final seasons = <(MediaItem, List<MediaItem>)>[];
@@ -64,9 +73,8 @@ class ItemDetailsController extends _$ItemDetailsController {
       }
 
       _seasons = AsyncData(seasons);
-    } catch (e, s) {
-      _seasons = AsyncError(e, s);
-      return _updateState();
+    } catch (e) {
+      _seasons = AsyncData([]);
     }
 
     _updateState();
@@ -174,7 +182,7 @@ PlayableState? _getPlayableForItem(
 
   final currentProgress = () {
     final position = playable.videoUserData?.position ?? 0;
-    final duration = playable.videoFile!.duration;
+    final duration = playable.videoFile?.duration ?? 0;
     final progress = position / duration;
     if (progress > 0.05 && progress < 0.9) {
       return progress;
@@ -184,7 +192,7 @@ PlayableState? _getPlayableForItem(
 
   final remainingProgress = () {
     final position = playable.videoUserData?.position ?? 0;
-    final duration = playable.videoFile!.duration;
+    final duration = playable.videoFile?.duration ?? 0;
     return duration - position;
   }();
 
