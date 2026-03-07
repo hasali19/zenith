@@ -60,7 +60,7 @@ final class ItemDetailsControllerProvider
 }
 
 String _$itemDetailsControllerHash() =>
-    r'5e09157a992264f1457dc573a5315e98a5bb8c23';
+    r'd5f1ca103a839ad8beae551f1caef824404f363e';
 
 final class ItemDetailsControllerFamily extends $Family
     with

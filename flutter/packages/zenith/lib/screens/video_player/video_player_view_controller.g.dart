@@ -53,7 +53,7 @@ final class VideoPlayerViewControllerProvider
 }
 
 String _$videoPlayerViewControllerHash() =>
-    r'818e532f1d7d6f243c1d1f0c4a0894a57aaa23c1';
+    r'3716c5d5b31bcf96a1d65e5a5f13d918026d55be';
 
 final class VideoPlayerViewControllerFamily extends $Family
     with
