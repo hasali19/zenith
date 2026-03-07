@@ -10,6 +10,8 @@
 struct _MyApplication {
   GtkApplication parent_instance;
   char** dart_entrypoint_arguments;
+  FlMethodChannel* windowing_channel;
+  GtkWindow* window;
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
@@ -19,11 +21,35 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
 }
 
+static void windowing_method_call_handler(FlMethodChannel* channel, FlMethodCall* method_call, gpointer user_data) {
+  MyApplication* self = (MyApplication*)user_data;
+
+  g_autoptr(FlMethodResponse) response = nullptr;
+  if (strcmp(fl_method_call_get_name(method_call), "setFullscreen") == 0) {
+    FlValue* fl_value = fl_method_call_get_args(method_call);
+    bool value = fl_value_get_bool(fl_value);
+    if (value) {
+      gtk_window_fullscreen(self->window);
+    } else {
+      gtk_window_unfullscreen(self->window);
+    }
+    response = FL_METHOD_RESPONSE(fl_method_success_response_new(fl_value_new_null()));
+  } else {
+    response = FL_METHOD_RESPONSE(fl_method_not_implemented_response_new());
+  }
+
+  g_autoptr(GError) error = nullptr;
+  if (!fl_method_call_respond(method_call, response, &error)) {
+    g_warning("Failed to send response: %s", error->message);
+  }
+}
+
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
+  self->window = window;
 
   // Use a header bar when running in GNOME as this is the common style used
   // by applications and is the setup most users will be using (e.g. Ubuntu
@@ -75,6 +101,10 @@ static void my_application_activate(GApplication* application) {
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
 
+  g_autoptr(FlStandardMethodCodec) codec = fl_standard_method_codec_new();
+  self->windowing_channel = fl_method_channel_new(fl_engine_get_binary_messenger(fl_view_get_engine(view)), "zenith.hasali.uk/windowing", FL_METHOD_CODEC(codec));
+  fl_method_channel_set_method_call_handler(self->windowing_channel, windowing_method_call_handler, self, nullptr);
+
   gtk_widget_grab_focus(GTK_WIDGET(view));
 }
 
@@ -121,6 +151,7 @@ static void my_application_shutdown(GApplication* application) {
 static void my_application_dispose(GObject* object) {
   MyApplication* self = MY_APPLICATION(object);
   g_clear_pointer(&self->dart_entrypoint_arguments, g_strfreev);
+  g_clear_object(&self->windowing_channel);
   G_OBJECT_CLASS(my_application_parent_class)->dispose(object);
 }
 
