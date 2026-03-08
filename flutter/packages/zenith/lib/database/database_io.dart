@@ -12,7 +12,7 @@ QueryExecutor createExecutor() {
     native: DriftNativeOptions(
       shareAcrossIsolates: true,
       databasePath: () async {
-        if (kDebugMode && Platform.isWindows) {
+        if (kDebugMode && !Platform.isAndroid) {
           return './zenith.sqlite';
         }
 
