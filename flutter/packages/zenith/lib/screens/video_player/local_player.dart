@@ -298,14 +298,27 @@ class _VideoPlayerState extends ConsumerState<LocalVideoPlayer> {
     if (controller == null) return;
 
     final position = controller.position.toInt();
-    if (kReleaseMode &&
-        controller.state == VideoState.active &&
+    if (controller.state == VideoState.active &&
         !controller.paused &&
         position > 0) {
       // TODO: Be smarter about progress reporting
       // - report when playback state changes, after seeking, etc
       // - maybe disable timer altogether when video is paused?
-      _api.updateProgress(currentItem.id, position);
+      if (kReleaseMode) {
+        _api.updateProgress(currentItem.id, position);
+      }
+
+      if (currentItem.videoFile case api.VideoFile videoFile) {
+        _db
+            .into(_db.videoUserData)
+            .insertOnConflictUpdate(
+              VideoUserDataCompanion.insert(
+                videoId: Value(videoFile.id),
+                position: controller.position,
+                timestamp: DateTime.now().millisecondsSinceEpoch,
+              ),
+            );
+      }
     }
   }
 

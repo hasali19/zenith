@@ -51,12 +51,21 @@ class MediaItems extends Table {
   Set<Column<Object>>? get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [DownloadedFiles, MediaItems, Servers])
+class VideoUserData extends Table {
+  IntColumn get videoId => integer()();
+  RealColumn get position => real()();
+  IntColumn get timestamp => integer()();
+
+  @override
+  Set<Column<Object>>? get primaryKey => {videoId};
+}
+
+@DriftDatabase(tables: [DownloadedFiles, MediaItems, Servers, VideoUserData])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? createExecutor());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -111,6 +120,9 @@ class AppDatabase extends _$AppDatabase {
     },
     from2To3: (m, schema) async {
       await m.createTable(schema.mediaItems);
+    },
+    from3To4: (m, schema) async {
+      await m.createTable(schema.videoUserData);
     },
   );
 }

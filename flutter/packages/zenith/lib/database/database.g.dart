@@ -1367,6 +1367,262 @@ class ServersCompanion extends UpdateCompanion<Server> {
   }
 }
 
+class $VideoUserDataTable extends VideoUserData
+    with TableInfo<$VideoUserDataTable, VideoUserDataData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VideoUserDataTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _videoIdMeta = const VerificationMeta(
+    'videoId',
+  );
+  @override
+  late final GeneratedColumn<int> videoId = GeneratedColumn<int>(
+    'video_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<double> position = GeneratedColumn<double>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timestampMeta = const VerificationMeta(
+    'timestamp',
+  );
+  @override
+  late final GeneratedColumn<int> timestamp = GeneratedColumn<int>(
+    'timestamp',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [videoId, position, timestamp];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'video_user_data';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VideoUserDataData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('video_id')) {
+      context.handle(
+        _videoIdMeta,
+        videoId.isAcceptableOrUnknown(data['video_id']!, _videoIdMeta),
+      );
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('timestamp')) {
+      context.handle(
+        _timestampMeta,
+        timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_timestampMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {videoId};
+  @override
+  VideoUserDataData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VideoUserDataData(
+      videoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}video_id'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}position'],
+      )!,
+      timestamp: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}timestamp'],
+      )!,
+    );
+  }
+
+  @override
+  $VideoUserDataTable createAlias(String alias) {
+    return $VideoUserDataTable(attachedDatabase, alias);
+  }
+}
+
+class VideoUserDataData extends DataClass
+    implements Insertable<VideoUserDataData> {
+  final int videoId;
+  final double position;
+  final int timestamp;
+  const VideoUserDataData({
+    required this.videoId,
+    required this.position,
+    required this.timestamp,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['video_id'] = Variable<int>(videoId);
+    map['position'] = Variable<double>(position);
+    map['timestamp'] = Variable<int>(timestamp);
+    return map;
+  }
+
+  VideoUserDataCompanion toCompanion(bool nullToAbsent) {
+    return VideoUserDataCompanion(
+      videoId: Value(videoId),
+      position: Value(position),
+      timestamp: Value(timestamp),
+    );
+  }
+
+  factory VideoUserDataData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VideoUserDataData(
+      videoId: serializer.fromJson<int>(json['videoId']),
+      position: serializer.fromJson<double>(json['position']),
+      timestamp: serializer.fromJson<int>(json['timestamp']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'videoId': serializer.toJson<int>(videoId),
+      'position': serializer.toJson<double>(position),
+      'timestamp': serializer.toJson<int>(timestamp),
+    };
+  }
+
+  VideoUserDataData copyWith({
+    int? videoId,
+    double? position,
+    int? timestamp,
+  }) => VideoUserDataData(
+    videoId: videoId ?? this.videoId,
+    position: position ?? this.position,
+    timestamp: timestamp ?? this.timestamp,
+  );
+  VideoUserDataData copyWithCompanion(VideoUserDataCompanion data) {
+    return VideoUserDataData(
+      videoId: data.videoId.present ? data.videoId.value : this.videoId,
+      position: data.position.present ? data.position.value : this.position,
+      timestamp: data.timestamp.present ? data.timestamp.value : this.timestamp,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VideoUserDataData(')
+          ..write('videoId: $videoId, ')
+          ..write('position: $position, ')
+          ..write('timestamp: $timestamp')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(videoId, position, timestamp);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VideoUserDataData &&
+          other.videoId == this.videoId &&
+          other.position == this.position &&
+          other.timestamp == this.timestamp);
+}
+
+class VideoUserDataCompanion extends UpdateCompanion<VideoUserDataData> {
+  final Value<int> videoId;
+  final Value<double> position;
+  final Value<int> timestamp;
+  const VideoUserDataCompanion({
+    this.videoId = const Value.absent(),
+    this.position = const Value.absent(),
+    this.timestamp = const Value.absent(),
+  });
+  VideoUserDataCompanion.insert({
+    this.videoId = const Value.absent(),
+    required double position,
+    required int timestamp,
+  }) : position = Value(position),
+       timestamp = Value(timestamp);
+  static Insertable<VideoUserDataData> custom({
+    Expression<int>? videoId,
+    Expression<double>? position,
+    Expression<int>? timestamp,
+  }) {
+    return RawValuesInsertable({
+      if (videoId != null) 'video_id': videoId,
+      if (position != null) 'position': position,
+      if (timestamp != null) 'timestamp': timestamp,
+    });
+  }
+
+  VideoUserDataCompanion copyWith({
+    Value<int>? videoId,
+    Value<double>? position,
+    Value<int>? timestamp,
+  }) {
+    return VideoUserDataCompanion(
+      videoId: videoId ?? this.videoId,
+      position: position ?? this.position,
+      timestamp: timestamp ?? this.timestamp,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (videoId.present) {
+      map['video_id'] = Variable<int>(videoId.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<double>(position.value);
+    }
+    if (timestamp.present) {
+      map['timestamp'] = Variable<int>(timestamp.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VideoUserDataCompanion(')
+          ..write('videoId: $videoId, ')
+          ..write('position: $position, ')
+          ..write('timestamp: $timestamp')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1375,6 +1631,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $MediaItemsTable mediaItems = $MediaItemsTable(this);
   late final $ServersTable servers = $ServersTable(this);
+  late final $VideoUserDataTable videoUserData = $VideoUserDataTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1383,6 +1640,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     downloadedFiles,
     mediaItems,
     servers,
+    videoUserData,
   ];
   @override
   DriftDatabaseOptions get options =>
@@ -2089,6 +2347,166 @@ typedef $$ServersTableProcessedTableManager =
       Server,
       PrefetchHooks Function()
     >;
+typedef $$VideoUserDataTableCreateCompanionBuilder =
+    VideoUserDataCompanion Function({
+      Value<int> videoId,
+      required double position,
+      required int timestamp,
+    });
+typedef $$VideoUserDataTableUpdateCompanionBuilder =
+    VideoUserDataCompanion Function({
+      Value<int> videoId,
+      Value<double> position,
+      Value<int> timestamp,
+    });
+
+class $$VideoUserDataTableFilterComposer
+    extends Composer<_$AppDatabase, $VideoUserDataTable> {
+  $$VideoUserDataTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get videoId => $composableBuilder(
+    column: $table.videoId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timestamp => $composableBuilder(
+    column: $table.timestamp,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$VideoUserDataTableOrderingComposer
+    extends Composer<_$AppDatabase, $VideoUserDataTable> {
+  $$VideoUserDataTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get videoId => $composableBuilder(
+    column: $table.videoId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timestamp => $composableBuilder(
+    column: $table.timestamp,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$VideoUserDataTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VideoUserDataTable> {
+  $$VideoUserDataTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get videoId =>
+      $composableBuilder(column: $table.videoId, builder: (column) => column);
+
+  GeneratedColumn<double> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<int> get timestamp =>
+      $composableBuilder(column: $table.timestamp, builder: (column) => column);
+}
+
+class $$VideoUserDataTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $VideoUserDataTable,
+          VideoUserDataData,
+          $$VideoUserDataTableFilterComposer,
+          $$VideoUserDataTableOrderingComposer,
+          $$VideoUserDataTableAnnotationComposer,
+          $$VideoUserDataTableCreateCompanionBuilder,
+          $$VideoUserDataTableUpdateCompanionBuilder,
+          (
+            VideoUserDataData,
+            BaseReferences<
+              _$AppDatabase,
+              $VideoUserDataTable,
+              VideoUserDataData
+            >,
+          ),
+          VideoUserDataData,
+          PrefetchHooks Function()
+        > {
+  $$VideoUserDataTableTableManager(_$AppDatabase db, $VideoUserDataTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VideoUserDataTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VideoUserDataTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$VideoUserDataTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> videoId = const Value.absent(),
+                Value<double> position = const Value.absent(),
+                Value<int> timestamp = const Value.absent(),
+              }) => VideoUserDataCompanion(
+                videoId: videoId,
+                position: position,
+                timestamp: timestamp,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> videoId = const Value.absent(),
+                required double position,
+                required int timestamp,
+              }) => VideoUserDataCompanion.insert(
+                videoId: videoId,
+                position: position,
+                timestamp: timestamp,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$VideoUserDataTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $VideoUserDataTable,
+      VideoUserDataData,
+      $$VideoUserDataTableFilterComposer,
+      $$VideoUserDataTableOrderingComposer,
+      $$VideoUserDataTableAnnotationComposer,
+      $$VideoUserDataTableCreateCompanionBuilder,
+      $$VideoUserDataTableUpdateCompanionBuilder,
+      (
+        VideoUserDataData,
+        BaseReferences<_$AppDatabase, $VideoUserDataTable, VideoUserDataData>,
+      ),
+      VideoUserDataData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2099,6 +2517,8 @@ class $AppDatabaseManager {
       $$MediaItemsTableTableManager(_db, _db.mediaItems);
   $$ServersTableTableManager get servers =>
       $$ServersTableTableManager(_db, _db.servers);
+  $$VideoUserDataTableTableManager get videoUserData =>
+      $$VideoUserDataTableTableManager(_db, _db.videoUserData);
 }
 
 // **************************************************************************
