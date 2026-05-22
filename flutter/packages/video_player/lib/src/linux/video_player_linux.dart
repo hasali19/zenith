@@ -40,6 +40,8 @@ class _VideoControllerLinux extends VideoController with ChangeNotifier {
     _player.stream.completed.listen((event) => notifyListeners());
     _player.stream.buffering.listen((event) => notifyListeners());
     _player.stream.rate.listen((event) => notifyListeners());
+    _player.stream.track.listen((event) => notifyListeners());
+    _player.stream.tracks.listen((event) => notifyListeners());
   }
 
   @override
@@ -56,8 +58,19 @@ class _VideoControllerLinux extends VideoController with ChangeNotifier {
   String? get activeSubtitleTrackId => null;
 
   @override
-  // TODO: implement availableAudioTracks
-  List<AudioTrack> get availableAudioTracks => [];
+  List<AudioTrack> get availableAudioTracks => _player
+      .state
+      .tracks
+      .audio
+      .indexed
+      .map(
+        (track) => AudioTrack(
+          index: track.$1,
+          language: track.$2.language ?? 'Unknown',
+          codec: track.$2.codec ?? 'Unknown',
+        ),
+      )
+      .toList();
 
   @override
   int get currentItemIndex => _player.state.playlist.index;
@@ -131,7 +144,7 @@ class _VideoControllerLinux extends VideoController with ChangeNotifier {
 
   @override
   void setAudioTrack(int index) {
-    // TODO: implement setAudioTrack
+    _player.setAudioTrack(_player.state.tracks.audio[index]);
   }
 
   @override
@@ -163,8 +176,7 @@ class _VideoControllerLinux extends VideoController with ChangeNotifier {
   }
 
   @override
-  // TODO: implement supportsAudioTrackSelection
-  bool get supportsAudioTrackSelection => false;
+  bool get supportsAudioTrackSelection => true;
 
   @override
   // TODO: implement supportsEmbeddedSubtitles
