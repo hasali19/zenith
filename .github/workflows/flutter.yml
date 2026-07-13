@@ -89,6 +89,26 @@ jobs:
         with:
           name: zenith-flutter-linux
           path: flutter/packages/zenith/build/linux/x64/release/bundle
+  
+  build_flatpak:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
+      options: --privileged
+    needs: build_linux
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: zenith-flutter-linux
+          path: flutter/flatpak/zenith-flutter-linux
+      
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: zenith.flatpak
+          manifest-path: flutter/flatpak/dev.hasali.Zenith.yml
+          cache: false
 
   build_web:
     runs-on: ubuntu-latest
@@ -353,6 +373,9 @@ jobs:
           cd artifacts/zenith-flutter-linux
           zip -r ../../release_artifacts/zenith-linux.zip *
           cd ../..
+
+          echo "Preparing flatpak"
+          cp artifacts/zenith-x86_64.flatpak/zenith.flatpak release_artifacts/zenith.flatpak
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:

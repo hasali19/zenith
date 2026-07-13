@@ -1,0 +1,57 @@
+id: dev.hasali.Zenith
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+command: zenith
+finish-args:
+  - --socket=wayland
+  - --socket=pulseaudio
+  - --device=dri
+  - --share=network
+  - --filesystem=home
+modules:
+  - name: zenith
+    buildsystem: simple
+    build-commands:
+      - mkdir -p "${FLATPAK_DEST}/Zenith"
+      - cp -r Zenith/. "${FLATPAK_DEST}/Zenith/"
+      - chmod +x "${FLATPAK_DEST}/Zenith/zenith"
+      - mkdir -p "${FLATPAK_DEST}/bin"
+      - mkdir -p "${FLATPAK_DEST}/lib"
+      - ln -s "${FLATPAK_DEST}/Zenith/zenith" "${FLATPAK_DEST}/bin/zenith"
+    sources:
+      - type: dir
+        only-arches: [x86_64]
+        path: zenith-flutter-linux
+        dest: Zenith
+
+  - name: mpv
+    buildsystem: simple
+    build-commands:
+      - cp mpv-build/lib/*/libmpv.so.2.5.0 ${FLATPAK_DEST}/lib
+      - ln -s "${FLATPAK_DEST}/lib/libmpv.so.2.5.0" "${FLATPAK_DEST}/lib/libmpv.so.2"
+    sources:
+      - type: archive
+        url: https://github.com/hasali19/mpv-build/releases/download/autobuild-2026-07-12-22-08/mpv-build.tar.gz
+        sha256: 07ecd93644cc83fe8900fc4431e024b225becb7da0a99749722b8305a43d0581
+        dest: mpv-build
+  
+  - name: bzip2
+    buildsystem: simple
+    build-commands:
+      - make -f Makefile-libbz2_so
+      - install -Dm755 libbz2.so.1.0.8 /app/lib/libbz2.so.1.0.8
+      - ln -s libbz2.so.1.0.8 /app/lib/libbz2.so.1.0
+      - ln -s libbz2.so.1.0 /app/lib/libbz2.so.1
+    cleanup:
+      - /bin
+      - /include
+      - /lib/pkgconfig
+      - '*.a'
+    sources:
+      - type: archive
+        url: https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
+        sha256: ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269
+        x-checker-data:
+          type: anitya
+          project-id: 237
