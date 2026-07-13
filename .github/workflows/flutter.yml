@@ -92,6 +92,9 @@ jobs:
   
   build_flatpak:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
+      options: --privileged
     needs: build_linux
     steps:
       - uses: actions/checkout@v4
