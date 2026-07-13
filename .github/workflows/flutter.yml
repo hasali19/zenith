@@ -374,6 +374,9 @@ jobs:
           zip -r ../../release_artifacts/zenith-linux.zip *
           cd ../..
 
+          echo "Preparing flatpak"
+          cp artifacts/zenith-x86_64.flatpak/zenith.flatpak release_artifacts/zenith.flatpak
+
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.CR_PAT }}"
