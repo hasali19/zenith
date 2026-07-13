@@ -103,10 +103,12 @@ jobs:
         with:
           name: zenith-flutter-linux
           path: flutter/zenith-flutter-linux
-
-      - run: |
-          cd flutter
-          flatpak-builder --force-clean --user --install-deps-from=flathub --repo=flatpak/repo flatpak/build flatpak/dev.hasali.Zenith.yml
+      
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: zenith.flatpak
+          manifest-path: flutter/flatpak/dev.hasali.Zenith.yml
+          cache: false
 
   build_web:
     runs-on: ubuntu-latest
