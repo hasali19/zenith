@@ -33,6 +33,7 @@ modules:
     sources:
       - type: archive
         url: https://github.com/hasali19/mpv-build/releases/download/autobuild-2026-07-12-22-08/mpv-build.tar.gz
+        sha256: 07ecd93644cc83fe8900fc4431e024b225becb7da0a99749722b8305a43d0581
         dest: mpv-build
   
   - name: bzip2
