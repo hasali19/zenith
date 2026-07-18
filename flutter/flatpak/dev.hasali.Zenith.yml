@@ -70,11 +70,11 @@ modules:
   - name: libmpv
     buildsystem: meson
     config-opts:
-      - -Dlibmpv=true
+      # - -Dlibmpv=true
       - -Dlua=disabled
       - -Ddebug=false
       - -Dbuild-date=false
-      - -Dcplayer=false
+      # - -Dcplayer=false
       - -Dmanpage-build=disabled
       - -Dvulkan=enabled
     sources:
