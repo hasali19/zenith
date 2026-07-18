@@ -76,7 +76,6 @@ modules:
       - -Dbuild-date=false
       - -Dcplayer=false
       - -Dmanpage-build=disabled
-      - -Dsdl2=disabled
       - -Dvulkan=enabled
     sources:
       - type: git
