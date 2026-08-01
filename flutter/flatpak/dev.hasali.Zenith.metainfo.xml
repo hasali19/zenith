@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>dev.hasali.Zenith</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Zenith</name>
+  <summary>Flutter client for Zenith media server</summary>
+  <description>
+    <p>
+      Zenith is a client for the Zenith media server, allowing you to browse
+      and stream your movies and TV shows.
+    </p>
+  </description>
+  <launchable type="desktop-id">dev.hasali.Zenith.desktop</launchable>
+  <url type="homepage">https://github.com/hasali19/zenith</url>
+  <content_rating type="oars-1.1" />
+</component>
