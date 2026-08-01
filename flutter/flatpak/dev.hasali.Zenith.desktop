@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Zenith
+Comment=Flutter client for Zenith media server
+Exec=zenith
+Icon=dev.hasali.Zenith
+Terminal=false
+Categories=AudioVideo;Video;Player;
+StartupWMClass=zenith

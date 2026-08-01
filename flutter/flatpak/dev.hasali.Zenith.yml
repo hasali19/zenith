@@ -20,11 +20,15 @@ modules:
       - mkdir -p "${FLATPAK_DEST}/bin"
       - mkdir -p "${FLATPAK_DEST}/lib"
       - ln -s "${FLATPAK_DEST}/Zenith/zenith" "${FLATPAK_DEST}/bin/zenith"
+      - install -Dm644 dev.hasali.Zenith.desktop "${FLATPAK_DEST}/share/applications/dev.hasali.Zenith.desktop"
+      - install -Dm644 Zenith/data/flutter_assets/assets/zenith_icon.png "${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/dev.hasali.Zenith.png"
     sources:
       - type: dir
         only-arches: [x86_64]
         path: zenith-flutter-linux
         dest: Zenith
+      - type: file
+        path: dev.hasali.Zenith.desktop
 
   - name: glslang
     buildsystem: cmake-ninja
