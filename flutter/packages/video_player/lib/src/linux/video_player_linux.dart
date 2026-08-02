@@ -54,8 +54,10 @@ class _VideoControllerLinux extends VideoController with ChangeNotifier {
   }
 
   @override
-  // TODO: implement activeSubtitleTrackId
-  String? get activeSubtitleTrackId => null;
+  String? get activeSubtitleTrackId =>
+      _player.state.track.subtitle == mk.SubtitleTrack.no()
+      ? null
+      : _player.state.track.subtitle.id;
 
   @override
   List<AudioTrack> get availableAudioTracks => _player
@@ -77,7 +79,19 @@ class _VideoControllerLinux extends VideoController with ChangeNotifier {
 
   @override
   // TODO: implement currentSubtitleTracks
-  List<SubtitleTrack> get currentSubtitleTracks => [];
+  List<SubtitleTrack> get currentSubtitleTracks {
+    return [
+      ..._player.state.tracks.subtitle
+          .where((track) => track.id != 'no' && track.id != 'auto')
+          .map(
+            (track) => SubtitleTrack(
+              id: track.id,
+              label: track.title,
+              language: track.language,
+            ),
+          ),
+    ];
+  }
 
   @override
   void dispose() {
@@ -95,6 +109,7 @@ class _VideoControllerLinux extends VideoController with ChangeNotifier {
 
   @override
   void load(List<VideoItem> items, int startIndex, double startPosition) {
+    _player.setSubtitleTrack(mk.SubtitleTrack.no());
     _player.open(
       mk.Playlist(
         items.indexed.map((e) {
@@ -159,7 +174,18 @@ class _VideoControllerLinux extends VideoController with ChangeNotifier {
 
   @override
   void setSubtitleTrack(String? trackId) {
-    // TODO: implement setSubtitleTrack
+    if (trackId == null) {
+      _player.setSubtitleTrack(mk.SubtitleTrack.no());
+      return;
+    }
+
+    final requestedTrack = _player.state.tracks.subtitle
+        .where((track) => track.id == trackId)
+        .firstOrNull;
+
+    if (requestedTrack != null) {
+      _player.setSubtitleTrack(requestedTrack);
+    }
   }
 
   @override
